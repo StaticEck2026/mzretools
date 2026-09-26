@@ -394,6 +394,50 @@ Similarly to the previous script, this parses the IDA listing but the output is 
 
 This is a bash script which wraps running the DOS build toolchain (compiler, assembler, linker) inside headless DosBox, to be used inside Makefiles so it's possible to build code for DOS from the comfort of the Linux command line without needing to go into actual DOS.
 
+## 32-bit protected mode executables (LE/LX)
+
+Many later DOS games (1993 onwards) are 32-bit protected mode programs built with Watcom C and bound to a DOS extender like DOS/4GW. On disk they are an MZ stub (the extender) followed by an LE or LX "linear executable", which the C++ tools above can't analyze because they only handle 8086 code. The following Python tools cover these executables. They require the `capstone` disassembler module (`pip install capstone`).
+
+### le.py
+
+Parses the LE/LX image behind the extender stub(s): header, object table, page map and fixup records, and can extract the relocated objects to binary files. Like `mzhdr`, but for the protected mode part:
+
+```
+$ tools/le.py HOCKEY.EXE
+--- HOCKEY.EXE: LE executable
+        LE header at file offset 0x28fec, owning MZ stub at 0x26654
+        cpu = 80386, os = OS/2, module flags = 0x200
+        pages = 193 x 0x1000, last page size = 0xb67
+        data pages at file offset 0x5f254
+        entry (cs:eip) = object 1:0x7ffd4 -> linear 0x8ffd4
+        stack (ss:esp) = object 2:0x3ab90 -> linear 0xfab90
+[...]
+--- objects:
+        object 1: base 0x10000, size 0xa7886, flags 0x2005 (R X 32bit), pages 1-168 [CODE]
+        object 2: base 0xc0000, size 0x3ab90, flags 0x2003 (R W 32bit), pages 169-193 [DATA]
+--- fixups: 26790 internal
+```
+
+### ledisasm.py
+
+The 32-bit counterpart of `mzmap`: a recursive traversal disassembler which follows calls, jumps and switch tables from the entrypoint, splits the code into routines and collects variables and strings. Because every absolute address in an LE image is covered by a fixup, function pointers, jump tables and data references are found exactly rather than guessed; unreferenced routines are recovered by scanning the remaining gaps, and routines which never return are detected so that the data following calls to them isn't disassembled. The results are saved into an editable map file in the mzmap format, which is read back on the next run, so routines and variables can be renamed and commented (`#@` lines) iteratively:
+
+```
+$ tools/ledisasm.py HOCKEY.EXE --map hockey.map --asm asm/hockey.asm --split 0x8000 --json hockey.json --strings strings.txt --symbols hockey.sym --elf hockey.elf
+Analyzing HOCKEY.EXE: entrypoint 0x8ffd4, 26790 fixups
+--- Summary
+Routines: 2593 (call: 1777, chunks: 1, entry: 1, fptr: 456, gap: 377, tail: 30)
+Noreturn routines: 11
+Instructions: 200768, 679798 bytes (99.1% of code objects)
+[...]
+```
+
+Besides the map it can write an annotated listing (symbolic operands, callers, referenced strings, interrupt services and I/O ports per routine), a JSON dump of routines/variables/call graph, a string table with references, a symbol list and an ELF32 file of the relocated image with a symbol table that loads directly into Ghidra, IDA, radare2 or objdump. The calling convention of each routine (Watcom register convention or stack based `__cdecl`) is guessed from its call sites.
+
+### lede.sh and ghidra/LEDecompile.java
+
+`lede.sh game.exe outdir` runs `ledisasm.py` with all outputs enabled and, if `GHIDRA_HOME` points to a Ghidra 11 installation, imports the ELF into a headless Ghidra, teaches it the Watcom register calling convention, applies the names and conventions from the map and writes the decompiled pseudo-C of every routine into `outdir/decomp`. See [re/nhl_hockey](re/nhl_hockey) for the complete output for EA's NHL Hockey, including an analysis of the program and a guide for porting it to a modern engine.
+
 ## other
 
 There's a bunch of bash scripts for doing odd jobs as well.
