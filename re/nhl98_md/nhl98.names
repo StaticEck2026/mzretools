@@ -1,0 +1,322 @@
+# Symbol names for the disassembly.  Format: <hex addr> <name> [comment]
+# RAM variables use "ram:<hex addr>".  Edit and re-run the generator.
+000200 EntryPoint reset entry: TMSS, VDP and Z80 setup (skipped on soft reset), then Boot_RegionCheck
+00028E BootParamTable VDP register values, PSG mute data and Z80 init program used by EntryPoint
+0002FA Boot_RegionCheck console version / region lockout check, draws the "DEVELOPED FOR USE ONLY WITH" screen
+000466 Region_PrintDevelopedFor
+000476 Region_PrintNtscMegaDrive
+000484 Region_PrintNtscGenesis
+000492 Region_PrintPalMegaDrive
+0004A0 Region_PrintAnd
+0004AE Region_PrintString a0 = length prefixed string, d0 = length, d1 = row; renders with the 1bpp boot font
+0004E4 RegionTable_Ver0 allowed region characters per hardware version (bits 7-6 of HW_VERSION)
+0004F4 RegionTable_Ver1
+000504 RegionTable_Ver2
+000514 RegionTable_Ver3
+000524 str_DevelopedFor
+000541 str_And
+000544 str_Systems
+00054E str_NtscMegaDrive
+00055F str_NtscGenesis
+00056D str_PalSecamMegaDrive
+00058E Font_Boot1bpp 1 bit per pixel font used by the region lockout screen
+000766 Boot_JumpToMain
+000772 NullEntry 4 zero bytes; pointers compare against this address as "no entry"
+000776 VBlank_Dispatch level 6 interrupt: jumps through ram_VBlankVector
+00077E RosterTable 62 pointers to the team roster records (two orderings of 31 teams)
+000876 Roster_Anaheim roster: Anaheim Mighty Ducks (Arrowhead Pond Of Anaheim)
+000BA8 Roster_Boston roster: Boston Bruins (Boston Garden)
+000EBE Roster_Buffalo roster: Buffalo Sabres (Memorial Auditorium)
+0011DE Roster_Calgary roster: Calgary Flames (Olympic Saddledome)
+001508 Roster_Chicago roster: Chicago Blackhawks (United Center)
+001826 Roster_Colorado roster: Colorado Colorado (Nichols Arena)
+001B12 Roster_Dallas roster: Dallas Stars (Reunion Arena)
+001E24 Roster_Detroit roster: Detroit Red Wings (Joe Louis Sports Arena)
+002160 Roster_Edmonton roster: Edmonton Oilers (Northlands Coliseum)
+00247C Roster_Florida roster: Florida Panthers (Miami Arena)
+0027A2 Roster_Carolina roster: Carolina Hurricanes (NC)
+002A8A Roster_LosAngeles roster: Los Angeles Kings (Great Western Forum)
+002DBA Roster_Montreal roster: Montreal Canadiens (Montreal Forum)
+0030B2 Roster_NewJersey roster: New Jersey Devils (Byrne Meadowlands Arena)
+003396 Roster_NewYorkIslanders roster: New York Islanders (Nassau Coliseum)
+003656 Roster_NewYorkRangers roster: New York Rangers (Madison Square Garden)
+00398A Roster_Ottawa roster: Ottawa Senators (Ottawa Civic Center)
+003CC4 Roster_Philadelphia roster: Philadelphia Flyers (Spectrum)
+003FC2 Roster_Phoenix roster: Phoenix Phoenix (America West Arena)
+0042EC Roster_Pittsburgh roster: Pittsburgh Penguins (Civic Arena)
+004604 Roster_SanJose roster: San Jose Sharks (San Jose Arena)
+004916 Roster_StLouis roster: St. Louis Blues (Kiel Center)
+004C0A Roster_TampaBay roster: Tampa Bay Lightning (Thunderdome)
+004F2C Roster_Toronto roster: Toronto Maple Leafs (Maple Leaf Gardens)
+00525E Roster_Vancouver roster: Vancouver Canucks (General Motors Place)
+005570 Roster_Washington roster: Washington Capitals (US Air Arena)
+005886 Roster_TeamCanada roster: Team Canada Canada (Unknown)
+005BBC Roster_TeamUsa roster: Team USA USA (Unknown)
+005EF0 Roster_TeamEurope roster: Team Europe Europe (Unknown)
+0061FE Roster_AllStarsEast roster: All Stars East All Stars East (Fleet Center)
+006506 Roster_AllStarsWest roster: All Stars West All Stars West (Fleet Center)
+0067EE Roster_EaSports roster: EA Sports EA Sports (EA Sports Arena)
+006AC8 Roster_Credits EA staff names and licensing text in roster record format
+00E67E Joypad_InitPorts sets up the I/O ports and detects an EA 4-Way Play adapter on port 2 (ram_FourWayPlay)
+00E6E6 Joypad_Read4Way1 selects pad 1 on the 4-Way Play and reads it
+00E702 Joypad_Read4Way2
+00E71E Joypad_Read4Way3
+00E73A Joypad_Read4Way4
+016FA6 TeamArtTable 6 groups of 31 pointers (team name banner, logo, icon; two team orderings each)
+01728E VBlank_Main DMA transfers, palette fade, frame counter, sound update
+018F30 Main_Init main program entry after the boot checks: clears work RAM, loads the sound driver, inits hardware and jumps to the title loop
+01FFF6 Palette_WaitFade installs VBlank_Simple and waits until the fade finished
+020026 Palette_FadeStep called every VBlank while ram_FadeCounter >= 0: steps CRAM towards ram_PaletteBuffer
+0200B4 Palette_LoadImmediate
+0200F6 Random d0 = random number below the word pushed on the stack (seed in ram_RandomSeed)
+02012E ISqrt d0 = integer square root of d0
+020314 Joypad_ReadAll ORs the new presses of all pads (4 with a 4-Way Play)
+020348 Joypad_DpadFilter
+020370 Joypad_Repeat auto repeat of held directions (ram_JoypadRepeat)
+020398 Joypad_Read1 returns d1 = newly pressed buttons, d3 = held buttons
+0203B0 Joypad_Read2
+0203C8 Joypad_Read3
+0203E0 Joypad_Read4
+0203F8 Joypad_Remap remaps the direction nibble through Joypad_RemapTable
+020418 Joypad_RemapTable
+020428 VDP_DMALocked VDP_DMASafe with the video lock flag set
+02043C VDP_DMASafe like VDP_DMA but splits transfers crossing a 128K boundary
+020474 VDP_DMA a0 = source, d0 = length in words, d1 = VRAM destination (pauses the Z80 around the transfer)
+0205BC VDP_WaitDMA
+0205CE Palette_SetAll fills the palette buffer with d0 and starts a fade
+0205E4 VDP_Init clears VRAM and programs the VDP registers from the ram_Plane* variables
+0206C8 VDP_SetWriteAddr d0 = VRAM address; returns a0 = VDP_DATA with the write address set
+0206E2 TileMap_Draw draws a tile map (a1) of d1 rows at the text cursor, loading its palettes (mask d5) into the palette buffer
+020774 Draw_RunScript runs the 8 byte drawing script placed after the call (see jmptbl_0207FA for the commands)
+020784 Draw_RunScript_Worker
+0207C2 Draw_Interpreter nibble coded tile row commands: copy, clear, fill, repeat
+0207FA Draw_CommandTable
+02099A Text_CursorToVRAM sets the VDP write address for ram_TextX / ram_TextY on the current plane
+0209C6 Text_FillRect d0 = width, d1 = rows, d2 = tile
+020A00 Text_PrintDigitsBig
+020A7E Text_PrintCmd inline text with escape commands dispatched through Text_CmdTable
+020A90 Text_PrintCmd_Worker
+020B40 Text_CmdTable escape command handlers for Text_PrintCmd
+020BDE Text_Print inline text using Font_Small; negative bytes set palette/plane, then x and y
+020BF0 Text_Print_Worker
+020CC2 Text_PrintFont inline text using the font in ram_FontPtr
+020CD4 Text_PrintFont_Worker
+020E6C Num_ToDecimal d0 = value, d1 = digits; writes the ASCII digits to ram_NumStr
+020EC8 Text_AppendInline appends the inline string to the length prefixed buffer at (a3)
+020ED0 Text_AppendInline_Worker
+020F14 Text_PrintBig inline text, large font with per character tile pairs
+020F26 Text_PrintHud inline text using the font in ram_FontPtr2 (scoreboard / HUD)
+020F38 Text_PrintNarrow inline text using Font_Narrow
+020F4E Text_PrintNarrow_Worker
+02117C Text_PrintScoreboard inline text using Font_Scoreboard
+02118E Text_PrintScoreboardAlt inline text using Art_1B5AEA
+0211A0 Text_PrintScoreboard_Worker
+0211BC Text_PrintScoreboardAlt_Worker
+0211D8 Text_PrintBig_Worker
+022A76 List_Skip skips d0 entries of a list of word length prefixed records at a1
+024D92 NullSub
+0257AE VBlank_InGame as VBlank_Main plus game timer handling
+0258A0 VBlank_Simple palette fade only (installed while waiting for fades)
+0258C0 Int_Null rte for unused interrupts and the level 4 (horizontal) interrupt
+0258C2 VBlank_DMATransfers2
+0258F8 VBlank_DMATransfers
+0287AE Exception_AddressError bus/address error: prints "Address Error" and the fault address
+0287D6 Exception_IllegalInstr
+028800 Exception_DivideByZero
+029A32 VBlank_CountOnly only increments ram_FrameCounter
+029A38 SaveData_Verify checks the checksum of the save data mirror in RAM
+029CA0 SRAM_Write a0 = source, d0 = SRAM byte offset, d1 = byte count
+029CC2 SRAM_UpdateChecksum sums the save area and stores the checksum (skipped when ram_SysFlags bit 6 is set)
+029D0A SRAM_Read a0 = destination, d0 = SRAM byte offset, d1 = byte count
+02A036 Sound_VBlankUpdate
+02A046 Sound_Dispatch
+02A06C Sound_FuncTable branch table of the 19 sound functions
+02A0B8 Snd_Disable function 3: sets ram_SoundLock to $1234
+02A0CA Snd_Enable function 2: clears ram_SoundLock
+02A0DA Snd_LoadDriver function 0: a0 = Z80 driver, d1 = length; resets the Z80 and uploads the driver
+02A200 Snd_Update function 1: per frame update called from the VBlank handlers
+02A574 Snd_Func04
+02A674 Snd_Func05
+02A6D6 Snd_QueueCommand d0 = 32 bit command, appended to the queue in Z80 RAM
+02A758 Snd_QueueTransfer
+02A874 Snd_Func0B
+02A8FE Snd_Func0C
+02A988 Snd_PauseZ80 function 13: tells the driver to stop (before DMA)
+02A9C4 Snd_ResumeZ80 function 14: lets the driver run again (after DMA)
+02AA00 Snd_StopAll function 15
+02AA38 Snd_Func10
+02AA86 Snd_Func11
+02ADDC Snd_SetSoundBank function 6: a0 = sound bank data
+02AE38 Snd_Func07
+02AE8C Snd_Func08
+02AFA2 Snd_ResetQueue function 9: clears the command queue in Z80 RAM
+02AFEC Snd_Func12
+02AFFC Snd_Func0A
+02B092 Z80_BusRequest
+02B0A6 Z80_BusRelease
+02B0B0 Z80_SoundDriver Z80 sound driver, uploaded to Z80 RAM by Snd_LoadDriver
+02CBD6 SoundBank sound data passed to Snd_SetSoundBank
+091F88 Sound_Call d0 = function number (index into Sound_FuncTable), other arguments per function
+09244C Z80_Reset
+0926D0 Art_MenuBackground
+09355E Art_NHL98Logo
+0944A0 Art_IceTexture
+0951AE Art_TitleScreen
+09847C Art_LegalScreen "(c) 1996 Electronic Arts ... NHL 97" licensing screen
+09BAAA Art_NHLLicensedLogo
+09CE6A Art_NHLPALogo
+09EBC8 Art_Rink the in-game ice surface
+0A4656 Art_RefereeCutscene
+0A7282 Art_PlayerSprites all player and goalie sprite frames (23305 tiles, frame table in the map block)
+16B87C Art_IngameMisc
+1779E8 Art_THQLogo
+17958E Art_TeamName_Anaheim
+17987C Art_TeamName_Boston
+179B6A Art_TeamName_Buffalo
+179E58 Art_TeamName_Calgary
+17A146 Art_TeamName_Chicago
+17A4B4 Art_TeamName_Colorado
+17A7E2 Art_TeamName_Dallas
+17AAD0 Art_TeamName_Detroit
+17ADBE Art_TeamName_Edmonton
+17B12C Art_TeamName_Florida
+17B41A Art_TeamName_Carolina
+17B748 Art_TeamName_LosAngeles
+17BB36 Art_TeamName_Montreal
+17BEA4 Art_TeamName_NewJersey
+17C272 Art_TeamName_NewYorkIslanders
+17C6C0 Art_TeamName_NewYorkRangers
+17CAAE Art_TeamName_Ottawa
+17CD9C Art_TeamName_Philadelphia
+17D20A Art_TeamName_Phoenix
+17D4F8 Art_TeamName_Pittsburgh
+17D8C6 Art_TeamName_SanJose
+17DC34 Art_TeamName_StLouis
+17DF62 Art_TeamName_TampaBay
+17E2B0 Art_TeamName_Toronto
+17E59E Art_TeamName_Vancouver
+17E98C Art_TeamName_Washington
+17F068 Art_TeamName_EaSports
+17F456 Art_TeamName_006AC8
+17F844 Art_TeamName_TeamCanada
+17FB32 Art_TeamName_TeamUsa
+17FD20 Art_TeamName_TeamEurope
+18000E Art_TeamNameAlt_EaSports
+18033C Art_TeamNameAlt_006AC8
+18080A Art_TeamLogo_Anaheim
+181518 Art_TeamLogo_Boston
+182246 Art_TeamLogo_Buffalo
+182F94 Art_TeamLogo_Calgary
+183CC2 Art_TeamLogo_Chicago
+184A70 Art_TeamLogo_Colorado
+1857FE Art_TeamLogo_Dallas
+18654C Art_TeamLogo_Detroit
+18723A Art_TeamLogo_Edmonton
+187FE8 Art_TeamLogo_Florida
+188D16 Art_TeamLogo_Carolina
+189A84 Art_TeamLogo_LosAngeles
+18A8B2 Art_TeamLogo_Montreal
+18B660 Art_TeamLogo_NewJersey
+18C46E Art_TeamLogo_NewYorkIslanders
+18D2FC Art_TeamLogo_NewYorkRangers
+18E12A Art_TeamLogo_Ottawa
+18EE58 Art_TeamLogo_Philadelphia
+18FD06 Art_TeamLogo_Phoenix
+190A54 Art_TeamLogo_Pittsburgh
+191862 Art_TeamLogo_SanJose
+192610 Art_TeamLogo_StLouis
+19339E Art_TeamLogo_TampaBay
+19412C Art_TeamLogo_Toronto
+194EBA Art_TeamLogo_Vancouver
+195CE8 Art_TeamLogo_Washington
+196B16 Art_TeamLogo_EaSports
+197944 Art_TeamLogo_006AC8
+198772 Art_TeamLogo_TeamCanada
+199480 Art_TeamLogo_TeamUsa
+19A08E Art_TeamLogo_TeamEurope
+19AD9C Art_TeamLogoAlt_EaSports
+19BAEA Art_TeamLogoAlt_006AC8
+19D0B8 Art_TeamIcon_Florida
+19D438 Art_TeamIcon_Buffalo
+19D818 Art_TeamIcon_Anaheim
+19DB58 Art_TeamIcon_Boston
+19DEB8 Art_TeamIcon_Calgary
+19E298 Art_TeamIcon_Chicago
+19E638 Art_TeamIcon_Colorado
+19E9B8 Art_TeamIcon_Dallas
+19EC98 Art_TeamIcon_Detroit
+19EFD8 Art_TeamIcon_Edmonton
+19F3B8 Art_TeamIcon_Carolina
+19F678 Art_TeamIcon_LosAngeles
+19F978 Art_TeamIcon_Montreal
+19FCB8 Art_TeamIcon_NewJersey
+1A0058 Art_TeamIcon_NewYorkIslanders
+1A0336 Art_TeamIcon_NewYorkRangers
+1A0716 Art_TeamIcon_Ottawa
+1A0A96 Art_TeamIcon_Philadelphia
+1A0DB6 Art_TeamIcon_Phoenix
+1A1116 Art_TeamIcon_Pittsburgh
+1A1436 Art_TeamIcon_SanJose
+1A17B6 Art_TeamIcon_StLouis
+1A1B16 Art_TeamIcon_TampaBay
+1A1EF6 Art_TeamIcon_Toronto
+1A21F6 Art_TeamIcon_Vancouver
+1A2514 Art_TeamIcon_Washington
+1A2854 Art_TeamIcon_EaSports
+1A2C34 Art_TeamIcon_006AC8
+1A3014 Art_TeamIcon_TeamCanada
+1A33B4 Art_TeamIcon_TeamUsa
+1A3714 Art_TeamIcon_TeamEurope
+1A3AD4 Art_TeamIconAlt_EaSports
+1A3EB4 Art_TeamIconAlt_006AC8
+1A41D4 Art_PlayoffLogo Stanley Cup Championship logo on blue
+1A983A Font_Menu
+1AA148 Font_Narrow
+1AC3EC Font_Cmd font used by Text_PrintCmd
+1ACCFA Font_Small
+1B509C Font_Scoreboard
+1BD196 Art_PlayoffBackground
+1C1272 Art_ChampionsPhoto Stanley Cup champions team photo
+1C5520 Art_ChampionsFaces
+1C74CE Art_StanleyCupWon "CONGRATULATIONS YOU'VE WON THE STANLEY CUP!"
+1DD70C VBlank_Main2 copy of VBlank_Main used by the front end
+
+ram:FF0000 SaveDataMirror copy of the battery backup save area
+ram:FFB002 HScrollTableAddr VRAM address of the horizontal scroll table
+ram:FFB004 PlaneAAddr VRAM address of plane A
+ram:FFB006 PlaneSize
+ram:FFB008 SpriteTableAddr VRAM address of the sprite attribute table
+ram:FFB00C PlaneBAddr VRAM address of plane B
+ram:FFB010 FontPtr2 tile set used by Text_PrintHud / Text_PrintNarrow
+ram:FFB01C FontTileBase
+ram:FFB042 TextX text cursor column
+ram:FFB044 TextY text cursor row
+ram:FFB046 TextAttr palette / priority bits ORed into text tiles
+ram:FFB048 TextPlaneOffset offset into the plane table for the text plane
+ram:FFB054 FrameCounter incremented every vertical interrupt
+ram:FFB058 JoypadRepeat auto repeat timer
+ram:FFBD3E FadeCounter palette fade step counter (-1 = idle, $64 = load immediately)
+ram:FFBD40 PaletteBuffer 64 colour words (target CRAM contents)
+ram:FFBF24 JoypadHeld1 previous button state of pad 1
+ram:FFBF26 JoypadHeld2
+ram:FFBF28 JoypadHeld3
+ram:FFBF2A JoypadHeld4
+ram:FFBF2C JoypadPort1 byte: port selector for pad 1
+ram:FFBF2D JoypadPort2
+ram:FFBF2E JoypadPort3
+ram:FFBF2F JoypadPort4
+ram:FFBF8A FontTileBaseAlt
+ram:FFBF8C FontPtr tile set used by Text_PrintFont
+ram:FFBFB4 VideoFlags bit 0 = DMA list pending, bit 2 = video lock (no DMA from VBlank), bit 1/5 = display mode
+ram:FFC058 NumStrLen length of the decimal string built by Num_ToDecimal
+ram:FFC05A NumStr decimal digits built by Num_ToDecimal
+ram:FFC348 TextFlags bit 3 = use FontTileBaseAlt
+ram:FFC352 SysFlags bit 6 = no battery backup
+ram:FFD048 DrawScriptPtr
+ram:FFD260 VBlankVector long: routine called by VBlank_Dispatch
+ram:FFD26C FourWayPlay non zero when an EA 4-Way Play adapter was detected
+ram:FFD296 RandomSeed 32 bit random number generator state
+ram:FFD29A DMACommand VDP command word pair of the last DMA
+ram:FFDDE0 SaveChecksum
+ram:FFFDFC SoundLock $1234 while the sound driver may run
+ram:FFFF4C SoundTick

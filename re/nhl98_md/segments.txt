@@ -1,0 +1,14 @@
+# Source modules: <start address> <file> <title>.  Every address here is a module boundary.
+000000 src/boot.asm Vector table, ROM header, entry point, region lockout check, VBlank stub
+00077E data/rosters.asm Team pointer table and roster records (players, team names, arenas)
+00B8DE src/season.asm Season mode: menus, standings, player stats, transactions, simulation (partly compiled C)
+01B8B8 src/game.asm Game engine: play, penalties, injuries, play-by-play text, exception handlers
+01FF24 src/system.asm System library: VDP, DMA, palettes, text rendering, joypads, random numbers
+022A82 src/game2.asm Game engine, second part: AI, animation, in-game screens
+0288B2 data/game_tables.asm Tables used by the game engine
+02993A src/sound.asm Sound interface: Z80 driver upload, command queue, SRAM access
+02B0B0 data/sound_data.asm Z80 sound driver and sound bank
+091F88 src/sound_glue.asm Sound call wrapper and sound effect helpers
+0924C2 data/art.asm Graphics: tile sets with palettes and tile maps (title, menus, rink, team logos, fonts)
+1CED80 src/frontend.asm Front end: team select, playoffs, rosters and trades, options, shootout, stats screens, awards, skills challenge
+1E6730 data/misc_data.asm Remaining data
