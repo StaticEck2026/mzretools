@@ -581,9 +581,10 @@ Art_Rink:
 	dc.l	Art_Rink_Pal-Art_Rink
 	dc.l	Art_Rink_Map-Art_Rink
 Art_Rink_Tiles:
-	incbin	"data/bin/data_09EBD0.bin"	; 5168 bytes
+	dc.w	453	; tile count
+	incbin	"data/art/art_rink.bin"	; 453 tiles, 8x8 4bpp (split by a label below)
 dat_0A0000:
-	incbin	"data/bin/data_0A0000.bin"	; 9330 bytes
+	incbin	"data/art/art_rink_0A0000.bin"	; tile data continued
 Art_Rink_Pal:
 	dc.w	$0EC8,$0000,$0EEE,$000E,$0AAE,$0EA6,$0ECA,$0AAA,$028C,$0E64,$0888,$0666,$044A,$0444,$0222,$0CCC
 	dc.w	$0EC8,$004E,$0420,$0640,$0860,$0668,$0648,$0006,$0244,$0024,$0EEE,$0888,$0666,$0444,$0222,$0000
@@ -951,33 +952,18 @@ Art_PlayerSprites:
 	dc.l	Art_PlayerSprites_Pal-Art_PlayerSprites
 	dc.l	Art_PlayerSprites_Map-Art_PlayerSprites
 Art_PlayerSprites_Tiles:
-	incbin	"data/bin/data_0A728A.bin"	; 363896 bytes
+	dc.w	23305	; tile count
+	incbin	"data/art/art_playersprites.bin"	; 23305 tiles, 8x8 4bpp (split by a label below)
 dat_100002:
-	dc.w	$0000,$F000,$0000,$0F00,$0000,$0000,$0000,$0000
-	dc.w	$0004,$0000,$000A,$0000,$003A,$0000,$0032,$0000
-	dc.w	$0077,$0000,$0077,$0000,$0997,$0000,$0977,$00EE
-	dc.w	$E97E,$0008,$1777,$000F,$81A2,$0000,$F810,$0000
-	dc.w	$0F8F,$F000,$00F0,$0F0F,$0F0F,$0000,$F0F0,$0000
-	dc.w	$0F0F,$0000,$00F0,$0000,$000F,$0000,$0000,$0000
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$0000,$AA00
-	dc.w	$0044,$4499,$9444,$4499,$1233,$3477,$7E23,$2377
-	dc.w	$A122,$2332,$A1B5,$2332,$11B5,$2299,$112A,$EE99
-	dc.w	$E199,$7779,$9777,$AAC7,$7712,$CCAC,$DDC0,$0CCA
-	dc.w	$3444,$F0C2,$3344,$0FFF,$2333,$FFFA,$2220,$FFFA
-	dc.w	$AAA0,$FFF3,$AAF0,$0FF2,$220F,$F0F1,$12F0,$0F01
-	dc.w	$11FF,$00F8,$111F,$000F,$8B11,$0000,$0000
+	incbin	"data/art/art_playersprites_100002.bin"	; tile data continued
 dat_1000D0:
-	dc.w	$4000,$0000,$4400,$0000,$4300,$0000,$3300,$0000
-	dc.w	$2200
+	incbin	"data/art/art_playersprites_1000D0.bin"	; tile data continued
 dat_1000E2:
-	incbin	"data/bin/data_1000E2.bin"	; 130846 bytes
+	incbin	"data/art/art_playersprites_1000E2.bin"	; tile data continued
 dat_120000:
-	dc.w	$0000,$0000,$0000,$0000,$0000,$0000,$EE00,$3490
-	dc.w	$00EE,$0799,$0000,$E779,$0000,$0779,$0000,$0077
-	dc.w	$0000,$0000,$0000,$0000,$F0F0,$0000,$0F0F,$0000
-	dc.w	$0000,$F0F0
+	incbin	"data/art/art_playersprites_120000.bin"	; tile data continued
 dat_120034:
-	incbin	"data/bin/data_120034.bin"	; 250744 bytes
+	incbin	"data/art/art_playersprites_120034.bin"	; tile data continued
 Art_PlayerSprites_Pal:
 	dc.w	$0EC6,$0000,$0EEE,$000E,$0AAE,$0EA6,$0ECA,$0AAA,$028C,$0E64,$0888,$0666,$044A,$0444,$0222,$0CCC
 	dc.w	$0EC6,$004E,$0420,$0640,$0860,$0668,$0648,$0006,$0244,$0024,$0EEE,$0888,$0666,$0444,$0222,$0000

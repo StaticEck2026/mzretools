@@ -112,6 +112,20 @@ around DMA...). Commands are queued in Z80 RAM for the driver in `Z80_SoundDrive
 **Save data**: battery backup at the odd bytes of `$200000` (`SRAM_Read` / `SRAM_Write`), mirrored at
 `SaveDataMirror` in work RAM and protected by `SRAM_UpdateChecksum`.
 
+## Extracting the graphics
+
+To rip every graphic asset straight from the ROM in one go:
+
+```
+python3 tools/md68k/mdextract.py "NHL 98 (USA).bin" out --names re/nhl98_md/nhl98.names
+```
+
+`out/extracted/` then holds the 170 tile sets as raw files (`<name>.bin` the whole container as it sits in
+the ROM, plus `<name>.tiles.bin`, `<name>.pal.bin` and `<name>.map.bin` split out), `out/png/` holds every
+one of them converted (picture, tile grid, palettes, and for the sprite sets all frames and the character
+sheets described below) and `out/manifest.txt` lists them with their ROM addresses. Without `--names` the
+assets are called `art_<address>`.
+
 ## Exporting the graphics
 
 `tools/md68k/mdart.py` converts every tile set to PNG (pure Python, no dependencies):

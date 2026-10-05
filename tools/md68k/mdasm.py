@@ -426,14 +426,25 @@ class Emitter:
         elif a in self.art_part:
             base, part = self.art_part[a]
             cnt, offA, offB, aend = self.tilesets[base]
-            if part == 'tiles' and b == base + offA:
-                out.append('\tdc.w\t%d\t; tile count' % cnt)
-                fname = 'data/art/%s.bin' % self.label_at[base].lower()
+            if part in ('tiles', 'tiles_cont') and b <= base + offA:
+                # a foreign label inside the tile data splits the incbin
+                if part == 'tiles':
+                    out.append('\tdc.w\t%d\t; tile count' % cnt)
+                    a += 2
+                    fname = 'data/art/%s.bin' % self.label_at[base].lower()
+                else:
+                    fname = 'data/art/%s_%06X.bin' % (self.label_at[base].lower(), a)
                 path = os.path.join(self.outdir, fname)
                 os.makedirs(os.path.dirname(path), exist_ok=True)
                 with open(path, 'wb') as f:
-                    f.write(rom[a + 2:b])
-                out.append('\tincbin\t"%s"\t; %d tiles, 8x8 4bpp' % (fname, cnt))
+                    f.write(rom[a:b])
+                if part == 'tiles':
+                    note = '%d tiles, 8x8 4bpp' % cnt + ('' if b == base + offA else ' (split by a label below)')
+                else:
+                    note = 'tile data continued'
+                out.append('\tincbin\t"%s"\t; %s' % (fname, note))
+                if b < base + offA:
+                    self.art_part[b] = (base, 'tiles_cont')
                 a = b
             elif part == 'pal' and b - a >= 128:
                 for i in range(4):
