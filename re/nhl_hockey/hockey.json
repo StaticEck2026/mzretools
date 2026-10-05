@@ -116,7 +116,7 @@
     "frontend_main_menu",
     "apply_settings",
     "load_cfg_palette",
-    "sub_479e9",
+    "loading_screen",
     "zone_manager_init",
     "joystick_calibrate",
     "ui_init",
@@ -655,7 +655,7 @@
     "sub_190be",
     "sub_1baf3",
     "fade_ambient_audio",
-    "sub_59981",
+    "stop_crowd_loop",
     "sub_837a8",
     "__CHK",
     "setfont",
@@ -702,8 +702,8 @@
    ],
    "strings": [],
    "vars": [
-    "unk_d8c18",
-    "unk_d8c4c"
+    "digit_shapes",
+    "position_letter_shapes"
    ],
    "interrupts": [],
    "ports": [],
@@ -840,10 +840,10 @@
    "callees": [
     "fade_palette_to",
     "show_scoreboard",
-    "sub_59748",
+    "sound_pause_all",
     "fade_ambient_audio",
-    "sub_59863",
-    "sub_59981",
+    "sound_resume_all",
+    "stop_crowd_loop",
     "sub_671e8",
     "event_queue_reset",
     "ui_init",
@@ -1102,9 +1102,9 @@
     "flush_key_events",
     "update_ambient_audio",
     "fade_ambient_audio",
-    "sub_59981",
+    "stop_crowd_loop",
     "play_speech",
-    "sub_59d71",
+    "preload_speech_wrapper",
     "draw_sprites",
     "end_of_period",
     "sub_61a27",
@@ -1235,8 +1235,8 @@
     "load_rink",
     "wait_sprite_fade",
     "flush_key_events",
-    "sub_59863",
-    "sub_59d71",
+    "sound_resume_all",
+    "preload_speech_wrapper",
     "savegame_io",
     "build_lines",
     "count_dressed_players",
@@ -1329,7 +1329,7 @@
     "ai_penalty_box",
     "ai_bench",
     "ai_puck_carrier",
-    "sub_4da7b",
+    "faceoff_resolve",
     "ai_ref_get_new_puck",
     "ai_ref_call_penalty",
     "ai_ref_pickup_puck",
@@ -1340,7 +1340,7 @@
     "ai_all_goto_faceoff",
     "handle_line_change",
     "ai_ref_penalty_shot",
-    "sub_55a35",
+    "ai_desperation_shot",
     "do_shot",
     "score_goal",
     "set_default_state",
@@ -1390,14 +1390,14 @@
     "ai_goalie",
     "ai_nearest_to_puck",
     "sub_511b4",
-    "sub_512a7",
+    "all_goto_positions",
     "ai_bench_wait",
     "ai_puck_faceoff2",
     "handle_line_change",
     "pass_to_entity",
     "sub_551cf",
     "score_goal",
-    "sub_5b2c5",
+    "put_player_on_ice",
     "setup_faceoff",
     "sub_5e0dd",
     "sub_63475",
@@ -1731,9 +1731,9 @@
     "make_path",
     "set_text_colors",
     "sub_33e6a",
-    "sub_59981",
+    "stop_crowd_loop",
     "play_sample_by_ptr",
-    "sub_599ee",
+    "sfx_set_volume",
     "event_queue_reset",
     "fade_palette",
     "__CHK",
@@ -1816,7 +1816,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_13867",
+   "name": "fill_sprite_frames",
    "addr": 79975,
    "size": 107,
    "blocks": [
@@ -1827,7 +1827,7 @@
    ],
    "instructions": 44,
    "callers": [
-    "sub_1395f"
+    "load_sprite_banks"
    ],
    "callees": [
     "__CHK",
@@ -1839,14 +1839,16 @@
    ],
    "vars": [
     "a04d",
-    "unk_d9980",
+    "sprite_banks",
     "sprite_frames"
    ],
    "interrupts": [],
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "fill_sprite_frames(bank): sprite_frames[f] = locateshape(bank, \"%04d\" % f) for the 50 frames of a bank"
+   ],
    "reasons": [
     "call"
    ],
@@ -1854,7 +1856,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_138d2",
+   "name": "load_effect_frames",
    "addr": 80082,
    "size": 141,
    "blocks": [
@@ -1865,7 +1867,7 @@
    ],
    "instructions": 46,
    "callers": [
-    "sub_1395f"
+    "load_sprite_banks"
    ],
    "callees": [
     "make_path",
@@ -1885,14 +1887,16 @@
     "aPPV",
     "dword_cc0e0",
     "install_path",
-    "unk_e00a0",
+    "effect_frames",
     "byte_ed85c"
    ],
    "interrupts": [],
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "F000149.PPV: 105 effect/net frames into effect_frames"
+   ],
    "reasons": [
     "call"
    ],
@@ -1900,7 +1904,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_1395f",
+   "name": "load_sprite_banks",
    "addr": 80223,
    "size": 208,
    "blocks": [
@@ -1917,8 +1921,8 @@
     "simulate_game_offscreen"
    ],
    "callees": [
-    "sub_13867",
-    "sub_138d2",
+    "fill_sprite_frames",
+    "load_effect_frames",
     "make_path",
     "__CHK",
     "loadfile",
@@ -1938,14 +1942,16 @@
     "aD00D49_c048a",
     "aPPV",
     "install_path",
-    "unk_d9980",
+    "sprite_banks",
     "file_on_disk"
    ],
    "interrupts": [],
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "loads the 23 player sprite banks \"%d00_%d49.PPV\"/\"%d50_%d99.PPV\""
+   ],
    "reasons": [
     "call"
    ],
@@ -1953,7 +1959,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_13a2f",
+   "name": "load_rink_end_shapes",
    "addr": 80431,
    "size": 98,
    "blocks": [
@@ -1990,7 +1996,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "trinknd.PPV"
+   ],
    "reasons": [
     "call"
    ],
@@ -2014,8 +2022,8 @@
     "highlights_play"
    ],
    "callees": [
-    "sub_1395f",
-    "sub_13a2f",
+    "load_sprite_banks",
+    "load_rink_end_shapes",
     "make_path",
     "sub_1cbd8",
     "__CHK",
@@ -2047,8 +2055,8 @@
     "aVFN",
     "word_cbec4",
     "install_path",
-    "unk_d8c18",
-    "unk_d8c4c",
+    "digit_shapes",
+    "position_letter_shapes",
     "dword_d8c80",
     "dword_ed700",
     "byte_ed86c",
@@ -2103,7 +2111,7 @@
     "aPPV",
     "aVFN",
     "install_path",
-    "unk_d8c18",
+    "digit_shapes",
     "dword_d8c80",
     "dword_ed700",
     "byte_ed86c",
@@ -2191,7 +2199,7 @@
     "sub_14056",
     "show_scoreboard",
     "match_sequence",
-    "sub_59863",
+    "sound_resume_all",
     "build_lines",
     "count_dressed_players",
     "__CHK",
@@ -2238,7 +2246,7 @@
    "callees": [
     "sub_14056",
     "match_sequence",
-    "sub_59863",
+    "sound_resume_all",
     "build_lines",
     "count_dressed_players",
     "__CHK"
@@ -2438,9 +2446,9 @@
     "load_award_stats",
     "league_leaders_screen",
     "awards_screen",
-    "sub_138d2",
-    "sub_1395f",
-    "sub_13a2f",
+    "load_effect_frames",
+    "load_sprite_banks",
+    "load_rink_end_shapes",
     "load_player_graphics",
     "sub_13bb4",
     "sub_1466b",
@@ -2529,8 +2537,8 @@
     "sub_44899",
     "schedule_screen2",
     "new_league_dialog",
-    "sub_479e9",
-    "load_announcer_clip",
+    "loading_screen",
+    "load_cutscene_clip",
     "load_team_palettes",
     "sub_6c19b",
     "database_disk_check",
@@ -3033,7 +3041,7 @@
    "callees": [
     "__CHK",
     "lseek",
-    "sub_90cea"
+    "read_bytes"
    ],
    "strings": [],
    "vars": [],
@@ -3209,7 +3217,7 @@
     "sub_14566",
     "file_close",
     "__CHK",
-    "sub_90cea",
+    "read_bytes",
     "sub_90d14"
    ],
    "strings": [],
@@ -4221,10 +4229,10 @@
     "apply_settings",
     "sub_3371c",
     "load_rink",
-    "sub_479e9",
+    "loading_screen",
     "wait_sprite_fade",
     "flush_key_events",
-    "sub_59d71",
+    "preload_speech_wrapper",
     "load_team_palettes",
     "ui_init",
     "ui_shutdown",
@@ -4378,9 +4386,9 @@
     "iff_parse",
     "sub_1b8ac",
     "sub_1b92e",
-    "sub_59981",
+    "stop_crowd_loop",
     "play_sample_by_ptr",
-    "sub_59c1d",
+    "say_nhl_intro",
     "event_queue_reset",
     "fade_palette",
     "__CHK",
@@ -4482,7 +4490,7 @@
     "demo_game",
     "ea_sports_intro",
     "sub_33e6a",
-    "sub_59d54",
+    "speech_stop",
     "event_queue_reset",
     "fade_palette",
     "sub_83459",
@@ -4597,10 +4605,10 @@
     "sub_17756",
     "sub_33e6a",
     "wait_sprite_fade",
-    "sub_59981",
+    "stop_crowd_loop",
     "play_sample_by_ptr",
-    "sub_59c3e",
-    "sub_59d54",
+    "say_goodnight",
+    "speech_stop",
     "event_queue_reset",
     "fade_palette",
     "sub_8374d",
@@ -6629,7 +6637,7 @@
     "boxscore_screen",
     "sub_2f2b1",
     "sub_2f3d7",
-    "sub_479e9",
+    "loading_screen",
     "wait_sprite_fade",
     "sub_61b85",
     "sub_61c22",
@@ -6689,7 +6697,7 @@
     "boxscore_screen",
     "sub_2f3d7",
     "sub_33e6a",
-    "sub_479e9",
+    "loading_screen",
     "sub_61b85",
     "sub_61bbf",
     "sub_61c22",
@@ -6744,8 +6752,8 @@
     "sub_1a817",
     "sub_1baf3",
     "set_hub_title",
-    "sub_59cdd",
-    "sub_59d54",
+    "say_series_result_wrapper",
+    "speech_stop",
     "event_queue_pop",
     "event_queue_reset",
     "ui_init",
@@ -6873,7 +6881,7 @@
     "pause_menu"
    ],
    "callees": [
-    "sub_1395f",
+    "load_sprite_banks",
     "load_rink",
     "fade_palette",
     "__CHK",
@@ -7021,7 +7029,7 @@
     "sub_1b982",
     "set_dialog_colors",
     "message_dialog",
-    "sub_479e9",
+    "loading_screen",
     "fade_palette",
     "__CHK",
     "releasememblock",
@@ -7080,7 +7088,7 @@
    "callees": [
     "set_video_mode",
     "fade_palette_to",
-    "sub_1395f",
+    "load_sprite_banks",
     "load_rink",
     "instant_replay",
     "__CHK",
@@ -7227,7 +7235,7 @@
    "callers": [],
    "callees": [
     "boxscore_screen",
-    "sub_479e9",
+    "loading_screen",
     "fade_palette",
     "__CHK",
     "releasememblock",
@@ -7269,7 +7277,7 @@
    "callers": [],
    "callees": [
     "boxscore_screen",
-    "sub_479e9",
+    "loading_screen",
     "fade_palette",
     "__CHK",
     "getpalette"
@@ -7303,7 +7311,7 @@
    "instructions": 20,
    "callers": [],
    "callees": [
-    "sub_479e9",
+    "loading_screen",
     "fade_palette",
     "__CHK",
     "getpalette"
@@ -8133,8 +8141,8 @@
     "cmv_play"
    ],
    "callees": [
-    "sub_1b82b",
-    "sub_1b871",
+    "iff_buffer_fill",
+    "iff_buffer_skip",
     "sub_1b88a",
     "__CHK",
     "sub_91fa4",
@@ -8201,7 +8209,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_1b82b",
+   "name": "iff_buffer_fill",
    "addr": 112683,
    "size": 70,
    "blocks": [
@@ -8231,7 +8239,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_1b871",
+   "name": "iff_buffer_skip",
    "addr": 112753,
    "size": 25,
    "blocks": [
@@ -8374,7 +8382,7 @@
     "sub_1bab1",
     "sub_33727",
     "flush_key_events",
-    "sub_59748",
+    "sound_pause_all",
     "sub_5dd9e",
     "sub_7dec8",
     "__CHK",
@@ -8461,7 +8469,7 @@
    ],
    "strings": [],
    "vars": [
-    "unk_d9980"
+    "sprite_banks"
    ],
    "interrupts": [],
    "ports": [],
@@ -8503,7 +8511,7 @@
    "vars": [
     "dword_c73d4",
     "dword_cbeca",
-    "unk_d9980",
+    "sprite_banks",
     "dword_e0244"
    ],
    "interrupts": [],
@@ -13083,10 +13091,10 @@
     "set_dialog_colors",
     "sub_30a39",
     "sub_30ae2",
-    "sub_59bb5",
-    "sub_59d16",
-    "sub_59d54",
-    "sub_59d71",
+    "say_game_intro_wrapper",
+    "say_playoff_intro_wrapper",
+    "speech_stop",
+    "preload_speech_wrapper",
     "event_queue_pop",
     "event_queue_reset",
     "fade_palette",
@@ -13225,8 +13233,8 @@
     "print_text_at",
     "sub_29c75",
     "sub_33e6a",
-    "sub_479e9",
-    "sub_59c5f",
+    "loading_screen",
+    "say_lineups",
     "event_queue_reset",
     "fade_palette",
     "sub_7df4e",
@@ -14171,11 +14179,11 @@
     "sub_33e6a",
     "wait_sprite_fade",
     "flush_key_events",
-    "sub_59981",
+    "stop_crowd_loop",
     "play_sample_by_ptr",
-    "sub_59bfc",
-    "sub_59c80",
-    "sub_59d54",
+    "say_period_score",
+    "say_elsenhl",
+    "speech_stop",
     "event_queue_reset",
     "fade_palette",
     "sub_7df4e",
@@ -14507,7 +14515,7 @@
     "print_text_at",
     "sub_2f580",
     "sub_33e6a",
-    "sub_59981",
+    "stop_crowd_loop",
     "play_sample_by_ptr",
     "event_queue_reset",
     "fade_palette",
@@ -16211,7 +16219,7 @@
     "hub_standings",
     "hub_stats",
     "team_select_screen",
-    "sub_479e9",
+    "loading_screen",
     "ui_init",
     "ui_shutdown",
     "fade_palette",
@@ -17422,7 +17430,7 @@
     "sub_346fe",
     "sub_34789",
     "sub_347b7",
-    "sub_479e9",
+    "loading_screen",
     "wait_sprite_fade",
     "event_queue_pop",
     "event_queue_reset",
@@ -17750,7 +17758,7 @@
     "sub_41b80",
     "sub_41cc4",
     "sub_41f64",
-    "sub_479e9",
+    "loading_screen",
     "ui_init",
     "ui_shutdown",
     "fade_palette",
@@ -22777,7 +22785,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_47951",
+   "name": "loading_screen_timer",
    "addr": 293201,
    "size": 152,
    "blocks": [
@@ -22788,7 +22796,7 @@
    ],
    "instructions": 47,
    "callers": [
-    "sub_479e9",
+    "loading_screen",
     "wait_sprite_fade"
    ],
    "callees": [
@@ -22815,7 +22823,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_479e9",
+   "name": "loading_screen",
    "addr": 293353,
    "size": 584,
    "blocks": [
@@ -22847,7 +22855,7 @@
    ],
    "callees": [
     "make_path",
-    "sub_47951",
+    "loading_screen_timer",
     "fade_palette",
     "__CHK",
     "freemem",
@@ -22883,7 +22891,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "\"load\" shape with palette cycling while files load"
+   ],
    "reasons": [
     "call"
    ],
@@ -22917,7 +22927,7 @@
     "coach_clip_player"
    ],
    "callees": [
-    "sub_47951",
+    "loading_screen_timer",
     "__CHK",
     "removetimer",
     "settimeout",
@@ -22970,7 +22980,7 @@
     "sub_5dd7c",
     "sub_5e01a",
     "sub_5e0dd",
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "sub_66dda",
     "select_game_surface",
     "randomrange",
@@ -23067,7 +23077,7 @@
     "read_control_p2",
     "update_ambient_audio",
     "fade_ambient_audio",
-    "sub_59981",
+    "stop_crowd_loop",
     "draw_sprites",
     "present_frame",
     "set_view_rect",
@@ -23130,7 +23140,7 @@
    ],
    "callees": [
     "init_match",
-    "sub_59863",
+    "sound_resume_all",
     "__CHK"
    ],
    "strings": [],
@@ -23243,7 +23253,7 @@
    "instructions": 212,
    "callers": [],
    "callees": [
-    "sub_4e292",
+    "ref_skate_to_point",
     "set_animation",
     "ai_skate_towards",
     "randomrange",
@@ -23672,8 +23682,8 @@
    "callees": [
     "set_state",
     "set_state_reset",
-    "sub_59b0f",
-    "sub_5b2c5",
+    "say_star_wrapper",
+    "put_player_on_ice",
     "format_player_name",
     "randomrange",
     "__CHK",
@@ -23696,7 +23706,7 @@
     "dword_cbebe",
     "word_cbec0",
     "word_cc0de",
-    "off_cca0a",
+    "star_names",
     "sound_enabled",
     "rosters",
     "unk_db3ad",
@@ -23740,7 +23750,7 @@
    "callers": [],
    "callees": [
     "ai_default_skate",
-    "sub_4e292",
+    "ref_skate_to_point",
     "set_animation",
     "sub_61576",
     "__CHK"
@@ -23783,7 +23793,7 @@
    "callers": [],
    "callees": [
     "ai_puck_shadow",
-    "sub_59aad",
+    "speech_busy",
     "set_animation",
     "randomrange",
     "__CHK"
@@ -23867,7 +23877,7 @@
     "set_state",
     "skate_idle",
     "handle_line_change",
-    "sub_53537",
+    "ai_try_check",
     "ai_near_carrier_check",
     "ai_skate_towards",
     "__CHK"
@@ -24257,7 +24267,7 @@
     "set_animation",
     "switch_to_nearest",
     "ai_skate_towards",
-    "sub_655cc",
+    "pick_player_for_position",
     "__CHK"
    ],
    "strings": [],
@@ -24418,7 +24428,7 @@
     "sub_593f5",
     "set_animation",
     "set_default_state",
-    "sub_5b2c5",
+    "put_player_on_ice",
     "ai_near_carrier_check",
     "ai_skate_towards",
     "__CHK"
@@ -24447,7 +24457,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_4b467",
+   "name": "goalie_puck_vector",
    "addr": 308327,
    "size": 130,
    "blocks": [
@@ -24474,7 +24484,9 @@
     "unreferenced"
    ],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "vector from the goalie to the puck, clamped behind the goal line"
+   ],
    "reasons": [
     "gap"
    ],
@@ -24482,7 +24494,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_4b4e9",
+   "name": "goalie_turn_towards",
    "addr": 308457,
    "size": 217,
    "blocks": [
@@ -24549,7 +24561,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_4b6f4",
+   "name": "goalie_clamp_target",
    "addr": 308980,
    "size": 128,
    "blocks": [
@@ -24600,15 +24612,15 @@
    ],
    "callees": [
     "set_state_reset",
-    "sub_4b6f4",
+    "goalie_clamp_target",
     "handle_line_change",
-    "sub_55493",
+    "ai_choose_pass_target",
     "set_animation",
     "ai_skate_towards",
     "skating_accelerate",
     "brake",
     "queue_infraction",
-    "sub_64102",
+    "count_defenders_ahead",
     "randomrange",
     "direction8",
     "__CHK",
@@ -24658,7 +24670,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_4c632",
+   "name": "carrier_reset_target",
    "addr": 312882,
    "size": 193,
    "blocks": [
@@ -24707,12 +24719,12 @@
    "callees": [
     "set_state",
     "skate_idle",
-    "sub_4c9fd",
+    "carrier_scan_opponents",
     "ai_default_skate",
     "pull_goalie_logic",
-    "sub_54af9",
-    "sub_55493",
-    "sub_55804",
+    "ai_consider_shot",
+    "ai_choose_pass_target",
+    "ai_offense_decision",
     "ai_skate_towards",
     "randomrange",
     "__CHK"
@@ -24745,7 +24757,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_4c8bd",
+   "name": "carrier_near_net_check",
    "addr": 313533,
    "size": 320,
    "blocks": [
@@ -24781,7 +24793,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_4c9fd",
+   "name": "carrier_scan_opponents",
    "addr": 313853,
    "size": 846,
    "blocks": [
@@ -24819,7 +24831,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "opponents within reach of the puck carrier"
+   ],
    "reasons": [
     "fptr"
    ],
@@ -24844,7 +24858,7 @@
     "ai_goalie",
     "ai_default_skate",
     "handle_line_change",
-    "sub_53537",
+    "ai_try_check",
     "frame_offsets_lookup",
     "ai_skate_towards",
     "ai_chase_puck",
@@ -24977,7 +24991,7 @@
     "sub_50b55",
     "ai_pass_receiver",
     "ai_all_goto_faceoff",
-    "sub_55493",
+    "ai_choose_pass_target",
     "knock_down"
    ],
    "callees": [
@@ -25298,7 +25312,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_4da7b",
+   "name": "faceoff_resolve",
    "addr": 318075,
    "size": 610,
    "blocks": [
@@ -25314,7 +25328,7 @@
    "callees": [
     "set_state",
     "play_sfx",
-    "sub_59981",
+    "stop_crowd_loop",
     "randomrange",
     "__CHK"
    ],
@@ -25350,7 +25364,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "drops the puck (sfx 0xab) and picks the winner from the faceoff ratings"
+   ],
    "reasons": [
     "call"
    ],
@@ -25372,7 +25388,7 @@
     "update_carrier"
    ],
    "callees": [
-    "sub_62cf9",
+    "maybe_queue_infraction",
     "__CHK"
    ],
    "strings": [],
@@ -25445,14 +25461,14 @@
    "callers": [
     "puck_update",
     "sub_50b55",
-    "sub_56d06",
-    "sub_57096",
-    "sub_57483"
+    "attach_puck_to_stick",
+    "puck_hits_player",
+    "goalie_save"
    ],
    "callees": [
     "sub_4dcdd",
     "sub_4dd51",
-    "sub_62cf9",
+    "maybe_queue_infraction",
     "__CHK"
    ],
    "strings": [],
@@ -25496,8 +25512,8 @@
    ],
    "instructions": 28,
    "callers": [
-    "sub_56d06",
-    "sub_57096",
+    "attach_puck_to_stick",
+    "puck_hits_player",
     "sub_57a3e",
     "collide_net",
     "bounce_off_boards"
@@ -25576,7 +25592,7 @@
    "callees": [
     "set_animation",
     "apply_skating",
-    "sub_5e4c4",
+    "ai_ref_positioning",
     "__CHK"
    ],
    "strings": [],
@@ -25606,7 +25622,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_4e292",
+   "name": "ref_skate_to_point",
    "addr": 320146,
    "size": 1160,
    "blocks": [
@@ -25642,7 +25658,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "referee pathing to the target point"
+   ],
    "reasons": [
     "call"
    ],
@@ -25650,7 +25668,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_4e71a",
+   "name": "ref_check_announcements",
    "addr": 321306,
    "size": 469,
    "blocks": [
@@ -25666,7 +25684,7 @@
    ],
    "callees": [
     "play_speech",
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "sub_66dda",
     "randomrange",
     "__CHK"
@@ -25695,7 +25713,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "period/clock based announcer events"
+   ],
    "reasons": [
     "call"
    ],
@@ -25716,9 +25736,9 @@
    "callers": [],
    "callees": [
     "set_state",
-    "sub_4e292",
-    "sub_4e71a",
-    "sub_512a7",
+    "ref_skate_to_point",
+    "ref_check_announcements",
+    "all_goto_positions",
     "set_animation",
     "__CHK"
    ],
@@ -25765,7 +25785,7 @@
    "callers": [],
    "callees": [
     "set_state",
-    "sub_4e292",
+    "ref_skate_to_point",
     "set_animation",
     "sub_62343",
     "__CHK"
@@ -25817,14 +25837,14 @@
    "callers": [],
    "callees": [
     "set_state",
-    "sub_4e292",
-    "sub_4e71a",
-    "sub_512a7",
-    "sub_59ad0",
+    "ref_skate_to_point",
+    "ref_check_announcements",
+    "all_goto_positions",
+    "say_goal_wrapper",
     "set_animation",
     "sub_62807",
     "sub_62c37",
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "sub_66dda",
     "direction8",
     "__CHK"
@@ -25900,7 +25920,7 @@
    "callers": [],
    "callees": [
     "set_state",
-    "sub_59aad",
+    "speech_busy",
     "set_animation",
     "__CHK"
    ],
@@ -26342,7 +26362,7 @@
    "instructions": 20,
    "callers": [
     "hook_button",
-    "sub_53537"
+    "ai_try_check"
    ],
    "callees": [
     "set_animation",
@@ -27085,7 +27105,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_512a7",
+   "name": "all_goto_positions",
    "addr": 332455,
    "size": 409,
    "blocks": [
@@ -27116,7 +27136,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "sends every player to the faceoff/initial position state"
+   ],
    "reasons": [
     "call"
    ],
@@ -27174,7 +27196,7 @@
     "sub_51115",
     "handle_line_change",
     "set_animation",
-    "sub_5b2c5",
+    "put_player_on_ice",
     "ai_skate_towards",
     "randomrange",
     "__CHK"
@@ -27300,10 +27322,10 @@
    "callees": [
     "set_state",
     "set_state_reset",
-    "sub_4da7b",
+    "faceoff_resolve",
     "sub_50ade",
     "sub_51440",
-    "sub_59981",
+    "stop_crowd_loop",
     "set_animation",
     "switch_to_nearest",
     "find_switch_target",
@@ -27481,7 +27503,7 @@
    "callees": [
     "set_state",
     "ai_default_skate",
-    "sub_4e292",
+    "ref_skate_to_point",
     "handle_line_change",
     "set_animation",
     "ai_skate_towards",
@@ -27630,10 +27652,10 @@
    "callers": [],
    "callees": [
     "set_state",
-    "sub_4e292",
+    "ref_skate_to_point",
     "sub_51440",
     "play_sfx",
-    "sub_59aad",
+    "speech_busy",
     "set_animation",
     "direction8",
     "__CHK"
@@ -27745,7 +27767,7 @@
    "instructions": 49,
    "callers": [
     "control_player",
-    "sub_53537"
+    "ai_try_check"
    ],
    "callees": [
     "set_animation",
@@ -27821,7 +27843,7 @@
    ],
    "instructions": 44,
    "callers": [
-    "sub_53537"
+    "ai_try_check"
    ],
    "callees": [
     "try_block_shot",
@@ -27845,7 +27867,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_53537",
+   "name": "ai_try_check",
    "addr": 341303,
    "size": 360,
    "blocks": [
@@ -27881,7 +27903,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "random body check decision from the checking skill"
+   ],
    "reasons": [
     "call"
    ],
@@ -27980,7 +28004,7 @@
     "resolve_hook_hit",
     "resolve_poke_hit",
     "set_animation",
-    "sub_62cf9",
+    "maybe_queue_infraction",
     "sub_6427f",
     "randomrange",
     "direction8",
@@ -28065,7 +28089,7 @@
    ],
    "callees": [
     "knock_down",
-    "sub_62cf9",
+    "maybe_queue_infraction",
     "randomrange",
     "__CHK"
    ],
@@ -28129,7 +28153,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_54134",
+   "name": "stickhandling_skill",
    "addr": 344372,
    "size": 150,
    "blocks": [
@@ -28151,7 +28175,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "skill attribute used for the puck interaction depending on the current animation"
+   ],
    "reasons": [
     "call"
    ],
@@ -28159,7 +28185,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_541ca",
+   "name": "two_line_pass_check",
    "addr": 344522,
    "size": 192,
    "blocks": [
@@ -28192,7 +28218,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "two line pass rule (option_flags & 2)"
+   ],
    "reasons": [
     "call"
    ],
@@ -28214,14 +28242,14 @@
     "puck_check_players"
    ],
    "callees": [
-    "sub_54134",
-    "sub_541ca",
-    "sub_56d06",
-    "sub_57096",
-    "sub_57483",
+    "stickhandling_skill",
+    "two_line_pass_check",
+    "attach_puck_to_stick",
+    "puck_hits_player",
+    "goalie_save",
     "frame_offsets_lookup",
-    "sub_5a4ad",
-    "sub_5a534",
+    "stick_offsets_lookup",
+    "stick_offset_from_frame",
     "__CHK"
    ],
    "strings": [],
@@ -28343,7 +28371,7 @@
    ],
    "instructions": 55,
    "callers": [
-    "sub_54af9"
+    "ai_consider_shot"
    ],
    "callees": [
     "__CHK"
@@ -28367,7 +28395,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_54af9",
+   "name": "ai_consider_shot",
    "addr": 346873,
    "size": 272,
    "blocks": [
@@ -28382,7 +28410,7 @@
    ],
    "callees": [
     "sub_54a53",
-    "sub_55a35",
+    "ai_desperation_shot",
     "sub_5a03b",
     "choose_line",
     "apply_line_change",
@@ -28401,7 +28429,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "shoot when in the slot (realism option)"
+   ],
    "reasons": [
     "call"
    ],
@@ -28421,10 +28451,10 @@
    "instructions": 125,
    "callers": [
     "do_pass",
-    "sub_55493"
+    "ai_choose_pass_target"
    ],
    "callees": [
-    "sub_64102",
+    "count_defenders_ahead",
     "direction8",
     "__CHK"
    ],
@@ -28493,7 +28523,7 @@
    "instructions": 234,
    "callers": [
     "pass_button",
-    "sub_55493"
+    "ai_choose_pass_target"
    ],
    "callees": [
     "sub_54c09",
@@ -28659,7 +28689,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_55493",
+   "name": "ai_choose_pass_target",
    "addr": 349331,
    "size": 881,
    "blocks": [
@@ -28699,7 +28729,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "random team mate with a clear lane"
+   ],
    "reasons": [
     "call"
    ],
@@ -28707,7 +28739,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_55804",
+   "name": "ai_offense_decision",
    "addr": 350212,
    "size": 561,
    "blocks": [
@@ -28747,7 +28779,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "shoot or pass depending on distance to the net and the clock"
+   ],
    "reasons": [
     "call"
    ],
@@ -28755,7 +28789,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_55a35",
+   "name": "ai_desperation_shot",
    "addr": 350773,
    "size": 106,
    "blocks": [
@@ -28766,7 +28800,7 @@
    ],
    "instructions": 25,
    "callers": [
-    "sub_54af9"
+    "ai_consider_shot"
    ],
    "callees": [
     "set_state",
@@ -28878,8 +28912,8 @@
    "instructions": 81,
    "callers": [
     "sub_56f5a",
-    "sub_57096",
-    "sub_57483",
+    "puck_hits_player",
+    "goalie_save",
     "score_goal"
    ],
    "callees": [
@@ -28925,7 +28959,7 @@
    "callees": [
     "play_sfx",
     "sub_62764",
-    "sub_655cc",
+    "pick_player_for_position",
     "randomrange",
     "__CHK"
    ],
@@ -29006,7 +29040,7 @@
     "resolve_body_check",
     "check_injury",
     "resolve_hook_hit",
-    "sub_56d06"
+    "attach_puck_to_stick"
    ],
    "callees": [
     "ai_default_skate",
@@ -29017,10 +29051,10 @@
     "play_sfx",
     "set_animation",
     "sub_61576",
-    "sub_62cf9",
+    "maybe_queue_infraction",
     "queue_infraction",
     "start_stoppage",
-    "sub_65b83",
+    "injury_check",
     "randomrange",
     "direction8",
     "__CHK"
@@ -29072,7 +29106,7 @@
    "callees": [
     "sub_5369f",
     "knock_down",
-    "sub_62cf9",
+    "maybe_queue_infraction",
     "sub_6427f",
     "randomrange",
     "direction8",
@@ -29114,7 +29148,7 @@
    "callees": [
     "sub_5369f",
     "set_animation",
-    "sub_62cf9",
+    "maybe_queue_infraction",
     "sub_6427f",
     "direction8",
     "__CHK"
@@ -29140,7 +29174,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_56d06",
+   "name": "attach_puck_to_stick",
    "addr": 355590,
    "size": 332,
    "blocks": [
@@ -29171,7 +29205,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "puck becomes carried by the player"
+   ],
    "reasons": [
     "call"
    ],
@@ -29262,8 +29298,8 @@
    ],
    "instructions": 82,
    "callers": [
-    "sub_57096",
-    "sub_57483"
+    "puck_hits_player",
+    "goalie_save"
    ],
    "callees": [
     "sub_50afe",
@@ -29300,7 +29336,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_57096",
+   "name": "puck_hits_player",
    "addr": 356502,
    "size": 1005,
    "blocks": [
@@ -29354,7 +29390,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "deflection of a loose puck off a player's body/stick"
+   ],
    "reasons": [
     "call"
    ],
@@ -29362,7 +29400,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_57483",
+   "name": "goalie_save",
    "addr": 357507,
    "size": 1003,
    "blocks": [
@@ -29412,7 +29450,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "goalie blocks/catches the puck, shot on goal bookkeeping"
+   ],
    "reasons": [
     "call"
    ],
@@ -29549,7 +29589,7 @@
    ],
    "instructions": 22,
    "callers": [
-    "sub_57483"
+    "goalie_save"
    ],
    "callees": [
     "sub_4dfa4",
@@ -29628,7 +29668,7 @@
     "set_state",
     "shot_setup",
     "play_sfx",
-    "sub_64102",
+    "count_defenders_ahead",
     "randomrange",
     "__CHK",
     "sub_933f0",
@@ -30334,7 +30374,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_59748",
+   "name": "sound_pause_all",
    "addr": 366408,
    "size": 155,
    "blocks": [
@@ -30397,7 +30437,7 @@
    ],
    "callees": [
     "update_ambient_audio",
-    "sub_59748",
+    "sound_pause_all",
     "__CHK",
     "settimeout",
     "waittimeout"
@@ -30421,7 +30461,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_59863",
+   "name": "sound_resume_all",
    "addr": 366691,
    "size": 33,
    "blocks": [
@@ -30472,15 +30512,15 @@
    "instructions": 54,
    "callers": [
     "ai_faceoff",
-    "sub_4da7b",
+    "faceoff_resolve",
     "ai_ref_penalty_shot",
     "do_pass",
     "sub_55e72",
     "knock_down",
-    "sub_56d06",
+    "attach_puck_to_stick",
     "sub_56f5a",
-    "sub_57096",
-    "sub_57483",
+    "puck_hits_player",
+    "goalie_save",
     "do_shot",
     "sub_58084",
     "collide_net",
@@ -30498,7 +30538,7 @@
     "replay_seek_frames"
    ],
    "callees": [
-    "sub_59aad",
+    "speech_busy",
     "__CHK",
     "sub_8f270",
     "sub_8f61d"
@@ -30559,7 +30599,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_59981",
+   "name": "stop_crowd_loop",
    "addr": 366977,
    "size": 56,
    "blocks": [
@@ -30579,7 +30619,7 @@
     "boxscore_screen",
     "team_select_screen2",
     "sub_480cc",
-    "sub_4da7b",
+    "faceoff_resolve",
     "ai_puck_faceoff2",
     "play_sample_by_ptr",
     "simulate_game_offscreen"
@@ -30625,7 +30665,7 @@
     "load_sound_config"
    ],
    "callees": [
-    "sub_59981",
+    "stop_crowd_loop",
     "__CHK",
     "sub_8f270"
    ],
@@ -30647,7 +30687,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_599ee",
+   "name": "sfx_set_volume",
    "addr": 367086,
    "size": 35,
    "blocks": [
@@ -30694,7 +30734,7 @@
    "callers": [
     "game_loop",
     "init_match",
-    "sub_4e71a",
+    "ref_check_announcements",
     "score_goal",
     "update_lead_change"
    ],
@@ -30761,7 +30801,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_59aad",
+   "name": "speech_busy",
    "addr": 367277,
    "size": 35,
    "blocks": [
@@ -30798,7 +30838,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_59ad0",
+   "name": "say_goal_wrapper",
    "addr": 367312,
    "size": 63,
    "blocks": [
@@ -30834,7 +30874,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_59b0f",
+   "name": "say_star_wrapper",
    "addr": 367375,
    "size": 45,
    "blocks": [
@@ -30869,7 +30909,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_59b3c",
+   "name": "say_penalty_wrapper",
    "addr": 367420,
    "size": 76,
    "blocks": [
@@ -30904,7 +30944,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_59b88",
+   "name": "say_penalty_shot_wrapper",
    "addr": 367496,
    "size": 45,
    "blocks": [
@@ -30939,7 +30979,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_59bb5",
+   "name": "say_game_intro_wrapper",
    "addr": 367541,
    "size": 71,
    "blocks": [
@@ -30974,7 +31014,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_59bfc",
+   "name": "say_period_score",
    "addr": 367612,
    "size": 33,
    "blocks": [
@@ -31000,7 +31040,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "scor?per.bar announcer clips"
+   ],
    "reasons": [
     "call"
    ],
@@ -31008,7 +31050,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_59c1d",
+   "name": "say_nhl_intro",
    "addr": 367645,
    "size": 33,
    "blocks": [
@@ -31034,7 +31076,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "nhl.int"
+   ],
    "reasons": [
     "call"
    ],
@@ -31042,7 +31086,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_59c3e",
+   "name": "say_goodnight",
    "addr": 367678,
    "size": 33,
    "blocks": [
@@ -31068,7 +31112,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "goodnite.int"
+   ],
    "reasons": [
     "call"
    ],
@@ -31076,7 +31122,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_59c5f",
+   "name": "say_lineups",
    "addr": 367711,
    "size": 33,
    "blocks": [
@@ -31102,7 +31148,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "lineups.int"
+   ],
    "reasons": [
     "call"
    ],
@@ -31110,7 +31158,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_59c80",
+   "name": "say_elsenhl",
    "addr": 367744,
    "size": 41,
    "blocks": [
@@ -31136,7 +31184,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "elsenhl.int"
+   ],
    "reasons": [
     "call"
    ],
@@ -31144,7 +31194,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_59ca9",
+   "name": "say_highlight_intro_wrapper",
    "addr": 367785,
    "size": 52,
    "blocks": [
@@ -31179,7 +31229,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_59cdd",
+   "name": "say_series_result_wrapper",
    "addr": 367837,
    "size": 57,
    "blocks": [
@@ -31214,7 +31264,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_59d16",
+   "name": "say_playoff_intro_wrapper",
    "addr": 367894,
    "size": 62,
    "blocks": [
@@ -31249,7 +31299,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_59d54",
+   "name": "speech_stop",
    "addr": 367956,
    "size": 29,
    "blocks": [
@@ -31287,7 +31337,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_59d71",
+   "name": "preload_speech_wrapper",
    "addr": 367985,
    "size": 41,
    "blocks": [
@@ -31354,7 +31404,7 @@
     "sub_4dfa4",
     "ai_ref_faceoff",
     "ai_ref_normal",
-    "sub_4e292",
+    "ref_skate_to_point",
     "ai_ref_get_new_puck",
     "ai_ref_call_penalty",
     "ai_ref_pickup_puck",
@@ -31378,7 +31428,7 @@
     "do_pass",
     "knock_down",
     "resolve_poke_hit",
-    "sub_56d06",
+    "attach_puck_to_stick",
     "start_shot",
     "collide_corner",
     "score_goal",
@@ -31408,7 +31458,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_59dbb",
+   "name": "draw_rink_marks",
    "addr": 368059,
    "size": 174,
    "blocks": [
@@ -31431,9 +31481,11 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "sort/draw of ice marks (orphan chunk)"
+   ],
    "reasons": [
-    "tail"
+    "map"
    ],
    "convention": "__watcall",
    "noreturn": false
@@ -31540,7 +31592,7 @@
    ],
    "instructions": 36,
    "callers": [
-    "sub_54af9",
+    "ai_consider_shot",
     "choose_line"
    ],
    "callees": [
@@ -31574,7 +31626,7 @@
    "instructions": 146,
    "callers": [
     "ai_puck_faceoff",
-    "sub_54af9"
+    "ai_consider_shot"
    ],
    "callees": [
     "sub_14afe",
@@ -31743,10 +31795,10 @@
     "puck_update",
     "puck_player_interaction",
     "sub_551cf",
-    "sub_56d06",
-    "sub_57096",
+    "attach_puck_to_stick",
+    "puck_hits_player",
     "move_entity",
-    "sub_5a534",
+    "stick_offset_from_frame",
     "ai_chase_puck"
    ],
    "callees": [
@@ -31773,7 +31825,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_5a4ad",
+   "name": "stick_offsets_lookup",
    "addr": 369837,
    "size": 135,
    "blocks": [
@@ -31785,7 +31837,7 @@
    "instructions": 39,
    "callers": [
     "puck_player_interaction",
-    "sub_5a534"
+    "stick_offset_from_frame"
    ],
    "callees": [
     "__CHK"
@@ -31801,7 +31853,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "stick position per frame (table 0xcc7a4, frames 0x196-0x219 and 0x3ce-0x44f)"
+   ],
    "reasons": [
     "call"
    ],
@@ -31809,7 +31863,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_5a534",
+   "name": "stick_offset_from_frame",
    "addr": 369972,
    "size": 77,
    "blocks": [
@@ -31824,7 +31878,7 @@
    ],
    "callees": [
     "frame_offsets_lookup",
-    "sub_5a4ad",
+    "stick_offsets_lookup",
     "__CHK"
    ],
    "strings": [],
@@ -32048,7 +32102,7 @@
     "goal_disallowed_check",
     "sub_5cd25",
     "sub_61576",
-    "sub_62cf9",
+    "maybe_queue_infraction",
     "queue_infraction",
     "sub_63d69",
     "end_penalty_shot",
@@ -32186,7 +32240,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_5b2c5",
+   "name": "put_player_on_ice",
    "addr": 373445,
    "size": 1377,
    "blocks": [
@@ -32224,7 +32278,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "put_player_on_ice(entity, roster_idx): assigns the roster player to the entity, bench/penalty states"
+   ],
    "reasons": [
     "call"
    ],
@@ -32614,7 +32670,7 @@
     "sub_50975",
     "ai_puck_faceoff",
     "ai_puck_faceoff2",
-    "sub_54af9",
+    "ai_consider_shot",
     "maybe_pull_goalie",
     "cpu_line_change",
     "sub_5e0b0",
@@ -33248,7 +33304,7 @@
     "set_state",
     "set_state_reset",
     "sub_15c30",
-    "sub_5b2c5",
+    "put_player_on_ice",
     "sub_61576",
     "queue_infraction",
     "sub_63d3c",
@@ -33796,7 +33852,7 @@
    "callees": [
     "set_state_reset",
     "set_default_state",
-    "sub_5b2c5",
+    "put_player_on_ice",
     "__CHK"
    ],
    "strings": [],
@@ -33869,7 +33925,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_5e4c4",
+   "name": "ai_ref_positioning",
    "addr": 386244,
    "size": 826,
    "blocks": [
@@ -33899,7 +33955,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "referee skates to his spot relative to the puck"
+   ],
    "reasons": [
     "fptr"
    ],
@@ -33973,7 +34031,7 @@
     "ai_goalie",
     "ai_puck_carrier",
     "ai_nearest_to_puck",
-    "sub_4e292",
+    "ref_skate_to_point",
     "ai_breakaway",
     "ai_bench_wait",
     "ai_all_goto_faceoff",
@@ -34685,7 +34743,7 @@
     "dword_d8c6c",
     "dword_d8c78",
     "period_num",
-    "unk_d9980",
+    "sprite_banks",
     "unk_dabf0",
     "unk_dac40",
     "unk_dac70",
@@ -34929,7 +34987,7 @@
     "dword_dffa0",
     "dword_dffac",
     "word_dffae",
-    "unk_e00a0",
+    "effect_frames",
     "dword_e0220",
     "dword_e0230"
    ],
@@ -35410,7 +35468,7 @@
    ],
    "callees": [
     "show_penalty",
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "sub_66dda",
     "randomrange",
     "__CHK"
@@ -35467,10 +35525,10 @@
     "penalty_box_update"
    ],
    "callees": [
-    "sub_59b3c",
-    "sub_59b88",
+    "say_penalty_wrapper",
+    "say_penalty_shot_wrapper",
     "show_penalty",
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "sub_66dda",
     "randomrange",
     "__CHK"
@@ -35714,7 +35772,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_62cf9",
+   "name": "maybe_queue_infraction",
    "addr": 404729,
    "size": 135,
    "blocks": [
@@ -35736,7 +35794,7 @@
    ],
    "callees": [
     "queue_infraction",
-    "sub_65b83",
+    "injury_check",
     "__CHK"
    ],
    "strings": [],
@@ -35750,7 +35808,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "filters rule events by the option flags before queue_infraction"
+   ],
    "reasons": [
     "call"
    ],
@@ -35771,13 +35831,13 @@
    "callers": [
     "ai_goalie",
     "puck_update",
-    "sub_541ca",
+    "two_line_pass_check",
     "sub_54990",
     "knock_down",
     "collide_corner",
     "score_goal",
     "setup_faceoff",
-    "sub_62cf9",
+    "maybe_queue_infraction",
     "end_penalty_shot"
    ],
    "callees": [
@@ -35866,7 +35926,7 @@
    "callees": [
     "set_state",
     "sub_14c22",
-    "sub_59aad",
+    "speech_busy",
     "record_penalty",
     "sub_62ea2",
     "sub_64398",
@@ -36077,7 +36137,7 @@
    ],
    "callees": [
     "set_default_state",
-    "sub_5b2c5",
+    "put_player_on_ice",
     "__CHK"
    ],
    "strings": [],
@@ -36499,7 +36559,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_64102",
+   "name": "count_defenders_ahead",
    "addr": 409858,
    "size": 381,
    "blocks": [
@@ -36530,7 +36590,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "defenders between the carrier and the net (breakaway detection)"
+   ],
    "reasons": [
     "call"
    ],
@@ -36554,7 +36616,7 @@
     "resolve_poke_hit"
    ],
    "callees": [
-    "sub_64102",
+    "count_defenders_ahead",
     "__CHK"
    ],
    "strings": [],
@@ -36591,7 +36653,7 @@
     "check_offside"
    ],
    "callees": [
-    "sub_64102",
+    "count_defenders_ahead",
     "__CHK"
    ],
    "strings": [],
@@ -36834,7 +36896,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_64a0b",
+   "name": "lineup_player_ok",
    "addr": 412171,
    "size": 669,
    "blocks": [
@@ -36846,7 +36908,7 @@
    "instructions": 213,
    "callers": [
     "sub_64ca8",
-    "sub_64e60"
+    "choose_lineup_player"
    ],
    "callees": [
     "__CHK"
@@ -36885,10 +36947,10 @@
    ],
    "instructions": 124,
    "callers": [
-    "sub_64e60"
+    "choose_lineup_player"
    ],
    "callees": [
-    "sub_64a0b",
+    "lineup_player_ok",
     "__CHK"
    ],
    "strings": [],
@@ -36914,7 +36976,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_64e60",
+   "name": "choose_lineup_player",
    "addr": 413280,
    "size": 1142,
    "blocks": [
@@ -36928,7 +36990,7 @@
     "sub_6552e"
    ],
    "callees": [
-    "sub_64a0b",
+    "lineup_player_ok",
     "sub_64ca8",
     "__CHK"
    ],
@@ -36974,7 +37036,7 @@
    ],
    "instructions": 74,
    "callers": [
-    "sub_655cc",
+    "pick_player_for_position",
     "count_dressed_players"
    ],
    "callees": [
@@ -37010,7 +37072,7 @@
    ],
    "instructions": 122,
    "callers": [
-    "sub_655cc"
+    "pick_player_for_position"
    ],
    "callees": [
     "__CHK"
@@ -37046,10 +37108,10 @@
    ],
    "instructions": 56,
    "callers": [
-    "sub_655cc"
+    "pick_player_for_position"
    ],
    "callees": [
-    "sub_64e60",
+    "choose_lineup_player",
     "__CHK"
    ],
    "strings": [],
@@ -37070,7 +37132,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_655cc",
+   "name": "pick_player_for_position",
    "addr": 415180,
    "size": 807,
    "blocks": [
@@ -37107,7 +37169,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "chooses a roster player for a line position (D/G/forward)"
+   ],
    "reasons": [
     "call"
    ],
@@ -37132,7 +37196,7 @@
    ],
    "callees": [
     "sub_652d6",
-    "sub_655cc",
+    "pick_player_for_position",
     "__CHK"
    ],
    "strings": [],
@@ -37194,7 +37258,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_65b83",
+   "name": "injury_check",
    "addr": 416643,
    "size": 293,
    "blocks": [
@@ -37206,7 +37270,7 @@
    "instructions": 101,
    "callers": [
     "knock_down",
-    "sub_62cf9"
+    "maybe_queue_infraction"
    ],
    "callees": [
     "__CHK"
@@ -37323,7 +37387,7 @@
    "noreturn": false
   },
   {
-   "name": "load_announcer_clip",
+   "name": "load_cutscene_clip",
    "addr": 418967,
    "size": 278,
    "blocks": [
@@ -37335,7 +37399,7 @@
    "instructions": 72,
    "callers": [
     "init_match",
-    "sub_4e71a",
+    "ref_check_announcements",
     "ai_ref_pickup_puck",
     "sub_62343",
     "record_penalty"
@@ -37379,7 +37443,7 @@
    "tags": [],
    "annotations": [],
    "comments": [
-    "loads %04d shapes of an announcer .PPV portrait set"
+    "loads the %04d frames of a cutscene .PPV (fanom, goal, clap, siren, hook ...)"
    ],
    "reasons": [
     "call"
@@ -37467,7 +37531,7 @@
    "callers": [
     "init_match",
     "start_period",
-    "sub_4e71a",
+    "ref_check_announcements",
     "ai_ref_pickup_puck",
     "sub_62343",
     "record_penalty",
@@ -37569,7 +37633,7 @@
    ],
    "strings": [],
    "vars": [
-    "off_cd4dc",
+    "message_strings",
     "dword_d30ac",
     "dword_d30b0",
     "font_scor2b",
@@ -37909,7 +37973,7 @@
    ],
    "callees": [
     "update_ambient_audio",
-    "sub_59748",
+    "sound_pause_all",
     "play_sfx",
     "__CHK",
     "sub_93540"
@@ -38005,7 +38069,7 @@
     "dword_d30b8",
     "dword_d30bc",
     "dword_d30c0",
-    "unk_e00a0",
+    "effect_frames",
     "dword_e0220",
     "dword_e0230",
     "word_e9f16",
@@ -38318,23 +38382,23 @@
     "run_sim_steps",
     "fade_palette_to",
     "set_state",
-    "sub_1395f",
+    "load_sprite_banks",
     "draw_clock",
     "show_scoreboard",
     "sub_1baf3",
     "sub_1bbcc",
     "load_rink",
     "draw_rink",
-    "sub_479e9",
+    "loading_screen",
     "wait_sprite_fade",
     "flush_key_events",
     "read_control_p1",
     "read_control_p2",
     "update_ambient_audio",
     "fade_ambient_audio",
-    "sub_59981",
-    "sub_59ca9",
-    "sub_59d54",
+    "stop_crowd_loop",
+    "say_highlight_intro_wrapper",
+    "speech_stop",
     "sub_5b826",
     "sub_5b97a",
     "apply_line_change",
@@ -44973,7 +45037,7 @@
    ],
    "callees": [
     "make_path",
-    "sub_479e9",
+    "loading_screen",
     "wait_sprite_fade",
     "edit_lines_screen",
     "fade_palette",
@@ -45790,7 +45854,7 @@
     "team_edit_screen",
     "team_roster_screen",
     "line_editor",
-    "sub_479e9",
+    "loading_screen",
     "joystick_calibrate",
     "database_screen",
     "sub_6df06",
@@ -46040,7 +46104,7 @@
    ],
    "callees": [
     "make_path",
-    "sub_479e9",
+    "loading_screen",
     "wait_sprite_fade",
     "fade_palette",
     "sub_76a93",
@@ -48295,8 +48359,8 @@
     "game_settings_screen"
    ],
    "callees": [
-    "sub_59748",
-    "sub_59863",
+    "sound_pause_all",
+    "sound_resume_all",
     "event_queue_pop",
     "event_queue_reset",
     "sub_7b734",
@@ -49767,7 +49831,7 @@
     "fade_palette_to",
     "make_path",
     "draw_rink",
-    "sub_59748",
+    "sound_pause_all",
     "sub_67581",
     "replay_seek_frames",
     "replay_draw_frame",
@@ -50489,7 +50553,7 @@
     "sub_1bab1",
     "sub_33727",
     "load_rink",
-    "sub_479e9",
+    "loading_screen",
     "wait_sprite_fade",
     "load_team_palettes",
     "event_queue_reset",
@@ -50799,7 +50863,7 @@
     "stanley_cup_tree_screen"
    ],
    "callees": [
-    "sub_479e9",
+    "loading_screen",
     "fade_palette",
     "locker_room_screen",
     "locker_room_menu",
@@ -51593,7 +51657,7 @@
     "sub_30f12",
     "message_dialog",
     "play_sample_by_ptr",
-    "sub_599ee",
+    "sfx_set_volume",
     "event_queue_pop",
     "sub_8357a",
     "sub_8363c",
@@ -52226,10 +52290,10 @@
     "pause_menu",
     "start_period",
     "speech_period_summary",
-    "sub_59ad0",
-    "sub_59b0f",
-    "sub_59b3c",
-    "sub_59b88",
+    "say_goal_wrapper",
+    "say_star_wrapper",
+    "say_penalty_wrapper",
+    "say_penalty_shot_wrapper",
     "sub_8373e"
    ],
    "callees": [
@@ -52253,7 +52317,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_837d9",
+   "name": "bswap16",
    "addr": 538585,
    "size": 34,
    "blocks": [
@@ -52283,7 +52347,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_837fb",
+   "name": "read_be32",
    "addr": 538619,
    "size": 100,
    "blocks": [
@@ -52298,7 +52362,7 @@
    ],
    "callees": [
     "__CHK",
-    "sub_90cea"
+    "read_bytes"
    ],
    "strings": [],
    "vars": [],
@@ -52314,7 +52378,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8385f",
+   "name": "read_clip_name",
    "addr": 538719,
    "size": 56,
    "blocks": [
@@ -52329,7 +52393,7 @@
    ],
    "callees": [
     "__CHK",
-    "sub_90cea"
+    "read_bytes"
    ],
    "strings": [],
    "vars": [],
@@ -52361,15 +52425,15 @@
    ],
    "callees": [
     "sub_833c5",
-    "sub_837d9",
-    "sub_837fb",
-    "sub_8385f",
+    "bswap16",
+    "read_be32",
+    "read_clip_name",
     "sub_83e32",
     "__CHK",
     "close",
     "open",
     "lseek",
-    "sub_90cea",
+    "read_bytes",
     "strncpy",
     "sub_961d0"
    ],
@@ -52443,7 +52507,7 @@
    "callees": [
     "__CHK",
     "lseek",
-    "sub_90cea",
+    "read_bytes",
     "sub_972f0",
     "sub_98028"
    ],
@@ -52517,7 +52581,7 @@
    "callees": [
     "__CHK",
     "lseek",
-    "sub_90cea"
+    "read_bytes"
    ],
    "strings": [],
    "vars": [
@@ -53282,7 +53346,7 @@
    ],
    "instructions": 4,
    "callers": [
-    "sub_59c1d"
+    "say_nhl_intro"
    ],
    "callees": [
     "__CHK"
@@ -53316,7 +53380,7 @@
    ],
    "instructions": 4,
    "callers": [
-    "sub_59c3e"
+    "say_goodnight"
    ],
    "callees": [
     "__CHK"
@@ -53350,7 +53414,7 @@
    ],
    "instructions": 4,
    "callers": [
-    "sub_59c5f"
+    "say_lineups"
    ],
    "callees": [
     "__CHK"
@@ -53591,7 +53655,7 @@
    ],
    "instructions": 4,
    "callers": [
-    "sub_59c80"
+    "say_elsenhl"
    ],
    "callees": [
     "__CHK"
@@ -53625,7 +53689,7 @@
    ],
    "instructions": 78,
    "callers": [
-    "sub_59ca9"
+    "say_highlight_intro_wrapper"
    ],
    "callees": [
     "speech_reset",
@@ -53686,7 +53750,7 @@
    ],
    "instructions": 89,
    "callers": [
-    "sub_59cdd"
+    "say_series_result_wrapper"
    ],
    "callees": [
     "speech_reset",
@@ -53791,7 +53855,7 @@
    ],
    "instructions": 40,
    "callers": [
-    "sub_59bfc"
+    "say_period_score"
    ],
    "callees": [
     "__CHK"
@@ -53839,7 +53903,7 @@
    ],
    "instructions": 74,
    "callers": [
-    "sub_59bb5"
+    "say_game_intro_wrapper"
    ],
    "callees": [
     "speech_reset",
@@ -53898,7 +53962,7 @@
    ],
    "instructions": 101,
    "callers": [
-    "sub_59d16"
+    "say_playoff_intro_wrapper"
    ],
    "callees": [
     "speech_reset",
@@ -54070,7 +54134,7 @@
    ],
    "instructions": 110,
    "callers": [
-    "sub_59b3c"
+    "say_penalty_wrapper"
    ],
    "callees": [
     "speech_reset",
@@ -54135,7 +54199,7 @@
    ],
    "instructions": 63,
    "callers": [
-    "sub_59b88"
+    "say_penalty_shot_wrapper"
    ],
    "callees": [
     "speech_reset",
@@ -54191,7 +54255,7 @@
    ],
    "instructions": 66,
    "callers": [
-    "sub_59b0f"
+    "say_star_wrapper"
    ],
    "callees": [
     "speech_reset",
@@ -54250,7 +54314,7 @@
    ],
    "instructions": 100,
    "callers": [
-    "sub_59ad0"
+    "say_goal_wrapper"
    ],
    "callees": [
     "speech_reset",
@@ -54353,7 +54417,7 @@
    ],
    "instructions": 33,
    "callers": [
-    "sub_59d54"
+    "speech_stop"
    ],
    "callees": [
     "make_path",
@@ -54443,7 +54507,7 @@
    ],
    "instructions": 96,
    "callers": [
-    "sub_59d71"
+    "preload_speech_wrapper"
    ],
    "callees": [
     "make_path",
@@ -55831,7 +55895,7 @@
     "save_settings",
     "apply_settings",
     "load_game_set",
-    "sub_479e9",
+    "loading_screen",
     "ui_init",
     "ui_shutdown",
     "draw_menu_items",
@@ -56782,12 +56846,12 @@
     "ai_celebrate_goal",
     "ai_goalie",
     "ai_puck_carrier",
-    "sub_4c9fd",
+    "carrier_scan_opponents",
     "ai_nearest_to_puck",
     "ai_shoot",
     "ai_faceoff",
-    "sub_4da7b",
-    "sub_4e71a",
+    "faceoff_resolve",
+    "ref_check_announcements",
     "sub_4f9ef",
     "ai_breakaway",
     "sub_50e5c",
@@ -56795,22 +56859,22 @@
     "ai_puck_faceoff2",
     "ai_all_penalty_shot_wait",
     "sub_534bb",
-    "sub_53537",
+    "ai_try_check",
     "sub_5369f",
     "resolve_body_check",
     "check_injury",
     "sub_54990",
-    "sub_54af9",
+    "ai_consider_shot",
     "pass_to_entity",
     "do_pass",
     "sub_551cf",
-    "sub_55493",
-    "sub_55804",
+    "ai_choose_pass_target",
+    "ai_offense_decision",
     "sub_55e72",
     "knock_down",
     "resolve_hook_hit",
-    "sub_57096",
-    "sub_57483",
+    "puck_hits_player",
+    "goalie_save",
     "sub_57a3e",
     "do_shot",
     "sub_58084",
@@ -57238,9 +57302,9 @@
     "sub_492f9",
     "ai_stanley_cup",
     "ai_goalie",
-    "sub_4c8bd",
-    "sub_4c9fd",
-    "sub_4e292",
+    "carrier_near_net_check",
+    "carrier_scan_opponents",
+    "ref_skate_to_point",
     "ai_ref_pickup_puck",
     "ai_ref_point_goal",
     "ai_breakaway",
@@ -57250,21 +57314,21 @@
     "ai_puck_faceoff2",
     "ai_all_goto_faceoff",
     "ai_ref_penalty_shot",
-    "sub_53537",
+    "ai_try_check",
     "resolve_body_check",
     "sub_54c09",
     "do_pass",
-    "sub_55804",
+    "ai_offense_decision",
     "knock_down",
     "resolve_hook_hit",
     "resolve_poke_hit",
-    "sub_57096",
+    "puck_hits_player",
     "start_shot",
     "collide_pair",
     "sim_update_players",
     "draw_sprites",
     "apply_skating",
-    "sub_5e4c4",
+    "ai_ref_positioning",
     "ai_near_carrier_check",
     "ai_skate_towards",
     "ai_chase_puck",
@@ -57356,10 +57420,10 @@
     "league_leaders_screen",
     "team_abbrev_lookup",
     "awards_screen",
-    "sub_13867",
-    "sub_138d2",
-    "sub_1395f",
-    "sub_13a2f",
+    "fill_sprite_frames",
+    "load_effect_frames",
+    "load_sprite_banks",
+    "load_rink_end_shapes",
     "load_player_graphics",
     "sub_13bb4",
     "sub_13c79",
@@ -57494,8 +57558,8 @@
     "sub_1b201",
     "iff_parse",
     "sub_1b818",
-    "sub_1b82b",
-    "sub_1b871",
+    "iff_buffer_fill",
+    "iff_buffer_skip",
     "sub_1b88a",
     "sub_1b8ac",
     "sub_1b92e",
@@ -57772,8 +57836,8 @@
     "sub_45282",
     "sub_452a6",
     "playoff_setup_screen",
-    "sub_47951",
-    "sub_479e9",
+    "loading_screen_timer",
+    "loading_screen",
     "wait_sprite_fade",
     "init_match",
     "match_sequence",
@@ -57806,15 +57870,15 @@
     "ai_door_open",
     "ai_exit_penalty_box",
     "ai_bench",
-    "sub_4b467",
-    "sub_4b4e9",
+    "goalie_puck_vector",
+    "goalie_turn_towards",
     "ai_goalie_get_puck",
-    "sub_4b6f4",
+    "goalie_clamp_target",
     "ai_goalie",
-    "sub_4c632",
+    "carrier_reset_target",
     "ai_puck_carrier",
-    "sub_4c8bd",
-    "sub_4c9fd",
+    "carrier_near_net_check",
+    "carrier_scan_opponents",
     "ai_nearest_to_puck",
     "ai_shoot",
     "ai_faceoff_wait",
@@ -57827,15 +57891,15 @@
     "start_line_change_ui",
     "request_line_change_button",
     "sub_4da37",
-    "sub_4da7b",
+    "faceoff_resolve",
     "sub_4dcdd",
     "sub_4dd51",
     "update_carrier",
     "sub_4dfa4",
     "ai_ref_faceoff",
     "ai_ref_normal",
-    "sub_4e292",
-    "sub_4e71a",
+    "ref_skate_to_point",
+    "ref_check_announcements",
     "ai_ref_get_new_puck",
     "ai_ref_call_penalty",
     "ai_ref_pickup_puck",
@@ -57869,7 +57933,7 @@
     "sub_51115",
     "sub_511b4",
     "sub_5125f",
-    "sub_512a7",
+    "all_goto_positions",
     "sub_51440",
     "ai_bench_wait",
     "ai_puck_faceoff",
@@ -57884,29 +57948,29 @@
     "body_check",
     "start_poke_check",
     "sub_534bb",
-    "sub_53537",
+    "ai_try_check",
     "sub_5369f",
     "sub_5378d",
     "resolve_body_check",
     "sub_53ce5",
     "check_injury",
     "pull_goalie_logic",
-    "sub_54134",
-    "sub_541ca",
+    "stickhandling_skill",
+    "two_line_pass_check",
     "puck_player_interaction",
     "puck_check_players",
     "sub_54990",
     "sub_54a53",
-    "sub_54af9",
+    "ai_consider_shot",
     "sub_54c09",
     "pass_to_entity",
     "do_pass",
     "pass_button",
     "shoot_button",
     "sub_551cf",
-    "sub_55493",
-    "sub_55804",
-    "sub_55a35",
+    "ai_choose_pass_target",
+    "ai_offense_decision",
+    "ai_desperation_shot",
     "check_offside",
     "update_offside_flags",
     "sub_55d28",
@@ -57915,12 +57979,12 @@
     "knock_down",
     "resolve_hook_hit",
     "resolve_poke_hit",
-    "sub_56d06",
+    "attach_puck_to_stick",
     "check_icing",
     "ai_puck_shadow",
     "sub_56f5a",
-    "sub_57096",
-    "sub_57483",
+    "puck_hits_player",
+    "goalie_save",
     "start_shot",
     "shot_control",
     "shot_is_backhand",
@@ -57942,32 +58006,32 @@
     "sub_59493",
     "sub_594b2",
     "update_ambient_audio",
-    "sub_59748",
+    "sound_pause_all",
     "fade_ambient_audio",
-    "sub_59863",
+    "sound_resume_all",
     "play_sfx",
     "sub_59945",
-    "sub_59981",
+    "stop_crowd_loop",
     "play_sample_by_ptr",
-    "sub_599ee",
+    "sfx_set_volume",
     "play_speech",
     "speech_period_summary",
-    "sub_59aad",
-    "sub_59ad0",
-    "sub_59b0f",
-    "sub_59b3c",
-    "sub_59b88",
-    "sub_59bb5",
-    "sub_59bfc",
-    "sub_59c1d",
-    "sub_59c3e",
-    "sub_59c5f",
-    "sub_59c80",
-    "sub_59ca9",
-    "sub_59cdd",
-    "sub_59d16",
-    "sub_59d54",
-    "sub_59d71",
+    "speech_busy",
+    "say_goal_wrapper",
+    "say_star_wrapper",
+    "say_penalty_wrapper",
+    "say_penalty_shot_wrapper",
+    "say_game_intro_wrapper",
+    "say_period_score",
+    "say_nhl_intro",
+    "say_goodnight",
+    "say_lineups",
+    "say_elsenhl",
+    "say_highlight_intro_wrapper",
+    "say_series_result_wrapper",
+    "say_playoff_intro_wrapper",
+    "speech_stop",
+    "preload_speech_wrapper",
     "set_animation",
     "switch_to_nearest",
     "find_switch_target",
@@ -57977,8 +58041,8 @@
     "sub_5a30c",
     "predict_puck_goal_line",
     "frame_offsets_lookup",
-    "sub_5a4ad",
-    "sub_5a534",
+    "stick_offsets_lookup",
+    "stick_offset_from_frame",
     "adjust_strategy",
     "sub_5a669",
     "time_announcements",
@@ -57986,7 +58050,7 @@
     "score_goal",
     "sub_5b1ce",
     "set_default_state",
-    "sub_5b2c5",
+    "put_player_on_ice",
     "sub_5b826",
     "sub_5b881",
     "sub_5b97a",
@@ -58024,7 +58088,7 @@
     "sub_5e0b0",
     "sub_5e0dd",
     "apply_skating",
-    "sub_5e4c4",
+    "ai_ref_positioning",
     "ai_near_carrier_check",
     "ai_skate_towards",
     "ai_chase_puck",
@@ -58057,7 +58121,7 @@
     "sub_62807",
     "sub_62c37",
     "sub_62cd7",
-    "sub_62cf9",
+    "maybe_queue_infraction",
     "queue_infraction",
     "sub_62ea2",
     "penalty_box_update",
@@ -58074,7 +58138,7 @@
     "sub_63d3c",
     "sub_63d69",
     "sub_63f72",
-    "sub_64102",
+    "count_defenders_ahead",
     "sub_6427f",
     "sub_64338",
     "sub_64398",
@@ -58082,19 +58146,19 @@
     "sub_644a8",
     "sub_6455f",
     "build_lines",
-    "sub_64a0b",
+    "lineup_player_ok",
     "sub_64ca8",
-    "sub_64e60",
+    "choose_lineup_player",
     "sub_652d6",
     "sub_653be",
     "sub_6552e",
-    "sub_655cc",
+    "pick_player_for_position",
     "count_dressed_players",
     "sub_65b48",
-    "sub_65b83",
+    "injury_check",
     "sub_65ca8",
     "update_camera",
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "draw_penalty_box_overlay",
     "sub_66dda",
     "update_announcer",
@@ -58393,9 +58457,9 @@
     "sub_8374d",
     "sub_8378c",
     "sub_837a8",
-    "sub_837d9",
-    "sub_837fb",
-    "sub_8385f",
+    "bswap16",
+    "read_be32",
+    "read_clip_name",
     "speech_load_bank",
     "sub_83bc7",
     "sub_83bf3",
@@ -59086,7 +59150,7 @@
     "sub_8cce0",
     "sub_8e920",
     "loadfile_auto",
-    "sub_a27c4"
+    "loadfile_packed"
    ],
    "callees": [
     "reservemem",
@@ -59126,7 +59190,7 @@
    "callers": [
     "reservemem_locked",
     "sub_8d604",
-    "sub_8d728"
+    "find_loaded_file"
    ],
    "callees": [
     "sub_8d604",
@@ -59340,7 +59404,7 @@
     "sub_8d10c",
     "sub_8d12c",
     "sub_8d144",
-    "sub_a27c4"
+    "loadfile_packed"
    ],
    "callees": [
     "sub_8d844",
@@ -59534,7 +59598,7 @@
     "schedule_screen",
     "schedule_screen2",
     "playoff_setup_screen",
-    "sub_479e9",
+    "loading_screen",
     "sub_480cc",
     "start_period",
     "ai_puck_faceoff2",
@@ -59680,7 +59744,7 @@
     "playoff_tree_screen",
     "coach_clip_player",
     "freemem",
-    "sub_8d728",
+    "find_loaded_file",
     "sub_8ff3e",
     "sub_91310",
     "sub_93e79",
@@ -60084,7 +60148,7 @@
    "instructions": 42,
    "callers": [
     "sub_8d5c0",
-    "sub_8d728"
+    "find_loaded_file"
    ],
    "callees": [
     "sub_8e3f8",
@@ -60117,7 +60181,7 @@
    ],
    "instructions": 6,
    "callers": [
-    "sub_8d728"
+    "find_loaded_file"
    ],
    "callees": [
     "sub_8d558"
@@ -60221,7 +60285,7 @@
     "sub_92e40"
    ],
    "callees": [
-    "sub_8d728"
+    "find_loaded_file"
    ],
    "strings": [],
    "vars": [],
@@ -60237,7 +60301,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8d728",
+   "name": "find_loaded_file",
    "addr": 579368,
    "size": 228,
    "blocks": [
@@ -60251,7 +60315,7 @@
     "sub_8d714",
     "sub_8e920",
     "loadfile_auto",
-    "sub_a27c4"
+    "loadfile_packed"
    ],
    "callees": [
     "reservemem",
@@ -60269,7 +60333,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "returns an already loaded copy of a file from the memory manager"
+   ],
    "reasons": [
     "call"
    ],
@@ -60457,8 +60523,8 @@
    "callers": [
     "sub_1baf3",
     "sub_212c6",
-    "sub_479e9",
-    "load_announcer_clip",
+    "loading_screen",
+    "load_cutscene_clip",
     "reservemem",
     "resizemem",
     "sub_8db20",
@@ -61540,7 +61606,7 @@
    "callers": [
     "sub_947d8",
     "sub_95158",
-    "sub_a27c4"
+    "loadfile_packed"
    ],
    "callees": [],
    "strings": [],
@@ -61570,7 +61636,7 @@
    "callers": [
     "sub_94b6c",
     "sub_954c8",
-    "sub_a27c4"
+    "loadfile_packed"
    ],
    "callees": [],
    "strings": [],
@@ -61820,7 +61886,7 @@
    "callers": [
     "main",
     "sub_1b0f3",
-    "sub_479e9",
+    "loading_screen",
     "ui_init",
     "sub_8357a",
     "sub_8eb5b"
@@ -62417,7 +62483,7 @@
     "line_editor",
     "select_human_team_dialog",
     "select_human_control_dialog",
-    "sub_479e9",
+    "loading_screen",
     "load_team_palettes",
     "joystick_calibrate",
     "player_ratings_card",
@@ -62539,9 +62605,9 @@
     "main",
     "game_loop",
     "play_game",
-    "sub_138d2",
-    "sub_1395f",
-    "sub_13a2f",
+    "load_effect_frames",
+    "load_sprite_banks",
+    "load_rink_end_shapes",
     "load_player_graphics",
     "sub_13bb4",
     "show_scoreboard",
@@ -62559,7 +62625,7 @@
     "line_editor",
     "sub_40792",
     "sub_41cc4",
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "load_team_palettes",
     "sub_6c19b",
     "player_temp_file",
@@ -62738,7 +62804,7 @@
    ],
    "callees": [
     "reservemem_locked",
-    "sub_8d728",
+    "find_loaded_file",
     "openhandle",
     "closehandle",
     "sub_b3c74"
@@ -64213,7 +64279,7 @@
    ],
    "instructions": 87,
    "callers": [
-    "sub_59981",
+    "stop_crowd_loop",
     "sub_8f1fe"
    ],
    "callees": [
@@ -64287,8 +64353,8 @@
    "instructions": 24,
    "callers": [
     "sub_59945",
-    "sub_59981",
-    "sub_599ee"
+    "stop_crowd_loop",
+    "sfx_set_volume"
    ],
    "callees": [],
    "strings": [],
@@ -65072,7 +65138,7 @@
    "instructions": 15,
    "callers": [
     "update_ambient_audio",
-    "sub_59748"
+    "sound_pause_all"
    ],
    "callees": [
     "sub_997b7"
@@ -65169,7 +65235,7 @@
    "instructions": 16,
    "callers": [
     "update_ambient_audio",
-    "sub_59748"
+    "sound_pause_all"
    ],
    "callees": [
     "sub_997b7"
@@ -65484,7 +65550,7 @@
     "team_edit_screen",
     "sub_3edaa",
     "line_editor",
-    "sub_479e9",
+    "loading_screen",
     "sub_480cc",
     "start_period",
     "simulate_game_offscreen",
@@ -65797,7 +65863,7 @@
     "sub_7651b",
     "initgraphics",
     "memset",
-    "sub_97740"
+    "bitlz_decode"
    ],
    "callees": [
     "_memset_dwords"
@@ -65876,7 +65942,7 @@
    "callers": [
     "game_loop",
     "play_game",
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "sub_95158",
     "sub_a30f8"
    ],
@@ -66872,9 +66938,9 @@
    "instructions": 18,
    "callers": [
     "league_leaders_screen",
-    "sub_13867",
-    "sub_138d2",
-    "sub_1395f",
+    "fill_sprite_frames",
+    "load_effect_frames",
+    "load_sprite_banks",
     "load_player_graphics",
     "sub_13bb4",
     "check_disk_space_for_game",
@@ -66908,7 +66974,7 @@
     "format_player_name",
     "show_penalty",
     "penalty_box_update",
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "dump_stats_log",
     "database_disk_check",
     "sub_6cefb",
@@ -67019,7 +67085,7 @@
     "team_roster_screen",
     "line_editor_screen",
     "playoff_setup_screen",
-    "sub_479e9",
+    "loading_screen",
     "joystick_calibrate",
     "player_ratings_card",
     "free_agent_card",
@@ -67628,7 +67694,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_90cea",
+   "name": "read_bytes",
    "addr": 593130,
    "size": 42,
    "blocks": [
@@ -67641,8 +67707,8 @@
    "callers": [
     "file_read",
     "sub_1466b",
-    "sub_837fb",
-    "sub_8385f",
+    "read_be32",
+    "read_clip_name",
     "speech_load_bank",
     "sub_83bf3",
     "sub_83d78",
@@ -67664,7 +67730,9 @@
     "int21h"
    ],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "read_bytes(fd, count, buffer)"
+   ],
    "reasons": [
     "call"
    ],
@@ -67967,7 +68035,7 @@
    "callers": [
     "league_select_screen",
     "league_name_entry",
-    "sub_479e9",
+    "loading_screen",
     "joystick_calibrate",
     "database_select_screen",
     "sub_73703",
@@ -68300,7 +68368,7 @@
     "team_info_screen",
     "load_league_list",
     "new_league_dialog",
-    "sub_479e9",
+    "loading_screen",
     "sub_6a3c0",
     "joystick_calibrate",
     "create_player_menu",
@@ -71094,7 +71162,7 @@
    "instructions": 4,
    "callers": [
     "ai_goalie",
-    "sub_57483",
+    "goalie_save",
     "do_shot",
     "ai_chase_puck"
    ],
@@ -74973,7 +75041,7 @@
    "instructions": 33,
    "callers": [
     "unpack",
-    "sub_a26b0"
+    "packed_read"
    ],
    "callees": [
     "sub_97300",
@@ -75008,7 +75076,7 @@
    "instructions": 56,
    "callers": [
     "sub_97714",
-    "sub_97740"
+    "bitlz_decode"
    ],
    "callees": [],
    "strings": [],
@@ -75040,7 +75108,7 @@
    ],
    "instructions": 17,
    "callers": [
-    "sub_97740"
+    "bitlz_decode"
    ],
    "callees": [
     "sub_9767c"
@@ -75059,7 +75127,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_97740",
+   "name": "bitlz_decode",
    "addr": 620352,
    "size": 696,
    "blocks": [
@@ -75088,7 +75156,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "pack codes 30/32/34: bit coded LZ"
+   ],
    "reasons": [
     "call"
    ],
@@ -75107,7 +75177,7 @@
    ],
    "instructions": 21,
    "callers": [
-    "sub_97a38"
+    "bytepair_decode"
    ],
    "callees": [],
    "strings": [],
@@ -75129,7 +75199,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_97a38",
+   "name": "bytepair_decode",
    "addr": 621112,
    "size": 381,
    "blocks": [
@@ -75157,7 +75227,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "pack code 46"
+   ],
    "reasons": [
     "call"
    ],
@@ -75165,7 +75237,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_97bb8",
+   "name": "delta_decode",
    "addr": 621496,
    "size": 115,
    "blocks": [
@@ -75185,7 +75257,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "pack codes 60/62/66: running sum"
+   ],
    "reasons": [
     "call"
    ],
@@ -75193,7 +75267,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_97c2c",
+   "name": "pack7a_decode",
    "addr": 621612,
    "size": 179,
    "blocks": [
@@ -75213,7 +75287,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "pack code 7a"
+   ],
    "reasons": [
     "call"
    ],
@@ -75221,7 +75297,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_97ce0",
+   "name": "refpack_decode",
    "addr": 621792,
    "size": 472,
    "blocks": [
@@ -75241,7 +75317,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "EA RefPack 10FB/11FB decoder"
+   ],
    "reasons": [
     "call"
    ],
@@ -75262,16 +75340,16 @@
    "callers": [
     "sub_98028",
     "sub_98044",
-    "sub_a27c4"
+    "loadfile_packed"
    ],
    "callees": [
     "sub_97300",
     "sub_9762c",
-    "sub_97740",
-    "sub_97a38",
-    "sub_97bb8",
-    "sub_97c2c",
-    "sub_97ce0",
+    "bitlz_decode",
+    "bytepair_decode",
+    "delta_decode",
+    "pack7a_decode",
+    "refpack_decode",
     "fatalerror",
     "sub_b3abc"
    ],
@@ -76767,12 +76845,12 @@
    "callees": [
     "reservemem_locked",
     "releasememblock",
-    "sub_8d728",
+    "find_loaded_file",
     "stricmp",
     "sub_a2610",
-    "sub_a27c4",
-    "sub_a28f0",
-    "sub_a2ab8"
+    "loadfile_packed",
+    "shpi_from_compressed",
+    "packed_size"
    ],
    "strings": [
     ".fsh.vsh.qfs.qvs",
@@ -77946,7 +78024,7 @@
     "open",
     "creat",
     "sub_90c94",
-    "sub_90cea"
+    "read_bytes"
    ],
    "callees": [
     "sub_9a735"
@@ -85766,7 +85844,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_a26b0",
+   "name": "packed_read",
    "addr": 665264,
    "size": 148,
    "blocks": [
@@ -85777,7 +85855,7 @@
    ],
    "instructions": 49,
    "callers": [
-    "sub_a27c4"
+    "loadfile_packed"
    ],
    "callees": [
     "sub_9762c",
@@ -85873,7 +85951,7 @@
     "sub_a275c"
    ],
    "callees": [
-    "sub_a27c4"
+    "loadfile_packed"
    ],
    "strings": [],
    "vars": [],
@@ -85901,7 +85979,7 @@
    "instructions": 8,
    "callers": [],
    "callees": [
-    "sub_a27c4"
+    "loadfile_packed"
    ],
    "strings": [],
    "vars": [],
@@ -85931,7 +86009,7 @@
    "instructions": 8,
    "callers": [],
    "callees": [
-    "sub_a27c4"
+    "loadfile_packed"
    ],
    "strings": [],
    "vars": [],
@@ -85949,7 +86027,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_a27c4",
+   "name": "loadfile_packed",
    "addr": 665540,
    "size": 290,
    "blocks": [
@@ -85968,11 +86046,11 @@
    "callees": [
     "reservemem_locked",
     "resizemem",
-    "sub_8d728",
+    "find_loaded_file",
     "sub_8e3cc",
     "sub_8e3d4",
     "unpack",
-    "sub_a26b0",
+    "packed_read",
     "openhandle",
     "closehandle",
     "sub_b3c74"
@@ -85983,7 +86061,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "loads a file and unpacks it when it carries a pack code"
+   ],
    "reasons": [
     "call"
    ],
@@ -85991,7 +86071,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_a28f0",
+   "name": "shpi_from_compressed",
    "addr": 665840,
    "size": 453,
    "blocks": [
@@ -86003,7 +86083,7 @@
    "instructions": 148,
    "callers": [
     "loadfile_auto",
-    "sub_a2ab8"
+    "packed_size"
    ],
    "callees": [
     "sub_b0100",
@@ -86020,7 +86100,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "rebuilds an SHPI directory from a compressed (q*) bank"
+   ],
    "reasons": [
     "call"
    ],
@@ -86028,7 +86110,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_a2ab8",
+   "name": "packed_size",
    "addr": 666296,
    "size": 16,
    "blocks": [
@@ -86042,7 +86124,7 @@
     "loadfile_auto"
    ],
    "callees": [
-    "sub_a28f0"
+    "shpi_from_compressed"
    ],
    "strings": [],
    "vars": [],
@@ -97873,7 +97955,7 @@
    ],
    "instructions": 20,
    "callers": [
-    "sub_a28f0"
+    "shpi_from_compressed"
    ],
    "callees": [],
    "strings": [],
@@ -97929,7 +98011,7 @@
    ],
    "instructions": 15,
    "callers": [
-    "sub_a28f0"
+    "shpi_from_compressed"
    ],
    "callees": [],
    "strings": [],
@@ -98465,7 +98547,7 @@
     "sub_aa300"
    ],
    "callees": [
-    "sub_90cea"
+    "read_bytes"
    ],
    "strings": [],
    "vars": [
@@ -102320,8 +102402,8 @@
     "main",
     "league_leaders_screen",
     "awards_screen",
-    "sub_138d2",
-    "sub_13a2f",
+    "load_effect_frames",
+    "load_rink_end_shapes",
     "load_player_graphics",
     "sub_13bb4",
     "show_scoreboard",
@@ -102370,8 +102452,8 @@
     "line_editor",
     "select_human_team_dialog",
     "select_human_control_dialog",
-    "sub_479e9",
-    "load_announcer_clip",
+    "loading_screen",
+    "load_cutscene_clip",
     "load_team_palettes",
     "joystick_calibrate",
     "player_ratings_card",
@@ -102440,7 +102522,7 @@
    ],
    "instructions": 22,
    "callers": [
-    "sub_13867",
+    "fill_sprite_frames",
     "player_card_screen",
     "goalie_card_screen",
     "sub_90b50"
@@ -103065,7 +103147,7 @@
     "select_human_team_dialog",
     "select_human_control_dialog",
     "sub_40f4e",
-    "sub_479e9",
+    "loading_screen",
     "joystick_calibrate",
     "sub_6df06",
     "sub_6ec95",
@@ -103260,7 +103342,7 @@
     "intro_sequence",
     "team_select_screen2",
     "sub_3170d",
-    "sub_479e9",
+    "loading_screen",
     "wait_sprite_fade",
     "replay_loop",
     "fade_ambient_audio",
@@ -103308,7 +103390,7 @@
     "set_video_mode",
     "intro_sequence",
     "team_select_screen2",
-    "sub_479e9",
+    "loading_screen",
     "wait_sprite_fade",
     "sub_480cc",
     "fade_ambient_audio",
@@ -103821,7 +103903,7 @@
     "sub_1b002",
     "iff_parse",
     "sub_8d604",
-    "sub_8d728",
+    "find_loaded_file",
     "sub_8d844",
     "sub_8d990",
     "load_eavesa",
@@ -103840,7 +103922,7 @@
     "sub_96e7c",
     "unpack",
     "unpackfile",
-    "sub_a28f0",
+    "shpi_from_compressed",
     "sub_a2f40",
     "sub_b01e4"
    ],
@@ -103910,7 +103992,7 @@
     "sub_8e920",
     "filesize_handle",
     "sub_92e40",
-    "sub_a27c4"
+    "loadfile_packed"
    ],
    "callees": [],
    "strings": [],
@@ -104063,7 +104145,7 @@
     "sub_96844",
     "sub_969a8",
     "sub_98a40",
-    "sub_a27c4",
+    "loadfile_packed",
     "sub_b3b5a"
    ],
    "callees": [],
@@ -104134,8 +104216,8 @@
     "sub_92e40",
     "sub_96844",
     "sub_96e7c",
-    "sub_a26b0",
-    "sub_a27c4"
+    "packed_read",
+    "loadfile_packed"
    ],
    "callees": [],
    "strings": [],
@@ -104173,7 +104255,7 @@
     "iff_parse",
     "sub_96844",
     "sub_96a10",
-    "sub_a26b0"
+    "packed_read"
    ],
    "callees": [
     "sub_b3b00"
@@ -104460,7 +104542,7 @@
     "collide_boards",
     "sim_update_players",
     "ai_chase_puck",
-    "sub_64102"
+    "count_defenders_ahead"
    ],
    "callees": [
     "sub_b49c0",
@@ -105240,7 +105322,7 @@
     "select_human_team_dialog",
     "select_human_control_dialog",
     "sub_40f4e",
-    "sub_47951",
+    "loading_screen_timer",
     "joystick_calibrate",
     "sub_76614",
     "sub_7ac31",
@@ -105336,7 +105418,7 @@
     "sub_3de05",
     "team_roster_screen",
     "line_editor",
-    "sub_479e9",
+    "loading_screen",
     "present_frame",
     "joystick_calibrate",
     "database_screen",
@@ -105573,7 +105655,7 @@
    ],
    "instructions": 12,
    "callers": [
-    "sub_47951",
+    "loading_screen_timer",
     "joystick_calibrate"
    ],
    "callees": [],
@@ -110586,8 +110668,8 @@
    "size": 5,
    "kind": "string",
    "xrefs": [
-    "sub_13867",
-    "sub_138d2",
+    "fill_sprite_frames",
+    "load_effect_frames",
     "load_player_graphics",
     "sub_13bb4"
    ],
@@ -110599,7 +110681,7 @@
    "size": 9,
    "kind": "string",
    "xrefs": [
-    "sub_138d2"
+    "load_effect_frames"
    ],
    "text": "f000_149"
   },
@@ -110609,7 +110691,7 @@
    "size": 9,
    "kind": "string",
    "xrefs": [
-    "sub_1395f"
+    "load_sprite_banks"
    ],
    "text": "%d50%d99"
   },
@@ -110619,7 +110701,7 @@
    "size": 9,
    "kind": "string",
    "xrefs": [
-    "sub_1395f"
+    "load_sprite_banks"
    ],
    "text": "%d00%d49"
   },
@@ -110629,7 +110711,7 @@
    "size": 10,
    "kind": "string",
    "xrefs": [
-    "sub_1395f"
+    "load_sprite_banks"
    ],
    "text": "%d50_%d99"
   },
@@ -110639,7 +110721,7 @@
    "size": 10,
    "kind": "string",
    "xrefs": [
-    "sub_1395f"
+    "load_sprite_banks"
    ],
    "text": "%d00_%d49"
   },
@@ -110649,7 +110731,7 @@
    "size": 8,
    "kind": "string",
    "xrefs": [
-    "sub_13a2f"
+    "load_rink_end_shapes"
    ],
    "text": "trinknd"
   },
@@ -110659,7 +110741,7 @@
    "size": 5,
    "kind": "string",
    "xrefs": [
-    "sub_13a2f"
+    "load_rink_end_shapes"
    ],
    "text": "0000"
   },
@@ -117885,7 +117967,7 @@
    "size": 5,
    "kind": "string",
    "xrefs": [
-    "sub_479e9"
+    "loading_screen"
    ],
    "text": "load"
   },
@@ -117895,7 +117977,7 @@
    "size": 5,
    "kind": "string",
    "xrefs": [
-    "sub_479e9"
+    "loading_screen"
    ],
    "text": "!pal"
   },
@@ -118611,7 +118693,7 @@
    "size": 5,
    "kind": "string",
    "xrefs": [
-    "load_announcer_clip"
+    "load_cutscene_clip"
    ],
    "text": "%04d"
   },
@@ -128182,7 +128264,7 @@
     "game_clock_tick",
     "sub_62343",
     "record_penalty",
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "simulate_game_offscreen"
    ],
    "comments": [
@@ -129099,22 +129181,22 @@
     "request_line_change_button",
     "sub_4dcdd",
     "sub_4dd51",
-    "sub_4e71a",
+    "ref_check_announcements",
     "request_line_change",
-    "sub_512a7",
+    "all_goto_positions",
     "ai_puck_faceoff",
     "body_check",
-    "sub_53537",
+    "ai_try_check",
     "pull_goalie_logic",
-    "sub_541ca",
-    "sub_54af9",
-    "sub_55493",
+    "two_line_pass_check",
+    "ai_consider_shot",
+    "ai_choose_pass_target",
     "check_offside",
     "update_offside_flags",
     "knock_down",
     "resolve_hook_hit",
     "update_ambient_audio",
-    "sub_59748",
+    "sound_pause_all",
     "fade_ambient_audio",
     "sub_5a669",
     "sub_5b9d1",
@@ -129123,7 +129205,7 @@
     "sub_5ddda",
     "ai_near_carrier_check",
     "skating_accelerate",
-    "sub_62cf9",
+    "maybe_queue_infraction",
     "sub_6427f",
     "simulate_game_offscreen",
     "sub_7a88e",
@@ -129159,23 +129241,23 @@
     "exhibition_mode",
     "league_calendar_flow",
     "ai_ref_three_stars",
-    "sub_4e71a",
+    "ref_check_announcements",
     "sub_5369f",
     "speech_period_summary",
-    "sub_59aad",
-    "sub_59ad0",
-    "sub_59b0f",
-    "sub_59b3c",
-    "sub_59b88",
-    "sub_59bb5",
-    "sub_59bfc",
-    "sub_59c1d",
-    "sub_59c3e",
-    "sub_59c5f",
-    "sub_59c80",
-    "sub_59ca9",
-    "sub_59cdd",
-    "sub_59d16",
+    "speech_busy",
+    "say_goal_wrapper",
+    "say_star_wrapper",
+    "say_penalty_wrapper",
+    "say_penalty_shot_wrapper",
+    "say_game_intro_wrapper",
+    "say_period_score",
+    "say_nhl_intro",
+    "say_goodnight",
+    "say_lineups",
+    "say_elsenhl",
+    "say_highlight_intro_wrapper",
+    "say_series_result_wrapper",
+    "say_playoff_intro_wrapper",
     "score_goal",
     "sub_5b9d1",
     "setup_faceoff",
@@ -129340,9 +129422,9 @@
     "credits_screen",
     "boxscore_screen",
     "team_select_screen2",
-    "sub_4e71a",
+    "ref_check_announcements",
     "update_ambient_audio",
-    "sub_59748",
+    "sound_pause_all",
     "fade_ambient_audio",
     "play_sfx",
     "play_sample_by_ptr",
@@ -129503,10 +129585,10 @@
     "apply_settings",
     "ai_ref_three_stars",
     "ai_ref_pickup_puck",
-    "sub_59bb5",
-    "sub_59ca9",
-    "sub_59cdd",
-    "sub_59d16",
+    "say_game_intro_wrapper",
+    "say_highlight_intro_wrapper",
+    "say_series_result_wrapper",
+    "say_playoff_intro_wrapper",
     "record_penalty",
     "sub_7fc5c",
     "highlights_screen",
@@ -135576,14 +135658,14 @@
    "xrefs": [
     "game_loop",
     "play_game",
-    "sub_138d2",
-    "sub_1395f",
-    "sub_13a2f",
+    "load_effect_frames",
+    "load_sprite_banks",
+    "load_rink_end_shapes",
     "load_player_graphics",
     "sub_13bb4",
     "show_scoreboard",
     "load_scoreboard_shapes",
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "instant_replay",
     "replay_menu"
    ],
@@ -136917,7 +136999,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_479e9",
+    "loading_screen",
     "wait_sprite_fade"
    ]
   },
@@ -136952,10 +137034,10 @@
     "ai_defense_defense",
     "ai_wing_defense",
     "ai_center_defense",
-    "sub_4b467",
+    "goalie_puck_vector",
     "ai_goalie",
-    "sub_4c632",
-    "sub_4c9fd",
+    "carrier_reset_target",
+    "carrier_scan_opponents",
     "ai_nearest_to_puck",
     "puck_update",
     "ai_ref_normal",
@@ -136968,8 +137050,8 @@
     "puck_player_interaction",
     "do_pass",
     "sub_551cf",
-    "sub_55493",
-    "sub_55804",
+    "ai_choose_pass_target",
+    "ai_offense_decision",
     "check_icing",
     "ai_puck_shadow",
     "shot_setup",
@@ -137009,8 +137091,8 @@
     "pass_to_entity",
     "do_pass",
     "sub_551cf",
-    "sub_57096",
-    "sub_57483",
+    "puck_hits_player",
+    "goalie_save",
     "do_shot",
     "switch_to_nearest",
     "predict_puck_goal_line",
@@ -137032,10 +137114,10 @@
     "ai_wing_offense",
     "ai_center_defense",
     "ai_center_offense",
-    "sub_4b467",
+    "goalie_puck_vector",
     "ai_goalie",
-    "sub_4c632",
-    "sub_4c9fd",
+    "carrier_reset_target",
+    "carrier_scan_opponents",
     "ai_nearest_to_puck",
     "puck_update",
     "sub_4dcdd",
@@ -137051,15 +137133,15 @@
     "ai_ref_penalty_shot",
     "sub_5369f",
     "pull_goalie_logic",
-    "sub_541ca",
+    "two_line_pass_check",
     "puck_player_interaction",
     "sub_54990",
-    "sub_54af9",
+    "ai_consider_shot",
     "do_pass",
     "sub_551cf",
-    "sub_55493",
-    "sub_55804",
-    "sub_55a35",
+    "ai_choose_pass_target",
+    "ai_offense_decision",
+    "ai_desperation_shot",
     "sub_55d28",
     "check_icing",
     "ai_puck_shadow",
@@ -137109,8 +137191,8 @@
     "pass_to_entity",
     "do_pass",
     "sub_551cf",
-    "sub_57096",
-    "sub_57483",
+    "puck_hits_player",
+    "goalie_save",
     "do_shot",
     "switch_to_nearest",
     "predict_puck_goal_line",
@@ -137127,15 +137209,15 @@
    "kind": "ptr",
    "xrefs": [
     "ai_goalie",
-    "sub_4da7b",
+    "faceoff_resolve",
     "ai_ref_pickup_puck",
     "ai_ref_goto_faceoff",
     "ai_puck_faceoff2",
     "ai_ref_penalty_shot",
     "start_poke_check",
     "puck_player_interaction",
-    "sub_57096",
-    "sub_57483",
+    "puck_hits_player",
+    "goalie_save",
     "sim_update_players",
     "draw_sprites",
     "sub_63f72",
@@ -137157,8 +137239,8 @@
     "pass_to_entity",
     "do_pass",
     "sub_551cf",
-    "sub_57096",
-    "sub_57483",
+    "puck_hits_player",
+    "goalie_save",
     "do_shot",
     "sub_63f72",
     "dump_stats_log"
@@ -137180,7 +137262,7 @@
     "ai_center_offense",
     "ai_celebrate_goal",
     "ai_goalie_get_puck",
-    "sub_4b6f4",
+    "goalie_clamp_target",
     "ai_goalie",
     "ai_puck_carrier",
     "ai_nearest_to_puck",
@@ -137205,8 +137287,8 @@
     "resolve_poke_hit",
     "check_icing",
     "sub_56f5a",
-    "sub_57096",
-    "sub_57483",
+    "puck_hits_player",
+    "goalie_save",
     "sub_57a3e",
     "do_shot",
     "collide_net",
@@ -137225,7 +137307,7 @@
     "sub_63475",
     "process_infractions",
     "sub_63f72",
-    "sub_64102",
+    "count_defenders_ahead",
     "sub_6427f",
     "sub_64338",
     "update_camera",
@@ -137339,8 +137421,8 @@
    "xrefs": [
     "try_block_shot",
     "sub_55d28",
-    "sub_57096",
-    "sub_57483",
+    "puck_hits_player",
+    "goalie_save",
     "move_entity",
     "collide_boards",
     "collide_net"
@@ -137355,8 +137437,8 @@
     "sub_14056",
     "ai_celebrate_goal",
     "try_block_shot",
-    "sub_57096",
-    "sub_57483",
+    "puck_hits_player",
+    "goalie_save",
     "do_shot",
     "score_goal",
     "setup_faceoff",
@@ -137372,8 +137454,8 @@
    "xrefs": [
     "sub_14056",
     "do_pass",
-    "sub_57096",
-    "sub_57483",
+    "puck_hits_player",
+    "goalie_save",
     "do_shot",
     "sub_5b1ce",
     "save_game",
@@ -137394,7 +137476,7 @@
     "pass_button",
     "shoot_button",
     "sub_551cf",
-    "sub_55493",
+    "ai_choose_pass_target",
     "start_shot",
     "shot_control",
     "shot_setup",
@@ -137441,7 +137523,7 @@
     "ai_puck_faceoff2",
     "pass_to_entity",
     "sub_551cf",
-    "sub_57483",
+    "goalie_save",
     "bounce_off_boards",
     "save_game",
     "savegame_io",
@@ -137456,12 +137538,12 @@
    "xrefs": [
     "sub_14056",
     "ai_goalie",
-    "sub_4c632",
+    "carrier_reset_target",
     "ai_puck_carrier",
-    "sub_4c9fd",
+    "carrier_scan_opponents",
     "ai_puck_faceoff2",
-    "sub_55493",
-    "sub_55804",
+    "ai_choose_pass_target",
+    "ai_offense_decision",
     "sub_5cd4f",
     "save_game",
     "savegame_io",
@@ -137582,7 +137664,7 @@
    "size": 2,
    "kind": null,
    "xrefs": [
-    "sub_4da7b",
+    "faceoff_resolve",
     "faceoff_control",
     "ai_puck_faceoff2",
     "sub_5cd4f",
@@ -137596,7 +137678,7 @@
    "size": 2,
    "kind": null,
    "xrefs": [
-    "sub_4da7b",
+    "faceoff_resolve",
     "faceoff_control",
     "ai_puck_faceoff2",
     "sub_5cd4f",
@@ -137646,11 +137728,11 @@
     "ai_puck_carrier",
     "ai_nearest_to_puck",
     "puck_update",
-    "sub_4da7b",
+    "faceoff_resolve",
     "sub_4dcdd",
     "sub_4dd51",
     "update_carrier",
-    "sub_4e71a",
+    "ref_check_announcements",
     "ai_ref_call_penalty",
     "ai_ref_pickup_puck",
     "ai_breakaway",
@@ -137665,7 +137747,7 @@
     "sub_5369f",
     "resolve_body_check",
     "check_injury",
-    "sub_541ca",
+    "two_line_pass_check",
     "sub_54990",
     "pass_to_entity",
     "sub_551cf",
@@ -137674,8 +137756,8 @@
     "sub_55d28",
     "knock_down",
     "sub_56f5a",
-    "sub_57096",
-    "sub_57483",
+    "puck_hits_player",
+    "goalie_save",
     "do_shot",
     "collide_net",
     "collide_corner",
@@ -137683,7 +137765,7 @@
     "cpu_line_change",
     "play_sfx",
     "speech_period_summary",
-    "sub_59ad0",
+    "say_goal_wrapper",
     "choose_line",
     "time_announcements",
     "goal_disallowed_check",
@@ -137711,7 +137793,7 @@
     "record_penalty",
     "sub_62764",
     "sub_62807",
-    "sub_62cf9",
+    "maybe_queue_infraction",
     "penalty_box_update",
     "sub_63475",
     "start_stoppage",
@@ -137758,15 +137840,15 @@
     "resolve_poke_hit",
     "ai_puck_shadow",
     "sub_56f5a",
-    "sub_57096",
-    "sub_57483",
+    "puck_hits_player",
+    "goalie_save",
     "start_shot",
     "shot_control",
     "do_shot",
     "move_entity",
     "collide_corner",
     "collide_pair",
-    "sub_59dbb",
+    "draw_rink_marks",
     "period_init",
     "advance_animation",
     "sub_5cd25",
@@ -137803,22 +137885,22 @@
     "ai_nearest_to_puck",
     "ai_faceoff_wait",
     "ai_faceoff",
-    "sub_4da7b",
+    "faceoff_resolve",
     "update_carrier",
     "ai_ref_faceoff",
     "control_player",
     "ai_puck_faceoff2",
     "sub_534bb",
     "pull_goalie_logic",
-    "sub_55804",
+    "ai_offense_decision",
     "sub_55d28",
-    "sub_57096",
-    "sub_57483",
+    "puck_hits_player",
+    "goalie_save",
     "do_shot",
     "collide_net",
     "bounce_off_boards",
     "score_goal",
-    "sub_5b2c5",
+    "put_player_on_ice",
     "period_init",
     "sim_update_players",
     "sub_5cd4f",
@@ -137845,8 +137927,8 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_4da7b",
-    "sub_4e71a",
+    "faceoff_resolve",
+    "ref_check_announcements",
     "control_player",
     "ai_puck_faceoff",
     "ai_puck_faceoff2",
@@ -138238,7 +138320,7 @@
    "xrefs": [
     "sub_14056",
     "start_period",
-    "sub_4e71a",
+    "ref_check_announcements",
     "ai_ref_call_penalty",
     "ai_ref_pickup_puck",
     "ai_puck_faceoff2",
@@ -138274,7 +138356,7 @@
     "sub_13e8f",
     "sub_13fa7",
     "ai_game_misconduct",
-    "sub_4e71a",
+    "ref_check_announcements",
     "ai_ref_get_new_puck",
     "ai_ref_call_penalty",
     "ai_ref_pickup_puck",
@@ -138285,7 +138367,7 @@
     "sub_55e72",
     "maybe_pull_goalie",
     "sub_593f5",
-    "sub_5b2c5",
+    "put_player_on_ice",
     "period_init",
     "setup_faceoff",
     "game_clock_tick",
@@ -138314,7 +138396,7 @@
     "game_loop",
     "ai_ref_faceoff",
     "ai_ref_normal",
-    "sub_4e71a",
+    "ref_check_announcements",
     "ai_ref_get_new_puck",
     "ai_ref_call_penalty",
     "ai_ref_pickup_puck",
@@ -138322,8 +138404,8 @@
     "ai_puck_faceoff",
     "ai_puck_faceoff2",
     "handle_line_change",
-    "sub_54af9",
-    "sub_55804",
+    "ai_consider_shot",
+    "ai_offense_decision",
     "sub_55e72",
     "maybe_pull_goalie",
     "sub_593f5",
@@ -138380,7 +138462,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_4da7b",
+    "faceoff_resolve",
     "body_check",
     "do_pass",
     "skating_accelerate"
@@ -138395,7 +138477,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_4da7b",
+    "faceoff_resolve",
     "body_check",
     "skating_accelerate"
    ]
@@ -138990,7 +139072,7 @@
    "kind": null,
    "xrefs": [
     "ai_ref_three_stars",
-    "sub_4e71a",
+    "ref_check_announcements",
     "record_penalty"
    ]
   },
@@ -139109,7 +139191,7 @@
     "init_match",
     "sub_480cc",
     "start_period",
-    "sub_4e71a",
+    "ref_check_announcements",
     "ai_ref_pickup_puck",
     "ai_ref_goto_faceoff",
     "ai_puck_faceoff2",
@@ -139145,7 +139227,7 @@
     "save_game",
     "savegame_io",
     "penalty_box_update",
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "draw_penalty_box_overlay",
     "update_announcer",
     "simulate_game_offscreen"
@@ -139162,7 +139244,7 @@
     "ai_puck_faceoff2",
     "save_game",
     "savegame_io",
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "draw_penalty_box_overlay",
     "update_announcer",
     "simulate_game_offscreen"
@@ -139176,7 +139258,7 @@
    "xrefs": [
     "game_loop",
     "play_game",
-    "load_announcer_clip"
+    "load_cutscene_clip"
    ]
   },
   {
@@ -139263,7 +139345,7 @@
    "kind": "ptr",
    "xrefs": [
     "savegame_io",
-    "load_announcer_clip"
+    "load_cutscene_clip"
    ]
   },
   {
@@ -139281,7 +139363,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "update_announcer"
    ]
   },
@@ -139293,7 +139375,7 @@
    "xrefs": [
     "game_loop",
     "play_game",
-    "load_announcer_clip"
+    "load_cutscene_clip"
    ]
   },
   {
@@ -139403,7 +139485,7 @@
     "start_period",
     "ai_ref_three_stars",
     "ai_goalie",
-    "sub_4e71a",
+    "ref_check_announcements",
     "sub_50b55",
     "sub_55d28",
     "sub_55e72",
@@ -139438,7 +139520,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_138d2",
+    "load_effect_frames",
     "sub_1ba85",
     "savegame_io"
    ]
@@ -139456,7 +139538,7 @@
     "intro_sequence",
     "match_sequence",
     "start_period",
-    "sub_4e71a",
+    "ref_check_announcements",
     "sub_5125f",
     "ai_puck_faceoff2"
    ]
@@ -139534,7 +139616,7 @@
    "xrefs": [
     "sub_14056",
     "ai_nearest_to_puck",
-    "sub_512a7",
+    "all_goto_positions",
     "ai_puck_faceoff2",
     "ai_all_goto_faceoff",
     "handle_line_change",
@@ -139573,7 +139655,7 @@
    "kind": null,
    "xrefs": [
     "puck_update",
-    "sub_512a7",
+    "all_goto_positions",
     "ai_puck_faceoff2",
     "ai_ref_penalty_shot",
     "score_goal",
@@ -139649,7 +139731,7 @@
     "ai_ref_goto_faceoff",
     "control_player",
     "sub_511b4",
-    "sub_512a7",
+    "all_goto_positions",
     "ai_puck_faceoff",
     "ai_puck_faceoff2",
     "ai_all_goto_faceoff",
@@ -139676,12 +139758,12 @@
     "sub_14056",
     "sub_4dcdd",
     "sub_511b4",
-    "sub_512a7",
+    "all_goto_positions",
     "ai_puck_faceoff",
     "ai_puck_faceoff2",
     "handle_line_change",
     "pull_goalie_logic",
-    "sub_541ca",
+    "two_line_pass_check",
     "check_offside",
     "period_init",
     "save_game",
@@ -139717,7 +139799,7 @@
     "period_init",
     "save_game",
     "savegame_io",
-    "sub_64102",
+    "count_defenders_ahead",
     "sub_6427f",
     "sub_64338",
     "dump_stats_log"
@@ -139736,9 +139818,9 @@
     "sub_4dcdd",
     "control_player",
     "pull_goalie_logic",
-    "sub_541ca",
-    "sub_54af9",
-    "sub_55804",
+    "two_line_pass_check",
+    "ai_consider_shot",
+    "ai_offense_decision",
     "check_offside",
     "sub_56f5a",
     "do_shot",
@@ -139747,7 +139829,7 @@
     "game_clock_tick",
     "save_game",
     "savegame_io",
-    "sub_62cf9",
+    "maybe_queue_infraction",
     "update_line_timers",
     "sub_63f72",
     "end_penalty_shot",
@@ -139867,7 +139949,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_5a4ad"
+    "stick_offsets_lookup"
    ]
   },
   {
@@ -139876,7 +139958,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_5a4ad"
+    "stick_offsets_lookup"
    ]
   },
   {
@@ -139953,12 +140035,15 @@
    ]
   },
   {
-   "name": "off_cca0a",
+   "name": "star_names",
    "addr": 838154,
    "size": 4,
    "kind": "ptr",
    "xrefs": [
     "ai_ref_three_stars"
+   ],
+   "comments": [
+    "1st 2nd 3rd"
    ]
   },
   {
@@ -140075,7 +140160,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_4da7b"
+    "faceoff_resolve"
    ]
   },
   {
@@ -140284,9 +140369,9 @@
    "kind": null,
    "xrefs": [
     "sub_59945",
-    "sub_59981",
+    "stop_crowd_loop",
     "play_sample_by_ptr",
-    "sub_599ee"
+    "sfx_set_volume"
    ]
   },
   {
@@ -140298,7 +140383,7 @@
     "sub_13e8f",
     "sub_13fa7",
     "update_ambient_audio",
-    "sub_59863",
+    "sound_resume_all",
     "savegame_io",
     "simulate_game_offscreen",
     "instant_replay"
@@ -140311,8 +140396,8 @@
    "kind": null,
    "xrefs": [
     "update_ambient_audio",
-    "sub_59748",
-    "sub_59863"
+    "sound_pause_all",
+    "sound_resume_all"
    ]
   },
   {
@@ -140322,8 +140407,8 @@
    "kind": null,
    "xrefs": [
     "update_ambient_audio",
-    "sub_59748",
-    "sub_59863"
+    "sound_pause_all",
+    "sound_resume_all"
    ]
   },
   {
@@ -140591,10 +140676,10 @@
    "kind": null,
    "xrefs": [
     "build_lines",
-    "sub_64a0b",
+    "lineup_player_ok",
     "sub_652d6",
     "sub_653be",
-    "sub_655cc",
+    "pick_player_for_position",
     "count_dressed_players"
    ]
   },
@@ -140604,7 +140689,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_64e60"
+    "choose_lineup_player"
    ]
   },
   {
@@ -140613,7 +140698,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_64e60"
+    "choose_lineup_player"
    ]
   },
   {
@@ -140622,7 +140707,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_64e60"
+    "choose_lineup_player"
    ]
   },
   {
@@ -140657,16 +140742,19 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "load_announcer_clip"
+    "load_cutscene_clip"
    ]
   },
   {
-   "name": "off_cd4dc",
+   "name": "message_strings",
    "addr": 840924,
    "size": 4,
    "kind": "ptr",
    "xrefs": [
     "draw_message_box"
+   ],
+   "comments": [
+    "RETURN GOALIE, PULL GOALIE, FACE-OFF, 2 LINE PASS, OFFSIDE, ICING, PENALTY"
    ]
   },
   {
@@ -146735,24 +146823,24 @@
     "team_info_screen",
     "start_period",
     "ai_ref_three_stars",
-    "sub_4e71a",
+    "ref_check_announcements",
     "speech_period_summary",
-    "sub_59aad",
-    "sub_59ad0",
-    "sub_59b0f",
-    "sub_59b3c",
-    "sub_59b88",
-    "sub_59bb5",
-    "sub_59bfc",
-    "sub_59c1d",
-    "sub_59c3e",
-    "sub_59c5f",
-    "sub_59c80",
-    "sub_59ca9",
-    "sub_59cdd",
-    "sub_59d16",
-    "sub_59d54",
-    "sub_59d71",
+    "speech_busy",
+    "say_goal_wrapper",
+    "say_star_wrapper",
+    "say_penalty_wrapper",
+    "say_penalty_shot_wrapper",
+    "say_game_intro_wrapper",
+    "say_period_score",
+    "say_nhl_intro",
+    "say_goodnight",
+    "say_lineups",
+    "say_elsenhl",
+    "say_highlight_intro_wrapper",
+    "say_series_result_wrapper",
+    "say_playoff_intro_wrapper",
+    "speech_stop",
+    "preload_speech_wrapper",
     "score_goal",
     "game_clock_tick",
     "update_lead_change",
@@ -146848,7 +146936,7 @@
    "kind": null,
    "xrefs": [
     "update_ambient_audio",
-    "sub_59748",
+    "sound_pause_all",
     "load_sound_config"
    ]
   },
@@ -147987,9 +148075,9 @@
     "play_game",
     "league_leaders_screen",
     "awards_screen",
-    "sub_138d2",
-    "sub_1395f",
-    "sub_13a2f",
+    "load_effect_frames",
+    "load_sprite_banks",
+    "load_rink_end_shapes",
     "load_player_graphics",
     "sub_13bb4",
     "show_scoreboard",
@@ -148041,8 +148129,8 @@
     "sub_40792",
     "select_human_team_dialog",
     "select_human_control_dialog",
-    "sub_479e9",
-    "load_announcer_clip",
+    "loading_screen",
+    "load_cutscene_clip",
     "load_team_palettes",
     "player_ratings_card",
     "free_agent_card",
@@ -148353,7 +148441,7 @@
    "kind": "ptr",
    "xrefs": [
     "findmemblock",
-    "sub_8d728",
+    "find_loaded_file",
     "sub_8d80c",
     "sub_8d958",
     "sub_8dae4",
@@ -152079,7 +152167,7 @@
    "size": 5,
    "kind": "string",
    "xrefs": [
-    "sub_a28f0"
+    "shpi_from_compressed"
    ],
    "text": "SHPI"
   },
@@ -157967,7 +158055,7 @@
    ]
   },
   {
-   "name": "unk_d8c18",
+   "name": "digit_shapes",
    "addr": 887832,
    "size": 0,
    "kind": null,
@@ -157975,6 +158063,9 @@
     "draw_player_number",
     "load_player_graphics",
     "sub_13bb4"
+   ],
+   "comments": [
+    "numshp.PPV \"%04d\" digits 0-9"
    ]
   },
   {
@@ -157993,13 +158084,16 @@
    ]
   },
   {
-   "name": "unk_d8c4c",
+   "name": "position_letter_shapes",
    "addr": 887884,
    "size": 0,
    "kind": null,
    "xrefs": [
     "draw_player_number",
     "load_player_graphics"
+   ],
+   "comments": [
+    "G D D L C R X"
    ]
   },
   {
@@ -158008,7 +158102,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_13a2f",
+    "load_rink_end_shapes",
     "sub_1b982",
     "highlights_play"
    ]
@@ -158036,7 +158130,7 @@
    "kind": null,
    "xrefs": [
     "sub_11136",
-    "sub_13a2f"
+    "load_rink_end_shapes"
    ]
   },
   {
@@ -158380,16 +158474,19 @@
    "xrefs": []
   },
   {
-   "name": "unk_d9980",
+   "name": "sprite_banks",
    "addr": 891264,
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_13867",
-    "sub_1395f",
+    "fill_sprite_frames",
+    "load_sprite_banks",
     "sub_1bab1",
     "sub_1baf3",
     "savegame_io"
+   ],
+   "comments": [
+    "23 loaded sprite bank pointers"
    ]
   },
   {
@@ -158399,7 +158496,7 @@
    "kind": null,
    "xrefs": [
     "draw_sprite_world",
-    "sub_13867"
+    "fill_sprite_frames"
    ],
    "comments": [
     "1134 shape pointers indexed by Entity.frame"
@@ -158422,13 +158519,13 @@
     "save_game",
     "savegame_io",
     "build_lines",
-    "sub_64a0b",
+    "lineup_player_ok",
     "sub_64ca8",
-    "sub_64e60",
+    "choose_lineup_player",
     "sub_652d6",
     "sub_653be",
     "sub_6552e",
-    "sub_655cc",
+    "pick_player_for_position",
     "count_dressed_players",
     "simulate_game_offscreen"
    ]
@@ -158517,7 +158614,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_4da7b"
+    "faceoff_resolve"
    ]
   },
   {
@@ -158536,7 +158633,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_4da7b"
+    "faceoff_resolve"
    ]
   },
   {
@@ -158663,13 +158760,13 @@
     "savegame_io",
     "show_penalty",
     "build_lines",
-    "sub_64a0b",
+    "lineup_player_ok",
     "sub_64ca8",
     "sub_652d6",
     "sub_653be",
-    "sub_655cc",
+    "pick_player_for_position",
     "count_dressed_players",
-    "sub_65b83",
+    "injury_check",
     "edit_lines_screen2",
     "sub_78366",
     "roster_dress_table",
@@ -158715,10 +158812,10 @@
     "sub_1c3f6",
     "sub_644a8",
     "sub_6455f",
-    "sub_64a0b",
+    "lineup_player_ok",
     "sub_64ca8",
-    "sub_64e60",
-    "sub_655cc"
+    "choose_lineup_player",
+    "pick_player_for_position"
    ]
   },
   {
@@ -158864,13 +158961,13 @@
     "save_game",
     "savegame_io",
     "build_lines",
-    "sub_64a0b",
+    "lineup_player_ok",
     "sub_64ca8",
-    "sub_64e60",
+    "choose_lineup_player",
     "sub_652d6",
     "sub_653be",
     "sub_6552e",
-    "sub_655cc",
+    "pick_player_for_position",
     "count_dressed_players",
     "simulate_game_offscreen"
    ]
@@ -161541,8 +161638,8 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_47951",
-    "sub_479e9",
+    "loading_screen_timer",
+    "loading_screen",
     "wait_sprite_fade"
    ]
   },
@@ -161552,8 +161649,8 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_47951",
-    "sub_479e9",
+    "loading_screen_timer",
+    "loading_screen",
     "wait_sprite_fade"
    ]
   },
@@ -161563,8 +161660,8 @@
    "size": 1,
    "kind": null,
    "xrefs": [
-    "sub_47951",
-    "sub_479e9"
+    "loading_screen_timer",
+    "loading_screen"
    ]
   },
   {
@@ -161573,8 +161670,8 @@
    "size": 1,
    "kind": null,
    "xrefs": [
-    "sub_47951",
-    "sub_479e9"
+    "loading_screen_timer",
+    "loading_screen"
    ]
   },
   {
@@ -161679,7 +161776,7 @@
    "xrefs": [
     "game_loop",
     "play_game",
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "draw_penalty_box_overlay"
    ]
   },
@@ -161807,7 +161904,7 @@
     "sub_593f5",
     "sub_5a2ee",
     "score_goal",
-    "sub_5b2c5",
+    "put_player_on_ice",
     "sub_5b881",
     "sub_5b97a",
     "sub_5ba89",
@@ -161934,7 +162031,7 @@
     "adjust_strategy",
     "time_announcements",
     "score_goal",
-    "sub_5b2c5",
+    "put_player_on_ice",
     "setup_faceoff",
     "end_of_period",
     "sub_63d69",
@@ -162058,7 +162155,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_4e71a",
+    "ref_check_announcements",
     "simulate_game_offscreen",
     "sub_7cea1"
    ]
@@ -162363,7 +162460,7 @@
     "choose_line",
     "sub_5a2ee",
     "score_goal",
-    "sub_5b2c5",
+    "put_player_on_ice",
     "sub_5b97a",
     "sub_5ba89",
     "assign_line_positions",
@@ -162453,7 +162550,7 @@
     "adjust_strategy",
     "time_announcements",
     "score_goal",
-    "sub_5b2c5",
+    "put_player_on_ice",
     "setup_faceoff",
     "end_of_period",
     "sub_63d69",
@@ -162543,7 +162640,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_4e71a",
+    "ref_check_announcements",
     "simulate_game_offscreen"
    ]
   },
@@ -162781,7 +162878,7 @@
    "kind": null,
    "xrefs": [
     "try_block_shot",
-    "sub_541ca"
+    "two_line_pass_check"
    ]
   },
   {
@@ -162848,9 +162945,9 @@
     "ai_ref_three_stars",
     "ai_defense_defense",
     "ai_goalie",
-    "sub_4c632",
-    "sub_4c8bd",
-    "sub_4c9fd",
+    "carrier_reset_target",
+    "carrier_near_net_check",
+    "carrier_scan_opponents",
     "ai_nearest_to_puck",
     "puck_update",
     "update_carrier",
@@ -162861,21 +162958,21 @@
     "control_player",
     "sub_50e5c",
     "sub_511b4",
-    "sub_512a7",
+    "all_goto_positions",
     "sub_51440",
     "ai_puck_faceoff",
     "ai_puck_faceoff2",
-    "sub_53537",
+    "ai_try_check",
     "pull_goalie_logic",
-    "sub_541ca",
+    "two_line_pass_check",
     "puck_player_interaction",
     "do_pass",
-    "sub_55493",
-    "sub_55804",
+    "ai_choose_pass_target",
+    "ai_offense_decision",
     "update_offside_flags",
     "sub_55d28",
-    "sub_57096",
-    "sub_57483",
+    "puck_hits_player",
+    "goalie_save",
     "shot_setup",
     "collide_boards",
     "collide_net",
@@ -162892,7 +162989,7 @@
     "sub_5d7f7",
     "setup_faceoff",
     "sub_5dd7c",
-    "sub_5e4c4",
+    "ai_ref_positioning",
     "ai_near_carrier_check",
     "ai_choose_direction",
     "save_game",
@@ -162901,7 +162998,7 @@
     "penalty_box_update",
     "start_stoppage",
     "sub_63f72",
-    "sub_64102",
+    "count_defenders_ahead",
     "update_camera",
     "replay_record_frame",
     "dump_stats_log",
@@ -162929,8 +163026,8 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_57096",
-    "sub_57483",
+    "puck_hits_player",
+    "goalie_save",
     "draw_sprites"
    ]
   },
@@ -162940,8 +163037,8 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_57096",
-    "sub_57483",
+    "puck_hits_player",
+    "goalie_save",
     "draw_sprites"
    ]
   },
@@ -162951,7 +163048,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_4da7b",
+    "faceoff_resolve",
     "sub_510a9",
     "ai_puck_faceoff"
    ]
@@ -162989,7 +163086,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_4da7b",
+    "faceoff_resolve",
     "find_switch_target",
     "setup_faceoff",
     "sub_64398"
@@ -163407,7 +163504,7 @@
    "xrefs": [
     "init_match",
     "start_period",
-    "sub_4da7b",
+    "faceoff_resolve",
     "ai_puck_faceoff2",
     "score_goal",
     "sub_62ea2",
@@ -163427,7 +163524,7 @@
    "xrefs": [
     "init_match",
     "start_period",
-    "sub_4da7b",
+    "faceoff_resolve",
     "ai_puck_faceoff2",
     "update_camera",
     "simulate_game_offscreen"
@@ -163453,7 +163550,7 @@
    "xrefs": [
     "init_match",
     "start_period",
-    "sub_4da7b",
+    "faceoff_resolve",
     "simulate_game_offscreen"
    ]
   },
@@ -163589,14 +163686,17 @@
    ]
   },
   {
-   "name": "unk_e00a0",
+   "name": "effect_frames",
    "addr": 917664,
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_138d2",
+    "load_effect_frames",
     "draw_nets_and_effects",
     "replay_draw_frame"
+   ],
+   "comments": [
+    "105 shape pointers of F000149.PPV (nets, ice marks, crowd)"
    ]
   },
   {
@@ -163632,7 +163732,7 @@
     "sub_480cc",
     "start_period",
     "ai_puck_faceoff2",
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "update_announcer",
     "simulate_game_offscreen"
    ]
@@ -163644,7 +163744,7 @@
    "kind": null,
    "xrefs": [
     "savegame_io",
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "update_announcer"
    ]
   },
@@ -163864,7 +163964,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_4da7b"
+    "faceoff_resolve"
    ]
   },
   {
@@ -163885,7 +163985,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_4da7b",
+    "faceoff_resolve",
     "ai_puck_faceoff2"
    ]
   },
@@ -163913,7 +164013,7 @@
    "size": 2,
    "kind": null,
    "xrefs": [
-    "sub_4da7b",
+    "faceoff_resolve",
     "ai_puck_faceoff2"
    ]
   },
@@ -163999,13 +164099,13 @@
    "xrefs": [
     "ai_center_defense",
     "ai_goalie",
-    "sub_4c9fd",
+    "carrier_scan_opponents",
     "puck_player_interaction",
-    "sub_57096",
+    "puck_hits_player",
     "bounce_off_boards",
     "sim_update_players",
     "setup_faceoff",
-    "sub_5e4c4",
+    "ai_ref_positioning",
     "ai_near_carrier_check",
     "skating_accelerate",
     "sub_63a37",
@@ -164025,10 +164125,10 @@
     "ai_center_defense",
     "ai_penalty_box",
     "ai_goalie",
-    "sub_4c9fd",
+    "carrier_scan_opponents",
     "ai_nearest_to_puck",
     "ai_shoot",
-    "sub_4da7b",
+    "faceoff_resolve",
     "ai_ref_get_new_puck",
     "ai_ref_call_penalty",
     "ai_ref_pickup_puck",
@@ -164042,17 +164142,17 @@
     "ai_puck_faceoff2",
     "ai_all_goto_faceoff",
     "ai_ref_penalty_shot",
-    "sub_53537",
+    "ai_try_check",
     "puck_player_interaction",
     "pass_button",
-    "sub_55493",
-    "sub_57096",
+    "ai_choose_pass_target",
+    "puck_hits_player",
     "shot_control",
     "bounce_off_boards",
     "sim_update_players",
     "sub_5cd4f",
     "setup_faceoff",
-    "sub_5e4c4",
+    "ai_ref_positioning",
     "ai_near_carrier_check",
     "skating_accelerate",
     "sub_63a37",
@@ -164068,7 +164168,7 @@
     "ai_wing_offense",
     "ai_bench",
     "ai_goalie",
-    "sub_4c9fd",
+    "carrier_scan_opponents",
     "collide_net",
     "bounce_off_boards",
     "sim_update_players",
@@ -164084,14 +164184,14 @@
     "ai_defense_defense",
     "ai_wing_offense",
     "ai_bench",
-    "sub_4b6f4",
+    "goalie_clamp_target",
     "ai_goalie",
-    "sub_4c9fd",
-    "sub_4da7b",
+    "carrier_scan_opponents",
+    "faceoff_resolve",
     "read_control_p1",
     "puck_player_interaction",
-    "sub_55493",
-    "sub_55804",
+    "ai_choose_pass_target",
+    "ai_offense_decision",
     "collide_boards",
     "collide_net",
     "bounce_off_boards",
@@ -164113,10 +164213,10 @@
     "ai_game_misconduct",
     "ai_penalty_box",
     "ai_goalie",
-    "sub_4c9fd",
+    "carrier_scan_opponents",
     "ai_puck_faceoff2",
     "ai_all_goto_faceoff",
-    "sub_55804",
+    "ai_offense_decision",
     "collide_pair",
     "sim_update_players",
     "apply_skating"
@@ -164132,13 +164232,13 @@
     "ai_game_misconduct",
     "ai_penalty_box",
     "ai_goalie",
-    "sub_4c9fd",
+    "carrier_scan_opponents",
     "ai_nearest_to_puck",
-    "sub_4da7b",
+    "faceoff_resolve",
     "ai_puck_faceoff2",
     "ai_all_goto_faceoff",
     "puck_player_interaction",
-    "sub_55804",
+    "ai_offense_decision",
     "collide_boards",
     "collide_net",
     "collide_pair",
@@ -164164,7 +164264,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_55804",
+    "ai_offense_decision",
     "collide_boards",
     "collide_net",
     "collide_pair",
@@ -164177,7 +164277,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_57096",
+    "puck_hits_player",
     "replay_seek_frames"
    ]
   },
@@ -164199,8 +164299,8 @@
     "ai_puck_carrier",
     "ai_nearest_to_puck",
     "puck_update",
-    "sub_4da7b",
-    "sub_4e292",
+    "faceoff_resolve",
+    "ref_skate_to_point",
     "ai_ref_get_new_puck",
     "ai_ref_call_penalty",
     "ai_ref_pickup_puck",
@@ -164215,14 +164315,14 @@
     "ai_puck_faceoff2",
     "ai_all_goto_faceoff",
     "body_check",
-    "sub_53537",
+    "ai_try_check",
     "sub_53ce5",
     "puck_player_interaction",
-    "sub_55493",
-    "sub_55804",
+    "ai_choose_pass_target",
+    "ai_offense_decision",
     "sub_56f5a",
-    "sub_57096",
-    "sub_57483",
+    "puck_hits_player",
+    "goalie_save",
     "collide_boards",
     "bounce_off_boards",
     "collide_pair",
@@ -164258,21 +164358,21 @@
     "ai_game_misconduct",
     "ai_penalty_box",
     "ai_bench",
-    "sub_4b467",
-    "sub_4b6f4",
+    "goalie_puck_vector",
+    "goalie_clamp_target",
     "ai_goalie",
     "ai_puck_carrier",
-    "sub_4c8bd",
-    "sub_4c9fd",
+    "carrier_near_net_check",
+    "carrier_scan_opponents",
     "ai_nearest_to_puck",
     "ai_faceoff",
     "start_line_change_ui",
-    "sub_4da7b",
+    "faceoff_resolve",
     "sub_4dcdd",
     "update_carrier",
     "sub_4dfa4",
     "ai_ref_normal",
-    "sub_4e292",
+    "ref_skate_to_point",
     "ai_ref_get_new_puck",
     "ai_ref_call_penalty",
     "ai_ref_pickup_puck",
@@ -164293,20 +164393,20 @@
     "ai_all_penalty_shot_wait",
     "ai_ref_penalty_shot",
     "body_check",
-    "sub_53537",
+    "ai_try_check",
     "sub_53ce5",
     "puck_player_interaction",
-    "sub_54af9",
+    "ai_consider_shot",
     "pass_button",
     "sub_551cf",
-    "sub_55493",
-    "sub_55804",
-    "sub_55a35",
+    "ai_choose_pass_target",
+    "ai_offense_decision",
+    "ai_desperation_shot",
     "check_offside",
-    "sub_56d06",
+    "attach_puck_to_stick",
     "sub_56f5a",
-    "sub_57096",
-    "sub_57483",
+    "puck_hits_player",
+    "goalie_save",
     "start_shot",
     "shot_control",
     "sub_57a3e",
@@ -164318,13 +164418,13 @@
     "sub_5a03b",
     "choose_line",
     "frame_offsets_lookup",
-    "sub_5a4ad",
-    "sub_5a534",
+    "stick_offsets_lookup",
+    "stick_offset_from_frame",
     "sim_update_players",
     "sub_5cd4f",
     "setup_faceoff",
     "end_of_period",
-    "sub_5e4c4",
+    "ai_ref_positioning",
     "ai_near_carrier_check",
     "ai_skate_towards",
     "ai_chase_puck",
@@ -164342,7 +164442,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_57096",
+    "puck_hits_player",
     "replay_seek_frames"
    ]
   },
@@ -164359,14 +164459,14 @@
     "ai_celebrate_goal",
     "ai_game_misconduct",
     "ai_bench",
-    "sub_4b6f4",
+    "goalie_clamp_target",
     "ai_goalie",
     "ai_puck_carrier",
-    "sub_4c8bd",
-    "sub_4c9fd",
+    "carrier_near_net_check",
+    "carrier_scan_opponents",
     "ai_nearest_to_puck",
     "puck_update",
-    "sub_4e292",
+    "ref_skate_to_point",
     "ai_ref_pickup_puck",
     "ai_breakaway",
     "ai_bench_wait",
@@ -164374,20 +164474,20 @@
     "ai_puck_faceoff2",
     "ai_all_goto_faceoff",
     "ai_all_penalty_shot_wait",
-    "sub_53537",
+    "ai_try_check",
     "sub_53ce5",
     "puck_player_interaction",
-    "sub_55493",
-    "sub_55804",
-    "sub_55a35",
-    "sub_57096",
-    "sub_57483",
+    "ai_choose_pass_target",
+    "ai_offense_decision",
+    "ai_desperation_shot",
+    "puck_hits_player",
+    "goalie_save",
     "collide_boards",
     "collide_net",
     "bounce_off_boards",
     "collide_pair",
-    "sub_5b2c5",
-    "sub_5e4c4",
+    "put_player_on_ice",
+    "ai_ref_positioning",
     "ai_near_carrier_check",
     "ai_skate_towards",
     "ai_chase_puck",
@@ -164420,16 +164520,16 @@
     "ai_game_misconduct",
     "ai_penalty_box",
     "ai_bench",
-    "sub_4b467",
-    "sub_4b6f4",
+    "goalie_puck_vector",
+    "goalie_clamp_target",
     "ai_goalie",
     "ai_puck_carrier",
-    "sub_4c8bd",
-    "sub_4c9fd",
+    "carrier_near_net_check",
+    "carrier_scan_opponents",
     "ai_nearest_to_puck",
     "ai_shoot",
     "ai_ref_normal",
-    "sub_4e292",
+    "ref_skate_to_point",
     "ai_ref_get_new_puck",
     "ai_ref_call_penalty",
     "ai_ref_pickup_puck",
@@ -164447,16 +164547,16 @@
     "ai_all_goto_faceoff",
     "ai_all_penalty_shot_wait",
     "ai_ref_penalty_shot",
-    "sub_53537",
+    "ai_try_check",
     "sub_53ce5",
     "puck_player_interaction",
     "sub_551cf",
-    "sub_55493",
-    "sub_55804",
-    "sub_55a35",
-    "sub_56d06",
-    "sub_57096",
-    "sub_57483",
+    "ai_choose_pass_target",
+    "ai_offense_decision",
+    "ai_desperation_shot",
+    "attach_puck_to_stick",
+    "puck_hits_player",
+    "goalie_save",
     "start_shot",
     "shot_control",
     "move_entity",
@@ -164465,13 +164565,13 @@
     "bounce_off_boards",
     "collide_pair",
     "frame_offsets_lookup",
-    "sub_5a4ad",
-    "sub_5a534",
+    "stick_offsets_lookup",
+    "stick_offset_from_frame",
     "sub_5b1ce",
-    "sub_5b2c5",
+    "put_player_on_ice",
     "sub_5cd4f",
     "setup_faceoff",
-    "sub_5e4c4",
+    "ai_ref_positioning",
     "ai_near_carrier_check",
     "ai_skate_towards",
     "ai_chase_puck",
@@ -164713,7 +164813,7 @@
    "xrefs": [
     "move_entity",
     "collide_neighbours",
-    "sub_59dbb",
+    "draw_rink_marks",
     "sub_5dd7c"
    ]
   },
@@ -164726,7 +164826,7 @@
     "puck_check_players",
     "move_entity",
     "collide_neighbours",
-    "sub_59dbb",
+    "draw_rink_marks",
     "sub_5ba89",
     "savegame_io"
    ],
@@ -164759,15 +164859,15 @@
     "ai_ref_pickup_puck",
     "next_key_event",
     "ai_puck_faceoff2",
-    "sub_57096",
-    "sub_57483",
+    "puck_hits_player",
+    "goalie_save",
     "period_init",
     "game_clock_tick",
     "save_game",
     "savegame_io",
     "sub_62343",
     "record_penalty",
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "simulate_game_offscreen"
    ]
   },
@@ -164788,7 +164888,7 @@
     "game_clock_tick",
     "sub_62343",
     "record_penalty",
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "simulate_game_offscreen"
    ]
   },
@@ -164867,7 +164967,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_4e71a",
+    "ref_check_announcements",
     "sub_5ba07",
     "save_game",
     "savegame_io",
@@ -164907,7 +165007,7 @@
    "xrefs": [
     "save_game",
     "savegame_io",
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "update_announcer"
    ]
   },
@@ -164919,7 +165019,7 @@
    "xrefs": [
     "save_game",
     "savegame_io",
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "update_announcer"
    ]
   },
@@ -164930,10 +165030,10 @@
    "kind": null,
    "xrefs": [
     "sub_14056",
-    "sub_4e71a",
+    "ref_check_announcements",
     "ai_ref_call_penalty",
     "sub_55e72",
-    "sub_5b2c5",
+    "put_player_on_ice",
     "save_game",
     "savegame_io"
    ]
@@ -164979,7 +165079,7 @@
     "sub_5df86",
     "save_game",
     "savegame_io",
-    "sub_62cf9",
+    "maybe_queue_infraction",
     "replay_record_frame"
    ]
   },
@@ -165028,7 +165128,7 @@
     "ai_goalie",
     "update_carrier",
     "ai_puck_faceoff2",
-    "sub_541ca",
+    "two_line_pass_check",
     "check_icing",
     "collide_corner",
     "save_game",
@@ -165053,10 +165153,10 @@
    "kind": null,
    "xrefs": [
     "compute_three_stars",
-    "sub_4da7b",
+    "faceoff_resolve",
     "sub_4dd51",
     "update_carrier",
-    "sub_541ca",
+    "two_line_pass_check",
     "check_offside",
     "goal_disallowed_check",
     "score_goal",
@@ -165322,7 +165422,7 @@
    "kind": null,
    "xrefs": [
     "move_entity",
-    "sub_59dbb",
+    "draw_rink_marks",
     "sub_5ba89",
     "savegame_io"
    ]
@@ -165578,7 +165678,7 @@
    "kind": null,
    "xrefs": [
     "build_lines",
-    "sub_64e60"
+    "choose_lineup_player"
    ]
   },
   {
@@ -165588,7 +165688,7 @@
    "kind": null,
    "xrefs": [
     "build_lines",
-    "sub_64e60"
+    "choose_lineup_player"
    ]
   },
   {
@@ -165599,7 +165699,7 @@
    "xrefs": [
     "assign_line_positions",
     "build_lines",
-    "sub_64e60"
+    "choose_lineup_player"
    ]
   },
   {
@@ -165609,7 +165709,7 @@
    "kind": null,
    "xrefs": [
     "build_lines",
-    "sub_64e60"
+    "choose_lineup_player"
    ]
   },
   {
@@ -165620,10 +165720,10 @@
    "xrefs": [
     "assign_line_positions",
     "build_lines",
-    "sub_64e60",
-    "sub_655cc",
+    "choose_lineup_player",
+    "pick_player_for_position",
     "count_dressed_players",
-    "sub_65b83"
+    "injury_check"
    ]
   },
   {
@@ -165633,7 +165733,7 @@
    "kind": null,
    "xrefs": [
     "build_lines",
-    "sub_64e60"
+    "choose_lineup_player"
    ]
   },
   {
@@ -165643,7 +165743,7 @@
    "kind": null,
    "xrefs": [
     "build_lines",
-    "sub_64a0b",
+    "lineup_player_ok",
     "sub_64ca8",
     "sub_6552e",
     "count_dressed_players",
@@ -165667,11 +165767,11 @@
    "xrefs": [
     "assign_line_positions",
     "build_lines",
-    "sub_64e60",
+    "choose_lineup_player",
     "sub_653be",
-    "sub_655cc",
+    "pick_player_for_position",
     "count_dressed_players",
-    "sub_65b83"
+    "injury_check"
    ]
   },
   {
@@ -165681,7 +165781,7 @@
    "kind": null,
    "xrefs": [
     "build_lines",
-    "sub_64e60"
+    "choose_lineup_player"
    ]
   },
   {
@@ -165691,7 +165791,7 @@
    "kind": null,
    "xrefs": [
     "build_lines",
-    "sub_64e60"
+    "choose_lineup_player"
    ]
   },
   {
@@ -165702,7 +165802,7 @@
    "xrefs": [
     "assign_line_positions",
     "build_lines",
-    "sub_64e60"
+    "choose_lineup_player"
    ]
   },
   {
@@ -165711,9 +165811,9 @@
    "size": 2,
    "kind": null,
    "xrefs": [
-    "sub_64a0b",
+    "lineup_player_ok",
     "sub_64ca8",
-    "sub_655cc",
+    "pick_player_for_position",
     "count_dressed_players"
    ]
   },
@@ -165723,9 +165823,9 @@
    "size": 2,
    "kind": null,
    "xrefs": [
-    "sub_64a0b",
+    "lineup_player_ok",
     "sub_64ca8",
-    "sub_655cc",
+    "pick_player_for_position",
     "count_dressed_players"
    ]
   },
@@ -168008,9 +168108,9 @@
     "game_loop",
     "play_game",
     "league_leaders_screen",
-    "sub_1395f",
+    "load_sprite_banks",
     "load_rink",
-    "load_announcer_clip",
+    "load_cutscene_clip",
     "load_music_banks",
     "locker_room_screen",
     "draw_jerseys",
@@ -168292,7 +168392,7 @@
    "size": 1,
    "kind": null,
    "xrefs": [
-    "sub_138d2"
+    "load_effect_frames"
    ]
   },
   {
@@ -168684,7 +168784,7 @@
    "size": 1,
    "kind": null,
    "xrefs": [
-    "sub_13a2f"
+    "load_rink_end_shapes"
    ]
   },
   {
@@ -168982,7 +169082,7 @@
    "size": 1,
    "kind": null,
    "xrefs": [
-    "sub_479e9"
+    "loading_screen"
    ]
   },
   {
@@ -169032,7 +169132,7 @@
     "sub_8d4e8",
     "sub_8d558",
     "sub_8d604",
-    "sub_8d728",
+    "find_loaded_file",
     "sub_93e4c",
     "sub_947d8"
    ]
@@ -169507,7 +169607,7 @@
    "kind": null,
    "xrefs": [
     "sub_9767c",
-    "sub_97740"
+    "bitlz_decode"
    ]
   },
   {
@@ -169517,7 +169617,7 @@
    "kind": null,
    "xrefs": [
     "sub_9767c",
-    "sub_97740"
+    "bitlz_decode"
    ]
   },
   {
@@ -169526,9 +169626,9 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_97740",
+    "bitlz_decode",
     "sub_979f8",
-    "sub_97a38"
+    "bytepair_decode"
    ]
   },
   {
@@ -169538,7 +169638,7 @@
    "kind": null,
    "xrefs": [
     "sub_979f8",
-    "sub_97a38"
+    "bytepair_decode"
    ]
   },
   {
@@ -169548,8 +169648,8 @@
    "kind": null,
    "xrefs": [
     "sub_9767c",
-    "sub_97740",
-    "sub_97a38"
+    "bitlz_decode",
+    "bytepair_decode"
    ]
   },
   {
@@ -169559,7 +169659,7 @@
    "kind": null,
    "xrefs": [
     "sub_979f8",
-    "sub_97a38"
+    "bytepair_decode"
    ]
   },
   {
@@ -169569,7 +169669,7 @@
    "kind": null,
    "xrefs": [
     "sub_979f8",
-    "sub_97a38"
+    "bytepair_decode"
    ]
   },
   {

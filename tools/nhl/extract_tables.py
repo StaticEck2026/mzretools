@@ -44,6 +44,10 @@ def main():
     t['infraction_is_penalty'] = list(le.read(0xc9123, 31))
     t['stoppage_duration'] = list(le.read(0xc9104, 13))
     t['net_y'] = shorts(le, 0xcd2f8, 6)
+    # apply_skating: heading change per step for (dir - facing) & 7; skating_accelerate: squared speed
+    # limit per energy level
+    t['turn_table'] = list(struct.unpack('<8i', le.read(0xccd78, 32)))
+    t['max_speed_sq'] = list(struct.unpack('<16i', le.read(0xccd98, 64)))
     t['ai_state_names'] = [cstr(le, le.read_u32(0xcd8c0 + i * 4)) for i in range(50)]
     t['ai_state_handlers'] = ['0x%x' % le.read_u32(0xc9161 + i * 4) for i in range(47)]
     t['team_abbrev'] = [cstr(le, le.read_u32(0xc5439 + i * 4)) for i in range(28)]

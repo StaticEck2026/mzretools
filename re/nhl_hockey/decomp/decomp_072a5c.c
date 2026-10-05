@@ -649,7 +649,7 @@ edit_lines_screen_a(undefined param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,
   if ((sound_enabled != '\0') && (dword_c721d != 0)) {
     sound_fade(dword_d2431,3,0x32);
   }
-  sub_479e9();
+  loading_screen();
   setscreen(dword_ea2b4);
   dword_d0b16 = 0xc1;
   dword_d0b1a = 0xc0;
@@ -2661,7 +2661,7 @@ void __watcall edit_lines_screen_b(undefined4 param_1)
     } while (iVar1 != 0);
   }
   *(undefined4 *)((int)piVar5 + -4) = 0x768a6;
-  sub_479e9();
+  loading_screen();
   *(undefined4 *)((int)piVar5 + 0x10) = dword_d0b16;
   *(undefined4 *)((int)piVar5 + 0x38) = dword_d0b1a;
   *(undefined4 *)((int)piVar5 + 0x3c) = dword_d0b1e;

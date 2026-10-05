@@ -11442,10 +11442,10 @@ loc_a26aa:
     times 2 db 0 ; 0a26ae (padding)
 
 ; ====================================================================================================
-; sub_a26b0  [0xa26b0, 148 bytes, 49 instructions]
-; called by: sub_a27c4
+; packed_read  [0xa26b0, 148 bytes, 49 instructions]
+; called by: loadfile_packed
 ; ====================================================================================================
-sub_a26b0:
+packed_read:
     push esi                                     ; 0a26b0 56
     push edi                                     ; 0a26b1 57
     push ebp                                     ; 0a26b2 55
@@ -11545,7 +11545,7 @@ sub_a2774:
     push ebx                                     ; 0a277d 53
     mov ecx, dword ptr [esp + 0xc]               ; 0a277e 8b4c240c
     push ecx                                     ; 0a2782 51
-    call sub_a27c4                               ; 0a2783 e83c000000
+    call loadfile_packed                         ; 0a2783 e83c000000
     add esp, 0xc                                 ; 0a2788 83c40c
     test eax, eax                                ; 0a278b 85c0
     je loc_a2791                                 ; 0a278d 7402
@@ -11565,7 +11565,7 @@ sub_a2794:
     push edx                                     ; 0a279a 52
     mov ebx, dword ptr [esp + 0xc]               ; 0a279b 8b5c240c
     push ebx                                     ; 0a279f 53
-    call sub_a27c4                               ; 0a27a0 e81f000000
+    call loadfile_packed                         ; 0a27a0 e81f000000
     add esp, 0xc                                 ; 0a27a5 83c40c
     ret                                          ; 0a27a8 c3
 
@@ -11581,17 +11581,18 @@ sub_a27ac:
     push edx                                     ; 0a27b2 52
     mov ebx, dword ptr [esp + 0xc]               ; 0a27b3 8b5c240c
     push ebx                                     ; 0a27b7 53
-    call sub_a27c4                               ; 0a27b8 e807000000
+    call loadfile_packed                         ; 0a27b8 e807000000
     add esp, 0xc                                 ; 0a27bd 83c40c
     ret                                          ; 0a27c0 c3
 
     db 0x8d, 0x40, 0x00 ; 0a27c1 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_a27c4  [0xa27c4, 290 bytes, 118 instructions]
+; loadfile_packed  [0xa27c4, 290 bytes, 118 instructions]
+; loads a file and unpacks it when it carries a pack code
 ; called by: loadfile_auto, sub_a2774, sub_a2794, sub_a27ac
 ; ====================================================================================================
-sub_a27c4:
+loadfile_packed:
     push esi                                     ; 0a27c4 56
     push edi                                     ; 0a27c5 57
     push ebp                                     ; 0a27c6 55
@@ -11599,7 +11600,7 @@ sub_a27c4:
     mov esi, dword ptr [esp + 0x20]              ; 0a27ca 8b742420
     mov edi, dword ptr [esp + 0x28]              ; 0a27ce 8b7c2428
     push esi                                     ; 0a27d2 56
-    call sub_8d728                               ; 0a27d3 e850affeff
+    call find_loaded_file                        ; 0a27d3 e850affeff
     add esp, 4                                   ; 0a27d8 83c404
     test eax, eax                                ; 0a27db 85c0
     jne loc_a28df                                ; 0a27dd 0f85fc000000
@@ -11626,7 +11627,7 @@ loc_a280b:
     push ecx                                     ; 0a2811 51
     mov ebp, dword ptr [esp + 0xc]               ; 0a2812 8b6c240c
     push ebp                                     ; 0a2816 55
-    call sub_a26b0                               ; 0a2817 e894feffff
+    call packed_read                             ; 0a2817 e894feffff
     add esp, 0x10                                ; 0a281c 83c410
     mov dword ptr [esp + 0xc], eax               ; 0a281f 8944240c
     test eax, eax                                ; 0a2823 85c0
@@ -11722,11 +11723,12 @@ loc_a28df:
     times 10 db 0 ; 0a28e6 (padding)
 
 ; ====================================================================================================
-; sub_a28f0  [0xa28f0, 453 bytes, 148 instructions]
-; called by: loadfile_auto, sub_a2ab8
+; shpi_from_compressed  [0xa28f0, 453 bytes, 148 instructions]
+; rebuilds an SHPI directory from a compressed (q*) bank
+; called by: loadfile_auto, packed_size
 ;   uses string "SHPI"
 ; ====================================================================================================
-sub_a28f0:
+shpi_from_compressed:
     push esi                                     ; 0a28f0 56
     push edi                                     ; 0a28f1 57
     push ebp                                     ; 0a28f2 55
@@ -11881,14 +11883,14 @@ loc_a2aaa:
     db 0x8d, 0x40, 0x00 ; 0a2ab5 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_a2ab8  [0xa2ab8, 16 bytes, 6 instructions]
+; packed_size  [0xa2ab8, 16 bytes, 6 instructions]
 ; called by: loadfile_auto
 ; ====================================================================================================
-sub_a2ab8:
+packed_size:
     push 0                                       ; 0a2ab8 6a00
     mov edx, dword ptr [esp + 8]                 ; 0a2aba 8b542408
     push edx                                     ; 0a2abe 52
-    call sub_a28f0                               ; 0a2abf e82cfeffff
+    call shpi_from_compressed                    ; 0a2abf e82cfeffff
     add esp, 8                                   ; 0a2ac4 83c408
     ret                                          ; 0a2ac7 c3
 

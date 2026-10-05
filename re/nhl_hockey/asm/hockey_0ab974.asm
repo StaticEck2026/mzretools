@@ -6852,7 +6852,7 @@ loc_b00f0:
 
 ; ====================================================================================================
 ; sub_b0100  [0xb0100, 40 bytes, 20 instructions]
-; called by: sub_a28f0
+; called by: shpi_from_compressed
 ; ====================================================================================================
 sub_b0100:
     push esi                                     ; 0b0100 56
@@ -6907,7 +6907,7 @@ loc_b0144:
 
 ; ====================================================================================================
 ; sub_b0148  [0xb0148, 38 bytes, 15 instructions]
-; called by: sub_a28f0
+; called by: shpi_from_compressed
 ; ====================================================================================================
 sub_b0148:
     sub esp, 4                                   ; 0b0148 83ec04
@@ -8057,7 +8057,7 @@ sub_b0a14:
     mov si, bx                                   ; 0b0a24 6689de
     mov ebx, edx                                 ; 0b0a27 89d3
     mov edx, esi                                 ; 0b0a29 89f2
-    call sub_90cea                               ; 0b0a2b e8ba02feff
+    call read_bytes                              ; 0b0a2b e8ba02feff
     mov word ptr [word_f799c], ax                ; 0b0a30 66a39c790f00
     mov eax, dword ptr [ebp - 0xc]               ; 0b0a36 8b45f4
     lea esp, [ebp - 8]                           ; 0b0a39 8d65f8
@@ -12410,7 +12410,7 @@ loc_b30b0:
 ; locateshape  [0xb30b4, 7 bytes, 2 instructions]
 ; locateshape(bank, "NAME"): finds a shape by its 4 character tag in an SHPI bank
 ; annotations: external
-; called by: main, league_leaders_screen, awards_screen, sub_138d2, sub_13a2f, load_player_graphics, sub_13bb4, show_scoreboard, ea_sports_intro, intro_sequence, credits_screen, pause_menu (+76 more)
+; called by: main, league_leaders_screen, awards_screen, load_effect_frames, load_rink_end_shapes, load_player_graphics, sub_13bb4, show_scoreboard, ea_sports_intro, intro_sequence, credits_screen, pause_menu (+76 more)
 ;   uses string "locateshape - '%-4.4s' SHAPE NOT FOUND\r\n"
 ; ====================================================================================================
 locateshape:
@@ -12420,7 +12420,7 @@ locateshape:
 
 ; ====================================================================================================
 ; sub_b30bb  [0xb30bb, 57 bytes, 22 instructions]
-; called by: sub_13867, player_card_screen, goalie_card_screen, sub_90b50
+; called by: fill_sprite_frames, player_card_screen, goalie_card_screen, sub_90b50
 ; ====================================================================================================
 sub_b30bb:
     xor ebx, ebx                                 ; 0b30bb 33db

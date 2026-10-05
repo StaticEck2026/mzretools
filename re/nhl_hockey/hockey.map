@@ -63,10 +63,14 @@ league_leaders_screen: code1 NEAR 2849-3187 R2849-3187
 team_abbrev_lookup: code1 NEAR 3188-331f R3188-331f
 #@ awardsi, season awards
 awards_screen: code1 NEAR 3320-3866 R3320-3866
-sub_13867: code1 NEAR 3867-38d1 R3867-38d1
-sub_138d2: code1 NEAR 38d2-395e R38d2-395e
-sub_1395f: code1 NEAR 395f-3a2e R395f-3a2e
-sub_13a2f: code1 NEAR 3a2f-3a90 R3a2f-3a90
+#@ fill_sprite_frames(bank): sprite_frames[f] = locateshape(bank, "%04d" % f) for the 50 frames of a bank
+fill_sprite_frames: code1 NEAR 3867-38d1 R3867-38d1
+#@ F000149.PPV: 105 effect/net frames into effect_frames
+load_effect_frames: code1 NEAR 38d2-395e R38d2-395e
+#@ loads the 23 player sprite banks "%d00_%d49.PPV"/"%d50_%d99.PPV"
+load_sprite_banks: code1 NEAR 395f-3a2e R395f-3a2e
+#@ trinknd.PPV
+load_rink_end_shapes: code1 NEAR 3a2f-3a90 R3a2f-3a90
 #@ HILIGHT/numshp .PPV banks and .VFN fonts of the match
 load_player_graphics: code1 NEAR 3a91-3bb3 R3a91-3bb3
 sub_13bb4: code1 NEAR 3bb4-3c78 R3bb4-3c78
@@ -224,8 +228,8 @@ sub_1b201: code1 NEAR b201-b282 Rb201-b282 unreferenced
 #@ chunked IFF reader ("Illegal chunk size")
 iff_parse: code1 NEAR b2a7-b817 Rb2a7-b817
 sub_1b818: code1 NEAR b818-b82a Rb818-b82a
-sub_1b82b: code1 NEAR b82b-b870 Rb82b-b870
-sub_1b871: code1 NEAR b871-b889 Rb871-b889
+iff_buffer_fill: code1 NEAR b82b-b870 Rb82b-b870
+iff_buffer_skip: code1 NEAR b871-b889 Rb871-b889
 sub_1b88a: code1 NEAR b88a-b8ab Rb88a-b8ab
 sub_1b8ac: code1 NEAR b8ac-b92d Rb8ac-b92d
 sub_1b92e: code1 NEAR b92e-b981 Rb92e-b981
@@ -574,8 +578,9 @@ sub_45282: code1 NEAR 35282-352a5 R35282-352a5
 sub_452a6: code1 NEAR 352a6-352c4 R352a6-352c4
 #@ pset/aps/apset/gset/ags/agset
 playoff_setup_screen: code1 NEAR 352c5-37950 R352c5-37950
-sub_47951: code1 NEAR 37951-379e8 R37951-379e8
-sub_479e9: code1 NEAR 379e9-37c30 R379e9-37c30
+loading_screen_timer: code1 NEAR 37951-379e8 R37951-379e8
+#@ "load" shape with palette cycling while files load
+loading_screen: code1 NEAR 379e9-37c30 R379e9-37c30
 wait_sprite_fade: code1 NEAR 37c31-37cd5 R37c31-37cd5
 #@ init_match: resets both teams, loads lines, player sprites
 init_match: code1 NEAR 37cd6-380cb R37cd6-380cb R38308-3830d
@@ -632,18 +637,20 @@ ai_door_open: code1 NEAR 3affb-3b02c R3affb-3b02c
 ai_exit_penalty_box: code1 NEAR 3b02d-3b12b R3b02d-3b12b
 #@ AI state 'bench'
 ai_bench: code1 NEAR 3b12c-3b466 R3b12c-3b466
-sub_4b467: code1 NEAR 3b467-3b4e8 R3b467-3b4e8 unreferenced
-sub_4b4e9: code1 NEAR 3b4e9-3b5c1 R3b4e9-3b5c1 unreferenced
+#@ vector from the goalie to the puck, clamped behind the goal line
+goalie_puck_vector: code1 NEAR 3b467-3b4e8 R3b467-3b4e8 unreferenced
+goalie_turn_towards: code1 NEAR 3b4e9-3b5c1 R3b4e9-3b5c1 unreferenced
 #@ AI state 'goalieget'
 ai_goalie_get_puck: code1 NEAR 3b5c2-3b6f3 R3b5c2-3b6f3
-sub_4b6f4: code1 NEAR 3b6f4-3b773 R3b6f4-3b773
+goalie_clamp_target: code1 NEAR 3b6f4-3b773 R3b6f4-3b773
 #@ AI state 'goalie': crease positioning, saves
 ai_goalie: code1 NEAR 3b774-3c631 R3b774-3c631
-sub_4c632: code1 NEAR 3c632-3c6f2 R3c632-3c6f2 unreferenced
+carrier_reset_target: code1 NEAR 3c632-3c6f2 R3c632-3c6f2 unreferenced
 #@ AI state 'puckc': CPU player with the puck
 ai_puck_carrier: code1 NEAR 3c6f3-3c8bc R3c6f3-3c8bc
-sub_4c8bd: code1 NEAR 3c8bd-3c9fc R3c8bd-3c9fc unreferenced
-sub_4c9fd: code1 NEAR 3c9fd-3cd4a R3c9fd-3cd4a
+carrier_near_net_check: code1 NEAR 3c8bd-3c9fc R3c8bd-3c9fc unreferenced
+#@ opponents within reach of the puck carrier
+carrier_scan_opponents: code1 NEAR 3c9fd-3cd4a R3c9fd-3cd4a
 #@ AI state 'nearest': chase the loose puck
 ai_nearest_to_puck: code1 NEAR 3cd4b-3d3f7 R3cd4b-3d3f7
 #@ AI state 'shoot'
@@ -663,7 +670,8 @@ sub_4d907: code1 NEAR 3d907-3d937 R3d907-3d937
 start_line_change_ui: code1 NEAR 3d938-3d9fb R3d938-3d9fb
 request_line_change_button: code1 NEAR 3d9fc-3da36 R3d9fc-3da36
 sub_4da37: code1 NEAR 3da37-3da7a R3da37-3da7a
-sub_4da7b: code1 NEAR 3da7b-3dcdc R3da7b-3dcdc
+#@ drops the puck (sfx 0xab) and picks the winner from the faceoff ratings
+faceoff_resolve: code1 NEAR 3da7b-3dcdc R3da7b-3dcdc
 sub_4dcdd: code1 NEAR 3dcdd-3dd50 R3dcdd-3dd50
 sub_4dd51: code1 NEAR 3dd51-3de13 R3dd51-3de13
 #@ puck follows the carrier's stick, carrier history, two-line pass check
@@ -673,8 +681,10 @@ sub_4dfa4: code1 NEAR 3dfa4-3dff6 R3dfa4-3dff6
 ai_ref_faceoff: code1 NEAR 3dff7-3e0bc R3dff7-3e0bc
 #@ AI state 'rnorm'
 ai_ref_normal: code1 NEAR 3e0bd-3e291 R3e0bd-3e291
-sub_4e292: code1 NEAR 3e292-3e719 R3e292-3e719
-sub_4e71a: code1 NEAR 3e71a-3e8ee R3e71a-3e8ee
+#@ referee pathing to the target point
+ref_skate_to_point: code1 NEAR 3e292-3e719 R3e292-3e719
+#@ period/clock based announcer events
+ref_check_announcements: code1 NEAR 3e71a-3e8ee R3e71a-3e8ee
 #@ AI state 'rgetnew'
 ai_ref_get_new_puck: code1 NEAR 3e8ef-3eb03 R3e8ef-3eb03
 #@ AI state 'rcallpen'
@@ -722,7 +732,8 @@ sub_510a9: code1 NEAR 410a9-41114 R410a9-41114
 sub_51115: code1 NEAR 41115-411b3 R41115-411b3
 sub_511b4: code1 NEAR 411b4-4125e R411b4-4125e
 sub_5125f: code1 NEAR 4125f-412a6 R4125f-412a6
-sub_512a7: code1 NEAR 412a7-4143f R412a7-4143f
+#@ sends every player to the faceoff/initial position state
+all_goto_positions: code1 NEAR 412a7-4143f R412a7-4143f
 sub_51440: code1 NEAR 41440-4147c R41440-4147c
 #@ AI state 'benwait'
 ai_bench_wait: code1 NEAR 4147d-416e0 R4147d-416e0
@@ -746,7 +757,8 @@ sub_532a2: code1 NEAR 432a2-432bc R432a2-432bc
 body_check: code1 NEAR 432bd-43386 R432bd-43386
 start_poke_check: code1 NEAR 43387-434ba R43387-434ba
 sub_534bb: code1 NEAR 434bb-43536 R434bb-43536
-sub_53537: code1 NEAR 43537-4369e R43537-4369e
+#@ random body check decision from the checking skill
+ai_try_check: code1 NEAR 43537-4369e R43537-4369e
 sub_5369f: code1 NEAR 4369f-4378c R4369f-4378c
 sub_5378d: code1 NEAR 4378d-4382b R4378d-4382b
 #@ outcome of a check: hits, knockdowns
@@ -755,15 +767,18 @@ sub_53ce5: code1 NEAR 43ce5-43e69 R43ce5-43e69
 #@ chance of injury after a heavy hit (queue_infraction 0x11)
 check_injury: code1 NEAR 43e6a-43f8b R43e6a-43f8b
 pull_goalie_logic: code1 NEAR 43f8c-44133 R43f8c-44133
-sub_54134: code1 NEAR 44134-441c9 R44134-441c9
-sub_541ca: code1 NEAR 441ca-44289 R441ca-44289
+#@ skill attribute used for the puck interaction depending on the current animation
+stickhandling_skill: code1 NEAR 44134-441c9 R44134-441c9
+#@ two line pass rule (option_flags & 2)
+two_line_pass_check: code1 NEAR 441ca-44289 R441ca-44289
 #@ pick up / deflect / stick handling for one player
 puck_player_interaction: code1 NEAR 4428a-448ab R4428a-448ab
 #@ puck against players adjacent in the draw order
 puck_check_players: code1 NEAR 448ac-4498f R448ac-4498f
 sub_54990: code1 NEAR 44990-44a52 R44990-44a52
 sub_54a53: code1 NEAR 44a53-44af8 R44a53-44af8
-sub_54af9: code1 NEAR 44af9-44c08 R44af9-44c08
+#@ shoot when in the slot (realism option)
+ai_consider_shot: code1 NEAR 44af9-44c08 R44af9-44c08
 sub_54c09: code1 NEAR 44c09-44d62 R44c09-44d62
 pass_to_entity: code1 NEAR 44d63-44df3 R44d63-44df3
 #@ chooses the receiver in the pushed direction, launches the puck
@@ -771,9 +786,11 @@ do_pass: code1 NEAR 44df4-4514d R44df4-4514d
 pass_button: code1 NEAR 4514e-451ae R4514e-451ae
 shoot_button: code1 NEAR 451af-451ce R451af-451ce
 sub_551cf: code1 NEAR 451cf-45492 R451cf-45492
-sub_55493: code1 NEAR 45493-45803 R45493-45803
-sub_55804: code1 NEAR 45804-45a34 R45804-45a34
-sub_55a35: code1 NEAR 45a35-45a9e R45a35-45a9e
+#@ random team mate with a clear lane
+ai_choose_pass_target: code1 NEAR 45493-45803 R45493-45803
+#@ shoot or pass depending on distance to the net and the clock
+ai_offense_decision: code1 NEAR 45804-45a34 R45804-45a34
+ai_desperation_shot: code1 NEAR 45a35-45a9e R45a35-45a9e
 check_offside: code1 NEAR 45a9f-45c6e R45a9f-45c6e
 update_offside_flags: code1 NEAR 45c6f-45d27 R45c6f-45d27
 sub_55d28: code1 NEAR 45d28-45e71 R45d28-45e71
@@ -783,13 +800,16 @@ sub_5601d: code1 NEAR 4601d-462da R4601d-462da
 knock_down: code1 NEAR 462db-46a53 R462db-46a53
 resolve_hook_hit: code1 NEAR 46a54-46b78 R46a54-46b78
 resolve_poke_hit: code1 NEAR 46b79-46d05 R46b79-46d05
-sub_56d06: code1 NEAR 46d06-46e51 R46d06-46e51
+#@ puck becomes carried by the player
+attach_puck_to_stick: code1 NEAR 46d06-46e51 R46d06-46e51
 check_icing: code1 NEAR 46e52-46ece R46e52-46ece
 #@ AI state 'pshad'
 ai_puck_shadow: code1 NEAR 46ecf-46f59 R46ecf-46f59
 sub_56f5a: code1 NEAR 46f5a-47095 R46f5a-47095
-sub_57096: code1 NEAR 47096-47482 R47096-47482
-sub_57483: code1 NEAR 47483-4786d R47483-4786d
+#@ deflection of a loose puck off a player's body/stick
+puck_hits_player: code1 NEAR 47096-47482 R47096-47482
+#@ goalie blocks/catches the puck, shot on goal bookkeeping
+goalie_save: code1 NEAR 47483-4786d R47483-4786d
 #@ aims at the net, picks the shotf/shotb animation
 start_shot: code1 NEAR 4786e-478f9 R4786e-478f9
 #@ wind-up / one-timer handling while the shot animation plays
@@ -824,37 +844,43 @@ sub_59493: code1 NEAR 49493-494b1 R49493-494b1
 sub_594b2: code1 NEAR 494b2-494cc R494b2-494cc
 #@ adjusts the ambient/crowd sample volume while sound is enabled
 update_ambient_audio: code1 NEAR 494cd-49747 R494cd-49747
-sub_59748: code1 NEAR 49748-497e2 R49748-497e2
+sound_pause_all: code1 NEAR 49748-497e2 R49748-497e2
 fade_ambient_audio: code1 NEAR 497e3-49862 R497e3-49862
-sub_59863: code1 NEAR 49863-49883 R49863-49883
+sound_resume_all: code1 NEAR 49863-49883 R49863-49883
 play_sfx: code1 NEAR 49884-49944 R49884-49944
 sub_59945: code1 NEAR 49945-49980 R49945-49980 unreferenced
-sub_59981: code1 NEAR 49981-499b8 R49981-499b8
+stop_crowd_loop: code1 NEAR 49981-499b8 R49981-499b8
 play_sample_by_ptr: code1 NEAR 499b9-499ed R499b9-499ed
-sub_599ee: code1 NEAR 499ee-49a10 R499ee-49a10
+sfx_set_volume: code1 NEAR 499ee-49a10 R499ee-49a10
 #@ play_speech(id): announcer / crowd sample tables
 play_speech: code1 NEAR 49a11-49a7d R49a11-49a7d
 #@ scor?per.bar announcer clips
 speech_period_summary: code1 NEAR 49a7e-49aac R49a7e-49aac
-sub_59aad: code1 NEAR 49aad-49acf R49aad-49acf
-sub_59ad0: code1 NEAR 49ad0-49b0e R49ad0-49b0e
-sub_59b0f: code1 NEAR 49b0f-49b3b R49b0f-49b3b
-sub_59b3c: code1 NEAR 49b3c-49b87 R49b3c-49b87
-sub_59b88: code1 NEAR 49b88-49bb4 R49b88-49bb4
-sub_59bb5: code1 NEAR 49bb5-49bfb R49bb5-49bfb
-sub_59bfc: code1 NEAR 49bfc-49c1c R49bfc-49c1c
-sub_59c1d: code1 NEAR 49c1d-49c3d R49c1d-49c3d
-sub_59c3e: code1 NEAR 49c3e-49c5e R49c3e-49c5e
-sub_59c5f: code1 NEAR 49c5f-49c7f R49c5f-49c7f
-sub_59c80: code1 NEAR 49c80-49ca8 R49c80-49ca8
-sub_59ca9: code1 NEAR 49ca9-49cdc R49ca9-49cdc
-sub_59cdd: code1 NEAR 49cdd-49d15 R49cdd-49d15
-sub_59d16: code1 NEAR 49d16-49d53 R49d16-49d53
-sub_59d54: code1 NEAR 49d54-49d70 R49d54-49d70
-sub_59d71: code1 NEAR 49d71-49d99 R49d71-49d99
+speech_busy: code1 NEAR 49aad-49acf R49aad-49acf
+say_goal_wrapper: code1 NEAR 49ad0-49b0e R49ad0-49b0e
+say_star_wrapper: code1 NEAR 49b0f-49b3b R49b0f-49b3b
+say_penalty_wrapper: code1 NEAR 49b3c-49b87 R49b3c-49b87
+say_penalty_shot_wrapper: code1 NEAR 49b88-49bb4 R49b88-49bb4
+say_game_intro_wrapper: code1 NEAR 49bb5-49bfb R49bb5-49bfb
+#@ scor?per.bar announcer clips
+say_period_score: code1 NEAR 49bfc-49c1c R49bfc-49c1c
+#@ nhl.int
+say_nhl_intro: code1 NEAR 49c1d-49c3d R49c1d-49c3d
+#@ goodnite.int
+say_goodnight: code1 NEAR 49c3e-49c5e R49c3e-49c5e
+#@ lineups.int
+say_lineups: code1 NEAR 49c5f-49c7f R49c5f-49c7f
+#@ elsenhl.int
+say_elsenhl: code1 NEAR 49c80-49ca8 R49c80-49ca8
+say_highlight_intro_wrapper: code1 NEAR 49ca9-49cdc R49ca9-49cdc
+say_series_result_wrapper: code1 NEAR 49cdd-49d15 R49cdd-49d15
+say_playoff_intro_wrapper: code1 NEAR 49d16-49d53 R49d16-49d53
+speech_stop: code1 NEAR 49d54-49d70 R49d54-49d70
+preload_speech_wrapper: code1 NEAR 49d71-49d99 R49d71-49d99
 #@ set_animation(entity, sequence)
 set_animation: code1 NEAR 49d9a-49dba R49d9a-49dba
-sub_59dbb: code1 NEAR 49dbb-49e68 R49dbb-49e68
+#@ sort/draw of ice marks (orphan chunk)
+draw_rink_marks: code1 NEAR 49dbb-49e68 R49dbb-49e68
 #@ switch_to_nearest(entity, player): control passes to the team mate closest to the puck
 switch_to_nearest: code1 NEAR 49e69-49fe0 R49e69-49fe0
 find_switch_target: code1 NEAR 49fe1-4a03a R49fe1-4a03a
@@ -867,8 +893,9 @@ sub_5a30c: code1 NEAR 4a30c-4a340 R4a30c-4a340
 predict_puck_goal_line: code1 NEAR 4a341-4a424 R4a341-4a424
 #@ x/y displacement of the current animation frame (table 0xcc148)
 frame_offsets_lookup: code1 NEAR 4a425-4a4ac R4a425-4a4ac
-sub_5a4ad: code1 NEAR 4a4ad-4a533 R4a4ad-4a533
-sub_5a534: code1 NEAR 4a534-4a580 R4a534-4a580
+#@ stick position per frame (table 0xcc7a4, frames 0x196-0x219 and 0x3ce-0x44f)
+stick_offsets_lookup: code1 NEAR 4a4ad-4a533 R4a4ad-4a533
+stick_offset_from_frame: code1 NEAR 4a534-4a580 R4a534-4a580
 adjust_strategy: code1 NEAR 4a581-4a668 R4a581-4a668
 sub_5a669: code1 NEAR 4a669-4a77b R4a669-4a77b
 #@ "one minute left" etc., strategy adjustments at 10:00 of the 2nd period
@@ -879,7 +906,8 @@ score_goal: code1 NEAR 4ab36-4b1cd R4ab36-4b1cd
 sub_5b1ce: code1 NEAR 4b1ce-4b297 R4b1ce-4b297
 #@ set_default_state(entity): AI state for the player's position
 set_default_state: code1 NEAR 4b298-4b2c4 R4b298-4b2c4
-sub_5b2c5: code1 NEAR 4b2c5-4b825 R4b2c5-4b825
+#@ put_player_on_ice(entity, roster_idx): assigns the roster player to the entity, bench/penalty states
+put_player_on_ice: code1 NEAR 4b2c5-4b825 R4b2c5-4b825
 sub_5b826: code1 NEAR 4b826-4b880 R4b826-4b880
 sub_5b881: code1 NEAR 4b881-4b979 R4b881-4b979
 sub_5b97a: code1 NEAR 4b97a-4b9d0 R4b97a-4b9d0
@@ -928,7 +956,8 @@ sub_5e0b0: code1 NEAR 4e0b0-4e0dc R4e0b0-4e0dc
 sub_5e0dd: code1 NEAR 4e0dd-4e16c R4e0dd-4e16c
 #@ apply_skating(entity, dir): turn towards dir, accelerate, stop
 apply_skating: code1 NEAR 4e16d-4e4c3 R4e16d-4e4c3
-sub_5e4c4: code1 NEAR 4e4c4-4e7fd R4e4c4-4e7fd
+#@ referee skates to his spot relative to the puck
+ai_ref_positioning: code1 NEAR 4e4c4-4e7fd R4e4c4-4e7fd
 ai_near_carrier_check: code1 NEAR 4e7fe-4e93a R4e7fe-4e93a
 #@ ai_skate_towards(entity, target): pathing helper used by the AI states
 ai_skate_towards: code1 NEAR 4e93b-4eb16 R4e93b-4eb16
@@ -968,7 +997,8 @@ sub_627f8: code1 NEAR 527f8-52806 R527f8-52806 unreferenced
 sub_62807: code1 NEAR 52807-52c36 R52807-52c36
 sub_62c37: code1 NEAR 52c37-52cd6 R52c37-52cd6
 sub_62cd7: code1 NEAR 52cd7-52cf8 R52cd7-52cf8 unreferenced
-sub_62cf9: code1 NEAR 52cf9-52d7f R52cf9-52d7f
+#@ filters rule events by the option flags before queue_infraction
+maybe_queue_infraction: code1 NEAR 52cf9-52d7f R52cf9-52d7f
 #@ queue_infraction(entity, event): records a rule event, boosts the crowd on big hits
 queue_infraction: code1 NEAR 52d80-52ea1 R52d80-52ea1
 sub_62ea2: code1 NEAR 52ea2-52ee8 R52ea2-52ee8
@@ -992,7 +1022,8 @@ update_lead_change: code1 NEAR 53c73-53d3b R53c73-53d3b
 sub_63d3c: code1 NEAR 53d3c-53d68 R53d3c-53d68
 sub_63d69: code1 NEAR 53d69-53f71 R53d69-53f71
 sub_63f72: code1 NEAR 53f72-54101 R53f72-54101
-sub_64102: code1 NEAR 54102-5427e R54102-5427e
+#@ defenders between the carrier and the net (breakaway detection)
+count_defenders_ahead: code1 NEAR 54102-5427e R54102-5427e
 sub_6427f: code1 NEAR 5427f-54337 R5427f-54337
 sub_64338: code1 NEAR 54338-54397 R54338-54397
 sub_64398: code1 NEAR 54398-54438 R54398-54438
@@ -1001,21 +1032,22 @@ sub_644a8: code1 NEAR 544a8-5455e R544a8-5455e
 sub_6455f: code1 NEAR 5455f-54613 R5455f-54613
 #@ builds the default lines from the roster ratings
 build_lines: code1 NEAR 54614-54a0a R54614-54a0a
-sub_64a0b: code1 NEAR 54a0b-54ca7 R54a0b-54ca7
+lineup_player_ok: code1 NEAR 54a0b-54ca7 R54a0b-54ca7
 sub_64ca8: code1 NEAR 54ca8-54e5f R54ca8-54e5f
-sub_64e60: code1 NEAR 54e60-552d5 R54e60-552d5
+choose_lineup_player: code1 NEAR 54e60-552d5 R54e60-552d5
 sub_652d6: code1 NEAR 552d6-553bd R552d6-553bd
 sub_653be: code1 NEAR 553be-5552d R553be-5552d
 sub_6552e: code1 NEAR 5552e-555cb R5552e-555cb
-sub_655cc: code1 NEAR 555cc-558f2 R555cc-558f2
+#@ chooses a roster player for a line position (D/G/forward)
+pick_player_for_position: code1 NEAR 555cc-558f2 R555cc-558f2
 count_dressed_players: code1 NEAR 558f3-55b47 R558f3-55b47
 sub_65b48: code1 NEAR 55b48-55b82 R55b48-55b82
-sub_65b83: code1 NEAR 55b83-55ca7 R55b83-55ca7
+injury_check: code1 NEAR 55b83-55ca7 R55b83-55ca7
 sub_65ca8: code1 NEAR 55ca8-55d00 R55ca8-55d00
 #@ moves camera towards the puck/carrier, bench camera during intermissions
 update_camera: code1 NEAR 55d01-56496 R55d01-56496
-#@ loads %04d shapes of an announcer .PPV portrait set
-load_announcer_clip: code1 NEAR 56497-565ac R56497-565ac
+#@ loads the %04d frames of a cutscene .PPV (fanom, goal, clap, siren, hook ...)
+load_cutscene_clip: code1 NEAR 56497-565ac R56497-565ac
 draw_penalty_box_overlay: code1 NEAR 565ad-56dd9 R565ad-56dd9
 sub_66dda: code1 NEAR 56dda-56e05 R56dda-56e05
 #@ drives announcer clips and the replay highlight timer
@@ -1392,9 +1424,9 @@ sub_8373e: code1 NEAR 7373e-7374c R7373e-7374c
 sub_8374d: code1 NEAR 7374d-7378b R7374d-7378b
 sub_8378c: code1 NEAR 7378c-737a7 R7378c-737a7
 sub_837a8: code1 NEAR 737a8-737d8 R737a8-737d8
-sub_837d9: code1 NEAR 737d9-737fa R737d9-737fa
-sub_837fb: code1 NEAR 737fb-7385e R737fb-7385e
-sub_8385f: code1 NEAR 7385f-73896 R7385f-73896
+bswap16: code1 NEAR 737d9-737fa R737d9-737fa
+read_be32: code1 NEAR 737fb-7385e R737fb-7385e
+read_clip_name: code1 NEAR 7385f-73896 R7385f-73896
 #@ loads a .VIV speech bank (XBRUCE2.VIV)
 speech_load_bank: code1 NEAR 73897-73bc6 R73897-73bc6
 sub_83bc7: code1 NEAR 73bc7-73bf2 R73bc7-73bf2
@@ -1576,7 +1608,8 @@ sub_8d5c0: code1 NEAR 7d5c0-7d5cf R7d5c0-7d5cf
 sub_8d5d0: code1 NEAR 7d5d0-7d601 R7d5d0-7d601 unreferenced
 sub_8d604: code1 NEAR 7d604-7d710 R7d604-7d710
 sub_8d714: code1 NEAR 7d714-7d727 R7d714-7d727
-sub_8d728: code1 NEAR 7d728-7d80b R7d728-7d80b
+#@ returns an already loaded copy of a file from the memory manager
+find_loaded_file: code1 NEAR 7d728-7d80b R7d728-7d80b
 sub_8d80c: code1 NEAR 7d80c-7d840 R7d80c-7d840 unreferenced
 sub_8d844: code1 NEAR 7d844-7d954 R7d844-7d954
 sub_8d958: code1 NEAR 7d958-7d98c R7d958-7d98c unreferenced
@@ -1786,7 +1819,8 @@ open: code1 NEAR 80c71-80c7f R80c71-80c7f external
 creat: code1 NEAR 80c80-80c93 R80c80-80c93 external
 sub_90c94: code1 NEAR 80c94-80ca7 R80c94-80ca7 unreferenced
 lseek: code1 NEAR 80ca8-80ce8 R80ca8-80ce8 external
-sub_90cea: code1 NEAR 80cea-80d13 R80cea-80d13
+#@ read_bytes(fd, count, buffer)
+read_bytes: code1 NEAR 80cea-80d13 R80cea-80d13
 sub_90d14: code1 NEAR 80d14-80d1a R80d14-80d1a
 #@ fillrect(x, y, w, h, color)
 fillrect: code1 NEAR 80d20-80ebe R80d20-80ebe external
@@ -1998,12 +2032,17 @@ sub_97350: code1 NEAR 87350-87628 R87350-87628
 sub_9762c: code1 NEAR 8762c-8767b R8762c-8767b
 sub_9767c: code1 NEAR 8767c-87712 R8767c-87712
 sub_97714: code1 NEAR 87714-8773f R87714-8773f
-sub_97740: code1 NEAR 87740-879f7 R87740-879f7
+#@ pack codes 30/32/34: bit coded LZ
+bitlz_decode: code1 NEAR 87740-879f7 R87740-879f7
 sub_979f8: code1 NEAR 879f8-87a37 R879f8-87a37
-sub_97a38: code1 NEAR 87a38-87bb4 R87a38-87bb4
-sub_97bb8: code1 NEAR 87bb8-87c2a R87bb8-87c2a
-sub_97c2c: code1 NEAR 87c2c-87cde R87c2c-87cde
-sub_97ce0: code1 NEAR 87ce0-87eb7 R87ce0-87eb7
+#@ pack code 46
+bytepair_decode: code1 NEAR 87a38-87bb4 R87a38-87bb4
+#@ pack codes 60/62/66: running sum
+delta_decode: code1 NEAR 87bb8-87c2a R87bb8-87c2a
+#@ pack code 7a
+pack7a_decode: code1 NEAR 87c2c-87cde R87c2c-87cde
+#@ EA RefPack 10FB/11FB decoder
+refpack_decode: code1 NEAR 87ce0-87eb7 R87ce0-87eb7
 #@ EA RefPack (QFS) decompression
 unpack: code1 NEAR 87eb8-88026 R87eb8-88026 external
 sub_98028: code1 NEAR 88028-88041 R88028-88041
@@ -2321,15 +2360,17 @@ sub_a1cc1: code1 NEAR 91cc1-91cf3 R91cc1-91cf3
 sub_a1cf4: code1 NEAR 91cf4-91ff1 R91cf4-91ff1
 sub_a2000: code1 NEAR 92000-92601 R92000-92601
 sub_a2610: code1 NEAR 92610-926ad R92610-926ad
-sub_a26b0: code1 NEAR 926b0-92743 R926b0-92743
+packed_read: code1 NEAR 926b0-92743 R926b0-92743
 sub_a2744: code1 NEAR 92744-92758 R92744-92758 unreferenced
 sub_a275c: code1 NEAR 9275c-92770 R9275c-92770 unreferenced
 sub_a2774: code1 NEAR 92774-92791 R92774-92791
 sub_a2794: code1 NEAR 92794-927a8 R92794-927a8 unreferenced
 sub_a27ac: code1 NEAR 927ac-927c0 R927ac-927c0 unreferenced
-sub_a27c4: code1 NEAR 927c4-928e5 R927c4-928e5
-sub_a28f0: code1 NEAR 928f0-92ab4 R928f0-92ab4
-sub_a2ab8: code1 NEAR 92ab8-92ac7 R92ab8-92ac7
+#@ loads a file and unpacks it when it carries a pack code
+loadfile_packed: code1 NEAR 927c4-928e5 R927c4-928e5
+#@ rebuilds an SHPI directory from a compressed (q*) bank
+shpi_from_compressed: code1 NEAR 928f0-92ab4 R928f0-92ab4
+packed_size: code1 NEAR 92ab8-92ac7 R92ab8-92ac7
 sub_a2ac8: code1 NEAR 92ac8-92ace R92ac8-92ace
 sub_a2acf: code1 NEAR 92acf-92ad9 R92acf-92ad9
 sub_a2adc: code1 NEAR 92adc-92aed R92adc-92aed
@@ -6072,7 +6113,8 @@ unk_cc9e4: data2 VAR c9e4
 unk_cc9e7: data2 VAR c9e7
 unk_cc9ea: data2 VAR c9ea
 unk_cc9ec: data2 VAR c9ec
-off_cca0a: data2 VAR ca0a
+#@ 1st 2nd 3rd
+star_names: data2 VAR ca0a
 unk_cca18: data2 VAR ca18
 unk_cca1a: data2 VAR ca1a
 unk_cca1c: data2 VAR ca1c
@@ -6145,7 +6187,8 @@ unk_cd473: data2 VAR d473
 off_cd498: data2 VAR d498
 off_cd4a0: data2 VAR d4a0
 unk_cd4b0: data2 VAR d4b0
-off_cd4dc: data2 VAR d4dc
+#@ RETURN GOALIE, PULL GOALIE, FACE-OFF, 2 LINE PASS, OFFSIDE, ICING, PENALTY
+message_strings: data2 VAR d4dc
 dword_cd4fa: data2 VAR d4fa
 word_cd4fc: data2 VAR d4fc
 word_cd4fe: data2 VAR d4fe
@@ -7887,9 +7930,11 @@ font_scor3b: data2 VAR 18b78
 joystick_state: data2 VAR 18b7c
 #@ 50 x 3 bytes sampled at 20 Hz
 control_ring: data2 VAR 18b80
-unk_d8c18: data2 VAR 18c18
+#@ numshp.PPV "%04d" digits 0-9
+digit_shapes: data2 VAR 18c18
 dword_d8c40: data2 VAR 18c40
-unk_d8c4c: data2 VAR 18c4c
+#@ G D D L C R X
+position_letter_shapes: data2 VAR 18c4c
 dword_d8c68: data2 VAR 18c68
 dword_d8c6c: data2 VAR 18c6c
 dword_d8c70: data2 VAR 18c70
@@ -7926,7 +7971,8 @@ unk_d98c3: data2 VAR 198c3
 unk_d98f2: data2 VAR 198f2
 unk_d9921: data2 VAR 19921
 unk_d9950: data2 VAR 19950
-unk_d9980: data2 VAR 19980
+#@ 23 loaded sprite bank pointers
+sprite_banks: data2 VAR 19980
 #@ 1134 shape pointers indexed by Entity.frame
 sprite_frames: data2 VAR 19a38
 unk_dabf0: data2 VAR 1abf0
@@ -8365,7 +8411,8 @@ byte_e0072: data2 VAR 20072
 byte_e0073: data2 VAR 20073
 byte_e0074: data2 VAR 20074
 dword_e009c: data2 VAR 2009c
-unk_e00a0: data2 VAR 200a0
+#@ 105 shape pointers of F000149.PPV (nets, ice marks, crowd)
+effect_frames: data2 VAR 200a0
 dword_e0220: data2 VAR 20220
 dword_e0230: data2 VAR 20230
 dword_e0244: data2 VAR 20244

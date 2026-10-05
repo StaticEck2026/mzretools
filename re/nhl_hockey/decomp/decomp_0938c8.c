@@ -4015,10 +4015,10 @@ undefined8 __watcall sub_97714(undefined4 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_97740 @ 0x97740 [__watcall]
+// bitlz_decode @ 0x97740 [__watcall]
 // ================================================================================================
 
-int __watcall sub_97740(byte *param_1,char *unaff_EDX,int unaff_EBX)
+int __watcall bitlz_decode(byte *param_1,char *unaff_EDX,int unaff_EBX)
 
 {
   char cVar1;
@@ -4183,10 +4183,10 @@ void __watcall sub_979f8(byte param_1)
 
 
 // ================================================================================================
-// sub_97a38 @ 0x97a38 [__watcall]
+// bytepair_decode @ 0x97a38 [__watcall]
 // ================================================================================================
 
-int __watcall sub_97a38(byte *param_1,byte *unaff_EDX)
+int __watcall bytepair_decode(byte *param_1,byte *unaff_EDX)
 
 {
   byte bVar1;
@@ -4261,10 +4261,10 @@ int __watcall sub_97a38(byte *param_1,byte *unaff_EDX)
 
 
 // ================================================================================================
-// sub_97bb8 @ 0x97bb8 [__watcall]
+// delta_decode @ 0x97bb8 [__watcall]
 // ================================================================================================
 
-int __watcall sub_97bb8(byte *param_1,char *unaff_EDX)
+int __watcall delta_decode(byte *param_1,char *unaff_EDX)
 
 {
   char *pcVar1;
@@ -4303,10 +4303,10 @@ int __watcall sub_97bb8(byte *param_1,char *unaff_EDX)
 
 
 // ================================================================================================
-// sub_97c2c @ 0x97c2c [__watcall]
+// pack7a_decode @ 0x97c2c [__watcall]
 // ================================================================================================
 
-int __watcall sub_97c2c(byte *param_1,byte *unaff_EDX)
+int __watcall pack7a_decode(byte *param_1,byte *unaff_EDX)
 
 {
   byte bVar1;
@@ -4368,10 +4368,10 @@ int __watcall sub_97c2c(byte *param_1,byte *unaff_EDX)
 
 
 // ================================================================================================
-// sub_97ce0 @ 0x97ce0 [__watcall]
+// refpack_decode @ 0x97ce0 [__watcall]
 // ================================================================================================
 
-int __watcall sub_97ce0(byte *param_1,byte *unaff_EDX,int unaff_EBX)
+int __watcall refpack_decode(byte *param_1,byte *unaff_EDX,int unaff_EBX)
 
 {
   byte bVar1;
@@ -4541,7 +4541,7 @@ LAB_00097fcb:
         else {
           if (bVar1 < 0x73) goto LAB_00097fbe;
           if ((0x79 < bVar1) && (bVar1 < 0x7c)) {
-            local_10 = sub_97c2c(pbVar3,param_2);
+            local_10 = pack7a_decode(pbVar3,param_2);
             goto LAB_00098009;
           }
         }
@@ -4550,13 +4550,13 @@ LAB_00097fcb:
       if ((bVar1 < 0x62) || ((0x62 < bVar1 && (bVar1 != 0x66)))) goto LAB_00097fef;
     }
 LAB_00097fbe:
-    iVar2 = sub_97bb8(pbVar3,param_2);
+    iVar2 = delta_decode(pbVar3,param_2);
     goto LAB_00098009;
   }
   if (bVar1 < 0x32) {
     if (0xf < bVar1) {
       if (bVar1 < 0x11) {
-        iVar2 = sub_97ce0(pbVar3,param_2,1);
+        iVar2 = refpack_decode(pbVar3,param_2,1);
         goto LAB_00098009;
       }
       if (bVar1 == 0x30) goto LAB_00097f9f;
@@ -4565,13 +4565,13 @@ LAB_00097fbe:
   else {
     if (bVar1 < 0x33) {
 LAB_00097f9f:
-      iVar2 = sub_97740(pbVar3,param_2,1);
+      iVar2 = bitlz_decode(pbVar3,param_2,1);
       goto LAB_00098009;
     }
     if (0x33 < bVar1) {
       if (bVar1 < 0x35) goto LAB_00097f9f;
       if (bVar1 == 0x46) {
-        iVar2 = sub_97a38(pbVar3,param_2);
+        iVar2 = bytepair_decode(pbVar3,param_2);
         goto LAB_00098009;
       }
     }
@@ -5702,19 +5702,19 @@ undefined4 * loadfile_auto(undefined4 param_1,uint param_2,undefined4 param_3)
   undefined local_70 [100];
   
   uVar1 = sub_a2610();
-  puVar2 = (undefined4 *)sub_8d728(local_70);
+  puVar2 = (undefined4 *)find_loaded_file(local_70);
   if (puVar2 == (undefined4 *)0x0) {
     iVar3 = stricmp(uVar1,&aVsh);
     if ((iVar3 != 0) && (iVar3 = stricmp(uVar1,&aQvs), iVar3 != 0)) {
-      puVar2 = (undefined4 *)sub_a27c4(local_70,param_2,param_3);
+      puVar2 = (undefined4 *)loadfile_packed(local_70,param_2,param_3);
       return puVar2;
     }
-    puVar4 = (undefined4 *)sub_a27c4(local_70,param_2 ^ 0x20,param_3);
+    puVar4 = (undefined4 *)loadfile_packed(local_70,param_2 ^ 0x20,param_3);
     puVar2 = puVar4;
     if (puVar4 != (undefined4 *)0x0) {
-      uVar1 = sub_a2ab8(*puVar4);
+      uVar1 = packed_size(*puVar4);
       puVar2 = (undefined4 *)reservemem_locked(local_70,uVar1,param_2,param_3);
-      sub_a28f0(*puVar4,*puVar2);
+      shpi_from_compressed(*puVar4,*puVar2);
       releasememblock(puVar4);
     }
   }

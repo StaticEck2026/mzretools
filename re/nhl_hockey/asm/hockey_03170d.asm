@@ -1869,7 +1869,7 @@ loc_32ece:
     xor ebx, ebx                                 ; 032ef3 31db
     mov dword ptr [dword_c721d], ebx             ; 032ef5 891d1d720c00
 loc_32efb:
-    call sub_479e9                               ; 032efb e8e94a0100
+    call loading_screen                          ; 032efb e8e94a0100
 loc_32f00:
     mov eax, esi                                 ; 032f00 89f0
     call play_game                               ; 032f02 e802eefdff
@@ -4133,7 +4133,7 @@ loc_348de:
     xor esi, esi                                 ; 034903 31f6
     mov dword ptr [dword_c721d], esi             ; 034905 89351d720c00
 loc_3490b:
-    call sub_479e9                               ; 03490b e8d9300100
+    call loading_screen                          ; 03490b e8d9300100
     mov dword ptr [dword_c65c0], cal_hub_a       ; 034910 c705c0650c005013..
     mov dword ptr [dword_c65c4], cal_hub_b       ; 03491a c705c4650c00b114..
     mov dword ptr [dword_c65c8], cal_hub_c       ; 034924 c705c8650c00c415..
@@ -6879,7 +6879,7 @@ loc_372c9:
 loc_372f6:
     cmp dword ptr [edi], 0                       ; 0372f6 833f00
     jl loc_37300                                 ; 0372f9 7c05
-    call sub_479e9                               ; 0372fb e8e9060100
+    call loading_screen                          ; 0372fb e8e9060100
 loc_37300:
     xor ecx, ecx                                 ; 037300 31c9
     mov cl, byte ptr [byte_ddd42]                ; 037302 8a0d42dd0d00

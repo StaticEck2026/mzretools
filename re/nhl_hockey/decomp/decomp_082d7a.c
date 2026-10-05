@@ -157,7 +157,7 @@ LAB_00082f66:
         dword_d2350 = -1;
         dword_c541f = 8;
         play_sample_by_ptr(uVar1,uVar1);
-        sub_599ee();
+        sfx_set_volume();
         sub_8f1fe(extraout_EDX);
         sub_30f12();
       }
@@ -504,10 +504,10 @@ sub_837a8(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined
 
 
 // ================================================================================================
-// sub_837d9 @ 0x837d9 [__watcall]
+// bswap16 @ 0x837d9 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_837d9(uint param_1,undefined4 unaff_EDX)
+undefined8 __watcall bswap16(uint param_1,undefined4 unaff_EDX)
 
 {
   __CHK(8);
@@ -516,10 +516,10 @@ undefined8 __watcall sub_837d9(uint param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_837fb @ 0x837fb [__watcall]
+// read_be32 @ 0x837fb [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_837fb(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall read_be32(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   undefined2 in_DS;
@@ -528,18 +528,18 @@ undefined8 __watcall sub_837fb(undefined4 param_1,undefined4 unaff_EDX)
   
   __CHK(0x20);
   uStack_14 = uStack_14 & 0xffffff;
-  sub_90cea(param_1,1,(int)&uStack_14 + 2,in_DS,auStack_18);
-  sub_90cea(param_1,1,(int)&uStack_14 + 1,in_DS,auStack_18);
-  sub_90cea(param_1,1,&uStack_14,in_DS,auStack_18);
+  read_bytes(param_1,1,(int)&uStack_14 + 2,in_DS,auStack_18);
+  read_bytes(param_1,1,(int)&uStack_14 + 1,in_DS,auStack_18);
+  read_bytes(param_1,1,&uStack_14,in_DS,auStack_18);
   return CONCAT44(unaff_EDX,uStack_14);
 }
 
 
 // ================================================================================================
-// sub_8385f @ 0x8385f [__watcall]
+// read_clip_name @ 0x8385f [__watcall]
 // ================================================================================================
 
-void __watcall sub_8385f(char *param_1,undefined4 unaff_EDX)
+void __watcall read_clip_name(char *param_1,undefined4 unaff_EDX)
 
 {
   char cVar1;
@@ -548,7 +548,7 @@ void __watcall sub_8385f(char *param_1,undefined4 unaff_EDX)
   
   __CHK(0x1c);
   do {
-    sub_90cea(unaff_EDX,1,param_1,in_DS,auStack_14);
+    read_bytes(unaff_EDX,1,param_1,in_DS,auStack_14);
     cVar1 = *param_1;
     param_1 = param_1 + 1;
   } while (cVar1 != '\0');
@@ -600,24 +600,24 @@ speech_load_bank(char *param_1,undefined4 unaff_EDX,undefined4 param_3,undefined
     *(undefined4 *)(dword_ed7b0 + 0x3b6c) = 0;
     *(undefined4 *)(dword_ed7b0 + 0x3b74) = 0;
     uVar7 = (undefined2)((uint)unaff_ECX >> 0x10);
-    sub_90cea(CONCAT22(uStack_26,local_28),2,(int)&uStack_1a + 2,CONCAT22(uVar7,in_DS),local_30);
-    uVar2 = sub_837d9(uStack_1a >> 0x10);
+    read_bytes(CONCAT22(uStack_26,local_28),2,(int)&uStack_1a + 2,CONCAT22(uVar7,in_DS),local_30);
+    uVar2 = bswap16(uStack_1a >> 0x10);
     *(undefined2 *)(dword_ed7b0 + 0x3b8d) = uVar2;
-    sub_90cea(CONCAT22(uStack_26,local_28),2,asStack_24,CONCAT22(uVar7,in_DS),local_30);
-    uVar2 = sub_837d9((int)asStack_24[0]);
+    read_bytes(CONCAT22(uStack_26,local_28),2,asStack_24,CONCAT22(uVar7,in_DS),local_30);
+    uVar2 = bswap16((int)asStack_24[0]);
     *(undefined2 *)(dword_ed7b0 + 0x3b8f) = uVar2;
     uVar6 = CONCAT22(uVar7,in_DS);
-    sub_90cea(CONCAT22(uStack_26,local_28),2,auStack_20 + 2,uVar6,local_30);
-    uVar2 = sub_837d9((int)(short)auStack_20[2]);
+    read_bytes(CONCAT22(uStack_26,local_28),2,auStack_20 + 2,uVar6,local_30);
+    uVar2 = bswap16((int)(short)auStack_20[2]);
     *(undefined2 *)(dword_ed7b0 + 0x3b91) = uVar2;
     for (iVar4 = 0; iVar4 < *(int *)(dword_ed7b0 + 0x3b8f) >> 0x10; iVar4 = iVar4 + 1) {
       iVar8 = iVar4 * 0x26;
       *(undefined4 *)(iVar8 + 0xe + dword_ed7b0) = 0;
-      uVar5 = sub_837fb(CONCAT22(uStack_26,local_28));
+      uVar5 = read_be32(CONCAT22(uStack_26,local_28));
       *(undefined4 *)(iVar8 + 0x12 + dword_ed7b0) = uVar5;
-      uVar5 = sub_837fb(CONCAT22(uStack_26,local_28));
+      uVar5 = read_be32(CONCAT22(uStack_26,local_28));
       *(undefined4 *)(dword_ed7b0 + 0x1a + iVar8) = uVar5;
-      sub_8385f(dword_ed7b0 + iVar8,CONCAT22(uStack_26,local_28));
+      read_clip_name(dword_ed7b0 + iVar8,CONCAT22(uStack_26,local_28));
       *(undefined4 *)(iVar8 + 0x22 + dword_ed7b0) = 0;
     }
     for (iVar4 = 0; iVar8 = *(int *)(dword_ed7b0 + 0x3b8f) >> 0x10, iVar4 < iVar8; iVar4 = iVar4 + 1
@@ -626,15 +626,15 @@ speech_load_bank(char *param_1,undefined4 unaff_EDX,undefined4 param_3,undefined
       iVar8 = *(int *)(iVar1 + 0x12 + dword_ed7b0);
       lseek(CONCAT22(uStack_26,local_28),iVar8,0);
       uVar2 = (undefined2)((uint)uVar6 >> 0x10);
-      sub_90cea(CONCAT22(uStack_26,local_28),2,auStack_20,CONCAT22(uVar2,in_DS),local_30);
+      read_bytes(CONCAT22(uStack_26,local_28),2,auStack_20,CONCAT22(uVar2,in_DS),local_30);
       uVar3 = auStack_20[0] & 0xff;
       auStack_20[0] = auStack_20[0] >> 8;
       auStack_20[1] = 0;
       if (uVar3 == 0x47) {
         lseek(CONCAT22(uStack_26,local_28),iVar8 + 6,0);
         uVar6 = CONCAT22(uVar2,in_DS);
-        sub_90cea(CONCAT22(uStack_26,local_28),2,&local_2c,uVar6,local_30);
-        local_2c = sub_837d9(local_2c);
+        read_bytes(CONCAT22(uStack_26,local_28),2,&local_2c,uVar6,local_30);
+        local_2c = bswap16(local_2c);
         local_2c = local_2c + -5;
         *(int *)(dword_ed7b0 + 0x16 + iVar1) = local_2c;
         lVar9 = (longdouble)sub_961d0();
@@ -702,7 +702,7 @@ void __watcall sub_83bf3(int param_1,undefined4 unaff_EDX)
   iVar1 = sub_972f0(unaff_EDX);
   iStack_18 = (local_20 - iVar2) + 5000 + iVar1;
   lseek(iVar3,local_1c,0);
-  sub_90cea(iVar3,iVar2,iStack_18,CONCAT22(extraout_var,in_DS),local_24);
+  read_bytes(iVar3,iVar2,iStack_18,CONCAT22(extraout_var,in_DS),local_24);
   iVar2 = sub_98028(iStack_18,iVar1,iVar2);
   cVar4 = '\0';
   for (iVar3 = 0; iVar3 < iVar2 + -5; iVar3 = iVar3 + 1) {
@@ -775,7 +775,7 @@ void __watcall sub_83d78(int param_1)
   __fd = *(int *)(dword_ed7b0 + 0x3b7c);
   uStack_1c = *(undefined4 *)(dword_ed7b0 + 0x1a + param_1 * 0x26);
   lseek(__fd,*(__off_t *)(dword_ed7b0 + 0x12 + param_1 * 0x26),0);
-  sub_90cea(__fd,uStack_1c,iVar1,in_DS,&local_20);
+  read_bytes(__fd,uStack_1c,iVar1,in_DS,&local_20);
   *(undefined4 *)(dword_ed7b0 + 0x22 + param_1 * 0x26) = 1;
   *(int *)(dword_ed7b0 + 0x3b6c) = *(int *)(dword_ed7b0 + 0x3b6c) + local_20;
   *(int *)(dword_ed7b0 + 0x3b74) = *(int *)(dword_ed7b0 + 0x3b74) + 1;
@@ -5112,7 +5112,7 @@ undefined8 __watcall playoff_tree_screen(int *param_1,undefined4 unaff_EDX)
       dword_c721d = 0;
       local_24 = 1;
     }
-    sub_479e9();
+    loading_screen();
     sub_8b85b();
     sub_10712();
     dword_c65c0 = exh_hub_sports_central;
@@ -5241,7 +5241,7 @@ undefined8 __watcall playoff_tree_screen(int *param_1,undefined4 unaff_EDX)
       uVar3 = file_open_read(acStack_48,param_1);
       if (uVar3 == 0) {
         uStack_1c = uVar3;
-        sub_479e9();
+        loading_screen();
       }
       else {
         *param_1 = -1;

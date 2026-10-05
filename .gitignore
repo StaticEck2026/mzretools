@@ -19,3 +19,4 @@ diagrams/*.png
 re/**/*.elf
 re/**/*.exe
 re/**/*.EXE
+godot/**/.godot/

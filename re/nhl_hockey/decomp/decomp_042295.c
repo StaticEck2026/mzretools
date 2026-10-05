@@ -2731,11 +2731,12 @@ LAB_00047189:
 
 
 // ================================================================================================
-// sub_47951 @ 0x47951 [__watcall]
+// loading_screen_timer @ 0x47951 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_47951(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+loading_screen_timer
+          (undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   uint uVar1;
@@ -2759,10 +2760,10 @@ sub_47951(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined
 
 
 // ================================================================================================
-// sub_479e9 @ 0x479e9 [__watcall]
+// loading_screen @ 0x479e9 [__watcall]
 // ================================================================================================
 
-void __watcall sub_479e9(void)
+void __watcall loading_screen(void)
 
 {
   void *__src;
@@ -2834,7 +2835,7 @@ void __watcall sub_479e9(void)
       dword_deb6c = 1;
       byte_deb70 = 0;
       byte_deb71 = 3;
-      addtimer(sub_47951);
+      addtimer(loading_screen_timer);
       dword_deb6c = 0;
       bVar1 = false;
       while (!bVar1) {
@@ -2899,7 +2900,7 @@ void __watcall wait_sprite_fade(void)
       waittimeout();
     }
     dword_deb6c = 1;
-    removetimer(sub_47951);
+    removetimer(loading_screen_timer);
     dword_c9074 = 0;
   }
   return;
@@ -2939,7 +2940,7 @@ void __watcall init_match(void)
   local_1c = CONCAT22(extraout_var,(short)(char)(&unk_cc9b0)[user2_team._2_2_]);
   sVar1 = *(short *)(&unk_cc9cc + (*(int *)(&unk_cc9ad + user2_team._2_2_) >> 0x18) * 2);
   local_28 = 0x47d2c;
-  load_announcer_clip(((char)(&unk_cc9b0)[user2_team._2_2_] != 1) + '\x03');
+  load_cutscene_clip(((char)(&unk_cc9b0)[user2_team._2_2_] != 1) + '\x03');
   byte_e0344 = 0;
   byte_e0308 = 0;
   byte_e028c = 0;
@@ -3168,7 +3169,7 @@ LAB_0004824e:
           getpalette(0,0x100,&palette_save);
           fade_palette_to(1,&palette_save,0x10);
         }
-        sub_59981();
+        stop_crowd_loop();
         sub_8374d();
         uVar3 = 0;
         iVar2 = dword_d8c74;
@@ -3178,7 +3179,7 @@ LAB_0004824e:
         getpalette(0,0x100,&palette_save);
         fade_palette_to(1,&palette_save,0x10);
         fade_ambient_audio();
-        sub_59981();
+        stop_crowd_loop();
         sub_8374d();
         pause_requested = 0;
         uVar3 = 0xffffffff;
@@ -3237,7 +3238,7 @@ longlong __watcall match_sequence(short param_1,uint unaff_EDX)
   if (param_1 == 0) {
     init_match();
   }
-  sub_59863();
+  sound_resume_all();
   __CHK(0x28);
   ticks_elapsed();
   _input_enabled = 1;
@@ -3257,7 +3258,7 @@ LAB_0004824e:
           getpalette(0,0x100,&palette_save);
           fade_palette_to(1,&palette_save,0x10);
         }
-        sub_59981();
+        stop_crowd_loop();
         sub_8374d();
         uVar2 = 0;
         iVar4 = dword_d8c74;
@@ -3267,7 +3268,7 @@ LAB_0004824e:
         getpalette(0,0x100,&palette_save);
         fade_palette_to(1,&palette_save,0x10);
         fade_ambient_audio();
-        sub_59981();
+        stop_crowd_loop();
         sub_8374d();
         pause_requested = 0;
         uVar2 = 0xffffffff;
@@ -3376,7 +3377,7 @@ LAB_0004824e:
           getpalette(0,0x100,&palette_save);
           fade_palette_to(1,&palette_save,0x10);
         }
-        sub_59981();
+        stop_crowd_loop();
         sub_8374d();
         uVar2 = 0;
         iVar4 = dword_d8c74;
@@ -3386,7 +3387,7 @@ LAB_0004824e:
         getpalette(0,0x100,&palette_save);
         fade_palette_to(1,&palette_save,0x10);
         fade_ambient_audio();
-        sub_59981();
+        stop_crowd_loop();
         sub_8374d();
         pause_requested = 0;
         uVar2 = 0xffffffff;
@@ -3627,7 +3628,7 @@ void __watcall ai_ref_anthem(int *param_1)
         ai_skate_towards(param_1,0);
         return;
       }
-      sub_4e292(param_1,0);
+      ref_skate_to_point(param_1,0);
     }
   }
   return;
@@ -4306,7 +4307,7 @@ void __watcall ai_ref_three_stars(int param_1)
       iVar7 = *(int *)(param_1 + 0x24) >> 0x10;
       iVar9 = *(int *)((int)&dword_e9af4 + iVar7 * 4 + 2) >> 0x10;
       iVar5 = *(int *)(&unk_e9af8 + iVar7 * 2);
-      sprintf(&byte_e0250,aSStar,(&off_cca0a)[iVar7]);
+      sprintf(&byte_e0250,aSStar,(&star_names)[iVar7]);
       iVar7 = (iVar5 >> 0x10) * 0x27;
       iVar2 = iVar7 + iVar9 * 0x444;
       format_player_name(&byte_e028c,&team_names + iVar9 * 0xba,(&unk_db3ad)[iVar7 + iVar9 * 0x444],
@@ -4315,8 +4316,8 @@ void __watcall ai_ref_three_stars(int param_1)
       if (iVar9 != 0) {
         sVar3 = _away_team_id;
       }
-      sub_59b0f((&team_abbrev)[sVar3],(*(int *)(param_1 + 0x24) >> 0x10) + 1,
-                (&unk_db3ad)[iVar9 * 0x444 + (iVar5 >> 0x10) * 0x27]);
+      say_star_wrapper((&team_abbrev)[sVar3],(*(int *)(param_1 + 0x24) >> 0x10) + 1,
+                       (&unk_db3ad)[iVar9 * 0x444 + (iVar5 >> 0x10) * 0x27]);
     }
     sVar3 = *(short *)(param_1 + 0x28) + -1;
     *(short *)(param_1 + 0x28) = sVar3;
@@ -4356,7 +4357,7 @@ void __watcall ai_ref_three_stars(int param_1)
             (&DAT_000df85e)[iVar7] = (&DAT_000df85f)[iVar7];
             (&unk_df65a)[uVar6 * 0x80 + (int)cVar1] = 0x300;
             *(byte *)(param_1 + 0x45) = *(byte *)(param_1 + 0x45) & 0xfb;
-            sub_5b2c5(puVar8,(int)(short)cVar1);
+            put_player_on_ice(puVar8,(int)(short)cVar1);
             set_state(puVar8,0);
             set_state_reset(puVar8,0x1d);
             set_state_reset(puVar8,0x14);
@@ -4379,7 +4380,7 @@ void __watcall ai_ref_three_stars(int param_1)
             iVar7 = *(int *)(param_1 + 0x24) >> 0x10;
             iVar9 = *(int *)((int)&dword_e9af4 + iVar7 * 4 + 2) >> 0x10;
             iVar5 = *(int *)(&unk_e9af8 + iVar7 * 2);
-            sprintf(&byte_e0250,aSStar,(&off_cca0a)[iVar7]);
+            sprintf(&byte_e0250,aSStar,(&star_names)[iVar7]);
             iVar7 = (iVar5 >> 0x10) * 0x27;
             iVar2 = iVar7 + iVar9 * 0x444;
             format_player_name(&byte_e028c,&team_names + iVar9 * 0xba,
@@ -4389,8 +4390,8 @@ void __watcall ai_ref_three_stars(int param_1)
             if (iVar9 != 0) {
               sVar3 = _away_team_id;
             }
-            sub_59b0f((&team_abbrev)[sVar3],(*(int *)(param_1 + 0x24) >> 0x10) + 1,
-                      (&unk_db3ad)[(iVar5 >> 0x10) * 0x27 + iVar9 * 0x444]);
+            say_star_wrapper((&team_abbrev)[sVar3],(*(int *)(param_1 + 0x24) >> 0x10) + 1,
+                             (&unk_db3ad)[(iVar5 >> 0x10) * 0x27 + iVar9 * 0x444]);
           }
         }
       }
@@ -4480,7 +4481,7 @@ void __watcall ai_get_cup(int param_1)
       if ((*(byte *)(param_1 + 0x44) & 4) == 0) {
         dword_e03ba._2_2_ = *(short *)(param_1 + 0x2a);
         dword_e03be = CONCAT22(*(undefined2 *)(param_1 + 0x2c),(undefined2)dword_e03be);
-        sub_4e292(param_1,0);
+        ref_skate_to_point(param_1,0);
       }
     }
   }
@@ -4501,7 +4502,7 @@ void __watcall ai_puck_give_cup(int param_1)
   __CHK(0x10);
   if ((*(byte *)(param_1 + 0x44) & 2) != 0) {
     ai_puck_shadow(param_1);
-    iVar2 = sub_59aad();
+    iVar2 = speech_busy();
     if (iVar2 != 0) {
       return;
     }
@@ -4758,7 +4759,7 @@ void __watcall ai_defense_defense(int param_1)
         dword_e03ba = CONCAT22(*(undefined2 *)(param_1 + 0x2a),(undefined2)dword_e03ba);
         dword_e03be = CONCAT22(*(undefined2 *)(param_1 + 0x2c),(undefined2)dword_e03be);
         ai_skate_towards(param_1,ai_near_carrier_check);
-        sub_53537(param_1);
+        ai_try_check(param_1);
       }
     }
     else {

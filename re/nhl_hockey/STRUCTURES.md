@@ -184,6 +184,43 @@ by `speed_skill`/`weight`, `stop_skating` brakes, `goalie_move` for goalies).
 | 0xc90e0 | `dir8_vectors` | (dx, dy) * 200 for the 8 directions |
 | 0xcc148 | `frame_offsets` | per-frame x/y displacement used by movement animations |
 
+## Animation sequences (`anim_sequences`, 0xc921d; `advance_animation`, `set_animation`)
+
+An animation id (`Entity.anim`, e.g. 0x289 skate, 0x361 stop, 0x3f9 forehand shot, 0x491 backhand shot,
+0x621 body check, 0x639/0x873 hook, 0x7a1/0x7dd/0xd05 faceoff, 0xa5b/0xb4b referee skate/glide, 0x1f1 goalie)
+is a **word offset** into the table: `entry = (u16*)(anim_sequences + anim * 2)`.
+
+```
+entry[0..7]   per facing direction (0-7) word offset of the frame list, relative to entry + 8 words;
+              bit 15 of entry[0] = the animation loops, otherwise anim is reset to 0 (idle) at the end
+entry[8 + off + 2k]      frame id (index into sprite_frames)
+entry[8 + off + 2k + 1]  duration in simulation steps; a negative duration marks the last frame
+```
+
+`advance_animation` holds each frame for its duration (`anim_hold`), steps `anim_pos` by 2, and when the duration
+word of the previous frame is negative it rewinds; animations starting with the "busy" flag clear `flags & 0x20`
+when they finish. Skating stride sounds (sfx 0xb3) are played on specific frame ids. Mirrored sprites
+(`flags4 & 8`, left handed players) use `8 - dir` for the direction lookup. `frame_offsets` (0xcc148, pairs of
+signed bytes indexed by frame id - see `frame_offsets_lookup`) give the per frame displacement that movement
+animations apply to the position.
+
+## Replay buffer (`replay_record_frame`, `replay_seek_frames`, `replay_draw_frame`)
+
+`replay_buffer` (0xc9078, 0x9600 bytes) is a ring of frames recorded every second simulation step while
+`game_flags & 0x10` is clear. One frame holds 17 packed u32 entity records (x & 0x3ff, y & 0x3ff << 10, frame &
+0x7ff << 20, mirror bit), 12 bytes of per player data (+0x5e), 6 bytes of line slot/line info, the puck height,
+the crowd/sound event, the controlled slots, the puck carrier, the camera position (u8 + u16 + u16) and the 20
+effect slots (10 packed bytes + 20 frame bytes).
+
+## Puck (`entities[14]`)
+
+The puck uses the same record as the players. `p_puck_x` .. `p_puck_vz` point at its integer parts; `puck_carrier`
+(+0x42 of the puck, 0xdff5e) is the slot of the carrier or -1. While carried, `update_carrier` moves the puck to
+the stick position (`frame_offsets` of the carrier's frame). `puck_update` (state `pnorm`) applies friction,
+bounces off the boards (`bounce_off_boards`, sfx 0xb1) and the nets (`collide_net` → `score_goal` when it crosses
+the goal line between the posts), lets players pick it up (`puck_check_players` → `puck_player_interaction`), and
+checks icing (`check_icing`) and offside (`check_offside`, blue lines at y = ±74).
+
 Physics constants found so far: friction `v -= v >> 6` per step on the ice (`>> 9` with flag 0x02 set), max skater
 speed 16000 (16.16 px/step * 16), gravity 96 per step, boards at x = ±160, y = ±264 with 64 px rounded corners
 (`collide_boards`), goal line y = ±240, shot aiming table `shot_targets` (0xccc60).

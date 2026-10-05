@@ -6631,10 +6631,10 @@ loc_47864:
 
 
 ; ====================================================================================================
-; sub_47951  [0x47951, 152 bytes, 47 instructions]
-; called by: sub_479e9, wait_sprite_fade
+; loading_screen_timer  [0x47951, 152 bytes, 47 instructions]
+; called by: loading_screen, wait_sprite_fade
 ; ====================================================================================================
-sub_47951:
+loading_screen_timer:
     push 0x1c                                    ; 047951 681c000000
     call __CHK                                   ; 047956 e8f14f0400
     push ebx                                     ; 04795b 53
@@ -6688,12 +6688,13 @@ loc_479e5:
 
 
 ; ====================================================================================================
-; sub_479e9  [0x479e9, 584 bytes, 164 instructions]
+; loading_screen  [0x479e9, 584 bytes, 164 instructions]
+; "load" shape with palette cycling while files load
 ; called by: main, demo_game, sub_190be, sub_1920f, exit_game_dialog, sub_1a9ac, sub_1aa6d, sub_1aac4, draw_team_logos, exhibition_mode, calendar_screen, league_calendar_flow (+6 more)
 ;   uses string "load"
 ;   uses string "!pal"
 ; ====================================================================================================
-sub_479e9:
+loading_screen:
     push 0x934                                   ; 0479e9 6834090000
     call __CHK                                   ; 0479ee e8594f0400
     push ebx                                     ; 0479f3 53
@@ -6826,7 +6827,7 @@ loc_47b3d:
     xor dl, dl                                   ; 047ba2 30d2
     mov byte ptr [byte_deb70], dl                ; 047ba4 881570eb0d00
     mov byte ptr [byte_deb71], 3                 ; 047baa c60571eb0d0003
-    push sub_47951                               ; 047bb1 6851790400
+    push loading_screen_timer                    ; 047bb1 6851790400
     call addtimer                                ; 047bb6 e805690400
     add esp, 4                                   ; 047bbb 83c404
     xor ecx, ecx                                 ; 047bbe 31c9
@@ -6933,7 +6934,7 @@ loc_47c89:
 
 loc_47cb1:
     mov dword ptr [dword_deb6c], 1               ; 047cb1 c7056ceb0d000100..
-    push sub_47951                               ; 047cbb 6851790400
+    push loading_screen_timer                    ; 047cbb 6851790400
     call removetimer                             ; 047cc0 e833680400
     add esp, 4                                   ; 047cc5 83c404
     xor ecx, ecx                                 ; 047cc8 31c9
@@ -6976,7 +6977,7 @@ init_match:
     and eax, 0xff                                ; 047d1e 25ff000000
     add eax, 3                                   ; 047d23 83c003
     cwde                                         ; 047d26 98
-    call load_announcer_clip                     ; 047d27 e86be70100
+    call load_cutscene_clip                      ; 047d27 e86be70100
     xor ah, ah                                   ; 047d2c 30e4
     mov byte ptr [byte_e0344], ah                ; 047d2e 882544030e00
     mov byte ptr [byte_e0308], ah                ; 047d34 882508030e00
@@ -7340,7 +7341,7 @@ loc_4827b:
     mov eax, 1                                   ; 0482a3 b801000000
     call fade_palette_to                         ; 0482a8 e8eb92fcff
     call fade_ambient_audio                      ; 0482ad e831150100
-    call sub_59981                               ; 0482b2 e8ca160100
+    call stop_crowd_loop                         ; 0482b2 e8ca160100
     call sub_8374d                               ; 0482b7 e891b40300
     xor edx, edx                                 ; 0482bc 31d2
     mov dword ptr [pause_requested], edx         ; 0482be 8915144e0c00
@@ -7360,7 +7361,7 @@ loc_482cb:
     mov eax, 1                                   ; 0482f1 b801000000
     call fade_palette_to                         ; 0482f6 e89d92fcff
 loc_482fb:
-    call sub_59981                               ; 0482fb e881160100
+    call stop_crowd_loop                         ; 0482fb e881160100
     call sub_8374d                               ; 048300 e848b40300
     xor eax, eax                                 ; 048305 31c0
 loc_48307:
@@ -7393,7 +7394,7 @@ loc_48324:
     jne loc_4832e                                ; 048327 7505
     call init_match                              ; 048329 e8a8f9ffff
 loc_4832e:
-    call sub_59863                               ; 04832e e830150100
+    call sound_resume_all                        ; 04832e e830150100
 
 ; ====================================================================================================
 ; replay_loop  [0x48333, 247 bytes, 64 instructions]
@@ -7774,7 +7775,7 @@ loc_48750:
 loc_4877b:
     xor edx, edx                                 ; 04877b 31d2
     mov eax, ebx                                 ; 04877d 89d8
-    call sub_4e292                               ; 04877f e80e5b0000
+    call ref_skate_to_point                      ; 04877f e80e5b0000
 loc_48784:
     pop edi                                      ; 048784 5f
     pop edx                                      ; 048785 5a
@@ -9059,7 +9060,7 @@ loc_49664:
     sar esi, 0x10                                ; 049677 c1fe10
     mov edi, dword ptr [ebx*4 + unk_e9af8]       ; 04967a 8b3c9df89a0e00
     sar edi, 0x10                                ; 049681 c1ff10
-    mov edx, dword ptr [ebx*4 + off_cca0a]       ; 049684 8b149d0aca0c00
+    mov edx, dword ptr [ebx*4 + star_names]      ; 049684 8b149d0aca0c00
     push edx                                     ; 04968b 52
     push aSStar                                  ; 04968c 68361b0c00        "%s Star"
     push byte_e0250                              ; 049691 6850020e00
@@ -9127,7 +9128,7 @@ loc_4971c:
     sar edx, 0x10                                ; 049747 c1fa10
     inc edx                                      ; 04974a 42
     mov eax, dword ptr [ecx*4 + team_abbrev]     ; 04974b 8b048d39540c00
-    call sub_59b0f                               ; 049752 e8b8030100
+    call say_star_wrapper                        ; 049752 e8b8030100
 loc_49757:
     mov di, word ptr [ebp + 0x28]                ; 049757 668b7d28
     dec edi                                      ; 04975b 4f
@@ -9183,7 +9184,7 @@ loc_49812:
     sar esi, 0x10                                ; 04981f c1fe10
     mov edi, dword ptr [ebx*4 + unk_e9af8]       ; 049822 8b3c9df89a0e00
     sar edi, 0x10                                ; 049829 c1ff10
-    mov eax, dword ptr [ebx*4 + off_cca0a]       ; 04982c 8b049d0aca0c00
+    mov eax, dword ptr [ebx*4 + star_names]      ; 04982c 8b049d0aca0c00
     push eax                                     ; 049833 50
     push aSStar                                  ; 049834 68361b0c00        "%s Star"
     push byte_e0250                              ; 049839 6850020e00
@@ -9248,7 +9249,7 @@ loc_498bb:
     sar edx, 0x10                                ; 0498e7 c1fa10
     inc edx                                      ; 0498ea 42
     mov eax, dword ptr [eax*4 + team_abbrev]     ; 0498eb 8b048539540c00
-    call sub_59b0f                               ; 0498f2 e818020100
+    call say_star_wrapper                        ; 0498f2 e818020100
     jmp loc_499d0                                ; 0498f7 e9d4000000
 
 loc_498fc:
@@ -9300,7 +9301,7 @@ loc_49972:
     and byte ptr [ebp + 0x45], 0xfb              ; 049995 806545fb
     movsx edx, di                                ; 049999 0fbfd7
     mov eax, ebx                                 ; 04999c 89d8
-    call sub_5b2c5                               ; 04999e e822190100
+    call put_player_on_ice                       ; 04999e e822190100
     xor edx, edx                                 ; 0499a3 31d2
     mov eax, ebx                                 ; 0499a5 89d8
     call set_state                               ; 0499a7 e84886fcff
@@ -9461,7 +9462,7 @@ loc_49b9a:
     mov word ptr [dword_e03c0], ax               ; 049bae 66a3c0030e00
     xor edx, edx                                 ; 049bb4 31d2
     mov eax, ebx                                 ; 049bb6 89d8
-    call sub_4e292                               ; 049bb8 e8d5460000
+    call ref_skate_to_point                      ; 049bb8 e8d5460000
 loc_49bbd:
     pop esi                                      ; 049bbd 5e
     pop edx                                      ; 049bbe 5a
@@ -9486,7 +9487,7 @@ ai_puck_give_cup:
     je loc_49c75                                 ; 049bd5 0f849a000000
     mov eax, ebx                                 ; 049bdb 89d8
     call ai_puck_shadow                          ; 049bdd e8edd20000
-    call sub_59aad                               ; 049be2 e8c6fe0000
+    call speech_busy                             ; 049be2 e8c6fe0000
     test eax, eax                                ; 049be7 85c0
     jne loc_49cd9                                ; 049be9 0f85ea000000
     cmp word ptr [word_cbec0], 0x100             ; 049bef 66813dc0be0c0000..
@@ -9952,7 +9953,7 @@ loc_4a17a:
     mov eax, ebx                                 ; 04a193 89d8
     call ai_skate_towards                        ; 04a195 e8a1470100
     mov eax, ebx                                 ; 04a19a 89d8
-    call sub_53537                               ; 04a19c e896930000
+    call ai_try_check                            ; 04a19c e896930000
     jmp loc_4e983                                ; 04a1a1 e9dd470000
 
 

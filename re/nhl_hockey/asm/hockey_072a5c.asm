@@ -1292,7 +1292,7 @@ edit_lines_screen_a:
     mov edx, 3                                   ; 07385d ba03000000
     call sound_fade                              ; 073862 e878c40100
 loc_73867:
-    call sub_479e9                               ; 073867 e87d41fdff
+    call loading_screen                          ; 073867 e87d41fdff
     mov ebx, dword ptr [dword_ea2b4]             ; 07386c 8b1db4a20e00
     push ebx                                     ; 073872 53
     call setscreen                               ; 073873 e8f8160400
@@ -5703,7 +5703,7 @@ loc_76898:
     test eax, eax                                ; 07689d 85c0
     jne loc_76898                                ; 07689f 75f7
 loc_768a1:
-    call sub_479e9                               ; 0768a1 e84311fdff
+    call loading_screen                          ; 0768a1 e84311fdff
     mov eax, dword ptr [dword_d0b16]             ; 0768a6 a1160b0d00
     mov dword ptr [esp + 0x10], eax              ; 0768ab 89442410
     mov eax, dword ptr [dword_d0b1a]             ; 0768af a11a0b0d00

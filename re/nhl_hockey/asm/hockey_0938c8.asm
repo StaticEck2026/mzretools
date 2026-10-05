@@ -6542,7 +6542,7 @@ loc_97623:
 
 ; ====================================================================================================
 ; sub_9762c  [0x9762c, 80 bytes, 33 instructions]
-; called by: unpack, sub_a26b0
+; called by: unpack, packed_read
 ; ====================================================================================================
 sub_9762c:
     push esi                                     ; 09762c 56
@@ -6585,7 +6585,7 @@ loc_97679:
 
 ; ====================================================================================================
 ; sub_9767c  [0x9767c, 151 bytes, 56 instructions]
-; called by: sub_97714, sub_97740
+; called by: sub_97714, bitlz_decode
 ; ====================================================================================================
 sub_9767c:
     push ebx                                     ; 09767c 53
@@ -6654,7 +6654,7 @@ loc_97703:
 
 ; ====================================================================================================
 ; sub_97714  [0x97714, 44 bytes, 17 instructions]
-; called by: sub_97740
+; called by: bitlz_decode
 ; ====================================================================================================
 sub_97714:
     push ebx                                     ; 097714 53
@@ -6678,10 +6678,11 @@ loc_97720:
 
 
 ; ====================================================================================================
-; sub_97740  [0x97740, 696 bytes, 194 instructions]
+; bitlz_decode  [0x97740, 696 bytes, 194 instructions]
+; pack codes 30/32/34: bit coded LZ
 ; called by: unpack
 ; ====================================================================================================
-sub_97740:
+bitlz_decode:
     push ecx                                     ; 097740 51
     push esi                                     ; 097741 56
     push edi                                     ; 097742 57
@@ -6903,7 +6904,7 @@ loc_979e6:
 
 ; ====================================================================================================
 ; sub_979f8  [0x979f8, 64 bytes, 21 instructions]
-; called by: sub_97a38
+; called by: bytepair_decode
 ; ====================================================================================================
 sub_979f8:
     push ebx                                     ; 0979f8 53
@@ -6933,10 +6934,11 @@ loc_97a26:
 
 
 ; ====================================================================================================
-; sub_97a38  [0x97a38, 381 bytes, 123 instructions]
+; bytepair_decode  [0x97a38, 381 bytes, 123 instructions]
+; pack code 46
 ; called by: unpack
 ; ====================================================================================================
-sub_97a38:
+bytepair_decode:
     push ebx                                     ; 097a38 53
     push ecx                                     ; 097a39 51
     push esi                                     ; 097a3a 56
@@ -7075,10 +7077,11 @@ loc_97b9c:
     db 0x8d, 0x40, 0x00 ; 097bb5 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_97bb8  [0x97bb8, 115 bytes, 55 instructions]
+; delta_decode  [0x97bb8, 115 bytes, 55 instructions]
+; pack codes 60/62/66: running sum
 ; called by: unpack
 ; ====================================================================================================
-sub_97bb8:
+delta_decode:
     push ebx                                     ; 097bb8 53
     push ecx                                     ; 097bb9 51
     push esi                                     ; 097bba 56
@@ -7143,10 +7146,11 @@ loc_97c24:
     db 0x90 ; 097c2b |.| (padding)
 
 ; ====================================================================================================
-; sub_97c2c  [0x97c2c, 179 bytes, 88 instructions]
+; pack7a_decode  [0x97c2c, 179 bytes, 88 instructions]
+; pack code 7a
 ; called by: unpack
 ; ====================================================================================================
-sub_97c2c:
+pack7a_decode:
     push ebx                                     ; 097c2c 53
     push ecx                                     ; 097c2d 51
     push esi                                     ; 097c2e 56
@@ -7250,10 +7254,11 @@ loc_97cd3:
     db 0x90 ; 097cdf |.| (padding)
 
 ; ====================================================================================================
-; sub_97ce0  [0x97ce0, 472 bytes, 231 instructions]
+; refpack_decode  [0x97ce0, 472 bytes, 231 instructions]
+; EA RefPack 10FB/11FB decoder
 ; called by: unpack
 ; ====================================================================================================
-sub_97ce0:
+refpack_decode:
     push ecx                                     ; 097ce0 51
     push esi                                     ; 097ce1 56
     push edi                                     ; 097ce2 57
@@ -7513,7 +7518,7 @@ loc_97ead:
 ; unpack  [0x97eb8, 367 bytes, 127 instructions]
 ; EA RefPack (QFS) decompression
 ; annotations: external
-; called by: sub_98028, sub_98044, sub_a27c4
+; called by: sub_98028, sub_98044, loadfile_packed
 ;   uses string "unpack - INVALID PACK CODE (%x)\n"
 ; ====================================================================================================
 unpack:
@@ -7600,7 +7605,7 @@ loc_97f8d:
     mov ebx, 1                                   ; 097f8d bb01000000
     mov edx, esi                                 ; 097f92 89f2
     mov eax, ecx                                 ; 097f94 89c8
-    call sub_97ce0                               ; 097f96 e845fdffff
+    call refpack_decode                          ; 097f96 e845fdffff
     mov edi, eax                                 ; 097f9b 89c7
     jmp loc_98009                                ; 097f9d eb6a
 
@@ -7608,21 +7613,21 @@ loc_97f9f:
     mov ebx, 1                                   ; 097f9f bb01000000
     mov edx, esi                                 ; 097fa4 89f2
     mov eax, ebp                                 ; 097fa6 89e8
-    call sub_97740                               ; 097fa8 e893f7ffff
+    call bitlz_decode                            ; 097fa8 e893f7ffff
     mov edi, eax                                 ; 097fad 89c7
     jmp loc_98009                                ; 097faf eb58
 
 loc_97fb1:
     mov edx, esi                                 ; 097fb1 89f2
     mov eax, ecx                                 ; 097fb3 89c8
-    call sub_97a38                               ; 097fb5 e87efaffff
+    call bytepair_decode                         ; 097fb5 e87efaffff
     mov edi, eax                                 ; 097fba 89c7
     jmp loc_98009                                ; 097fbc eb4b
 
 loc_97fbe:
     mov edx, esi                                 ; 097fbe 89f2
     mov eax, ebp                                 ; 097fc0 89e8
-    call sub_97bb8                               ; 097fc2 e8f1fbffff
+    call delta_decode                            ; 097fc2 e8f1fbffff
     mov edi, eax                                 ; 097fc7 89c7
     jmp loc_98009                                ; 097fc9 eb3e
 
@@ -7640,7 +7645,7 @@ loc_97fcb:
 loc_97fe1:
     mov edx, esi                                 ; 097fe1 89f2
     mov eax, ecx                                 ; 097fe3 89c8
-    call sub_97c2c                               ; 097fe5 e842fcffff
+    call pack7a_decode                           ; 097fe5 e842fcffff
     mov dword ptr [esp], eax                     ; 097fea 890424
     jmp loc_98009                                ; 097fed eb1a
 
@@ -9371,7 +9376,7 @@ loadfile_auto:
     add esp, 0xc                                 ; 098e74 83c40c
     mov eax, esp                                 ; 098e77 89e0
     push eax                                     ; 098e79 50
-    call sub_8d728                               ; 098e7a e8a948ffff
+    call find_loaded_file                        ; 098e7a e8a948ffff
     add esp, 4                                   ; 098e7f 83c404
     test eax, eax                                ; 098e82 85c0
     jne loc_98f0a                                ; 098e84 0f8580000000
@@ -9392,14 +9397,14 @@ loc_98eaa:
     push eax                                     ; 098eaf 50
     lea eax, [esp + 8]                           ; 098eb0 8d442408
     push eax                                     ; 098eb4 50
-    call sub_a27c4                               ; 098eb5 e80a990000
+    call loadfile_packed                         ; 098eb5 e80a990000
     mov esi, eax                                 ; 098eba 89c6
     add esp, 0xc                                 ; 098ebc 83c40c
     test eax, eax                                ; 098ebf 85c0
     je loc_98f0a                                 ; 098ec1 7447
     mov ebx, dword ptr [eax]                     ; 098ec3 8b18
     push ebx                                     ; 098ec5 53
-    call sub_a2ab8                               ; 098ec6 e8ed9b0000
+    call packed_size                             ; 098ec6 e8ed9b0000
     add esp, 4                                   ; 098ecb 83c404
     push edi                                     ; 098ece 57
     push ebp                                     ; 098ecf 55
@@ -9413,7 +9418,7 @@ loc_98eaa:
     push ecx                                     ; 098ee2 51
     mov ebp, dword ptr [esi]                     ; 098ee3 8b2e
     push ebp                                     ; 098ee5 55
-    call sub_a28f0                               ; 098ee6 e8059a0000
+    call shpi_from_compressed                    ; 098ee6 e8059a0000
     add esp, 8                                   ; 098eeb 83c408
     push esi                                     ; 098eee 56
     call releasememblock                         ; 098eef e8fc43ffff
@@ -9426,7 +9431,7 @@ loc_98efb:
     push ebp                                     ; 098efc 55
     lea eax, [esp + 8]                           ; 098efd 8d442408
     push eax                                     ; 098f01 50
-    call sub_a27c4                               ; 098f02 e8bd980000
+    call loadfile_packed                         ; 098f02 e8bd980000
     add esp, 0xc                                 ; 098f07 83c40c
 loc_98f0a:
     add esp, 0x64                                ; 098f0a 83c464
@@ -12290,7 +12295,7 @@ loc_9a714:
 
 ; ====================================================================================================
 ; sub_9a716  [0x9a716, 19 bytes, 8 instructions]
-; called by: _dos_findfirst, _dos_findnext, close, sub_90c61, open, creat, sub_90c94, sub_90cea
+; called by: _dos_findfirst, _dos_findnext, close, sub_90c61, open, creat, sub_90c94, read_bytes
 ; ====================================================================================================
 sub_9a716:
     jae loc_9a726                                ; 09a716 730e

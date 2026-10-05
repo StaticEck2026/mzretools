@@ -6659,10 +6659,10 @@ char * __watcall sub_a2610(void)
 
 
 // ================================================================================================
-// sub_a26b0 @ 0xa26b0 [__cdecl]
+// packed_read @ 0xa26b0 [__cdecl]
 // ================================================================================================
 
-undefined4 sub_a26b0(undefined4 param_1,undefined4 param_2,int param_3)
+undefined4 packed_read(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
   int iVar1;
@@ -6732,7 +6732,7 @@ undefined4 * sub_a2774(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 {
   undefined4 *puVar1;
   
-  puVar1 = (undefined4 *)sub_a27c4(param_1,param_2,param_3);
+  puVar1 = (undefined4 *)loadfile_packed(param_1,param_2,param_3);
   if (puVar1 != (undefined4 *)0x0) {
     puVar1 = (undefined4 *)*puVar1;
   }
@@ -6750,7 +6750,7 @@ void __watcall sub_a2794(void)
   undefined4 in_stack_00000004;
   undefined4 in_stack_00000008;
   
-  sub_a27c4(in_stack_00000004,in_stack_00000008,1);
+  loadfile_packed(in_stack_00000004,in_stack_00000008,1);
   return;
 }
 
@@ -6765,16 +6765,16 @@ void __watcall sub_a27ac(void)
   undefined4 in_stack_00000004;
   undefined4 in_stack_00000008;
   
-  sub_a27c4(in_stack_00000004,in_stack_00000008,0);
+  loadfile_packed(in_stack_00000004,in_stack_00000008,0);
   return;
 }
 
 
 // ================================================================================================
-// sub_a27c4 @ 0xa27c4 [__cdecl]
+// loadfile_packed @ 0xa27c4 [__cdecl]
 // ================================================================================================
 
-undefined4 * sub_a27c4(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+undefined4 * loadfile_packed(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   undefined4 *puVar1;
@@ -6786,14 +6786,14 @@ undefined4 * sub_a27c4(undefined4 param_1,undefined4 param_2,undefined4 param_3)
   int local_14;
   int local_10;
   
-  puVar1 = (undefined4 *)sub_8d728(param_1);
+  puVar1 = (undefined4 *)find_loaded_file(param_1);
   if (puVar1 == (undefined4 *)0x0) {
     openhandle(param_1,&local_1c,&local_18,&local_14,param_3);
     if (local_14 == 0) {
       puVar1 = (undefined4 *)0x0;
     }
     else {
-      local_10 = sub_a26b0(local_1c,local_18,local_14,param_3);
+      local_10 = packed_read(local_1c,local_18,local_14,param_3);
       if (local_10 == 0) {
         closehandle(local_1c);
         return (undefined4 *)0x0;
@@ -6821,10 +6821,10 @@ undefined4 * sub_a27c4(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_a28f0 @ 0xa28f0 [__cdecl]
+// shpi_from_compressed @ 0xa28f0 [__cdecl]
 // ================================================================================================
 
-int sub_a28f0(int param_1,int param_2)
+int shpi_from_compressed(int param_1,int param_2)
 
 {
   int iVar1;
@@ -6914,13 +6914,13 @@ int sub_a28f0(int param_1,int param_2)
 
 
 // ================================================================================================
-// sub_a2ab8 @ 0xa2ab8 [__cdecl]
+// packed_size @ 0xa2ab8 [__cdecl]
 // ================================================================================================
 
-void sub_a2ab8(undefined4 param_1)
+void packed_size(undefined4 param_1)
 
 {
-  sub_a28f0(param_1,0);
+  shpi_from_compressed(param_1,0);
   return;
 }
 

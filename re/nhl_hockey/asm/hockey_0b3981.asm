@@ -24,7 +24,7 @@ sub_b3981:
 ; settimeout  [0xb3989, 16 bytes, 4 instructions]
 ; settimeout(ticks)
 ; annotations: external
-; called by: set_video_mode, ea_sports_intro, intro_sequence, team_select_screen2, sub_3170d, sub_479e9, wait_sprite_fade, replay_loop, fade_ambient_audio, replay_menu, load_sound_config, broadcast_booth_screen (+4 more)
+; called by: set_video_mode, ea_sports_intro, intro_sequence, team_select_screen2, sub_3170d, loading_screen, wait_sprite_fade, replay_loop, fade_ambient_audio, replay_menu, load_sound_config, broadcast_booth_screen (+4 more)
 ; ====================================================================================================
 settimeout:
     mov eax, dword ptr [esp + 4]                 ; 0b3989 8b442404
@@ -37,7 +37,7 @@ settimeout:
 ; waittimeout  [0xb3999, 14 bytes, 4 instructions]
 ; busy waits until the timeout set by settimeout expires
 ; annotations: external
-; called by: set_video_mode, intro_sequence, team_select_screen2, sub_479e9, wait_sprite_fade, sub_480cc, fade_ambient_audio, replay_menu, load_sound_config, broadcast_booth_screen, stanley_cup_tree_screen, playoff_results_screen (+1 more)
+; called by: set_video_mode, intro_sequence, team_select_screen2, loading_screen, wait_sprite_fade, sub_480cc, fade_ambient_audio, replay_menu, load_sound_config, broadcast_booth_screen, stanley_cup_tree_screen, playoff_results_screen (+1 more)
 ; ====================================================================================================
 waittimeout:
     mov eax, dword ptr [dword_d2fdc]             ; 0b3999 a1dc2f0d00
@@ -277,7 +277,7 @@ sub_b3aa1:
 
 ; ====================================================================================================
 ; sub_b3abc  [0xb3abc, 68 bytes, 33 instructions]
-; called by: sub_1b002, iff_parse, sub_8d604, sub_8d728, sub_8d844, sub_8d990, load_eavesa, sub_8e40c, loadpatches, loadsound, sub_90698, drawshape2_remap (+13 more)
+; called by: sub_1b002, iff_parse, sub_8d604, find_loaded_file, sub_8d844, sub_8d990, load_eavesa, sub_8e40c, loadpatches, loadsound, sub_90698, drawshape2_remap (+13 more)
 ; ====================================================================================================
 sub_b3abc:
     push ebp                                     ; 0b3abc 55
@@ -341,7 +341,7 @@ sub_b3b00:
 ; ====================================================================================================
 ; openhandle  [0xb3b19, 21 bytes, 7 instructions]
 ; annotations: external
-; called by: sub_8e920, filesize_handle, sub_92e40, sub_a27c4
+; called by: sub_8e920, filesize_handle, sub_92e40, loadfile_packed
 ; ====================================================================================================
 openhandle:
     push ebp                                     ; 0b3b19 55
@@ -484,7 +484,7 @@ loc_b3c53:
 ; ====================================================================================================
 ; closehandle  [0xb3c60, 16 bytes, 9 instructions]  <dos_close>
 ; annotations: external
-; called by: sub_1b18b, iff_parse, sub_8e920, filesize_handle, sub_92e40, savefileblocka, sub_96844, sub_969a8, sub_98a40, sub_a27c4, sub_b3b5a
+; called by: sub_1b18b, iff_parse, sub_8e920, filesize_handle, sub_92e40, savefileblocka, sub_96844, sub_969a8, sub_98a40, loadfile_packed, sub_b3b5a
 ; ====================================================================================================
 closehandle:
     push ebp                                     ; 0b3c60 55
@@ -510,7 +510,7 @@ sub_b3c70:
 
 ; ====================================================================================================
 ; sub_b3c74  [0xb3c74, 63 bytes, 23 instructions]  <int21h>
-; called by: iff_parse, sub_8e920, sub_92e40, sub_96844, sub_96e7c, sub_a26b0, sub_a27c4
+; called by: iff_parse, sub_8e920, sub_92e40, sub_96844, sub_96e7c, packed_read, loadfile_packed
 ; ====================================================================================================
 sub_b3c74:
     mov ah, 0x3f                                 ; 0b3c74 b43f
@@ -547,7 +547,7 @@ loc_b3cb1:
 ; ====================================================================================================
 ; seekhandle  [0xb3cb3, 21 bytes, 8 instructions]
 ; annotations: external
-; called by: iff_parse, sub_96844, sub_96a10, sub_a26b0
+; called by: iff_parse, sub_96844, sub_96a10, packed_read
 ; ====================================================================================================
 seekhandle:
     push ebp                                     ; 0b3cb3 55
@@ -697,7 +697,7 @@ loc_b3d85:
 
 ; ====================================================================================================
 ; sub_b3d94  [0xb3d94, 102 bytes, 41 instructions]
-; called by: ai_goalie, try_block_shot, sub_53ce5, sub_5601d, shot_setup, do_shot, collide_boards, sim_update_players, ai_chase_puck, sub_64102
+; called by: ai_goalie, try_block_shot, sub_53ce5, sub_5601d, shot_setup, do_shot, collide_boards, sim_update_players, ai_chase_puck, count_defenders_ahead
 ; ====================================================================================================
 sub_b3d94:
     push ebp                                     ; 0b3d94 55
@@ -2373,7 +2373,7 @@ loc_b4c56:
 ; ====================================================================================================
 ; waitvbl_start  [0xb4c61, 35 bytes, 12 instructions]  <vga_status>
 ; annotations: external
-; called by: sub_47951, joystick_calibrate
+; called by: loading_screen_timer, joystick_calibrate
 ; ====================================================================================================
 waitvbl_start:
     mov dx, 0x3da                                ; 0b4c61 66bada03

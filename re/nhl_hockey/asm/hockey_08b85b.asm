@@ -1771,7 +1771,7 @@ loc_8c8bf:
 ; direction8  [0x8c8e8, 89 bytes, 39 instructions]
 ; 8-way direction index from a (dx, dy) vector
 ; annotations: external
-; called by: sub_109fc, sub_13c79, ai_ref_anthem, sub_492f9, ai_stanley_cup, ai_goalie, sub_4c8bd, sub_4c9fd, sub_4e292, ai_ref_pickup_puck, ai_ref_point_goal, ai_breakaway (+26 more)
+; called by: sub_109fc, sub_13c79, ai_ref_anthem, sub_492f9, ai_stanley_cup, ai_goalie, carrier_near_net_check, carrier_scan_opponents, ref_skate_to_point, ai_ref_pickup_puck, ai_ref_point_goal, ai_breakaway (+26 more)
 ; ====================================================================================================
 direction8:
     push ebp                                     ; 08c8e8 55
@@ -2279,7 +2279,7 @@ sub_8cce0:
 ; reservemem_locked  [0x8cd04, 69 bytes, 27 instructions]
 ; reservemem() inside the memory manager lock
 ; annotations: external
-; called by: sub_8cc70, sub_8cc8c, allocmem, sub_8ccc4, sub_8cce0, sub_8e920, loadfile_auto, sub_a27c4
+; called by: sub_8cc70, sub_8cc8c, allocmem, sub_8ccc4, sub_8cce0, sub_8e920, loadfile_auto, loadfile_packed
 ; ====================================================================================================
 reservemem_locked:
     push esi                                     ; 08cd04 56
@@ -2316,7 +2316,7 @@ reservemem_locked:
 ; reservemem  [0x8cd4c, 892 bytes, 301 instructions]
 ; allocates a named block ("reservemem - OUT OF MEMORY")
 ; annotations: external
-; called by: reservemem_locked, sub_8d604, sub_8d728
+; called by: reservemem_locked, sub_8d604, find_loaded_file
 ;   uses string "reservemem - INVALID SIZE REQUESTED\nrequested: %ld available: %ld\n"
 ;   uses string "reservemem - OUT OF MEMORY\nrequested: %ld available: %ld\n"
 ;   uses string "reservemem - OUT OF MEMORY\nrequested: %ld available: %ld\n"
@@ -2758,7 +2758,7 @@ sub_8d144:
 ; ====================================================================================================
 ; resizemem  [0x8d15c, 324 bytes, 113 instructions]
 ; annotations: external
-; called by: sub_8d0c8, sub_8d0ec, sub_8d10c, sub_8d12c, sub_8d144, sub_a27c4
+; called by: sub_8d0c8, sub_8d0ec, sub_8d10c, sub_8d12c, sub_8d144, loadfile_packed
 ;   uses string "resizemem - INVALID SIZE REQUESTED\nrequested: %ld available: %ld\n"
 ;   uses string "resizememblock - NO ROOM TO RESIZE\nrequested: %ld available: %ld\n"
 ; ====================================================================================================
@@ -3264,7 +3264,7 @@ sub_8d548:
 
 ; ====================================================================================================
 ; sub_8d558  [0x8d558, 102 bytes, 42 instructions]
-; called by: sub_8d5c0, sub_8d728
+; called by: sub_8d5c0, find_loaded_file
 ; ====================================================================================================
 sub_8d558:
     push esi                                     ; 08d558 56
@@ -3318,7 +3318,7 @@ loc_8d5b8:
 
 ; ====================================================================================================
 ; sub_8d5c0  [0x8d5c0, 16 bytes, 6 instructions]
-; called by: sub_8d728
+; called by: find_loaded_file
 ; ====================================================================================================
 sub_8d5c0:
     push 0                                       ; 08d5c0 6a00
@@ -3483,7 +3483,7 @@ loc_8d70a:
 sub_8d714:
     mov edx, dword ptr [esp + 4]                 ; 08d714 8b542404
     push edx                                     ; 08d718 52
-    call sub_8d728                               ; 08d719 e80a000000
+    call find_loaded_file                        ; 08d719 e80a000000
     add esp, 4                                   ; 08d71e 83c404
     test eax, eax                                ; 08d721 85c0
     je loc_8d727                                 ; 08d723 7402
@@ -3493,10 +3493,11 @@ loc_8d727:
 
 
 ; ====================================================================================================
-; sub_8d728  [0x8d728, 228 bytes, 91 instructions]
-; called by: sub_8d714, sub_8e920, loadfile_auto, sub_a27c4
+; find_loaded_file  [0x8d728, 228 bytes, 91 instructions]
+; returns an already loaded copy of a file from the memory manager
+; called by: sub_8d714, sub_8e920, loadfile_auto, loadfile_packed
 ; ====================================================================================================
-sub_8d728:
+find_loaded_file:
     push esi                                     ; 08d728 56
     push edi                                     ; 08d729 57
     push ebp                                     ; 08d72a 55
@@ -3937,7 +3938,7 @@ loc_8daad:
 
 ; ====================================================================================================
 ; sub_8dab8  [0x8dab8, 42 bytes, 14 instructions]
-; called by: sub_1baf3, sub_212c6, sub_479e9, load_announcer_clip, reservemem, resizemem, sub_8db20, initmemman
+; called by: sub_1baf3, sub_212c6, loading_screen, load_cutscene_clip, reservemem, resizemem, sub_8db20, initmemman
 ; ====================================================================================================
 sub_8dab8:
     push esi                                     ; 08dab8 56
@@ -4950,7 +4951,7 @@ sub_8e3c4:
 
 ; ====================================================================================================
 ; sub_8e3cc  [0x8e3cc, 5 bytes, 2 instructions]
-; called by: sub_947d8, sub_95158, sub_a27c4
+; called by: sub_947d8, sub_95158, loadfile_packed
 ; ====================================================================================================
 sub_8e3cc:
     mov eax, dword ptr [esp + 4]                 ; 08e3cc 8b442404
@@ -4960,7 +4961,7 @@ sub_8e3cc:
 
 ; ====================================================================================================
 ; sub_8e3d4  [0x8e3d4, 5 bytes, 2 instructions]
-; called by: sub_94b6c, sub_954c8, sub_a27c4
+; called by: sub_94b6c, sub_954c8, loadfile_packed
 ; ====================================================================================================
 sub_8e3d4:
     mov eax, dword ptr [esp + 4]                 ; 08e3d4 8b442404
@@ -5112,7 +5113,7 @@ loc_8e4b8:
 ; addtimer  [0x8e4c0, 55 bytes, 16 instructions]
 ; registers a timer callback ("addtimer - LIST FULL")
 ; annotations: external
-; called by: main, sub_1b0f3, sub_479e9, ui_init, sub_8357a, sub_8eb5b
+; called by: main, sub_1b0f3, loading_screen, ui_init, sub_8357a, sub_8eb5b
 ;   uses string "addtimer - LIST FULL\n"
 ; ====================================================================================================
 addtimer:
@@ -5623,7 +5624,7 @@ aLocateshape44sSHAPENOTFO:
 ; loadfile  [0x8e8a0, 21 bytes, 8 instructions]
 ; loadfile(path, flags): loads a whole file (fonts .VFN, .PPV shape banks...) into memory
 ; annotations: external
-; called by: main, game_loop, play_game, sub_138d2, sub_1395f, sub_13a2f, load_player_graphics, sub_13bb4, show_scoreboard, load_scoreboard_shapes, exh_hub_standings, hub_standings (+25 more)
+; called by: main, game_loop, play_game, load_effect_frames, load_sprite_banks, load_rink_end_shapes, load_player_graphics, sub_13bb4, show_scoreboard, load_scoreboard_shapes, exh_hub_standings, hub_standings (+25 more)
 ; ====================================================================================================
 loadfile:
     push 1                                       ; 08e8a0 6a01
@@ -5717,7 +5718,7 @@ sub_8e920:
     sub esp, 0xc                                 ; 08e922 83ec0c
     mov esi, dword ptr [esp + 0x18]              ; 08e925 8b742418
     push esi                                     ; 08e929 56
-    call sub_8d728                               ; 08e92a e8f9edffff
+    call find_loaded_file                        ; 08e92a e8f9edffff
     add esp, 4                                   ; 08e92f 83c404
     test eax, eax                                ; 08e932 85c0
     jne loc_8e9b4                                ; 08e934 0f857a000000
@@ -7295,7 +7296,7 @@ loc_8f679:
 
 ; ====================================================================================================
 ; sub_8f67d  [0x8f67d, 305 bytes, 87 instructions]
-; called by: sub_59981, sub_8f1fe
+; called by: stop_crowd_loop, sub_8f1fe
 ; ====================================================================================================
 sub_8f67d:
     push ebx                                     ; 08f67d 53
@@ -7454,7 +7455,7 @@ loc_8f7fa:
 
 ; ====================================================================================================
 ; sub_8f80e  [0x8f80e, 56 bytes, 24 instructions]
-; called by: sub_59945, sub_59981, sub_599ee
+; called by: sub_59945, stop_crowd_loop, sfx_set_volume
 ; ====================================================================================================
 sub_8f80e:
     push ebx                                     ; 08f80e 53
@@ -8213,7 +8214,7 @@ loc_8fdae:
 
 ; ====================================================================================================
 ; sub_8fdb2  [0x8fdb2, 51 bytes, 15 instructions]
-; called by: update_ambient_audio, sub_59748
+; called by: update_ambient_audio, sound_pause_all
 ; ====================================================================================================
 sub_8fdb2:
     sub esp, 4                                   ; 08fdb2 83ec04
@@ -8284,7 +8285,7 @@ loc_8fe4b:
 
 ; ====================================================================================================
 ; sub_8fe4f  [0x8fe4f, 52 bytes, 16 instructions]
-; called by: update_ambient_audio, sub_59748
+; called by: update_ambient_audio, sound_pause_all
 ; ====================================================================================================
 sub_8fe4f:
     sub esp, 4                                   ; 08fe4f 83ec04
@@ -8773,7 +8774,7 @@ sub_902a0:
 ; _memset_fill  [0x902b0, 49 bytes, 24 instructions]
 ; byte fill helper of memset
 ; annotations: external
-; called by: fade_palette_to, load_award_stats, sub_14056, intro_sequence, sub_1faa7, season_record_result, savegame_io, fade_palette, sub_7651b, initgraphics, memset, sub_97740
+; called by: fade_palette_to, load_award_stats, sub_14056, intro_sequence, sub_1faa7, season_record_result, savegame_io, fade_palette, sub_7651b, initgraphics, memset, bitlz_decode
 ; ====================================================================================================
 _memset_fill:
     or ecx, ecx                                  ; 0902b0 09c9
@@ -8875,7 +8876,7 @@ loc_90352:
 ; shapecount  [0x90354, 8 bytes, 3 instructions]
 ; number of entries in an SHPI bank (header +8)
 ; annotations: external
-; called by: game_loop, play_game, load_announcer_clip, sub_95158, sub_a30f8
+; called by: game_loop, play_game, load_cutscene_clip, sub_95158, sub_a30f8
 ; ====================================================================================================
 shapecount:
     mov ebx, dword ptr [esp + 4]                 ; 090354 8b5c2404
@@ -9816,7 +9817,7 @@ sub_90ad7:
 ; ====================================================================================================
 ; sprintf  [0x90aea, 48 bytes, 18 instructions]
 ; annotations: external
-; called by: league_leaders_screen, sub_13867, sub_138d2, sub_1395f, load_player_graphics, sub_13bb4, check_disk_space_for_game, intro_sequence, sub_176ae, sub_176db, export_stats_dialog, pause_menu (+83 more)
+; called by: league_leaders_screen, fill_sprite_frames, load_effect_frames, load_sprite_banks, load_player_graphics, sub_13bb4, check_disk_space_for_game, intro_sequence, sub_176ae, sub_176db, export_stats_dialog, pause_menu (+83 more)
 ; ====================================================================================================
 sprintf:
     push ebx                                     ; 090aea 53
@@ -10187,10 +10188,11 @@ loc_90ce3:
     db 0x00 ; 090ce9 |.| (padding)
 
 ; ====================================================================================================
-; sub_90cea  [0x90cea, 42 bytes, 17 instructions]  <int21h>
-; called by: file_read, sub_1466b, sub_837fb, sub_8385f, speech_load_bank, sub_83bf3, sub_83d78, sub_b0a14
+; read_bytes  [0x90cea, 42 bytes, 17 instructions]  <int21h>
+; read_bytes(fd, count, buffer)
+; called by: file_read, sub_1466b, read_be32, read_clip_name, speech_load_bank, sub_83bf3, sub_83d78, sub_b0a14
 ; ====================================================================================================
-sub_90cea:
+read_bytes:
     push 0x3f00                                  ; 090cea 68003f0000
 loc_90cef:
     push ds                                      ; 090cef 1e
@@ -10627,7 +10629,7 @@ sub_910b0:
 ; ====================================================================================================
 ; drawshape2  [0x910e0, 313 bytes, 98 instructions]
 ; annotations: external
-; called by: league_select_screen, league_name_entry, sub_479e9, joystick_calibrate, database_select_screen, sub_73703, draw_jerseys, save_game_dialog, cmv_play, drawshape2_home, sub_91238, drawshape2_remap (+3 more)
+; called by: league_select_screen, league_name_entry, loading_screen, joystick_calibrate, database_select_screen, sub_73703, draw_jerseys, save_game_dialog, cmv_play, drawshape2_home, sub_91238, drawshape2_remap (+3 more)
 ; ====================================================================================================
 drawshape2:
     push esi                                     ; 0910e0 56
@@ -10914,7 +10916,7 @@ sub_9132c:
 ; ====================================================================================================
 ; memset  [0x91350, 24 bytes, 12 instructions]
 ; annotations: external
-; called by: intro_sequence, sub_17711, sub_37d6a, league_control_dialog, team_info_screen, load_league_list, new_league_dialog, sub_479e9, sub_6a3c0, joystick_calibrate, create_player_menu, sub_9afbe (+10 more)
+; called by: intro_sequence, sub_17711, sub_37d6a, league_control_dialog, team_info_screen, load_league_list, new_league_dialog, loading_screen, sub_6a3c0, joystick_calibrate, create_player_menu, sub_9afbe (+10 more)
 ; ====================================================================================================
 memset:
     push eax                                     ; 091350 50
@@ -14844,7 +14846,7 @@ loc_933e8:
 
 ; ====================================================================================================
 ; sub_933f0  [0x933f0, 11 bytes, 4 instructions]
-; called by: ai_goalie, sub_57483, do_shot, ai_chase_puck
+; called by: ai_goalie, goalie_save, do_shot, ai_chase_puck
 ; ====================================================================================================
 sub_933f0:
     mov eax, dword ptr [esp + 4]                 ; 0933f0 8b442404

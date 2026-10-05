@@ -878,13 +878,13 @@ LAB_0007bad7:
       }
       uVar4 = (uint)((dword_ed360 & 0x80) != 0);
       if (((option_flags & 0x80) != 0) && (uVar4 == 0)) {
-        sub_59748();
+        sound_pause_all();
         uVar4 = extraout_EDX_00;
       }
       if (((option_flags & 0x80) == 0) && (uVar4 != 0)) {
         option_flags = option_flags & 0xffffff7f;
         option_flags = option_flags | (uVar4 & 1) << 7;
-        sub_59863();
+        sound_resume_all();
       }
       else {
         option_flags = option_flags & 0xffffff7f;
@@ -3185,7 +3185,7 @@ void __watcall instant_replay(int param_1)
     local_28._0_2_ = (short)uVar5;
     local_28._2_2_ = (short)((uint)uVar5 >> 0x10);
   }
-  sub_59748();
+  sound_pause_all();
   _word_cd500 = 0xffff;
   camera._0_2_ = (short)local_20;
   camera._2_2_ = (short)uStack_1c;
@@ -4141,7 +4141,7 @@ void __watcall highlights_play(void)
     releasememblock(dword_c721d);
     dword_c721d = 0;
   }
-  sub_479e9();
+  loading_screen();
   load_team_palettes((int)(short)user2_team._2_2_,(int)(short)_away_team_id,&unk_df314);
   load_music_banks();
   load_player_graphics();
@@ -4364,7 +4364,7 @@ undefined8 __watcall locker_room_hub(undefined4 param_1,undefined4 unaff_EDX)
     releasememblock(dword_c721d);
     dword_c721d = 0;
   }
-  sub_479e9();
+  loading_screen();
   getfontstate(auStack_58);
   dword_ed794 = (undefined4 *)allocmem(aHomeBck,0x1b811,0x20);
   dword_ed79c = (undefined4 *)allocmem(aVisBck,0x1a6f9,0x20);

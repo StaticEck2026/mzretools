@@ -4799,7 +4799,7 @@ undefined4 __watcall sub_b0a14(undefined4 param_1,undefined4 unaff_EDX,undefined
   undefined2 in_DS;
   undefined4 local_10;
   
-  word_f799c = sub_90cea(param_1,unaff_BX,unaff_EDX,in_DS,&local_10);
+  word_f799c = read_bytes(param_1,unaff_BX,unaff_EDX,in_DS,&local_10);
   return local_10;
 }
 

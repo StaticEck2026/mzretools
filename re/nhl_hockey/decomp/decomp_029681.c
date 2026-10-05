@@ -404,7 +404,7 @@ undefined4 __watcall team_select_screen(byte param_1,byte unaff_DL)
   piStack_68c = (int *)0x29f5b;
   local_1c = unaff_DL;
   bStack_18 = param_1;
-  sub_59d54();
+  speech_stop();
   piStack_68c = (int *)0xf7;
   set_dialog_colors(0xf9,0xfa,0xf8);
   piStack_68c = (int *)0x29f85;
@@ -639,7 +639,7 @@ LAB_0002a4e7:
   fade_palette(0,local_44);
   if (dword_dc234 < 0x444) {
     piStack_68c = (int *)0x2a6d2;
-    uVar18 = sub_59bb5(bStack_18,local_1c);
+    uVar18 = say_game_intro_wrapper(bStack_18,local_1c);
   }
   else {
     if (*(uint *)(&unk_c5581 + (uint)bStack_18 * 4) == *(uint *)(&unk_c5581 + (uint)local_1c * 4)) {
@@ -656,7 +656,7 @@ LAB_0002a4e7:
     if (0x497 < dword_dc234) {
       piStack_68c = (int *)0x3;
     }
-    uVar18 = sub_59d16(bStack_18,local_1c,(dword_dc234 + -0x444) % 7 + 1,iVar3);
+    uVar18 = say_playoff_intro_wrapper(bStack_18,local_1c,(dword_dc234 + -0x444) % 7 + 1,iVar3);
   }
   ppiVar12 = (int **)0x0;
   local_24 = 0;
@@ -830,7 +830,7 @@ LAB_0002a9be:
         puVar10 = (&team_abbrev)[bVar9];
         puVar2 = (&team_abbrev)[bVar17];
         *(undefined4 *)((int)ppiVar14 + -4) = 0x2abae;
-        sub_59d71(puVar2,puVar10);
+        preload_speech_wrapper(puVar2,puVar10);
       }
       *(undefined4 *)((int)ppiVar14 + 0x664) = 0;
       if (*(int *)((int)ppiVar14 + 0x640) == 3) {
@@ -1238,7 +1238,7 @@ int __watcall draw_team_logos(void)
         pcVar8[-0xffffffff00000003] = -0x4e;
         pcVar8[-0xffffffff00000002] = '\x02';
         pcVar8[-0xffffffff00000001] = '\0';
-        sub_59c5f();
+        say_lineups();
       }
       *(undefined4 *)(pcVar7 + 0x104) = 0xffffffff;
       pcVar8 = pcVar7;
@@ -1601,7 +1601,7 @@ int __watcall draw_team_logos(void)
     pcVar8[-0xffffffff00000003] = -0x49;
     pcVar8[-0xffffffff00000002] = '\x02';
     pcVar8[-0xffffffff00000001] = '\0';
-    sub_479e9();
+    loading_screen();
   }
   *(char **)(pcVar8 + -4) = pcVar8 + 0x54;
   pcVar8[-0xffffffff00000008] = 'V';
@@ -3078,7 +3078,7 @@ undefined4 __watcall boxscore_screen(uint param_1,undefined unaff_DL,undefined u
   } while (local_88 < 2);
   local_54 = 0;
   local_40 = 0;
-  sub_59d54();
+  speech_stop();
   local_70 = 0;
   local_4c = 0;
   local_50 = 0;
@@ -3413,7 +3413,7 @@ LAB_0002d781:
             puVar8 = puVar7 + -1;
             puVar7 = puVar7 + -1;
             *puVar8 = 0x2df86;
-            sub_59c80();
+            say_elsenhl();
             *(undefined4 *)((int)puVar7 + 0x7a4) = 0;
           }
           if (*(int *)((int)puVar7 + 0x778) == 0) {
@@ -4012,7 +4012,7 @@ LAB_0002e6c6:
             *(byte *)((int)puVar9 + -0xffffffff00000003) = 0xec;
             *(byte *)((int)puVar9 + -0xffffffff00000002) = 2;
             *(byte *)((int)puVar9 + -0xffffffff00000001) = 0;
-            sub_59bfc(uVar17,uVar4);
+            say_period_score(uVar17,uVar4);
           }
           *(undefined4 *)(pbVar14 + 0x790) = 1;
         }
@@ -4244,7 +4244,7 @@ LAB_0002e6c6:
             pbVar14[-0xffffffff00000003] = 0xf0;
             pbVar14[-0xffffffff00000002] = 2;
             pbVar14[-0xffffffff00000001] = 0;
-            sub_59bfc(uVar17,uVar4);
+            say_period_score(uVar17,uVar4);
           }
         }
       }
@@ -4258,7 +4258,7 @@ LAB_0002e6c6:
   fade_palette(1,*(undefined4 *)((int)puVar9 + 0x7a8),0x10);
   if ((sound_enabled == '\0') || (dword_c721d == 0)) {
     *(undefined4 *)((int)puVar9 + -4) = 0x2f1ac;
-    sub_59981();
+    stop_crowd_loop();
   }
   else {
     do {
@@ -4669,7 +4669,7 @@ void __watcall team_select_screen2(void)
   }
   fade_palette(1,auStack_38c,0x10);
   if (sound_enabled == '\0') {
-    sub_59981();
+    stop_crowd_loop();
     sub_8f1fe(local_38[3]);
   }
   else if (dword_c721d != 0) {

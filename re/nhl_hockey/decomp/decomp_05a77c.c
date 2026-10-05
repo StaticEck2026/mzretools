@@ -442,7 +442,7 @@ void __watcall score_goal(undefined4 *param_1)
     if ((game_flags & 1) == 0) {
       set_state(&puck,0x1a);
       if ((*(byte *)(iVar11 + 0x44) & 0x10) != 0) {
-        sub_62cf9(*(undefined4 *)(iVar11 + 0xf6),8);
+        maybe_queue_infraction(*(undefined4 *)(iVar11 + 0xf6),8);
       }
       queue_infraction(*(undefined4 *)(iVar10 + 0xf6),0x1b);
     }
@@ -513,14 +513,14 @@ set_default_state(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefine
 
 
 // ================================================================================================
-// sub_5b2c5 @ 0x5b2c5 [__watcall]
+// put_player_on_ice @ 0x5b2c5 [__watcall]
 // ================================================================================================
 
 /* WARNING: Removing unreachable block (ram,0x0005b596) */
 /* WARNING: Removing unreachable block (ram,0x0005b6c6) */
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __watcall sub_5b2c5(int param_1,short unaff_DX)
+void __watcall put_player_on_ice(int param_1,short unaff_DX)
 
 {
   ushort uVar1;
@@ -2452,7 +2452,7 @@ void __watcall setup_faceoff(void)
               *(undefined2 *)((int)puVar4 + 0x1a) = uVar2;
               dword_e03be._2_2_ = dword_e03be._2_2_ + 1;
               set_state_reset(puVar4,7);
-              sub_5b2c5(puVar4,(int)(short)cVar1);
+              put_player_on_ice(puVar4,(int)(short)cVar1);
               sVar3 = 1;
               while( true ) {
                 cVar1 = *(char *)(iVar5 + 0xb6 + (int)sVar3);
@@ -2960,7 +2960,7 @@ void __watcall sub_5e0b0(void)
       }
       (&DAT_000df792)[*(int *)(iVar1 + 0x40) >> 0x18] = 0xffff;
       *(undefined *)(dword_df802 + (*(int *)(iVar1 + 0x40) >> 0x18) * 0x27) = 4;
-      sub_5b2c5(iVar1,*(int *)(iVar1 + 0x40) >> 0x18);
+      put_player_on_ice(iVar1,*(int *)(iVar1 + 0x40) >> 0x18);
     }
     *(undefined *)(iVar1 + 0x43) = 0xff;
     *(undefined *)(iVar1 + 0x42) = 0xff;
@@ -2993,7 +2993,7 @@ void __watcall sub_5e0dd(int param_1)
       }
       *(undefined2 *)(param_1 + 0x7e + (*(int *)(iVar1 + 0x40) >> 0x18) * 2) = 0xffff;
       *(undefined *)(*(int *)(param_1 + 0xee) + (*(int *)(iVar1 + 0x40) >> 0x18) * 0x27) = 4;
-      sub_5b2c5(iVar1,*(int *)(iVar1 + 0x40) >> 0x18);
+      put_player_on_ice(iVar1,*(int *)(iVar1 + 0x40) >> 0x18);
     }
     *(undefined *)(iVar1 + 0x43) = 0xff;
     *(undefined *)(iVar1 + 0x42) = 0xff;
@@ -3150,12 +3150,12 @@ LAB_0005e334:
 
 
 // ================================================================================================
-// sub_5e4c4 @ 0x5e4c4 [__watcall]
+// ai_ref_positioning @ 0x5e4c4 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __watcall sub_5e4c4(int *param_1)
+void __watcall ai_ref_positioning(int *param_1)
 
 {
   short sVar1;
@@ -5072,10 +5072,10 @@ LAB_00061249:
   dword_c66d0 = 1;
   dword_dc28c = 0;
   load_music_banks();
-  _memset_dwords(&unk_d9980,0xffffffff,&unk_df314,0x17);
+  _memset_dwords(&sprite_banks,0xffffffff,&unk_df314,0x17);
   dword_cc0e0 = 0xffffffff;
   load_player_graphics();
-  _memset_dwords(&unk_d9980,0);
+  _memset_dwords(&sprite_banks,0);
   dword_cc0e0 = 0;
   if ((dword_cbeca._2_2_ != -1) && (word_cbece != -1)) {
     dword_e0248 = (&off_cc01d)[dword_cbeca._2_2_];
@@ -5361,9 +5361,9 @@ void __watcall draw_nets_and_effects(void)
   psVar3 = (short *)&unk_dee94;
   for (sVar4 = 0; sVar4 < 0x12; sVar4 = sVar4 + 1) {
     if (-1 < *psVar3) {
-      blit_sprite((&unk_e00a0)[*(int *)((int)psVar3 + 1) >> 0x18],*(int *)((int)psVar3 + 3) >> 0x10,
-                  *(int *)((int)psVar3 + 5) >> 0x10,0xc0 < *(short *)((int)psVar3 + 5),0xffffffff,0)
-      ;
+      blit_sprite((&effect_frames)[*(int *)((int)psVar3 + 1) >> 0x18],
+                  *(int *)((int)psVar3 + 3) >> 0x10,*(int *)((int)psVar3 + 5) >> 0x10,
+                  0xc0 < *(short *)((int)psVar3 + 5),0xffffffff,0);
     }
     psVar3 = psVar3 + 6;
   }
@@ -5381,7 +5381,7 @@ void __watcall draw_nets_and_effects(void)
       blit_sprite(dword_e0220,4,*(int *)(&unk_cd2f8 + sVar4 * 4) >> 0x10,0,(int)sVar4,0);
     }
     if (-1 < sStack_24) {
-      blit_sprite((&unk_e00a0)[sStack_24],(int)sVar1,(int)sVar2,0,(int)sVar4,0);
+      blit_sprite((&effect_frames)[sStack_24],(int)sVar1,(int)sVar2,0,(int)sVar4,0);
     }
     if (sVar4 == 0) {
       blit_sprite(dword_e0230,4,_unk_cd2f8 >> 0x10,0,0xffffffff,0);
@@ -5867,7 +5867,7 @@ sub_62343(int param_1,undefined param_2,undefined unaff_BL,undefined unaff_CL,un
     else {
       uVar3 = 5;
     }
-    load_announcer_clip(uVar3);
+    load_cutscene_clip(uVar3);
   }
   show_penalty();
   sub_66dda();
@@ -5937,7 +5937,7 @@ record_penalty(uint param_1,int param_2,int unaff_EBX,undefined unaff_CL,undefin
   else {
     uVar2 = 10;
   }
-  load_announcer_clip(uVar2);
+  load_cutscene_clip(uVar2);
 LAB_000625df:
   show_penalty();
   sub_66dda();
@@ -5955,8 +5955,9 @@ LAB_000625df:
     if (dword_cc104 != 0) {
       sVar1 = _away_team_id;
     }
-    sub_59b88((&team_abbrev)[sVar1],(&unk_db3ad)[dword_cc100 * 0x27 + dword_cc104 * 0x444],param_5,
-              param_6);
+    say_penalty_shot_wrapper
+              ((&team_abbrev)[sVar1],(&unk_db3ad)[dword_cc100 * 0x27 + dword_cc104 * 0x444],param_5,
+               param_6);
   }
   else {
     if (_dword_e9aac >> 0x10 == param_1) {
@@ -5971,8 +5972,9 @@ LAB_000625df:
        ((*(byte *)((int)&infraction_queue + param_7 * 2 + 2) & 0x1f) < 6 != param_1)) {
       iVar4 = iVar3 + 1;
     }
-    sub_59b3c((&team_abbrev)[sVar1],(&unk_db3ad)[param_2 * 0x27 + param_1 * 0x444],extraout_EDX,
-              (&off_cd354)[unaff_EBX],param_5,param_6,iVar3,iVar4,param_7 == 0);
+    say_penalty_wrapper((&team_abbrev)[sVar1],(&unk_db3ad)[param_2 * 0x27 + param_1 * 0x444],
+                        extraout_EDX,(&off_cd354)[unaff_EBX],param_5,param_6,iVar3,iVar4,
+                        param_7 == 0);
     if (param_7 == 0) {
       _dword_e9aac = CONCAT22(0xffff,dword_e9aac);
     }

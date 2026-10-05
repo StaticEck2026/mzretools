@@ -244,7 +244,7 @@ loc_8307b:
     mov dword ptr [dword_d2350], 0xffffffff      ; 08308b c70550230d00ffff..
     mov dword ptr [dword_c541f], 8               ; 083095 c7051f540c000800..
     call play_sample_by_ptr                      ; 08309f e81569fdff
-    call sub_599ee                               ; 0830a4 e84569fdff
+    call sfx_set_volume                          ; 0830a4 e84569fdff
     mov eax, edx                                 ; 0830a9 89d0
     call sub_8f1fe                               ; 0830ab e84ec10000
     call sub_30f12                               ; 0830b0 e85ddefaff
@@ -868,7 +868,7 @@ sub_8378c:
 
 ; ====================================================================================================
 ; sub_837a8  [0x837a8, 49 bytes, 13 instructions]
-; called by: sub_10f6d, handle_hotkey, game_loop, pause_menu, start_period, speech_period_summary, sub_59ad0, sub_59b0f, sub_59b3c, sub_59b88, sub_8373e
+; called by: sub_10f6d, handle_hotkey, game_loop, pause_menu, start_period, speech_period_summary, say_goal_wrapper, say_star_wrapper, say_penalty_wrapper, say_penalty_shot_wrapper, sub_8373e
 ; ====================================================================================================
 sub_837a8:
     push 8                                       ; 0837a8 6808000000
@@ -888,10 +888,10 @@ loc_837d7:
 
 
 ; ====================================================================================================
-; sub_837d9  [0x837d9, 34 bytes, 11 instructions]
+; bswap16  [0x837d9, 34 bytes, 11 instructions]
 ; called by: speech_load_bank
 ; ====================================================================================================
-sub_837d9:
+bswap16:
     push 8                                       ; 0837d9 6808000000
     call __CHK                                   ; 0837de e869910000
     push edx                                     ; 0837e3 52
@@ -906,10 +906,10 @@ sub_837d9:
 
 
 ; ====================================================================================================
-; sub_837fb  [0x837fb, 100 bytes, 38 instructions]
+; read_be32  [0x837fb, 100 bytes, 38 instructions]
 ; called by: speech_load_bank
 ; ====================================================================================================
-sub_837fb:
+read_be32:
     push 0x20                                    ; 0837fb 6820000000
     call __CHK                                   ; 083800 e847910000
     push ebx                                     ; 083805 53
@@ -926,21 +926,21 @@ sub_837fb:
     mov ecx, ds                                  ; 08381c 8cd9
     lea ebx, [esp + 0xa]                         ; 08381e 8d5c240a
     mov eax, esi                                 ; 083822 89f0
-    call sub_90cea                               ; 083824 e8c1d40000
+    call read_bytes                              ; 083824 e8c1d40000
     mov ebx, esp                                 ; 083829 89e3
     push ebx                                     ; 08382b 53
     mov edx, 1                                   ; 08382c ba01000000
     mov ecx, ds                                  ; 083831 8cd9
     lea ebx, [esp + 9]                           ; 083833 8d5c2409
     mov eax, esi                                 ; 083837 89f0
-    call sub_90cea                               ; 083839 e8acd40000
+    call read_bytes                              ; 083839 e8acd40000
     mov ebx, esp                                 ; 08383e 89e3
     push ebx                                     ; 083840 53
     mov edx, 1                                   ; 083841 ba01000000
     mov ecx, ds                                  ; 083846 8cd9
     lea ebx, [esp + 8]                           ; 083848 8d5c2408
     mov eax, esi                                 ; 08384c 89f0
-    call sub_90cea                               ; 08384e e897d40000
+    call read_bytes                              ; 08384e e897d40000
     mov eax, dword ptr [esp + 4]                 ; 083853 8b442404
 loc_83857:
     add esp, 8                                   ; 083857 83c408
@@ -952,10 +952,10 @@ loc_83857:
 
 
 ; ====================================================================================================
-; sub_8385f  [0x8385f, 56 bytes, 26 instructions]
+; read_clip_name  [0x8385f, 56 bytes, 26 instructions]
 ; called by: speech_load_bank
 ; ====================================================================================================
-sub_8385f:
+read_clip_name:
     push 0x1c                                    ; 08385f 681c000000
     call __CHK                                   ; 083864 e8e3900000
     push ebx                                     ; 083869 53
@@ -972,7 +972,7 @@ loc_83874:
     mov edx, 1                                   ; 083879 ba01000000
     mov ebx, esi                                 ; 08387e 89f3
     mov eax, edi                                 ; 083880 89f8
-    call sub_90cea                               ; 083882 e863d40000
+    call read_bytes                              ; 083882 e863d40000
     mov eax, esi                                 ; 083887 89f0
     inc esi                                      ; 083889 46
     cmp byte ptr [eax], 0                        ; 08388a 803800
@@ -1041,10 +1041,10 @@ loc_838ed:
     mov ecx, ds                                  ; 083962 8cd9
     lea ebx, [esp + 0x24]                        ; 083964 8d5c2424
     mov eax, dword ptr [esp + 0x14]              ; 083968 8b442414
-    call sub_90cea                               ; 08396c e879d30000
+    call read_bytes                              ; 08396c e879d30000
     mov eax, dword ptr [esp + 0x1e]              ; 083971 8b44241e
     sar eax, 0x10                                ; 083975 c1f810
-    call sub_837d9                               ; 083978 e85cfeffff
+    call bswap16                                 ; 083978 e85cfeffff
     mov edx, dword ptr [dword_ed7b0]             ; 08397d 8b15b0d70e00
     mov word ptr [edx + 0x3b8d], ax              ; 083983 6689828d3b0000
     lea eax, [esp + 8]                           ; 08398a 8d442408
@@ -1053,10 +1053,10 @@ loc_838ed:
     mov ecx, ds                                  ; 083994 8cd9
     lea ebx, [esp + 0x18]                        ; 083996 8d5c2418
     mov eax, dword ptr [esp + 0x14]              ; 08399a 8b442414
-    call sub_90cea                               ; 08399e e847d30000
+    call read_bytes                              ; 08399e e847d30000
     mov eax, dword ptr [esp + 0x12]              ; 0839a3 8b442412
     sar eax, 0x10                                ; 0839a7 c1f810
-    call sub_837d9                               ; 0839aa e82afeffff
+    call bswap16                                 ; 0839aa e82afeffff
     mov edx, eax                                 ; 0839af 89c2
     mov eax, dword ptr [dword_ed7b0]             ; 0839b1 a1b0d70e00
     mov word ptr [eax + 0x3b8f], dx              ; 0839b6 6689908f3b0000
@@ -1066,10 +1066,10 @@ loc_838ed:
     mov ecx, ds                                  ; 0839c7 8cd9
     lea ebx, [esp + 0x20]                        ; 0839c9 8d5c2420
     mov eax, dword ptr [esp + 0x14]              ; 0839cd 8b442414
-    call sub_90cea                               ; 0839d1 e814d30000
+    call read_bytes                              ; 0839d1 e814d30000
     mov eax, dword ptr [esp + 0x1a]              ; 0839d6 8b44241a
     sar eax, 0x10                                ; 0839da c1f810
-    call sub_837d9                               ; 0839dd e8f7fdffff
+    call bswap16                                 ; 0839dd e8f7fdffff
     mov edx, dword ptr [dword_ed7b0]             ; 0839e2 8b15b0d70e00
     mov word ptr [edx + 0x3b91], ax              ; 0839e8 668982913b0000
     xor esi, esi                                 ; 0839ef 31f6
@@ -1084,18 +1084,18 @@ loc_839f3:
     add edi, edi                                 ; 0839ff 01ff
     mov dword ptr [edi + eax + 0xe], 0           ; 083a01 c744070e00000000
     mov eax, dword ptr [esp + 0x10]              ; 083a09 8b442410
-    call sub_837fb                               ; 083a0d e8e9fdffff
+    call read_be32                               ; 083a0d e8e9fdffff
     mov edx, eax                                 ; 083a12 89c2
     mov eax, dword ptr [dword_ed7b0]             ; 083a14 a1b0d70e00
     mov dword ptr [edi + eax + 0x12], edx        ; 083a19 89540712
     mov eax, dword ptr [esp + 0x10]              ; 083a1d 8b442410
-    call sub_837fb                               ; 083a21 e8d5fdffff
+    call read_be32                               ; 083a21 e8d5fdffff
     mov edx, dword ptr [dword_ed7b0]             ; 083a26 8b15b0d70e00
     mov dword ptr [edx + edi + 0x1a], eax        ; 083a2c 89443a1a
     mov eax, dword ptr [dword_ed7b0]             ; 083a30 a1b0d70e00
     add eax, edi                                 ; 083a35 01f8
     mov edx, dword ptr [esp + 0x10]              ; 083a37 8b542410
-    call sub_8385f                               ; 083a3b e81ffeffff
+    call read_clip_name                          ; 083a3b e81ffeffff
     mov eax, dword ptr [dword_ed7b0]             ; 083a40 a1b0d70e00
     mov dword ptr [edi + eax + 0x22], 0          ; 083a45 c744072200000000
     inc esi                                      ; 083a4d 46
@@ -1126,7 +1126,7 @@ loc_83a67:
     mov ecx, ds                                  ; 083a90 8cd9
     lea ebx, [esp + 0x1c]                        ; 083a92 8d5c241c
     mov eax, dword ptr [esp + 0x14]              ; 083a96 8b442414
-    call sub_90cea                               ; 083a9a e84bd20000
+    call read_bytes                              ; 083a9a e84bd20000
     mov eax, dword ptr [esp + 0x18]              ; 083a9f 8b442418
     xor ah, ah                                   ; 083aa3 30e4
     xor edx, edx                                 ; 083aa5 31d2
@@ -1145,9 +1145,9 @@ loc_83a67:
     mov ecx, ds                                  ; 083ad1 8cd9
     lea ebx, [esp + 0x10]                        ; 083ad3 8d5c2410
     mov eax, dword ptr [esp + 0x14]              ; 083ad7 8b442414
-    call sub_90cea                               ; 083adb e80ad20000
+    call read_bytes                              ; 083adb e80ad20000
     mov eax, dword ptr [esp + 0xc]               ; 083ae0 8b44240c
-    call sub_837d9                               ; 083ae4 e8f0fcffff
+    call bswap16                                 ; 083ae4 e8f0fcffff
     sub eax, 5                                   ; 083ae9 83e805
     mov dword ptr [esp + 0xc], eax               ; 083aec 8944240c
     mov edx, dword ptr [dword_ed7b0]             ; 083af0 8b15b0d70e00
@@ -1297,7 +1297,7 @@ sub_83bf3:
     mov edx, edi                                 ; 083c6b 89fa
     mov ebx, dword ptr [esp + 0x14]              ; 083c6d 8b5c2414
     mov eax, dword ptr [esp + 4]                 ; 083c71 8b442404
-    call sub_90cea                               ; 083c75 e870d00000
+    call read_bytes                              ; 083c75 e870d00000
     push edi                                     ; 083c7a 57
     push ebp                                     ; 083c7b 55
     mov edx, dword ptr [esp + 0x18]              ; 083c7c 8b542418
@@ -1443,7 +1443,7 @@ loc_83dbc:
     mov edx, dword ptr [esp + 8]                 ; 083df6 8b542408
     mov ebx, ebp                                 ; 083dfa 89eb
     mov eax, edi                                 ; 083dfc 89f8
-    call sub_90cea                               ; 083dfe e8e7ce0000
+    call read_bytes                              ; 083dfe e8e7ce0000
     mov eax, dword ptr [dword_ed7b0]             ; 083e03 a1b0d70e00
     mov dword ptr [eax + esi*2 + 0x22], 1        ; 083e08 c744702201000000
     mov edx, dword ptr [dword_ed7b0]             ; 083e10 8b15b0d70e00
@@ -2468,7 +2468,7 @@ loc_846b2:
 
 ; ====================================================================================================
 ; sub_846b4  [0x846b4, 20 bytes, 4 instructions]
-; called by: sub_59c1d
+; called by: say_nhl_intro
 ;   uses string "nhl.int"
 ; ====================================================================================================
 sub_846b4:
@@ -2480,7 +2480,7 @@ sub_846b4:
 
 ; ====================================================================================================
 ; sub_846c8  [0x846c8, 20 bytes, 4 instructions]
-; called by: sub_59c3e
+; called by: say_goodnight
 ;   uses string "goodnite.int"
 ; ====================================================================================================
 sub_846c8:
@@ -2492,7 +2492,7 @@ sub_846c8:
 
 ; ====================================================================================================
 ; sub_846dc  [0x846dc, 20 bytes, 4 instructions]
-; called by: sub_59c5f
+; called by: say_lineups
 ;   uses string "lineups.int"
 ; ====================================================================================================
 sub_846dc:
@@ -2605,7 +2605,7 @@ loc_847b7:
 
 ; ====================================================================================================
 ; sub_847ba  [0x847ba, 20 bytes, 4 instructions]
-; called by: sub_59c80
+; called by: say_elsenhl
 ;   uses string "elsenhl.int"
 ; ====================================================================================================
 sub_847ba:
@@ -2618,7 +2618,7 @@ sub_847ba:
 ; ====================================================================================================
 ; say_highlight_intro  [0x847ce, 319 bytes, 78 instructions]
 ; "take you now to highlights of the game between ... and ..."
-; called by: sub_59ca9
+; called by: say_highlight_intro_wrapper
 ;   uses string "rnk"
 ;   uses string "awa"
 ;   uses string "hom"
@@ -2715,7 +2715,7 @@ loc_84908:
 ; ====================================================================================================
 ; say_series_result  [0x8490d, 351 bytes, 89 instructions]
 ; "... have won game N of the ... (overtime)"
-; called by: sub_59cdd
+; called by: say_series_result_wrapper
 ;   uses string "awa"
 ;   uses string "bar"
 ;   uses string "gamenum"
@@ -2838,7 +2838,7 @@ sub_84a6c:
 
 ; ====================================================================================================
 ; sub_84a7d  [0x84a7d, 114 bytes, 40 instructions]
-; called by: sub_59bfc
+; called by: say_period_score
 ;   uses string "scor1per.bar"
 ;   uses string "scor2per.bar"
 ;   uses string "scor3per.bar"
@@ -2927,7 +2927,7 @@ loc_84b0a:
 ; ====================================================================================================
 ; say_game_intro  [0x84b0d, 299 bytes, 74 instructions]
 ; "tonight ... EA Sports game between ... and ..."
-; called by: sub_59bb5
+; called by: say_game_intro_wrapper
 ;   uses string "rnk"
 ;   uses string "awa"
 ;   uses string "hom"
@@ -3018,7 +3018,7 @@ loc_84c33:
 
 ; ====================================================================================================
 ; say_playoff_game_intro  [0x84c38, 421 bytes, 101 instructions]
-; called by: sub_59d16
+; called by: say_playoff_intro_wrapper
 ;   uses string "rnk"
 ;   uses string "awa"
 ;   uses string "hom"
@@ -3329,7 +3329,7 @@ loc_84f76:
 ; ====================================================================================================
 ; say_penalty  [0x84f7b, 419 bytes, 110 instructions]
 ; team, number, infraction .pen, minutes
-; called by: sub_59b3c
+; called by: say_penalty_wrapper
 ;   uses string "num"
 ;   uses string "tea"
 ;   uses string "pen"
@@ -3467,7 +3467,7 @@ loc_85115:
 
 ; ====================================================================================================
 ; say_penalty_shot  [0x8511e, 245 bytes, 63 instructions]
-; called by: sub_59b88
+; called by: say_penalty_shot_wrapper
 ;   uses string "num"
 ;   uses string "tea"
 ;   uses string "pause.cor"
@@ -3546,7 +3546,7 @@ loc_8520e:
 ; ====================================================================================================
 ; say_star  [0x85213, 268 bytes, 66 instructions]
 ; 1st/2nd/3rd star
-; called by: sub_59b0f
+; called by: say_star_wrapper
 ;   uses string "num"
 ;   uses string "frm"
 ;   uses string "pause.cor"
@@ -3629,7 +3629,7 @@ loc_85319:
 ; ====================================================================================================
 ; say_goal  [0x8531f, 397 bytes, 100 instructions]
 ; goal and assists by number
-; called by: sub_59ad0
+; called by: say_goal_wrapper
 ;   uses string "num"
 ;   uses string "tea"
 ;   uses string "pause.cor"
@@ -3786,7 +3786,7 @@ loc_85505:
 
 ; ====================================================================================================
 ; sub_85507  [0x85507, 105 bytes, 33 instructions]
-; called by: sub_59d54
+; called by: speech_stop
 ;   uses string "XBRUCE2"
 ;   uses string ".VIV"
 ; ====================================================================================================
@@ -4018,7 +4018,7 @@ loc_85799:
 ; ====================================================================================================
 ; preload_speech  [0x8579e, 390 bytes, 96 instructions]
 ; loads the bank and the common clips
-; called by: sub_59d71
+; called by: preload_speech_wrapper
 ;   uses string "tea"
 ;   uses string "XBRUCE2"
 ;   uses string "pause.cor"
@@ -9297,7 +9297,7 @@ loc_893be:
     mov dword ptr [dword_c721d], edi             ; 0893e5 893d1d720c00
     mov dword ptr [esp + 0x24], 1                ; 0893eb c744242401000000
 loc_893f3:
-    call sub_479e9                               ; 0893f3 e8f1e5fbff
+    call loading_screen                          ; 0893f3 e8f1e5fbff
     call sub_8b85b                               ; 0893f8 e85e240000
     call sub_10712                               ; 0893fd e81073f8ff
     mov dword ptr [dword_c65c0], exh_hub_sports_central ; 089402 c705c0650c001600..
@@ -9635,7 +9635,7 @@ loc_897bf:
 
 loc_898d0:
     mov dword ptr [esp + 0x2c], eax              ; 0898d0 8944242c
-    call sub_479e9                               ; 0898d4 e810e1fbff
+    call loading_screen                          ; 0898d4 e810e1fbff
 loc_898d9:
     mov eax, dword ptr [esp + 0x20]              ; 0898d9 8b442420
     sub eax, 2                                   ; 0898dd 83e802

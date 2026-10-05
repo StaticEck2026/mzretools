@@ -1714,7 +1714,7 @@ loc_7bd36:
     je loc_7bd59                                 ; 07bd4e 7409
     test eax, eax                                ; 07bd50 85c0
     jne loc_7bd59                                ; 07bd52 7505
-    call sub_59748                               ; 07bd54 e8efd9fdff
+    call sound_pause_all                         ; 07bd54 e8efd9fdff
 loc_7bd59:
     mov bh, byte ptr [option_flags]              ; 07bd59 8a3dff530c00
     test bh, 0x80                                ; 07bd5f f6c780
@@ -1727,7 +1727,7 @@ loc_7bd59:
     mov byte ptr [option_flags], ch              ; 07bd70 882dff530c00
     shl edx, 7                                   ; 07bd76 c1e207
     or dword ptr [option_flags], edx             ; 07bd79 0915ff530c00
-    call sub_59863                               ; 07bd7f e8dfdafdff
+    call sound_resume_all                        ; 07bd7f e8dfdafdff
     jmp loc_7bd9b                                ; 07bd84 eb15
 
 loc_7bd86:
@@ -5554,7 +5554,7 @@ loc_7e7e6:
     jmp loc_7e44a                                ; 07e829 e91cfcffff
 
 loc_7e82e:
-    call sub_59748                               ; 07e82e e815affdff
+    call sound_pause_all                         ; 07e82e e815affdff
     mov ecx, 0xffffffff                          ; 07e833 b9ffffffff
     mov word ptr [crowd_noise], cx               ; 07e838 66890ddcc00c00
     mov word ptr [word_cd500], cx                ; 07e83f 66890d00d50c00
@@ -7723,7 +7723,7 @@ loc_8022d:
     xor edi, edi                                 ; 080252 31ff
     mov dword ptr [dword_c721d], edi             ; 080254 893d1d720c00
 loc_8025a:
-    call sub_479e9                               ; 08025a e88a77fcff
+    call loading_screen                          ; 08025a e88a77fcff
     mov edx, dword ptr [dword_c90ca]             ; 08025f 8b15ca900c00
     sar edx, 0x10                                ; 080265 c1fa10
     mov eax, dword ptr [user2_team]              ; 080268 a1c8900c00
@@ -8339,7 +8339,7 @@ loc_808a1:
     xor esi, esi                                 ; 0808c6 31f6
     mov dword ptr [dword_c721d], esi             ; 0808c8 89351d720c00
 loc_808ce:
-    call sub_479e9                               ; 0808ce e81671fcff
+    call loading_screen                          ; 0808ce e81671fcff
     lea eax, [esp + 0x300]                       ; 0808d3 8d842400030000
     push eax                                     ; 0808da 50
     call getfontstate                            ; 0808db e808e10000

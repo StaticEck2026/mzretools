@@ -1053,7 +1053,7 @@ undefined8 __watcall exhibition_mode(int *param_1,undefined4 unaff_EDX)
           releasememblock(dword_c721d);
           dword_c721d = 0;
         }
-        sub_479e9();
+        loading_screen();
       }
       play_game(param_1);
       set_menu_mode(0);
@@ -2280,7 +2280,7 @@ int __watcall calendar_screen(undefined4 param_1,undefined4 param_2,uint unaff_E
     releasememblock(dword_c721d);
     dword_c721d = 0;
   }
-  sub_479e9();
+  loading_screen();
   dword_c65c0 = cal_hub_a;
   dword_c65c4 = cal_hub_b;
   dword_c65c8 = cal_hub_c;
@@ -3518,7 +3518,7 @@ void __watcall league_calendar_flow(int *param_1)
             dword_c721d = 0;
           }
           if (-1 < *param_1) {
-            sub_479e9();
+            loading_screen();
           }
           bVar10 = byte_ddd42 != dword_ddd38;
           if (bVar10) {

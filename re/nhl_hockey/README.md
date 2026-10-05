@@ -157,9 +157,13 @@ like `defo defd wingo wingd cento centd goalie puckc nearest shoot passrec`.
 
 ## Named routines
 
-212 routines are named so far (the rest keep `sub_<address>` names). Library names in lower case without
-prefix (`reservemem`, `locateshape`, `initgraphics`, `addtimer`, `unpack`, ...) are EA's own names recovered
-from their error messages; C runtime functions carry their standard names. The most important ones:
+673 routines and 94 variables are named so far (the rest keep `sub_<address>` / `dword_<address>` names).
+Library names in lower case without prefix (`reservemem`, `locateshape`, `initgraphics`, `addtimer`,
+`unpack`, ...) are EA's own names recovered from their error messages; C runtime functions carry their
+standard names; game routines use `snake_case` names describing what was understood of them, with the 47 AI
+state handlers prefixed `ai_` and named after the original state names found in the data. The reverse
+engineered data structures (entities, teams, AI dispatch, controls, globals) are described in
+[STRUCTURES.md](STRUCTURES.md) and the file formats in [FORMATS.md](FORMATS.md). The most important routines:
 
 | Address | Name | |
 |---|---|---|
@@ -169,6 +173,12 @@ from their error messages; C runtime functions carry their standard names. The m
 | `0x1167b` | `game_loop` | per frame loop |
 | `0x1149a` | `run_sim_steps` | fixed 60 Hz stepping |
 | `0x5c1c4` | `sim_tick` | one simulation step |
+| `0x5c40f` | `sim_update_players` | per entity update: animation, physics, control/AI dispatch |
+| `0x5e16d` | `apply_skating` | skating/turning from a control byte |
+| `0x5edad` | `skating_accelerate` | acceleration and speed limit from the skills |
+| `0x5f53c` | `collide_boards` | boards with rounded corners |
+| `0x11ff4` | `set_state` | push an AI state |
+| `0x4a343+` | `ai_*` | the 47 AI state handlers |
 | `0x1118f` | `handle_hotkey` | in-game hotkeys |
 | `0x5dc10` | `game_clock_tick` | period clock |
 | `0x33dd3` | `draw_rink` | background |
@@ -194,8 +204,8 @@ The full list with descriptions is in `hockey.map` (lines starting with `#@`).
 
 The recommended loop is the one used throughout mzretools: study a routine in the listing and the pseudo-C,
 rename it (and important variables) in `hockey.map`, add a `#@` comment, rerun `tools/lede.sh` and all outputs
-(listing, JSON, ELF symbols, Ghidra output) pick up the new names. Good next targets are the player/puck
-structures used by `sim_game_state`/`sim_update_players` (team records at `0xdf614` and `0xdf714`, each pointing
-to 6 player records of 0x80 bytes; the player loop starts at `0xdf81c`),
-the unnamed parts of `sim_tick` (`sub_65d01`, `sub_675d6`), `draw_sprites` (animation frame selection) and
-the database loaders.
+(listing, JSON, ELF symbols, Ghidra output) pick up the new names. The simulation core, the AI dispatch, the
+controls, the asset loaders and most screens are named; what remains unnamed is mostly menu/screen helpers in
+`0x1b000-0x45000`, the HUD drawing helpers under `draw_clock`, the season/statistics screens and small sim
+helpers. The Godot reimplementation that uses this material lives in
+[godot/nhl_hockey](../../godot/nhl_hockey); the asset tools in [tools/nhl](../../tools/nhl).

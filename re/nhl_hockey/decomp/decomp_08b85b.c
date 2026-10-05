@@ -2466,7 +2466,7 @@ undefined4 * __watcall sub_8d714(void)
   undefined4 *puVar1;
   undefined4 in_stack_00000004;
   
-  puVar1 = (undefined4 *)sub_8d728(in_stack_00000004);
+  puVar1 = (undefined4 *)find_loaded_file(in_stack_00000004);
   if (puVar1 != (undefined4 *)0x0) {
     puVar1 = (undefined4 *)*puVar1;
   }
@@ -2475,10 +2475,10 @@ undefined4 * __watcall sub_8d714(void)
 
 
 // ================================================================================================
-// sub_8d728 @ 0x8d728 [__cdecl]
+// find_loaded_file @ 0x8d728 [__cdecl]
 // ================================================================================================
 
-undefined4 * sub_8d728(void)
+undefined4 * find_loaded_file(void)
 
 {
   byte bVar1;
@@ -4074,7 +4074,7 @@ undefined4 * sub_8e920(undefined4 param_1,undefined4 param_2,undefined4 param_3)
   undefined local_10 [4];
   int local_c;
   
-  puVar1 = (undefined4 *)sub_8d728(param_1);
+  puVar1 = (undefined4 *)find_loaded_file(param_1);
   if (puVar1 == (undefined4 *)0x0) {
     openhandle(param_1,&local_14,local_10,&local_c,param_3);
     if (local_c == 0) {
@@ -7394,10 +7394,10 @@ __off_t __watcall lseek(int __fd,__off_t __offset,int __whence)
 
 
 // ================================================================================================
-// sub_90cea @ 0x90cea [__watcall]
+// read_bytes @ 0x90cea [__watcall]
 // ================================================================================================
 
-void __watcall sub_90cea(undefined4 *param_1)
+void __watcall read_bytes(undefined4 *param_1)
 
 {
   code *pcVar1;

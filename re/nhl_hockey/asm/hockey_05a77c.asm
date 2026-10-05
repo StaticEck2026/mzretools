@@ -381,7 +381,7 @@ loc_5ac01:
     je loc_5ac5a                                 ; 05ac48 7410
     mov eax, dword ptr [esi + 0xf6]              ; 05ac4a 8b86f6000000
     mov edx, 8                                   ; 05ac50 ba08000000
-    call sub_62cf9                               ; 05ac55 e89f800000
+    call maybe_queue_infraction                  ; 05ac55 e89f800000
 loc_5ac5a:
     mov eax, dword ptr [ebp + 0xf6]              ; 05ac5a 8b85f6000000
     mov edx, 0x1b                                ; 05ac60 ba1b000000
@@ -886,10 +886,11 @@ loc_5b2c3:
 
 
 ; ====================================================================================================
-; sub_5b2c5  [0x5b2c5, 1377 bytes, 437 instructions]
+; put_player_on_ice  [0x5b2c5, 1377 bytes, 437 instructions]
+; put_player_on_ice(entity, roster_idx): assigns the roster player to the entity, bench/penalty states
 ; called by: ai_ref_three_stars, ai_bench, ai_bench_wait, setup_faceoff, sub_5e0dd, sub_6392a
 ; ====================================================================================================
-sub_5b2c5:
+put_player_on_ice:
     push 0x34                                    ; 05b2c5 6834000000
     call __CHK                                   ; 05b2ca e87d160300
     push ebx                                     ; 05b2cf 53
@@ -2021,7 +2022,7 @@ loc_5bee3:
 ; ====================================================================================================
 ; apply_line_change  [0x5bef4, 284 bytes, 81 instructions]
 ; moves the requested line onto the ice, benches the others
-; called by: init_match, request_line_change, sub_50975, ai_puck_faceoff, ai_puck_faceoff2, sub_54af9, maybe_pull_goalie, cpu_line_change, sub_5e0b0, sub_671e8, sub_672f9, simulate_game_offscreen (+1 more)
+; called by: init_match, request_line_change, sub_50975, ai_puck_faceoff, ai_puck_faceoff2, ai_consider_shot, maybe_pull_goalie, cpu_line_change, sub_5e0b0, sub_671e8, sub_672f9, simulate_game_offscreen (+1 more)
 ; ====================================================================================================
 apply_line_change:
     push 0x1c                                    ; 05bef4 681c000000
@@ -4346,7 +4347,7 @@ loc_5db30:
     call set_state_reset                         ; 05db42 e8ca44fbff
     movsx edx, bx                                ; 05db47 0fbfd3
     mov eax, ecx                                 ; 05db4a 89c8
-    call sub_5b2c5                               ; 05db4c e874d7ffff
+    call put_player_on_ice                       ; 05db4c e874d7ffff
     mov ebx, 1                                   ; 05db51 bb01000000
 loc_5db56:
     movsx eax, bx                                ; 05db56 0fbfc3
@@ -4908,7 +4909,7 @@ loc_5e120:
     mov edx, dword ptr [ebx + 0x40]              ; 05e149 8b5340
     sar edx, 0x18                                ; 05e14c c1fa18
     mov eax, ebx                                 ; 05e14f 89d8
-    call sub_5b2c5                               ; 05e151 e86fd1ffff
+    call put_player_on_ice                       ; 05e151 e86fd1ffff
 loc_5e156:
     mov byte ptr [ebx + 0x43], 0xff              ; 05e156 c64343ff
     mov byte ptr [ebx + 0x42], 0xff              ; 05e15a c64342ff
@@ -5218,10 +5219,11 @@ loc_5e4bc:
 
 
 ; ====================================================================================================
-; sub_5e4c4  [0x5e4c4, 826 bytes, 224 instructions]
+; ai_ref_positioning  [0x5e4c4, 826 bytes, 224 instructions]
+; referee skates to his spot relative to the puck
 ; called by: ai_ref_normal
 ; ====================================================================================================
-sub_5e4c4:
+ai_ref_positioning:
     push 0x30                                    ; 05e4c4 6830000000
     call __CHK                                   ; 05e4c9 e87ee40200
     push ebx                                     ; 05e4ce 53
@@ -5605,7 +5607,7 @@ loc_5e933:
 ; ====================================================================================================
 ; ai_skate_towards  [0x5e93b, 476 bytes, 139 instructions]
 ; ai_skate_towards(entity, target): pathing helper used by the AI states
-; called by: ai_ref_anthem, ai_defense_offense, ai_defense_defense, ai_wing_defense, ai_center_defense, ai_celebrate_goal, ai_game_misconduct, ai_bench, ai_goalie, ai_puck_carrier, ai_nearest_to_puck, sub_4e292 (+4 more)
+; called by: ai_ref_anthem, ai_defense_offense, ai_defense_defense, ai_wing_defense, ai_center_defense, ai_celebrate_goal, ai_game_misconduct, ai_bench, ai_goalie, ai_puck_carrier, ai_nearest_to_puck, ref_skate_to_point (+4 more)
 ; ====================================================================================================
 ai_skate_towards:
     push 0x18                                    ; 05e93b 6818000000
@@ -8920,14 +8922,14 @@ loc_61249:
     call load_music_banks                        ; 061292 e8f4c90100
     mov ecx, 0x17                                ; 061297 b917000000
     mov edx, 0xffffffff                          ; 06129c baffffffff
-    mov eax, unk_d9980                           ; 0612a1 b880990d00
+    mov eax, sprite_banks                        ; 0612a1 b880990d00
     call _memset_dwords                          ; 0612a6 e83cf00200
     mov ebx, 0xffffffff                          ; 0612ab bbffffffff
     mov dword ptr [dword_cc0e0], ebx             ; 0612b0 891de0c00c00
     call load_player_graphics                    ; 0612b6 e8d627fbff
     mov ecx, 0x17                                ; 0612bb b917000000
     xor edx, edx                                 ; 0612c0 31d2
-    mov eax, unk_d9980                           ; 0612c2 b880990d00
+    mov eax, sprite_banks                        ; 0612c2 b880990d00
     call _memset_dwords                          ; 0612c7 e81bf00200
     xor ecx, ecx                                 ; 0612cc 31c9
     mov dword ptr [dword_cc0e0], ecx             ; 0612ce 890de0c00c00
@@ -9405,7 +9407,7 @@ loc_61880:
     sar edx, 0x10                                ; 0618a2 c1fa10
     mov eax, dword ptr [esi + 1]                 ; 0618a5 8b4601
     sar eax, 0x18                                ; 0618a8 c1f818
-    mov eax, dword ptr [eax*4 + unk_e00a0]       ; 0618ab 8b0485a0000e00
+    mov eax, dword ptr [eax*4 + effect_frames]   ; 0618ab 8b0485a0000e00
     mov ecx, dword ptr [ebp - 0x10]              ; 0618b2 8b4df0
     call blit_sprite                             ; 0618b5 e8b9b4fbff
 loc_618ba:
@@ -9458,7 +9460,7 @@ loc_61926:
     sar edx, 0x10                                ; 06193c c1fa10
     mov eax, dword ptr [ebp - 0xe]               ; 06193f 8b45f2
     sar eax, 0x10                                ; 061942 c1f810
-    mov eax, dword ptr [eax*4 + unk_e00a0]       ; 061945 8b0485a0000e00
+    mov eax, dword ptr [eax*4 + effect_frames]   ; 061945 8b0485a0000e00
     xor ecx, ecx                                 ; 06194c 31c9
     call blit_sprite                             ; 06194e e820b4fbff
 loc_61953:
@@ -10469,7 +10471,7 @@ loc_6246c:
     mov eax, 5                                   ; 06246c b805000000
 loc_62471:
     cwde                                         ; 062471 98
-    call load_announcer_clip                     ; 062472 e820400000
+    call load_cutscene_clip                      ; 062472 e820400000
 loc_62477:
     call show_penalty                            ; 062477 e81dfaffff
     call sub_66dda                               ; 06247c e859490000
@@ -10585,7 +10587,7 @@ loc_625c1:
     jne loc_625df                                ; 0625d3 750a
     mov eax, 9                                   ; 0625d5 b809000000
 loc_625da:
-    call load_announcer_clip                     ; 0625da e8b83e0000
+    call load_cutscene_clip                      ; 0625da e8b83e0000
 loc_625df:
     call show_penalty                            ; 0625df e8b5f8ffff
     call sub_66dda                               ; 0625e4 e8f1470000
@@ -10635,7 +10637,7 @@ loc_62644:
     mov eax, dword ptr [esi*4 + team_abbrev]     ; 062677 8b04b539540c00
     mov ecx, dword ptr [esp + 0x1c]              ; 06267e 8b4c241c
     mov ebx, dword ptr [esp + 0x18]              ; 062682 8b5c2418
-    call sub_59b88                               ; 062686 e8fd74ffff
+    call say_penalty_shot_wrapper                ; 062686 e8fd74ffff
     jmp loc_6274c                                ; 06268b e9bc000000
 
 loc_62690:
@@ -10696,7 +10698,7 @@ loc_626f0:
     mov eax, dword ptr [esi*4 + team_abbrev]     ; 06272f 8b04b539540c00
     mov ebx, edx                                 ; 062736 89d3
     mov edx, edi                                 ; 062738 89fa
-    call sub_59b3c                               ; 06273a e8fd73ffff
+    call say_penalty_wrapper                     ; 06273a e8fd73ffff
     test ebp, ebp                                ; 06273f 85ed
     je loc_6274c                                 ; 062741 7409
     mov word ptr [dword_e9aae], 0xffff           ; 062743 66c705ae9a0e00ff..

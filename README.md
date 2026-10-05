@@ -438,6 +438,10 @@ Besides the map it can write an annotated listing (symbolic operands, callers, r
 
 `lede.sh game.exe outdir` runs `ledisasm.py` with all outputs enabled and, if `GHIDRA_HOME` points to a Ghidra 11 installation, imports the ELF into a headless Ghidra, teaches it the Watcom register calling convention, applies the names and conventions from the map and writes the decompiled pseudo-C of every routine into `outdir/decomp`. See [re/nhl_hockey](re/nhl_hockey) for the complete output for EA's NHL Hockey, including an analysis of the program and a guide for porting it to a modern engine.
 
+### nhl/ and godot/
+
+`tools/nhl/nhltool.py` reads the data files of NHL Hockey using the formats recovered from the disassembly (RefPack and EA's other pack codes, SHPI shape banks, VFN fonts, 8SVX/RIFF samples, rink tile maps, VIV speech banks) and converts them to PNG/WAV; `tools/nhl/extract_tables.py` pulls the static tables (animation sequences, direction vectors, AI state names, ...) out of the executable into JSON. [godot/nhl_hockey](godot/nhl_hockey) is a Godot 4 project rebuilding the game from that material: it loads the original assets from the user's installation at runtime and ports the simulation routine by routine from the decompiled code.
+
 ## other
 
 There's a bunch of bash scripts for doing odd jobs as well.

@@ -404,7 +404,7 @@ loc_52b7e:
 loc_52ba8:
     xor edx, edx                                 ; 052ba8 31d2
     mov eax, ebx                                 ; 052baa 89d8
-    call sub_4e292                               ; 052bac e8e1b6ffff
+    call ref_skate_to_point                      ; 052bac e8e1b6ffff
     jmp loc_511ae                                ; 052bb1 e9f8e5ffff
 
 
@@ -970,7 +970,7 @@ loc_5321b:
     ret                                          ; 053236 c3
 
 loc_53237:
-    call sub_59aad                               ; 053237 e871680000
+    call speech_busy                             ; 053237 e871680000
     test eax, eax                                ; 05323c 85c0
     jne loc_53290                                ; 05323e 7550
     mov eax, dword ptr [dword_cbeca]             ; 053240 a1cabe0c00
@@ -996,7 +996,7 @@ loc_53273:
     mov word ptr [dword_e03c0], ax               ; 053281 66a3c0030e00
     xor edx, edx                                 ; 053287 31d2
     mov eax, ebx                                 ; 053289 89d8
-    call sub_4e292                               ; 05328b e802b0ffff
+    call ref_skate_to_point                      ; 05328b e802b0ffff
 loc_53290:
     pop edx                                      ; 053290 5a
     pop ecx                                      ; 053291 59
@@ -1033,7 +1033,7 @@ sub_532a2:
 ; ====================================================================================================
 ; body_check  [0x532bd, 202 bytes, 49 instructions]
 ; velocity burst in the heading direction, costs energy, animation 0x621
-; called by: control_player, sub_53537
+; called by: control_player, ai_try_check
 ; ====================================================================================================
 body_check:
     push 0x18                                    ; 0532bd 6818000000
@@ -1228,7 +1228,7 @@ loc_534ae:
 
 ; ====================================================================================================
 ; sub_534bb  [0x534bb, 124 bytes, 44 instructions]
-; called by: sub_53537
+; called by: ai_try_check
 ; ====================================================================================================
 sub_534bb:
     push 0x10                                    ; 0534bb 6810000000
@@ -1280,10 +1280,11 @@ loc_53533:
 
 
 ; ====================================================================================================
-; sub_53537  [0x53537, 360 bytes, 96 instructions]
+; ai_try_check  [0x53537, 360 bytes, 96 instructions]
+; random body check decision from the checking skill
 ; called by: ai_defense_defense, ai_nearest_to_puck
 ; ====================================================================================================
-sub_53537:
+ai_try_check:
     push 0x18                                    ; 053537 6818000000
     call __CHK                                   ; 05353c e80b940300
     push ebx                                     ; 053541 53
@@ -1846,7 +1847,7 @@ loc_53add:
     add eax, 0xb                                 ; 053b2d 83c00b
     movsx edx, ax                                ; 053b30 0fbfd0
     mov eax, esi                                 ; 053b33 89f0
-    call sub_62cf9                               ; 053b35 e8bff10000
+    call maybe_queue_infraction                  ; 053b35 e8bff10000
     jmp loc_53cc8                                ; 053b3a e989010000
 
 loc_53b3f:
@@ -1863,7 +1864,7 @@ loc_53b3f:
     mov word ptr [word_cbec2], di                ; 053b6b 66893dc2be0c00
     mov edx, 0x16                                ; 053b72 ba16000000
     mov eax, esi                                 ; 053b77 89f0
-    call sub_62cf9                               ; 053b79 e87bf10000
+    call maybe_queue_infraction                  ; 053b79 e87bf10000
     jmp loc_53cbf                                ; 053b7e e93c010000
 
 loc_53b83:
@@ -1970,7 +1971,7 @@ loc_53cb5:
     movsx edx, ax                                ; 053cb5 0fbfd0
 loc_53cb8:
     mov eax, esi                                 ; 053cb8 89f0
-    call sub_62cf9                               ; 053cba e83af00000
+    call maybe_queue_infraction                  ; 053cba e83af00000
 loc_53cbf:
     mov edx, ecx                                 ; 053cbf 89ca
     mov eax, esi                                 ; 053cc1 89f0
@@ -2202,7 +2203,7 @@ loc_53f0e:
     jne loc_53f73                                ; 053f65 750c
     mov edx, 0x11                                ; 053f67 ba11000000
     mov eax, ebx                                 ; 053f6c 89d8
-    call sub_62cf9                               ; 053f6e e886ed0000
+    call maybe_queue_infraction                  ; 053f6e e886ed0000
 loc_53f73:
     mov eax, ebx                                 ; 053f73 89d8
     mov ebx, ecx                                 ; 053f75 89cb
@@ -2369,10 +2370,11 @@ loc_5412e:
 
 
 ; ====================================================================================================
-; sub_54134  [0x54134, 150 bytes, 47 instructions]
+; stickhandling_skill  [0x54134, 150 bytes, 47 instructions]
+; skill attribute used for the puck interaction depending on the current animation
 ; called by: puck_player_interaction
 ; ====================================================================================================
-sub_54134:
+stickhandling_skill:
     push 8                                       ; 054134 6808000000
     call __CHK                                   ; 054139 e80e880300
     push edx                                     ; 05413e 52
@@ -2446,10 +2448,11 @@ loc_541c3:
 
 
 ; ====================================================================================================
-; sub_541ca  [0x541ca, 192 bytes, 57 instructions]
+; two_line_pass_check  [0x541ca, 192 bytes, 57 instructions]
+; two line pass rule (option_flags & 2)
 ; called by: puck_player_interaction
 ; ====================================================================================================
-sub_541ca:
+two_line_pass_check:
     push 8                                       ; 0541ca 6808000000
     call __CHK                                   ; 0541cf e878870300
     push edx                                     ; 0541d4 52
@@ -2555,7 +2558,7 @@ loc_542bd:
     cmp word ptr [ebx + 0x1a], 0                 ; 0542e9 66837b1a00
     jne loc_54561                                ; 0542ee 0f856d020000
     mov eax, ebx                                 ; 0542f4 89d8
-    call sub_54134                               ; 0542f6 e839feffff
+    call stickhandling_skill                     ; 0542f6 e839feffff
     mov edi, eax                                 ; 0542fb 89c7
     mov eax, dword ptr [p_puck_vx]               ; 0542fd a180900c00
     mov dx, word ptr [eax]                       ; 054302 668b10
@@ -2602,7 +2605,7 @@ loc_54358:
     mov edi, 4                                   ; 05435e bf04000000
 loc_54363:
     mov eax, ebx                                 ; 054363 89d8
-    call sub_5a534                               ; 054365 e8ca610000
+    call stick_offset_from_frame                 ; 054365 e8ca610000
     cmp word ptr [dword_e03bc], 0                ; 05436a 66833dbc030e0000
     jge loc_54380                                ; 054372 7d0c
     mov eax, dword ptr [dword_e03ba]             ; 054374 a1ba030e00
@@ -2730,10 +2733,10 @@ loc_5450b:
     cmp ax, word ptr [dword_e03bc]               ; 054511 663b05bc030e00
     jl loc_5452e                                 ; 054518 0f8c10000000
     mov eax, ebx                                 ; 05451e 89d8
-    call sub_541ca                               ; 054520 e8a5fcffff
+    call two_line_pass_check                     ; 054520 e8a5fcffff
     mov edx, ebx                                 ; 054525 89da
     mov eax, ecx                                 ; 054527 89c8
-    call sub_57483                               ; 054529 e8552f0000
+    call goalie_save                             ; 054529 e8552f0000
 loc_5452e:
     cmp word ptr [ebx + 0x1a], 0                 ; 05452e 66837b1a00
     jne loc_546ea                                ; 054533 0f85b1010000
@@ -2823,7 +2826,7 @@ loc_54636:
 loc_54662:
     mov edx, ebx                                 ; 054662 89da
     mov eax, ecx                                 ; 054664 89c8
-    call sub_57483                               ; 054666 e8182e0000
+    call goalie_save                             ; 054666 e8182e0000
     jmp loc_54d5d                                ; 05466b e9ed060000
 
 loc_54670:
@@ -2859,10 +2862,10 @@ loc_546aa:
     cmp eax, 0x64                                ; 0546cc 83f864
     ja loc_54d5d                                 ; 0546cf 0f8788060000
     mov eax, ebx                                 ; 0546d5 89d8
-    call sub_541ca                               ; 0546d7 e8eefaffff
+    call two_line_pass_check                     ; 0546d7 e8eefaffff
     mov edx, ebx                                 ; 0546dc 89da
     mov eax, ecx                                 ; 0546de 89c8
-    call sub_57096                               ; 0546e0 e8b1290000
+    call puck_hits_player                        ; 0546e0 e8b1290000
     jmp loc_54d5d                                ; 0546e5 e973060000
 
 loc_546ea:
@@ -2877,7 +2880,7 @@ loc_546ea:
     cmp word ptr [eax], 8                        ; 054712 66833808
     jge loc_547f1                                ; 054716 0f8dd5000000
     mov eax, ebx                                 ; 05471c 89d8
-    call sub_5a4ad                               ; 05471e e88a5d0000
+    call stick_offsets_lookup                    ; 05471e e88a5d0000
     mov ax, word ptr [dword_e03bc]               ; 054723 66a1bc030e00
     sar ax, 1                                    ; 054729 66d1f8
     mov word ptr [dword_e03bc], ax               ; 05472c 66a3bc030e00
@@ -3000,7 +3003,7 @@ loc_54869:
 loc_5489e:
     mov edx, ebx                                 ; 05489e 89da
     mov eax, ecx                                 ; 0548a0 89c8
-    call sub_56d06                               ; 0548a2 e85f240000
+    call attach_puck_to_stick                    ; 0548a2 e85f240000
     jmp loc_54d5d                                ; 0548a7 e9b1040000
 
 
@@ -3179,7 +3182,7 @@ loc_54a4d:
 
 ; ====================================================================================================
 ; sub_54a53  [0x54a53, 166 bytes, 55 instructions]
-; called by: sub_54af9
+; called by: ai_consider_shot
 ; ====================================================================================================
 sub_54a53:
     push 0x18                                    ; 054a53 6818000000
@@ -3252,10 +3255,11 @@ loc_54ad3:
 
 
 ; ====================================================================================================
-; sub_54af9  [0x54af9, 272 bytes, 74 instructions]
+; ai_consider_shot  [0x54af9, 272 bytes, 74 instructions]
+; shoot when in the slot (realism option)
 ; called by: ai_puck_carrier
 ; ====================================================================================================
-sub_54af9:
+ai_consider_shot:
     push 0x18                                    ; 054af9 6818000000
     call __CHK                                   ; 054afe e8497e0300
     push ebx                                     ; 054b03 53
@@ -3339,14 +3343,14 @@ loc_54be8:
     call apply_line_change                       ; 054bf3 e8fc720000
 loc_54bf8:
     mov eax, ecx                                 ; 054bf8 89c8
-    call sub_55a35                               ; 054bfa e8360e0000
+    call ai_desperation_shot                     ; 054bfa e8360e0000
     mov eax, 1                                   ; 054bff b801000000
     jmp loc_5412e                                ; 054c04 e925f5ffff
 
 
 ; ====================================================================================================
 ; sub_54c09  [0x54c09, 346 bytes, 125 instructions]
-; called by: do_pass, sub_55493
+; called by: do_pass, ai_choose_pass_target
 ; ====================================================================================================
 sub_54c09:
     push 0x1c                                    ; 054c09 681c000000
@@ -3370,7 +3374,7 @@ loc_54c32:
     jmp loc_54d5a                                ; 054c34 e921010000
 
 loc_54c39:
-    call sub_64102                               ; 054c39 e8c4f40000
+    call count_defenders_ahead                   ; 054c39 e8c4f40000
     test eax, eax                                ; 054c3e 85c0
     jne loc_54c32                                ; 054c40 75f0
     mov esi, dword ptr [ebx + 4]                 ; 054c42 8b7304
@@ -3550,7 +3554,7 @@ loc_54d89:
 ; ====================================================================================================
 ; do_pass  [0x54df4, 858 bytes, 234 instructions]
 ; chooses the receiver in the pushed direction, launches the puck
-; called by: pass_button, sub_55493
+; called by: pass_button, ai_choose_pass_target
 ; ====================================================================================================
 do_pass:
     push 0x28                                    ; 054df4 6828000000
@@ -4108,10 +4112,11 @@ loc_553b8:
 
 
 ; ====================================================================================================
-; sub_55493  [0x55493, 881 bytes, 240 instructions]
+; ai_choose_pass_target  [0x55493, 881 bytes, 240 instructions]
+; random team mate with a clear lane
 ; called by: ai_goalie, ai_puck_carrier
 ; ====================================================================================================
-sub_55493:
+ai_choose_pass_target:
     push 0x18                                    ; 055493 6818000000
     call __CHK                                   ; 055498 e8af740300
     push ebx                                     ; 05549d 53
@@ -4393,10 +4398,11 @@ loc_557fd:
 
 
 ; ====================================================================================================
-; sub_55804  [0x55804, 561 bytes, 143 instructions]
+; ai_offense_decision  [0x55804, 561 bytes, 143 instructions]
+; shoot or pass depending on distance to the net and the clock
 ; called by: ai_puck_carrier
 ; ====================================================================================================
-sub_55804:
+ai_offense_decision:
     push 0x18                                    ; 055804 6818000000
     call __CHK                                   ; 055809 e83e710300
     push ebx                                     ; 05580e 53
@@ -4566,10 +4572,10 @@ loc_55a27:
 
 
 ; ====================================================================================================
-; sub_55a35  [0x55a35, 106 bytes, 25 instructions]
-; called by: sub_54af9
+; ai_desperation_shot  [0x55a35, 106 bytes, 25 instructions]
+; called by: ai_consider_shot
 ; ====================================================================================================
-sub_55a35:
+ai_desperation_shot:
     push 8                                       ; 055a35 6808000000
     call __CHK                                   ; 055a3a e80d6f0300
     push edx                                     ; 055a3f 52
@@ -4822,7 +4828,7 @@ loc_55d25:
 
 ; ====================================================================================================
 ; sub_55d28  [0x55d28, 330 bytes, 81 instructions]
-; called by: sub_56f5a, sub_57096, sub_57483, score_goal
+; called by: sub_56f5a, puck_hits_player, goalie_save, score_goal
 ; ====================================================================================================
 sub_55d28:
     push 0x18                                    ; 055d28 6818000000
@@ -5042,7 +5048,7 @@ loc_55fcc:
     setne al                                     ; 05600d 0f95c0
     xor ah, ah                                   ; 056010 30e4
     cwde                                         ; 056012 98
-    call sub_655cc                               ; 056013 e8b4f50000
+    call pick_player_for_position                ; 056013 e8b4f50000
     jmp loc_5412e                                ; 056018 e911e1ffff
 
 
@@ -5292,7 +5298,7 @@ loc_562d3:
 ; ====================================================================================================
 ; knock_down  [0x562db, 1913 bytes, 495 instructions]
 ; victim falls, crowd noise
-; called by: resolve_body_check, check_injury, resolve_hook_hit, sub_56d06
+; called by: resolve_body_check, check_injury, resolve_hook_hit, attach_puck_to_stick
 ; ====================================================================================================
 knock_down:
     push 0x14                                    ; 0562db 6814000000
@@ -5635,7 +5641,7 @@ loc_56761:
     cmp ax, 0x14                                 ; 056767 663d1400
     jg loc_5685e                                 ; 05676b 0f8fed000000
     mov eax, ebx                                 ; 056771 89d8
-    call sub_65b83                               ; 056773 e80bf40000
+    call injury_check                            ; 056773 e80bf40000
     test eax, eax                                ; 056778 85c0
     je loc_5685e                                 ; 05677a 0f84de000000
     mov dx, word ptr [word_cc0de]                ; 056780 668b15dec00c00
@@ -5706,7 +5712,7 @@ loc_5684f:
 loc_56854:
     movsx edx, ax                                ; 056854 0fbfd0
     mov eax, ecx                                 ; 056857 89c8
-    call sub_62cf9                               ; 056859 e89bc40000
+    call maybe_queue_infraction                  ; 056859 e89bc40000
 loc_5685e:
     or byte ptr [ebx + 0x44], 0x20               ; 05685e 804b4420
     movsx edx, si                                ; 056862 0fbfd6
@@ -5784,7 +5790,7 @@ loc_56947:
     test byte ptr [game_flags], 1                ; 056957 f605bb900c0001
     jne loc_56a3b                                ; 05695e 0f85d7000000
     mov eax, ebx                                 ; 056964 89d8
-    call sub_65b83                               ; 056966 e818f20000
+    call injury_check                            ; 056966 e818f20000
     test eax, eax                                ; 05696b 85c0
     je loc_56a3b                                 ; 05696d 0f84c8000000
     or byte ptr [ebx + 0x44], 0x20               ; 056973 804b4420
@@ -5803,7 +5809,7 @@ loc_56947:
     cmp byte ptr [eax + word_e9aba], 8           ; 0569a6 80b8ba9a0e0008
     jge loc_569ba                                ; 0569ad 7d0b
     mov eax, ecx                                 ; 0569af 89c8
-    call sub_65b83                               ; 0569b1 e8cdf10000
+    call injury_check                            ; 0569b1 e8cdf10000
     test eax, eax                                ; 0569b6 85c0
     jne loc_569cb                                ; 0569b8 7511
 loc_569ba:
@@ -5963,7 +5969,7 @@ loc_56b55:
     mov edx, 0x10                                ; 056b62 ba10000000
 loc_56b67:
     mov eax, ecx                                 ; 056b67 89c8
-    call sub_62cf9                               ; 056b69 e88bc10000
+    call maybe_queue_infraction                  ; 056b69 e88bc10000
 loc_56b6e:
     mov byte ptr [byte_c90ba], 0xff              ; 056b6e c605ba900c00ff
 loc_56b75:
@@ -6073,7 +6079,7 @@ loc_56caa:
 loc_56cb4:
     mov edx, 0x1a                                ; 056cb4 ba1a000000
     mov eax, ecx                                 ; 056cb9 89c8
-    call sub_62cf9                               ; 056cbb e839c00000
+    call maybe_queue_infraction                  ; 056cbb e839c00000
     mov eax, dword ptr [p_puck_carrier]          ; 056cc0 a194900c00
     mov byte ptr [eax], 0xff                     ; 056cc5 c600ff
     mov word ptr [ecx + 0x3e], 0x20              ; 056cc8 66c7413e2000
@@ -6094,7 +6100,7 @@ loc_56cec:
 loc_56cf1:
     movsx edx, ax                                ; 056cf1 0fbfd0
     mov eax, ecx                                 ; 056cf4 89c8
-    call sub_62cf9                               ; 056cf6 e8febf0000
+    call maybe_queue_infraction                  ; 056cf6 e8febf0000
 loc_56cfb:
     mov byte ptr [byte_c90ba], 0xff              ; 056cfb c605ba900c00ff
 loc_56d02:
@@ -6105,10 +6111,11 @@ loc_56d02:
 
 
 ; ====================================================================================================
-; sub_56d06  [0x56d06, 332 bytes, 99 instructions]
+; attach_puck_to_stick  [0x56d06, 332 bytes, 99 instructions]
+; puck becomes carried by the player
 ; called by: puck_player_interaction
 ; ====================================================================================================
-sub_56d06:
+attach_puck_to_stick:
     push 0x14                                    ; 056d06 6814000000
     call __CHK                                   ; 056d0b e83c5c0300
     push ebx                                     ; 056d10 53
@@ -6325,7 +6332,7 @@ loc_56f58:
 
 ; ====================================================================================================
 ; sub_56f5a  [0x56f5a, 316 bytes, 82 instructions]
-; called by: sub_57096, sub_57483
+; called by: puck_hits_player, goalie_save
 ; ====================================================================================================
 sub_56f5a:
     push 0x14                                    ; 056f5a 6814000000
@@ -6424,10 +6431,11 @@ loc_57084:
 
 
 ; ====================================================================================================
-; sub_57096  [0x57096, 1005 bytes, 274 instructions]
+; puck_hits_player  [0x57096, 1005 bytes, 274 instructions]
+; deflection of a loose puck off a player's body/stick
 ; called by: puck_player_interaction
 ; ====================================================================================================
-sub_57096:
+puck_hits_player:
     push 0x18                                    ; 057096 6818000000
     call __CHK                                   ; 05709b e8ac580300
     push ebx                                     ; 0570a0 53
@@ -6748,10 +6756,11 @@ loc_5747b:
 
 
 ; ====================================================================================================
-; sub_57483  [0x57483, 1003 bytes, 265 instructions]
+; goalie_save  [0x57483, 1003 bytes, 265 instructions]
+; goalie blocks/catches the puck, shot on goal bookkeeping
 ; called by: puck_player_interaction
 ; ====================================================================================================
-sub_57483:
+goalie_save:
     push 0x24                                    ; 057483 6824000000
     call __CHK                                   ; 057488 e8bf540300
     push ebx                                     ; 05748d 53
@@ -7252,7 +7261,7 @@ loc_57a37:
 
 ; ====================================================================================================
 ; sub_57a3e  [0x57a3e, 90 bytes, 22 instructions]
-; called by: sub_57483
+; called by: goalie_save
 ; ====================================================================================================
 sub_57a3e:
     push 8                                       ; 057a3e 6808000000
@@ -7544,7 +7553,7 @@ loc_57d00:
     mov word ptr [shot_power], ax                ; 057d48 66a3a6900c00
     cmp dword ptr [dword_cc0f8], 0               ; 057d4e 833df8c00c0000
     je loc_57d66                                 ; 057d55 740f
-    call sub_64102                               ; 057d57 e8a6c30000
+    call count_defenders_ahead                   ; 057d57 e8a6c30000
     mov eax, dword ptr [dword_cc124]             ; 057d5c a124c10c00
     mov dword ptr [dword_cc0f8], eax             ; 057d61 a3f8c00c00
 loc_57d66:
@@ -9703,10 +9712,10 @@ loc_59743:
 
 
 ; ====================================================================================================
-; sub_59748  [0x59748, 155 bytes, 41 instructions]
+; sound_pause_all  [0x59748, 155 bytes, 41 instructions]
 ; called by: handle_hotkey, sub_1b982, fade_ambient_audio, replay_seek_frames, game_settings_menu, instant_replay
 ; ====================================================================================================
-sub_59748:
+sound_pause_all:
     push 0x10                                    ; 059748 6810000000
     call __CHK                                   ; 05974d e8fa310300
     push ebx                                     ; 059752 53
@@ -9790,7 +9799,7 @@ loc_59840:
     jmp loc_5980d                                ; 05984f ebbc
 
 loc_59851:
-    call sub_59748                               ; 059851 e8f2feffff
+    call sound_pause_all                         ; 059851 e8f2feffff
     mov word ptr [word_cc0de], si                ; 059856 668935dec00c00
 loc_5985d:
     pop edi                                      ; 05985d 5f
@@ -9802,10 +9811,10 @@ loc_5985d:
 
 
 ; ====================================================================================================
-; sub_59863  [0x59863, 33 bytes, 9 instructions]
+; sound_resume_all  [0x59863, 33 bytes, 9 instructions]
 ; called by: handle_hotkey, play_game, sub_13e8f, sub_13fa7, match_sequence, game_settings_menu
 ; ====================================================================================================
-sub_59863:
+sound_resume_all:
     push 8                                       ; 059863 6808000000
     call __CHK                                   ; 059868 e8df300300
     push edx                                     ; 05986d 52
@@ -9819,7 +9828,7 @@ sub_59863:
 
 ; ====================================================================================================
 ; play_sfx  [0x59884, 193 bytes, 54 instructions]
-; called by: ai_faceoff, sub_4da7b, ai_ref_penalty_shot, do_pass, sub_55e72, knock_down, sub_56d06, sub_56f5a, sub_57096, sub_57483, do_shot, sub_58084 (+13 more)
+; called by: ai_faceoff, faceoff_resolve, ai_ref_penalty_shot, do_pass, sub_55e72, knock_down, attach_puck_to_stick, sub_56f5a, puck_hits_player, goalie_save, do_shot, sub_58084 (+13 more)
 ; ====================================================================================================
 play_sfx:
     push 0xc                                     ; 059884 680c000000
@@ -9828,7 +9837,7 @@ play_sfx:
     push edx                                     ; 05988f 52
     mov edx, eax                                 ; 059890 89c2
     mov word ptr [crowd_noise], ax               ; 059892 66a3dcc00c00
-    call sub_59aad                               ; 059898 e810020000
+    call speech_busy                             ; 059898 e810020000
     test eax, eax                                ; 05989d 85c0
     je loc_598c3                                 ; 05989f 7422
     cmp edx, 0x9c                                ; 0598a1 81fa9c000000
@@ -9915,10 +9924,10 @@ loc_5997e:
 
 
 ; ====================================================================================================
-; sub_59981  [0x59981, 56 bytes, 15 instructions]
-; called by: sub_10f6d, handle_hotkey, game_loop, awards_screen, ea_sports_intro, credits_screen, boxscore_screen, team_select_screen2, sub_480cc, sub_4da7b, ai_puck_faceoff2, play_sample_by_ptr (+1 more)
+; stop_crowd_loop  [0x59981, 56 bytes, 15 instructions]
+; called by: sub_10f6d, handle_hotkey, game_loop, awards_screen, ea_sports_intro, credits_screen, boxscore_screen, team_select_screen2, sub_480cc, faceoff_resolve, ai_puck_faceoff2, play_sample_by_ptr (+1 more)
 ; ====================================================================================================
-sub_59981:
+stop_crowd_loop:
     push 8                                       ; 059981 6808000000
     call __CHK                                   ; 059986 e8c12f0300
     push edx                                     ; 05998b 52
@@ -9947,7 +9956,7 @@ play_sample_by_ptr:
     push ebx                                     ; 0599c3 53
     push edx                                     ; 0599c4 52
     mov ebx, eax                                 ; 0599c5 89c3
-    call sub_59981                               ; 0599c7 e8b5ffffff
+    call stop_crowd_loop                         ; 0599c7 e8b5ffffff
     test byte ptr [dword_c541f], 0x11            ; 0599cc f6051f540c0011
     jne loc_599eb                                ; 0599d3 7516
     test ebx, ebx                                ; 0599d5 85db
@@ -9963,10 +9972,10 @@ loc_599eb:
 
 
 ; ====================================================================================================
-; sub_599ee  [0x599ee, 35 bytes, 9 instructions]
+; sfx_set_volume  [0x599ee, 35 bytes, 9 instructions]
 ; called by: awards_screen, load_sound_config
 ; ====================================================================================================
-sub_599ee:
+sfx_set_volume:
     push 4                                       ; 0599ee 6804000000
     call __CHK                                   ; 0599f3 e8542f0300
     cmp dword ptr [dword_ccc84], -1              ; 0599f8 833d84cc0c00ff
@@ -9983,7 +9992,7 @@ loc_59a10:
 ; ====================================================================================================
 ; play_speech  [0x59a11, 109 bytes, 35 instructions]
 ; play_speech(id): announcer / crowd sample tables
-; called by: game_loop, init_match, sub_4e71a, score_goal, update_lead_change
+; called by: game_loop, init_match, ref_check_announcements, score_goal, update_lead_change
 ; ====================================================================================================
 play_speech:
     push 0xc                                     ; 059a11 680c000000
@@ -10050,10 +10059,10 @@ speech_period_summary:
 
 
 ; ====================================================================================================
-; sub_59aad  [0x59aad, 35 bytes, 8 instructions]
+; speech_busy  [0x59aad, 35 bytes, 8 instructions]
 ; called by: ai_puck_give_cup, ai_ref_goto_faceoff, ai_ref_penalty_shot, play_sfx, penalty_box_update
 ; ====================================================================================================
-sub_59aad:
+speech_busy:
     push 4                                       ; 059aad 6804000000
     call __CHK                                   ; 059ab2 e8952e0300
     cmp byte ptr [sound_enabled], 0              ; 059ab7 803d30240d0000
@@ -10066,10 +10075,10 @@ loc_59acd:
 
 
 ; ====================================================================================================
-; sub_59ad0  [0x59ad0, 63 bytes, 19 instructions]
+; say_goal_wrapper  [0x59ad0, 63 bytes, 19 instructions]
 ; called by: ai_ref_pickup_puck
 ; ====================================================================================================
-sub_59ad0:
+say_goal_wrapper:
     push 0x10                                    ; 059ad0 6810000000
     call __CHK                                   ; 059ad5 e8722e0300
     push esi                                     ; 059ada 56
@@ -10093,10 +10102,10 @@ loc_59b0a:
 
 
 ; ====================================================================================================
-; sub_59b0f  [0x59b0f, 45 bytes, 13 instructions]
+; say_star_wrapper  [0x59b0f, 45 bytes, 13 instructions]
 ; called by: ai_ref_three_stars
 ; ====================================================================================================
-sub_59b0f:
+say_star_wrapper:
     push 8                                       ; 059b0f 6808000000
     call __CHK                                   ; 059b14 e8332e0300
     push ecx                                     ; 059b19 51
@@ -10114,10 +10123,10 @@ loc_59b3a:
 
 
 ; ====================================================================================================
-; sub_59b3c  [0x59b3c, 76 bytes, 27 instructions]
+; say_penalty_wrapper  [0x59b3c, 76 bytes, 27 instructions]
 ; called by: record_penalty
 ; ====================================================================================================
-sub_59b3c:
+say_penalty_wrapper:
     push 0x24                                    ; 059b3c 6824000000
     call __CHK                                   ; 059b41 e8062e0300
     push esi                                     ; 059b46 56
@@ -10149,10 +10158,10 @@ loc_59b82:
 
 
 ; ====================================================================================================
-; sub_59b88  [0x59b88, 45 bytes, 13 instructions]
+; say_penalty_shot_wrapper  [0x59b88, 45 bytes, 13 instructions]
 ; called by: record_penalty
 ; ====================================================================================================
-sub_59b88:
+say_penalty_shot_wrapper:
     push 8                                       ; 059b88 6808000000
     call __CHK                                   ; 059b8d e8ba2d0300
     push esi                                     ; 059b92 56
@@ -10170,10 +10179,10 @@ loc_59bb3:
 
 
 ; ====================================================================================================
-; sub_59bb5  [0x59bb5, 71 bytes, 19 instructions]
+; say_game_intro_wrapper  [0x59bb5, 71 bytes, 19 instructions]
 ; called by: team_select_screen
 ; ====================================================================================================
-sub_59bb5:
+say_game_intro_wrapper:
     push 0xc                                     ; 059bb5 680c000000
     call __CHK                                   ; 059bba e88d2d0300
     push ebx                                     ; 059bbf 53
@@ -10199,10 +10208,11 @@ loc_59bfb:
 
 
 ; ====================================================================================================
-; sub_59bfc  [0x59bfc, 33 bytes, 7 instructions]
+; say_period_score  [0x59bfc, 33 bytes, 7 instructions]
+; scor?per.bar announcer clips
 ; called by: boxscore_screen
 ; ====================================================================================================
-sub_59bfc:
+say_period_score:
     push 4                                       ; 059bfc 6804000000
     call __CHK                                   ; 059c01 e8462d0300
     cmp byte ptr [sound_enabled], 0              ; 059c06 803d30240d0000
@@ -10213,10 +10223,11 @@ sub_59bfc:
 
 
 ; ====================================================================================================
-; sub_59c1d  [0x59c1d, 33 bytes, 7 instructions]
+; say_nhl_intro  [0x59c1d, 33 bytes, 7 instructions]
+; nhl.int
 ; called by: ea_sports_intro
 ; ====================================================================================================
-sub_59c1d:
+say_nhl_intro:
     push 4                                       ; 059c1d 6804000000
     call __CHK                                   ; 059c22 e8252d0300
     cmp byte ptr [sound_enabled], 0              ; 059c27 803d30240d0000
@@ -10227,10 +10238,11 @@ sub_59c1d:
 
 
 ; ====================================================================================================
-; sub_59c3e  [0x59c3e, 33 bytes, 7 instructions]
+; say_goodnight  [0x59c3e, 33 bytes, 7 instructions]
+; goodnite.int
 ; called by: credits_screen
 ; ====================================================================================================
-sub_59c3e:
+say_goodnight:
     push 4                                       ; 059c3e 6804000000
     call __CHK                                   ; 059c43 e8042d0300
     cmp byte ptr [sound_enabled], 0              ; 059c48 803d30240d0000
@@ -10241,10 +10253,11 @@ sub_59c3e:
 
 
 ; ====================================================================================================
-; sub_59c5f  [0x59c5f, 33 bytes, 7 instructions]
+; say_lineups  [0x59c5f, 33 bytes, 7 instructions]
+; lineups.int
 ; called by: draw_team_logos
 ; ====================================================================================================
-sub_59c5f:
+say_lineups:
     push 4                                       ; 059c5f 6804000000
     call __CHK                                   ; 059c64 e8e32c0300
     cmp byte ptr [sound_enabled], 0              ; 059c69 803d30240d0000
@@ -10255,10 +10268,11 @@ sub_59c5f:
 
 
 ; ====================================================================================================
-; sub_59c80  [0x59c80, 41 bytes, 7 instructions]
+; say_elsenhl  [0x59c80, 41 bytes, 7 instructions]
+; elsenhl.int
 ; called by: boxscore_screen
 ; ====================================================================================================
-sub_59c80:
+say_elsenhl:
     push 4                                       ; 059c80 6804000000
     call __CHK                                   ; 059c85 e8c22c0300
     cmp byte ptr [sound_enabled], 0              ; 059c8a 803d30240d0000
@@ -10269,10 +10283,10 @@ sub_59c80:
 
 
 ; ====================================================================================================
-; sub_59ca9  [0x59ca9, 52 bytes, 13 instructions]
+; say_highlight_intro_wrapper  [0x59ca9, 52 bytes, 13 instructions]
 ; called by: simulate_game_offscreen
 ; ====================================================================================================
-sub_59ca9:
+say_highlight_intro_wrapper:
     push 8                                       ; 059ca9 6808000000
     call __CHK                                   ; 059cae e8992c0300
     push ebx                                     ; 059cb3 53
@@ -10290,10 +10304,10 @@ loc_59cdb:
 
 
 ; ====================================================================================================
-; sub_59cdd  [0x59cdd, 57 bytes, 17 instructions]
+; say_series_result_wrapper  [0x59cdd, 57 bytes, 17 instructions]
 ; called by: pause_menu
 ; ====================================================================================================
-sub_59cdd:
+say_series_result_wrapper:
     push 0x14                                    ; 059cdd 6814000000
     call __CHK                                   ; 059ce2 e8652c0300
     push esi                                     ; 059ce7 56
@@ -10315,10 +10329,10 @@ loc_59d11:
 
 
 ; ====================================================================================================
-; sub_59d16  [0x59d16, 62 bytes, 17 instructions]
+; say_playoff_intro_wrapper  [0x59d16, 62 bytes, 17 instructions]
 ; called by: team_select_screen
 ; ====================================================================================================
-sub_59d16:
+say_playoff_intro_wrapper:
     push 0x10                                    ; 059d16 6810000000
     call __CHK                                   ; 059d1b e82c2c0300
     push esi                                     ; 059d20 56
@@ -10340,10 +10354,10 @@ loc_59d50:
 
 
 ; ====================================================================================================
-; sub_59d54  [0x59d54, 29 bytes, 8 instructions]
+; speech_stop  [0x59d54, 29 bytes, 8 instructions]
 ; called by: intro_sequence, credits_screen, pause_menu, team_select_screen, boxscore_screen, simulate_game_offscreen
 ; ====================================================================================================
-sub_59d54:
+speech_stop:
     push 4                                       ; 059d54 6804000000
     call __CHK                                   ; 059d59 e8ee2b0300
     cmp byte ptr [sound_enabled], 0              ; 059d5e 803d30240d0000
@@ -10357,10 +10371,10 @@ loc_59d70:
 
 
 ; ====================================================================================================
-; sub_59d71  [0x59d71, 41 bytes, 16 instructions]
+; preload_speech_wrapper  [0x59d71, 41 bytes, 16 instructions]
 ; called by: game_loop, play_game, demo_game, team_select_screen
 ; ====================================================================================================
-sub_59d71:
+preload_speech_wrapper:
     push 0xc                                     ; 059d71 680c000000
     call __CHK                                   ; 059d76 e8d12b0300
     push ebx                                     ; 059d7b 53
@@ -10399,10 +10413,11 @@ loc_59dba:
 
 
 ; ====================================================================================================
-; sub_59dbb  [0x59dbb, 174 bytes, 54 instructions]
+; draw_rink_marks  [0x59dbb, 174 bytes, 54 instructions]
+; sort/draw of ice marks (orphan chunk)
 ; no references found
 ; ====================================================================================================
-sub_59dbb:
+draw_rink_marks:
     lea esi, [eax + 2]                           ; 059dbb 8d7002
     test byte ptr [action_flags], 0x80           ; 059dbe f605bc900c0080
     je loc_59dcd                                 ; 059dc5 7406
@@ -10418,7 +10433,7 @@ loc_59dd1:
     inc ebx                                      ; 059ddc 43
 loc_59ddd:
     cmp bx, 0x11                                 ; 059ddd 6683fb11
-    jl sub_59dbb                                 ; 059de1 7cd8
+    jl draw_rink_marks                           ; 059de1 7cd8
 loc_59de3:
     xor dh, dh                                   ; 059de3 30f6
     mov byte ptr [esp + 8], dh                   ; 059de5 88742408
@@ -10652,7 +10667,7 @@ loc_5a036:
 
 ; ====================================================================================================
 ; sub_5a03b  [0x5a03b, 104 bytes, 36 instructions]
-; called by: sub_54af9, choose_line
+; called by: ai_consider_shot, choose_line
 ; ====================================================================================================
 sub_5a03b:
     push 0x14                                    ; 05a03b 6814000000
@@ -10698,7 +10713,7 @@ loc_5a09e:
 
 ; ====================================================================================================
 ; choose_line  [0x5a0a3, 485 bytes, 146 instructions]
-; called by: ai_puck_faceoff, sub_54af9
+; called by: ai_puck_faceoff, ai_consider_shot
 ; ====================================================================================================
 choose_line:
     push 0x1c                                    ; 05a0a3 681c000000
@@ -11067,7 +11082,7 @@ loc_5a41f:
 ; ====================================================================================================
 ; frame_offsets_lookup  [0x5a425, 136 bytes, 41 instructions]
 ; x/y displacement of the current animation frame (table 0xcc148)
-; called by: ai_nearest_to_puck, puck_update, puck_player_interaction, sub_551cf, sub_56d06, sub_57096, move_entity, sub_5a534, ai_chase_puck
+; called by: ai_nearest_to_puck, puck_update, puck_player_interaction, sub_551cf, attach_puck_to_stick, puck_hits_player, move_entity, stick_offset_from_frame, ai_chase_puck
 ; ====================================================================================================
 frame_offsets_lookup:
     push 0x10                                    ; 05a425 6810000000
@@ -11121,10 +11136,11 @@ loc_5a4a9:
 
 
 ; ====================================================================================================
-; sub_5a4ad  [0x5a4ad, 135 bytes, 39 instructions]
-; called by: puck_player_interaction, sub_5a534
+; stick_offsets_lookup  [0x5a4ad, 135 bytes, 39 instructions]
+; stick position per frame (table 0xcc7a4, frames 0x196-0x219 and 0x3ce-0x44f)
+; called by: puck_player_interaction, stick_offset_from_frame
 ; ====================================================================================================
-sub_5a4ad:
+stick_offsets_lookup:
     push 0x10                                    ; 05a4ad 6810000000
     call __CHK                                   ; 05a4b2 e895240300
     push ebx                                     ; 05a4b7 53
@@ -11171,17 +11187,17 @@ loc_5a530:
 
 
 ; ====================================================================================================
-; sub_5a534  [0x5a534, 77 bytes, 21 instructions]
+; stick_offset_from_frame  [0x5a534, 77 bytes, 21 instructions]
 ; called by: puck_player_interaction
 ; ====================================================================================================
-sub_5a534:
+stick_offset_from_frame:
     push 0x10                                    ; 05a534 6810000000
     call __CHK                                   ; 05a539 e80e240300
     push ebx                                     ; 05a53e 53
     push ecx                                     ; 05a53f 51
     push edx                                     ; 05a540 52
     mov edx, eax                                 ; 05a541 89c2
-    call sub_5a4ad                               ; 05a543 e865ffffff
+    call stick_offsets_lookup                    ; 05a543 e865ffffff
     mov bx, word ptr [dword_e03bc]               ; 05a548 668b1dbc030e00
     mov cx, word ptr [dword_e03c0]               ; 05a54f 668b0dc0030e00
     mov eax, edx                                 ; 05a556 89d0
