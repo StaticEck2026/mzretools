@@ -265,6 +265,26 @@ class TileSet:
             draw_text(img, cx + 1, cy + 1, str(n), (200, 200, 60, 255))
         return img
 
+    def one_sheet(self, frames, per_row=32, title=None):
+        """All frames on one image: the regular frames in a compact grid, the
+        oversized ones in their own band underneath."""
+        large = set(self.large_frames(frames))
+        normal = [i for i in range(len(frames)) if i not in large]
+        parts = [self.sheet_image([frames[i] for i in normal], per_row=per_row, numbers=normal)]
+        if large:
+            big = sorted(large)
+            bb = [self.frame_bounds(frames[i]) for i in big]
+            cell = (max(b[2] - b[0] for b in bb) + 4, max(b[3] - b[1] for b in bb) + 10)
+            parts.append(self.sheet_image([frames[i] for i in big], per_row=8, numbers=big, cell=cell))
+        w = max(p.w for p in parts)
+        h = sum(p.h for p in parts) + 4 * (len(parts) - 1)
+        img = Image(w, h, (48, 48, 48, 255))
+        y = 0
+        for p in parts:
+            img.blit(p, 0, y)
+            y += p.h + 4
+        return img
+
     def large_frames(self, frames):
         """Indices of the frames that do not fit the standard sheet cell."""
         bounds = [self.frame_bounds(p) for p in frames]
@@ -295,6 +315,7 @@ def main():
     ap.add_argument('--map-cache', help='pickle of the mapping result (optional, speeds up the scan)')
     ap.add_argument('--scale', type=int, default=1, help='integer zoom of the output images')
     ap.add_argument('--no-frames', action='store_true', help='do not write the individual sprite frames')
+    ap.add_argument('--one-sheet', metavar='FILE', help='also write every sprite frame of the ROM on one PNG')
     args = ap.parse_args()
 
     rom = open(args.rom, 'rb').read()
@@ -310,6 +331,7 @@ def main():
     os.makedirs(args.outdir, exist_ok=True)
     addrs = sorted(sets)
     index = []
+    sheets = []
     for i, a in enumerate(addrs):
         cnt, pal_off, map_off, aend = sets[a]
         if aend is None:
@@ -326,6 +348,7 @@ def main():
             frames = ts.frames()
             if frames:
                 kind = 'sprites, %d frames' % len(frames)
+                sheets.append(ts.one_sheet(frames))
                 ts.sheet_image(frames).scaled(args.scale).save(os.path.join(args.outdir, name + '_sheet.png'))
                 large = ts.large_frames(frames)
                 if large:
@@ -347,6 +370,16 @@ def main():
         print(index[-1])
     with open(os.path.join(args.outdir, 'index.txt'), 'w') as f:
         f.write('\n'.join(index) + '\n')
+    if args.one_sheet and sheets:
+        w = max(p.w for p in sheets)
+        h = sum(p.h for p in sheets) + 8 * (len(sheets) - 1)
+        img = Image(w, h, (48, 48, 48, 255))
+        y = 0
+        for p in sheets:
+            img.blit(p, 0, y)
+            y += p.h + 8
+        img.scaled(args.scale).save(args.one_sheet)
+        print('one sheet: %s (%dx%d)' % (args.one_sheet, img.w * args.scale, img.h * args.scale))
 
 
 if __name__ == '__main__':
