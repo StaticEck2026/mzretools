@@ -16,6 +16,8 @@ python3 tools/md68k/mddisasm.py rom.bin outdir --name game [--ea] [--segments se
   validated sweep for unreferenced routines.
 * `mdasm.py` – emitter: labels, hardware and RAM equates, data items (strings, pointer tables, jump tables,
   inline blocks, `incbin` blobs), module files, symbol and names files.
+* `mdart.py` – exports the EA tile sets as PNG: pictures through their tile maps, raw tiles, palettes,
+  and for sprite sets every frame plus a numbered character sheet (`mdart.py rom.bin outdir --names x.names`).
 * `mdassets.py` – EA specific structures (`--ea`): tile set containers (tiles + 4 palettes + tile map) and
   roster records.
 

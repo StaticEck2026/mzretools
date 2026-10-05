@@ -112,6 +112,24 @@ around DMA...). Commands are queued in Z80 RAM for the driver in `Z80_SoundDrive
 **Save data**: battery backup at the odd bytes of `$200000` (`SRAM_Read` / `SRAM_Write`), mirrored at
 `SaveDataMirror` in work RAM and protected by `SRAM_UpdateChecksum`.
 
+## Exporting the graphics
+
+`tools/md68k/mdart.py` converts every tile set to PNG (pure Python, no dependencies):
+
+```
+python3 tools/md68k/mdart.py "NHL 98 (USA).bin" out/art --names re/nhl98_md/nhl98.names
+```
+
+For each set it writes `<name>.png` (the picture through its tile map and palettes), `<name>_tiles.png`
+(the raw tiles) and `<name>_pal.png` (the four palettes). `Art_PlayerSprites` and the other sprite sets are
+decoded through their frame tables: every frame goes to `<name>/frame_NNNN.png` and all frames are laid
+out with their numbers on the character sheet `<name>_sheet.png` (oversized scenes on
+`<name>_sheet_large.png`). `index.txt` lists what was exported. Use `--scale 2` for zoomed images and
+`--no-frames` to skip the individual frames.
+
+Sprite frames are lists of 8 byte pieces in the layout of the VDP sprite attribute table (y, size, tile
+attribute, x); the otherwise unused upper nibble of the size word selects a 2048 tile bank inside the set.
+
 ## Regenerating
 
 The source is produced by the generic Mega Drive tools in `tools/md68k` of this repository:
