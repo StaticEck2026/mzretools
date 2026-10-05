@@ -24,7 +24,7 @@ sub_b3981:
 ; settimeout  [0xb3989, 16 bytes, 4 instructions]
 ; settimeout(ticks)
 ; annotations: external
-; called by: set_video_mode, sub_1609f, sub_1672a, sub_2f5ee, sub_3170d, sub_479e9, sub_47c31, replay_loop, fade_ambient_audio, sub_7f0af, sub_82d7a, sub_85924 (+4 more)
+; called by: set_video_mode, ea_sports_intro, intro_sequence, team_select_screen2, sub_3170d, sub_479e9, wait_sprite_fade, replay_loop, fade_ambient_audio, replay_menu, load_sound_config, broadcast_booth_screen (+4 more)
 ; ====================================================================================================
 settimeout:
     mov eax, dword ptr [esp + 4]                 ; 0b3989 8b442404
@@ -37,7 +37,7 @@ settimeout:
 ; waittimeout  [0xb3999, 14 bytes, 4 instructions]
 ; busy waits until the timeout set by settimeout expires
 ; annotations: external
-; called by: set_video_mode, sub_1672a, sub_2f5ee, sub_479e9, sub_47c31, sub_480cc, fade_ambient_audio, sub_7f0af, sub_82d7a, sub_85924, sub_86696, sub_88096 (+1 more)
+; called by: set_video_mode, intro_sequence, team_select_screen2, sub_479e9, wait_sprite_fade, sub_480cc, fade_ambient_audio, replay_menu, load_sound_config, broadcast_booth_screen, stanley_cup_tree_screen, playoff_results_screen (+1 more)
 ; ====================================================================================================
 waittimeout:
     mov eax, dword ptr [dword_d2fdc]             ; 0b3999 a1dc2f0d00
@@ -48,7 +48,7 @@ waittimeout:
 
 ; ====================================================================================================
 ; sub_b39a7  [0xb39a7, 16 bytes, 5 instructions]
-; called by: sub_1609f, sub_3170d, sub_8bedb, sub_b3a2f
+; called by: ea_sports_intro, sub_3170d, cmv_play, sub_b3a2f
 ; ====================================================================================================
 sub_b39a7:
     mov ebx, dword ptr [dword_d2fdc]             ; 0b39a7 8b1ddc2f0d00
@@ -76,7 +76,7 @@ loc_b39c3:
 
 ; ====================================================================================================
 ; sub_b39d0  [0xb39d0, 29 bytes, 11 instructions]
-; called by: sub_6b093, sub_94b6c, debug_palette, sub_981f8, flushkeys, sub_b3fec, sub_b3ff7, sub_b400b, sub_b40bf
+; called by: joystick_calibrate, sub_94b6c, debug_palette, sub_981f8, flushkeys, sub_b3fec, sub_b3ff7, sub_b400b, sub_b40bf
 ; ====================================================================================================
 sub_b39d0:
     mov ah, 1                                    ; 0b39d0 b401
@@ -145,7 +145,7 @@ sub_b3a12:
 ; ====================================================================================================
 ; waitkey  [0xb3a18, 12 bytes, 4 instructions]
 ; annotations: external
-; called by: dump_stats_log, sub_7947f, fatalerror
+; called by: dump_stats_log, lines_teams_a, fatalerror
 ; ====================================================================================================
 waitkey:
     call dword ptr [funcptr_d42a0]               ; 0b3a18 ff15a0420d00
@@ -277,7 +277,7 @@ sub_b3aa1:
 
 ; ====================================================================================================
 ; sub_b3abc  [0xb3abc, 68 bytes, 33 instructions]
-; called by: sub_1b002, sub_1b2a7, sub_8d604, sub_8d728, sub_8d844, sub_8d990, load_eavesa, sub_8e40c, loadpatches, loadsound, sub_90698, drawshape2_remap (+13 more)
+; called by: sub_1b002, iff_parse, sub_8d604, sub_8d728, sub_8d844, sub_8d990, load_eavesa, sub_8e40c, loadpatches, loadsound, sub_90698, drawshape2_remap (+13 more)
 ; ====================================================================================================
 sub_b3abc:
     push ebp                                     ; 0b3abc 55
@@ -381,7 +381,7 @@ sub_b3b44:
 
 ; ====================================================================================================
 ; sub_b3b5a  [0xb3b5a, 262 bytes, 87 instructions]  <dos_read int21h>
-; called by: sub_1b2a7, sub_96844
+; called by: iff_parse, sub_96844
 ;   uses string "openhandle - %s FILE ERROR\r"
 ; ====================================================================================================
 sub_b3b5a:
@@ -484,7 +484,7 @@ loc_b3c53:
 ; ====================================================================================================
 ; closehandle  [0xb3c60, 16 bytes, 9 instructions]  <dos_close>
 ; annotations: external
-; called by: sub_1b18b, sub_1b2a7, sub_8e920, filesize_handle, sub_92e40, savefileblocka, sub_96844, sub_969a8, sub_98a40, sub_a27c4, sub_b3b5a
+; called by: sub_1b18b, iff_parse, sub_8e920, filesize_handle, sub_92e40, savefileblocka, sub_96844, sub_969a8, sub_98a40, sub_a27c4, sub_b3b5a
 ; ====================================================================================================
 closehandle:
     push ebp                                     ; 0b3c60 55
@@ -510,7 +510,7 @@ sub_b3c70:
 
 ; ====================================================================================================
 ; sub_b3c74  [0xb3c74, 63 bytes, 23 instructions]  <int21h>
-; called by: sub_1b2a7, sub_8e920, sub_92e40, sub_96844, sub_96e7c, sub_a26b0, sub_a27c4
+; called by: iff_parse, sub_8e920, sub_92e40, sub_96844, sub_96e7c, sub_a26b0, sub_a27c4
 ; ====================================================================================================
 sub_b3c74:
     mov ah, 0x3f                                 ; 0b3c74 b43f
@@ -547,7 +547,7 @@ loc_b3cb1:
 ; ====================================================================================================
 ; seekhandle  [0xb3cb3, 21 bytes, 8 instructions]
 ; annotations: external
-; called by: sub_1b2a7, sub_96844, sub_96a10, sub_a26b0
+; called by: iff_parse, sub_96844, sub_96a10, sub_a26b0
 ; ====================================================================================================
 seekhandle:
     push ebp                                     ; 0b3cb3 55
@@ -562,7 +562,7 @@ seekhandle:
 
 ; ====================================================================================================
 ; sub_b3cc8  [0xb3cc8, 98 bytes, 38 instructions]  <dos_findfirst dos_set_dta>
-; called by: sub_2d260, sub_3d8dd, sub_93b34, sub_960ac
+; called by: load_league_settings, load_league_info, sub_93b34, sub_960ac
 ; ====================================================================================================
 sub_b3cc8:
     push ebp                                     ; 0b3cc8 55
@@ -697,7 +697,7 @@ loc_b3d85:
 
 ; ====================================================================================================
 ; sub_b3d94  [0xb3d94, 102 bytes, 41 instructions]
-; called by: sub_4b774, sub_4ffee, sub_53ce5, sub_5601d, sub_57a98, sub_57c0b, sub_582c9, sim_update_players, sub_5eb17, sub_64102
+; called by: ai_goalie, try_block_shot, sub_53ce5, sub_5601d, shot_setup, do_shot, collide_boards, sim_update_players, ai_chase_puck, sub_64102
 ; ====================================================================================================
 sub_b3d94:
     push ebp                                     ; 0b3d94 55
@@ -990,7 +990,7 @@ sub_b400b:
     ret                                          ; 0b401e c3
 
 loc_b401f:
-    call dword ptr [funcptr_d3078]               ; 0b401f ff1578300d00
+    call dword ptr [mouse_update_callback]       ; 0b401f ff1578300d00
     shl ax, 4                                    ; 0b4025 66c1e004
     jne loc_b4030                                ; 0b4029 7505
 loc_b402b:
@@ -2234,7 +2234,7 @@ sub_b4b4e:
 ; settextmode  [0xb4b58, 48 bytes, 12 instructions]  <bios_set_video_mode int10h>
 ; restores the BIOS text mode on exit
 ; annotations: external
-; called by: main, sub_1a6a7, sub_7947f
+; called by: main, exit_game_dialog, lines_teams_a
 ; ====================================================================================================
 settextmode:
     push 0                                       ; 0b4b58 6a00
@@ -2255,7 +2255,7 @@ settextmode:
 ; setpalette  [0xb4b88, 31 bytes, 17 instructions]  <vga_pel_write>
 ; setpalette(first, count, rgb) through ports 3C8h/3C9h
 ; annotations: external
-; called by: set_video_mode, sub_11550, sub_1609f, sub_1672a, sub_2051a, sub_21c04, sub_27f9c, sub_2f5ee, sub_36b93, sub_3b8b0, load_cfg_palette, sub_3e055 (+20 more)
+; called by: set_video_mode, sub_11550, ea_sports_intro, intro_sequence, exh_hub_stats, sub_21c04, standings_screen, team_select_screen2, league_calendar_flow, sub_3b8b0, load_cfg_palette, jersey_number_dialog (+20 more)
 ; ====================================================================================================
 setpalette:
     push ebp                                     ; 0b4b88 55
@@ -2283,7 +2283,7 @@ loc_b4ba0:
 ; setdefaultscreen  [0xb4ba8, 26 bytes, 9 instructions]
 ; selects the physical screen as the drawing surface
 ; annotations: external
-; called by: set_video_mode, play_game, sub_13320, sub_13a91, sub_1609f, sub_1672a, sub_16f9a, pause_menu, sub_1a6a7, sub_20016, sub_20171, sub_203fa (+95 more)
+; called by: set_video_mode, play_game, awards_screen, load_player_graphics, ea_sports_intro, intro_sequence, credits_screen, pause_menu, exit_game_dialog, exh_hub_sports_central, exh_hub_playoff_tree, exh_hub_standings (+95 more)
 ; ====================================================================================================
 setdefaultscreen:
     mov edx, edi                                 ; 0b4ba8 8bd7
@@ -2302,7 +2302,7 @@ setdefaultscreen:
 ; setclip  [0xb4bc4, 99 bytes, 23 instructions]
 ; setclip(x0, x1, y0, y1)
 ; annotations: external
-; called by: set_video_mode, sub_21cde, sub_22581, sub_235be, sub_244e2, sub_25b24, sub_27080, sub_27f9c, sub_29f28, sub_2abdf, boxscore_screen, frontend_main_menu (+25 more)
+; called by: set_video_mode, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, standings_screen, team_select_screen, draw_team_logos, boxscore_screen, frontend_main_menu (+25 more)
 ; ====================================================================================================
 setclip:
     mov eax, dword ptr [esp + 4]                 ; 0b4bc4 8b442404
@@ -2373,7 +2373,7 @@ loc_b4c56:
 ; ====================================================================================================
 ; waitvbl_start  [0xb4c61, 35 bytes, 12 instructions]  <vga_status>
 ; annotations: external
-; called by: sub_47951, sub_6b093
+; called by: sub_47951, joystick_calibrate
 ; ====================================================================================================
 waitvbl_start:
     mov dx, 0x3da                                ; 0b4c61 66bada03
@@ -2451,7 +2451,7 @@ sub_b4cb4:
 
 ; ====================================================================================================
 ; sub_b4cd8  [0xb4cd8, 26 bytes, 12 instructions]
-; called by: sub_14a20, sub_14afe, sub_14f31, show_scoreboard, sub_1540a, sub_15995, sub_1cd73, instant_replay, sub_7e9ac
+; called by: sub_14a20, sub_14afe, sub_14f31, show_scoreboard, sub_1540a, sub_15995, blit_sprite, instant_replay, replay_control_loop
 ; ====================================================================================================
 sub_b4cd8:
     push ebp                                     ; 0b4cd8 55
@@ -2585,7 +2585,7 @@ loc_b4dad:
 ; setremaptable  [0xb4dd4, 24 bytes, 12 instructions]
 ; installs a 256 byte color remap table
 ; annotations: external
-; called by: show_scoreboard, sub_1cd73, sub_1faa7, sub_21c04, sub_34821, sub_38b4f, sub_3e9cf, sub_3ef89, sub_73a18, sub_75046, sub_76af5, sub_78366 (+5 more)
+; called by: show_scoreboard, blit_sprite, sub_1faa7, sub_21c04, calendar_screen, team_info_screen, team_roster_screen, line_editor_screen, edit_lines_screen, sub_75046, edit_lines_screen2, sub_78366 (+5 more)
 ; ====================================================================================================
 setremaptable:
     push ebp                                     ; 0b4dd4 55
@@ -2675,7 +2675,7 @@ sub_b4e2c:
 
 ; ====================================================================================================
 ; sub_b4e50  [0xb4e50, 26 bytes, 12 instructions]
-; called by: show_scoreboard, sub_1cd73
+; called by: show_scoreboard, blit_sprite
 ; ====================================================================================================
 sub_b4e50:
     push ebp                                     ; 0b4e50 55
@@ -2821,7 +2821,7 @@ loc_b4f40:
 ; setscreen  [0xb4f70, 25 bytes, 9 instructions]
 ; selects a drawing surface (12 dword context at 0xd30a4)
 ; annotations: external
-; called by: sub_1609f, sub_174d8, boxscore_screen, sub_3377c, sub_3e9cf, sub_3ff52, sub_6a106, sub_6a166, begin_frame, sub_6d2f8, sub_6ec95, sub_7025b (+7 more)
+; called by: ea_sports_intro, sub_174d8, boxscore_screen, load_rink, team_roster_screen, line_editor, sub_6a106, sub_6a166, begin_frame, player_ratings_card, sub_6ec95, free_agent_card (+7 more)
 ; ====================================================================================================
 setscreen:
     mov edx, edi                                 ; 0b4f70 8bd7
@@ -2839,7 +2839,7 @@ setscreen:
 ; ====================================================================================================
 ; windowdefp  [0xb4f8c, 26 bytes, 10 instructions]
 ; annotations: external
-; called by: sub_1609f, sub_174d8, sub_1ad16, boxscore_screen, sub_3377c, sub_40183, sub_6cc20, sub_966e4, sub_981f8, sub_984d0
+; called by: ea_sports_intro, sub_174d8, cmv_load_palette, boxscore_screen, load_rink, statistics_menu, database_screen, sub_966e4, sub_981f8, sub_984d0
 ; ====================================================================================================
 windowdefp:
     mov eax, dword ptr [esp + 4]                 ; 0b4f8c 8b442404
@@ -2857,7 +2857,7 @@ windowdefp:
 
 ; ====================================================================================================
 ; sub_b4fac  [0xb4fac, 60 bytes, 23 instructions]
-; called by: sub_18e43, sub_29d00, sub_29f28, sub_2c18f, sub_2c46b, sub_2fe49, sub_33ffd, sub_6a2c7, sub_6b7fc, sub_6d2f8, sub_727ee, sub_72ac6 (+10 more)
+; called by: sub_18e43, sub_29d00, team_select_screen, league_dialog_box, sub_2c46b, draw_dialog_frame, calendar_draw_games, sub_6a2c7, draw_box, player_ratings_card, database_dialog, sub_72ac6 (+10 more)
 ; ====================================================================================================
 sub_b4fac:
     push ebp                                     ; 0b4fac 55
@@ -2911,7 +2911,7 @@ sub_b4fe8:
 
 ; ====================================================================================================
 ; sub_b500c  [0xb500c, 26 bytes, 12 instructions]
-; called by: sub_1cd73, sub_665ad, sub_7e9ac, sub_7f0af
+; called by: blit_sprite, draw_penalty_box_overlay, replay_control_loop, replay_menu
 ; ====================================================================================================
 sub_b500c:
     push ebp                                     ; 0b500c 55
@@ -3263,7 +3263,7 @@ sub_b5290:
 
 ; ====================================================================================================
 ; sub_b52b4  [0xb52b4, 26 bytes, 12 instructions]
-; called by: sub_1cd73
+; called by: blit_sprite
 ; ====================================================================================================
 sub_b52b4:
     push ebp                                     ; 0b52b4 55
@@ -3630,7 +3630,7 @@ sub_b555c:
 
 ; ====================================================================================================
 ; sub_b5584  [0xb5584, 26 bytes, 12 instructions]
-; called by: sub_1cd73
+; called by: blit_sprite
 ; ====================================================================================================
 sub_b5584:
     push ebp                                     ; 0b5584 55
@@ -3798,7 +3798,7 @@ sub_b5690:
 
 ; ====================================================================================================
 ; sub_b56b8  [0xb56b8, 26 bytes, 12 instructions]
-; called by: sub_1cd73
+; called by: blit_sprite
 ; ====================================================================================================
 sub_b56b8:
     push ebp                                     ; 0b56b8 55
@@ -4168,7 +4168,7 @@ sub_b594c:
 
 ; ====================================================================================================
 ; sub_b5974  [0xb5974, 26 bytes, 12 instructions]
-; called by: sub_1cd73
+; called by: blit_sprite
 ; ====================================================================================================
 sub_b5974:
     push ebp                                     ; 0b5974 55
@@ -4343,7 +4343,7 @@ sub_b5aa0:
 
 ; ====================================================================================================
 ; sub_b5ac8  [0xb5ac8, 26 bytes, 12 instructions]
-; called by: sub_1cd73
+; called by: blit_sprite
 ; ====================================================================================================
 sub_b5ac8:
     push ebp                                     ; 0b5ac8 55
@@ -4718,7 +4718,7 @@ loc_b5dac:
 ; ====================================================================================================
 ; putpixel  [0xb5db0, 77 bytes, 21 instructions]
 ; annotations: external
-; called by: sub_29d00, sub_6d2f8, sub_78be7, sub_7f0af, sub_7f724, sub_80682, sub_9b498
+; called by: sub_29d00, player_ratings_card, sub_78be7, replay_menu, replay_save_dialog, sub_80682, sub_9b498
 ; blocks: b5db0-b5dd6 b5dd8-b5dfd
 ; ====================================================================================================
 putpixel:

@@ -1311,7 +1311,7 @@ short __watcall sub_b400b(void)
     sVar2 = sub_b4aa4(uVar3);
     return sVar2;
   }
-  sVar2 = (*(code *)funcptr_d3078)();
+  sVar2 = (*(code *)mouse_update_callback)();
   uVar4 = (uint)(ushort)(sVar2 << 4);
   if ((ushort)(sVar2 << 4) == 0) {
     uVar4 = sub_b3168();

@@ -5982,19 +5982,19 @@ undefined8 __watcall sub_b195c(undefined4 param_1,undefined4 unaff_EDX)
   byte *pbVar3;
   byte *pbVar4;
   
-  for (pbVar3 = &unk_d8b4a; pbVar3 != (byte *)&dword_d8b68; pbVar3 = pbVar3 + 6) {
+  for (pbVar3 = &unk_d8b4a; pbVar3 != (byte *)&font_kaufm; pbVar3 = pbVar3 + 6) {
     *pbVar3 = *pbVar3 & 1;
   }
   while( true ) {
     uVar1 = 0x100;
-    pbVar3 = (byte *)&dword_d8b68;
-    for (pbVar4 = &unk_d8b4a; pbVar4 != (byte *)&dword_d8b68; pbVar4 = pbVar4 + 6) {
+    pbVar3 = (byte *)&font_kaufm;
+    for (pbVar4 = &unk_d8b4a; pbVar4 != (byte *)&font_kaufm; pbVar4 = pbVar4 + 6) {
       if (((*pbVar4 & 2) == 0) && (pbVar4[1] < uVar1)) {
         uVar1 = (uint)pbVar4[1];
         pbVar3 = pbVar4;
       }
     }
-    if (pbVar3 == (byte *)&dword_d8b68) break;
+    if (pbVar3 == (byte *)&font_kaufm) break;
     *pbVar3 = *pbVar3 | 2;
     iVar2 = (**(code **)(pbVar3 + 2))();
     if (iVar2 != 0) {
@@ -7883,7 +7883,7 @@ int __watcall initmouse(undefined4 param_1,undefined4 param_2,undefined2 unaff_B
     funcptr_d306c = sub_b2efd;
     funcptr_d3070 = sub_b2efd;
     funcptr_d3074 = sub_b2ef6;
-    funcptr_d3078 = readmouse;
+    mouse_update_callback = readmouse;
     *(code **)(puVar3 + -0x1c) = sub_b2f04;
     *(undefined4 *)(puVar3 + -0x20) = 0xb3003;
     sub_b3454();

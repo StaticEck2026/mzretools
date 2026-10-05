@@ -9818,7 +9818,7 @@ sub_b195c:
     push esi                                     ; 0b195f 56
     push edi                                     ; 0b1960 57
     mov esi, unk_d8b4a                           ; 0b1961 be4a8b0d00
-    mov edi, dword_d8b68                         ; 0b1966 bf688b0d00
+    mov edi, font_kaufm                          ; 0b1966 bf688b0d00
     mov ebx, esi                                 ; 0b196b 8bde
 loc_b196d:
     cmp ebx, edi                                 ; 0b196d 3bdf
@@ -11704,7 +11704,7 @@ loc_b29dc:
 
 ; ====================================================================================================
 ; sub_b29f0  [0xb29f0, 171 bytes, 38 instructions]  <pic1_mask>
-; called by: sub_10712, sub_6b410
+; called by: sub_10712, ui_init
 ; ====================================================================================================
 sub_b29f0:
     cmp word ptr [word_d2d6e], 0                 ; 0b29f0 66833d6e2d0d0000
@@ -11951,7 +11951,7 @@ loc_b2cac:
 
 ; ====================================================================================================
 ; sub_b2cbe  [0xb2cbe, 15 bytes, 6 instructions]
-; called by: sub_1086a, sub_10ac6, sub_10c7f, sub_11161, sub_2fedf, sub_31250, sub_6bd69, sub_6eab5, sub_71f0c
+; called by: sub_1086a, sub_10ac6, sub_10c7f, sub_11161, sub_2fedf, sub_31250, sub_6bd69, sub_6eab5, database_dialog_box
 ; ====================================================================================================
 sub_b2cbe:
     push ebp                                     ; 0b2cbe 55
@@ -11978,7 +11978,7 @@ sub_b2ccd:
 ; fatalerror  [0xb2cd8, 80 bytes, 19 instructions]
 ; restores the video mode, prints the message and exits
 ; annotations: external
-; called by: main, sub_106c8, sub_14825, sub_148a5, sub_1b201, sub_1b2a7, sub_1bbcc, sub_1befd, sub_1c0af, sub_1c26c, sub_2b944, sub_2ce29 (+41 more)
+; called by: main, sub_106c8, check_disk_space, check_disk_space_for_game, sub_1b201, iff_parse, sub_1bbcc, sub_1befd, sub_1c0af, sub_1c26c, league_select_screen, league_name_prompt (+41 more)
 ; ====================================================================================================
 fatalerror:
     pop eax                                      ; 0b2cd8 58
@@ -12087,7 +12087,7 @@ loc_b2db2:
 ; ====================================================================================================
 ; setmousepos  [0xb2db4, 22 bytes, 8 instructions]
 ; annotations: external
-; called by: sub_10712, handle_hotkey, game_loop, play_game, sub_14056, sub_148a5, pause_menu, sub_1d6e8, sub_1df03, sub_1ed96, sub_29f28, sub_2c801 (+25 more)
+; called by: sub_10712, handle_hotkey, game_loop, play_game, sub_14056, check_disk_space_for_game, pause_menu, run_menu, menu_page_a, menu_page_b, team_select_screen, league_name_entry (+25 more)
 ; ====================================================================================================
 setmousepos:
     push ebp                                     ; 0b2db4 55
@@ -12104,7 +12104,7 @@ setmousepos:
 ; getmouse  [0xb2dca, 37 bytes, 13 instructions]
 ; getmouse(&buttons, &x, &y)
 ; annotations: external
-; called by: pause_menu, sub_1a5d4, sub_1a6a7, sub_2c801, sub_2fdd1, sub_303fb, sub_34821, sub_35fb9, sub_36b93, sub_38386, sub_38b4f, sub_3a395 (+38 more)
+; called by: pause_menu, sub_1a5d4, exit_game_dialog, league_name_entry, sub_2fdd1, sub_303fb, calendar_screen, league_import_export_check, league_calendar_flow, sub_38386, team_info_screen, password_prompt (+38 more)
 ; ====================================================================================================
 getmouse:
     push ebp                                     ; 0b2dca 55
@@ -12155,7 +12155,7 @@ sub_b2e05:
 ; ====================================================================================================
 ; setmouselimits  [0xb2e1b, 40 bytes, 12 instructions]
 ; annotations: external
-; called by: set_video_mode, handle_hotkey, pause_menu, sub_1d6e8, sub_1df03, sub_1ed96, sub_29f28, frontend_main_menu, sub_36b93, sub_6e089, sub_73a18, sub_76af5 (+4 more)
+; called by: set_video_mode, handle_hotkey, pause_menu, run_menu, menu_page_a, menu_page_b, team_select_screen, frontend_main_menu, league_calendar_flow, database_menu, edit_lines_screen, edit_lines_screen2 (+4 more)
 ; ====================================================================================================
 setmouselimits:
     push ebp                                     ; 0b2e1b 55
@@ -12265,7 +12265,7 @@ sub_b2f04:
 ; initmouse  [0xb2f22, 234 bytes, 45 instructions]  <int33h mouse_get_state mouse_reset>
 ; int 33h reset
 ; annotations: external
-; called by: main, sub_10712, sub_6b410
+; called by: main, sub_10712, ui_init
 ; ====================================================================================================
 initmouse:
     mov dword ptr [dword_d3028], 0               ; 0b2f22 c70528300d000000..
@@ -12308,7 +12308,7 @@ loc_b2f7c:
     mov dword ptr [funcptr_d306c], sub_b2efd     ; 0b2fd1 c7056c300d00fd2e..
     mov dword ptr [funcptr_d3070], sub_b2efd     ; 0b2fdb c70570300d00fd2e..
     mov dword ptr [funcptr_d3074], sub_b2ef6     ; 0b2fe5 c70574300d00f62e..
-    mov dword ptr [funcptr_d3078], readmouse     ; 0b2fef c70578300d00432e..
+    mov dword ptr [mouse_update_callback], readmouse ; 0b2fef c70578300d00432e..
     push sub_b2f04                               ; 0b2ff9 68042f0b00
     call sub_b3454                               ; 0b2ffe e851040000
     add esp, 0x20                                ; 0b3003 83c420
@@ -12410,7 +12410,7 @@ loc_b30b0:
 ; locateshape  [0xb30b4, 7 bytes, 2 instructions]
 ; locateshape(bank, "NAME"): finds a shape by its 4 character tag in an SHPI bank
 ; annotations: external
-; called by: main, sub_12849, sub_13320, sub_138d2, sub_13a2f, sub_13a91, sub_13bb4, show_scoreboard, sub_1609f, sub_1672a, sub_16f9a, pause_menu (+76 more)
+; called by: main, league_leaders_screen, awards_screen, sub_138d2, sub_13a2f, load_player_graphics, sub_13bb4, show_scoreboard, ea_sports_intro, intro_sequence, credits_screen, pause_menu (+76 more)
 ;   uses string "locateshape - '%-4.4s' SHAPE NOT FOUND\r\n"
 ; ====================================================================================================
 locateshape:
@@ -12420,7 +12420,7 @@ locateshape:
 
 ; ====================================================================================================
 ; sub_b30bb  [0xb30bb, 57 bytes, 22 instructions]
-; called by: sub_13867, sub_21cde, sub_22581, sub_90b50
+; called by: sub_13867, player_card_screen, goalie_card_screen, sub_90b50
 ; ====================================================================================================
 sub_b30bb:
     xor ebx, ebx                                 ; 0b30bb 33db
@@ -12725,7 +12725,7 @@ joy_init:
 
 ; ====================================================================================================
 ; sub_b340b  [0xb340b, 22 bytes, 9 instructions]
-; called by: draw_sprites, sub_67dcc, sub_6b093
+; called by: draw_sprites, replay_draw_frame, joystick_calibrate
 ; ====================================================================================================
 sub_b340b:
     push ebp                                     ; 0b340b 55
@@ -12791,7 +12791,7 @@ sub_b345d:
 ; joy_read  [0xb3464, 1002 bytes, 253 instructions]  <joystick>
 ; reads joystick axes and buttons through port 201h
 ; annotations: external
-; called by: sub_10c7f, sub_10dcd, sub_1600c, sub_6b093, sub_6bcda
+; called by: sub_10c7f, sub_10dcd, sub_1600c, joystick_calibrate, sub_6bcda
 ; ====================================================================================================
 joy_read:
     mov bl, byte ptr [dword_d3040]               ; 0b3464 8a1d40300d00
@@ -13122,7 +13122,7 @@ loc_b3845:
 
 ; ====================================================================================================
 ; sub_b384e  [0xb384e, 48 bytes, 6 instructions]
-; called by: sub_6b093
+; called by: joystick_calibrate
 ; ====================================================================================================
 sub_b384e:
     or byte ptr [dword_d3040], 1                 ; 0b384e 800d40300d0001
@@ -13135,7 +13135,7 @@ sub_b384e:
 
 ; ====================================================================================================
 ; sub_b387e  [0xb387e, 48 bytes, 6 instructions]
-; called by: sub_6b093
+; called by: joystick_calibrate
 ; ====================================================================================================
 sub_b387e:
     or byte ptr [dword_d3040], 2                 ; 0b387e 800d40300d0002
@@ -13223,7 +13223,7 @@ loc_b391a:
 ; clearclip  [0xb392c, 46 bytes, 15 instructions]
 ; fills the clip rectangle with a color
 ; annotations: external
-; called by: set_video_mode, sub_13320, sub_1609f, sub_1672a, sub_16f9a, sub_174d8, sub_1a6a7, sub_2051a, sub_2abdf, boxscore_screen, sub_2f5ee, sub_34821 (+19 more)
+; called by: set_video_mode, awards_screen, ea_sports_intro, intro_sequence, credits_screen, sub_174d8, exit_game_dialog, exh_hub_stats, draw_team_logos, boxscore_screen, team_select_screen2, calendar_screen (+19 more)
 ; ====================================================================================================
 clearclip:
     mov eax, dword ptr [esp + 4]                 ; 0b392c 8b442404
@@ -13248,7 +13248,7 @@ clearclip:
 ; getticks  [0xb395c, 6 bytes, 2 instructions]
 ; timer tick counter
 ; annotations: external
-; called by: sub_12849, sub_1609f, sub_33e6a, sub_8bedb, sub_b3a48, sub_b400b
+; called by: league_leaders_screen, ea_sports_intro, sub_33e6a, cmv_play, sub_b3a48, sub_b400b
 ; ====================================================================================================
 getticks:
     mov eax, dword ptr [dword_d2fdc]             ; 0b395c a1dc2f0d00
@@ -13270,7 +13270,7 @@ sub_b3962:
 ; ticks_elapsed  [0xb396e, 19 bytes, 5 instructions]
 ; ticks since the previous call
 ; annotations: external
-; called by: game_loop, sub_1609f, pause_menu, replay_loop, sub_69336, instant_replay
+; called by: game_loop, ea_sports_intro, pause_menu, replay_loop, simulate_game_offscreen, instant_replay
 ; ====================================================================================================
 ticks_elapsed:
     mov ebx, dword ptr [dword_d4298]             ; 0b396e 8b1d98420d00

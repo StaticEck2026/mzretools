@@ -12,7 +12,7 @@ section code1 vstart=0x8b85b
 
 ; ====================================================================================================
 ; sub_8b85b  [0x8b85b, 212 bytes, 52 instructions]
-; called by: frontend_main_menu, sub_327a1, sub_7d6b1, sub_7db67, sub_89268
+; called by: frontend_main_menu, apply_settings, controller_menu, sub_7db67, playoff_tree_screen
 ; ====================================================================================================
 sub_8b85b:
     push 0x10                                    ; 08b85b 6810000000
@@ -83,7 +83,7 @@ loc_8b921:
 
 ; ====================================================================================================
 ; sub_8b92f  [0x8b92f, 62 bytes, 17 instructions]
-; called by: sub_7add3, sub_7b9e8, sub_7c317, sub_7d6b1, sub_81c4e
+; called by: settings_menu, game_settings_menu, sound_settings_menu, controller_menu, locker_room_menu
 ; ====================================================================================================
 sub_8b92f:
     push 4                                       ; 08b92f 6804000000
@@ -100,21 +100,21 @@ loc_8b94a:
 loc_8b94b:
     test eax, eax                                ; 08b94b 85c0
     jne loc_8b94a                                ; 08b94d 75fb
-    mov eax, unk_c5298                           ; 08b94f b898520c00
-    jmp sub_32b1d                                ; 08b954 e9c471faff
+    mov eax, settings_exhibition                 ; 08b94f b898520c00
+    jmp load_game_set                            ; 08b954 e9c471faff
 
 loc_8b959:
-    mov eax, dword_c530d                         ; 08b959 b80d530c00
-    jmp sub_32b1d                                ; 08b95e e9ba71faff
+    mov eax, settings_playoff                    ; 08b959 b80d530c00
+    jmp load_game_set                            ; 08b95e e9ba71faff
 
 loc_8b963:
-    mov eax, dword_c5382                         ; 08b963 b882530c00
-    jmp sub_32b1d                                ; 08b968 e9b071faff
+    mov eax, settings_league                     ; 08b963 b882530c00
+    jmp load_game_set                            ; 08b968 e9b071faff
 
 
 ; ====================================================================================================
 ; sub_8b96d  [0x8b96d, 322 bytes, 120 instructions]
-; called by: sub_3e390
+; called by: team_edit_screen
 ; ====================================================================================================
 sub_8b96d:
     push 0xc                                     ; 08b96d 680c000000
@@ -356,7 +356,7 @@ loc_8bb76:
     jge loc_8bba7                                ; 08bb7c 7d29
     cmp ecx, -1                                  ; 08bb7e 83f9ff
     je loc_8bba7                                 ; 08bb81 7424
-    mov byte ptr [ebx + unk_ed7cc], 1            ; 08bb83 c683ccd70e0001
+    mov byte ptr [ebx + file_on_disk], 1         ; 08bb83 c683ccd70e0001
     mov edx, ebx                                 ; 08bb8a 89da
     shl edx, 4                                   ; 08bb8c c1e204
     mov eax, esp                                 ; 08bb8f 89e0
@@ -397,7 +397,7 @@ loc_8bbcf:
     test eax, eax                                ; 08bbec 85c0
     jne loc_8bbff                                ; 08bbee 750f
     xor dh, dh                                   ; 08bbf0 30f6
-    mov byte ptr [ebx + unk_ed7cc], dh           ; 08bbf2 88b3ccd70e00
+    mov byte ptr [ebx + file_on_disk], dh        ; 08bbf2 88b3ccd70e00
     mov ebx, 0x226                               ; 08bbf8 bb26020000
     jmp loc_8bbcf                                ; 08bbfd ebd0
 
@@ -418,7 +418,8 @@ loc_8bc02:
 
 
 ; ====================================================================================================
-; sub_8bc15  [0x8bc15, 710 bytes, 189 instructions]
+; coach_clip_player  [0x8bc15, 710 bytes, 189 instructions]
+; plays the coachcut clip%04d .cmv movies
 ; called by: sub_1920f
 ;   uses string "coachcut"
 ;   uses string "scrn"
@@ -428,7 +429,7 @@ loc_8bc02:
 ;   uses string "clip%04d"
 ;   uses string ".cmv"
 ; ====================================================================================================
-sub_8bc15:
+coach_clip_player:
     push 0x358                                   ; 08bc15 6858030000
     call __CHK                                   ; 08bc1a e82d0d0000
     push ebx                                     ; 08bc1f 53
@@ -438,13 +439,13 @@ sub_8bc15:
     push edi                                     ; 08bc23 57
     push ebp                                     ; 08bc24 55
     sub esp, 0x330                               ; 08bc25 81ec30030000
-    call sub_47c31                               ; 08bc2b e801c0fbff
-    call sub_6b410                               ; 08bc30 e8dbf7fdff
+    call wait_sprite_fade                        ; 08bc2b e801c0fbff
+    call ui_init                                 ; 08bc30 e8dbf7fdff
     xor ecx, ecx                                 ; 08bc35 31c9
     mov ebx, aCoachcut                           ; 08bc37 bb6c3b0c00        "coachcut"
     cmp byte ptr [byte_ed9b2], 1                 ; 08bc3c 803db2d90e0001
     jne loc_8bc4d                                ; 08bc43 7508
-    mov edx, dword ptr [off_d2c6b]               ; 08bc45 8b156b2c0d00
+    mov edx, dword ptr [install_path]            ; 08bc45 8b156b2c0d00
     jmp loc_8bc4f                                ; 08bc4b eb02
 
 loc_8bc4d:
@@ -487,7 +488,7 @@ loc_8bc4f:
     push esi                                     ; 08bccb 56
     call freemem                                 ; 08bccc e807160000
     add esp, 4                                   ; 08bcd1 83c404
-    cmp byte ptr [byte_d2430], 0                 ; 08bcd4 803d30240d0000
+    cmp byte ptr [sound_enabled], 0              ; 08bcd4 803d30240d0000
     je loc_8bd20                                 ; 08bcdb 7443
     cmp dword ptr [dword_c721d], 0               ; 08bcdd 833d1d720c0000
     jne loc_8bd20                                ; 08bce4 753a
@@ -495,7 +496,7 @@ loc_8bc4f:
     mov ebx, aCoach                              ; 08bceb bb843b0c00        "coach"
     cmp byte ptr [byte_ed9eb], 1                 ; 08bcf0 803debd90e0001
     jne loc_8bd01                                ; 08bcf7 7508
-    mov edx, dword ptr [off_d2c6b]               ; 08bcf9 8b156b2c0d00
+    mov edx, dword ptr [install_path]            ; 08bcf9 8b156b2c0d00
     jmp loc_8bd03                                ; 08bcff eb02
 
 loc_8bd01:
@@ -507,7 +508,7 @@ loc_8bd03:
     call loadsound                               ; 08bd16 e8743c0000
     mov dword ptr [dword_c721d], eax             ; 08bd1b a31d720c00
 loc_8bd20:
-    cmp byte ptr [byte_d2430], 0                 ; 08bd20 803d30240d0000
+    cmp byte ptr [sound_enabled], 0              ; 08bd20 803d30240d0000
     je loc_8bd3e                                 ; 08bd27 7415
     test byte ptr [byte_c5400], 1                ; 08bd29 f60500540c0001
     je loc_8bd3e                                 ; 08bd30 740c
@@ -543,7 +544,7 @@ loc_8bd40:
     lea ebx, [esp + 0x320]                       ; 08bd91 8d9c2420030000
     cmp byte ptr [edx + unk_ed9b3], 1            ; 08bd98 80bab3d90e0001
     jne loc_8bda9                                ; 08bd9f 7508
-    mov edx, dword ptr [off_d2c6b]               ; 08bda1 8b156b2c0d00
+    mov edx, dword ptr [install_path]            ; 08bda1 8b156b2c0d00
     jmp loc_8bdab                                ; 08bda7 eb02
 
 loc_8bda9:
@@ -551,7 +552,7 @@ loc_8bda9:
 loc_8bdab:
     lea eax, [esp + 0x300]                       ; 08bdab 8d842400030000
     call make_path                               ; 08bdb2 e86785f8ff
-    cmp byte ptr [byte_d2430], 0                 ; 08bdb7 803d30240d0000
+    cmp byte ptr [sound_enabled], 0              ; 08bdb7 803d30240d0000
     je loc_8bdd2                                 ; 08bdbe 7412
     test byte ptr [byte_c5400], 1                ; 08bdc0 f60500540c0001
     je loc_8bdd2                                 ; 08bdc7 7409
@@ -563,7 +564,7 @@ loc_8bdd2:
     mov ebx, 0x54                                ; 08bdd2 bb54000000
     mov edx, 0x161                               ; 08bdd7 ba61010000
     lea eax, [esp + 0x300]                       ; 08bddc 8d842400030000
-    call sub_8bedb                               ; 08bde3 e8f3000000
+    call cmv_play                                ; 08bde3 e8f3000000
     mov esi, eax                                 ; 08bde8 89c6
     mov eax, esp                                 ; 08bdea 89e0
     push eax                                     ; 08bdec 50
@@ -575,7 +576,7 @@ loc_8bdd2:
     mov edx, esp                                 ; 08be01 89e2
     mov eax, 1                                   ; 08be03 b801000000
     call fade_palette_to                         ; 08be08 e88b57f8ff
-    cmp byte ptr [byte_d2430], 0                 ; 08be0d 803d30240d0000
+    cmp byte ptr [sound_enabled], 0              ; 08be0d 803d30240d0000
     je loc_8be2d                                 ; 08be14 7417
     test byte ptr [byte_c5400], 1                ; 08be16 f60500540c0001
     je loc_8be2d                                 ; 08be1d 740e
@@ -585,7 +586,7 @@ loc_8be24:
     test eax, eax                                ; 08be29 85c0
     jne loc_8be24                                ; 08be2b 75f7
 loc_8be2d:
-    cmp byte ptr [byte_d2430], 0                 ; 08be2d 803d30240d0000
+    cmp byte ptr [sound_enabled], 0              ; 08be2d 803d30240d0000
     je loc_8bebd                                 ; 08be34 0f8483000000
     cmp dword ptr [dword_c721d], 0               ; 08be3a 833d1d720c0000
     je loc_8bebd                                 ; 08be41 0f8476000000
@@ -615,7 +616,7 @@ loc_8be76:
     mov edx, esp                                 ; 08be8d 89e2
     mov eax, 1                                   ; 08be8f b801000000
     call fade_palette_to                         ; 08be94 e8ff56f8ff
-    cmp byte ptr [byte_d2430], 0                 ; 08be99 803d30240d0000
+    cmp byte ptr [sound_enabled], 0              ; 08be99 803d30240d0000
     je loc_8bebd                                 ; 08bea0 741b
     mov ebx, dword ptr [dword_c721d]             ; 08bea2 8b1d1d720c00
     test ebx, ebx                                ; 08bea8 85db
@@ -630,7 +631,7 @@ loc_8bebd:
     jne loc_8bec7                                ; 08bec0 7505
     call sub_8474e                               ; 08bec2 e88788ffff
 loc_8bec7:
-    call sub_6b47c                               ; 08bec7 e8b0f5fdff
+    call ui_shutdown                             ; 08bec7 e8b0f5fdff
     mov eax, esi                                 ; 08becc 89f0
     add esp, 0x330                               ; 08bece 81c430030000
     pop ebp                                      ; 08bed4 5d
@@ -643,10 +644,10 @@ loc_8bec7:
 
 
 ; ====================================================================================================
-; sub_8bedb  [0x8bedb, 732 bytes, 212 instructions]
-; called by: sub_8bc15
+; cmv_play  [0x8bedb, 732 bytes, 212 instructions]
+; called by: coach_clip_player
 ; ====================================================================================================
-sub_8bedb:
+cmv_play:
     push 0x58                                    ; 08bedb 6858000000
     call __CHK                                   ; 08bee0 e8670a0000
     push ecx                                     ; 08bee5 51
@@ -657,7 +658,7 @@ sub_8bedb:
     mov esi, eax                                 ; 08beec 89c6
     mov dword ptr [esp + 0x18], edx              ; 08beee 89542418
     mov dword ptr [esp + 0x14], ebx              ; 08bef2 895c2414
-    call sub_6b3d7                               ; 08bef6 e8dcf4fdff
+    call event_queue_reset                       ; 08bef6 e8dcf4fdff
     call setdefaultscreen                        ; 08befb e8a88c0200
     push 0x20                                    ; 08bf00 6a20
     push 0x2000                                  ; 08bf02 6800200000
@@ -678,7 +679,7 @@ loc_8bf36:
     call sub_b39a7                               ; 08bf36 e86c7a0200
     test eax, eax                                ; 08bf3b 85c0
     jne loc_8bf46                                ; 08bf3d 7507
-    call sub_1b2a7                               ; 08bf3f e863f3f8ff
+    call iff_parse                               ; 08bf3f e863f3f8ff
     jmp loc_8bf36                                ; 08bf44 ebf0
 
 loc_8bf46:
@@ -692,7 +693,7 @@ loc_8bf46:
     call getticks                                ; 08bf63 e8f4790200
     mov dword ptr [esp + 0x24], eax              ; 08bf68 89442424
     mov dword ptr [esp + 0x28], ebp              ; 08bf6c 896c2428
-    call sub_1b2a7                               ; 08bf70 e832f3f8ff
+    call iff_parse                               ; 08bf70 e832f3f8ff
 loc_8bf75:
     mov ebx, dword ptr [esp + 0x20]              ; 08bf75 8b5c2420
     push ebx                                     ; 08bf79 53
@@ -747,7 +748,7 @@ loc_8c00f:
     jne loc_8c04f                                ; 08c014 7539
     cmp ebp, dword ptr [esp + 0x10]              ; 08c016 3b6c2410
     jne loc_8c04f                                ; 08c01a 7533
-    cmp byte ptr [byte_d2430], 0                 ; 08c01c 803d30240d0000
+    cmp byte ptr [sound_enabled], 0              ; 08c01c 803d30240d0000
     je loc_8c046                                 ; 08c023 7421
     mov ecx, dword ptr [dword_c721d]             ; 08c025 8b0d1d720c00
     test ecx, ecx                                ; 08c02b 85c9
@@ -766,7 +767,7 @@ loc_8c04f:
 
 loc_8c055:
     mov eax, edi                                 ; 08c055 89f8
-    call sub_1ad16                               ; 08c057 e8baecf8ff
+    call cmv_load_palette                        ; 08c057 e8baecf8ff
     mov eax, edi                                 ; 08c05c 89f8
     call sub_1b092                               ; 08c05e e82ff0f8ff
     mov ebp, eax                                 ; 08c063 89c5
@@ -814,7 +815,7 @@ loc_8c0d0:
     push ecx                                     ; 08c0d9 51
     call sub_1b92e                               ; 08c0da e84ff8f8ff
     add esp, 8                                   ; 08c0df 83c408
-    call sub_1b2a7                               ; 08c0e2 e8c0f1f8ff
+    call iff_parse                               ; 08c0e2 e8c0f1f8ff
     cmp dword ptr [esp + 8], 0x4d564966          ; 08c0e7 817c24086649564d
     jne loc_8c12a                                ; 08c0ef 7539
     call getticks                                ; 08c0f1 e866780200
@@ -838,7 +839,7 @@ loc_8c10f:
     jmp loc_8c10f                                ; 08c123 ebea
 
 loc_8c125:
-    call sub_1b2a7                               ; 08c125 e87df1f8ff
+    call iff_parse                               ; 08c125 e87df1f8ff
 loc_8c12a:
     test esi, esi                                ; 08c12a 85f6
     jne loc_8c135                                ; 08c12c 7507
@@ -858,7 +859,7 @@ loc_8c14b:
     push edx                                     ; 08c156 52
     call sub_1b18b                               ; 08c157 e82ff0f8ff
     add esp, 4                                   ; 08c15c 83c404
-    cmp byte ptr [byte_d2430], 0                 ; 08c15f 803d30240d0000
+    cmp byte ptr [sound_enabled], 0              ; 08c15f 803d30240d0000
     je loc_8c1ad                                 ; 08c166 7445
     cmp dword ptr [dword_c721d], 0               ; 08c168 833d1d720c0000
     je loc_8c1ad                                 ; 08c16f 743c
@@ -903,7 +904,7 @@ sub_8c1b7:
 
 ; ====================================================================================================
 ; select_game_surface  [0x8c1c2, 32 bytes, 13 instructions]
-; called by: game_loop, sub_14a20, sub_14afe, draw_clock, show_scoreboard, sub_47cd6, instant_replay, sub_7e9ac, sub_7f0af
+; called by: game_loop, sub_14a20, sub_14afe, draw_clock, show_scoreboard, init_match, instant_replay, replay_control_loop, replay_menu
 ; ====================================================================================================
 select_game_surface:
     push 0x14                                    ; 08c1c2 6814000000
@@ -991,7 +992,7 @@ sub_8c223:
 ; randomrange  [0x8c230, 94 bytes, 33 instructions]
 ; EA random(range) 16 bit LCG
 ; annotations: external
-; called by: sub_14056, sub_15d6b, sub_18f8d, sub_47cd6, sub_4842a, sub_484da, sub_49460, sub_495b8, sub_49bc2, sub_4a343, sub_4a65c, sub_4a90f (+48 more)
+; called by: sub_14056, demo_game, simulate_pending_games, init_match, ai_anthem, ai_ref_anthem, ai_three_stars, ai_ref_three_stars, ai_puck_give_cup, ai_wing_offense, ai_center_offense, ai_celebrate_goal (+48 more)
 ; ====================================================================================================
 randomrange:
     push ebp                                     ; 08c230 55
@@ -1770,7 +1771,7 @@ loc_8c8bf:
 ; direction8  [0x8c8e8, 89 bytes, 39 instructions]
 ; 8-way direction index from a (dx, dy) vector
 ; annotations: external
-; called by: sub_109fc, sub_13c79, sub_484da, sub_492f9, sub_4a832, sub_4b774, sub_4c8bd, sub_4c9fd, sub_4e292, sub_4ed7c, sub_4f7d0, sub_4fae8 (+26 more)
+; called by: sub_109fc, sub_13c79, ai_ref_anthem, sub_492f9, ai_stanley_cup, ai_goalie, sub_4c8bd, sub_4c9fd, sub_4e292, ai_ref_pickup_puck, ai_ref_point_goal, ai_breakaway (+26 more)
 ; ====================================================================================================
 direction8:
     push ebp                                     ; 08c8e8 55
@@ -1834,7 +1835,7 @@ sub_8c944:
 ; __CHK  [0x8c94c, 16 bytes, 4 instructions]
 ; Watcom stack probe, every compiled function starts with 'push framesize; call __CHK'
 ; annotations: external conv:__regsafe
-; called by: sub_10010, sub_1002a, main, sub_106c8, sub_10712, set_video_mode, sub_10f6d, sub_11005, sub_110e0, sub_11136, sub_11161, handle_hotkey (+1177 more)
+; called by: sub_10010, sub_1002a, main, sub_106c8, sub_10712, set_video_mode, sub_10f6d, draw_player_number, draw_sprite_world, sub_11136, sub_11161, handle_hotkey (+1177 more)
 ; ====================================================================================================
 __CHK:
     xchg dword ptr [esp + 4], eax                ; 08c94c 87442404
@@ -2218,7 +2219,7 @@ sub_8cc8c:
 ; allocmem  [0x8cca8, 28 bytes, 11 instructions]
 ; allocmem(name, size, flags): reservemem() returning the data pointer
 ; annotations: external
-; called by: main, sub_12849, sub_13320, sub_15b76, sub_1609f, sub_16f9a, sub_17dfc, sub_17edf, sub_17fbc, sub_1809f, sub_18182, sub_18265 (+106 more)
+; called by: main, league_leaders_screen, awards_screen, sub_15b76, ea_sports_intro, credits_screen, sub_17dfc, sub_17edf, sub_17fbc, sub_1809f, sub_18182, sub_18265 (+106 more)
 ; ====================================================================================================
 allocmem:
     push 1                                       ; 08cca8 6a01
@@ -2924,7 +2925,7 @@ loc_8d2b9:
 ; freemem  [0x8d2d8, 23 bytes, 8 instructions]
 ; frees the memory block owning a data pointer
 ; annotations: external
-; called by: sub_12849, sub_13320, show_scoreboard, sub_15b76, sub_1609f, sub_1672a, sub_16f9a, sub_17dfc, sub_17edf, sub_17fbc, sub_1809f, sub_18182 (+173 more)
+; called by: league_leaders_screen, awards_screen, show_scoreboard, sub_15b76, ea_sports_intro, intro_sequence, credits_screen, sub_17dfc, sub_17edf, sub_17fbc, sub_1809f, sub_18182 (+173 more)
 ; ====================================================================================================
 freemem:
     mov edx, dword ptr [esp + 4]                 ; 08d2d8 8b542404
@@ -2942,7 +2943,7 @@ freemem:
 ; releasememblock  [0x8d2f0, 44 bytes, 13 instructions]
 ; releases a block descriptor (locked)
 ; annotations: external
-; called by: main, sub_13320, sub_1609f, sub_1672a, sub_16f9a, pause_menu, sub_1a6a7, sub_1a9ac, sub_29f28, sub_2abdf, boxscore_screen, sub_2f5ee (+25 more)
+; called by: main, awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, exit_game_dialog, sub_1a9ac, team_select_screen, draw_team_logos, boxscore_screen, team_select_screen2 (+25 more)
 ; ====================================================================================================
 releasememblock:
     mov edx, dword ptr [dword_edab0]             ; 08d2f0 8b15b0da0e00
@@ -3936,7 +3937,7 @@ loc_8daad:
 
 ; ====================================================================================================
 ; sub_8dab8  [0x8dab8, 42 bytes, 14 instructions]
-; called by: sub_1baf3, sub_212c6, sub_479e9, sub_66497, reservemem, resizemem, sub_8db20, initmemman
+; called by: sub_1baf3, sub_212c6, sub_479e9, load_announcer_clip, reservemem, resizemem, sub_8db20, initmemman
 ; ====================================================================================================
 sub_8dab8:
     push esi                                     ; 08dab8 56
@@ -4086,7 +4087,7 @@ loc_8dbb1:
 
 ; ====================================================================================================
 ; sub_8dbc0  [0x8dbc0, 17 bytes, 6 instructions]
-; called by: sub_3377c, load_eavesa, sub_92e40
+; called by: load_rink, load_eavesa, sub_92e40
 ; ====================================================================================================
 sub_8dbc0:
     mov edx, dword ptr [esp + 4]                 ; 08dbc0 8b542404
@@ -4205,7 +4206,7 @@ unk_8dc3e:
 ; exit  [0x8dc3f, 22 bytes, 6 instructions]  <noreturn>
 ; C exit(): runs atexit handlers and terminates
 ; annotations: external
-; called by: main, sub_7947f, __CMain, sub_b345d
+; called by: main, lines_teams_a, __CMain, sub_b345d
 ; ====================================================================================================
 exit:
     push edx                                     ; 08dc3f 52
@@ -4243,7 +4244,7 @@ _exit:
 ; ====================================================================================================
 ; _dos_getdiskfree  [0x8dc6e, 45 bytes, 20 instructions]  <dos_disk_free>
 ; annotations: external
-; called by: main, sub_106c8, sub_14825, sub_148a5, sub_3d46d, sub_3d694, sub_6c4ba, create_player_menu, sub_7fa10
+; called by: main, sub_106c8, check_disk_space, check_disk_space_for_game, player_id_write, player_id_read, database_disk_check, create_player_menu, replay_save_highlight
 ; ====================================================================================================
 _dos_getdiskfree:
     push edi                                     ; 08dc6e 57
@@ -4930,7 +4931,7 @@ loc_8e38c:
 
 ; ====================================================================================================
 ; sub_8e3c0  [0x8e3c0, 1 bytes, 1 instructions]
-; called by: sub_13a91
+; called by: load_player_graphics
 ; ====================================================================================================
 sub_8e3c0:
     ret                                          ; 08e3c0 c3
@@ -5111,7 +5112,7 @@ loc_8e4b8:
 ; addtimer  [0x8e4c0, 55 bytes, 16 instructions]
 ; registers a timer callback ("addtimer - LIST FULL")
 ; annotations: external
-; called by: main, sub_1b0f3, sub_479e9, sub_6b410, sub_8357a, sub_8eb5b
+; called by: main, sub_1b0f3, sub_479e9, ui_init, sub_8357a, sub_8eb5b
 ;   uses string "addtimer - LIST FULL\n"
 ; ====================================================================================================
 addtimer:
@@ -5142,7 +5143,7 @@ loc_8e4e9:
 ; ====================================================================================================
 ; removetimer  [0x8e4f8, 45 bytes, 17 instructions]
 ; annotations: external
-; called by: sub_1b18b, sub_47c31, sub_6b47c, sub_8363c, sub_8eb93
+; called by: sub_1b18b, wait_sprite_fade, ui_shutdown, sub_8363c, sub_8eb93
 ; ====================================================================================================
 removetimer:
     push esi                                     ; 08e4f8 56
@@ -5571,7 +5572,7 @@ loc_8e82b:
 ; loadshapes  [0x8e83c, 10 bytes, 4 instructions]
 ; loads an EA shape bank (FSH/QFS 'SHPI'), returns its data pointer
 ; annotations: external
-; called by: main, sub_12849, sub_13320, sub_1609f, sub_1672a, sub_16f9a, pause_menu, sub_20016, sub_20171, sub_202e5, sub_203fa, sub_2051a (+66 more)
+; called by: main, league_leaders_screen, awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, exh_hub_sports_central, exh_hub_playoff_tree, exh_hub_league_calendar, exh_hub_standings, exh_hub_stats (+66 more)
 ; ====================================================================================================
 loadshapes:
     push ebp                                     ; 08e83c 55
@@ -5622,7 +5623,7 @@ aLocateshape44sSHAPENOTFO:
 ; loadfile  [0x8e8a0, 21 bytes, 8 instructions]
 ; loadfile(path, flags): loads a whole file (fonts .VFN, .PPV shape banks...) into memory
 ; annotations: external
-; called by: main, game_loop, play_game, sub_138d2, sub_1395f, sub_13a2f, sub_13a91, sub_13bb4, show_scoreboard, sub_1cc3d, sub_203fa, sub_20d97 (+25 more)
+; called by: main, game_loop, play_game, sub_138d2, sub_1395f, sub_13a2f, load_player_graphics, sub_13bb4, show_scoreboard, load_scoreboard_shapes, exh_hub_standings, hub_standings (+25 more)
 ; ====================================================================================================
 loadfile:
     push 1                                       ; 08e8a0 6a01
@@ -5638,7 +5639,7 @@ loadfile:
 
 ; ====================================================================================================
 ; sub_8e8b8  [0x8e8b8, 21 bytes, 8 instructions]
-; called by: sub_59493, sub_8721f, sub_891b2
+; called by: sub_59493, load_schedule_db, sub_891b2
 ; ====================================================================================================
 sub_8e8b8:
     push 0                                       ; 08e8b8 6a00
@@ -5784,7 +5785,7 @@ loc_8e9b4:
 ; ====================================================================================================
 ; settextpos  [0x8e9c0, 19 bytes, 5 instructions]
 ; annotations: external
-; called by: sub_13a91, sub_2bd16, sub_2c18f, sub_2c46b, sub_2fedf, sub_30209, sub_3e9cf, sub_3ef89, sub_665ad, sub_66fe2, sub_6b093, sub_6b5e4 (+39 more)
+; called by: load_player_graphics, league_type_menu, league_dialog_box, sub_2c46b, sub_2fedf, sub_30209, team_roster_screen, line_editor_screen, draw_penalty_box_overlay, draw_message_box, joystick_calibrate, draw_menu_items (+39 more)
 ; ====================================================================================================
 settextpos:
     mov eax, dword ptr [esp + 4]                 ; 08e9c0 8b442404
@@ -5812,7 +5813,7 @@ settextxy:
 ; ====================================================================================================
 ; getfontstate  [0x8e9e8, 21 bytes, 9 instructions]
 ; annotations: external
-; called by: sub_13320, sub_16f9a, pause_menu, sub_21cde, sub_22581, sub_235be, sub_244e2, sub_25b24, sub_27080, sub_27f9c, sub_29f28, sub_2abdf (+17 more)
+; called by: awards_screen, credits_screen, pause_menu, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, standings_screen, team_select_screen, draw_team_logos (+17 more)
 ; ====================================================================================================
 getfontstate:
     push esi                                     ; 08e9e8 56
@@ -5830,7 +5831,7 @@ getfontstate:
 ; ====================================================================================================
 ; setfontstate  [0x8ea00, 21 bytes, 9 instructions]
 ; annotations: external
-; called by: sub_13320, sub_16f9a, pause_menu, sub_21cde, sub_22581, sub_235be, sub_244e2, sub_25b24, sub_27080, sub_27f9c, sub_29f28, sub_2abdf (+16 more)
+; called by: awards_screen, credits_screen, pause_menu, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, standings_screen, team_select_screen, draw_team_logos (+16 more)
 ; ====================================================================================================
 setfontstate:
     push esi                                     ; 08ea00 56
@@ -5849,7 +5850,7 @@ setfontstate:
 ; setfont  [0x8ea18, 212 bytes, 61 instructions]
 ; selects a loaded .VFN font
 ; annotations: external
-; called by: main, sub_10f6d, game_loop, sub_13320, sub_16f9a, pause_menu, sub_1a817, sub_1b982, sub_21cde, sub_22581, sub_235be, sub_244e2 (+28 more)
+; called by: main, sub_10f6d, game_loop, awards_screen, credits_screen, pause_menu, sub_1a817, sub_1b982, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen (+28 more)
 ; ====================================================================================================
 setfont:
     mov edx, dword ptr [esp + 4]                 ; 08ea18 8b542404
@@ -5947,7 +5948,7 @@ sub_8eaec:
 ; ====================================================================================================
 ; _dos_gettime  [0x8eb07, 26 bytes, 15 instructions]  <dos_get_time>
 ; annotations: external
-; called by: main, sub_1672a, sub_93bd4, sub_96030
+; called by: main, intro_sequence, sub_93bd4, sub_96030
 ; ====================================================================================================
 _dos_gettime:
     push edx                                     ; 08eb07 52
@@ -5980,7 +5981,7 @@ sub_8eb21:
 ; rand  [0x8eb27, 36 bytes, 12 instructions]
 ; Watcom LCG rand(): seed * 0x41c64e6d + 0x3039
 ; annotations: external
-; called by: sub_15d6b, sub_16f9a, sub_2f2b1, sub_2f3d7, sub_42295, sub_45282, sub_452c5, sub_59a11, sub_7dc8b, sub_8bc15
+; called by: demo_game, credits_screen, sub_2f2b1, sub_2f3d7, league_db_load, sub_45282, playoff_setup_screen, play_speech, load_music_banks, coach_clip_player
 ; ====================================================================================================
 rand:
     push edx                                     ; 08eb27 52
@@ -6001,7 +6002,7 @@ loc_8eb49:
 ; ====================================================================================================
 ; srand  [0x8eb4b, 16 bytes, 8 instructions]
 ; annotations: external
-; called by: main, sub_1672a
+; called by: main, intro_sequence
 ; ====================================================================================================
 srand:
     push edx                                     ; 08eb4b 52
@@ -6017,7 +6018,7 @@ loc_8eb59:
 
 ; ====================================================================================================
 ; sub_8eb5b  [0x8eb5b, 56 bytes, 18 instructions]
-; called by: sub_82d7a
+; called by: load_sound_config
 ; ====================================================================================================
 sub_8eb5b:
     push ebx                                     ; 08eb5b 53
@@ -6043,7 +6044,7 @@ loc_8eb8d:
 
 ; ====================================================================================================
 ; sub_8eb93  [0x8eb93, 79 bytes, 29 instructions]
-; called by: load_cfg_palette, sub_82d7a, sub_8eb5b
+; called by: load_cfg_palette, load_sound_config, sub_8eb5b
 ; ====================================================================================================
 sub_8eb93:
     push ebx                                     ; 08eb93 53
@@ -6183,7 +6184,7 @@ loc_8ec9d:
 ; loadpatches  [0x8ecc0, 274 bytes, 89 instructions]
 ; loads the music patches %0.3sFF%03d.PAT/.TIM
 ; annotations: external
-; called by: sub_82d7a
+; called by: load_sound_config
 ;   uses string "SCN"
 ;   uses string "%0.3sFF%03d.PAT"
 ;   uses string "%0.3sFF%03d.TIM"
@@ -6705,7 +6706,7 @@ loc_8f127:
 
 ; ====================================================================================================
 ; sub_8f13b  [0x8f13b, 195 bytes, 65 instructions]
-; called by: sub_13320, sub_1609f, sub_16f9a, boxscore_screen, sub_2f5ee, sub_7dc8b, sub_82d7a, sub_8f48f
+; called by: awards_screen, ea_sports_intro, credits_screen, boxscore_screen, team_select_screen2, load_music_banks, load_sound_config, sub_8f48f
 ;   uses string "KMS"
 ;   uses string "CFG"
 ; ====================================================================================================
@@ -6788,7 +6789,7 @@ loc_8f1f8:
 
 ; ====================================================================================================
 ; sub_8f1fe  [0x8f1fe, 73 bytes, 26 instructions]
-; called by: sub_13320, sub_1609f, sub_16f9a, boxscore_screen, sub_2f5ee, sub_7dec8, sub_82d7a, sub_8eb93
+; called by: awards_screen, ea_sports_intro, credits_screen, boxscore_screen, team_select_screen2, sub_7dec8, load_sound_config, sub_8eb93
 ; ====================================================================================================
 sub_8f1fe:
     push ebx                                     ; 08f1fe 53
@@ -6852,7 +6853,7 @@ loc_8f262:
 
 ; ====================================================================================================
 ; sub_8f270  [0x8f270, 10 bytes, 5 instructions]
-; called by: play_sfx, sub_599b9
+; called by: play_sfx, play_sample_by_ptr
 ; ====================================================================================================
 sub_8f270:
     push ebx                                     ; 08f270 53
@@ -7257,7 +7258,7 @@ sub_8f61d:
 ; ====================================================================================================
 ; sound_stopall  [0x8f633, 74 bytes, 25 instructions]
 ; annotations: external
-; called by: sub_10f6d, handle_hotkey, game_loop, sub_48f0b, sub_69336
+; called by: sub_10f6d, handle_hotkey, game_loop, start_period, simulate_game_offscreen
 ; ====================================================================================================
 sound_stopall:
     push ebx                                     ; 08f633 53
@@ -7649,7 +7650,7 @@ loc_8f950:
 ; ====================================================================================================
 ; sfx_enable  [0x8f963, 11 bytes, 2 instructions]
 ; annotations: external
-; called by: handle_hotkey, sub_327a1, sub_7add3, sub_7b3a7, sub_7b9e8, sub_7c317
+; called by: handle_hotkey, apply_settings, settings_menu, game_settings_screen, game_settings_menu, sound_settings_menu
 ; ====================================================================================================
 sfx_enable:
     mov dword ptr [dword_d4f8e], 1               ; 08f963 c7058e4f0d000100..
@@ -7659,7 +7660,7 @@ sfx_enable:
 ; ====================================================================================================
 ; sfx_disable  [0x8f96e, 11 bytes, 5 instructions]
 ; annotations: external
-; called by: handle_hotkey, sub_327a1, sub_7add3, sub_7b3a7, sub_7b9e8, sub_7c317
+; called by: handle_hotkey, apply_settings, settings_menu, game_settings_screen, game_settings_menu, sound_settings_menu
 ; ====================================================================================================
 sfx_disable:
     push edx                                     ; 08f96e 52
@@ -7672,7 +7673,7 @@ sfx_disable:
 ; ====================================================================================================
 ; music_enable  [0x8f979, 11 bytes, 2 instructions]
 ; annotations: external
-; called by: handle_hotkey, sub_327a1, sub_7add3, sub_7b3a7, sub_7b9e8, sub_7c317
+; called by: handle_hotkey, apply_settings, settings_menu, game_settings_screen, game_settings_menu, sound_settings_menu
 ; ====================================================================================================
 music_enable:
     mov dword ptr [dword_d4f92], 1               ; 08f979 c705924f0d000100..
@@ -7682,7 +7683,7 @@ music_enable:
 ; ====================================================================================================
 ; music_disable  [0x8f984, 11 bytes, 5 instructions]
 ; annotations: external
-; called by: handle_hotkey, sub_327a1, sub_7add3, sub_7b3a7, sub_7b9e8, sub_7c317
+; called by: handle_hotkey, apply_settings, settings_menu, game_settings_screen, game_settings_menu, sound_settings_menu
 ; ====================================================================================================
 music_disable:
     push edx                                     ; 08f984 52
@@ -7696,7 +7697,7 @@ music_disable:
 ; loadsound  [0x8f98f, 355 bytes, 118 instructions]
 ; loads an IFF 8SVX sample file (VHDR chunk)
 ; annotations: external
-; called by: sub_13320, sub_1609f, sub_1672a, sub_16f9a, pause_menu, sub_29f28, sub_2abdf, boxscore_screen, sub_2f5ee, frontend_main_menu, sub_34821, sub_38b4f (+3 more)
+; called by: awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, team_select_screen, draw_team_logos, boxscore_screen, team_select_screen2, frontend_main_menu, calendar_screen, team_info_screen (+3 more)
 ;   uses string "VHDR"
 ; ====================================================================================================
 loadsound:
@@ -7926,7 +7927,7 @@ loc_8fb87:
 ; playsample  [0x8fb8e, 87 bytes, 38 instructions]
 ; playsample(sample, rate, channel, volume)
 ; annotations: external
-; called by: sub_13320, sub_1609f, sub_1672a, sub_16f9a, pause_menu, sub_29f28, sub_2abdf, boxscore_screen, sub_2f5ee, frontend_main_menu, sub_34821, sub_38b4f (+6 more)
+; called by: awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, team_select_screen, draw_team_logos, boxscore_screen, team_select_screen2, frontend_main_menu, calendar_screen, team_info_screen (+6 more)
 ; ====================================================================================================
 playsample:
     push esi                                     ; 08fb8e 56
@@ -8061,7 +8062,7 @@ sub_8fc37:
 ; ====================================================================================================
 ; sound_channel_status  [0x8fc8a, 34 bytes, 10 instructions]
 ; annotations: external
-; called by: main, sub_13320, sub_1609f, sub_1672a, sub_16f9a, pause_menu, sub_1a6a7, sub_1a9ac, sub_29f28, sub_2abdf, boxscore_screen, sub_2f5ee (+19 more)
+; called by: main, awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, exit_game_dialog, sub_1a9ac, team_select_screen, draw_team_logos, boxscore_screen, team_select_screen2 (+19 more)
 ; ====================================================================================================
 sound_channel_status:
     cmp eax, dword ptr [dword_d4f64]             ; 08fc8a 3b05644f0d00
@@ -8112,7 +8113,7 @@ loc_8fcdc:
 ; ====================================================================================================
 ; sound_fade  [0x8fcdf, 136 bytes, 48 instructions]
 ; annotations: external
-; called by: main, sub_13320, sub_1609f, sub_1672a, sub_16f9a, pause_menu, sub_1a6a7, sub_1a9ac, sub_29f28, sub_2abdf, boxscore_screen, sub_2f5ee (+18 more)
+; called by: main, awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, exit_game_dialog, sub_1a9ac, team_select_screen, draw_team_logos, boxscore_screen, team_select_screen2 (+18 more)
 ; ====================================================================================================
 sound_fade:
     push ecx                                     ; 08fcdf 51
@@ -8486,7 +8487,7 @@ sub_8ff7c:
 ; getpalette  [0x8ffb0, 34 bytes, 16 instructions]  <vga_pel_data vga_pel_read>
 ; getpalette(first, count, rgb) through ports 3C7h/3C9h
 ; annotations: external
-; called by: main, sub_10f6d, handle_hotkey, game_loop, sub_12849, sub_13320, sub_13e8f, sub_17a00, sub_17af3, sub_17be7, sub_17dfc, sub_17edf (+76 more)
+; called by: main, sub_10f6d, handle_hotkey, game_loop, league_leaders_screen, awards_screen, sub_13e8f, sub_17a00, sub_17af3, sub_17be7, sub_17dfc, sub_17edf (+76 more)
 ; ====================================================================================================
 getpalette:
     push ebp                                     ; 08ffb0 55
@@ -8690,7 +8691,7 @@ loc_901ed:
     mov dword ptr [dword_d4ce8], edi             ; 0901fe 893de84c0d00
     mov dword ptr [dword_d4cd4], ebx             ; 090204 891dd44c0d00
     mov ecx, unk_f7b88                           ; 09020a 3eb9887b0f00
-    mov edi, dword_d8b68                         ; 090210 3ebf688b0d00
+    mov edi, font_kaufm                          ; 090210 3ebf688b0d00
     sub ecx, edi                                 ; 090216 29f9
     cmp byte ptr [byte_d4d06], 1                 ; 090218 803d064d0d0001
     jne loc_9022e                                ; 09021f 750d
@@ -8772,7 +8773,7 @@ sub_902a0:
 ; _memset_fill  [0x902b0, 49 bytes, 24 instructions]
 ; byte fill helper of memset
 ; annotations: external
-; called by: fade_palette_to, sub_1205d, sub_14056, sub_1672a, sub_1faa7, sub_3626d, savegame_io, fade_palette, sub_7651b, initgraphics, memset, sub_97740
+; called by: fade_palette_to, load_award_stats, sub_14056, intro_sequence, sub_1faa7, season_record_result, savegame_io, fade_palette, sub_7651b, initgraphics, memset, sub_97740
 ; ====================================================================================================
 _memset_fill:
     or ecx, ecx                                  ; 0902b0 09c9
@@ -8809,7 +8810,7 @@ loc_902e0:
 ; _memset_dwords  [0x902e7, 108 bytes, 48 instructions]
 ; aligned dword fill helper of memset
 ; annotations: external
-; called by: sub_41f64, sub_42295, sub_43644, sub_43757, sub_43e40, sub_443b6, sub_447a6, savegame_io, sub_833fa, sub_87863, inittimer, _memset_fill
+; called by: sub_41f64, league_db_load, sub_43644, sub_43757, sub_43e40, sub_443b6, sub_447a6, savegame_io, speech_reset, sub_87863, inittimer, _memset_fill
 ; ====================================================================================================
 _memset_dwords:
     or ecx, ecx                                  ; 0902e7 09c9
@@ -8874,7 +8875,7 @@ loc_90352:
 ; shapecount  [0x90354, 8 bytes, 3 instructions]
 ; number of entries in an SHPI bank (header +8)
 ; annotations: external
-; called by: game_loop, play_game, sub_66497, sub_95158, sub_a30f8
+; called by: game_loop, play_game, load_announcer_clip, sub_95158, sub_a30f8
 ; ====================================================================================================
 shapecount:
     mov ebx, dword ptr [esp + 4]                 ; 090354 8b5c2404
@@ -8886,7 +8887,7 @@ shapecount:
 ; getshape  [0x9035c, 23 bytes, 9 instructions]
 ; getshape(bank, index): pointer to entry (directory at +0x10, 8 bytes per entry)
 ; annotations: external
-; called by: game_loop, play_game, sub_12849, sub_95158, debug_memshapes, sub_a30f8
+; called by: game_loop, play_game, league_leaders_screen, sub_95158, debug_memshapes, sub_a30f8
 ; ====================================================================================================
 getshape:
     mov eax, dword ptr [esp + 4]                 ; 09035c 8b442404
@@ -8926,7 +8927,7 @@ loc_9038d:
 ; ====================================================================================================
 ; strcpy  [0x90392, 31 bytes, 15 instructions]
 ; annotations: external
-; called by: play_game, sub_12849, sub_13188, make_path, sub_14368, sub_14442, sub_17816, sub_1c3f6, sub_1c807, sub_1c852, sub_1cb7f, sub_1d518 (+60 more)
+; called by: play_game, league_leaders_screen, team_abbrev_lookup, make_path, sub_14368, sub_14442, export_stats_dialog, sub_1c3f6, sub_1c807, sub_1c852, sub_1cb7f, sub_1d518 (+60 more)
 ; ====================================================================================================
 strcpy:
     push ecx                                     ; 090392 51
@@ -8951,7 +8952,7 @@ loc_903ae:
 ; ====================================================================================================
 ; strcat  [0x903b1, 55 bytes, 31 instructions]
 ; annotations: external
-; called by: play_game, sub_12849, sub_13188, make_path, sub_14368, sub_14442, sub_17816, sub_1c807, sub_1ff86, sub_21cde, sub_27f9c, sub_29c75 (+37 more)
+; called by: play_game, league_leaders_screen, team_abbrev_lookup, make_path, sub_14368, sub_14442, export_stats_dialog, sub_1c807, sub_1ff86, player_card_screen, standings_screen, sub_29c75 (+37 more)
 ; ====================================================================================================
 strcat:
     push ecx                                     ; 0903b1 51
@@ -8991,7 +8992,7 @@ loc_903e0:
 
 ; ====================================================================================================
 ; sub_903e8  [0x903e8, 5 bytes, 1 instructions]
-; called by: play_game, sub_14368, sub_14442, sub_2b944, sub_7125c, sub_89268, sub_91dc4
+; called by: play_game, sub_14368, sub_14442, league_select_screen, sub_7125c, playoff_tree_screen, sub_91dc4
 ; ====================================================================================================
 sub_903e8:
     jmp remove                                   ; 0903e8 e96d290000
@@ -9002,7 +9003,7 @@ sub_903e8:
 ; drawshape  [0x903f0, 555 bytes, 175 instructions]
 ; drawshape(shape, x, y): clipped transparent blit of an SHPI entry
 ; annotations: external
-; called by: sub_16f9a, pause_menu, sub_1d6e8, sub_1df03, sub_1ed96, sub_29f28, sub_2abdf, sub_2c801, boxscore_screen, sub_303fb, sub_30f12, sub_31250 (+47 more)
+; called by: credits_screen, pause_menu, run_menu, menu_page_a, menu_page_b, team_select_screen, draw_team_logos, league_name_entry, boxscore_screen, sub_303fb, sub_30f12, sub_31250 (+47 more)
 ; ====================================================================================================
 drawshape:
     push esi                                     ; 0903f0 56
@@ -9204,7 +9205,7 @@ loc_90614:
 ; drawshape_home  [0x9061c, 28 bytes, 11 instructions]
 ; drawshape at the position stored in the shape header
 ; annotations: external
-; called by: sub_12849, sub_13320, sub_16f9a, pause_menu, sub_29f28, sub_2abdf, frontend_main_menu, sub_33ffd, sub_7025b, sub_737e1, sub_8bc15, sub_95158 (+1 more)
+; called by: league_leaders_screen, awards_screen, credits_screen, pause_menu, team_select_screen, draw_team_logos, frontend_main_menu, calendar_draw_games, free_agent_card, edit_lines_screen_a, coach_clip_player, sub_95158 (+1 more)
 ; ====================================================================================================
 drawshape_home:
     mov edx, dword ptr [esp + 4]                 ; 09061c 8b542404
@@ -9506,7 +9507,7 @@ sub_90854:
 
 ; ====================================================================================================
 ; sub_9087c  [0x9087c, 285 bytes, 97 instructions]
-; called by: sub_1609f, sub_9099c, sub_909b8
+; called by: ea_sports_intro, sub_9099c, sub_909b8
 ; ====================================================================================================
 sub_9087c:
     push esi                                     ; 09087c 56
@@ -9661,7 +9662,7 @@ sub_909b8:
 
 ; ====================================================================================================
 ; sub_909e0  [0x909e0, 87 bytes, 41 instructions]
-; called by: sub_12849, sub_13188, sub_235be, sub_a6b87
+; called by: league_leaders_screen, team_abbrev_lookup, team_stats_screen, sub_a6b87
 ; ====================================================================================================
 sub_909e0:
     push ecx                                     ; 0909e0 51
@@ -9783,7 +9784,7 @@ loc_90abd:
 ; ====================================================================================================
 ; textwidth  [0x90ac4, 19 bytes, 6 instructions]
 ; annotations: external
-; called by: sub_12849, sub_16f9a, sub_174d8, sub_17573, sub_1c852, sub_21cde, sub_22581, sub_235be, sub_244e2, sub_25b24, sub_27080, sub_27f9c (+32 more)
+; called by: league_leaders_screen, credits_screen, sub_174d8, sub_17573, sub_1c852, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, standings_screen (+32 more)
 ; ====================================================================================================
 textwidth:
     push 0x200                                   ; 090ac4 6800020000
@@ -9815,7 +9816,7 @@ sub_90ad7:
 ; ====================================================================================================
 ; sprintf  [0x90aea, 48 bytes, 18 instructions]
 ; annotations: external
-; called by: sub_12849, sub_13867, sub_138d2, sub_1395f, sub_13a91, sub_13bb4, sub_148a5, sub_1672a, sub_176ae, sub_176db, sub_17816, pause_menu (+83 more)
+; called by: league_leaders_screen, sub_13867, sub_138d2, sub_1395f, load_player_graphics, sub_13bb4, check_disk_space_for_game, intro_sequence, sub_176ae, sub_176db, export_stats_dialog, pause_menu (+83 more)
 ; ====================================================================================================
 sprintf:
     push ebx                                     ; 090aea 53
@@ -9842,7 +9843,7 @@ sprintf:
 ; ====================================================================================================
 ; memcpy  [0x90b20, 37 bytes, 23 instructions]
 ; annotations: external
-; called by: sub_13320, sub_1609f, sub_1672a, sub_16f9a, sub_17793, sub_1fdfe, sub_20016, sub_20171, sub_202e5, sub_21c04, sub_21cde, sub_22581 (+19 more)
+; called by: awards_screen, ea_sports_intro, intro_sequence, credits_screen, sub_17793, sub_1fdfe, exh_hub_sports_central, exh_hub_playoff_tree, exh_hub_league_calendar, sub_21c04, player_card_screen, goalie_card_screen (+19 more)
 ; ====================================================================================================
 memcpy:
     push ecx                                     ; 090b20 51
@@ -9904,7 +9905,7 @@ loc_90b7b:
 
 ; ====================================================================================================
 ; sub_90b80  [0x90b80, 47 bytes, 21 instructions]
-; called by: sub_13a91, sub_1cc3d
+; called by: load_player_graphics, load_scoreboard_shapes
 ; ====================================================================================================
 sub_90b80:
     push esi                                     ; 090b80 56
@@ -9936,7 +9937,7 @@ loc_90bab:
 ; ====================================================================================================
 ; _dos_findfirst  [0x90bb0, 29 bytes, 15 instructions]  <dos_findfirst dos_set_dta>
 ; annotations: external
-; called by: sub_14368, sub_14442, sub_148a5, sub_149bf, sub_1bbcc, sub_1c26c, sub_2befd, sub_2ce29, sub_3c3af, sub_3c6e2, sub_411c8, sub_44dcf (+11 more)
+; called by: sub_14368, sub_14442, check_disk_space_for_game, sub_149bf, sub_1bbcc, sub_1c26c, scan_league_dirs, league_name_prompt, sub_3c3af, player_db_sync, load_league_list, new_league_dialog (+11 more)
 ; ====================================================================================================
 _dos_findfirst:
     push ecx                                     ; 090bb0 51
@@ -9959,7 +9960,7 @@ _dos_findfirst:
 ; ====================================================================================================
 ; _dos_findnext  [0x90bcd, 28 bytes, 11 instructions]  <dos_findnext dos_set_dta>
 ; annotations: external
-; called by: sub_14368, sub_14442, sub_2befd, sub_411c8, sub_7248c, sub_7fcf8
+; called by: sub_14368, sub_14442, scan_league_dirs, load_league_list, scan_database_files, highlights_screen
 ; ====================================================================================================
 _dos_findnext:
     push edx                                     ; 090bcd 52
@@ -10041,7 +10042,7 @@ loc_90c31:
 ; ====================================================================================================
 ; rmdir  [0x90c32, 31 bytes, 15 instructions]  <dos_rmdir>
 ; annotations: external
-; called by: sub_14442, sub_6c4ba, sub_86696
+; called by: sub_14442, database_disk_check, stanley_cup_tree_screen
 ; ====================================================================================================
 rmdir:
     push edx                                     ; 090c32 52
@@ -10067,7 +10068,7 @@ loc_90c4d:
 ; ====================================================================================================
 ; close  [0x90c52, 15 bytes, 7 instructions]  <dos_close>
 ; annotations: external
-; called by: file_close, sub_8363c, sub_83897, sub_b0a40
+; called by: file_close, sub_8363c, speech_load_bank, sub_b0a40
 ; ====================================================================================================
 close:
     push ebx                                     ; 090c52 53
@@ -10097,7 +10098,7 @@ sub_90c61:
 ; ====================================================================================================
 ; open  [0x90c71, 15 bytes, 7 instructions]  <dos_open>
 ; annotations: external
-; called by: file_open_read, sub_83897, sub_b0a78
+; called by: file_open_read, speech_load_bank, sub_b0a78
 ; ====================================================================================================
 open:
     xchg edx, eax                                ; 090c71 92
@@ -10150,7 +10151,7 @@ loc_90ca1:
 ; ====================================================================================================
 ; lseek  [0x90ca8, 65 bytes, 26 instructions]  <dos_lseek>
 ; annotations: external
-; called by: file_read, file_write, sub_1bbcc, sub_1c0af, sub_21cde, sub_22581, sub_235be, sub_244e2, sub_25b24, sub_27080, sub_61a8a, sub_61c22 (+14 more)
+; called by: file_read, file_write, sub_1bbcc, sub_1c0af, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, sub_61a8a, sub_61c22 (+14 more)
 ; ====================================================================================================
 lseek:
     push ecx                                     ; 090ca8 51
@@ -10187,7 +10188,7 @@ loc_90ce3:
 
 ; ====================================================================================================
 ; sub_90cea  [0x90cea, 42 bytes, 17 instructions]  <int21h>
-; called by: file_read, sub_1466b, sub_837fb, sub_8385f, sub_83897, sub_83bf3, sub_83d78, sub_b0a14
+; called by: file_read, sub_1466b, sub_837fb, sub_8385f, speech_load_bank, sub_83bf3, sub_83d78, sub_b0a14
 ; ====================================================================================================
 sub_90cea:
     push 0x3f00                                  ; 090cea 68003f0000
@@ -10225,7 +10226,7 @@ sub_90d14:
 ; fillrect  [0x90d20, 415 bytes, 131 instructions]
 ; fillrect(x, y, w, h, color)
 ; annotations: external
-; called by: sub_15707, sub_157bd, sub_29d00, sub_29f28, sub_2c18f, sub_2c46b, sub_2fe49, sub_302b9, sub_665ad, sub_66fe2, sub_6b7fc, sub_6b94e (+20 more)
+; called by: sub_15707, sub_157bd, sub_29d00, team_select_screen, league_dialog_box, sub_2c46b, draw_dialog_frame, sub_302b9, draw_penalty_box_overlay, draw_message_box, draw_box, highlight_menu_item (+20 more)
 ; ====================================================================================================
 fillrect:
     push esi                                     ; 090d20 56
@@ -10377,7 +10378,7 @@ loc_90eb8:
 
 ; ====================================================================================================
 ; sub_90ec0  [0x90ec0, 106 bytes, 41 instructions]
-; called by: sub_31599, sub_665ad, printstr2, sub_93000
+; called by: sub_31599, draw_penalty_box_overlay, printstr2, sub_93000
 ; ====================================================================================================
 sub_90ec0:
     push esi                                     ; 090ec0 56
@@ -10447,7 +10448,7 @@ sub_90f2c:
 ; ====================================================================================================
 ; fillrect2  [0x90f38, 268 bytes, 85 instructions]
 ; annotations: external
-; called by: sub_1df03, sub_1ed96, sub_6cf6f, sub_6dac3, sub_91044
+; called by: menu_page_a, menu_page_b, sub_6cf6f, sub_6dac3, sub_91044
 ; ====================================================================================================
 fillrect2:
     push esi                                     ; 090f38 56
@@ -10601,7 +10602,7 @@ loc_910ac:
 
 ; ====================================================================================================
 ; sub_910b0  [0x910b0, 47 bytes, 16 instructions]
-; called by: sub_89268, restorevideo, settextmode
+; called by: playoff_tree_screen, restorevideo, settextmode
 ; ====================================================================================================
 sub_910b0:
     sub esp, 0x60                                ; 0910b0 83ec60
@@ -10626,7 +10627,7 @@ sub_910b0:
 ; ====================================================================================================
 ; drawshape2  [0x910e0, 313 bytes, 98 instructions]
 ; annotations: external
-; called by: sub_2b944, sub_2c801, sub_479e9, sub_6b093, sub_72de7, sub_73703, sub_8156f, sub_85d6c, sub_8bedb, drawshape2_home, sub_91238, drawshape2_remap (+3 more)
+; called by: league_select_screen, league_name_entry, sub_479e9, joystick_calibrate, database_select_screen, sub_73703, draw_jerseys, save_game_dialog, cmv_play, drawshape2_home, sub_91238, drawshape2_remap (+3 more)
 ; ====================================================================================================
 drawshape2:
     push esi                                     ; 0910e0 56
@@ -10742,7 +10743,7 @@ loc_91212:
 ; ====================================================================================================
 ; drawshape2_home  [0x9121c, 28 bytes, 11 instructions]
 ; annotations: external
-; called by: sub_1609f, sub_1672a, sub_3e9cf, sub_6b093, sub_6d2f8, sub_6ed39, sub_7556e, sub_75bf7, sub_86696
+; called by: ea_sports_intro, intro_sequence, team_roster_screen, joystick_calibrate, player_ratings_card, sub_6ed39, roster_screen, roster_table, stanley_cup_tree_screen
 ; ====================================================================================================
 drawshape2_home:
     mov edx, dword ptr [esp + 4]                 ; 09121c 8b542404
@@ -10809,7 +10810,7 @@ loc_91283:
 ; ====================================================================================================
 ; drawshape2_remap  [0x91284, 65 bytes, 19 instructions]
 ; annotations: external
-; called by: sub_1609f, sub_2c18f, sub_727ee, sub_7a57e, sub_7b4ec, sub_7c1ac, sub_8261c, sub_85d6c, sub_912c8, sub_912e4
+; called by: ea_sports_intro, league_dialog_box, database_dialog, settings_screen_b, game_settings_dialog, sub_7c1ac, sub_8261c, save_game_dialog, sub_912c8, sub_912e4
 ; ====================================================================================================
 drawshape2_remap:
     mov edx, dword ptr [esp + 4]                 ; 091284 8b542404
@@ -10838,7 +10839,7 @@ loc_912a5:
 
 ; ====================================================================================================
 ; sub_912c8  [0x912c8, 28 bytes, 11 instructions]
-; called by: sub_1672a, sub_80aa4, sub_8156f
+; called by: intro_sequence, locker_room_screen, draw_jerseys
 ; ====================================================================================================
 sub_912c8:
     mov edx, dword ptr [esp + 4]                 ; 0912c8 8b542404
@@ -10896,7 +10897,7 @@ sub_91310:
 
 ; ====================================================================================================
 ; sub_9132c  [0x9132c, 25 bytes, 8 instructions]
-; called by: sub_1609f, sub_174d8, sub_1ac9a, sub_969a8, sub_981f8, sub_984d0
+; called by: ea_sports_intro, sub_174d8, sub_1ac9a, sub_969a8, sub_981f8, sub_984d0
 ; ====================================================================================================
 sub_9132c:
     mov edx, dword ptr [esp + 4]                 ; 09132c 8b542404
@@ -10913,7 +10914,7 @@ sub_9132c:
 ; ====================================================================================================
 ; memset  [0x91350, 24 bytes, 12 instructions]
 ; annotations: external
-; called by: sub_1672a, sub_17711, sub_37d6a, sub_380e9, sub_38b4f, sub_411c8, sub_44dcf, sub_479e9, sub_6a3c0, sub_6b093, create_player_menu, sub_9afbe (+10 more)
+; called by: intro_sequence, sub_17711, sub_37d6a, league_control_dialog, team_info_screen, load_league_list, new_league_dialog, sub_479e9, sub_6a3c0, joystick_calibrate, create_player_menu, sub_9afbe (+10 more)
 ; ====================================================================================================
 memset:
     push eax                                     ; 091350 50
@@ -10935,7 +10936,7 @@ memset:
 ; drawshape_remap  [0x91370, 65 bytes, 19 instructions]
 ; drawshape through the color remap table
 ; annotations: external
-; called by: sub_16f9a, sub_174d8, pause_menu, sub_1d6e8, sub_1df03, sub_1ed96, sub_235be, sub_244e2, sub_25b24, sub_27080, sub_27f9c, sub_29f28 (+37 more)
+; called by: credits_screen, sub_174d8, pause_menu, run_menu, menu_page_a, menu_page_b, team_stats_screen, player_stats_screen, stats_table, standings_table, standings_screen, team_select_screen (+37 more)
 ; ====================================================================================================
 drawshape_remap:
     mov edx, dword ptr [esp + 4]                 ; 091370 8b542404
@@ -10965,7 +10966,7 @@ loc_91391:
 ; ====================================================================================================
 ; drawshape_remap_home  [0x913b4, 28 bytes, 11 instructions]
 ; annotations: external
-; called by: sub_1672a, sub_21cde, sub_22581, sub_235be, sub_244e2, sub_25b24, sub_27080, sub_27f9c, boxscore_screen, sub_2f5ee, sub_3377c, sub_6b093 (+6 more)
+; called by: intro_sequence, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, standings_screen, boxscore_screen, team_select_screen2, load_rink, joystick_calibrate (+6 more)
 ; ====================================================================================================
 drawshape_remap_home:
     mov edx, dword ptr [esp + 4]                 ; 0913b4 8b542404
@@ -10985,7 +10986,7 @@ drawshape_remap_home:
 ; drawshape_remap_centered  [0x913d0, 40 bytes, 15 instructions]
 ; x/y minus the shape hotspot
 ; annotations: external
-; called by: sub_2abdf, boxscore_screen, sub_2f5ee, sub_33ffd
+; called by: draw_team_logos, boxscore_screen, team_select_screen2, calendar_draw_games
 ; ====================================================================================================
 drawshape_remap_centered:
     mov edx, dword ptr [esp + 4]                 ; 0913d0 8b542404
@@ -11010,7 +11011,7 @@ drawshape_remap_centered:
 ; grabshape  [0x91400, 312 bytes, 101 instructions]
 ; copies a screen rectangle into a shape buffer (used to save the background under the mouse pointer)
 ; annotations: external
-; called by: sub_16f9a, pause_menu, sub_1d6e8, sub_1df03, sub_1ed96, sub_29f28, sub_2abdf, sub_2b944, sub_2c801, sub_303fb, sub_30e66, sub_31250 (+42 more)
+; called by: credits_screen, pause_menu, run_menu, menu_page_a, menu_page_b, team_select_screen, draw_team_logos, league_select_screen, league_name_entry, sub_303fb, save_dialog_background, sub_31250 (+42 more)
 ; ====================================================================================================
 grabshape:
     push esi                                     ; 091400 56
@@ -11560,7 +11561,7 @@ loc_9195d:
 ; printstr_at  [0x91964, 32 bytes, 11 instructions]
 ; printstr_at(str, x, y)
 ; annotations: external
-; called by: sub_17573, sub_175e2, sub_17636, sub_1fb1c, sub_1fb49, sub_2bd16, sub_2c135, sub_33ffd, sub_665ad, sub_66fe2, sub_6b093, sub_6b8cb (+19 more)
+; called by: sub_17573, print_text_at, sub_17636, sub_1fb1c, sub_1fb49, league_type_menu, sub_2c135, calendar_draw_games, draw_penalty_box_overlay, draw_message_box, joystick_calibrate, draw_item_text_dim (+19 more)
 ; ====================================================================================================
 printstr_at:
     mov edx, dword ptr [esp + 0xc]               ; 091964 8b54240c
@@ -11736,7 +11737,7 @@ loc_91ab8:
 ; ====================================================================================================
 ; strlen  [0x91ac5, 25 bytes, 17 instructions]
 ; annotations: external
-; called by: sub_17793, sub_1ff86, sub_29c75, sub_314b4, sub_31599, sub_3a597, sub_61d48, sub_6cefb, sub_6f159, create_player_menu, sub_71f0c, sub_8faf2 (+2 more)
+; called by: sub_17793, sub_1ff86, sub_29c75, sub_314b4, sub_31599, sub_3a597, format_player_name, sub_6cefb, sub_6f159, create_player_menu, database_dialog_box, sub_8faf2 (+2 more)
 ; ====================================================================================================
 strlen:
     push ecx                                     ; 091ac5 51
@@ -11970,7 +11971,7 @@ loc_91c72:
 ; ====================================================================================================
 ; fopen  [0x91c75, 10 bytes, 5 instructions]
 ; annotations: external
-; called by: sub_17816, load_cfg_palette, write_stats_table, sub_82d7a, load_nhl_cfg, debug_openlog, debug_memmap, debug_memshapes
+; called by: export_stats_dialog, load_cfg_palette, write_stats_table, load_sound_config, load_nhl_cfg, debug_openlog, debug_memmap, debug_memshapes
 ; ====================================================================================================
 fopen:
     push ebx                                     ; 091c75 53
@@ -12067,7 +12068,7 @@ loc_91d08:
 ; ====================================================================================================
 ; fclose  [0x91d0b, 47 bytes, 21 instructions]
 ; annotations: external
-; called by: sub_17816, load_cfg_palette, write_stats_table, sub_82d7a, load_nhl_cfg, debug_openlog, sub_93a40, debug_memmap, debug_memshapes
+; called by: export_stats_dialog, load_cfg_palette, write_stats_table, load_sound_config, load_nhl_cfg, debug_openlog, sub_93a40, debug_memmap, debug_memshapes
 ; ====================================================================================================
 fclose:
     push ebx                                     ; 091d0b 53
@@ -12243,7 +12244,7 @@ loc_91e43:
 ; ====================================================================================================
 ; strncpy  [0x91e4d, 37 bytes, 23 instructions]
 ; annotations: external
-; called by: sub_17816, sub_17a00, sub_17af3, sub_17be7, sub_1c852, sub_1d100, sub_1ff86, sub_2d099, sub_327a1, sub_411c8, sub_81c4e, sub_83897 (+6 more)
+; called by: export_stats_dialog, sub_17a00, sub_17af3, sub_17be7, sub_1c852, set_menu_mode, sub_1ff86, enter_league, apply_settings, load_league_list, locker_room_menu, speech_load_bank (+6 more)
 ; ====================================================================================================
 strncpy:
     push ecx                                     ; 091e4d 51
@@ -12279,7 +12280,7 @@ loc_91e6d:
 
 ; ====================================================================================================
 ; sub_91e72  [0x91e72, 129 bytes, 58 instructions]
-; called by: sub_17816, sub_93ad8, sub_9621d
+; called by: export_stats_dialog, sub_93ad8, sub_9621d
 ; ====================================================================================================
 sub_91e72:
     push ebx                                     ; 091e72 53
@@ -12352,7 +12353,7 @@ loc_91eeb:
 ; ====================================================================================================
 ; strcmp  [0x91f00, 161 bytes, 67 instructions]
 ; annotations: external
-; called by: sub_17ce0, sub_17d6e, sub_29b07, sub_2beea, sub_380e9, sub_38b4f, sub_3a395, sub_3a49e, sub_3bb87, sub_3fef0, sub_6d78b, sub_71690 (+3 more)
+; called by: sub_17ce0, sub_17d6e, playoff_round_screen, sub_2beea, league_control_dialog, team_info_screen, password_prompt, sub_3a49e, pinfo_find_player, sub_3fef0, sub_6d78b, sub_71690 (+3 more)
 ; ====================================================================================================
 strcmp:
     push ebx                                     ; 091f00 53
@@ -12432,7 +12433,7 @@ loc_91f9a:
 
 ; ====================================================================================================
 ; sub_91fa4  [0x91fa4, 21 bytes, 6 instructions]
-; called by: sub_1b0f3, sub_1b2a7, sub_8e624, sub_8e6cc, sub_8e738, unpackfile, sub_9e5c9, sub_9e85b, sub_9ebd5
+; called by: sub_1b0f3, iff_parse, sub_8e624, sub_8e6cc, sub_8e738, unpackfile, sub_9e5c9, sub_9e85b, sub_9ebd5
 ; ====================================================================================================
 sub_91fa4:
     mov eax, dword ptr [esp + 4]                 ; 091fa4 8b442404
@@ -12476,7 +12477,7 @@ loc_91fd5:
 ; drawshape_trans  [0x91fe0, 65 bytes, 19 instructions]
 ; drawshape with the translucency pixel handler
 ; annotations: external
-; called by: sub_21c04, sub_3ef89, sub_73a18, sub_76af5, sub_78500, sub_7a6bd, sub_7aaaa, sub_7add3, sub_81c4e, sub_92024, sub_92040
+; called by: sub_21c04, line_editor_screen, edit_lines_screen, edit_lines_screen2, draw_lines_screen, settings_dialog, sub_7aaaa, settings_menu, locker_room_menu, sub_92024, sub_92040
 ; ====================================================================================================
 drawshape_trans:
     mov edx, dword ptr [esp + 4]                 ; 091fe0 8b542404
@@ -12545,7 +12546,7 @@ sub_92040:
 
 ; ====================================================================================================
 ; sub_92068  [0x92068, 36 bytes, 16 instructions]
-; called by: sub_21cde, sub_22581, sub_235be, sub_244e2, sub_25b24, sub_27080, sub_77ff5, sub_7947f, sub_797b4
+; called by: player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, edit_lines_keys, lines_teams_a, lines_teams_b
 ; ====================================================================================================
 sub_92068:
     push ebx                                     ; 092068 53
@@ -12815,7 +12816,7 @@ loc_922ae:
 ; ====================================================================================================
 ; read  [0x922b6, 275 bytes, 103 instructions]  <dos_read>
 ; annotations: external
-; called by: sub_21cde, sub_22581, sub_235be, sub_244e2, sub_25b24, sub_27080, sub_77ff5, sub_7947f, sub_797b4
+; called by: player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, edit_lines_keys, lines_teams_a, lines_teams_b
 ; ====================================================================================================
 read:
     push ecx                                     ; 0922b6 51
@@ -12944,7 +12945,7 @@ loc_923c1:
 
 ; ====================================================================================================
 ; sub_923c9  [0x923c9, 5 bytes, 1 instructions]
-; called by: sub_21cde, sub_22581, sub_235be, sub_244e2, sub_25b24, sub_27080, sub_77ff5, sub_7947f, sub_797b4
+; called by: player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, edit_lines_keys, lines_teams_a, lines_teams_b
 ; ====================================================================================================
 sub_923c9:
     jmp sub_9b321                                ; 0923c9 e9538f0000
@@ -13043,7 +13044,7 @@ loc_92443:
 
 ; ====================================================================================================
 ; sub_9244c  [0x9244c, 1085 bytes, 338 instructions]
-; called by: sub_235be, sub_244e2, sub_25b24, sub_27080, sub_2befd, sub_3ff52, sub_48ac8, sub_7248c, sub_75bf7, sub_767d0, sub_7fcf8
+; called by: team_stats_screen, player_stats_screen, stats_table, standings_table, scan_league_dirs, line_editor, compute_three_stars, scan_database_files, roster_table, edit_lines_screen_b, highlights_screen
 ; ====================================================================================================
 sub_9244c:
     push esi                                     ; 09244c 56
@@ -13875,7 +13876,7 @@ loc_92cc6:
 ; ====================================================================================================
 ; printstr2_at  [0x92cd0, 32 bytes, 11 instructions]
 ; annotations: external
-; called by: sub_2bd16, sub_31599, sub_6b910, sub_72605, sub_85d6c, printf_at, sub_94188, sub_948e4, sub_9c890
+; called by: league_type_menu, sub_31599, sub_6b910, database_type_menu, save_game_dialog, printf_at, sub_94188, sub_948e4, sub_9c890
 ; ====================================================================================================
 printstr2_at:
     mov edx, dword ptr [esp + 0xc]               ; 092cd0 8b54240c
@@ -13919,7 +13920,7 @@ sub_92cf0:
 ; stricmp  [0x92d21, 57 bytes, 28 instructions]
 ; case insensitive compare
 ; annotations: external
-; called by: sub_2ce29, sub_38b4f, sub_3d46d, sub_3d694, sub_41516, sub_7fc5c, load_nhl_cfg, loadfile_auto, sub_a1cf4
+; called by: league_name_prompt, team_info_screen, player_id_write, player_id_read, league_player_sync, sub_7fc5c, load_nhl_cfg, loadfile_auto, sub_a1cf4
 ; ====================================================================================================
 stricmp:
     push ebx                                     ; 092d21 53
@@ -13960,7 +13961,7 @@ loc_92d4c:
 ; ====================================================================================================
 ; remove  [0x92d5a, 31 bytes, 15 instructions]  <dos_delete>
 ; annotations: external
-; called by: sub_2ce29, load_eavesa, sub_903e8
+; called by: league_name_prompt, load_eavesa, sub_903e8
 ; ====================================================================================================
 remove:
     push edx                                     ; 092d5a 52
@@ -13985,7 +13986,7 @@ loc_92d75:
 
 ; ====================================================================================================
 ; sub_92d7c  [0x92d7c, 87 bytes, 37 instructions]
-; called by: sub_2fedf, sub_71f0c
+; called by: sub_2fedf, database_dialog_box
 ; ====================================================================================================
 sub_92d7c:
     push ebx                                     ; 092d7c 53
@@ -14040,7 +14041,7 @@ loc_92dcd:
 ; ====================================================================================================
 ; filesize  [0x92de0, 16 bytes, 6 instructions]
 ; annotations: external
-; called by: sub_3377c, sub_41cc4, sub_6c19b, sub_710d8, sub_7345b, sub_7fcf8, sub_85924, sub_8721f, sub_88096, sub_8873c, sub_89223
+; called by: load_rink, sub_41cc4, sub_6c19b, player_temp_file, sub_7345b, highlights_screen, broadcast_booth_screen, load_schedule_db, playoff_results_screen, season_standings_db, sub_89223
 ; ====================================================================================================
 filesize:
     push 1                                       ; 092de0 6a01
@@ -14176,7 +14177,7 @@ sub_92ecc:
 
 ; ====================================================================================================
 ; sub_92ee4  [0x92ee4, 21 bytes, 8 instructions]
-; called by: sub_3377c
+; called by: load_rink
 ; ====================================================================================================
 sub_92ee4:
     push 0                                       ; 092ee4 6a00
@@ -14192,7 +14193,7 @@ sub_92ee4:
 ; ====================================================================================================
 ; strcspn  [0x92ef9, 73 bytes, 30 instructions]
 ; annotations: external
-; called by: sub_35fb9, sub_36b93, sub_3b039, sub_3b25a, sub_3bb87, sub_3c6e2, sub_3d108, sub_3d8dd, sub_408f5, sub_40c29, sub_40f4e, sub_41171 (+1 more)
+; called by: league_import_export_check, league_calendar_flow, league_merge_warning, league_merge_check, pinfo_find_player, player_db_sync, select_team_dialog, load_league_info, select_human_team_dialog, select_human_control_dialog, sub_40f4e, sub_41171 (+1 more)
 ; ====================================================================================================
 strcspn:
     push esi                                     ; 092ef9 56
@@ -14314,7 +14315,7 @@ loc_92f89:
 
 ; ====================================================================================================
 ; sub_93000  [0x93000, 167 bytes, 70 instructions]
-; called by: sub_37ea6, sub_7f724, sub_948e4, sub_981f8
+; called by: sub_37ea6, replay_save_dialog, sub_948e4, sub_981f8
 ; ====================================================================================================
 sub_93000:
     push esi                                     ; 093000 56
@@ -14394,7 +14395,7 @@ loc_93039:
 ; ====================================================================================================
 ; mkdir  [0x930a7, 31 bytes, 15 instructions]  <dos_mkdir>
 ; annotations: external
-; called by: sub_3c3af, sub_3c6e2, sub_44dcf, sub_6c3bb, sub_86696
+; called by: sub_3c3af, player_db_sync, new_league_dialog, new_database_dialog, stanley_cup_tree_screen
 ; ====================================================================================================
 mkdir:
     push edx                                     ; 0930a7 52
@@ -14518,7 +14519,7 @@ fscanf:
 ; printf_at  [0x93170, 86 bytes, 19 instructions]
 ; printf_at(x, y, fmt, ...)
 ; annotations: external
-; called by: sub_3e7b3, sub_3e9cf, sub_948e4, sub_95158, sub_95548, debug_palette, sub_95ecc, fatalerror
+; called by: sub_3e7b3, team_roster_screen, sub_948e4, sub_95158, sub_95548, debug_palette, sub_95ecc, fatalerror
 ; ====================================================================================================
 printf_at:
     sub esp, 0x104                               ; 093170 81ec04010000
@@ -14574,7 +14575,7 @@ loc_931fb:
 ; ====================================================================================================
 ; drawshape2_trans  [0x931fc, 65 bytes, 19 instructions]
 ; annotations: external
-; called by: sub_3e9cf, sub_3ef89, sub_73a18, sub_75046, sub_76af5, sub_78366, sub_7a6bd, sub_7d254, sub_93240, sub_9325c
+; called by: team_roster_screen, line_editor_screen, edit_lines_screen, sub_75046, edit_lines_screen2, sub_78366, settings_dialog, controller_dialog, sub_93240, sub_9325c
 ; ====================================================================================================
 drawshape2_trans:
     mov edx, dword ptr [esp + 4]                 ; 0931fc 8b542404
@@ -14643,7 +14644,7 @@ sub_9325c:
 
 ; ====================================================================================================
 ; sub_93284  [0x93284, 68 bytes, 28 instructions]
-; called by: sub_40183, sub_7fc5c
+; called by: statistics_menu, sub_7fc5c
 ; ====================================================================================================
 sub_93284:
     push ebx                                     ; 093284 53
@@ -14685,7 +14686,7 @@ loc_932c0:
 ; savefile  [0x932d0, 26 bytes, 10 instructions]
 ; savefile(name, buffer, size)
 ; annotations: external
-; called by: sub_41cc4, sub_428ab, sub_44899, sub_44a41, sub_6c4ba, sub_6c96c, sub_8721f, sub_88096, sub_8873c, sub_89223
+; called by: sub_41cc4, schedule_screen, sub_44899, schedule_screen2, database_disk_check, sub_6c96c, load_schedule_db, playoff_results_screen, season_standings_db, sub_89223
 ; ====================================================================================================
 savefile:
     push 1                                       ; 0932d0 6a01
@@ -14843,7 +14844,7 @@ loc_933e8:
 
 ; ====================================================================================================
 ; sub_933f0  [0x933f0, 11 bytes, 4 instructions]
-; called by: sub_4b774, sub_57483, sub_57c0b, sub_5eb17
+; called by: ai_goalie, sub_57483, do_shot, ai_chase_puck
 ; ====================================================================================================
 sub_933f0:
     mov eax, dword ptr [esp + 4]                 ; 0933f0 8b442404
@@ -15053,7 +15054,7 @@ loc_934f2:
 
 ; ====================================================================================================
 ; sub_93540  [0x93540, 150 bytes, 57 instructions]
-; called by: draw_sprites, sub_644a8, sub_6455f, sub_67900, sub_67dcc
+; called by: draw_sprites, sub_644a8, sub_6455f, replay_seek_frames, replay_draw_frame
 ; ====================================================================================================
 sub_93540:
     push esi                                     ; 093540 56

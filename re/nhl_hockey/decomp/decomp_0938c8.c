@@ -4831,11 +4831,11 @@ sub_981f8(undefined4 param_1,int param_2,int unaff_EBX,int unaff_ECX,int param_5
   (*(code *)funcptr_d3074)();
   sub_a1840(&dword_d30d4);
   do {
-    uVar2 = (*(code *)funcptr_d3078)();
+    uVar2 = (*(code *)mouse_update_callback)();
   } while ((uVar2 & param_6) != 0);
   do {
     uVar2 = sub_b39d0();
-    uVar3 = (*(code *)funcptr_d3078)();
+    uVar3 = (*(code *)mouse_update_callback)();
     if (uVar2 != 0) break;
   } while ((uVar3 & param_6) == 0);
   uVar3 = uVar3 & param_6 & 1;

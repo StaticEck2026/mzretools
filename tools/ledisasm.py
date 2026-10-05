@@ -229,6 +229,7 @@ class Analyzer:
         self.var_names = {}
         self.map_annotations = defaultdict(list)
         self.map_comments = defaultdict(list)
+        self.var_comments = defaultdict(list)
         # fixup lookup tables
         self.fix_by_src = {}
         for fx in le.fixups:
@@ -1153,7 +1154,9 @@ class Analyzer:
                     addr = segs[seg] + int(off, 16)
                     if not re.match(self.AUTO_VAR_NAME, name):
                         self.var_names[addr] = name
-                    pending_comments = []
+                    if pending_comments:
+                        self.var_comments[addr].extend(pending_comments)
+                        pending_comments = []
         return seeds
 
     def save_map(self, path):
@@ -1196,6 +1199,8 @@ class Analyzer:
             for a in sorted(self.vars):
                 v = self.vars[a]
                 o = self.obj_of(a)
+                for c in self.var_comments.get(a, []):
+                    w(f"#@ {c}\n")
                 w(f"{v.name}: {self.seg_name(o)} VAR {a - o.base:x}\n")
 
     # --- listing -------------------------------------------------------------------------------
@@ -1302,6 +1307,8 @@ class Analyzer:
             if v is not None:
                 xr = ', '.join(self.routines[x].name for x in sorted(v.xrefs)[:6] if x in self.routines)
                 more = f" +{len(v.xrefs) - 6}" if len(v.xrefs) > 6 else ''
+                for c in self.var_comments.get(a, []):
+                    out.append(f"; {c}")
                 out.append(f"{v.name}:" + (f"{' ' * max(1, 48 - len(v.name))}; xref {xr}{more}" if xr else ''))
             if a in self.fix_by_src:
                 fx, tgt = self.fix_by_src[a]
@@ -1463,6 +1470,8 @@ class Analyzer:
                  'xrefs': [self.routines[x].name for x in sorted(v.xrefs) if x in self.routines]}
             if v.text is not None:
                 d['text'] = v.text
+            if self.var_comments.get(a):
+                d['comments'] = self.var_comments[a]
             variables.append(d)
         return {
             'file': os.path.basename(le.path), 'tool': f"ledisasm {VERSION}", 'format': le.format,
