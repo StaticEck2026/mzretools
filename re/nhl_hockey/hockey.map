@@ -795,13 +795,14 @@ try_shot_block: code1 NEAR 434bb-43536 R434bb-43536
 ai_try_check: code1 NEAR 43537-4369e R43537-4369e
 #@ random threshold for calling a penalty on a hit
 penalty_odds: code1 NEAR 4369f-4378c R4369f-4378c
-sub_5378d: code1 NEAR 4378d-4382b R4378d-4382b
+#@ the player faces nearby boards (checking from behind)
+facing_boards: code1 NEAR 4378d-4382b R4378d-4382b
 #@ outcome of a check: hits, knockdowns
 resolve_body_check: code1 NEAR 4382c-43ce4 R4382c-43ce4
 #@ pushes a skater or the referee off the net frame
 collide_player_net: code1 NEAR 43ce5-43e69 R43ce5-43e69
-#@ chance of injury after a heavy hit (queue_infraction 0x11)
-check_injury: code1 NEAR 43e6a-43f8b R43e6a-43f8b
+#@ a skater who runs into a goalie falls; a hard hit on a goalie away from the crease may be interference (0x11)
+goalie_collision: code1 NEAR 43e6a-43f8b R43e6a-43f8b
 pull_goalie_logic: code1 NEAR 43f8c-44133 R43f8c-44133
 #@ skill attribute used for the puck interaction depending on the current animation
 stickhandling_skill: code1 NEAR 44134-441c9 R44134-441c9
@@ -841,8 +842,10 @@ injure_player: code1 NEAR 45e72-4601c R45e72-4601c
 knockdown_position: code1 NEAR 4601d-462da R4601d-462da
 #@ victim falls, crowd noise
 knock_down: code1 NEAR 462db-46a53 R462db-46a53
-resolve_hook_hit: code1 NEAR 46a54-46b78 R46a54-46b78
-resolve_poke_hit: code1 NEAR 46b79-46d05 R46b79-46d05
+#@ a diving player (anim 0x589) trips the victim: tripping (0x10) or a penalty shot (0x1a)
+resolve_dive_hit: code1 NEAR 46a54-46b78 R46a54-46b78
+#@ a hooking stick (anim 0x639 / 0x873) ties both players up: holding (0x12) / hooking (0xf) or a penalty shot
+resolve_hook_hold: code1 NEAR 46b79-46d05 R46b79-46d05
 #@ puck becomes carried by the player
 attach_puck_to_stick: code1 NEAR 46d06-46e51 R46d06-46e51
 check_icing: code1 NEAR 46e52-46ece R46e52-46ece
@@ -960,7 +963,8 @@ follow_puck_user_switch: code1 NEAR 4b1ce-4b297 R4b1ce-4b297
 set_default_state: code1 NEAR 4b298-4b2c4 R4b298-4b2c4
 #@ put_player_on_ice(entity, roster_idx): assigns the roster player to the entity, bench/penalty states
 put_player_on_ice: code1 NEAR 4b2c5-4b825 R4b2c5-4b825
-sub_5b826: code1 NEAR 4b826-4b880 R4b826-4b880
+#@ energy back to 0x1000, players hurt for the period return
+reset_team_for_period: code1 NEAR 4b826-4b880 R4b826-4b880
 sub_5b881: code1 NEAR 4b881-4b979 R4b881-4b979
 sub_5b97a: code1 NEAR 4b97a-4b9d0 R4b97a-4b9d0
 sub_5b9d1: code1 NEAR 4b9d1-4ba06 R4b9d1-4ba06
@@ -1002,7 +1006,8 @@ sort_draw_order2: code1 NEAR 4dd7c-4dd9d R4dd7c-4dd9d
 sub_5dd9e: code1 NEAR 4dd9e-4ddbb R4dd9e-4ddbb
 #@ sets period_over
 end_period_flag: code1 NEAR 4ddbc-4ddd9 R4ddbc-4ddd9
-sub_5ddda: code1 NEAR 4ddda-4de41 R4ddda-4de41
+#@ count_penalized, reset_team_for_period, power play / penalty kill lines
+period_start_reset: code1 NEAR 4ddda-4de41 R4ddda-4de41
 sub_5de42: code1 NEAR 4de42-4de6f R4de42-4de6f
 period_cleanup: code1 NEAR 4de70-4dea5 R4de70-4dea5
 end_of_period: code1 NEAR 4dea6-4df85 R4dea6-4df85
@@ -1076,7 +1081,8 @@ sub_63475: code1 NEAR 53475-53542 R53475-53542
 start_stoppage: code1 NEAR 53543-537b4 R53543-537b4
 #@ turns queued infractions into stoppages and penalties
 process_infractions: code1 NEAR 537b5-53929 R537b5-53929
-sub_6392a: code1 NEAR 5392a-539a3 R5392a-539a3
+#@ a free entity takes the player whose penalty expired
+release_from_box: code1 NEAR 5392a-539a3 R5392a-539a3
 #@ time in the attacking zone statistics
 zone_time_stats: code1 NEAR 539a4-539f8 R539a4-539f8
 #@ releases a player from the box
@@ -1097,10 +1103,12 @@ goal_ends_penalty: code1 NEAR 53d69-53f71 R53d69-53f71
 start_penalty_shot: code1 NEAR 53f72-54101 R53f72-54101
 #@ defenders between the carrier and the net (breakaway detection)
 count_defenders_ahead: code1 NEAR 54102-5427e R54102-5427e
-sub_6427f: code1 NEAR 5427f-54337 R5427f-54337
+#@ a foul on the breakaway carrier moving at the net with the goalie in: penalty shot
+breakaway_foul: code1 NEAR 5427f-54337 R5427f-54337
 #@ sets the breakaway flag when the puck crosses the blue line
 note_breakaway: code1 NEAR 54338-54397 R54338-54397
-sub_64398: code1 NEAR 54398-54438 R54398-54438
+#@ penalty_box_update for infraction 0x1a: phase 1, saves the faceoff spot, puck to centre ice
+begin_penalty_shot: code1 NEAR 54398-54438 R54398-54438
 end_penalty_shot: code1 NEAR 54439-544a7 R54439-544a7
 sub_644a8: code1 NEAR 544a8-5455e R544a8-5455e
 sub_6455f: code1 NEAR 5455f-54613 R5455f-54613
@@ -1112,7 +1120,7 @@ choose_lineup_player: code1 NEAR 54e60-552d5 R54e60-552d5
 sub_652d6: code1 NEAR 552d6-553bd R552d6-553bd
 sub_653be: code1 NEAR 553be-5552d R553be-5552d
 sub_6552e: code1 NEAR 5552e-555cb R5552e-555cb
-#@ chooses a roster player for a line position (D/G/forward)
+#@ replaces an injured or ejected player in the line table
 pick_player_for_position: code1 NEAR 555cc-558f2 R555cc-558f2
 count_dressed_players: code1 NEAR 558f3-55b47 R558f3-55b47
 sub_65b48: code1 NEAR 55b48-55b82 R55b48-55b82
@@ -5240,7 +5248,8 @@ dword_c53f7: data2 VAR 53f7
 dword_c53fb: data2 VAR 53fb
 #@ game options bit field (settings block +0x59)
 option_flags: data2 VAR 53ff
-byte_c5400: data2 VAR 5400
+#@ second options byte (bit 1: normal penalty rate in penalty_odds), default 0x7b
+settings2: data2 VAR 5400
 dword_c5403: data2 VAR 5403
 dword_c5407: data2 VAR 5407
 dword_c540b: data2 VAR 540b
@@ -6151,7 +6160,8 @@ unk_cbe8e: data2 VAR be8e
 faceoff_lineup: data2 VAR bea8
 dword_cbebe: data2 VAR bebe
 word_cbec0: data2 VAR bec0
-word_cbec2: data2 VAR bec2
+#@ body checks of a user on the referee, 3 = abuse of official
+ref_hits: data2 VAR bec2
 word_cbec4: data2 VAR bec4
 dword_cbec6: data2 VAR bec6
 word_cbec8: data2 VAR bec8
@@ -6194,15 +6204,18 @@ one_timer_pending: data2 VAR c0f4
 breakaway_flag: data2 VAR c0f8
 dword_cc0fa: data2 VAR c0fa
 penalty_shot_slot: data2 VAR c0fc
-dword_cc100: data2 VAR c100
+penalty_shot_roster: data2 VAR c100
 penalty_shot_team: data2 VAR c104
-dword_cc108: data2 VAR c108
+#@ 1 when user 1 controlled the fouled player, else -1
+penalty_shot_user: data2 VAR c108
 dword_cc10c: data2 VAR c10c
-dword_cc110: data2 VAR c110
+#@ faceoff spot after the penalty shot (cc114 y)
+penalty_shot_spot_x: data2 VAR c110
 dword_cc114: data2 VAR c114
 penalty_shot_phase: data2 VAR c118
 penalty_shot_setup: data2 VAR c11c
-dword_cc120: data2 VAR c120
+#@ 1000 steps for the shot
+penalty_shot_clock: data2 VAR c120
 #@ result of count_defenders_ahead
 defenders_ahead: data2 VAR c124
 penalty_shot_active: data2 VAR c128
@@ -6259,7 +6272,8 @@ unk_ccb5a: data2 VAR cb5a
 #@ one timer stick position per facing
 onetimer_offsets: data2 VAR cbba
 unk_ccbbb: data2 VAR cbbb
-unk_ccbcc: data2 VAR cbcc
+#@ knock_down: x against the right boards per facing (also ccbdc left, ccbec top y, ccbfc bottom y, ccc0c / ccc1c at the bench doors)
+knockdown_right_x: data2 VAR cbcc
 unk_ccbdc: data2 VAR cbdc
 unk_ccbec: data2 VAR cbec
 unk_ccbfc: data2 VAR cbfc
@@ -8685,7 +8699,8 @@ unk_e9af6: data2 VAR 29af6
 unk_e9af8: data2 VAR 29af8
 unk_e9afa: data2 VAR 29afa
 dword_e9b04: data2 VAR 29b04
-word_e9b28: data2 VAR 29b28
+#@ strength of the last collision between opponents (collide_pair)
+last_impact: data2 VAR 29b28
 unk_e9b2a: data2 VAR 29b2a
 unk_e9b2c: data2 VAR 29b2c
 unk_e9b4c: data2 VAR 29b4c

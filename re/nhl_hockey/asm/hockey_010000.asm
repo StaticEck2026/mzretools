@@ -2648,7 +2648,7 @@ loc_11dae:
     jmp loc_11f74                                ; 011db3 e9bc010000
 
 loc_11db8:
-    test byte ptr [byte_c5400], 2                ; 011db8 f60500540c0002
+    test byte ptr [settings2], 2                 ; 011db8 f60500540c0002
     jne loc_11dc6                                ; 011dbf 7505
     call sub_15b76                               ; 011dc1 e8b03d0000
 loc_11dc6:
@@ -2774,7 +2774,7 @@ loc_11f74:
     je loc_11fdd                                 ; 011f98 7443
     cmp dword ptr [dword_c53f7], 1               ; 011f9a 833df7530c0001
     jne loc_11fdd                                ; 011fa1 753a
-    and byte ptr [byte_c5400], 0x7f              ; 011fa3 802500540c007f
+    and byte ptr [settings2], 0x7f               ; 011fa3 802500540c007f
     mov edx, league_dir                          ; 011faa ba51840c00
     lea eax, [esp + 0x20]                        ; 011faf 8d442420
     call strcpy                                  ; 011fb3 e8dae30700
@@ -5551,7 +5551,7 @@ reset_game_state:
     mov dword ptr [dword_df00c], ecx             ; 014171 890d0cf00d00
     mov word ptr [dword_cbeca], ax               ; 014177 66a3cabe0c00
     mov word ptr [dword_cbec6], ax               ; 01417d 66a3c6be0c00
-    mov word ptr [word_cbec2], ax                ; 014183 66a3c2be0c00
+    mov word ptr [ref_hits], ax                  ; 014183 66a3c2be0c00
     mov ecx, edx                                 ; 014189 89d1
     mov word ptr [word_cbec8], dx                ; 01418b 668915c8be0c00
     mov word ptr [word_cbece], dx                ; 014192 668915cebe0c00
@@ -8342,18 +8342,18 @@ loc_15e5e:
     or byte ptr [option_flags], 0xff             ; 015ead 800dff530c00ff
     cmp byte ptr [sound_enabled], 0              ; 015eb4 803d30240d0000
     je loc_15ec6                                 ; 015ebb 7409
-    or byte ptr [byte_c5400], 1                  ; 015ebd 800d00540c0001
+    or byte ptr [settings2], 1                   ; 015ebd 800d00540c0001
     jmp loc_15ecd                                ; 015ec4 eb07
 
 loc_15ec6:
-    and byte ptr [byte_c5400], 0xfe              ; 015ec6 802500540c00fe
+    and byte ptr [settings2], 0xfe               ; 015ec6 802500540c00fe
 loc_15ecd:
-    mov bh, byte ptr [byte_c5400]                ; 015ecd 8a3d00540c00
+    mov bh, byte ptr [settings2]                 ; 015ecd 8a3d00540c00
     or bh, 2                                     ; 015ed3 80cf02
-    mov byte ptr [byte_c5400], bh                ; 015ed6 883d00540c00
+    mov byte ptr [settings2], bh                 ; 015ed6 883d00540c00
     mov cl, bh                                   ; 015edc 88f9
     and cl, 3                                    ; 015ede 80e103
-    mov byte ptr [byte_c5400], cl                ; 015ee1 880d00540c00
+    mov byte ptr [settings2], cl                 ; 015ee1 880d00540c00
     mov edx, dword ptr [dword_c90ca]             ; 015ee7 8b15ca900c00
     sar edx, 0x10                                ; 015eed c1fa10
     mov edx, dword ptr [edx*4 + team_abbrev]     ; 015ef0 8b149539540c00

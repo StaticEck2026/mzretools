@@ -4247,7 +4247,7 @@ loc_85a3d:
 
 loc_85a5c:
     or byte ptr [byte_c52f2], 0x80               ; 085a5c 800df2520c0080
-    or byte ptr [byte_c5400], 0x80               ; 085a63 800d00540c0080
+    or byte ptr [settings2], 0x80                ; 085a63 800d00540c0080
     mov eax, settings_exhibition                 ; 085a6a b898520c00
     call load_game_set                           ; 085a6f e8a9d0faff
     lea edx, [esp + 0x98]                        ; 085a74 8d942498000000
@@ -4402,7 +4402,7 @@ loc_85c7b:
     mov eax, edx                                 ; 085c9c 89d0
     call message_dialog                          ; 085c9e e870b3faff
     or byte ptr [byte_c53dc], 0x80               ; 085ca3 800ddc530c0080
-    or byte ptr [byte_c5400], 0x80               ; 085caa 800d00540c0080
+    or byte ptr [settings2], 0x80                ; 085caa 800d00540c0080
     mov eax, settings_league                     ; 085cb1 b882530c00
     call load_game_set                           ; 085cb6 e862cefaff
     mov eax, dword ptr [esp + 0x98]              ; 085cbb 8b842498000000
@@ -4421,7 +4421,7 @@ loc_85cc9:
     mov eax, edx                                 ; 085ce2 89d0
     call message_dialog                          ; 085ce4 e82ab3faff
     or byte ptr [byte_c5367], 0x80               ; 085ce9 800d67530c0080
-    or byte ptr [byte_c5400], 0x80               ; 085cf0 800d00540c0080
+    or byte ptr [settings2], 0x80                ; 085cf0 800d00540c0080
     mov eax, settings_playoff                    ; 085cf7 b80d530c00
     call load_game_set                           ; 085cfc e81ccefaff
 loc_85d01:
@@ -9334,7 +9334,7 @@ loc_8948b:
     mov eax, esp                                 ; 0894b4 89e0
     call sub_903e8                               ; 0894b6 e82d6f0000
     and byte ptr [byte_c5367], 0x7f              ; 0894bb 802567530c007f
-    and byte ptr [byte_c5400], 0x7f              ; 0894c2 802500540c007f
+    and byte ptr [settings2], 0x7f               ; 0894c2 802500540c007f
 loc_894c9:
     mov eax, dword ptr [esp + 0x20]              ; 0894c9 8b442420
     call season_standings_db                     ; 0894cd e86af2ffff

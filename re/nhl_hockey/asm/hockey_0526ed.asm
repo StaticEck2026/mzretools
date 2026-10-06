@@ -1404,7 +1404,7 @@ loc_53677:
 ; ====================================================================================================
 ; penalty_odds  [0x5369f, 238 bytes, 80 instructions]
 ; random threshold for calling a penalty on a hit
-; called by: resolve_body_check, knock_down, resolve_hook_hit, resolve_poke_hit
+; called by: resolve_body_check, knock_down, resolve_dive_hit, resolve_hook_hold
 ; ====================================================================================================
 penalty_odds:
     push 0x10                                    ; 05369f 6810000000
@@ -1453,7 +1453,7 @@ loc_53705:
     jle loc_53712                                ; 05370d 7e03
     shl eax, 3                                   ; 05370f c1e003
 loc_53712:
-    test byte ptr [byte_c5400], 2                ; 053712 f60500540c0002
+    test byte ptr [settings2], 2                 ; 053712 f60500540c0002
     jne loc_5371d                                ; 053719 7502
     add eax, eax                                 ; 05371b 01c0
 loc_5371d:
@@ -1499,10 +1499,11 @@ loc_5377a:
 
 
 ; ====================================================================================================
-; sub_5378d  [0x5378d, 159 bytes, 54 instructions]
+; facing_boards  [0x5378d, 159 bytes, 54 instructions]
+; the player faces nearby boards (checking from behind)
 ; called by: resolve_body_check
 ; ====================================================================================================
-sub_5378d:
+facing_boards:
     push 0x10                                    ; 05378d 6810000000
     call __CHK                                   ; 053792 e8b5910300
     push ebx                                     ; 053797 53
@@ -1599,7 +1600,7 @@ loc_5384f:
 loc_53861:
     mov edx, ecx                                 ; 053861 89ca
     mov eax, esi                                 ; 053863 89f0
-    call resolve_poke_hit                        ; 053865 e80f330000
+    call resolve_hook_hold                       ; 053865 e80f330000
     jmp loc_53cc8                                ; 05386a e959040000
 
 loc_5386f:
@@ -1607,7 +1608,7 @@ loc_5386f:
     jne loc_53884                                ; 053874 750e
     mov edx, ecx                                 ; 053876 89ca
     mov eax, esi                                 ; 053878 89f0
-    call resolve_hook_hit                        ; 05387a e8d5310000
+    call resolve_dive_hit                        ; 05387a e8d5310000
     jmp loc_53cc8                                ; 05387f e944040000
 
 loc_53884:
@@ -1823,7 +1824,7 @@ loc_53a98:
     test byte ptr [game_flags], 0x10             ; 053ac0 f605bb900c0010
     jne loc_53add                                ; 053ac7 7514
     mov eax, ecx                                 ; 053ac9 89c8
-    call sub_6427f                               ; 053acb e8af070100
+    call breakaway_foul                          ; 053acb e8af070100
     test eax, eax                                ; 053ad0 85c0
     je loc_53add                                 ; 053ad2 7409
     cmp dword ptr [penalty_shot_slot], 0         ; 053ad4 833dfcc00c0000
@@ -1859,13 +1860,13 @@ loc_53b3f:
     jne loc_53b83                                ; 053b44 753d
     test byte ptr [esi + 0x44], 8                ; 053b46 f6464408
     je loc_53cc8                                 ; 053b4a 0f8478010000
-    mov dx, word ptr [word_cbec2]                ; 053b50 668b15c2be0c00
+    mov dx, word ptr [ref_hits]                  ; 053b50 668b15c2be0c00
     inc edx                                      ; 053b57 42
-    mov word ptr [word_cbec2], dx                ; 053b58 668915c2be0c00
+    mov word ptr [ref_hits], dx                  ; 053b58 668915c2be0c00
     cmp dx, 3                                    ; 053b5f 6683fa03
     jl loc_53cbf                                 ; 053b63 0f8c56010000
     xor edi, edi                                 ; 053b69 31ff
-    mov word ptr [word_cbec2], di                ; 053b6b 66893dc2be0c00
+    mov word ptr [ref_hits], di                  ; 053b6b 66893dc2be0c00
     mov edx, 0x16                                ; 053b72 ba16000000
     mov eax, esi                                 ; 053b77 89f0
     call maybe_queue_infraction                  ; 053b79 e87bf10000
@@ -1875,7 +1876,7 @@ loc_53b83:
     test byte ptr [game_flags], 0x10             ; 053b83 f605bb900c0010
     jne loc_53cbf                                ; 053b8a 0f852f010000
     mov eax, ecx                                 ; 053b90 89c8
-    call sub_6427f                               ; 053b92 e8e8060100
+    call breakaway_foul                          ; 053b92 e8e8060100
     test eax, eax                                ; 053b97 85c0
     je loc_53bf3                                 ; 053b99 7458
     cmp dword ptr [penalty_shot_slot], 0         ; 053b9b 833dfcc00c0000
@@ -1888,16 +1889,16 @@ loc_53b83:
     mov edi, dword ptr [penalty_shot_slot]       ; 053bbb 8b3dfcc00c00
     cmp eax, edi                                 ; 053bc1 39f8
     jne loc_53bd1                                ; 053bc3 750c
-    mov dword ptr [dword_cc108], 1               ; 053bc5 c70508c10c000100..
+    mov dword ptr [penalty_shot_user], 1         ; 053bc5 c70508c10c000100..
     jmp loc_53be9                                ; 053bcf eb18
 
 loc_53bd1:
     jne loc_53bdf                                ; 053bd1 750c
-    mov dword ptr [dword_cc108], 2               ; 053bd3 c70508c10c000200..
+    mov dword ptr [penalty_shot_user], 2         ; 053bd3 c70508c10c000200..
     jmp loc_53be9                                ; 053bdd eb0a
 
 loc_53bdf:
-    mov dword ptr [dword_cc108], 0xffffffff      ; 053bdf c70508c10c00ffff..
+    mov dword ptr [penalty_shot_user], 0xffffffff ; 053bdf c70508c10c00ffff..
 loc_53be9:
     mov edx, 0x1a                                ; 053be9 ba1a000000
     jmp loc_53cb8                                ; 053bee e9c5000000
@@ -1921,7 +1922,7 @@ loc_53bf3:
     cmp edx, 2                                   ; 053c1a 83fa02
     jg loc_53c42                                 ; 053c1d 7f23
     mov eax, ecx                                 ; 053c1f 89c8
-    call sub_5378d                               ; 053c21 e867fbffff
+    call facing_boards                           ; 053c21 e867fbffff
     test ax, ax                                  ; 053c26 6685c0
     je loc_53c42                                 ; 053c29 7417
     mov eax, esi                                 ; 053c2b 89f0
@@ -2125,11 +2126,11 @@ loc_53e67:
 
 
 ; ====================================================================================================
-; check_injury  [0x53e6a, 290 bytes, 82 instructions]
-; chance of injury after a heavy hit (queue_infraction 0x11)
+; goalie_collision  [0x53e6a, 290 bytes, 82 instructions]
+; a skater who runs into a goalie falls; a hard hit on a goalie away from the crease may be interference (0x11)
 ; called by: collide_pair
 ; ====================================================================================================
-check_injury:
+goalie_collision:
     push 0x10                                    ; 053e6a 6810000000
     call __CHK                                   ; 053e6f e8d88a0300
     push ebx                                     ; 053e74 53
@@ -2158,7 +2159,7 @@ loc_53eb9:
     mov edx, ebx                                 ; 053ec4 89da
     mov eax, ecx                                 ; 053ec6 89c8
     call knock_down                              ; 053ec8 e80e240000
-    mov dx, word ptr [word_e9b28]                ; 053ecd 668b15289b0e00
+    mov dx, word ptr [last_impact]               ; 053ecd 668b15289b0e00
     cmp dx, 8                                    ; 053ed4 6683fa08
     jl loc_53f73                                 ; 053ed8 0f8c95000000
     mov eax, dword ptr [p_puck_carrier]          ; 053ede a194900c00
@@ -4988,7 +4989,7 @@ loc_55ef4:
     mov ecx, eax                                 ; 055f2e 89c1
     test eax, eax                                ; 055f30 85c0
     jle loc_55f69                                ; 055f32 7e35
-    cmp word ptr [word_e9b28], 0x2d              ; 055f34 66833d289b0e002d
+    cmp word ptr [last_impact], 0x2d             ; 055f34 66833d289b0e002d
     jle loc_55f69                                ; 055f3c 7e2b
     mov eax, dword ptr [esi + 0x44]              ; 055f3e 8b4644
     sar eax, 0x18                                ; 055f41 c1f818
@@ -5240,7 +5241,7 @@ loc_561ce:
 loc_5620d:
     mov eax, dword ptr [esi + 0x34]              ; 05620d 8b4634
     sar eax, 0x10                                ; 056210 c1f810
-    mov ax, word ptr [eax*2 + unk_ccbcc]         ; 056213 668b0445cccb0c00
+    mov ax, word ptr [eax*2 + knockdown_right_x] ; 056213 668b0445cccb0c00
     sub eax, 0x9a                                ; 05621b 81e89a000000
     add word ptr [esi + 2], ax                   ; 056221 66014602
 loc_56225:
@@ -5281,7 +5282,7 @@ loc_56265:
     sub edx, eax                                 ; 05628a 29c2
     mov eax, edx                                 ; 05628c 89d0
     and eax, 7                                   ; 05628e 83e007
-    mov ax, word ptr [eax*2 + unk_ccbcc]         ; 056291 668b0445cccb0c00
+    mov ax, word ptr [eax*2 + knockdown_right_x] ; 056291 668b0445cccb0c00
     sub eax, 0x9a                                ; 056299 81e89a000000
     sub word ptr [esi + 2], ax                   ; 05629f 66294602
     jmp loc_562bc                                ; 0562a3 eb17
@@ -5310,7 +5311,7 @@ loc_562d3:
 ; ====================================================================================================
 ; knock_down  [0x562db, 1913 bytes, 495 instructions]
 ; victim falls, crowd noise
-; called by: resolve_body_check, check_injury, resolve_hook_hit, attach_puck_to_stick
+; called by: resolve_body_check, goalie_collision, resolve_dive_hit, attach_puck_to_stick
 ; ====================================================================================================
 knock_down:
     push 0x14                                    ; 0562db 6814000000
@@ -5491,7 +5492,7 @@ loc_56520:
     mov esi, 0xf9b                               ; 056520 be9b0f0000
     mov eax, dword ptr [ebx + 0x34]              ; 056525 8b4334
     sar eax, 0x10                                ; 056528 c1f810
-    mov ax, word ptr [eax*2 + unk_ccbcc]         ; 05652b 668b0445cccb0c00
+    mov ax, word ptr [eax*2 + knockdown_right_x] ; 05652b 668b0445cccb0c00
     jmp loc_56517                                ; 056533 ebe2
 
 loc_56535:
@@ -5552,7 +5553,7 @@ loc_565d7:
     sub edx, eax                                 ; 0565ed 29c2
     mov eax, edx                                 ; 0565ef 89d0
     and eax, 7                                   ; 0565f1 83e007
-    mov ax, word ptr [eax*2 + unk_ccbcc]         ; 0565f4 668b0445cccb0c00
+    mov ax, word ptr [eax*2 + knockdown_right_x] ; 0565f4 668b0445cccb0c00
     jmp loc_56515                                ; 0565fc e914ffffff
 
 loc_56601:
@@ -5892,10 +5893,11 @@ loc_56a4f:
 
 
 ; ====================================================================================================
-; resolve_hook_hit  [0x56a54, 293 bytes, 82 instructions]
+; resolve_dive_hit  [0x56a54, 293 bytes, 82 instructions]
+; a diving player (anim 0x589) trips the victim: tripping (0x10) or a penalty shot (0x1a)
 ; called by: resolve_body_check
 ; ====================================================================================================
-resolve_hook_hit:
+resolve_dive_hit:
     push 0x10                                    ; 056a54 6810000000
     call __CHK                                   ; 056a59 e8ee5e0300
     push ebx                                     ; 056a5e 53
@@ -5946,7 +5948,7 @@ loc_56ac1:
     mov eax, ecx                                 ; 056af2 89c8
     call knock_down                              ; 056af4 e8e2f7ffff
     mov eax, ebx                                 ; 056af9 89d8
-    call sub_6427f                               ; 056afb e87fd70000
+    call breakaway_foul                          ; 056afb e87fd70000
     test eax, eax                                ; 056b00 85c0
     je loc_56b55                                 ; 056b02 7451
     cmp dword ptr [penalty_shot_slot], 0         ; 056b04 833dfcc00c0000
@@ -5959,16 +5961,16 @@ loc_56ac1:
     mov ebx, dword ptr [penalty_shot_slot]       ; 056b20 8b1dfcc00c00
     cmp eax, ebx                                 ; 056b26 39d8
     jne loc_56b36                                ; 056b28 750c
-    mov dword ptr [dword_cc108], 1               ; 056b2a c70508c10c000100..
+    mov dword ptr [penalty_shot_user], 1         ; 056b2a c70508c10c000100..
     jmp loc_56b4e                                ; 056b34 eb18
 
 loc_56b36:
     jne loc_56b44                                ; 056b36 750c
-    mov dword ptr [dword_cc108], 2               ; 056b38 c70508c10c000200..
+    mov dword ptr [penalty_shot_user], 2         ; 056b38 c70508c10c000200..
     jmp loc_56b4e                                ; 056b42 eb0a
 
 loc_56b44:
-    mov dword ptr [dword_cc108], 0xffffffff      ; 056b44 c70508c10c00ffff..
+    mov dword ptr [penalty_shot_user], 0xffffffff ; 056b44 c70508c10c00ffff..
 loc_56b4e:
     mov edx, 0x1a                                ; 056b4e ba1a000000
     jmp loc_56b67                                ; 056b53 eb12
@@ -5992,10 +5994,11 @@ loc_56b75:
 
 
 ; ====================================================================================================
-; resolve_poke_hit  [0x56b79, 397 bytes, 108 instructions]
+; resolve_hook_hold  [0x56b79, 397 bytes, 108 instructions]
+; a hooking stick (anim 0x639 / 0x873) ties both players up: holding (0x12) / hooking (0xf) or a penalty shot
 ; called by: resolve_body_check
 ; ====================================================================================================
-resolve_poke_hit:
+resolve_hook_hold:
     push 0x10                                    ; 056b79 6810000000
     call __CHK                                   ; 056b7e e8c95d0300
     push ebx                                     ; 056b83 53
@@ -6065,7 +6068,7 @@ loc_56c51:
     mov eax, ecx                                 ; 056c54 89c8
     call set_animation                           ; 056c56 e83f310000
     mov eax, ebx                                 ; 056c5b 89d8
-    call sub_6427f                               ; 056c5d e81dd60000
+    call breakaway_foul                          ; 056c5d e81dd60000
     test eax, eax                                ; 056c62 85c0
     je loc_56cd0                                 ; 056c64 746a
     cmp dword ptr [penalty_shot_slot], 0         ; 056c66 833dfcc00c0000
@@ -6078,16 +6081,16 @@ loc_56c51:
     mov ebx, dword ptr [penalty_shot_slot]       ; 056c86 8b1dfcc00c00
     cmp eax, ebx                                 ; 056c8c 39d8
     jne loc_56c9c                                ; 056c8e 750c
-    mov dword ptr [dword_cc108], 1               ; 056c90 c70508c10c000100..
+    mov dword ptr [penalty_shot_user], 1         ; 056c90 c70508c10c000100..
     jmp loc_56cb4                                ; 056c9a eb18
 
 loc_56c9c:
     jne loc_56caa                                ; 056c9c 750c
-    mov dword ptr [dword_cc108], 2               ; 056c9e c70508c10c000200..
+    mov dword ptr [penalty_shot_user], 2         ; 056c9e c70508c10c000200..
     jmp loc_56cb4                                ; 056ca8 eb0a
 
 loc_56caa:
-    mov dword ptr [dword_cc108], 0xffffffff      ; 056caa c70508c10c00ffff..
+    mov dword ptr [penalty_shot_user], 0xffffffff ; 056caa c70508c10c00ffff..
 loc_56cb4:
     mov edx, 0x1a                                ; 056cb4 ba1a000000
     mov eax, ecx                                 ; 056cb9 89c8
@@ -7862,7 +7865,7 @@ crowd_reaction_sfx:
 loc_580a1:
     test dx, dx                                  ; 0580a1 6685d2
     je loc_580c6                                 ; 0580a4 7420
-    cmp word ptr [word_e9b28], 0x20              ; 0580a6 66833d289b0e0020
+    cmp word ptr [last_impact], 0x20             ; 0580a6 66833d289b0e0020
     jle loc_580c6                                ; 0580ae 7e16
     mov eax, 2                                   ; 0580b0 b802000000
     call randomrange                             ; 0580b5 e876410300
@@ -9002,7 +9005,7 @@ loc_58f08:
     mov dword ptr [dword_e03b4], 5               ; 058f1c c705b4030e000500..
 loc_58f26:
     mov ax, word ptr [dword_e03b4]               ; 058f26 66a1b4030e00
-    mov word ptr [word_e9b28], ax                ; 058f2c 66a3289b0e00
+    mov word ptr [last_impact], ax               ; 058f2c 66a3289b0e00
     add word ptr [esi + 0x18], ax                ; 058f32 66014618
     mov ax, word ptr [dword_e03b4]               ; 058f36 66a1b4030e00
     add word ptr [ecx + 0x18], ax                ; 058f3c 66014118
@@ -9030,7 +9033,7 @@ loc_58f7c:
 loc_58f83:
     mov edx, ecx                                 ; 058f83 89ca
     mov eax, esi                                 ; 058f85 89f0
-    call check_injury                            ; 058f87 e8deaeffff
+    call goalie_collision                        ; 058f87 e8deaeffff
     mov ebx, dword ptr [dword_e03b2]             ; 058f8c 8b1db2030e00
     sar ebx, 0x10                                ; 058f92 c1fb10
     mov edx, ecx                                 ; 058f95 89ca
@@ -10067,7 +10070,7 @@ speech_period_summary:
     call __CHK                                   ; 059a83 e8c42e0300
     cmp byte ptr [sound_enabled], 0              ; 059a88 803d30240d0000
     je loc_59a7d                                 ; 059a8f 74ec
-    test byte ptr [byte_c5400], 1                ; 059a91 f60500540c0001
+    test byte ptr [settings2], 1                 ; 059a91 f60500540c0001
     je loc_59a7d                                 ; 059a98 74e3
     test byte ptr [game_flags], 0x10             ; 059a9a f605bb900c0010
     jne loc_59a7d                                ; 059aa1 75da
@@ -10084,7 +10087,7 @@ speech_busy:
     call __CHK                                   ; 059ab2 e8952e0300
     cmp byte ptr [sound_enabled], 0              ; 059ab7 803d30240d0000
     je loc_59acd                                 ; 059abe 740d
-    test byte ptr [byte_c5400], 1                ; 059ac0 f60500540c0001
+    test byte ptr [settings2], 1                 ; 059ac0 f60500540c0001
     jne sub_836e4                                ; 059ac7 0f85179c0200
 loc_59acd:
     xor eax, eax                                 ; 059acd 31c0
@@ -10103,7 +10106,7 @@ say_goal_wrapper:
     mov esi, eax                                 ; 059adc 89c6
     cmp byte ptr [sound_enabled], 0              ; 059ade 803d30240d0000
     je loc_59b0a                                 ; 059ae5 7423
-    test byte ptr [byte_c5400], 1                ; 059ae7 f60500540c0001
+    test byte ptr [settings2], 1                 ; 059ae7 f60500540c0001
     je loc_59b0a                                 ; 059aee 741a
     test byte ptr [game_flags], 0x10             ; 059af0 f605bb900c0010
     jne loc_59b0a                                ; 059af7 7511
@@ -10129,7 +10132,7 @@ say_star_wrapper:
     mov ecx, eax                                 ; 059b1a 89c1
     cmp byte ptr [sound_enabled], 0              ; 059b1c 803d30240d0000
     je loc_59b3a                                 ; 059b23 7415
-    test byte ptr [byte_c5400], 1                ; 059b25 f60500540c0001
+    test byte ptr [settings2], 1                 ; 059b25 f60500540c0001
     je loc_59b3a                                 ; 059b2c 740c
     call sub_837a8                               ; 059b2e e8759c0200
     mov eax, ecx                                 ; 059b33 89c8
@@ -10152,7 +10155,7 @@ say_penalty_wrapper:
     mov esi, eax                                 ; 059b49 89c6
     cmp byte ptr [sound_enabled], 0              ; 059b4b 803d30240d0000
     je loc_59b82                                 ; 059b52 742e
-    test byte ptr [byte_c5400], 1                ; 059b54 f60500540c0001
+    test byte ptr [settings2], 1                 ; 059b54 f60500540c0001
     je loc_59b82                                 ; 059b5b 7425
     call sub_837a8                               ; 059b5d e8469c0200
     mov edi, dword ptr [esp + 0x20]              ; 059b62 8b7c2420
@@ -10185,7 +10188,7 @@ say_penalty_shot_wrapper:
     mov esi, eax                                 ; 059b93 89c6
     cmp byte ptr [sound_enabled], 0              ; 059b95 803d30240d0000
     je loc_59bb3                                 ; 059b9c 7415
-    test byte ptr [byte_c5400], 1                ; 059b9e f60500540c0001
+    test byte ptr [settings2], 1                 ; 059b9e f60500540c0001
     je loc_59bb3                                 ; 059ba5 740c
     call sub_837a8                               ; 059ba7 e8fc9b0200
     mov eax, esi                                 ; 059bac 89f0
@@ -10211,7 +10214,7 @@ say_game_intro_wrapper:
 loc_59bcd:
     cmp byte ptr [sound_enabled], 0              ; 059bcd 803d30240d0000
     je loc_59bf9                                 ; 059bd4 7423
-    test byte ptr [byte_c5400], 1                ; 059bd6 f60500540c0001
+    test byte ptr [settings2], 1                 ; 059bd6 f60500540c0001
     je loc_59bf9                                 ; 059bdd 741a
     mov ebx, dword ptr [eax*4 + team_abbrev]     ; 059bdf 8b1c8539540c00
     mov edx, dword ptr [edx*4 + team_abbrev]     ; 059be6 8b149539540c00
@@ -10234,7 +10237,7 @@ say_period_score:
     call __CHK                                   ; 059c01 e8462d0300
     cmp byte ptr [sound_enabled], 0              ; 059c06 803d30240d0000
     je loc_59bfb                                 ; 059c0d 74ec
-    test byte ptr [byte_c5400], 1                ; 059c0f f60500540c0001
+    test byte ptr [settings2], 1                 ; 059c0f f60500540c0001
     je loc_59bfb                                 ; 059c16 74e3
     jmp sub_84a7d                                ; 059c18 e960ae0200
 
@@ -10249,7 +10252,7 @@ say_nhl_intro:
     call __CHK                                   ; 059c22 e8252d0300
     cmp byte ptr [sound_enabled], 0              ; 059c27 803d30240d0000
     je loc_59bfb                                 ; 059c2e 74cb
-    test byte ptr [byte_c5400], 1                ; 059c30 f60500540c0001
+    test byte ptr [settings2], 1                 ; 059c30 f60500540c0001
     je loc_59bfb                                 ; 059c37 74c2
     jmp sub_846b4                                ; 059c39 e976aa0200
 
@@ -10264,7 +10267,7 @@ say_goodnight:
     call __CHK                                   ; 059c43 e8042d0300
     cmp byte ptr [sound_enabled], 0              ; 059c48 803d30240d0000
     je loc_59bfb                                 ; 059c4f 74aa
-    test byte ptr [byte_c5400], 1                ; 059c51 f60500540c0001
+    test byte ptr [settings2], 1                 ; 059c51 f60500540c0001
     je loc_59bfb                                 ; 059c58 74a1
     jmp sub_846c8                                ; 059c5a e969aa0200
 
@@ -10279,7 +10282,7 @@ say_lineups:
     call __CHK                                   ; 059c64 e8e32c0300
     cmp byte ptr [sound_enabled], 0              ; 059c69 803d30240d0000
     je loc_59bfb                                 ; 059c70 7489
-    test byte ptr [byte_c5400], 1                ; 059c72 f60500540c0001
+    test byte ptr [settings2], 1                 ; 059c72 f60500540c0001
     je loc_59bfb                                 ; 059c79 7480
     jmp sub_846dc                                ; 059c7b e95caa0200
 
@@ -10294,7 +10297,7 @@ say_elsenhl:
     call __CHK                                   ; 059c85 e8c22c0300
     cmp byte ptr [sound_enabled], 0              ; 059c8a 803d30240d0000
     je loc_59bfb                                 ; 059c91 0f8464ffffff
-    test byte ptr [byte_c5400], 1                ; 059c97 f60500540c0001
+    test byte ptr [settings2], 1                 ; 059c97 f60500540c0001
     je loc_59bfb                                 ; 059c9e 0f8457ffffff
     jmp sub_847ba                                ; 059ca4 e911ab0200
 
@@ -10309,7 +10312,7 @@ say_highlight_intro_wrapper:
     push ebx                                     ; 059cb3 53
     cmp byte ptr [sound_enabled], 0              ; 059cb4 803d30240d0000
     je loc_59cdb                                 ; 059cbb 741e
-    test byte ptr [byte_c5400], 1                ; 059cbd f60500540c0001
+    test byte ptr [settings2], 1                 ; 059cbd f60500540c0001
     je loc_59cdb                                 ; 059cc4 7415
     mov eax, dword ptr [eax*4 + team_abbrev]     ; 059cc6 8b048539540c00
     mov edx, dword ptr [edx*4 + team_abbrev]     ; 059ccd 8b149539540c00
@@ -10331,7 +10334,7 @@ say_series_result_wrapper:
     push edi                                     ; 059ce8 57
     cmp byte ptr [sound_enabled], 0              ; 059ce9 803d30240d0000
     je loc_59d11                                 ; 059cf0 741f
-    test byte ptr [byte_c5400], 1                ; 059cf2 f60500540c0001
+    test byte ptr [settings2], 1                 ; 059cf2 f60500540c0001
     je loc_59d11                                 ; 059cf9 7416
     mov esi, dword ptr [esp + 0x10]              ; 059cfb 8b742410
     push esi                                     ; 059cff 56
@@ -10355,7 +10358,7 @@ say_playoff_intro_wrapper:
     push esi                                     ; 059d20 56
     cmp byte ptr [sound_enabled], 0              ; 059d21 803d30240d0000
     je loc_59d50                                 ; 059d28 7426
-    test byte ptr [byte_c5400], 1                ; 059d2a f60500540c0001
+    test byte ptr [settings2], 1                 ; 059d2a f60500540c0001
     je loc_59d50                                 ; 059d31 741d
     mov esi, dword ptr [esp + 8]                 ; 059d33 8b742408
     push esi                                     ; 059d37 56

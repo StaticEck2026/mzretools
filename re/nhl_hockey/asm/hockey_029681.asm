@@ -1749,7 +1749,7 @@ loc_2aaf3:
 loc_2ab1f:
     cmp byte ptr [sound_enabled], 0              ; 02ab1f 803d30240d0000
     je loc_2ab3f                                 ; 02ab26 7417
-    test byte ptr [byte_c5400], 1                ; 02ab28 f60500540c0001
+    test byte ptr [settings2], 1                 ; 02ab28 f60500540c0001
     je loc_2ab3f                                 ; 02ab2f 740e
     call sub_8373e                               ; 02ab31 e8088c0500
 loc_2ab36:
@@ -6315,7 +6315,7 @@ loc_2e5d1:
     add eax, dword ptr [esp + 0x7c4]             ; 02e5f0 038424c4070000
     mov esi, dword ptr [esp + eax + 0x6cd]       ; 02e5f7 8bb404cd060000
     sar esi, 0x18                                ; 02e5fe c1fe18
-    test byte ptr [byte_c5400], 2                ; 02e601 f60500540c0002
+    test byte ptr [settings2], 2                 ; 02e601 f60500540c0002
     je loc_2e616                                 ; 02e608 740c
     xor eax, eax                                 ; 02e60a 31c0
     mov ax, word ptr [esp + 0x706]               ; 02e60c 668b842406070000

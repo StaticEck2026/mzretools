@@ -6081,7 +6081,7 @@ loc_4e7c4:
     jmp loc_4e7ba                                ; 04e7eb ebcd
 
 loc_4e7ed:
-    test byte ptr [byte_c5400], 1                ; 04e7ed f60500540c0001
+    test byte ptr [settings2], 1                 ; 04e7ed f60500540c0001
     je loc_4e837                                 ; 04e7f4 7441
     cmp byte ptr [sound_enabled], 0              ; 04e7f6 803d30240d0000
     je loc_4e837                                 ; 04e7fd 7438

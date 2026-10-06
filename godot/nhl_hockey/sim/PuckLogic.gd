@@ -447,7 +447,13 @@ static func shot_landed(sim: Sim) -> void:
 		sim.add_crowd(100, 1000)
 		sim.excitement += 10
 		if not sim.no_stats:
-			sim.team_of(s).shots += 1
+			var team := sim.team_of(s)
+			team.shots += 1
+			team.add_stat(s.roster_idx, Team.ST_SHOTS)
+			var opp := sim.opponents_of(s)
+			var g := opp.goalie_index()
+			if g >= 0:
+				opp.goalie_stats[g][1] += 1
 
 ## sub_57a3e: the puck squirts away from a failed take
 static func release_puck_random(sim: Sim) -> void:
@@ -920,8 +926,8 @@ static func start_hook(sim: Sim, e: Entity, target: Entity) -> void:
 	Anim.set_animation(e, Anim.HOOK_B)
 
 ## resolve_body_check (0x5382c): contact between two opponents (or a player and the referee),
-## looked at both ways round: `b` hooks `a` with his stick (0x639 / 0x873, resolve_poke_hit),
-## `b` dives at `a` (0x589, resolve_hook_hit) or `a` body checks `b` (0x621)
+## looked at both ways round: `b` hooks `a` with his stick (0x639 / 0x873, resolve_hook_hold),
+## `b` dives at `a` (0x589, resolve_dive_hit) or `a` body checks `b` (0x621)
 static func resolve_body_check(sim: Sim, e: Entity, o: Entity, strength: int) -> void:
 	var a := e
 	var b := o
@@ -1008,7 +1014,7 @@ static func check_hit(sim: Sim, a: Entity, b: Entity, strength: int) -> void:
 				Rules.maybe_queue_infraction(sim, a, type)
 	knock_down(sim, a, b)
 
-## sub_5378d: the player faces the boards or the end boards close by (a check from behind
+## facing_boards (0x5378d): the player faces the boards or the end boards close by (a check from behind
 ## would put him into them)
 static func facing_boards(e: Entity) -> bool:
 	var y := e.yi
@@ -1046,7 +1052,7 @@ static func penalty_odds(sim: Sim, e: Entity) -> int:
 		o16 = Entity.to_s16(odds << 2)
 	return sim.random(Entity.to_s16((o16 >> 1) + o16))
 
-## resolve_poke_hit (0x56b79): `b` hooks or holds `a` with his stick (0x639 / 0x873). Both are tied
+## resolve_hook_hold (0x56b79): `b` hooks or holds `a` with his stick (0x639 / 0x873). Both are tied
 ## up at their common speed; holding (0x651) or hooking (0x88b) may be called, on a breakaway it
 ## is a penalty shot and the puck is lost.
 static func resolve_hook(sim: Sim, a: Entity, b: Entity) -> void:
@@ -1075,7 +1081,7 @@ static func resolve_hook(sim: Sim, a: Entity, b: Entity) -> void:
 		b.timer_c = 0x20
 	sim.puck_in_net = true
 
-## resolve_hook_hit (0x56a54): `b` dives at `a` (0x589) and trips him: tripping, or a penalty
+## resolve_dive_hit (0x56a54): `b` dives at `a` (0x589) and trips him: tripping, or a penalty
 ## shot on a breakaway. Without the penalty option a user's dive often misses.
 static func resolve_dive(sim: Sim, a: Entity, b: Entity) -> void:
 	if (a.flags & Entity.F_BUSY) or a.slot == Entity.Slot.REFEREE or a.line_slot == 0 or (a.flags2 & Entity.F2_KNOCKED):
@@ -1093,7 +1099,7 @@ static func resolve_dive(sim: Sim, a: Entity, b: Entity) -> void:
 		Rules.award_penalty_shot(sim, a, b)
 	sim.puck_in_net = true
 
-## check_injury (0x53e6a), in fact the goalie collision: a skater who crashes into a goalie (with
+## goalie_collision (0x53e6a): a skater who crashes into a goalie (with
 ## the puck or at speed) falls; a hard hit on a goalie outside his crease may be called as
 ## interference
 static func goalie_collision(sim: Sim, e: Entity, o: Entity) -> void:
@@ -1346,6 +1352,7 @@ static func injure_player(sim: Sim, e: Entity) -> void:
 		if not for_game:
 			team.injured.append(e.roster_idx)
 	sim.injury_report = [team.index, e.roster_idx, for_game]
+	InfoPanel.announce_injury(sim, team.index, e.roster_idx, for_game)
 
 ## crowd_reaction_sfx (0x58084): 0 a hit, 1 a fall, 2 a fall against the boards (glass)
 static func crowd_reaction_sfx(sim: Sim, kind: int) -> void:

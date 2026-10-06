@@ -1267,7 +1267,7 @@
     "pause_requested",
     "dword_c53f7",
     "dword_c53fb",
-    "byte_c5400",
+    "settings2",
     "team_abbrev",
     "dword_c7444",
     "dword_c7448",
@@ -2335,7 +2335,7 @@
     "word_cbc6a",
     "word_cbc6c",
     "word_cbec0",
-    "word_cbec2",
+    "ref_hits",
     "dword_cbec6",
     "word_cbec8",
     "dword_cbeca",
@@ -4282,7 +4282,7 @@
     "dword_c53f7",
     "dword_c53fb",
     "option_flags",
-    "byte_c5400",
+    "settings2",
     "team_abbrev",
     "unk_c5861",
     "unk_c5862",
@@ -6844,7 +6844,7 @@
     "dword_c53f7",
     "dword_c53fb",
     "option_flags",
-    "byte_c5400",
+    "settings2",
     "dword_c5403",
     "dword_c5407",
     "unk_c5581",
@@ -8661,7 +8661,7 @@
     "aB1",
     "aB5",
     "aB8",
-    "byte_c5400",
+    "settings2",
     "unk_c5423",
     "byte_c5424",
     "byte_c5425",
@@ -8846,7 +8846,7 @@
    ],
    "strings": [],
    "vars": [
-    "byte_c5400",
+    "settings2",
     "unk_c66b4",
     "unk_dac40",
     "player_ratings",
@@ -13191,7 +13191,7 @@
     "aScouting",
     "aScreen",
     "option_flags",
-    "byte_c5400",
+    "settings2",
     "dword_c5403",
     "dword_c5407",
     "team_abbrev",
@@ -14360,7 +14360,7 @@
     "aSDD",
     "dword_c53f7",
     "option_flags",
-    "byte_c5400",
+    "settings2",
     "dword_c541f",
     "off_c57cc",
     "aNoScoring",
@@ -16270,7 +16270,7 @@
    "vars": [
     "aPalette",
     "aTemp_c1783",
-    "byte_c5400",
+    "settings2",
     "dword_c65c0",
     "dword_c65c4",
     "dword_c65c8",
@@ -17834,7 +17834,7 @@
     "aGAME",
     "aSAV",
     "dword_c53f7",
-    "byte_c5400",
+    "settings2",
     "dword_c65c0",
     "dword_c65c4",
     "dword_c65c8",
@@ -23002,7 +23002,7 @@
     "flush_key_events",
     "play_speech",
     "set_animation",
-    "sub_5b826",
+    "reset_team_for_period",
     "apply_line_change",
     "sim_tick",
     "sort_draw_order2",
@@ -23727,7 +23727,7 @@
     "aEASports",
     "aSStar",
     "unk_c1b3e",
-    "byte_c5400",
+    "settings2",
     "team_abbrev",
     "dword_c90ca",
     "away_team_id",
@@ -25732,7 +25732,7 @@
    "strings": [],
    "vars": [
     "option_flags",
-    "byte_c5400",
+    "settings2",
     "dword_c541f",
     "game_flags",
     "misc_flags",
@@ -27990,8 +27990,8 @@
    "callers": [
     "resolve_body_check",
     "knock_down",
-    "resolve_hook_hit",
-    "resolve_poke_hit"
+    "resolve_dive_hit",
+    "resolve_hook_hold"
    ],
    "callees": [
     "randomrange",
@@ -27999,7 +27999,7 @@
    ],
    "strings": [],
    "vars": [
-    "byte_c5400",
+    "settings2",
     "p_puck_x",
     "p_puck_y",
     "p_puck_carrier",
@@ -28020,7 +28020,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_5378d",
+   "name": "facing_boards",
    "addr": 341901,
    "size": 159,
    "blocks": [
@@ -28042,7 +28042,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "the player faces nearby boards (checking from behind)"
+   ],
    "reasons": [
     "call"
    ],
@@ -28065,13 +28067,13 @@
    ],
    "callees": [
     "penalty_odds",
-    "sub_5378d",
+    "facing_boards",
     "knock_down",
-    "resolve_hook_hit",
-    "resolve_poke_hit",
+    "resolve_dive_hit",
+    "resolve_hook_hold",
     "set_animation",
     "maybe_queue_infraction",
-    "sub_6427f",
+    "breakaway_foul",
     "randomrange",
     "direction8",
     "__CHK"
@@ -28080,9 +28082,9 @@
    "vars": [
     "game_flags",
     "misc_flags",
-    "word_cbec2",
+    "ref_hits",
     "penalty_shot_slot",
-    "dword_cc108",
+    "penalty_shot_user",
     "unk_ccc4e"
    ],
    "interrupts": [],
@@ -28142,7 +28144,7 @@
    "noreturn": false
   },
   {
-   "name": "check_injury",
+   "name": "goalie_collision",
    "addr": 343658,
    "size": 290,
    "blocks": [
@@ -28165,14 +28167,14 @@
    "vars": [
     "p_puck_carrier",
     "game_flags",
-    "word_e9b28"
+    "last_impact"
    ],
    "interrupts": [],
    "ports": [],
    "tags": [],
    "annotations": [],
    "comments": [
-    "chance of injury after a heavy hit (queue_infraction 0x11)"
+    "a skater who runs into a goalie falls; a hard hit on a goalie away from the crease may be interference (0x11)"
    ],
    "reasons": [
     "call"
@@ -29054,7 +29056,7 @@
     "word_cc0de",
     "word_e9aa8",
     "dword_e9ab6",
-    "word_e9b28"
+    "last_impact"
    ],
    "interrupts": [],
    "ports": [],
@@ -29089,7 +29091,7 @@
    ],
    "strings": [],
    "vars": [
-    "unk_ccbcc",
+    "knockdown_right_x",
     "unk_ccbdc",
     "unk_ccbec",
     "unk_ccbfc"
@@ -29120,8 +29122,8 @@
    "instructions": 495,
    "callers": [
     "resolve_body_check",
-    "check_injury",
-    "resolve_hook_hit",
+    "goalie_collision",
+    "resolve_dive_hit",
     "attach_puck_to_stick"
    ],
    "callees": [
@@ -29148,7 +29150,7 @@
     "game_flags",
     "word_cc0de",
     "penalty_shot_slot",
-    "unk_ccbcc",
+    "knockdown_right_x",
     "unk_ccbdc",
     "unk_ccbec",
     "unk_ccbfc",
@@ -29172,7 +29174,7 @@
    "noreturn": false
   },
   {
-   "name": "resolve_hook_hit",
+   "name": "resolve_dive_hit",
    "addr": 354900,
    "size": 293,
    "blocks": [
@@ -29189,7 +29191,7 @@
     "penalty_odds",
     "knock_down",
     "maybe_queue_infraction",
-    "sub_6427f",
+    "breakaway_foul",
     "randomrange",
     "direction8",
     "__CHK"
@@ -29200,13 +29202,15 @@
     "puck_in_net",
     "misc_flags",
     "penalty_shot_slot",
-    "dword_cc108"
+    "penalty_shot_user"
    ],
    "interrupts": [],
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "a diving player (anim 0x589) trips the victim: tripping (0x10) or a penalty shot (0x1a)"
+   ],
    "reasons": [
     "call"
    ],
@@ -29214,7 +29218,7 @@
    "noreturn": false
   },
   {
-   "name": "resolve_poke_hit",
+   "name": "resolve_hook_hold",
    "addr": 355193,
    "size": 397,
    "blocks": [
@@ -29231,7 +29235,7 @@
     "penalty_odds",
     "set_animation",
     "maybe_queue_infraction",
-    "sub_6427f",
+    "breakaway_foul",
     "direction8",
     "__CHK"
    ],
@@ -29242,13 +29246,15 @@
     "action_flags",
     "misc_flags",
     "penalty_shot_slot",
-    "dword_cc108"
+    "penalty_shot_user"
    ],
    "interrupts": [],
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "a hooking stick (anim 0x639 / 0x873) ties both players up: holding (0x12) / hooking (0xf) or a penalty shot"
+   ],
    "reasons": [
     "call"
    ],
@@ -29817,7 +29823,7 @@
    "strings": [],
    "vars": [
     "word_cc0da",
-    "word_e9b28"
+    "last_impact"
    ],
    "interrupts": [],
    "ports": [],
@@ -30144,7 +30150,7 @@
    ],
    "callees": [
     "resolve_body_check",
-    "check_injury",
+    "goalie_collision",
     "crowd_reaction_sfx",
     "apply_skating",
     "direction8",
@@ -30166,7 +30172,7 @@
     "dword_e03bc",
     "dword_e03be",
     "dword_e03c0",
-    "word_e9b28"
+    "last_impact"
    ],
    "interrupts": [],
    "ports": [],
@@ -30875,7 +30881,7 @@
    ],
    "strings": [],
    "vars": [
-    "byte_c5400",
+    "settings2",
     "game_flags",
     "sound_enabled"
    ],
@@ -30915,7 +30921,7 @@
    ],
    "strings": [],
    "vars": [
-    "byte_c5400",
+    "settings2",
     "sound_enabled"
    ],
    "interrupts": [],
@@ -30950,7 +30956,7 @@
    ],
    "strings": [],
    "vars": [
-    "byte_c5400",
+    "settings2",
     "game_flags",
     "sound_enabled"
    ],
@@ -30986,7 +30992,7 @@
    ],
    "strings": [],
    "vars": [
-    "byte_c5400",
+    "settings2",
     "sound_enabled"
    ],
    "interrupts": [],
@@ -31021,7 +31027,7 @@
    ],
    "strings": [],
    "vars": [
-    "byte_c5400",
+    "settings2",
     "sound_enabled"
    ],
    "interrupts": [],
@@ -31056,7 +31062,7 @@
    ],
    "strings": [],
    "vars": [
-    "byte_c5400",
+    "settings2",
     "sound_enabled"
    ],
    "interrupts": [],
@@ -31090,7 +31096,7 @@
    ],
    "strings": [],
    "vars": [
-    "byte_c5400",
+    "settings2",
     "team_abbrev",
     "sound_enabled"
    ],
@@ -31125,7 +31131,7 @@
    ],
    "strings": [],
    "vars": [
-    "byte_c5400",
+    "settings2",
     "sound_enabled"
    ],
    "interrupts": [],
@@ -31161,7 +31167,7 @@
    ],
    "strings": [],
    "vars": [
-    "byte_c5400",
+    "settings2",
     "sound_enabled"
    ],
    "interrupts": [],
@@ -31197,7 +31203,7 @@
    ],
    "strings": [],
    "vars": [
-    "byte_c5400",
+    "settings2",
     "sound_enabled"
    ],
    "interrupts": [],
@@ -31233,7 +31239,7 @@
    ],
    "strings": [],
    "vars": [
-    "byte_c5400",
+    "settings2",
     "sound_enabled"
    ],
    "interrupts": [],
@@ -31269,7 +31275,7 @@
    ],
    "strings": [],
    "vars": [
-    "byte_c5400",
+    "settings2",
     "sound_enabled"
    ],
    "interrupts": [],
@@ -31305,7 +31311,7 @@
    ],
    "strings": [],
    "vars": [
-    "byte_c5400",
+    "settings2",
     "team_abbrev",
     "sound_enabled"
    ],
@@ -31340,7 +31346,7 @@
    ],
    "strings": [],
    "vars": [
-    "byte_c5400",
+    "settings2",
     "team_abbrev",
     "sound_enabled"
    ],
@@ -31375,7 +31381,7 @@
    ],
    "strings": [],
    "vars": [
-    "byte_c5400",
+    "settings2",
     "team_abbrev",
     "sound_enabled"
    ],
@@ -31519,7 +31525,7 @@
     "resolve_body_check",
     "do_pass",
     "knock_down",
-    "resolve_poke_hit",
+    "resolve_hook_hold",
     "attach_puck_to_stick",
     "start_shot",
     "collide_corner",
@@ -32208,7 +32214,7 @@
    ],
    "strings": [],
    "vars": [
-    "byte_c5400",
+    "settings2",
     "last_shooter",
     "faceoff_spot",
     "word_c90b4",
@@ -32221,7 +32227,7 @@
     "one_timer_pending",
     "breakaway_flag",
     "penalty_shot_team",
-    "dword_cc110",
+    "penalty_shot_spot_x",
     "dword_cc114",
     "penalty_shot_phase",
     "penalty_shot_active",
@@ -32316,7 +32322,7 @@
     "ai_bench",
     "handle_line_change",
     "dress_line",
-    "sub_6392a"
+    "release_from_box"
    ],
    "callees": [
     "set_state",
@@ -32356,7 +32362,7 @@
     "ai_bench_wait",
     "setup_faceoff",
     "dress_line",
-    "sub_6392a"
+    "release_from_box"
    ],
    "callees": [
     "set_state_reset",
@@ -32388,7 +32394,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_5b826",
+   "name": "reset_team_for_period",
    "addr": 374822,
    "size": 91,
    "blocks": [
@@ -32400,7 +32406,7 @@
    "instructions": 32,
    "callers": [
     "init_match",
-    "sub_5ddda",
+    "period_start_reset",
     "simulate_game_offscreen"
    ],
    "callees": [
@@ -32412,7 +32418,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "energy back to 0x1000, players hurt for the period return"
+   ],
    "reasons": [
     "call"
    ],
@@ -32546,7 +32554,7 @@
    "strings": [],
    "vars": [
     "option_flags",
-    "byte_c5400",
+    "settings2",
     "word_cbc4a",
     "period_num"
    ],
@@ -33416,7 +33424,7 @@
    ],
    "strings": [],
    "vars": [
-    "byte_c5400",
+    "settings2",
     "p_puck_carrier",
     "last_shooter",
     "game_flags",
@@ -33477,11 +33485,11 @@
    "strings": [],
    "vars": [
     "input_enabled",
-    "byte_c5400",
+    "settings2",
     "period_idx",
     "clock_seconds",
     "clock_sub",
-    "dword_cc120",
+    "penalty_shot_clock",
     "penalty_shot_active",
     "sound_enabled",
     "period_num",
@@ -33645,7 +33653,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_5ddda",
+   "name": "period_start_reset",
    "addr": 384474,
    "size": 104,
    "blocks": [
@@ -33659,7 +33667,7 @@
     "sub_5de42"
    ],
    "callees": [
-    "sub_5b826",
+    "reset_team_for_period",
     "count_penalized",
     "__CHK"
    ],
@@ -33673,7 +33681,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "count_penalized, reset_team_for_period, power play / penalty kill lines"
+   ],
    "reasons": [
     "call"
    ],
@@ -33696,7 +33706,7 @@
     "simulate_game_offscreen"
    ],
    "callees": [
-    "sub_5ddda",
+    "period_start_reset",
     "__CHK"
    ],
    "strings": [],
@@ -33771,7 +33781,7 @@
    ],
    "strings": [],
    "vars": [
-    "byte_c5400",
+    "settings2",
     "game_flags",
     "period_idx",
     "penalty_box_mode",
@@ -33811,7 +33821,7 @@
    "instructions": 48,
    "callers": [
     "ai_puck_faceoff2",
-    "sub_5ddda",
+    "period_start_reset",
     "simulate_game_offscreen"
    ],
    "callees": [
@@ -34601,7 +34611,7 @@
     "word_cbc6a",
     "word_cbc6c",
     "word_cbec0",
-    "word_cbec2",
+    "ref_hits",
     "word_cbec4",
     "dword_cbec6",
     "word_cbec8",
@@ -34617,15 +34627,15 @@
     "one_timer_pending",
     "breakaway_flag",
     "penalty_shot_slot",
-    "dword_cc100",
+    "penalty_shot_roster",
     "penalty_shot_team",
-    "dword_cc108",
+    "penalty_shot_user",
     "dword_cc10c",
-    "dword_cc110",
+    "penalty_shot_spot_x",
     "dword_cc114",
     "penalty_shot_phase",
     "penalty_shot_setup",
-    "dword_cc120",
+    "penalty_shot_clock",
     "defenders_ahead",
     "penalty_shot_active",
     "penalty_shot_timer",
@@ -34817,7 +34827,7 @@
     "unk_cbd64",
     "unk_cbd66",
     "word_cbec0",
-    "word_cbec2",
+    "ref_hits",
     "word_cbec4",
     "dword_cbec6",
     "word_cbec8",
@@ -34835,15 +34845,15 @@
     "one_timer_pending",
     "breakaway_flag",
     "penalty_shot_slot",
-    "dword_cc100",
+    "penalty_shot_roster",
     "penalty_shot_team",
-    "dword_cc108",
+    "penalty_shot_user",
     "dword_cc10c",
-    "dword_cc110",
+    "penalty_shot_spot_x",
     "dword_cc114",
     "penalty_shot_phase",
     "penalty_shot_setup",
-    "dword_cc120",
+    "penalty_shot_clock",
     "defenders_ahead",
     "penalty_shot_active",
     "penalty_shot_timer",
@@ -35538,7 +35548,7 @@
     "aGoneFor1Period",
     "dword_c53fb",
     "game_flags",
-    "dword_cc100",
+    "penalty_shot_roster",
     "penalty_shot_team",
     "off_cd304",
     "unk_db086",
@@ -35666,7 +35676,7 @@
     "away_team_id",
     "dword_cbebe",
     "word_cc0de",
-    "dword_cc100",
+    "penalty_shot_roster",
     "penalty_shot_team",
     "dword_cd34c",
     "off_cd354",
@@ -35798,7 +35808,7 @@
    "strings": [],
    "vars": [
     "dword_c53fb",
-    "byte_c5400",
+    "settings2",
     "dword_c5840",
     "p_puck_y",
     "game_flags",
@@ -35914,10 +35924,10 @@
     "offside_entry_check",
     "update_carrier",
     "resolve_body_check",
-    "check_injury",
+    "goalie_collision",
     "knock_down",
-    "resolve_hook_hit",
-    "resolve_poke_hit",
+    "resolve_dive_hit",
+    "resolve_hook_hold",
     "score_goal"
    ],
    "callees": [
@@ -36059,7 +36069,7 @@
     "speech_busy",
     "record_penalty",
     "ref_announce",
-    "sub_64398",
+    "begin_penalty_shot",
     "__CHK",
     "sprintf"
    ],
@@ -36176,7 +36186,7 @@
     "word_c90b4",
     "game_flags",
     "stoppage_timer",
-    "dword_cc110",
+    "penalty_shot_spot_x",
     "dword_cc114",
     "penalty_shot_setup",
     "entities",
@@ -36251,7 +36261,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_6392a",
+   "name": "release_from_box",
    "addr": 407850,
    "size": 122,
    "blocks": [
@@ -36282,7 +36292,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "a free entity takes the player whose penalty expired"
+   ],
    "reasons": [
     "call"
    ],
@@ -36342,7 +36354,7 @@
    ],
    "callees": [
     "play_sfx",
-    "sub_6392a",
+    "release_from_box",
     "__CHK"
    ],
    "strings": [],
@@ -36536,7 +36548,7 @@
    ],
    "strings": [],
    "vars": [
-    "byte_c5400",
+    "settings2",
     "game_flags",
     "stop_flags",
     "sound_enabled",
@@ -36610,7 +36622,7 @@
    ],
    "callees": [
     "sub_14ca0",
-    "sub_6392a",
+    "release_from_box",
     "__CHK"
    ],
    "strings": [],
@@ -36682,7 +36694,7 @@
     "penalty_shot_slot",
     "penalty_shot_team",
     "penalty_shot_setup",
-    "dword_cc120",
+    "penalty_shot_clock",
     "penalty_shot_active",
     "entities",
     "puck"
@@ -36715,7 +36727,7 @@
     "ai_goalie",
     "pass_lane_ok",
     "do_shot",
-    "sub_6427f",
+    "breakaway_foul",
     "note_breakaway"
    ],
    "callees": [
@@ -36742,7 +36754,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_6427f",
+   "name": "breakaway_foul",
    "addr": 410239,
    "size": 185,
    "blocks": [
@@ -36754,8 +36766,8 @@
    "instructions": 61,
    "callers": [
     "resolve_body_check",
-    "resolve_hook_hit",
-    "resolve_poke_hit"
+    "resolve_dive_hit",
+    "resolve_hook_hold"
    ],
    "callees": [
     "count_defenders_ahead",
@@ -36773,7 +36785,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "a foul on the breakaway carrier moving at the net with the goalie in: penalty shot"
+   ],
    "reasons": [
     "call"
    ],
@@ -36822,7 +36836,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_64398",
+   "name": "begin_penalty_shot",
    "addr": 410520,
    "size": 161,
    "blocks": [
@@ -36844,9 +36858,9 @@
     "faceoff_spot",
     "word_c90b4",
     "penalty_shot_slot",
-    "dword_cc100",
+    "penalty_shot_roster",
     "penalty_shot_team",
-    "dword_cc110",
+    "penalty_shot_spot_x",
     "dword_cc114",
     "penalty_shot_phase",
     "team_home",
@@ -36859,7 +36873,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "penalty_box_update for infraction 0x1a: phase 1, saves the faceoff spot, puck to centre ice"
+   ],
    "reasons": [
     "call"
    ],
@@ -36894,7 +36910,7 @@
    "strings": [],
    "vars": [
     "penalty_shot_slot",
-    "dword_cc110",
+    "penalty_shot_spot_x",
     "dword_cc114",
     "penalty_shot_phase",
     "penalty_shot_active",
@@ -37314,7 +37330,7 @@
    "tags": [],
    "annotations": [],
    "comments": [
-    "chooses a roster player for a line position (D/G/forward)"
+    "replaces an injured or ejected player in the line table"
    ],
    "reasons": [
     "call"
@@ -38367,12 +38383,12 @@
     "period_over",
     "breakaway_flag",
     "penalty_shot_slot",
-    "dword_cc100",
+    "penalty_shot_roster",
     "penalty_shot_team",
-    "dword_cc108",
+    "penalty_shot_user",
     "penalty_shot_phase",
     "penalty_shot_setup",
-    "dword_cc120",
+    "penalty_shot_clock",
     "defenders_ahead",
     "penalty_shot_active",
     "penalty_shot_timer",
@@ -38543,7 +38559,7 @@
     "stop_crowd_loop",
     "say_highlight_intro_wrapper",
     "speech_stop",
-    "sub_5b826",
+    "reset_team_for_period",
     "sub_5b97a",
     "apply_line_change",
     "sim_tick",
@@ -38579,7 +38595,7 @@
     "pause_requested",
     "dword_c5130",
     "option_flags",
-    "byte_c5400",
+    "settings2",
     "hud_clock_min",
     "hud_clock_sec",
     "hud_clock_tenths",
@@ -46280,7 +46296,7 @@
     "aPal_c3190",
     "aLineditp_c3194",
     "aShrt_c319d",
-    "byte_c5400",
+    "settings2",
     "dword_c71cc",
     "dword_c71d0",
     "dword_c71d4",
@@ -48142,7 +48158,7 @@
    "vars": [
     "aPointer_c32f5",
     "option_flags",
-    "byte_c5400",
+    "settings2",
     "dword_c541f",
     "dword_c721d",
     "unk_d16a0",
@@ -48533,7 +48549,7 @@
    "vars": [
     "aPointer_c3339",
     "option_flags",
-    "byte_c5400",
+    "settings2",
     "dword_c541f",
     "dword_c721d",
     "unk_d16a0",
@@ -48823,7 +48839,7 @@
    "vars": [
     "aPointer_c3374",
     "option_flags",
-    "byte_c5400",
+    "settings2",
     "dword_c541f",
     "dword_c721d",
     "unk_d16a0",
@@ -51754,7 +51770,7 @@
     "aIff_c3688",
     "aMaindesk_c368d",
     "option_flags",
-    "byte_c5400",
+    "settings2",
     "dword_c541b",
     "dword_c541f",
     "dword_c721d",
@@ -54796,7 +54812,7 @@
     "settings_league",
     "byte_c53dc",
     "dword_c53fb",
-    "byte_c5400",
+    "settings2",
     "aDB",
     "league_dir",
     "off_d27ef",
@@ -56082,7 +56098,7 @@
     "settings_playoff",
     "byte_c5367",
     "dword_c53f7",
-    "byte_c5400",
+    "settings2",
     "off_c54a9",
     "dword_c65ac",
     "dword_c65c0",
@@ -56625,7 +56641,7 @@
     "aCoach",
     "aClip04d",
     "aCmv_c3b93",
-    "byte_c5400",
+    "settings2",
     "dword_c721d",
     "dword_d242c",
     "sound_enabled",
@@ -57008,7 +57024,7 @@
     "ai_try_check",
     "penalty_odds",
     "resolve_body_check",
-    "check_injury",
+    "goalie_collision",
     "net_push_off",
     "ai_consider_shot",
     "pass_to_entity",
@@ -57018,7 +57034,7 @@
     "ai_offense_decision",
     "injure_player",
     "knock_down",
-    "resolve_hook_hit",
+    "resolve_dive_hit",
     "puck_hits_player",
     "goalie_save",
     "release_puck_random",
@@ -57466,8 +57482,8 @@
     "do_pass",
     "ai_offense_decision",
     "knock_down",
-    "resolve_hook_hit",
-    "resolve_poke_hit",
+    "resolve_dive_hit",
+    "resolve_hook_hold",
     "puck_hits_player",
     "start_shot",
     "collide_pair",
@@ -58096,10 +58112,10 @@
     "try_shot_block",
     "ai_try_check",
     "penalty_odds",
-    "sub_5378d",
+    "facing_boards",
     "resolve_body_check",
     "collide_player_net",
-    "check_injury",
+    "goalie_collision",
     "pull_goalie_logic",
     "stickhandling_skill",
     "two_line_pass_check",
@@ -58123,8 +58139,8 @@
     "injure_player",
     "knockdown_position",
     "knock_down",
-    "resolve_hook_hit",
-    "resolve_poke_hit",
+    "resolve_dive_hit",
+    "resolve_hook_hold",
     "attach_puck_to_stick",
     "check_icing",
     "ai_puck_shadow",
@@ -58197,7 +58213,7 @@
     "follow_puck_user_switch",
     "set_default_state",
     "put_player_on_ice",
-    "sub_5b826",
+    "reset_team_for_period",
     "sub_5b881",
     "sub_5b97a",
     "sub_5b9d1",
@@ -58224,7 +58240,7 @@
     "sort_draw_order2",
     "sub_5dd9e",
     "end_period_flag",
-    "sub_5ddda",
+    "period_start_reset",
     "sub_5de42",
     "period_cleanup",
     "end_of_period",
@@ -58273,7 +58289,7 @@
     "penalty_box_update",
     "start_stoppage",
     "process_infractions",
-    "sub_6392a",
+    "release_from_box",
     "zone_time_stats",
     "penalty_expired",
     "penalty_timers",
@@ -58285,9 +58301,9 @@
     "goal_ends_penalty",
     "start_penalty_shot",
     "count_defenders_ahead",
-    "sub_6427f",
+    "breakaway_foul",
     "note_breakaway",
-    "sub_64398",
+    "begin_penalty_shot",
     "end_penalty_shot",
     "sub_644a8",
     "sub_6455f",
@@ -129362,7 +129378,7 @@
     "check_offside",
     "update_offside_flags",
     "knock_down",
-    "resolve_hook_hit",
+    "resolve_dive_hit",
     "update_ambient_audio",
     "sound_pause_all",
     "fade_ambient_audio",
@@ -129370,11 +129386,11 @@
     "sub_5b9d1",
     "regenerate_energy",
     "sim_game_state",
-    "sub_5ddda",
+    "period_start_reset",
     "ai_near_carrier_check",
     "skating_accelerate",
     "maybe_queue_infraction",
-    "sub_6427f",
+    "breakaway_foul",
     "simulate_game_offscreen",
     "sub_7a88e",
     "settings_menu",
@@ -129394,7 +129410,7 @@
    ]
   },
   {
-   "name": "byte_c5400",
+   "name": "settings2",
    "addr": 807936,
    "size": 1,
    "kind": null,
@@ -129442,6 +129458,9 @@
     "broadcast_booth_screen",
     "playoff_tree_screen",
     "coach_clip_player"
+   ],
+   "comments": [
+    "second options byte (bit 1: normal penalty rate in penalty_odds), default 0x7b"
    ]
   },
   {
@@ -137466,11 +137485,11 @@
     "handle_line_change",
     "ai_ref_penalty_shot",
     "penalty_odds",
-    "check_injury",
+    "goalie_collision",
     "puck_player_interaction",
     "do_pass",
     "knock_down",
-    "resolve_poke_hit",
+    "resolve_hook_hold",
     "check_icing",
     "take_puck",
     "puck_hits_player",
@@ -137494,7 +137513,7 @@
     "process_infractions",
     "start_penalty_shot",
     "count_defenders_ahead",
-    "sub_6427f",
+    "breakaway_foul",
     "note_breakaway",
     "update_camera",
     "sub_672f9",
@@ -137808,7 +137827,7 @@
     "save_game",
     "savegame_io",
     "start_stoppage",
-    "sub_64398",
+    "begin_penalty_shot",
     "update_camera",
     "simulate_game_offscreen"
    ]
@@ -137833,7 +137852,7 @@
     "save_game",
     "savegame_io",
     "start_stoppage",
-    "sub_64398",
+    "begin_penalty_shot",
     "update_camera"
    ],
    "comments": [
@@ -137858,7 +137877,7 @@
     "save_game",
     "savegame_io",
     "start_stoppage",
-    "sub_64398",
+    "begin_penalty_shot",
     "update_camera"
    ]
   },
@@ -137899,8 +137918,8 @@
    "size": 1,
    "kind": null,
    "xrefs": [
-    "resolve_hook_hit",
-    "resolve_poke_hit",
+    "resolve_dive_hit",
+    "resolve_hook_hold",
     "move_entity",
     "collide_net",
     "collide_pair",
@@ -137956,7 +137975,7 @@
     "ai_ref_penalty_shot",
     "penalty_odds",
     "resolve_body_check",
-    "check_injury",
+    "goalie_collision",
     "two_line_pass_check",
     "net_push_off",
     "pass_to_entity",
@@ -138012,7 +138031,7 @@
     "update_line_timers",
     "update_stoppage",
     "update_lead_change",
-    "sub_6427f",
+    "breakaway_foul",
     "update_camera",
     "update_announcer",
     "sub_672f9",
@@ -138047,7 +138066,7 @@
     "do_pass",
     "shoot_button",
     "injure_player",
-    "resolve_poke_hit",
+    "resolve_hook_hold",
     "ai_puck_shadow",
     "take_puck",
     "puck_hits_player",
@@ -138144,8 +138163,8 @@
     "ai_puck_faceoff2",
     "resolve_body_check",
     "do_pass",
-    "resolve_hook_hit",
-    "resolve_poke_hit",
+    "resolve_dive_hit",
+    "resolve_hook_hold",
     "take_puck",
     "switch_to_nearest",
     "follow_puck_user_switch",
@@ -138814,7 +138833,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_6392a"
+    "release_from_box"
    ]
   },
   {
@@ -139333,7 +139352,7 @@
    ]
   },
   {
-   "name": "word_cbec2",
+   "name": "ref_hits",
    "addr": 835266,
    "size": 2,
    "kind": null,
@@ -139342,6 +139361,9 @@
     "resolve_body_check",
     "save_game",
     "savegame_io"
+   ],
+   "comments": [
+    "body checks of a user on the referee, 3 = abuse of official"
    ]
   },
   {
@@ -139837,7 +139859,7 @@
     "period_init",
     "save_game",
     "savegame_io",
-    "sub_6427f",
+    "breakaway_foul",
     "note_breakaway",
     "dump_stats_log"
    ]
@@ -139866,19 +139888,19 @@
     "ai_ref_penalty_shot",
     "resolve_body_check",
     "knock_down",
-    "resolve_hook_hit",
-    "resolve_poke_hit",
+    "resolve_dive_hit",
+    "resolve_hook_hold",
     "period_init",
     "save_game",
     "savegame_io",
     "start_penalty_shot",
-    "sub_64398",
+    "begin_penalty_shot",
     "end_penalty_shot",
     "dump_stats_log"
    ]
   },
   {
-   "name": "dword_cc100",
+   "name": "penalty_shot_roster",
    "addr": 835840,
    "size": 4,
    "kind": null,
@@ -139887,7 +139909,7 @@
     "savegame_io",
     "show_penalty",
     "record_penalty",
-    "sub_64398",
+    "begin_penalty_shot",
     "dump_stats_log"
    ]
   },
@@ -139908,22 +139930,25 @@
     "show_penalty",
     "record_penalty",
     "start_penalty_shot",
-    "sub_64398",
+    "begin_penalty_shot",
     "dump_stats_log"
    ]
   },
   {
-   "name": "dword_cc108",
+   "name": "penalty_shot_user",
    "addr": 835848,
    "size": 4,
    "kind": null,
    "xrefs": [
     "resolve_body_check",
-    "resolve_hook_hit",
-    "resolve_poke_hit",
+    "resolve_dive_hit",
+    "resolve_hook_hold",
     "save_game",
     "savegame_io",
     "dump_stats_log"
+   ],
+   "comments": [
+    "1 when user 1 controlled the fouled player, else -1"
    ]
   },
   {
@@ -139937,7 +139962,7 @@
    ]
   },
   {
-   "name": "dword_cc110",
+   "name": "penalty_shot_spot_x",
    "addr": 835856,
    "size": 4,
    "kind": null,
@@ -139946,8 +139971,11 @@
     "save_game",
     "savegame_io",
     "start_stoppage",
-    "sub_64398",
+    "begin_penalty_shot",
     "end_penalty_shot"
+   ],
+   "comments": [
+    "faceoff spot after the penalty shot (cc114 y)"
    ]
   },
   {
@@ -139960,7 +139988,7 @@
     "save_game",
     "savegame_io",
     "start_stoppage",
-    "sub_64398",
+    "begin_penalty_shot",
     "end_penalty_shot"
    ]
   },
@@ -139987,7 +140015,7 @@
     "save_game",
     "savegame_io",
     "note_breakaway",
-    "sub_64398",
+    "begin_penalty_shot",
     "end_penalty_shot",
     "dump_stats_log"
    ]
@@ -140019,7 +140047,7 @@
    ]
   },
   {
-   "name": "dword_cc120",
+   "name": "penalty_shot_clock",
    "addr": 835872,
    "size": 4,
    "kind": null,
@@ -140029,6 +140057,9 @@
     "savegame_io",
     "start_penalty_shot",
     "dump_stats_log"
+   ],
+   "comments": [
+    "1000 steps for the shot"
    ]
   },
   {
@@ -140043,7 +140074,7 @@
     "save_game",
     "savegame_io",
     "count_defenders_ahead",
-    "sub_6427f",
+    "breakaway_foul",
     "note_breakaway",
     "dump_stats_log"
    ],
@@ -140521,13 +140552,16 @@
    ]
   },
   {
-   "name": "unk_ccbcc",
+   "name": "knockdown_right_x",
    "addr": 838604,
    "size": 0,
    "kind": null,
    "xrefs": [
     "knockdown_position",
     "knock_down"
+   ],
+   "comments": [
+    "knock_down: x against the right boards per facing (also ccbdc left, ccbec top y, ccbfc bottom y, ccc0c / ccc1c at the bench doors)"
    ]
   },
   {
@@ -162240,7 +162274,7 @@
     "sub_5ba89",
     "regenerate_energy",
     "sim_game_state",
-    "sub_5ddda",
+    "period_start_reset",
     "count_penalized",
     "reset_players_for_faceoff",
     "sub_5e0b0",
@@ -162253,7 +162287,7 @@
     "update_lead_change",
     "goal_ends_penalty",
     "note_breakaway",
-    "sub_64398",
+    "begin_penalty_shot",
     "sub_671e8",
     "sub_672f9",
     "write_stats_table",
@@ -162501,7 +162535,7 @@
     "update_carrier",
     "penalty_time_left",
     "update_lead_change",
-    "sub_64398",
+    "begin_penalty_shot",
     "dump_stats_log",
     "simulate_game_offscreen"
    ]
@@ -162557,7 +162591,7 @@
    "kind": null,
    "xrefs": [
     "ai_puck_faceoff",
-    "sub_6392a",
+    "release_from_box",
     "goal_ends_penalty",
     "game_settings_screen",
     "sub_7cea1"
@@ -162644,7 +162678,7 @@
     "adjust_strategy",
     "sub_5a669",
     "time_announcements",
-    "sub_6392a"
+    "release_from_box"
    ]
   },
   {
@@ -162796,7 +162830,7 @@
     "assign_line_positions",
     "regenerate_energy",
     "sim_game_state",
-    "sub_5ddda",
+    "period_start_reset",
     "count_penalized",
     "reset_players_for_faceoff",
     "sub_5e0b0",
@@ -162808,7 +162842,7 @@
     "update_lead_change",
     "goal_ends_penalty",
     "note_breakaway",
-    "sub_64398",
+    "begin_penalty_shot",
     "write_stats_table",
     "simulate_game_offscreen"
    ]
@@ -162985,7 +163019,7 @@
     "update_carrier",
     "penalty_time_left",
     "update_lead_change",
-    "sub_64398",
+    "begin_penalty_shot",
     "dump_stats_log",
     "simulate_game_offscreen"
    ]
@@ -163029,7 +163063,7 @@
    "kind": null,
    "xrefs": [
     "ai_puck_faceoff",
-    "sub_6392a",
+    "release_from_box",
     "goal_ends_penalty",
     "game_settings_screen"
    ]
@@ -163085,7 +163119,7 @@
     "adjust_strategy",
     "sub_5a669",
     "time_announcements",
-    "sub_6392a"
+    "release_from_box"
    ]
   },
   {
@@ -163422,7 +163456,7 @@
     "faceoff_resolve",
     "find_switch_target",
     "setup_faceoff",
-    "sub_64398"
+    "begin_penalty_shot"
    ]
   },
   {
@@ -165862,15 +165896,18 @@
    ]
   },
   {
-   "name": "word_e9b28",
+   "name": "last_impact",
    "addr": 957224,
    "size": 2,
    "kind": null,
    "xrefs": [
-    "check_injury",
+    "goalie_collision",
     "injure_player",
     "crowd_reaction_sfx",
     "collide_pair"
+   ],
+   "comments": [
+    "strength of the last collision between opponents (collide_pair)"
    ]
   },
   {

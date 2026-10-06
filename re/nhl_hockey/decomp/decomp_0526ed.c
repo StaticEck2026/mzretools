@@ -885,10 +885,10 @@ void __watcall penalty_odds(int *param_1)
 
 
 // ================================================================================================
-// sub_5378d @ 0x5378d [__watcall]
+// facing_boards @ 0x5378d [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_5378d(int param_1,uint unaff_EDX)
+longlong __watcall facing_boards(int param_1,uint unaff_EDX)
 
 {
   short sVar1;
@@ -950,10 +950,10 @@ void __watcall resolve_body_check(int *param_1,int *unaff_EDX,short unaff_BX)
     }
     sVar1 = *(short *)(piVar5 + 0xe);
     if ((sVar1 == 0x639) || (sVar1 == 0x873)) {
-      resolve_poke_hit(param_1,piVar5);
+      resolve_hook_hold(param_1,piVar5);
     }
     else if (sVar1 == 0x589) {
-      resolve_hook_hit(param_1,piVar5);
+      resolve_dive_hit(param_1,piVar5);
     }
     else if (*(short *)(param_1 + 0xe) == 0x621) {
       if ((game_flags & 1) != 0) {
@@ -1052,25 +1052,25 @@ LAB_00053a11:
                              (uint)*(byte *)((int)piVar5 + 0x56)) >> 1) -
                 (short)((uint)*(undefined4 *)((int)piVar5 + 0x16) >> 0x10);
         if ((sVar3 < 1) ||
-           (((((game_flags & 0x10) == 0 && (iVar4 = sub_6427f(piVar5), iVar4 != 0)) &&
+           (((((game_flags & 0x10) == 0 && (iVar4 = breakaway_foul(piVar5), iVar4 != 0)) &&
              (penalty_shot_slot < 0)) ||
             (sVar3 = randomrange((int)sVar3), sVar3 <= (short)(ushort)*(byte *)(param_1 + 0x19)))))
         {
           if (*(short *)((int)piVar5 + 0x6a) == 0x10) {
             if ((*(byte *)(param_1 + 0x11) & 8) == 0) goto LAB_00053cc8;
-            word_cbec2 = word_cbec2 + 1;
-            if (2 < word_cbec2) {
-              word_cbec2 = 0;
+            ref_hits = ref_hits + 1;
+            if (2 < ref_hits) {
+              ref_hits = 0;
               maybe_queue_infraction(param_1,0x16);
             }
           }
           else if ((game_flags & 0x10) == 0) {
-            iVar4 = sub_6427f(piVar5);
+            iVar4 = breakaway_foul(piVar5);
             if (iVar4 == 0) {
               if (((*(short *)(piVar5 + 6) < 0x24) ||
                   (2 < (((int)sVar1 - (param_1[0xd] >> 0x10)) + 1U & 7))) ||
                  ((2 < (((piVar5[0xd] >> 0x10) - (param_1[0xd] >> 0x10)) + 1U & 7) ||
-                  ((sVar1 = sub_5378d(piVar5), sVar1 == 0 ||
+                  ((sVar1 = facing_boards(piVar5), sVar1 == 0 ||
                    (sVar1 = penalty_odds(param_1), 0x13 < sVar1)))))) {
                 sVar1 = penalty_odds(param_1);
                 if (3 < sVar1) goto LAB_00053cbf;
@@ -1106,14 +1106,14 @@ LAB_00053a11:
               bVar7 = _misc_flags >> 0x10 != penalty_shot_slot;
               if (bVar7) {
                 if (bVar7) {
-                  _dword_cc108 = 0xffffffff;
+                  _penalty_shot_user = 0xffffffff;
                 }
                 else {
-                  _dword_cc108 = 2;
+                  _penalty_shot_user = 2;
                 }
               }
               else {
-                _dword_cc108 = 1;
+                _penalty_shot_user = 1;
               }
               uVar2 = 0x1a;
             }
@@ -1202,10 +1202,10 @@ void __watcall collide_player_net(int param_1,int unaff_EDX,short unaff_BX,short
 
 
 // ================================================================================================
-// check_injury @ 0x53e6a [__watcall]
+// goalie_collision @ 0x53e6a [__watcall]
 // ================================================================================================
 
-void __watcall check_injury(int param_1,int unaff_EDX)
+void __watcall goalie_collision(int param_1,int unaff_EDX)
 
 {
   short sVar1;
@@ -1219,8 +1219,8 @@ void __watcall check_injury(int param_1,int unaff_EDX)
         (((short)*p_puck_carrier == *(short *)(param_1 + 0x6a) ||
          (0x19 < *(short *)(param_1 + 0x18))))) && (2 < *(short *)(param_1 + 0x18))) {
       knock_down(iVar3,param_1);
-      if ((7 < word_e9b28) &&
-         (((short)*p_puck_carrier != *(short *)(param_1 + 0x6a) || (9 < word_e9b28)))) {
+      if ((7 < last_impact) &&
+         (((short)*p_puck_carrier != *(short *)(param_1 + 0x6a) || (9 < last_impact)))) {
         if (*(short *)(iVar3 + 6) < 0) {
           iVar2 = -(*(int *)(iVar3 + 4) >> 0x10);
         }
@@ -2860,7 +2860,7 @@ void __watcall injure_player(int param_1)
   sVar1 = randomrange(*(byte *)(*(int *)(*(int *)(param_1 + 0x6c) + 0xde) + 0xf +
                                (*(int *)(param_1 + 0x44) >> 0x18) * 0x14) + 8);
   uVar3 = (uint)(6 < sVar1);
-  if ((uVar3 == 0) || (word_e9b28 < 0x2e)) {
+  if ((uVar3 == 0) || (last_impact < 0x2e)) {
     *(undefined2 *)(extraout_EDX + 0x7e + (*(int *)(param_1 + 0x44) >> 0x18) * 2) = 0xfffd;
     *(undefined *)((*(int *)(param_1 + 0x44) >> 0x18) * 0x27 + *(int *)(extraout_EDX + 0xee)) = 6;
     uVar3 = 0xffffffff;
@@ -2952,7 +2952,7 @@ int __watcall knockdown_position(int *param_1,int unaff_EDX)
           else {
             *(short *)((int)param_1 + 2) =
                  *(short *)((int)param_1 + 2) -
-                 (*(short *)(&unk_ccbcc + (8U - (param_1[0xd] >> 0x10) & 7) * 2) + -0x9a);
+                 (*(short *)(&knockdown_right_x + (8U - (param_1[0xd] >> 0x10) & 7) * 2) + -0x9a);
           }
           if ((*(byte *)((int)param_1 + 0x55) & 8) != 0) {
             return 0xf9b;
@@ -2974,7 +2974,7 @@ int __watcall knockdown_position(int *param_1,int unaff_EDX)
         if ((*(byte *)((int)param_1 + 0x55) & 8) == 0) {
           *(short *)((int)param_1 + 2) =
                *(short *)((int)param_1 + 2) +
-               *(short *)(&unk_ccbcc + (param_1[0xd] >> 0x10) * 2) + -0x9a;
+               *(short *)(&knockdown_right_x + (param_1[0xd] >> 0x10) * 2) + -0x9a;
         }
         else {
           *(short *)((int)param_1 + 2) =
@@ -3124,7 +3124,7 @@ void __watcall knock_down(int param_1,int *unaff_EDX)
             {
               if ((*(byte *)((int)unaff_EDX + 0x55) & 8) != 0) {
                 sVar5 = 0xf9b;
-                sVar3 = *(short *)(&unk_ccbcc + (8U - (unaff_EDX[0xd] >> 0x10) & 7) * 2);
+                sVar3 = *(short *)(&knockdown_right_x + (8U - (unaff_EDX[0xd] >> 0x10) & 7) * 2);
                 goto LAB_00056515;
               }
               sVar5 = 0xfe1;
@@ -3173,7 +3173,7 @@ LAB_00056517:
               goto LAB_00056515;
             }
             sVar5 = 0xf9b;
-            sVar3 = *(short *)(&unk_ccbcc + (unaff_EDX[0xd] >> 0x10) * 2);
+            sVar3 = *(short *)(&knockdown_right_x + (unaff_EDX[0xd] >> 0x10) * 2);
             goto LAB_00056517;
           }
         }
@@ -3321,12 +3321,12 @@ LAB_00056a4a:
 
 
 // ================================================================================================
-// resolve_hook_hit @ 0x56a54 [__watcall]
+// resolve_dive_hit @ 0x56a54 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __watcall resolve_hook_hit(int param_1,int unaff_EDX)
+void __watcall resolve_dive_hit(int param_1,int unaff_EDX)
 
 {
   short sVar1;
@@ -3357,7 +3357,7 @@ void __watcall resolve_hook_hit(int param_1,int unaff_EDX)
       return;
     }
     knock_down(unaff_EDX,param_1);
-    iVar2 = sub_6427f(param_1);
+    iVar2 = breakaway_foul(param_1);
     if (iVar2 == 0) {
       sVar1 = penalty_odds(unaff_EDX);
       if (4 < sVar1) {
@@ -3375,14 +3375,14 @@ void __watcall resolve_hook_hit(int param_1,int unaff_EDX)
       bVar4 = _misc_flags >> 0x10 != penalty_shot_slot;
       if (bVar4) {
         if (bVar4) {
-          _dword_cc108 = 0xffffffff;
+          _penalty_shot_user = 0xffffffff;
         }
         else {
-          _dword_cc108 = 2;
+          _penalty_shot_user = 2;
         }
       }
       else {
-        _dword_cc108 = 1;
+        _penalty_shot_user = 1;
       }
       uVar3 = 0x1a;
     }
@@ -3395,12 +3395,12 @@ void __watcall resolve_hook_hit(int param_1,int unaff_EDX)
 
 
 // ================================================================================================
-// resolve_poke_hit @ 0x56b79 [__watcall]
+// resolve_hook_hold @ 0x56b79 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __watcall resolve_poke_hit(int param_1,int unaff_EDX)
+void __watcall resolve_hook_hold(int param_1,int unaff_EDX)
 
 {
   short sVar1;
@@ -3436,7 +3436,7 @@ void __watcall resolve_poke_hit(int param_1,int unaff_EDX)
         uVar2 = 0x88b;
       }
       set_animation(unaff_EDX,uVar2);
-      iVar3 = sub_6427f(param_1);
+      iVar3 = breakaway_foul(param_1);
       if (iVar3 == 0) {
         sVar1 = penalty_odds(unaff_EDX);
         if (sVar1 < 7) {
@@ -3454,14 +3454,14 @@ void __watcall resolve_poke_hit(int param_1,int unaff_EDX)
         bVar4 = _misc_flags >> 0x10 != penalty_shot_slot;
         if (bVar4) {
           if (bVar4) {
-            _dword_cc108 = 0xffffffff;
+            _penalty_shot_user = 0xffffffff;
           }
           else {
-            _dword_cc108 = 2;
+            _penalty_shot_user = 2;
           }
         }
         else {
-          _dword_cc108 = 1;
+          _penalty_shot_user = 1;
         }
         maybe_queue_infraction(unaff_EDX,0x1a);
         *p_puck_carrier = -1;
@@ -4488,7 +4488,7 @@ void __watcall crowd_reaction_sfx(short param_1)
     play_sfx(0xb1);
     param_1 = extraout_DX;
   }
-  if ((param_1 != 0) && (0x20 < word_e9b28)) {
+  if ((param_1 != 0) && (0x20 < last_impact)) {
     sVar1 = randomrange(2);
     if (sVar1 == 0) {
       uVar2 = 0x93;
@@ -5123,7 +5123,7 @@ void __watcall collide_pair(int param_1,short unaff_DX,short unaff_BX,short unaf
             dword_e03b2._2_2_ = 5;
             dword_e03b6._0_2_ = 0;
           }
-          word_e9b28 = dword_e03b2._2_2_;
+          last_impact = dword_e03b2._2_2_;
           *(short *)(param_1 + 0x18) = *(short *)(param_1 + 0x18) + dword_e03b2._2_2_;
           (&DAT_000df834)[iVar6 * 0x40] = (&DAT_000df834)[iVar6 * 0x40] + dword_e03b2._2_2_;
           if (((&unk_df861)[iVar7] & 1) == 0) {
@@ -5138,7 +5138,7 @@ void __watcall collide_pair(int param_1,short unaff_DX,short unaff_BX,short unaf
               crowd_reaction_sfx(0);
             }
           }
-          check_injury(param_1,puVar10);
+          goalie_collision(param_1,puVar10);
           resolve_body_check(param_1,puVar10,(int)dword_e03b2._2_2_);
           iVar9 = CONCAT22((undefined2)dword_e03be,dword_e03ba._2_2_);
         }

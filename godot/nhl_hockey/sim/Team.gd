@@ -12,6 +12,8 @@ var index: int = 0                   # 0 home, 1 away
 var goals: int = 0                   # +0x10
 var shots: int = 0                   # +0x12
 var faceoffs_won: int = 0            # +0x14
+var one_timer_goals: int = 0         # +0x1a
+var breakaway_goals: int = 0         # +0x1e
 var penalty_shots: int = 0           # +0x20 penalty shots awarded
 var penalty_shot_goals: int = 0      # +0x22
 var hits: int = 0                    # +0x24
@@ -39,6 +41,18 @@ var injured: Array = []              # roster indices hurt for the rest of the p
 var penalties: Array = []            # +0xb6 list: [roster_idx, seconds left, entity slot, minor]
 var first_slot: int = 0              # index of players[0] in Sim.entities
 var attacks_up: bool = false         # the goal this team shoots at is at +y (flags & 0x80 of its players)
+# per player game statistics (the 0x10 byte records at team +0xe6): goals, assists, penalty
+# minutes, plus/minus, power play goals, short handed goals, empty net goals, shots
+const ST_GOALS := 0
+const ST_ASSISTS := 1
+const ST_PIM := 2
+const ST_PLUS_MINUS := 3
+const ST_PPG := 4
+const ST_SHG := 5
+const ST_ENG := 6
+const ST_SHOTS := 7
+var player_stats: Array = []         # 25 x PackedInt32Array(8)
+var goalie_stats: Array = []         # team +0xea: 3 x [time, shots against, goals against]
 var info: Database.TeamInfo = null   # roster from the databases (null: placeholder players)
 
 func _init(idx: int = 0) -> void:
@@ -49,6 +63,41 @@ func _init(idx: int = 0) -> void:
 	for i in 28:
 		energy[i] = 0x1000
 		entity_of[i] = -2
+	reset_stats()
+
+func reset_stats() -> void:
+	player_stats.clear()
+	for i in 25:
+		player_stats.append(PackedInt32Array([0, 0, 0, 0, 0, 0, 0, 0]))
+	goalie_stats.clear()
+	for i in 3:
+		goalie_stats.append(PackedInt32Array([0, 0, 0]))
+	goals = 0
+	shots = 0
+	hits = 0
+	one_timer_goals = 0
+	breakaway_goals = 0
+	penalty_shots = 0
+	penalty_shot_goals = 0
+
+## adds to a player's statistic (skaters 0..24 only, like the original's table)
+func add_stat(roster: int, field: int, amount: int = 1) -> void:
+	if roster >= 0 and roster < 25:
+		player_stats[roster][field] += amount
+
+func stat(roster: int, field: int) -> int:
+	return player_stats[roster][field] if roster >= 0 and roster < 25 else 0
+
+## the goalie in the net (line table +0x24 + goalie_request), as 0..2, or -1 when pulled
+func goalie_index() -> int:
+	if goalie_pulled():
+		return -1
+	var lt := Lines.line_table(self)
+	var k := 0x24 + (goalie_request & 0xff)
+	if k >= lt.size():
+		return -1
+	var g := lt[k] - 25
+	return g if g >= 0 and g < 3 else -1
 
 ## the goalie is off for an extra attacker (goalie_request < 0 as a 16 bit word)
 func goalie_pulled() -> bool:

@@ -191,7 +191,7 @@ static func apply_line_change(sim: Sim, team: Team) -> void:
 			var e := sim.entities[first + i]
 			if e.next_roster >= 0 or serving_penalty(e):
 				# the original tracks a penalty by roster player and reuses the box entity
-				# (sub_6392a takes any free entity when the penalty expires); the port keeps the
+				# (release_from_box takes any free entity when the penalty expires); the port keeps the
 				# penalized player on his entity until he is back on the ice
 				continue
 			if e.line_slot < 0:

@@ -166,6 +166,10 @@ func attack_sign() -> int:
 func own_goal_y() -> int:
 	return -Sim.GOAL_LINE_Y if flags & F_ATTACK_UP else Sim.GOAL_LINE_Y
 
+static func to_s8(v: int) -> int:
+	v &= 0xff
+	return v - 0x100 if v >= 0x80 else v
+
 static func to_s16(v: int) -> int:
 	v &= 0xffff
 	return v - 0x10000 if v >= 0x8000 else v

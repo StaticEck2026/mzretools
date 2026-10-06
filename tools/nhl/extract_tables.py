@@ -94,6 +94,28 @@ def main():
     t['knockdown_bottom_y'] = shorts(le, 0xccbfc, 8)
     t['knockdown_right2_x'] = shorts(le, 0xccc0c, 8)
     t['knockdown_left2_x'] = shorts(le, 0xccc1c, 8)
+    # init_match / ai_anthem: national anthem per home team (0 Canada, 1 USA), its length in steps
+    # per country and the idle animations of the players standing on the blue line
+    t['anthem_country'] = list(le.read(0xcc9b0, 28))
+    t['anthem_length'] = shorts(le, 0xcc9cc, 2)
+    t['anthem_fidgets'] = shorts(le, 0xcc9d0, 5)
+    # compute_three_stars: shots a goalie must face for a shutout star / a save percentage star,
+    # per period length setting (option_flags bits 10-11)
+    t['star_shutout_shots'] = list(le.read(0xcc9e4, 3))
+    t['star_save_shots'] = list(le.read(0xcc9e7, 3))
+    # ai_three_stars: the lap of honour, 4 points per team (home, away)
+    t['star_laps'] = [[shorts(le, 0xcc9ea + team * 16 + k * 4, 2) for k in range(4)] for team in range(2)]
+    # load_cutscene_clip / update_announcer: the scoreboard clips (announcer_ppv_names): the frame
+    # script (count, then frame indices), the steps per frame and whether the panel closes after it
+    t['clip_scripts'] = []
+    for i in range(11):
+        sp = le.read_u32(0xcc01d + i * 4)
+        n = le.read(sp, 1)[0]
+        t['clip_scripts'].append(list(le.read(sp, n + 1)))
+    t['clip_frame_steps'] = [shorts(le, 0xcc054 + i * 4, 1)[0] for i in range(11)]
+    t['clip_closes'] = list(le.read(0xcc049, 11))
+    # show_penalty: the penalty names of the panel (off_cd304[type - 9])
+    t['penalty_names'] = [cstr(le, le.read_u32(0xcd304 + i * 4)) for i in range(18)]
     t['star_names'] = [cstr(le, le.read_u32(0xcca0a + i * 4)) for i in range(3)]
     t['announcer_ppv_names'] = [cstr(le, le.read_u32(0xcbed0 + i * 4)) for i in range(11)]
     # team names and cities (table of 0xba byte records is runtime data; the fixed list of full

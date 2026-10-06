@@ -4358,7 +4358,8 @@ dword_c53fb:                                     ; xref play_game, game_over_che
 ; game options bit field (settings block +0x59)
 option_flags:                                    ; xref handle_hotkey, awards_screen, sub_13e8f, game_over_check, demo_game, pause_menu +57
     db 0xff ; 0c53ff |.|
-byte_c5400:                                      ; xref play_game, demo_game, pause_menu, sub_1befd, db_load_team_roster, team_select_screen +37
+; second options byte (bit 1: normal penalty rate in penalty_odds), default 0x7b
+settings2:                                       ; xref play_game, demo_game, pause_menu, sub_1befd, db_load_team_roster, team_select_screen +37
     db 0x7b, 0x00, 0x00 ; 0c5400 |{..|
 dword_c5403:                                     ; xref sub_10712, pause_menu, team_select_screen, save_settings, apply_settings, load_game_set +13
     db 0xff, 0xff, 0xff, 0xff ; 0c5403 |....|
@@ -6847,7 +6848,7 @@ faceoff_dir_home:                                ; xref faceoff_resolve, faceoff
 faceoff_dir_away:                                ; xref faceoff_resolve, faceoff_control, ai_puck_faceoff2, sub_5cd4f, save_game, savegame_io
     db 0x00, 0x00 ; 0c90b8 |..|
 ; byte: a collision reverted the position this step / puck in the net
-puck_in_net:                                     ; xref resolve_hook_hit, resolve_poke_hit, move_entity, collide_net, collide_pair, score_goal +3
+puck_in_net:                                     ; xref resolve_dive_hit, resolve_hook_hold, move_entity, collide_net, collide_pair, score_goal +3
     db 0x00 ; 0c90ba |.|
 ; 1 play stopped, 2 ends switched, 4 delayed penalty, 8 goal, 0x10 replay playback, 0x40 overtime, 0x80 intermission camera
 game_flags:                                      ; xref sub_10c7f, handle_hotkey, run_sim_steps, draw_clock, start_period, ai_defense_offense +96
@@ -7655,7 +7656,7 @@ anim_sequences:                                  ; xref advance_animation
     db 0xf4, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ; 0cbc0d |................|
     db 0x00, 0x00, 0xc1, 0x02, 0x0c, 0x00, 0x6b, 0x04, 0x0a, 0x00, 0x6c, 0x04, 0x0a, 0x00, 0x6d, 0x04 ; 0cbc1d |......k...l...m.|
     db 0x18, 0x00, 0x6b, 0x04, 0x0c, 0x00, 0xc1, 0x02, 0xf4 ; 0cbc2d |..k......|
-unk_cbc36:                                       ; xref sub_6392a
+unk_cbc36:                                       ; xref release_from_box
     db 0xff ; 0cbc36 |.|
 unk_cbc37:                                       ; xref assign_line_positions
     db 0x00, 0x01, 0x02, 0x04, 0x03, 0x05, 0x06 ; 0cbc37 |.......|
@@ -7774,7 +7775,8 @@ dword_cbebe:                                     ; xref ai_ref_three_stars, ref_
     db 0x00, 0x00 ; 0cbebe |..|
 word_cbec0:                                      ; xref reset_game_state, ai_ref_three_stars, ai_puck_give_cup, ai_ref_get_new_puck, ai_ref_pickup_puck, ai_puck_faceoff2 +11
     db 0xff, 0xff ; 0cbec0 |..|
-word_cbec2:                                      ; xref reset_game_state, resolve_body_check, save_game, savegame_io
+; body checks of a user on the referee, 3 = abuse of official
+ref_hits:                                        ; xref reset_game_state, resolve_body_check, save_game, savegame_io
     db 0x00, 0x00 ; 0cbec2 |..|
 word_cbec4:                                      ; xref handle_hotkey, game_loop, play_game, load_player_graphics, sub_13e8f, sub_13fa7 +7
     db 0x00, 0x00 ; 0cbec4 |..|
@@ -7894,23 +7896,26 @@ dword_cc0fa:                                     ; xref ai_puck_faceoff2
     db 0x00, 0x00 ; 0cc0fa |..|
 penalty_shot_slot:                               ; xref reset_game_state, ai_nearest_to_puck, all_goto_positions, ai_puck_faceoff2, ai_all_goto_faceoff, handle_line_change +12
     db 0x00, 0x00, 0x00, 0x00 ; 0cc0fc |....|
-dword_cc100:                                     ; xref save_game, savegame_io, show_penalty, record_penalty, sub_64398, dump_stats_log
+penalty_shot_roster:                             ; xref save_game, savegame_io, show_penalty, record_penalty, begin_penalty_shot, dump_stats_log
     db 0x00, 0x00, 0x00, 0x00 ; 0cc100 |....|
 penalty_shot_team:                               ; xref puck_update, all_goto_positions, ai_puck_faceoff2, ai_ref_penalty_shot, score_goal, assign_line_positions +7
     db 0x00, 0x00, 0x00, 0x00 ; 0cc104 |....|
-dword_cc108:                                     ; xref resolve_body_check, resolve_hook_hit, resolve_poke_hit, save_game, savegame_io, dump_stats_log
+; 1 when user 1 controlled the fouled player, else -1
+penalty_shot_user:                               ; xref resolve_body_check, resolve_dive_hit, resolve_hook_hold, save_game, savegame_io, dump_stats_log
     db 0x00, 0x00, 0x00, 0x00 ; 0cc108 |....|
 dword_cc10c:                                     ; xref save_game, savegame_io
     db 0x00, 0x00, 0x00, 0x00 ; 0cc10c |....|
-dword_cc110:                                     ; xref score_goal, save_game, savegame_io, start_stoppage, sub_64398, end_penalty_shot
+; faceoff spot after the penalty shot (cc114 y)
+penalty_shot_spot_x:                             ; xref score_goal, save_game, savegame_io, start_stoppage, begin_penalty_shot, end_penalty_shot
     db 0x00, 0x00, 0x00, 0x00 ; 0cc110 |....|
-dword_cc114:                                     ; xref score_goal, save_game, savegame_io, start_stoppage, sub_64398, end_penalty_shot
+dword_cc114:                                     ; xref score_goal, save_game, savegame_io, start_stoppage, begin_penalty_shot, end_penalty_shot
     db 0x00, 0x00, 0x00, 0x00 ; 0cc114 |....|
 penalty_shot_phase:                              ; xref reset_game_state, ai_ref_goto_faceoff, control_player, send_team_to_faceoff, all_goto_positions, ai_puck_faceoff +14
     db 0x00, 0x00, 0x00, 0x00 ; 0cc118 |....|
 penalty_shot_setup:                              ; xref reset_game_state, offside_entry_check, send_team_to_faceoff, all_goto_positions, ai_puck_faceoff, ai_puck_faceoff2 +12
     db 0x00, 0x00, 0x00, 0x00 ; 0cc11c |....|
-dword_cc120:                                     ; xref game_clock_tick, save_game, savegame_io, start_penalty_shot, dump_stats_log
+; 1000 steps for the shot
+penalty_shot_clock:                              ; xref game_clock_tick, save_game, savegame_io, start_penalty_shot, dump_stats_log
     db 0x00, 0x00, 0x00, 0x00 ; 0cc120 |....|
 ; result of count_defenders_ahead
 defenders_ahead:                                 ; xref reset_game_state, do_shot, period_init, save_game, savegame_io, count_defenders_ahead +3
@@ -8167,7 +8172,8 @@ onetimer_offsets:                                ; xref one_timer_step
 unk_ccbbb:                                       ; xref one_timer_step
     db 0x0c, 0x0e, 0x0c, 0x13, 0xfe, 0x0f, 0xf9, 0x06, 0xf5, 0xf6, 0xf4, 0xef, 0xf9, 0xee, 0x04, 0x00 ; 0ccbbb |................|
     db 0x00 ; 0ccbcb |.|
-unk_ccbcc:                                       ; xref knockdown_position, knock_down
+; knock_down: x against the right boards per facing (also ccbdc left, ccbec top y, ccbfc bottom y, ccc0c / ccc1c at the bench doors)
+knockdown_right_x:                               ; xref knockdown_position, knock_down
     db 0x98, 0x00, 0x98, 0x00, 0x8d, 0x00, 0x8d, 0x00, 0x9d, 0x00, 0x9d, 0x00, 0x96, 0x00, 0x99, 0x00 ; 0ccbcc |................|
 unk_ccbdc:                                       ; xref knockdown_position, knock_down
     db 0x66, 0xff, 0x66, 0xff, 0x66, 0xff, 0x66, 0xff, 0x68, 0xff, 0x68, 0xff, 0x70, 0xff, 0x70, 0xff ; 0ccbdc |f.f.f.f.h.h.p.p.|
@@ -15334,7 +15340,7 @@ word_df646:                                      ; xref goal_milestone_check, si
     resb 2                                       ; 0df646 (bss)
 dword_df648:                                     ; xref ref_check_announcements, simulate_game_offscreen, sub_7cea1
     resb 2                                       ; 0df648 (bss)
-dword_df64a:                                     ; xref setup_demo_faceoff, sub_1c852, update_carrier, penalty_time_left, update_lead_change, sub_64398 +2
+dword_df64a:                                     ; xref setup_demo_faceoff, sub_1c852, update_carrier, penalty_time_left, update_lead_change, begin_penalty_shot +2
     resb 2                                       ; 0df64a (bss)
 word_df64c:                                      ; xref sub_1c852, season_record_result, score_goal, sub_5b881, announce_goal, sub_671e8 +2
     resb 1                                       ; 0df64c (bss)
@@ -15344,7 +15350,7 @@ dword_df652:                                     ; xref puck_update, sim_update_
     resb 4                                       ; 0df652 (bss)
 word_df656:                                      ; xref sim_update_players
     resb 2                                       ; 0df656 (bss)
-byte_df658:                                      ; xref ai_puck_faceoff, sub_6392a, goal_ends_penalty, game_settings_screen, sub_7cea1
+byte_df658:                                      ; xref ai_puck_faceoff, release_from_box, goal_ends_penalty, game_settings_screen, sub_7cea1
     resb 2                                       ; 0df658 (bss)
 unk_df65a:                                       ; xref ai_ref_three_stars, game_settings_screen
     resb 54                                      ; 0df65a (bss)
@@ -15360,7 +15366,7 @@ byte_df6e6:                                      ; xref adjust_strategy, sub_5a6
     resb 1                                       ; 0df6e6 (bss)
 byte_df6e7:                                      ; xref adjust_strategy, sub_5a669, time_announcements, score_goal
     resb 1                                       ; 0df6e7 (bss)
-byte_df6e8:                                      ; xref adjust_strategy, sub_5a669, time_announcements, sub_6392a
+byte_df6e8:                                      ; xref adjust_strategy, sub_5a669, time_announcements, release_from_box
     resb 1                                       ; 0df6e8 (bss)
 byte_df6e9:                                      ; xref adjust_strategy, sub_5a669, time_announcements
     resb 1                                       ; 0df6e9 (bss)
@@ -15418,7 +15424,7 @@ word_df746:                                      ; xref simulate_game_offscreen
     resb 2                                       ; 0df746 (bss)
 dword_df748:                                     ; xref ref_check_announcements, simulate_game_offscreen
     resb 2                                       ; 0df748 (bss)
-dword_df74a:                                     ; xref setup_demo_faceoff, sub_1c852, update_carrier, penalty_time_left, update_lead_change, sub_64398 +2
+dword_df74a:                                     ; xref setup_demo_faceoff, sub_1c852, update_carrier, penalty_time_left, update_lead_change, begin_penalty_shot +2
     resb 2                                       ; 0df74a (bss)
 word_df74c:                                      ; xref sub_1c852, season_record_result, score_goal, sub_5b881, simulate_game_offscreen
     resb 6                                       ; 0df74c (bss)
@@ -15426,7 +15432,7 @@ dword_df752:                                     ; xref puck_update, sim_update_
     resb 4                                       ; 0df752 (bss)
 word_df756:                                      ; xref sim_update_players
     resb 2                                       ; 0df756 (bss)
-byte_df758:                                      ; xref ai_puck_faceoff, sub_6392a, goal_ends_penalty, game_settings_screen
+byte_df758:                                      ; xref ai_puck_faceoff, release_from_box, goal_ends_penalty, game_settings_screen
     resb 2                                       ; 0df758 (bss)
 unk_df75a:                                       ; xref game_settings_screen
     resb 112                                     ; 0df75a (bss)
@@ -15436,7 +15442,7 @@ byte_df7e6:                                      ; xref adjust_strategy, sub_5a6
     resb 1                                       ; 0df7e6 (bss)
 byte_df7e7:                                      ; xref adjust_strategy, sub_5a669, time_announcements, score_goal
     resb 1                                       ; 0df7e7 (bss)
-byte_df7e8:                                      ; xref adjust_strategy, sub_5a669, time_announcements, sub_6392a
+byte_df7e8:                                      ; xref adjust_strategy, sub_5a669, time_announcements, release_from_box
     resb 1                                       ; 0df7e8 (bss)
 byte_df7e9:                                      ; xref adjust_strategy, sub_5a669, time_announcements
     resb 1                                       ; 0df7e9 (bss)
@@ -15490,7 +15496,7 @@ unk_df84a:                                       ; xref sub_510a9
     resb 16                                      ; 0df84a (bss)
 unk_df85a:                                       ; xref ai_puck_faceoff
     resb 6                                       ; 0df85a (bss)
-unk_df860:                                       ; xref faceoff_resolve, find_switch_target, setup_faceoff, sub_64398
+unk_df860:                                       ; xref faceoff_resolve, find_switch_target, setup_faceoff, begin_penalty_shot
     resb 1                                       ; 0df860 (bss)
 unk_df861:                                       ; xref goal_ends_penalty, game_settings_screen, sub_7cea1
     resb 30                                      ; 0df861 (bss)
@@ -15864,7 +15870,8 @@ unk_e9afa:                                       ; xref sub_48789, compute_three
     resb 10                                      ; 0e9afa (bss)
 dword_e9b04:                                     ; xref init_match, replay_loop, ai_ref_anthem, start_period, ai_ref_three_stars
     resb 36                                      ; 0e9b04 (bss)
-word_e9b28:                                      ; xref check_injury, injure_player, crowd_reaction_sfx, collide_pair
+; strength of the last collision between opponents (collide_pair)
+last_impact:                                     ; xref goalie_collision, injure_player, crowd_reaction_sfx, collide_pair
     resb 2                                       ; 0e9b28 (bss)
 unk_e9b2a:                                       ; xref savegame_io, start_crowd_sound, update_effects
     resb 2                                       ; 0e9b2a (bss)

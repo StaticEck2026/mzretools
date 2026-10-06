@@ -7005,13 +7005,13 @@ init_match:
     mov word ptr [user2_slot], ax                ; 047da6 66a3c4900c00
     mov word ptr [user1_slot], ax                ; 047dac 66a3c2900c00
     mov eax, team_home                           ; 047db2 b814f60d00
-    call sub_5b826                               ; 047db7 e86a3a0100
+    call reset_team_for_period                   ; 047db7 e86a3a0100
     mov eax, team_home                           ; 047dbc b814f60d00
     call apply_line_change                       ; 047dc1 e82e410100
     mov eax, team_home                           ; 047dc6 b814f60d00
     call dress_line                              ; 047dcb e80d630100
     mov eax, team_away                           ; 047dd0 b814f70d00
-    call sub_5b826                               ; 047dd5 e84c3a0100
+    call reset_team_for_period                   ; 047dd5 e84c3a0100
     mov eax, team_away                           ; 047dda b814f70d00
     call apply_line_change                       ; 047ddf e810410100
     mov eax, team_away                           ; 047de4 b814f70d00
@@ -9044,7 +9044,7 @@ loc_495fd:
     call randomrange                             ; 049638 e8f32b0400
     add eax, 0x14                                ; 04963d 0514000000
     mov word ptr [ebp + 0x28], ax                ; 049642 66894528
-    test byte ptr [byte_c5400], 1                ; 049646 f60500540c0001
+    test byte ptr [settings2], 1                 ; 049646 f60500540c0001
     je loc_49664                                 ; 04964d 7415
     cmp byte ptr [sound_enabled], 0              ; 04964f 803d30240d0000
     je loc_49664                                 ; 049656 740c
@@ -9161,7 +9161,7 @@ loc_49790:
     call randomrange                             ; 0497ca e8612a0400
     add eax, 0x14                                ; 0497cf 0514000000
     mov word ptr [ebp + 0x28], ax                ; 0497d4 66894528
-    test byte ptr [byte_c5400], 1                ; 0497d8 f60500540c0001
+    test byte ptr [settings2], 1                 ; 0497d8 f60500540c0001
     je loc_497f0                                 ; 0497df 740f
     cmp byte ptr [sound_enabled], 0              ; 0497e1 803d30240d0000
     je loc_497f0                                 ; 0497e8 7406

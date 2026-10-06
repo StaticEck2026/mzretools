@@ -1953,7 +1953,7 @@ loc_19861:
     jne loc_19898                                ; 01986f 7527
     cmp dword ptr [dword_c53f7], 0               ; 019871 833df7530c0000
     jne loc_19898                                ; 019878 751e
-    test byte ptr [byte_c5400], 1                ; 01987a f60500540c0001
+    test byte ptr [settings2], 1                 ; 01987a f60500540c0001
     je loc_19898                                 ; 019881 7415
     mov dword ptr [esp + 0x3e8], 0xffffffff      ; 019883 c78424e8030000ff..
     call sub_837a8                               ; 01988e e8159f0600
@@ -2040,7 +2040,7 @@ loc_199d6:
     je loc_19a00                                 ; 0199e2 741c
     cmp dword ptr [dword_c53f7], 0               ; 0199e4 833df7530c0000
     jne loc_19a00                                ; 0199eb 7513
-    test byte ptr [byte_c5400], 1                ; 0199ed f60500540c0001
+    test byte ptr [settings2], 1                 ; 0199ed f60500540c0001
     je loc_19a00                                 ; 0199f4 740a
     call sub_837a8                               ; 0199f6 e8ad9d0600
     call sub_84729                               ; 0199fb e829ad0600
@@ -2261,7 +2261,7 @@ loc_19d87:
     jne loc_19dad                                ; 019d8f 751c
     cmp byte ptr [sound_enabled], 0              ; 019d91 803d30240d0000
     je loc_19dad                                 ; 019d98 7413
-    test byte ptr [byte_c5400], 1                ; 019d9a f60500540c0001
+    test byte ptr [settings2], 1                 ; 019d9a f60500540c0001
     je loc_19dad                                 ; 019da1 740a
     call sub_837a8                               ; 019da3 e8009a0600
     call sub_846f0                               ; 019da8 e843a90600
@@ -2309,7 +2309,7 @@ loc_19e40:
     jne loc_19a00                                ; 019e48 0f85b2fbffff
     cmp byte ptr [sound_enabled], 0              ; 019e4e 803d30240d0000
     je loc_19a00                                 ; 019e55 0f84a5fbffff
-    test byte ptr [byte_c5400], 1                ; 019e5b f60500540c0001
+    test byte ptr [settings2], 1                 ; 019e5b f60500540c0001
     je loc_19a00                                 ; 019e62 0f8498fbffff
 loc_19e68:
     call sub_836e4                               ; 019e68 e877980600
@@ -5303,7 +5303,7 @@ sub_1befd:
     mov byte ptr [byte_c5430], ah                ; 01bf53 882530540c00
     mov byte ptr [byte_c5431], ah                ; 01bf59 882531540c00
     mov byte ptr [byte_c5432], ah                ; 01bf5f 882532540c00
-    test byte ptr [byte_c5400], 2                ; 01bf65 f60500540c0002
+    test byte ptr [settings2], 2                 ; 01bf65 f60500540c0002
     jne loc_1bf73                                ; 01bf6c 7505
     call sub_15b76                               ; 01bf6e e8039cffff
 loc_1bf73:
@@ -5887,7 +5887,7 @@ loc_1c57b:
     mov edx, ebp                                 ; 01c5cc 89ea
     shl edx, 4                                   ; 01c5ce c1e204
     add eax, edx                                 ; 01c5d1 01d0
-    test byte ptr [byte_c5400], 2                ; 01c5d3 f60500540c0002
+    test byte ptr [settings2], 2                 ; 01c5d3 f60500540c0002
     je loc_1c623                                 ; 01c5da 7447
     xor edx, edx                                 ; 01c5dc 31d2
     mov dx, word ptr [esp + 0xd0]                ; 01c5de 668b9424d0000000

@@ -387,7 +387,7 @@ void __watcall score_goal(undefined4 *param_1)
         end_penalty_shot();
         set_state(&referee,0x1f);
         _dword_cc114 = 0;
-        _dword_cc110 = 0;
+        _penalty_shot_spot_x = 0;
       }
       if ((game_flags & 0x10) == 0) {
         sVar6 = dword_df622._2_2_ - dword_df722._2_2_;
@@ -763,10 +763,10 @@ LAB_0005b344:
 
 
 // ================================================================================================
-// sub_5b826 @ 0x5b826 [__watcall]
+// reset_team_for_period @ 0x5b826 [__watcall]
 // ================================================================================================
 
-void __watcall sub_5b826(int param_1)
+void __watcall reset_team_for_period(int param_1)
 
 {
   int iVar1;
@@ -2517,8 +2517,8 @@ void __watcall game_clock_tick(void)
   
   __CHK(0x14);
   if (penalty_shot_active != 0) {
-    dword_cc120 = dword_cc120 + -1;
-    if (0 < dword_cc120) {
+    penalty_shot_clock = penalty_shot_clock + -1;
+    if (0 < penalty_shot_clock) {
       return;
     }
     uStackY_14 = 0x5dc41;
@@ -2721,10 +2721,10 @@ void __watcall end_period_flag(void)
 
 
 // ================================================================================================
-// sub_5ddda @ 0x5ddda [__watcall]
+// period_start_reset @ 0x5ddda [__watcall]
 // ================================================================================================
 
-void __watcall sub_5ddda(void)
+void __watcall period_start_reset(void)
 
 {
   short sVar1;
@@ -2737,7 +2737,7 @@ void __watcall sub_5ddda(void)
   uVar2 = 0xdf614;
   iVar3 = 0xdf714;
   for (sVar1 = 0; sVar1 < 2; sVar1 = sVar1 + 1) {
-    sub_5b826(uVar2);
+    reset_team_for_period(uVar2);
     *(undefined2 *)(extraout_EDX + 0x2a) = 0;
     if ((((byte)option_flags & 4) != 0) &&
        (*(short *)(extraout_EDX + 0x36) != *(short *)(iVar3 + 0x36))) {
@@ -2765,7 +2765,7 @@ void __watcall sub_5de42(void)
   short sVar1;
   
   __CHK(0xc);
-  sub_5ddda();
+  period_start_reset();
   for (sVar1 = 0; sVar1 < 0x11; sVar1 = sVar1 + 1) {
     *(undefined2 *)((int)&entities + sVar1 * 0x80 + 2) = 0;
   }
@@ -4512,7 +4512,7 @@ longlong __watcall save_game(undefined4 param_1,uint unaff_EDX)
   puVar4[0x1f] = period_over;
   puVar4[0x20] = game_over;
   puVar4[0x21] = dword_cbebe._2_2_;
-  puVar4[0x22] = word_cbec2;
+  puVar4[0x22] = ref_hits;
   puVar4[0x23] = word_cbec4;
   puVar4[0x24] = (undefined2)dword_c5840;
   puVar4[0x25] = dword_cbec6;
@@ -4615,15 +4615,15 @@ longlong __watcall save_game(undefined4 param_1,uint unaff_EDX)
   *(undefined2 *)((int)puVar6 + 10) = dword_e9ab2._2_2_;
   *(undefined2 *)(puVar6 + 3) = (undefined2)breakaway_flag;
   *(undefined2 *)((int)puVar6 + 0xe) = (undefined2)penalty_shot_slot;
-  *(undefined2 *)(puVar6 + 4) = (undefined2)dword_cc100;
+  *(undefined2 *)(puVar6 + 4) = (undefined2)penalty_shot_roster;
   *(undefined2 *)((int)puVar6 + 0x12) = (undefined2)penalty_shot_team;
-  *(undefined2 *)(puVar6 + 5) = dword_cc108;
+  *(undefined2 *)(puVar6 + 5) = penalty_shot_user;
   *(undefined2 *)((int)puVar6 + 0x16) = dword_cc10c;
-  *(undefined2 *)(puVar6 + 6) = dword_cc110;
+  *(undefined2 *)(puVar6 + 6) = penalty_shot_spot_x;
   *(undefined2 *)((int)puVar6 + 0x1a) = dword_cc114;
   *(undefined2 *)(puVar6 + 7) = (undefined2)penalty_shot_phase;
   *(undefined2 *)((int)puVar6 + 0x1e) = (undefined2)penalty_shot_setup;
-  *(undefined2 *)(puVar6 + 8) = (undefined2)dword_cc120;
+  *(undefined2 *)(puVar6 + 8) = (undefined2)penalty_shot_clock;
   *(undefined2 *)((int)puVar6 + 0x22) = (undefined2)defenders_ahead;
   *(undefined2 *)(puVar6 + 9) = (undefined2)penalty_shot_active;
   *(undefined2 *)((int)puVar6 + 0x26) = (undefined2)penalty_shot_timer;
@@ -4841,7 +4841,7 @@ longlong __watcall savegame_io(undefined4 param_1,uint unaff_EDX)
   period_over = psVar7[0x1f];
   game_over = psVar7[0x20];
   dword_cbebe._2_2_ = psVar7[0x21];
-  word_cbec2 = psVar7[0x22];
+  ref_hits = psVar7[0x22];
   word_cbec4 = psVar7[0x23];
   dword_c5840 = (int)psVar7[0x24];
   dword_cbec6 = psVar7[0x25];
@@ -4964,15 +4964,15 @@ longlong __watcall savegame_io(undefined4 param_1,uint unaff_EDX)
   dword_e9ab2._2_2_ = psVar7[5];
   breakaway_flag = (int)psVar7[6];
   penalty_shot_slot = (int)psVar7[7];
-  dword_cc100 = (int)psVar7[8];
+  penalty_shot_roster = (int)psVar7[8];
   penalty_shot_team = (int)psVar7[9];
-  _dword_cc108 = (int)psVar7[10];
+  _penalty_shot_user = (int)psVar7[10];
   _dword_cc10c = (int)psVar7[0xb];
-  _dword_cc110 = (int)psVar7[0xc];
+  _penalty_shot_spot_x = (int)psVar7[0xc];
   _dword_cc114 = (int)psVar7[0xd];
   penalty_shot_phase = (int)psVar7[0xe];
   penalty_shot_setup = (int)psVar7[0xf];
-  dword_cc120 = (int)psVar7[0x10];
+  penalty_shot_clock = (int)psVar7[0x10];
   defenders_ahead = (int)psVar7[0x11];
   penalty_shot_active = (int)psVar7[0x12];
   penalty_shot_timer = (int)psVar7[0x13];
@@ -5809,8 +5809,8 @@ void __watcall show_penalty(void)
          *(undefined2 *)(pcVar8 + ((uint)bVar10 * -2 + 1) * 4);
     *(char *)((int)(puVar3 + (uint)bVar10 * -2 + 1) + (uint)bVar10 * -4 + 2) =
          (pcVar8 + ((uint)bVar10 * -2 + 1) * 4)[(uint)bVar10 * -4 + 2];
-    puVar1 = &rosters + dword_cc100 * 0x27 + penalty_shot_team * 0x444;
-    uVar2 = (&unk_db3ad)[dword_cc100 * 0x27 + penalty_shot_team * 0x444];
+    puVar1 = &rosters + penalty_shot_roster * 0x27 + penalty_shot_team * 0x444;
+    uVar2 = (&unk_db3ad)[penalty_shot_roster * 0x27 + penalty_shot_team * 0x444];
     puVar6 = &byte_e0308;
   }
   format_player_name(puVar6,&unk_c1b49,uVar2,puVar1 + 7,puVar1 + 0x17,&unk_c1b49);
@@ -5959,8 +5959,9 @@ LAB_000625df:
       sVar1 = _away_team_id;
     }
     say_penalty_shot_wrapper
-              ((&team_abbrev)[sVar1],(&unk_db3ad)[dword_cc100 * 0x27 + penalty_shot_team * 0x444],
-               param_5,param_6);
+              ((&team_abbrev)[sVar1],
+               (&unk_db3ad)[penalty_shot_roster * 0x27 + penalty_shot_team * 0x444],param_5,param_6)
+    ;
   }
   else {
     if (_dword_e9aac >> 0x10 == param_1) {

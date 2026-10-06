@@ -2,8 +2,8 @@ class_name AI
 ## The AI state machine: ports of the `ai_*` handlers dispatched by sim_update_players through
 ## ai_state_handlers[state]. Every player, the puck, its shadow and the referee run one handler per
 ## step. States and handlers are listed in re/nhl_hockey/STRUCTURES.md; the mapping below follows
-## ai_state_names. The anthem, the three stars and the cup ceremony are not ported: their states
-## fall through to the default role of the player.
+## ai_state_names. The anthem, the goal celebration, the three stars and the cup ceremony are in
+## Ceremonies.gd.
 
 static func dispatch(sim: Sim, e: Entity) -> void:
 	match e.state():
@@ -13,7 +13,7 @@ static func dispatch(sim: Sim, e: Entity) -> void:
 		Entity.State.WING_OFFENSE: wing_offense(sim, e)
 		Entity.State.CENTER_DEFENSE: center_defense(sim, e)
 		Entity.State.CENTER_OFFENSE: center_offense(sim, e)
-		Entity.State.CELEBRATE: celebrate(sim, e)
+		Entity.State.CELEBRATE: Ceremonies.celebrate(sim, e)
 		Entity.State.GOALIE: goalie(sim, e)
 		Entity.State.GOALIE_GET_PUCK: goalie_get_puck(sim, e)
 		Entity.State.PUCK_CARRIER: puck_carrier(sim, e)
@@ -43,6 +43,13 @@ static func dispatch(sim: Sim, e: Entity) -> void:
 		Entity.State.EXIT_PENALTY_BOX: exit_penalty_box(sim, e)
 		Entity.State.INIT_PERIOD: init_period(sim, e)
 		Entity.State.BREAKAWAY: breakaway(sim, e)
+		Entity.State.ANTHEM: Ceremonies.anthem(sim, e)
+		Entity.State.REF_ANTHEM: Ceremonies.ref_anthem(sim, e)
+		Entity.State.THREE_STARS: Ceremonies.three_stars(sim, e)
+		Entity.State.REF_THREE_STARS: Ceremonies.ref_three_stars(sim, e)
+		Entity.State.STANLEY_CUP: Ceremonies.stanley_cup(sim, e)
+		Entity.State.GET_CUP: Ceremonies.get_cup(sim, e)
+		Entity.State.PUCK_GIVE_CUP: Ceremonies.puck_give_cup(sim, e)
 		Entity.State.REF_PENALTY_SHOT: ref_penalty_shot(sim, e)
 		Entity.State.PENALTY_SHOT_WAIT: penalty_shot_wait(sim, e)
 		Entity.State.GAME_MISCONDUCT: game_misconduct(sim, e)
@@ -699,38 +706,6 @@ static func center_offense(sim: Sim, e: Entity) -> void:
 			e.target_y = z[2] + sim.random(z[3] * 2) - z[3]
 	var ty := e.target_y if (e.flags & Entity.F_ATTACK_UP) else -e.target_y
 	skate_towards(sim, e, e.target_x, ty, 1)
-
-## ai_celebrate_goal (0x4a90f): after a goal the scoring team swarms the scorer
-static func celebrate(sim: Sim, e: Entity) -> void:
-	if e.flags & Entity.F_BUSY:
-		return
-	if Lines.handle_line_change(sim, e):
-		return
-	if sim.puck_carrier == e.slot:
-		sim.puck_carrier = -1
-		if sim.puck.state() == Entity.State.PUCK_NORMAL:
-			sim.puck.set_state(Entity.State.PUCK_IDLE)
-	if e.flags & Entity.F_BUSY:
-		return
-	if e.flags & Entity.F_STATE_ENTERED:
-		e.flags &= ~Entity.F_STATE_ENTERED
-		e.timer_a = sim.random(0x78)
-		e.want_dir = 8
-		if not sim.game_over:
-			e.target_x = -100 if sim.camera_x < 0 else 100
-			e.target_y = sim.camera_y - (0x37 if sim.camera_x < 0 else 0)
-		else:
-			e.target_x = -0x50
-			e.target_y = 0
-	e.timer_a -= 1
-	if e.timer_a < 0:
-		e.flags |= Entity.F_BUSY
-		e.timer_a = sim.random(0x78)
-		Anim.set_animation(e, 0x769 if e.slot == sim.last_shooter else 0x731)
-		return
-	if e.flags & Entity.F_USER:
-		return
-	skate_towards(sim, e, e.target_x, e.target_y)
 
 # --------------------------------------------------------------------------------------------
 # the puck carrier and the chasers (puckc nearest shoot passrec abreak)
@@ -1562,6 +1537,10 @@ static func puck_faceoff(sim: Sim, e: Entity) -> void:
 		Lines.cpu_pull_goalie_check(sim)
 		for i in 12:
 			sim.entities[i].flags2 &= ~Entity.F2_LINE_CHANGE
+		if sim.opt_line_changes and (sim.user1_team != 0 or sim.user2_team != 0) and sim.penalty_box_mode:
+			# the users get their line change prompt: the penalty box sequence ends here
+			sim.action_hold_camera = true
+			sim.penalty_box_mode = false
 		for t in 2:
 			var team := sim.teams[t]
 			var other := sim.teams[1 - t]
@@ -1604,8 +1583,10 @@ static func puck_faceoff2(sim: Sim, e: Entity) -> void:
 		sim.skip_wait = false
 		sim.ref_phase = -1
 		sim.whistle_timer = 0
+		sim.penalty_box_mode = false
 		sim.infractions.clear()
 		sim.penalty_shot_setup = false
+		InfoPanel.reset(sim)
 		if sim.penalty_shot_phase != 0:
 			penalty_shot_go(sim, e)
 			return
@@ -1959,6 +1940,18 @@ static func ref_call_penalty(sim: Sim, e: Entity) -> void:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		var inf := clampi(sim.ref_infraction, 0, 31)
 		if Tables.ref_signal_dir[inf] < 0:
+			if inf == Rules.INF_GOAL:
+				# the goal is announced on the panel (announce_goal)
+				var t := 0
+				for k in 2:
+					if sim.teams[k].attacks_up == (sim.puck.yi > 0):
+						t = k
+				var team := sim.teams[t]
+				var a1: int = team.carrier_history[1] if team.carrier_history[1] >= 0 else -1
+				var a2: int = team.carrier_history[2] if team.carrier_history[2] >= 0 else -1
+				if a1 < 0:
+					a2 = -1
+				InfoPanel.announce_goal(sim, t, team.carrier_history[0], a1, a2)
 			e.set_state(Entity.State.REF_PICKUP)
 			return
 		e.want_dir = 8
@@ -1992,6 +1985,10 @@ static func ref_call_penalty(sim: Sim, e: Entity) -> void:
 static func ref_pickup(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_BUSY:
 		return
+	# the referee waits while the panel opens and plays its clip (not for the fans or the clapping)
+	if sim.clip != InfoPanel.CLIP_CLAP and sim.clip != InfoPanel.CLIP_FAN_ANTHEM and sim.panel >= 0 and sim.panel < InfoPanel.HELD:
+		Anim.set_animation(e, Anim.REF_GLIDE)
+		return
 	var puck := sim.puck
 	if not sim.infractions.is_empty() and not sim.infractions[sim.infractions.size() - 1][2]:
 		Anim.set_animation(e, Anim.REF_GLIDE)
@@ -2016,6 +2013,17 @@ static func ref_pickup(sim: Sim, e: Entity) -> void:
 		e.push_x = 0
 		e.push_y = 0
 		Anim.set_animation(e, Anim.REF_GLIDE)
+		# a goalie who made the save that froze the puck gets the SAVED clip; after routine
+		# stoppages the announcer or the crowd (ref_check_announcements)
+		if sim.ref_infraction == Rules.INF_GOALIE_HOLD and sim.ref_infraction_slot >= 0 and sim.ref_infraction_slot < 12 \
+				and sim.entities[sim.ref_infraction_slot].save_result != 0:
+			sim.entities[sim.ref_infraction_slot].save_result = 0
+			InfoPanel.load_clip(sim, InfoPanel.CLIP_SAVE)
+			InfoPanel.open(sim)
+			return
+		if sim.ref_infraction != Rules.INF_GOAL and InfoPanel.ref_announcements(sim):
+			return
+		InfoPanel.close(sim)
 	if sim.puck_carrier >= 0 and sim.puck_carrier != Entity.Slot.REFEREE:
 		sim.puck_carrier = -1
 		puck.set_state(Entity.State.PUCK_IDLE)

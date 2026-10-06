@@ -619,7 +619,7 @@ loc_7b151:
     test byte ptr [byte_ed361], 1                ; 07b15a f60561d30e0001
     setne al                                     ; 07b161 0f95c0
     and eax, 1                                   ; 07b164 83e001
-    and byte ptr [byte_c5400], 0xfe              ; 07b167 802500540c00fe
+    and byte ptr [settings2], 0xfe               ; 07b167 802500540c00fe
     shl eax, 8                                   ; 07b16e c1e008
     or dword ptr [option_flags], eax             ; 07b171 0905ff530c00
 loc_7b177:
@@ -681,7 +681,7 @@ loc_7b20f:
     jmp loc_7b1fc                                ; 07b218 ebe2
 
 loc_7b21a:
-    or byte ptr [byte_c5400], 0x70               ; 07b21a 800d00540c0070
+    or byte ptr [settings2], 0x70                ; 07b21a 800d00540c0070
 loc_7b221:
     test byte ptr [option_flags], 0x40           ; 07b221 f605ff530c0040
     je loc_7b27a                                 ; 07b228 7450
@@ -1742,7 +1742,7 @@ loc_7bd9b:
     test byte ptr [byte_ed361], 1                ; 07bda4 f60561d30e0001
     setne al                                     ; 07bdab 0f95c0
     and eax, 1                                   ; 07bdae 83e001
-    and byte ptr [byte_c5400], 0xfe              ; 07bdb1 802500540c00fe
+    and byte ptr [settings2], 0xfe               ; 07bdb1 802500540c00fe
     shl eax, 8                                   ; 07bdb8 c1e008
     or dword ptr [option_flags], eax             ; 07bdbb 0905ff530c00
 loc_7bdc1:
@@ -2554,7 +2554,7 @@ loc_7c665:
     test byte ptr [byte_ed361], 1                ; 07c66e f60561d30e0001
     setne al                                     ; 07c675 0f95c0
     and eax, 1                                   ; 07c678 83e001
-    and byte ptr [byte_c5400], 0xfe              ; 07c67b 802500540c00fe
+    and byte ptr [settings2], 0xfe               ; 07c67b 802500540c00fe
     shl eax, 8                                   ; 07c682 c1e008
     or dword ptr [option_flags], eax             ; 07c685 0905ff530c00
 loc_7c68b:
@@ -11202,11 +11202,11 @@ loc_82c2e:
 loc_82c63:
     cmp byte ptr [sound_enabled], 0              ; 082c63 803d30240d0000
     je loc_82c78                                 ; 082c6a 740c
-    or byte ptr [byte_c5400], 1                  ; 082c6c 800d00540c0001
+    or byte ptr [settings2], 1                   ; 082c6c 800d00540c0001
     jmp loc_82d4e                                ; 082c73 e9d6000000
 
 loc_82c78:
-    and byte ptr [byte_c5400], 0xfe              ; 082c78 802500540c00fe
+    and byte ptr [settings2], 0xfe               ; 082c78 802500540c00fe
     jmp loc_82d4e                                ; 082c7f e9ca000000
 
 loc_82c84:

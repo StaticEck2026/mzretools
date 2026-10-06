@@ -13,6 +13,7 @@ static var ai_state_names: PackedStringArray
 static var team_abbrev: PackedStringArray
 static var team_strings: PackedStringArray
 static var message_strings: PackedStringArray
+static var star_names: PackedStringArray       # "1st", "2nd", "3rd" (ai_ref_three_stars)
 static var turn_table: PackedInt32Array           # heading change per step by (dir - facing) & 7
 static var max_speed_sq: PackedInt32Array         # squared speed limit per energy level
 static var infraction_priority: PackedInt32Array
@@ -41,6 +42,16 @@ static var lineup_slot_types: Array = []          # [mode][k]: position type of 
 static var line_table_lists: Array = []           # [type]: preference list of line table offsets (line 0..7 first)
 static var line_preference: Array = []            # [strategy][line]: candidate lines of choose_line
 static var line_rotation: Array = []              # [group * 8 + line]: lines offered by the line change prompt
+static var clip_scripts: Array = []              # scoreboard clips: [count, frame, frame, ...]
+static var clip_frame_steps: Array = []           # steps per clip frame
+static var clip_closes: Array = []                # the panel closes after the clip
+static var penalty_names: PackedStringArray       # show_penalty: name per penalty (type - 9)
+static var anthem_country: Array = []             # init_match: 0 Canada, 1 USA per team
+static var anthem_length: Array = []              # steps of the anthem per country
+static var anthem_fidgets: Array = []             # ai_anthem: idle animations on the blue line
+static var star_shutout_shots: Array = []         # compute_three_stars thresholds per period length
+static var star_save_shots: Array = []
+static var star_laps: Array = []                  # ai_three_stars: [team][point] = [x, y]
 static var check_anims: Array = []                # resolve_body_check: checker animation per relative direction
 static var knockdown_right_x: Array = []          # knock_down: x against the right boards per facing
 static var knockdown_left_x: Array = []
@@ -69,6 +80,7 @@ static func load_tables() -> void:
 	team_abbrev = PackedStringArray(t["team_abbrev"])
 	team_strings = PackedStringArray(t["team_strings"])
 	message_strings = PackedStringArray(t["message_strings"])
+	star_names = PackedStringArray(t["star_names"])
 	turn_table = PackedInt32Array(t["turn_table"])
 	max_speed_sq = PackedInt32Array(t["max_speed_sq"])
 	infraction_priority = PackedInt32Array(t["infraction_priority"])
@@ -98,6 +110,16 @@ static func load_tables() -> void:
 	line_preference = _ints(t["line_preference"])
 	line_rotation = _ints(t["line_rotation"])
 	check_anims = _ints(t["check_anims"])
+	clip_scripts = _ints(t["clip_scripts"])
+	clip_frame_steps = _ints(t["clip_frame_steps"])
+	clip_closes = _ints(t["clip_closes"])
+	penalty_names = PackedStringArray(t["penalty_names"])
+	anthem_country = _ints(t["anthem_country"])
+	anthem_length = _ints(t["anthem_length"])
+	anthem_fidgets = _ints(t["anthem_fidgets"])
+	star_shutout_shots = _ints(t["star_shutout_shots"])
+	star_save_shots = _ints(t["star_save_shots"])
+	star_laps = _ints(t["star_laps"])
 	knockdown_right_x = _ints(t["knockdown_right_x"])
 	knockdown_left_x = _ints(t["knockdown_left_x"])
 	knockdown_right2_x = _ints(t["knockdown_right2_x"])

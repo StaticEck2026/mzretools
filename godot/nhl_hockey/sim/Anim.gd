@@ -20,14 +20,18 @@ const HOOK_B := 0x873
 const SKATE_HOOKED := 0x8d3
 const FACEOFF := 0x7a1
 const GOALIE_IDLE := 0x1f1
-# referee: the second id of each pair is used while the play is stopped (whistle_timer / stop_flags)
+# referee: the _ARM variants (arm raised) while the whistle sounds, a call is delayed or the offside
+# warning is up during play (Sim.ref_arm_up)
 const REF_GLIDE := 0xa5b
-const REF_GLIDE_STOPPED := 0xb4b
+const REF_GLIDE_ARM := 0xb4b
 const REF_SKATE := 0xa73
-const REF_SKATE_STOPPED := 0xb63
+const REF_SKATE_ARM := 0xb63
 const REF_TURN_L := 0xabb
+const REF_TURN_L_ARM := 0xbab
 const REF_TURN_R := 0xad3
+const REF_TURN_R_ARM := 0xbc3
 const REF_STOP := 0xaeb
+const REF_STOP_ARM := 0xbdb
 
 static func set_animation(e: Entity, id: int) -> void:
 	if id != e.anim:

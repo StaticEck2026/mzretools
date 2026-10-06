@@ -510,7 +510,7 @@ loc_8bd03:
 loc_8bd20:
     cmp byte ptr [sound_enabled], 0              ; 08bd20 803d30240d0000
     je loc_8bd3e                                 ; 08bd27 7415
-    test byte ptr [byte_c5400], 1                ; 08bd29 f60500540c0001
+    test byte ptr [settings2], 1                 ; 08bd29 f60500540c0001
     je loc_8bd3e                                 ; 08bd30 740c
     mov edi, 1                                   ; 08bd32 bf01000000
     call sub_8473a                               ; 08bd37 e8fe89ffff
@@ -554,7 +554,7 @@ loc_8bdab:
     call make_path                               ; 08bdb2 e86785f8ff
     cmp byte ptr [sound_enabled], 0              ; 08bdb7 803d30240d0000
     je loc_8bdd2                                 ; 08bdbe 7412
-    test byte ptr [byte_c5400], 1                ; 08bdc0 f60500540c0001
+    test byte ptr [settings2], 1                 ; 08bdc0 f60500540c0001
     je loc_8bdd2                                 ; 08bdc7 7409
 loc_8bdc9:
     call sub_836e4                               ; 08bdc9 e81679ffff
@@ -578,7 +578,7 @@ loc_8bdd2:
     call fade_palette_to                         ; 08be08 e88b57f8ff
     cmp byte ptr [sound_enabled], 0              ; 08be0d 803d30240d0000
     je loc_8be2d                                 ; 08be14 7417
-    test byte ptr [byte_c5400], 1                ; 08be16 f60500540c0001
+    test byte ptr [settings2], 1                 ; 08be16 f60500540c0001
     je loc_8be2d                                 ; 08be1d 740e
     call sub_8373e                               ; 08be1f e81a79ffff
 loc_8be24:

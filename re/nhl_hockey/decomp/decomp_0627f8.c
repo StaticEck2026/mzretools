@@ -405,7 +405,7 @@ void __watcall penalty_box_update(void)
     sVar6 = (short)*(char *)((int)&infraction_queue + iVar3 + 3);
     iVar4 = (int)sVar6;
     if (sVar6 == 0x1a) {
-      sub_64398();
+      begin_penalty_shot();
       sVar6 = dword_e9ab6._2_2_ - clock_seconds;
       if ((clock_seconds < 0x3c) && (clock_sub != 0)) {
         sVar6 = sVar6 + -1;
@@ -615,7 +615,7 @@ void __watcall start_stoppage(short param_1)
       }
     }
     if (penalty_shot_setup != 0) {
-      faceoff_spot._0_2_ = dword_cc110;
+      faceoff_spot._0_2_ = penalty_shot_spot_x;
       faceoff_spot._2_2_ = dword_cc114;
     }
     if ((short)faceoff_spot < 0x60) {
@@ -752,10 +752,11 @@ LAB_00063879:
 
 
 // ================================================================================================
-// sub_6392a @ 0x6392a [__watcall]
+// release_from_box @ 0x6392a [__watcall]
 // ================================================================================================
 
-void __watcall sub_6392a(int param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_ECX)
+void __watcall
+release_from_box(int param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   uint uVar1;
@@ -828,7 +829,7 @@ void __watcall penalty_expired(int param_1,short unaff_DX)
   iVar1 = unaff_DX * 2 + param_1;
   if ((*(ushort *)(iVar1 + 0x7e) & 0x3fff) < 6) {
     if (*(short *)(iVar1 + 0x7e) == 0) {
-      sub_6392a(param_1);
+      release_from_box(param_1);
     }
     play_sfx(0x97);
   }
@@ -1160,7 +1161,7 @@ LAB_00063e4f:
     iVar4 = (int)sVar3;
     *(undefined2 *)(iVar7 + 0x7e + iVar4 * 2) = 0;
     *(undefined *)(*(int *)(iVar7 + 0xee) + iVar4 * 0x27) = 7;
-    sub_6392a(iVar7,iVar4);
+    release_from_box(iVar7,iVar4);
     sub_14ca0(param_1 == 0,*(undefined *)(iVar4 * 0x27 + 5 + *(int *)(iVar7 + 0xee)));
     sVar3 = 1;
     while (cVar1 = *(char *)((int)sVar3 + (int)sVar5 + 0xb6 + iVar7),
@@ -1227,7 +1228,7 @@ void __watcall start_penalty_shot(void)
   *p_puck_carrier = (undefined)penalty_shot_slot;
   penalty_shot_active = 1;
   penalty_shot_setup = 1;
-  dword_cc120 = 1000;
+  penalty_shot_clock = 1000;
   clear_infractions();
   return;
 }
@@ -1309,10 +1310,10 @@ LAB_0006346e:
 
 
 // ================================================================================================
-// sub_6427f @ 0x6427f [__watcall]
+// breakaway_foul @ 0x6427f [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_6427f(int param_1,uint unaff_EDX)
+longlong __watcall breakaway_foul(int param_1,uint unaff_EDX)
 
 {
   int iVar1;
@@ -1377,12 +1378,12 @@ longlong __watcall note_breakaway(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_64398 @ 0x64398 [__watcall]
+// begin_penalty_shot @ 0x64398 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __watcall sub_64398(void)
+void __watcall begin_penalty_shot(void)
 
 {
   int iVar1;
@@ -1399,9 +1400,9 @@ void __watcall sub_64398(void)
     *(short *)(iVar1 + 0x20) = *(short *)(iVar1 + 0x20) + 1;
     dword_df648._2_2_ = 1;
     dword_df748._2_2_ = 1;
-    dword_cc100 = *(int *)(&unk_df860 + penalty_shot_slot * 0x80) >> 0x18;
+    penalty_shot_roster = *(int *)(&unk_df860 + penalty_shot_slot * 0x80) >> 0x18;
     penalty_shot_phase = 1;
-    _dword_cc110 = (int)(short)faceoff_spot;
+    _penalty_shot_spot_x = (int)(short)faceoff_spot;
     _dword_cc114 = (int)faceoff_spot._2_2_;
     faceoff_spot._0_2_ = 0;
     faceoff_spot._2_2_ = 0;
@@ -1424,7 +1425,7 @@ end_penalty_shot(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,un
     penalty_shot_active = 0;
     penalty_shot_slot = 0xffffffff;
     queue_infraction(&puck,5,unaff_EBX,0,unaff_EDX,unaff_ECX);
-    last_touch_x = dword_cc110;
+    last_touch_x = penalty_shot_spot_x;
     last_touch_y = dword_cc114;
     set_state(&referee,0x21);
   }
@@ -3944,8 +3945,9 @@ void __watcall dump_stats_log(void)
     acStack_218[0] = '\0';
     iVar3 = sprintf(acStack_218,unk_c234f,ram0x000df63c >> 0x10,dword_df73c >> 0x10);
     iVar4 = sprintf(acStack_218 + iVar3,aPsDDDDDFDDDDBDD,penalty_shot_phase,penalty_shot_active,
-                    penalty_shot_setup,dword_cc120,penalty_shot_timer,penalty_shot_slot,dword_cc100,
-                    penalty_shot_team,_dword_cc108,defenders_ahead,breakaway_flag);
+                    penalty_shot_setup,penalty_shot_clock,penalty_shot_timer,penalty_shot_slot,
+                    penalty_shot_roster,penalty_shot_team,_penalty_shot_user,defenders_ahead,
+                    breakaway_flag);
     uVar5 = all_players_arrived();
     sub_935e0(aLipD,uVar5);
     iVar6 = sprintf(acStack_218 + iVar3 + iVar4,aHVposDDDD,(int)(short)camera,(int)camera._2_2_,
@@ -4422,7 +4424,7 @@ simulate_game_offscreen
   *(undefined4 *)((int)puVar16 + -4) = 0x69765;
   count_penalized();
   *(undefined4 *)((int)puVar16 + -4) = 0x6976f;
-  sub_5b826(0xdf614);
+  reset_team_for_period(0xdf614);
   *(undefined4 *)((int)puVar16 + -4) = 0x69779;
   apply_line_change(0xdf614);
   *(undefined4 *)((int)puVar16 + -4) = 0x69783;
@@ -4431,7 +4433,7 @@ simulate_game_offscreen
   word_df646 = extraout_DX_00;
   dword_df648._0_2_ = extraout_DX_00;
   *(undefined4 *)((int)puVar16 + -4) = 0x697a4;
-  sub_5b826(0xdf714);
+  reset_team_for_period(0xdf714);
   *(undefined4 *)((int)puVar16 + -4) = 0x697ae;
   apply_line_change(0xdf714);
   *(undefined4 *)((int)puVar16 + -4) = 0x697b8;

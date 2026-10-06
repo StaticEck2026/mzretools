@@ -2901,7 +2901,7 @@ void __watcall reset_game_state(void)
   dword_df00c = 0;
   dword_cbeca._0_2_ = 0;
   dword_cbec6 = 0;
-  word_cbec2 = 0;
+  ref_hits = 0;
   _word_cbec8 = 0xffff;
   word_cbece = 0xffff;
   dword_cbeca._2_2_ = 0xffff;

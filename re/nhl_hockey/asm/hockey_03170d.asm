@@ -1805,7 +1805,7 @@ loc_32dcd:
     mov dword ptr [dword_c65cc], exh_hub_standings ; 032df1 c705cc650c00fa03..
     mov dword ptr [dword_c65d0], exh_hub_stats   ; 032dfb c705d0650c001a05..
     call sub_10712                               ; 032e05 e808d9fdff
-    or byte ptr [byte_c5400], 2                  ; 032e0a 800d00540c0002
+    or byte ptr [settings2], 2                   ; 032e0a 800d00540c0002
     cmp dword ptr [esi], 0                       ; 032e11 833e00
     jge loc_32e3a                                ; 032e14 7d24
     xor eax, eax                                 ; 032e16 31c0
@@ -6929,11 +6929,11 @@ loc_373ad:
     mov dword ptr [dword_dc234], eax             ; 0373b5 a334c20d00
     cmp word ptr [word_ddd46], 0x444             ; 0373ba 66813d46dd0d0044..
     jge loc_373ce                                ; 0373c3 7d09
-    or byte ptr [byte_c5400], 2                  ; 0373c5 800d00540c0002
+    or byte ptr [settings2], 2                   ; 0373c5 800d00540c0002
     jmp loc_373d5                                ; 0373cc eb07
 
 loc_373ce:
-    and byte ptr [byte_c5400], 0xfd              ; 0373ce 802500540c00fd
+    and byte ptr [settings2], 0xfd               ; 0373ce 802500540c00fd
 loc_373d5:
     cmp dword ptr [edi], 0                       ; 0373d5 833f00
     jge loc_37408                                ; 0373d8 7d2e

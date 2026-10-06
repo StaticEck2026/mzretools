@@ -563,10 +563,10 @@
 000534bb	func	try_shot_block	124	__watcall
 00053537	func	ai_try_check	360	__watcall
 0005369f	func	penalty_odds	238	__watcall
-0005378d	func	sub_5378d	159	__watcall
+0005378d	func	facing_boards	159	__watcall
 0005382c	func	resolve_body_check	1209	__watcall
 00053ce5	func	collide_player_net	389	__watcall
-00053e6a	func	check_injury	290	__watcall
+00053e6a	func	goalie_collision	290	__watcall
 00053f8c	func	pull_goalie_logic	424	__watcall
 00054134	func	stickhandling_skill	150	__watcall
 000541ca	func	two_line_pass_check	192	__watcall
@@ -590,8 +590,8 @@
 00055e72	func	injure_player	427	__watcall
 0005601d	func	knockdown_position	702	__watcall
 000562db	func	knock_down	1913	__watcall
-00056a54	func	resolve_hook_hit	293	__watcall
-00056b79	func	resolve_poke_hit	397	__watcall
+00056a54	func	resolve_dive_hit	293	__watcall
+00056b79	func	resolve_hook_hold	397	__watcall
 00056d06	func	attach_puck_to_stick	332	__watcall
 00056e52	func	check_icing	125	__watcall
 00056ecf	func	ai_puck_shadow	139	__watcall
@@ -666,7 +666,7 @@
 0005b1ce	func	follow_puck_user_switch	202	__watcall
 0005b298	func	set_default_state	45	__watcall
 0005b2c5	func	put_player_on_ice	1377	__watcall
-0005b826	func	sub_5b826	91	__watcall
+0005b826	func	reset_team_for_period	91	__watcall
 0005b881	func	sub_5b881	249	__watcall
 0005b97a	func	sub_5b97a	87	__watcall
 0005b9d1	func	sub_5b9d1	54	__watcall
@@ -693,7 +693,7 @@
 0005dd7c	func	sort_draw_order2	34	__watcall
 0005dd9e	func	sub_5dd9e	30	__watcall
 0005ddbc	func	end_period_flag	30	__watcall
-0005ddda	func	sub_5ddda	104	__watcall
+0005ddda	func	period_start_reset	104	__watcall
 0005de42	func	sub_5de42	46	__watcall
 0005de70	func	period_cleanup	54	__watcall
 0005dea6	func	end_of_period	224	__watcall
@@ -743,7 +743,7 @@
 00063475	func	sub_63475	206	__watcall
 00063543	func	start_stoppage	626	__watcall
 000637b5	func	process_infractions	373	__watcall
-0006392a	func	sub_6392a	122	__watcall
+0006392a	func	release_from_box	122	__watcall
 000639a4	func	zone_time_stats	85	__watcall
 000639f9	func	penalty_expired	62	__watcall
 00063a37	func	penalty_timers	288	__watcall
@@ -755,9 +755,9 @@
 00063d69	func	goal_ends_penalty	521	__watcall
 00063f72	func	start_penalty_shot	400	__watcall
 00064102	func	count_defenders_ahead	381	__watcall
-0006427f	func	sub_6427f	185	__watcall
+0006427f	func	breakaway_foul	185	__watcall
 00064338	func	note_breakaway	96	__watcall
-00064398	func	sub_64398	161	__watcall
+00064398	func	begin_penalty_shot	161	__watcall
 00064439	func	end_penalty_shot	111	__watcall
 000644a8	func	sub_644a8	183	__watcall
 0006455f	func	sub_6455f	181	__watcall
@@ -4699,7 +4699,7 @@
 000c53f7	data	dword_c53f7	4	
 000c53fb	data	dword_c53fb	4	
 000c53ff	data	option_flags	4	
-000c5400	data	byte_c5400	1	
+000c5400	data	settings2	1	
 000c5403	data	dword_c5403	4	
 000c5407	data	dword_c5407	4	
 000c540b	data	dword_c540b	4	
@@ -5568,7 +5568,7 @@
 000cbea8	data	faceoff_lineup	0	
 000cbebe	data	dword_cbebe	4	
 000cbec0	data	word_cbec0	2	
-000cbec2	data	word_cbec2	2	
+000cbec2	data	ref_hits	2	
 000cbec4	data	word_cbec4	2	
 000cbec6	data	dword_cbec6	4	
 000cbec8	data	word_cbec8	2	
@@ -5606,15 +5606,15 @@
 000cc0f8	data	breakaway_flag	4	
 000cc0fa	data	dword_cc0fa	4	
 000cc0fc	data	penalty_shot_slot	4	
-000cc100	data	dword_cc100	4	
+000cc100	data	penalty_shot_roster	4	
 000cc104	data	penalty_shot_team	4	
-000cc108	data	dword_cc108	4	
+000cc108	data	penalty_shot_user	4	
 000cc10c	data	dword_cc10c	4	
-000cc110	data	dword_cc110	4	
+000cc110	data	penalty_shot_spot_x	4	
 000cc114	data	dword_cc114	4	
 000cc118	data	penalty_shot_phase	4	
 000cc11c	data	penalty_shot_setup	4	
-000cc120	data	dword_cc120	4	
+000cc120	data	penalty_shot_clock	4	
 000cc124	data	defenders_ahead	4	
 000cc128	data	penalty_shot_active	4	
 000cc12c	data	penalty_shot_timer	4	
@@ -5659,7 +5659,7 @@
 000ccb5a	data	unk_ccb5a	0	
 000ccbba	data	onetimer_offsets	0	
 000ccbbb	data	unk_ccbbb	0	
-000ccbcc	data	unk_ccbcc	0	
+000ccbcc	data	knockdown_right_x	0	
 000ccbdc	data	unk_ccbdc	0	
 000ccbec	data	unk_ccbec	0	
 000ccbfc	data	unk_ccbfc	0	
@@ -8039,7 +8039,7 @@
 000e9af8	data	unk_e9af8	0	
 000e9afa	data	unk_e9afa	0	
 000e9b04	data	dword_e9b04	4	
-000e9b28	data	word_e9b28	2	
+000e9b28	data	last_impact	2	
 000e9b2a	data	unk_e9b2a	0	
 000e9b2c	data	unk_e9b2c	0	
 000e9b4c	data	unk_e9b4c	0	

@@ -2956,13 +2956,13 @@ void __watcall init_match(void)
   user2_slot = 0xffff;
   _user1_slot = 0xffff;
   local_28 = 0x47dbc;
-  sub_5b826(0xdf614);
+  reset_team_for_period(0xdf614);
   local_28 = 0x47dc6;
   apply_line_change(0xdf614);
   local_28 = 0x47dd0;
   dress_line(0xdf614);
   local_28 = 0x47dda;
-  sub_5b826(0xdf714);
+  reset_team_for_period(0xdf714);
   local_28 = 0x47de4;
   apply_line_change(0xdf714);
   local_28 = 0x47dee;

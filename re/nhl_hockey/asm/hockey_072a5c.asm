@@ -5695,7 +5695,7 @@ loc_76854:
 loc_76881:
     cmp byte ptr [sound_enabled], 0              ; 076881 803d30240d0000
     je loc_768a1                                 ; 076888 7417
-    test byte ptr [byte_c5400], 1                ; 07688a f60500540c0001
+    test byte ptr [settings2], 1                 ; 07688a f60500540c0001
     je loc_768a1                                 ; 076891 740e
     call sub_8373e                               ; 076893 e8a6ce0000
 loc_76898:

@@ -440,7 +440,7 @@ loc_5ad2e:
     call play_crowd_chant                        ; 05ad35 e83c680000
     cmp word ptr [esp + 4], 0                    ; 05ad3a 66837c240400
     jne loc_5ad6b                                ; 05ad40 7529
-    test byte ptr [byte_c5400], 1                ; 05ad42 f60500540c0001
+    test byte ptr [settings2], 1                 ; 05ad42 f60500540c0001
     je loc_5ad54                                 ; 05ad49 7409
     cmp byte ptr [sound_enabled], 0              ; 05ad4b 803d30240d0000
     jne loc_5ad5b                                ; 05ad52 7507
@@ -710,7 +710,7 @@ loc_5b04c:
     call set_state                               ; 05b0b2 e83d6ffbff
     xor edx, edx                                 ; 05b0b7 31d2
     mov dword ptr [dword_cc114], edx             ; 05b0b9 891514c10c00
-    mov dword ptr [dword_cc110], edx             ; 05b0bf 891510c10c00
+    mov dword ptr [penalty_shot_spot_x], edx     ; 05b0bf 891510c10c00
 loc_5b0c5:
     test byte ptr [game_flags], 0x10             ; 05b0c5 f605bb900c0010
     jne loc_5b1c6                                ; 05b0cc 0f85f4000000
@@ -866,7 +866,7 @@ loc_5b293:
 ; ====================================================================================================
 ; set_default_state  [0x5b298, 45 bytes, 14 instructions]
 ; set_default_state(entity): AI state for the player's position
-; called by: ai_bench, handle_line_change, dress_line, sub_6392a
+; called by: ai_bench, handle_line_change, dress_line, release_from_box
 ; ====================================================================================================
 set_default_state:
     push 8                                       ; 05b298 6808000000
@@ -889,7 +889,7 @@ loc_5b2c3:
 ; ====================================================================================================
 ; put_player_on_ice  [0x5b2c5, 1377 bytes, 437 instructions]
 ; put_player_on_ice(entity, roster_idx): assigns the roster player to the entity, bench/penalty states
-; called by: ai_ref_three_stars, ai_bench, ai_bench_wait, setup_faceoff, dress_line, sub_6392a
+; called by: ai_ref_three_stars, ai_bench, ai_bench_wait, setup_faceoff, dress_line, release_from_box
 ; ====================================================================================================
 put_player_on_ice:
     push 0x34                                    ; 05b2c5 6834000000
@@ -1394,10 +1394,11 @@ loc_5b81e:
 
 
 ; ====================================================================================================
-; sub_5b826  [0x5b826, 91 bytes, 32 instructions]
-; called by: init_match, sub_5ddda, simulate_game_offscreen
+; reset_team_for_period  [0x5b826, 91 bytes, 32 instructions]
+; energy back to 0x1000, players hurt for the period return
+; called by: init_match, period_start_reset, simulate_game_offscreen
 ; ====================================================================================================
-sub_5b826:
+reset_team_for_period:
     push 0x18                                    ; 05b826 6818000000
     call __CHK                                   ; 05b82b e81c110300
     push ebx                                     ; 05b830 53
@@ -1543,7 +1544,7 @@ sub_5b9d1:
     shl eax, 0x14                                ; 05b9e0 c1e014
     shr eax, 0x1e                                ; 05b9e3 c1e81e
     mov ax, word ptr [eax*2 + word_cbc4a]        ; 05b9e6 668b04454abc0c00
-    test byte ptr [byte_c5400], 2                ; 05b9ee f60500540c0002
+    test byte ptr [settings2], 2                 ; 05b9ee f60500540c0002
     je loc_5ba06                                 ; 05b9f5 740f
     cmp dword ptr [period_num], 3                ; 05b9f7 833d848c0d0003
     jle loc_5ba06                                ; 05b9fe 7e06
@@ -4174,7 +4175,7 @@ loc_5d8b5:
     jne loc_5d976                                ; 05d8d0 0f85a0000000
     cmp word ptr [period_idx], 3                 ; 05d8d6 66833dda900c0003
     jne loc_5d96f                                ; 05d8de 0f858b000000
-    test byte ptr [byte_c5400], 2                ; 05d8e4 f60500540c0002
+    test byte ptr [settings2], 2                 ; 05d8e4 f60500540c0002
     je loc_5d96f                                 ; 05d8eb 0f847e000000
     call clear_infractions                       ; 05d8f1 e846640000
     mov di, word ptr [word_cc0de]                ; 05d8f6 668b3ddec00c00
@@ -4414,9 +4415,9 @@ game_clock_tick:
     push edi                                     ; 05dc1d 57
     cmp dword ptr [penalty_shot_active], 0       ; 05dc1e 833d28c10c0000
     je loc_5dc46                                 ; 05dc25 741f
-    mov edi, dword ptr [dword_cc120]             ; 05dc27 8b3d20c10c00
+    mov edi, dword ptr [penalty_shot_clock]      ; 05dc27 8b3d20c10c00
     dec edi                                      ; 05dc2d 4f
-    mov dword ptr [dword_cc120], edi             ; 05dc2e 893d20c10c00
+    mov dword ptr [penalty_shot_clock], edi      ; 05dc2e 893d20c10c00
     test edi, edi                                ; 05dc34 85ff
     jg loc_5dd66                                 ; 05dc36 0f8f2a010000
     call end_penalty_shot                        ; 05dc3c e8f8670000
@@ -4460,7 +4461,7 @@ loc_5dca2:
 loc_5dcb5:
     cmp byte ptr [sound_enabled], 0              ; 05dcb5 803d30240d0000
     je loc_5dcc7                                 ; 05dcbc 7409
-    test byte ptr [byte_c5400], 1                ; 05dcbe f60500540c0001
+    test byte ptr [settings2], 1                 ; 05dcbe f60500540c0001
     jne loc_5dcd3                                ; 05dcc5 750c
 loc_5dcc7:
     mov eax, 0x97                                ; 05dcc7 b897000000
@@ -4574,10 +4575,11 @@ loc_5ddd9:
 
 
 ; ====================================================================================================
-; sub_5ddda  [0x5ddda, 104 bytes, 32 instructions]
+; period_start_reset  [0x5ddda, 104 bytes, 32 instructions]
+; count_penalized, reset_team_for_period, power play / penalty kill lines
 ; called by: sub_5de42
 ; ====================================================================================================
-sub_5ddda:
+period_start_reset:
     push 0x10                                    ; 05ddda 6810000000
     call __CHK                                   ; 05dddf e868eb0200
     push ebx                                     ; 05dde4 53
@@ -4591,7 +4593,7 @@ sub_5ddda:
 
 loc_5ddfa:
     mov eax, edx                                 ; 05ddfa 89d0
-    call sub_5b826                               ; 05ddfc e825daffff
+    call reset_team_for_period                   ; 05ddfc e825daffff
     mov word ptr [edx + 0x2a], 0                 ; 05de01 66c7422a0000
     test byte ptr [option_flags], 4              ; 05de07 f605ff530c0004
     je loc_5de2d                                 ; 05de0e 741d
@@ -4627,7 +4629,7 @@ sub_5de42:
     call __CHK                                   ; 05de47 e800eb0200
     push ebx                                     ; 05de4c 53
     push edx                                     ; 05de4d 52
-    call sub_5ddda                               ; 05de4e e887ffffff
+    call period_start_reset                      ; 05de4e e887ffffff
     xor eax, eax                                 ; 05de53 31c0
     jmp loc_5de67                                ; 05de55 eb10
 
@@ -4698,13 +4700,13 @@ end_of_period:
     jl loc_5df7c                                 ; 05df26 7c54
     jle loc_5df47                                ; 05df28 7e1d
     mov word ptr [period_idx], 3                 ; 05df2a 66c705da900c0003..
-    test byte ptr [byte_c5400], 2                ; 05df33 f60500540c0002
+    test byte ptr [settings2], 2                 ; 05df33 f60500540c0002
     je loc_5df5b                                 ; 05df3a 741f
     mov word ptr [period_idx], 4                 ; 05df3c 66c705da900c0004..
     jmp loc_5df5b                                ; 05df45 eb14
 
 loc_5df47:
-    test byte ptr [byte_c5400], 2                ; 05df47 f60500540c0002
+    test byte ptr [settings2], 2                 ; 05df47 f60500540c0002
     je loc_5df5b                                 ; 05df4e 740b
     mov dh, ah                                   ; 05df50 88e6
     xor dh, 2                                    ; 05df52 80f602
@@ -4728,7 +4730,7 @@ loc_5df7c:
 ; ====================================================================================================
 ; count_penalized  [0x5df86, 148 bytes, 48 instructions]
 ; counts the penalized players per team, benches the rest
-; called by: ai_puck_faceoff2, sub_5ddda, simulate_game_offscreen
+; called by: ai_puck_faceoff2, period_start_reset, simulate_game_offscreen
 ; ====================================================================================================
 count_penalized:
     push 0x18                                    ; 05df86 6818000000
@@ -7535,7 +7537,7 @@ loc_5fc9a:
     mov dx, word ptr [word_cbec0]                ; 05fe4e 668b15c0be0c00
     mov word ptr [eax], dx                       ; 05fe55 668910
     add eax, 2                                   ; 05fe58 83c002
-    mov dx, word ptr [word_cbec2]                ; 05fe5b 668b15c2be0c00
+    mov dx, word ptr [ref_hits]                  ; 05fe5b 668b15c2be0c00
     mov word ptr [eax], dx                       ; 05fe62 668910
     add eax, 2                                   ; 05fe65 83c002
     mov dx, word ptr [word_cbec4]                ; 05fe68 668b15c4be0c00
@@ -7808,19 +7810,19 @@ loc_6024b:
     mov dx, word ptr [penalty_shot_slot]         ; 0602b5 668b15fcc00c00
     mov word ptr [eax], dx                       ; 0602bc 668910
     add eax, 2                                   ; 0602bf 83c002
-    mov dx, word ptr [dword_cc100]               ; 0602c2 668b1500c10c00
+    mov dx, word ptr [penalty_shot_roster]       ; 0602c2 668b1500c10c00
     mov word ptr [eax], dx                       ; 0602c9 668910
     add eax, 2                                   ; 0602cc 83c002
     mov dx, word ptr [penalty_shot_team]         ; 0602cf 668b1504c10c00
     mov word ptr [eax], dx                       ; 0602d6 668910
     add eax, 2                                   ; 0602d9 83c002
-    mov dx, word ptr [dword_cc108]               ; 0602dc 668b1508c10c00
+    mov dx, word ptr [penalty_shot_user]         ; 0602dc 668b1508c10c00
     mov word ptr [eax], dx                       ; 0602e3 668910
     add eax, 2                                   ; 0602e6 83c002
     mov dx, word ptr [dword_cc10c]               ; 0602e9 668b150cc10c00
     mov word ptr [eax], dx                       ; 0602f0 668910
     add eax, 2                                   ; 0602f3 83c002
-    mov dx, word ptr [dword_cc110]               ; 0602f6 668b1510c10c00
+    mov dx, word ptr [penalty_shot_spot_x]       ; 0602f6 668b1510c10c00
     mov word ptr [eax], dx                       ; 0602fd 668910
     add eax, 2                                   ; 060300 83c002
     mov dx, word ptr [dword_cc114]               ; 060303 668b1514c10c00
@@ -7832,7 +7834,7 @@ loc_6024b:
     mov dx, word ptr [penalty_shot_setup]        ; 06031d 668b151cc10c00
     mov word ptr [eax], dx                       ; 060324 668910
     add eax, 2                                   ; 060327 83c002
-    mov dx, word ptr [dword_cc120]               ; 06032a 668b1520c10c00
+    mov dx, word ptr [penalty_shot_clock]        ; 06032a 668b1520c10c00
     mov word ptr [eax], dx                       ; 060331 668910
     add eax, 2                                   ; 060334 83c002
     mov dx, word ptr [defenders_ahead]           ; 060337 668b1524c10c00
@@ -8322,7 +8324,7 @@ loc_6080f:
     mov word ptr [word_cbec0], ax                ; 0609b3 66a3c0be0c00
     add ebx, 2                                   ; 0609b9 83c302
     mov ax, word ptr [ebx]                       ; 0609bc 668b03
-    mov word ptr [word_cbec2], ax                ; 0609bf 66a3c2be0c00
+    mov word ptr [ref_hits], ax                  ; 0609bf 66a3c2be0c00
     add ebx, 2                                   ; 0609c5 83c302
     mov ax, word ptr [ebx]                       ; 0609c8 668b03
     mov word ptr [word_cbec4], ax                ; 0609cb 66a3c4be0c00
@@ -8659,19 +8661,19 @@ loc_60e61:
     mov dword ptr [penalty_shot_slot], eax       ; 060eb7 a3fcc00c00
     add ebx, 2                                   ; 060ebc 83c302
     movsx eax, word ptr [ebx]                    ; 060ebf 0fbf03
-    mov dword ptr [dword_cc100], eax             ; 060ec2 a300c10c00
+    mov dword ptr [penalty_shot_roster], eax     ; 060ec2 a300c10c00
     add ebx, 2                                   ; 060ec7 83c302
     movsx eax, word ptr [ebx]                    ; 060eca 0fbf03
     mov dword ptr [penalty_shot_team], eax       ; 060ecd a304c10c00
     add ebx, 2                                   ; 060ed2 83c302
     movsx eax, word ptr [ebx]                    ; 060ed5 0fbf03
-    mov dword ptr [dword_cc108], eax             ; 060ed8 a308c10c00
+    mov dword ptr [penalty_shot_user], eax       ; 060ed8 a308c10c00
     add ebx, 2                                   ; 060edd 83c302
     movsx eax, word ptr [ebx]                    ; 060ee0 0fbf03
     mov dword ptr [dword_cc10c], eax             ; 060ee3 a30cc10c00
     add ebx, 2                                   ; 060ee8 83c302
     movsx eax, word ptr [ebx]                    ; 060eeb 0fbf03
-    mov dword ptr [dword_cc110], eax             ; 060eee a310c10c00
+    mov dword ptr [penalty_shot_spot_x], eax     ; 060eee a310c10c00
     add ebx, 2                                   ; 060ef3 83c302
     movsx eax, word ptr [ebx]                    ; 060ef6 0fbf03
     mov dword ptr [dword_cc114], eax             ; 060ef9 a314c10c00
@@ -8683,7 +8685,7 @@ loc_60e61:
     mov dword ptr [penalty_shot_setup], eax      ; 060f0f a31cc10c00
     add ebx, 2                                   ; 060f14 83c302
     movsx eax, word ptr [ebx]                    ; 060f17 0fbf03
-    mov dword ptr [dword_cc120], eax             ; 060f1a a320c10c00
+    mov dword ptr [penalty_shot_clock], eax      ; 060f1a a320c10c00
     add ebx, 2                                   ; 060f1f 83c302
     movsx eax, word ptr [ebx]                    ; 060f22 0fbf03
     mov dword ptr [defenders_ahead], eax         ; 060f25 a324c10c00
@@ -10240,7 +10242,7 @@ loc_620c9:
     shl ebx, 2                                   ; 062162 c1e302
     mov ecx, rosters                             ; 062165 b9a8b30d00
     add ecx, ebx                                 ; 06216a 01d9
-    mov edx, dword ptr [dword_cc100]             ; 06216c 8b1500c10c00
+    mov edx, dword ptr [penalty_shot_roster]     ; 06216c 8b1500c10c00
     mov eax, edx                                 ; 062172 89d0
     shl eax, 2                                   ; 062174 c1e002
     add eax, edx                                 ; 062177 01d0
@@ -10639,7 +10641,7 @@ loc_62644:
     shl ebx, 4                                   ; 062654 c1e304
     add ebx, edx                                 ; 062657 01d3
     shl ebx, 2                                   ; 062659 c1e302
-    mov edx, dword ptr [dword_cc100]             ; 06265c 8b1500c10c00
+    mov edx, dword ptr [penalty_shot_roster]     ; 06265c 8b1500c10c00
     mov eax, edx                                 ; 062662 89d0
     shl eax, 2                                   ; 062664 c1e002
     add eax, edx                                 ; 062667 01d0

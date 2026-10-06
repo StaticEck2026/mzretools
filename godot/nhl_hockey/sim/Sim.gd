@@ -45,7 +45,33 @@ var ends_switched := false          # bit 1: teams switched ends (2nd period)
 var stoppage_countdown := false     # bit 2: stoppage_timer running
 var delayed_call := false           # bit 3: a penalty is pending on the carrier's team
 var no_stats := false               # bit 4
-var game_over := false              # bit 7
+var game_over := false              # game_flags 0x40: the final whistle went
+# ceremonies (Ceremonies.gd)
+var intro := false                   # the anthem before the game (match_sequence) is running
+var stars_running := false           # the three stars after the game (three_stars_sequence)
+var match_over := false              # the three stars are over: the game is finished
+var sequence_steps: int = 0          # dword_e9b04: steps left of the anthem / three stars
+var cup_final := false               # game_over_check: this game decides the Stanley Cup
+var intermission_camera := false     # game_flags 0x80 (the cup presentation)
+var stars: Array = []                # e9af8: up to 3 x [team, roster], the 1st star first
+var game_winner := Vector2i(-1, -1)  # e9af0 / e9af4: [team, roster] of the overtime winner
+# the scoreboard panel of the stoppages (InfoPanel.gd): dword_cbebe and the clip of dword_cbeca
+var panel: int = -1                  # -1 closed, 0..0xf opening, 0x10 plays the clip, ..0xff open, 0x100 held, 600..0x268 closing
+var clip: int = -1                   # the clip on the scoreboard (Tables.announcer_ppv_names), -1 none
+var clip_frame: int = -1             # word_cbece: frame of the clip shown
+var clip_pos: int = 0                # dword_e9ab2 high word: position in the clip script
+var clip_time: int = 0               # dword_e9ab2 low word: steps left on this frame
+var panel_text: Array = ["", "", "", "", ""]   # byte_e02c8 (title), byte_e0250, byte_e028c, byte_e0308, byte_e0344
+var event_log: Array = []            # e9b4c: the last 8 goals / penalties / injuries of the period
+var ref_infraction_slot: int = -1    # ref_infraction high word: the entity the call is about
+var infraction_type_served: int = 0  # the infraction of the penalty being served (record_penalty)
+var goal_flags: int = 1             # word_e9ab0 of the last goal: 1 even, 2 short handed, 4 power play, 8 empty net
+var speech_queue: Array = []         # play_speech ids for the announcer (XBRUCE2.VIV)
+var sound_enabled := true            # sound_enabled
+var sound_device: int = 8            # dword_c541f: a digital device (bits 0x2a) plays the fan clip
+var half_announce := false           # misc_flags 0x80: the halfway line is still to come (periods 1 and 2)
+var announce_time: int = -1          # dword_e9aac: clock time of the late game line in the 3rd period
+var scorer_jumps: int = 0            # dword_cca58: the goal scorer's jumps in ai_celebrate_goal
 # stop_flags
 var faceoff_pending := false        # bit 0: faceoff set up, waiting for the drop
 var whistle_ready := false          # bit 2
@@ -64,6 +90,8 @@ var period_over := false
 var stoppage_timer: int = -1
 var whistle_timer: int = 0
 var announce_timer: int = -1        # word_cc0b0
+var penalty_box_mode := false      # word_c90de: a penalty is being handed out (no new calls)
+var speech_busy := false           # speech_busy(): the announcer is talking (set by the audio layer)
 var ref_phase: int = -1             # dword_c90d4: 0 = referee called, 1 = collecting, -1 = ready
 var ref_infraction: int = 0         # dword_c90d6
 var faceoff_x: int = 0              # dword_c90b2
@@ -122,7 +150,7 @@ var penalty_shot_roster := -1        # dword_cc100
 var penalty_shot_spot := Vector2i()  # dword_cc110 / dword_cc114: faceoff spot after the shot
 var penalty_shot_clock := 0          # dword_cc120: steps left for the shot (1000)
 var penalty_shot_away := 0           # penalty_shot_timer (cc12c): steps the loose puck moved away from the net
-var settings2: int = 0x7b           # byte_c5400 (option_flags + 1): bit 1 set = penalties called at the normal rate (penalty_odds)
+var settings2: int = 0x7b           # byte_c5400 (option_flags + 1): bit 1 set = regular season game (normal penalty rate in penalty_odds, a tie after one overtime); clear = playoffs
 var crowd_toggle := false            # word_cc0da: alternates the two crowd hit sounds
 var injury_report: Array = []        # [team, roster, out for the game] of the last injury (announce_injury)
 var ref_hits := 0                    # word_cbec2: body checks of a user on the referee (3 = game misconduct)
@@ -168,7 +196,7 @@ func new_game() -> void:
 		team.dpair_counter = 0
 		team.goalie_request = 0
 		team.extra_attacker = -1
-		team.goals = 0
+		team.reset_stats()
 		team.penalties.clear()
 		team.skaters_on_ice = 6
 		for i in 28:
@@ -181,18 +209,30 @@ func new_game() -> void:
 	start_period(0)
 
 ## new period: dress the default lines, everyone to the centre faceoff
-func start_period(p: int) -> void:
+func start_period(p: int, switch_ends: bool = true) -> void:
+	# end_of_period: the teams change ends every period (not in the overtime of a regular
+	# season game); period 3 is the overtime
+	if p == 0:
+		ends_switched = false
+	elif switch_ends:
+		ends_switched = not ends_switched
 	period = p
+	# sub_5ba07: the clock; a random time of the late game announcement (3rd period)
 	clock_seconds = period_length
 	clock_sub = 0
+	announce_time = clock_seconds - random(clock_seconds >> 1)
 	period_over = false
-	ends_switched = (p & 1) == 1
+	# period_init: the halfway announcement in the first two periods, the panel is closed
+	half_announce = p < 2
+	excitement = 0x10
+	InfoPanel.reset(self)
+	event_log.clear()
 	for t in 2:
 		var team := teams[t]
 		var up := (t == 0) != ends_switched     # the home team shoots at +y in the 1st and 3rd period
 		team.attacks_up = up
 		team.info = team_info[t]
-		# sub_5ddda / sub_5b826: everybody is rested and the players hurt in the last period are back
+		# period_start_reset / reset_team_for_period: everybody is rested and the players hurt in the last period are back
 		for i in 28:
 			team.energy[i] = 0x1000
 		for r: int in team.injured:
@@ -236,6 +276,7 @@ func start_period(p: int) -> void:
 	stoppage_countdown = false
 	stoppage_timer = -1
 	ref_phase = -1
+	penalty_box_mode = false
 	user1_slot = -1
 	user2_slot = -1
 	assign_users()
@@ -454,6 +495,18 @@ func add_crowd(amount: int, cap: int) -> void:
 ## pressed_p1/pressed_p2: the button bits that went down with this sample
 func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) -> void:
 	step_count += 1
+	# match_sequence / three_stars_sequence: a button skips the anthem, the sequences run for
+	# dword_e9b04 steps
+	if intro or stars_running:
+		if intro and ((pressed_p1 | pressed_p2) & 0x30) != 0:
+			sequence_steps = 0
+		sequence_steps = maxi(0, sequence_steps - 1)
+		if sequence_steps == 0:
+			if intro:
+				Ceremonies.end_anthem(self)
+			else:
+				stars_running = false
+				match_over = true
 	Rules.game_state_tick(self)
 	# dword_ccc9c: the users cannot move during the whistle / announcement phase of a stoppage
 	controls_blocked = play_stopped and (game_over or (not faceoff_pending and stoppage_timer < 0 and infractions.is_empty()))
@@ -702,7 +755,7 @@ func apply_skating(e: Entity, dir: int) -> void:
 	if e.flags & Entity.F_BACKWARDS:
 		idle_anim = Anim.GLIDE_BACK
 	elif e.slot == Entity.Slot.REFEREE:
-		idle_anim = Anim.REF_GLIDE if not play_stopped else Anim.REF_GLIDE_STOPPED
+		idle_anim = Anim.REF_GLIDE_ARM if ref_arm_up() else Anim.REF_GLIDE
 	if dir >= 8:
 		if dir == 9 and (e.vx != 0 or e.vy != 0):
 			stop_skating(e)
@@ -749,7 +802,10 @@ func apply_skating(e: Entity, dir: int) -> void:
 		if sp > 0x14:
 			var right := ((e.flags4 & Entity.F4_MIRROR) != 0) == (tt < 0)
 			if e.slot == Entity.Slot.REFEREE:
-				Anim.set_animation(e, Anim.REF_TURN_R if right else Anim.REF_TURN_L)
+				if ref_arm_up():
+					Anim.set_animation(e, Anim.REF_TURN_R_ARM if right else Anim.REF_TURN_L_ARM)
+				else:
+					Anim.set_animation(e, Anim.REF_TURN_R if right else Anim.REF_TURN_L)
 			else:
 				Anim.set_animation(e, Anim.TURN_R if right else Anim.TURN_L)
 			e.flags2 |= Entity.F2_TURNING
@@ -759,22 +815,50 @@ func apply_skating(e: Entity, dir: int) -> void:
 			var accel_dir := e.facing ^ 4 if (e.flags & Entity.F_BACKWARDS) else e.facing
 			skating_accelerate(e, accel_dir)
 		return
-	skating_turn(e, dir)
+	skating_turn(e, turn)
 
-## skating_turn (0x5e9bc): facing matches the input, pick the skating cycle and accelerate
-func skating_turn(e: Entity, dir: int) -> void:
+## skating_turn (0x5f98a): turn is the input direction relative to the facing (0 or 4 here, the
+## other turns steer in apply_skating). Facing the input (or facing away from it when skating
+## backwards) the skater accelerates; otherwise he brakes while still moving towards his facing
+## and then turns around one step at a time.
+func skating_turn(e: Entity, turn: int) -> void:
+	var back := (e.flags & Entity.F_BACKWARDS) != 0
+	var k := 2
+	if back:
+		turn ^= 4
+		k = 6
+	if turn != 0:
+		var vdir := Tables.direction8(e.vx >> 8, e.vy >> 8) if (e.vx != 0 or e.vy != 0) else 8
+		if (vdir & 8) == 0 and ((vdir - e.facing + k) & 7) < 4:
+			stop_skating(e)
+			return
+		if (e.flags4 & Entity.F4_MIRROR) == 0:
+			e.facing = e.facing + 1
+		else:
+			e.facing = e.facing - 1
+		var g := Anim.GLIDE
+		if back:
+			g = Anim.GLIDE_BACK
+		elif e.slot == Entity.Slot.REFEREE:
+			g = Anim.REF_GLIDE_ARM if ref_arm_up() else Anim.REF_GLIDE
+		Anim.set_animation(e, g)
+		return
 	var a := Anim.SKATE
-	if e.flags & Entity.F_BACKWARDS:
+	if back:
 		a = Anim.SKATE_BACK
 	elif e.slot == Entity.Slot.REFEREE:
-		a = Anim.REF_SKATE if not play_stopped else Anim.REF_SKATE_STOPPED
+		a = Anim.REF_SKATE_ARM if ref_arm_up() else Anim.REF_SKATE
 	elif puck_carrier == e.slot:
 		a = Anim.SKATE_CARRIER
 	elif e.flags2 & Entity.F2_HOOKED:
 		a = Anim.SKATE_HOOKED
 	if (e.flags2 & Entity.F2_TURNING) == 0:
 		Anim.set_animation(e, a)
-	skating_accelerate(e, dir ^ 4 if (e.flags & Entity.F_BACKWARDS) else dir)
+	skating_accelerate(e, e.facing ^ 4 if back else e.facing)
+
+## the referee raises his arm: the whistle, or during play a delayed call or the offside warning
+func ref_arm_up() -> bool:
+	return whistle_timer != 0 or (not play_stopped and (offside_warning or delayed_call))
 
 func skating_accelerate(e: Entity, dir: int) -> void:
 	var k := e.speed_skill + 0x30
@@ -818,9 +902,14 @@ func stop_skating(e: Entity) -> void:
 	if absi(e.vx) > 0x1000 or absi(e.vy) > 0x1000:
 		if (e.flags & Entity.F_BACKWARDS) == 0:
 			e.flags2 |= Entity.F2_TURNING
-			Anim.set_animation(e, Anim.REF_STOP if e.slot == Entity.Slot.REFEREE else Anim.STOP)
+			if e.slot == Entity.Slot.REFEREE:
+				Anim.set_animation(e, Anim.REF_STOP_ARM if ref_arm_up() else Anim.REF_STOP)
+			else:
+				Anim.set_animation(e, Anim.STOP)
+		elif e.slot == Entity.Slot.REFEREE:
+			Anim.set_animation(e, Anim.REF_GLIDE_ARM if ref_arm_up() else Anim.REF_GLIDE)
 		else:
-			Anim.set_animation(e, Anim.REF_GLIDE if e.slot == Entity.Slot.REFEREE else Anim.GLIDE)
+			Anim.set_animation(e, Anim.GLIDE)
 	brake(e)
 
 func brake(e: Entity) -> void:

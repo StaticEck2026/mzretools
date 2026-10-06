@@ -382,6 +382,7 @@ func asset_tests() -> void:
 		print("BOS - DET after 3000 steps: %d-%d, clock %d:%02d" % [sim.teams[0].goals, sim.teams[1].goals, sim.clock_seconds / 60, sim.clock_seconds % 60])
 		line_change_tests(bos, det)
 		match_rules_tests(bos, det)
+		ceremony_tests(bos, det)
 	# sound effects: 30 digital samples, the goal horn (0x9c) is the 7 second sample
 	var snd := Sounds.load_bank(gf.read_raw("pcff001.pat"), gf.read_raw("pcff001.tim"), gf.read_raw("pcff001.dig"))
 	if snd == null or snd.sample_count != 30 or snd.timbre_count != 30:
@@ -643,6 +644,127 @@ func match_rules_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 			fail("board knockdown x %d (mirrored)" % pinned.xi)
 	else:
 		fail("a hit against the boards should use a board animation, got %x" % pinned.anim)
+
+## the anthem, the goal panel, the end of the game, the three stars, overtime and the cup
+func ceremony_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
+	# the anthem: blue lines, the US flag clip for Boston, then the opening faceoff
+	var sim := Sim.new()
+	sim.set_teams(bos, det)
+	Ceremonies.begin_anthem(sim)
+	var ok := sim.intro and sim.clip == InfoPanel.CLIP_USA_FLAG
+	for i in 12:
+		var e := sim.entities[i]
+		if e.line_slot == 0 and absi(e.yi) != 0xdc:
+			ok = false
+		if e.line_slot > 0 and (absi(e.yi) < 0x2e or absi(e.yi) > 0x3c or e.state() != Entity.State.ANTHEM):
+			ok = false
+	if not ok:
+		fail("anthem line up (intro %s clip %d)" % [sim.intro, sim.clip])
+	var steps := 0
+	while sim.intro and steps < 3000:
+		sim.step(8, 8, 0, 0)
+		steps += 1
+	var drop := run_until_play(sim, 2000)
+	if sim.intro or drop < 0:
+		fail("the anthem did not end in a faceoff (steps %d, intro %s)" % [steps, sim.intro])
+	else:
+		print("anthem: %d steps, faceoff %d steps later" % [steps, drop])
+	sim = Sim.new()
+	sim.set_teams(bos, det)
+	Ceremonies.begin_anthem(sim)
+	sim.step(8, 8, 0x20, 0)
+	if sim.intro:
+		fail("a button should skip the anthem")
+	# a goal: the panel opens with the scorer and the assists and the referee waits for it
+	sim = Sim.new()
+	sim.set_teams(bos, det)
+	run_until_play(sim, 1200)
+	var home := sim.teams[0]
+	home.carrier_history = PackedInt32Array([7, 10, -1])
+	sim.last_touch_slot = 4
+	Rules.score_goal(sim, sim.entities[Entity.Slot.NET_TOP] if home.attacks_up else sim.entities[Entity.Slot.NET_BOTTOM])
+	var opened := -1
+	var shown := ""
+	for i in 1500:
+		sim.step(8, 8, 0, 0)
+		if opened < 0 and sim.panel >= 0:
+			opened = i
+			shown = "%s | %s | %s | %s" % sim.panel_text.slice(0, 4)
+		if opened >= 0 and not sim.play_stopped:
+			break
+	if opened < 0 or not shown.contains("Boston") or not shown.contains("Assists:") or home.stat(7, Team.ST_GOALS) != 1 or home.stat(10, Team.ST_ASSISTS) != 1:
+		fail("goal panel: '%s' goals %d assists %d" % [shown, home.stat(7, Team.ST_GOALS), home.stat(10, Team.ST_ASSISTS)])
+	else:
+		print("goal panel: ", shown)
+	# the final whistle, the three stars (two goals, two assists, one goal) and the end of the game
+	sim = Sim.new()
+	sim.set_teams(bos, det)
+	sim.user1_team = 0
+	sim.assign_users()
+	run_until_play(sim, 1200)
+	sim.period = 2
+	sim.clock_seconds = 2
+	sim.teams[0].goals = 2
+	sim.teams[0].player_stats[7][Team.ST_GOALS] = 2
+	sim.teams[0].player_stats[10][Team.ST_ASSISTS] = 2
+	sim.teams[1].goals = 1
+	sim.teams[1].player_stats[3][Team.ST_GOALS] = 1
+	var star_lines := []
+	for i in 16000:
+		sim.step(8, 8, 0, 0)
+		if sim.stars_running and sim.panel_text[1] != "" and not star_lines.has(sim.panel_text[1]):
+			star_lines.append(sim.panel_text[1])
+		if sim.match_over:
+			break
+	if not sim.match_over or str(sim.stars) != "[[0, 7], [0, 10], [1, 3]]" or star_lines != ["3rd Star", "2nd Star", "1st Star"]:
+		fail("three stars: over %s stars %s shown %s" % [sim.match_over, str(sim.stars), str(star_lines)])
+	else:
+		print("three stars: ", str(sim.stars))
+	# a regular season game tied after the overtime ends tied; in the playoffs the overtime goes on
+	sim = Sim.new()
+	sim.set_teams(bos, det)
+	run_until_play(sim, 1200)
+	sim.period = 3
+	sim.clock_seconds = 1
+	for i in 600:
+		sim.step(8, 8, 0, 0)
+		if sim.game_over:
+			break
+	if not sim.game_over or sim.teams[0].goals != sim.teams[1].goals:
+		fail("a regular season game should end tied after the overtime")
+	sim = Sim.new()
+	sim.set_teams(bos, det)
+	sim.settings2 &= ~2
+	run_until_play(sim, 1200)
+	sim.period = 2
+	sim.clock_seconds = 1
+	var switched := sim.ends_switched
+	for i in 1200:
+		sim.step(8, 8, 0, 0)
+		if sim.period == 3:
+			break
+	if sim.period != 3 or sim.game_over or sim.ends_switched == switched:
+		fail("playoff overtime: period %d over %s" % [sim.period, sim.game_over])
+	# a cup final: the captain fetches the Stanley Cup
+	sim = Sim.new()
+	sim.set_teams(bos, det)
+	sim.cup_final = true
+	sim.user1_team = 0
+	sim.assign_users()
+	run_until_play(sim, 1200)
+	sim.period = 2
+	sim.clock_seconds = 1
+	sim.teams[0].goals = 1
+	var got_cup := false
+	for i in 4000:
+		sim.step(8, 8, 0, 0)
+		for k in 6:
+			if sim.entities[k].state() == Entity.State.STANLEY_CUP:
+				got_cup = true
+		if got_cup:
+			break
+	if not got_cup:
+		fail("the Stanley Cup was not handed over (shadow %s)" % Tables.ai_state_names[sim.shadow.state() + 1])
 
 func _dressed(sim: Sim, t: int) -> Array:
 	var out := []
