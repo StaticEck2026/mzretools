@@ -25,7 +25,7 @@ var opt_penalties := true           # bit 0
 var opt_offsides := true            # bit 1
 var opt_line_changes := true        # bit 2: line changes and fatigue (Lines.gd)
 var opt_two_line_pass := true       # bit 3
-var opt_injuries := false           # bit 4
+var opt_injuries := true            # bit 4 (option_flags starts as 0xff: every option on)
 
 var entities: Array[Entity] = []
 var teams: Array[Team] = []
@@ -100,7 +100,7 @@ var crowd_noise: int = 300
 var excitement: int = 0
 var step_count: int = 0
 var sfx_queue: PackedInt32Array = PackedInt32Array()
-var rng := RandomNumberGenerator.new()
+var seed: int = 0xabcd4321           # dword_c9100: state of randomrange (demo_game reseeds it from rand(), init_match adds the team numbers)
 var puck_in_net := false            # byte_c90ba
 # line changes (Lines.gd)
 var req_roster: PackedInt32Array = PackedInt32Array([-1, -1, -1, -1, -1, -1])   # unk_e0384: lineup being assigned
@@ -112,10 +112,24 @@ var message: int = -1
 var message_timer: int = 0
 var puck_stuck_timer: int = 0x78    # puck +0x28 (frozen puck countdown)
 var puck_goal_timer: int = 0        # puck +0x26 (goal line prediction every 5 steps)
-var penalty_shot := false           # dword_cc128 (not ported, always false)
+var penalty_shot := false           # dword_cc128 penalty_shot_active: the shot is under way
+var penalty_shot_phase := 0          # dword_cc118: 1 from the call until the shot ends
+var penalty_shot_setup := false      # dword_cc11c: from the start of the shot until the next faceoff
+var penalty_shot_slot := -1          # dword_cc0fc: the fouled player, who takes the shot
+var penalty_shot_team := 0           # dword_cc104: 0 home, 1 away
+var penalty_shot_user := -1          # dword_cc108: 1 when user 1 controlled the shooter, else -1
+var penalty_shot_roster := -1        # dword_cc100
+var penalty_shot_spot := Vector2i()  # dword_cc110 / dword_cc114: faceoff spot after the shot
+var penalty_shot_clock := 0          # dword_cc120: steps left for the shot (1000)
+var penalty_shot_away := 0           # penalty_shot_timer (cc12c): steps the loose puck moved away from the net
+var settings2: int = 0x7b           # byte_c5400 (option_flags + 1): bit 1 set = penalties called at the normal rate (penalty_odds)
+var crowd_toggle := false            # word_cc0da: alternates the two crowd hit sounds
+var injury_report: Array = []        # [team, roster, out for the game] of the last injury (announce_injury)
+var ref_hits := 0                    # word_cbec2: body checks of a user on the referee (3 = game misconduct)
+var last_impact := 0                 # word_e9b28: strength of the last collision between opponents
 
 func _init() -> void:
-	rng.seed = 0x4e484c
+	seed = 0xabcd4321
 	teams.append(Team.new(0))
 	teams.append(Team.new(1))
 	for i in 17:
@@ -178,6 +192,13 @@ func start_period(p: int) -> void:
 		var up := (t == 0) != ends_switched     # the home team shoots at +y in the 1st and 3rd period
 		team.attacks_up = up
 		team.info = team_info[t]
+		# sub_5ddda / sub_5b826: everybody is rested and the players hurt in the last period are back
+		for i in 28:
+			team.energy[i] = 0x1000
+		for r: int in team.injured:
+			if team.entity_of[r] == -3:
+				team.entity_of[r] = -2
+		team.injured.clear()
 		if p == 1:
 			Lines.adjust_strategy(self, t)       # time_announcements: strategy review in the 2nd period
 		for i in 6:
@@ -215,12 +236,41 @@ func start_period(p: int) -> void:
 	stoppage_countdown = false
 	stoppage_timer = -1
 	ref_phase = -1
+	user1_slot = -1
+	user2_slot = -1
+	assign_users()
+
+## the users take their skaters for a faceoff (switch_to_nearest from ai_puck_faceoff2): the
+## skater nearest to the puck, which is the centre; a second user on the same team takes the
+## nearest of the others
+func assign_users() -> void:
+	user1_slot = -1
+	user2_slot = -1
+	for i in 12:
+		entities[i].flags &= ~Entity.F_USER
 	if user1_team != 0:
-		user1_slot = centre_slot(user1_team - 1)
-		entities[user1_slot].flags |= Entity.F_USER
+		user1_slot = find_switch_target(centre_slot(user1_team - 1), -1)
 	if user2_team != 0:
-		user2_slot = centre_slot(user2_team - 1)
-		entities[user2_slot].flags |= Entity.F_USER | Entity.F_PLAYER2
+		var c := centre_slot(user2_team - 1)
+		if c == user1_slot:
+			c = nearest_free_skater(user2_team - 1, user1_slot)
+		user2_slot = find_switch_target(c, -1)
+
+## the selectable skater of team t nearest to the puck, other than `exclude`
+func nearest_free_skater(t: int, exclude: int) -> int:
+	var best := -1
+	var best_d := 0x7fffffff
+	for i in 6:
+		var p := entities[teams[t].first_slot + i]
+		if p.line_slot <= 0 or p.slot == exclude or (p.flags2 & Entity.F2_UNSELECTABLE) or (p.flags & Entity.F_BUSY):
+			continue
+		var dx := puck.xi - p.xi
+		var dy := puck.yi - p.yi
+		var d := dx * dx + dy * dy
+		if d <= best_d:
+			best_d = d
+			best = p.slot
+	return best
 
 ## the entity of the centre (line slot 4) of a team, or its first skater
 func centre_slot(t: int) -> int:
@@ -279,9 +329,14 @@ func put_player_on_ice(e: Entity, roster: int) -> void:
 ## [10] offensive awareness -> reaction (inverted), [11] -> awareness (inverted), [12] checking,
 ## [13] stick handling, [14] -> +0x5f. Goalies (0x10 bytes): [0] hand, [1] -> +0x62, [2] passing,
 ## [3] -> +0x5f, [4] stick handling, [5] shooting, [6] agility, [7] speed, [8] weight,
-## [10]/[11] -> reaction / awareness. The strategy and late game bonuses of the original are 0 here.
+## [10]/[11] -> reaction / awareness. A skater gets the adjustments of rating_bonuses.
 func dress_player(e: Entity, p: Database.Player) -> void:
 	var r := p.ratings
+	var bonus := rating_bonuses(e)
+	var home: int = bonus[0]
+	var lead: int = bonus[1]
+	var trail: int = bonus[2]
+	var late: int = bonus[3]
 	e.number = p.number
 	e.left_handed = r[0]
 	e.flags4 &= ~Entity.F4_MIRROR
@@ -292,15 +347,15 @@ func dress_player(e: Entity, p: Database.Player) -> void:
 		e.speed_skill = r[2] - mini(r[2], 3)
 		e.weight = r[3]
 		e.shot_skill = r[4]
-		e.aggression = mini(r[5], 15)
-		e.goalie_skill = clampi(r[6], 0, 15)
-		e.shot_accuracy = clampi(r[7], 0, 15)
-		e.pass_skill = clampi(r[9], 0, 15)
-		e.reaction = ((clampi(r[10], 0, 15) ^ 0xf) + 0xf) >> 1
-		e.awareness = ((clampi(r[11], 0, 15) ^ 0xf) + 0xf) >> 1
+		e.aggression = mini(r[5] + late, 15)
+		e.goalie_skill = clampi(r[6] + home + lead + trail, 0, 15)
+		e.shot_accuracy = clampi(r[7] + trail + lead + home, 0, 15)
+		e.pass_skill = clampi(r[9] + home + lead, 0, 15)
+		e.reaction = ((clampi(r[10] + trail + lead + home + late, 0, 15) ^ 0xf) + 0xf) >> 1
+		e.awareness = ((clampi(r[11] + home, 0, 15) ^ 0xf) + 0xf) >> 1
 		e.check_skill = r[12]
 		e.endurance = r[13]
-		e.offense = mini(r[14], 15)
+		e.offense = mini(r[14] + late * 2, 15)
 	else:
 		e.check_skill = r[1]
 		e.pass_skill = r[2]
@@ -310,9 +365,39 @@ func dress_player(e: Entity, p: Database.Player) -> void:
 		e.stamina = r[6] - mini(r[6], 3)
 		e.speed_skill = r[7] - mini(r[7], 3)
 		e.weight = r[8]
-		e.reaction = ((clampi(r[10], 0, 15) ^ 0xf) + 0xf) >> 1
-		e.awareness = ((clampi(r[11], 0, 15) ^ 0xf) + 0xf) >> 1
+		e.reaction = ((clampi(r[10] + late + lead + trail + home, 0, 15) ^ 0xf) + 0xf) >> 1
+		e.awareness = ((clampi(r[11] + home, 0, 15) ^ 0xf) + 0xf) >> 1
 		e.goalie_skill = r[9]
+
+## the adjustments of put_player_on_ice for a skater (line_slot != 0), from the team factors of
+## TEAMS.DB (+0x2dc..+0x2df, Database.TeamInfo.factors): [home or away (0..2 at home, -2..0 away),
+## leading (0..2), trailing (-2..0), late game (2 in overtime or the second half of the third
+## period when tied or behind)]
+func rating_bonuses(e: Entity) -> Array:
+	if e.line_slot == 0 or e.slot >= 12:
+		return [0, 0, 0, 0]
+	var team := team_of(e)
+	var f := PackedByteArray([7, 7, 7, 3])
+	if team.info != null and team.info.factors.size() == 4:
+		f = team.info.factors
+	var away := (e.flags & Entity.F_PLAYER2) != 0
+	var home_b := _factor(f[3]) - 2 if away else _factor(f[2])
+	var lead_b := 0
+	var trail_b := 0
+	var diff := teams[0].goals - teams[1].goals
+	if diff != 0:
+		if (diff < 0) == away:
+			lead_b = _factor(f[1])
+		else:
+			trail_b = _factor(f[0]) - 2
+	var late := 0
+	if period > 2 or (period == 2 and clock_seconds < period_length / 2):
+		if diff == 0 or (diff > 0) == away:
+			late = 2
+	return [home_b, lead_b, trail_b, late]
+
+static func _factor(v: int) -> int:
+	return 0 if v < 4 else (1 if v < 7 else 2)
 
 ## default ratings in the 0..15 scale of the player database (put_player_on_ice would read them)
 func _default_skills(e: Entity) -> void:
@@ -345,11 +430,14 @@ func same_team(a: int, b: int) -> bool:
 func carrier() -> Entity:
 	return entities[puck_carrier] if puck_carrier >= 0 else null
 
-## randomrange (0x8c230): 0 .. n-1 (n <= 0 gives 0)
+## randomrange (0x8c230): seed = seed * 0xBB40E62D + 1 (mod 2^32), computed in 16 bit halves as the
+## original does; the result is bits 8..23 of the new seed scaled to 0 .. n-1 (n is a 16 bit word)
 func random(n: int) -> int:
-	if n <= 1:
-		return 0
-	return rng.randi_range(0, n - 1)
+	var lo := seed & 0xffff
+	var hi := (seed >> 16) & 0xffff
+	var mid := (hi * 0xe62d + lo * 0xbb40) & 0xffff
+	seed = (lo * 0xe62d + (mid << 16) + 1) & 0xffffffff
+	return ((((seed >> 8) & 0xffff) * (n & 0xffff)) >> 16)
 
 func play_sfx(id: int) -> void:
 	sfx_queue.append(id)
@@ -396,7 +484,6 @@ func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) ->
 		if e.xi != e.prev_x >> 16 or e.yi != e.prev_y >> 16 or e.slot == Entity.Slot.PUCK:
 			move_entity(e)
 		e.speed = maxi(0, e.speed - 2)
-		e.contact = e.speed
 		if team != null and e.roster_idx >= 0:
 			team.energy[e.roster_idx] = e.energy
 	if message_timer > 0:
@@ -418,6 +505,8 @@ func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) ->
 func update_puck_distances() -> void:
 	teams[0].reset_nearest()
 	teams[1].reset_nearest()
+	teams[0].goalie_slot = -1     # word_df70e / word_df80e: no goalie until one is found
+	teams[1].goalie_slot = -1
 	for i in 12:
 		var e := entities[i]
 		var dx := puck.xi - e.xi
@@ -499,11 +588,10 @@ func clamp_goalie_to_crease(e: Entity) -> void:
 ## control byte, `pressed` the buttons that just went down
 func control_player(e: Entity, control: int, pressed: int, player: int) -> void:
 	e.flags |= Entity.F_USER
-	if player == 1:
-		e.flags |= Entity.F_PLAYER2
-	# F1-F4 / F5-F8: a line change request for the team (word_e0304)
+	# F1-F4 / F5-F8: a line change request for the team (word_e0304); with both users on one team
+	# only user 1 changes lines
 	var t := e.team
-	if line_hotkey[t] >= 0 and not penalty_shot:
+	if line_hotkey[t] >= 0 and not penalty_shot and (user1_team != user2_team or e.slot == user1_slot):
 		if not play_stopped or (e.flags2 & Entity.F2_LINE_CHANGE) or faceoff_pending:
 			Lines.request_line_change(self, e, line_hotkey[t])
 		line_hotkey[t] = -1
@@ -882,6 +970,7 @@ func collide_corner(e: Entity, a: int, b: int) -> void:
 				e.flags4 |= Entity.F4_FLIP_Y
 			if not play_stopped:
 				Rules.queue_infraction(self, entities[maxi(0, last_touch_slot)], Rules.INF_FROZEN)
+			Rules.end_penalty_shot(self)
 			one_timer = false
 			breakaway = false
 			return
@@ -912,6 +1001,11 @@ func bounce_off_boards(e: Entity, a: int, b: int) -> void:
 		vt = vt - (vt >> 6) - (vt >> 7)
 		e.vx = (a * vt - vn * b) >> 8
 		e.vy = (vt * b + a * vn) >> 8
+		# a loose puck off the boards (or one behind the goal line) ends a penalty shot
+		if puck_carrier < 0 or absi(e.yi) > 0xe8:
+			Rules.end_penalty_shot(self)
+		one_timer = false
+		breakaway = false
 	if e.vz > 0:
 		e.vz = 0
 	# keep the entity inside the boards after the bounce
@@ -932,6 +1026,12 @@ func collide_net(e: Entity, net: Entity, px: int, py: int, hw: int, hh: int) -> 
 		return
 	var dy := py - net.yi
 	if absi(dy) > hh + 2:
+		return
+	if (e.prev_z >> 16) > 0xc:
+		# it came down onto the roof of the net: it stays at its height and bounces up
+		e.z = (e.prev_z & ~0xffff) | (e.z & 0xffff)
+		if e.vz < 0:
+			e.vz = (-e.vz) >> 1
 		return
 	puck_in_net = true
 	e.flags &= ~Entity.F_ATTACK_UP
@@ -969,6 +1069,7 @@ func collide_net(e: Entity, net: Entity, px: int, py: int, hw: int, hh: int) -> 
 					e.vx = random(0x2000) - 0x1000
 					e.vz = random(0x2000) - 0x1000
 					PuckLogic.puck_spin(self, e)
+					Rules.end_penalty_shot(self)
 					one_timer = false
 					breakaway = false
 					return
@@ -1035,15 +1136,23 @@ func collide_pair(e: Entity, o: Entity) -> void:
 		return
 	var strength := closing >> 4
 	if e.slot == Entity.Slot.REFEREE or o.slot == Entity.Slot.REFEREE or e.team != o.team:
-		var s := maxi(5, strength >> 8)
-		e.contact += s
-		o.contact += s
+		# the impact (a signed byte of closing >> 12, at least 5) adds to both players' speed word,
+		# which knock_down and resolve_body_check read as the strength of the hit
+		var s := ((strength >> 8) & 0xff)
+		if s >= 0x80:
+			s -= 0x100
+		if s < 6:
+			s = 5
+		last_impact = s
+		e.speed += s
+		o.speed += s
 		if (o.flags2 & Entity.F2_KNOCKED) == 0:
 			o.hit_by = e.slot
 		if (e.flags2 & Entity.F2_KNOCKED) == 0:
 			e.hit_by = o.slot
 		if s > 0x13 and (puck_carrier == e.slot or puck_carrier == o.slot):
-			play_sfx(0xb0 if (step_count & 1) else 0xb2)
+			PuckLogic.crowd_reaction_sfx(self, 0)
+		PuckLogic.goalie_collision(self, e, o)
 		PuckLogic.resolve_body_check(self, e, o, s)
 	if puck_in_net:
 		return

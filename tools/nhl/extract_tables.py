@@ -82,7 +82,18 @@ def main():
     t['ai_state_names'] = [cstr(le, le.read_u32(0xcd8c0 + i * 4)) for i in range(50)]
     t['ai_state_handlers'] = ['0x%x' % le.read_u32(0xc9161 + i * 4) for i in range(47)]
     t['team_abbrev'] = [cstr(le, le.read_u32(0xc5439 + i * 4)) for i in range(28)]
-    t['message_strings'] = [cstr(le, le.read_u32(0xcd4dc + i * 4), 80) for i in range(7)]
+    t['message_strings'] = [cstr(le, le.read_u32(0xcd4dc + i * 4), 80) for i in range(8)]
+    # resolve_body_check: the checker's follow-through animation per direction of the victim
+    t['check_anims'] = shorts(le, 0xccc50, 8)
+    # knock_down / knockdown_position: positions against the boards per facing (x for the side
+    # boards at +0xccbcc right / +0xccbdc left and +0xccc0c / +0xccc1c alternates, y for the end
+    # boards at +0xccbec top / +0xccbfc bottom)
+    t['knockdown_right_x'] = shorts(le, 0xccbcc, 8)
+    t['knockdown_left_x'] = shorts(le, 0xccbdc, 8)
+    t['knockdown_top_y'] = shorts(le, 0xccbec, 8)
+    t['knockdown_bottom_y'] = shorts(le, 0xccbfc, 8)
+    t['knockdown_right2_x'] = shorts(le, 0xccc0c, 8)
+    t['knockdown_left2_x'] = shorts(le, 0xccc1c, 8)
     t['star_names'] = [cstr(le, le.read_u32(0xcca0a + i * 4)) for i in range(3)]
     t['announcer_ppv_names'] = [cstr(le, le.read_u32(0xcbed0 + i * 4)) for i in range(11)]
     # team names and cities (table of 0xba byte records is runtime data; the fixed list of full

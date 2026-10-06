@@ -170,12 +170,13 @@ func _draw_period() -> void:
 func _draw_message() -> void:
 	if sim.game_over:
 		return
-	var msg := sim.message       # PULL GOALIE / RETURN GOALIE / the OFFSIDE warning
+	var msg := sim.message       # PULL GOALIE / RETURN GOALIE / OFFSIDE warning / PENALTY SHOT
 	if msg < 0 and sim.play_stopped:
 		match sim.ref_infraction:
 			Rules.INF_ICING: msg = 5
 			Rules.INF_OFFSIDE: msg = 4
 			Rules.INF_TWO_LINE: msg = 3
+			Rules.INF_PENALTY_SHOT: msg = 7
 			_:
 				if sim.ref_infraction >= 9 and sim.ref_infraction <= 25:
 					msg = 6

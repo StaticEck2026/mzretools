@@ -31,6 +31,15 @@ static func puck_update(sim: Sim) -> void:
 	Rules.update_offside_flags(sim)
 	if not sim.play_stopped:
 		if sim.puck_carrier < 0:
+			# penalty shot: a loose puck that keeps moving away from the net for 30 steps ends it
+			var up := sim.teams[sim.penalty_shot_team].attacks_up
+			if sim.penalty_shot and ((up and puck.vy <= 0) or (not up and puck.vy >= 0)):
+				sim.penalty_shot_away += 1
+				if sim.penalty_shot_away > 0x1d:
+					Rules.end_penalty_shot(sim)
+					sim.penalty_shot_away = 0
+			else:
+				sim.penalty_shot_away = 0
 			# a puck that does not move for 0x78 steps (behind the net, in a corner) is frozen
 			if puck.xi == puck.prev_x >> 16 and puck.yi == puck.prev_y >> 16:
 				if not (absi(puck.xi) < 0xa3 and absi(puck.yi) < 0x10e and sim.teams[0].nearest_dist > 0x14 and sim.teams[1].nearest_dist > 0x14):
@@ -42,6 +51,7 @@ static func puck_update(sim: Sim) -> void:
 			else:
 				sim.puck_stuck_timer = 0x78
 		else:
+			sim.penalty_shot_away = 0
 			sim.puck_stuck_timer = 0x78
 	# frame selection: a slow, low puck shows the flat disc, otherwise the rolling frames
 	if absi(puck.vz) < 0x100 and puck.timer_c == 0:
@@ -391,6 +401,11 @@ static func take_puck(sim: Sim, e: Entity) -> void:
 	sim.puck_carrier = e.slot
 	var team := sim.team_of(e)
 	var opp := sim.opponents_of(e)
+	if sim.penalty_shot and e.roster_idx == team.carrier_history[0]:
+		# the shooter plays the puck a second time (a rebound): the penalty shot is over
+		Rules.end_penalty_shot(sim)
+		sim.one_timer = false
+		sim.breakaway = false
 	opp.carrier_history[1] = -1
 	opp.carrier_history[2] = -1
 	opp.flags |= 8
@@ -410,6 +425,7 @@ static func take_puck(sim: Sim, e: Entity) -> void:
 	sim.action_shot = false
 	if e.line_slot == 0:
 		shot_landed(sim)
+		Rules.end_penalty_shot(sim)
 		e.timer_b = 5 if e.anim == 0x181 else 0x8c   # time until the goalie must play the puck
 	# sub_5b1ce: the user follows the puck to the new carrier of his team
 	if e.slot != sim.user1_slot and e.slot != sim.user2_slot:
@@ -903,103 +919,440 @@ static func start_hook(sim: Sim, e: Entity, target: Entity) -> void:
 			return
 	Anim.set_animation(e, Anim.HOOK_B)
 
-## resolve_body_check (0x5387b), reduced: a body check or a hook on contact knocks the other down
-## or slows him; penalties are called with the original odds
+## resolve_body_check (0x5382c): contact between two opponents (or a player and the referee),
+## looked at both ways round: `b` hooks `a` with his stick (0x639 / 0x873, resolve_poke_hit),
+## `b` dives at `a` (0x589, resolve_hook_hit) or `a` body checks `b` (0x621)
 static func resolve_body_check(sim: Sim, e: Entity, o: Entity, strength: int) -> void:
-	for pair in [[e, o], [o, e]]:
-		var a: Entity = pair[0]
-		var b: Entity = pair[1]
+	var a := e
+	var b := o
+	for k in 2:
 		if b.anim == Anim.HOOK_A or b.anim == Anim.HOOK_B:
-			# hook: the carrier is slowed, hooking penalty with the aggression odds
-			if sim.puck_carrier == a.slot and (a.flags2 & Entity.F2_HOOKED) == 0:
-				a.flags2 |= Entity.F2_HOOKED
-				a.timer_d = 0x3c
-				if sim.random(0x20 - b.aggression) < 4:
-					Rules.maybe_queue_infraction(sim, b, Rules.INF_HOOKING)
-			continue
-		if b.anim == 0x589 and sim.puck_carrier == a.slot and sim.random(3) == 0:
-			# poke / lunge: steals the puck
-			a.timer_c = 0x14
-			sim.puck_carrier = -1
-			sim.last_passer = a.slot
-			release_puck_random(sim)
-			continue
-		if a.anim != Anim.BODY_CHECK:
-			continue
-		if sim.play_stopped:
-			a.vx = 0
-			a.vy = 0
-			continue
-		var dir := Tables.direction8(b.xi - a.xi, b.yi - a.yi)
-		var rel := (dir - a.facing) & 7
-		if a.flags4 & Entity.F4_MIRROR:
-			rel = (8 - rel) & 7
-		a.flags |= Entity.F_BUSY
-		if b.line_slot == 0 or strength <= 0x13:
-			continue
-		var base := 0xa0 if (a.flags & Entity.F_USER) else 100
-		if ((b.flags & Entity.F_USER) != 0) != (base == 0xa0):
-			base = 0x78
-		var odds := ((base - a.weight + b.weight) >> 1) - b.contact
-		if odds > 0 and sim.random(odds) > a.awareness:
-			continue
-		if b.slot == Entity.Slot.REFEREE:
-			continue
-		if not sim.no_stats:
-			if b.contact < 0x24 or ((dir - a.facing + 1) & 7) > 2:
-				var pen := -1
-				if sim.random(0x14 - a.check_skill) > 3:
-					pen = -1
-				elif b.contact < 0x24 or sim.random(4) != 0:
-					pen = Rules.INF_CHARGING if sim.random(10) < 7 else 21
-				else:
-					pen = 25
-				if pen >= 0:
-					Rules.maybe_queue_infraction(sim, a, pen)
-		knock_down(sim, a, b)
+			resolve_hook(sim, a, b)
+		elif b.anim == 0x589:
+			resolve_dive(sim, a, b)
+		elif a.anim == Anim.BODY_CHECK:
+			check_hit(sim, a, b, strength)
+		var t := a
+		a = b
+		b = t
 
-## knock_down (0x561c5): the victim falls (or stumbles if the hit was light)
+## the body check part of resolve_body_check: the checker's follow through, then whether the
+## victim goes down (weight, speed and the checker's aggression) and the penalty, if any
+static func check_hit(sim: Sim, a: Entity, b: Entity, strength: int) -> void:
+	if sim.play_stopped:
+		a.speed = 0x100
+		b.speed = 0x100
+	var dir := Tables.direction8(b.xi - a.xi, b.yi - a.yi)
+	var rel := (dir - a.facing) & 7
+	if a.flags4 & Entity.F4_MIRROR:
+		rel = (8 - rel) & 7
+	a.flags |= Entity.F_BUSY
+	# near the boards or in front of his own net the checker is more likely to lay a big hit
+	var odds_range := 0x1e
+	if absi(b.xi) > 0x90:
+		odds_range = 0x14
+	elif (a.yi > 0) != ((a.flags & Entity.F_ATTACK_UP) != 0) and absi(b.yi) - 0xe8 < 0x3c and absi(b.xi) < 0x50:
+		odds_range = 0x14
+	var anim: int = Tables.check_anims[rel]
+	if b.slot != Entity.Slot.REFEREE and sim.random(odds_range) < a.check_skill and ((rel + 1) & 7) <= 2 \
+			and absi(a.xi - b.xi) < 0x14 and absi(a.yi - b.yi) < 0x14:
+		if absi(b.vx) < 500 and absi(b.vy) < 500:
+			anim = 0xed7
+		elif ((Tables.direction8(b.vx, b.vy) - a.facing + 2) & 3) != 0:
+			anim = 0xed7
+	Anim.set_animation(a, anim)
+	if b.line_slot == 0 or strength < 0x14:
+		return
+	var base := 0xa0 if (a.flags & Entity.F_USER) else 100
+	if ((b.flags & Entity.F_USER) != 0) != (base == 0xa0):
+		base = 0x78
+	var odds := Entity.to_s16(((base - a.weight + b.weight) >> 1) - b.speed)
+	var down := odds <= 0
+	if not down and not sim.no_stats and Rules.breakaway_foul(sim, b) and sim.penalty_shot_slot < 0:
+		down = true
+	if not down and sim.random(odds) <= a.aggression:
+		down = true
+	if not down:
+		# he stays on his feet; the check may still be called (charging or slashing)
+		if b.slot == Entity.Slot.REFEREE or penalty_odds(sim, a) > 4 or sim.no_stats:
+			return
+		Rules.maybe_queue_infraction(sim, a, Rules.INF_SLASHING if sim.random(2) != 0 else Rules.INF_CHARGING)
+		return
+	if b.slot == Entity.Slot.REFEREE:
+		# a user who flattens the referee three times is thrown out (abuse of official)
+		if (a.flags & Entity.F_USER) == 0:
+			return
+		sim.ref_hits += 1
+		if sim.ref_hits >= 3:
+			sim.ref_hits = 0
+			Rules.maybe_queue_infraction(sim, a, Rules.INF_ABUSE_OF_OFFICIAL)
+		knock_down(sim, a, b)
+		return
+	if not sim.no_stats:
+		if Rules.breakaway_foul(sim, b):
+			if sim.penalty_shot_slot < 0:
+				Rules.award_penalty_shot(sim, b, a)
+		else:
+			var type := -1
+			if b.speed > 0x23 and ((dir - a.facing + 1) & 7) <= 2 and ((b.facing - a.facing + 1) & 7) <= 2 \
+					and facing_boards(b) and penalty_odds(sim, a) < 0x14:
+				type = Rules.INF_CHECK_FROM_BEHIND
+			elif penalty_odds(sim, a) <= 3:
+				if a.anim == 0xed7:
+					type = Rules.INF_HIGH_STICK if sim.random(10) > 8 else Rules.INF_CROSS_CHECK
+				elif b.speed > 0x23 and sim.random(4) == 0:
+					type = Rules.INF_ELBOWING_MAJOR
+				else:
+					type = Rules.INF_ELBOWING if sim.random(10) > 6 else Rules.INF_ROUGHING_HIT
+			if type >= 0:
+				Rules.maybe_queue_infraction(sim, a, type)
+	knock_down(sim, a, b)
+
+## sub_5378d: the player faces the boards or the end boards close by (a check from behind
+## would put him into them)
+static func facing_boards(e: Entity) -> bool:
+	var y := e.yi
+	var f := e.facing
+	if e.xi < -0x78:
+		if f == 6 or (y > 0xe8 and f == 7):
+			return true
+		return y < -0xe8 and f == 5
+	if e.xi < 0x79:
+		if y > 0xf2 and f == 0:
+			return true
+		return y < -0xf2 and f == 4
+	if f == 2 or (y > 0xe8 and f == 1):
+		return true
+	return y < -0xe8 and f == 3
+
+## penalty_odds (0x5369f): a random number; the smaller, the likelier the referee calls the foul.
+## Good checkers, fouls away from the puck, the third period, a team already short handed and a
+## delayed call against the other team all make a call less likely.
+static func penalty_odds(sim: Sim, e: Entity) -> int:
+	var odds := (0x14 - e.check_skill) * (0x20 if (e.flags & Entity.F_USER) else 0x10)
+	if absi(e.xi - sim.puck.xi) < 0x29 and absi(e.yi - sim.puck.yi) < 0x29:
+		odds = (Entity.to_s16(odds) >> 1) & 0xffff
+	if sim.period > 2:
+		odds <<= 3
+	if (sim.settings2 & 2) == 0:
+		odds *= 2
+	var short := sim.opponents_of(e).skaters_on_ice - sim.team_of(e).skaters_on_ice
+	if short > 0:
+		odds <<= 2
+	if short > 1:
+		odds <<= 2
+	var o16 := Entity.to_s16(odds)
+	if sim.delayed_call and sim.puck_carrier >= 0 and (sim.puck_carrier < 6) != (e.slot < 6):
+		o16 = Entity.to_s16(odds << 2)
+	return sim.random(Entity.to_s16((o16 >> 1) + o16))
+
+## resolve_poke_hit (0x56b79): `b` hooks or holds `a` with his stick (0x639 / 0x873). Both are tied
+## up at their common speed; holding (0x651) or hooking (0x88b) may be called, on a breakaway it
+## is a penalty shot and the puck is lost.
+static func resolve_hook(sim: Sim, a: Entity, b: Entity) -> void:
+	if (a.flags & Entity.F_BUSY) or a.slot == Entity.Slot.REFEREE or a.line_slot == 0 or (a.flags2 & Entity.F2_KNOCKED):
+		return
+	var dir := Tables.direction8(a.xi - b.xi, a.yi - b.yi)
+	if ((dir - b.facing + 1) & 7) >= 3:
+		return
+	if sim.puck_carrier == a.slot:
+		sim.action_shot = false
+	var vx := (b.vx + a.vx) >> 1
+	a.vx = vx
+	b.vx = vx
+	var vy := (b.vy + a.vy) >> 1
+	a.vy = vy
+	b.vy = vy
+	a.flags |= Entity.F_BUSY
+	Anim.set_animation(a, 0x669)
+	b.flags |= Entity.F_BUSY
+	Anim.set_animation(b, 0x651 if b.anim == Anim.HOOK_A else 0x88b)
+	if not Rules.breakaway_foul(sim, a):
+		if penalty_odds(sim, b) < 7:
+			Rules.maybe_queue_infraction(sim, b, Rules.INF_HOLDING if b.anim == 0x651 else Rules.INF_HOOKING)
+	elif Rules.award_penalty_shot(sim, a, b):
+		sim.puck_carrier = -1
+		b.timer_c = 0x20
+	sim.puck_in_net = true
+
+## resolve_hook_hit (0x56a54): `b` dives at `a` (0x589) and trips him: tripping, or a penalty
+## shot on a breakaway. Without the penalty option a user's dive often misses.
+static func resolve_dive(sim: Sim, a: Entity, b: Entity) -> void:
+	if (a.flags & Entity.F_BUSY) or a.slot == Entity.Slot.REFEREE or a.line_slot == 0 or (a.flags2 & Entity.F2_KNOCKED):
+		return
+	if not sim.opt_penalties and (b.flags & Entity.F_USER) and sim.random((b.aggression + 0x10) - a.speed_skill) < 0xc:
+		return
+	var dir := Tables.direction8(a.xi - b.xi, a.yi - b.yi)
+	if ((dir - b.facing + 1) & 7) > 2:
+		return
+	knock_down(sim, b, a)
+	if not Rules.breakaway_foul(sim, a):
+		if penalty_odds(sim, b) <= 4:
+			Rules.maybe_queue_infraction(sim, b, Rules.INF_TRIPPING)
+	else:
+		Rules.award_penalty_shot(sim, a, b)
+	sim.puck_in_net = true
+
+## check_injury (0x53e6a), in fact the goalie collision: a skater who crashes into a goalie (with
+## the puck or at speed) falls; a hard hit on a goalie outside his crease may be called as
+## interference
+static func goalie_collision(sim: Sim, e: Entity, o: Entity) -> void:
+	var p := e
+	var g := o
+	for k in 2:
+		if g.line_slot == 0 and not sim.play_stopped and (sim.puck_carrier == p.slot or p.speed > 0x19) and p.speed > 2:
+			knock_down(sim, g, p)
+			if sim.last_impact > 7 and (sim.puck_carrier != p.slot or sim.last_impact > 9):
+				if absi(g.yi) > 0x9f and p.slot != Entity.Slot.REFEREE and p.slot < 12 and p.roster_idx >= 0 \
+						and sim.team_of(p).entity_of[p.roster_idx] > -3 and g.speed > 0x1e and (p.flags2 & Entity.F2_PENALIZED) == 0:
+					if sim.random(0x14 - p.check_skill) < 3 and not sim.no_stats:
+						Rules.maybe_queue_infraction(sim, p, Rules.INF_INTERFERENCE)
+		var t := p
+		p = g
+		g = t
+
+## knock_down (0x562db): `victim` falls (or only stumbles: 0x8d3). Against the boards he is put
+## into a board animation (knockdown_position) and boarding may be called; a fall can injure him
+## (injure_player). The hitter can be a player, the referee or the puck.
 static func knock_down(sim: Sim, hitter: Entity, victim: Entity) -> void:
 	if (victim.slot >= 12 and victim.slot != Entity.Slot.REFEREE) or (victim.flags2 & Entity.F2_KNOCKED):
 		return
-	var a := victim.anim
-	if a == 0xa0b or a == 0x8d3 or a == 0x681 or a == 0x6d9 or a == 0x993 or a == 0x13c5 or a == 0x141d:
+	var va := victim.anim
+	if va == 0xa0b or va == 0x8d3 or va == 0x681 or va == 0x6d9 or va == 0x993 or va == 0x13c5 or va == 0x141d:
 		return
 	if victim.slot == Entity.Slot.REFEREE:
-		if a == 0xb13:
+		if va == 0xb13:
 			return
 		victim.flags |= Entity.F_BUSY
 		Anim.set_animation(victim, 0xb13)
 		sim.add_crowd(500, 1000)
 		sim.excitement += 0xf
+		crowd_reaction_sfx(sim, 1)
+		sim.play_sfx(0x7d)
 		return
-	var falls := victim.speed >= 0xc or sim.random(0x10) + 0x10 <= victim.contact
-	var anim := 0x8d3
-	if falls:
-		if hitter.line_slot != 0 and not sim.no_stats and not sim.play_stopped:
+	# the puck and the nets have no line slot in the original (0, like a goalie)
+	var hitter_slot := hitter.line_slot if hitter.slot < 12 else 0
+	var anim: int
+	if victim.goalie_skill >= 0xc and sim.random(0x10) + 0x10 > victim.speed:
+		victim.timer_d = 0x3c
+		anim = 0x8d3
+	else:
+		if hitter_slot != 0 and not sim.no_stats and not sim.play_stopped:
 			sim.team_of(hitter).hits += 1
 		victim.timer_c = 0x78
 		var dir := Tables.direction8(hitter.xi - victim.xi, hitter.yi - victim.yi)
-		var rel := (dir - victim.facing + 1) & 7
-		if rel < 3:
-			anim = 0x6d9           # falls backwards
-		elif hitter.slot == Entity.Slot.PUCK and (rel == 3 or rel == 7):
-			anim = 0x6d9
-		elif (victim.facing & 3) == 0 and hitter.aggression > 9 and hitter.slot < 12:
-			anim = 0x993           # big hit
+		anim = victim.anim
+		if hitter_slot != 0 and (hitter.slot < 6) != (victim.slot < 6):
+			anim = board_knockdown(sim, victim, dir)
+		if anim == victim.anim:
+			var rel := (dir - victim.facing + 1) & 7
+			if rel < 3:
+				anim = 0x6d9               # falls backwards
+			elif hitter.slot == Entity.Slot.PUCK and (rel == 3 or rel == 7):
+				anim = 0x6d9               # hit by the puck
+				if hitter.frame < 0x450 and sim.penalty_shot_slot < 0 and not sim.play_stopped and not sim.no_stats \
+						and sim.opt_injuries and (victim.facing & 3) == 0 and (victim.flags2 & Entity.F2_PENALIZED) == 0:
+					var r := sim.random(200 if (victim.flags & Entity.F_USER) else 0xa0)
+					if r < 0x15 and Rules.injury_check(sim, victim):
+						sim.add_crowd(500, 1000)
+						sim.excitement += 0xf
+						victim.flags |= Entity.F_BUSY
+						Anim.set_animation(victim, 0xa0b)
+						injure_player(sim, victim)
+						Rules.queue_infraction(sim, hitter, Rules.INF_INJURY)
+						return
+			elif (victim.facing & 3) == 0 and hitter.aggression > 9 and hitter.slot < 12:
+				anim = 0x993               # a big hit (the crowd chants)
+			else:
+				anim = 0x681               # spins down sideways
 		else:
-			anim = 0x681           # stumbles sideways
-	else:
-		victim.timer_d = 0x3c
+			sim.crowd_noise += 100
+			if sim.puck_carrier != victim.slot and penalty_odds(sim, hitter) < 4 and anim > 0xf0e and anim < 0xfe2:
+				Rules.maybe_queue_infraction(sim, hitter, Rules.INF_BOARDING if victim.speed < 0x24 else Rules.INF_BOARDING_MAJOR)
 	victim.flags |= Entity.F_BUSY
 	Anim.set_animation(victim, anim)
 	if victim.state() == Entity.State.SHOOT:
-		victim.push_state()
+		AI.default_skate(sim, victim)
 	sim.add_crowd(500, 1000)
 	sim.excitement += 0xf
-	if sim.puck_carrier == victim.slot:
-		sim.puck_carrier = -1
-		victim.timer_c = maxi(victim.timer_c, 0x14)
-		sim.last_passer = victim.slot
-		release_puck_random(sim)
+	if sim.puck_carrier < 0 or sim.puck_carrier != victim.slot:
+		crowd_reaction_sfx(sim, 1 if (anim < 0xf0f or anim > 0x1055) else 2)
+		return
+	sim.puck_carrier = -1
+	if sim.penalty_shot_slot < 0 and not sim.no_stats and sim.opt_injuries and victim.anim == 0x6d9 \
+			and (victim.facing & 3) == 0 and (victim.flags2 & Entity.F2_PENALIZED) == 0:
+		var r := sim.random(200 if (victim.flags & Entity.F_USER) else 0xa0)
+		if r <= victim.speed and not sim.play_stopped and Rules.injury_check(sim, victim):
+			victim.flags |= Entity.F_BUSY
+			Anim.set_animation(victim, 0xa0b)
+			injure_player(sim, victim)
+			if hitter_slot == 0 or not sim.opt_penalties or (hitter.slot < 12 and sim.team_of(hitter).penalties.size() > 7) \
+					or not Rules.injury_check(sim, hitter):
+				Rules.queue_infraction(sim, hitter, Rules.INF_INJURY)
+			else:
+				# the hit that injured him is called: from behind (a major) or roughing
+				var d := Tables.direction8(victim.xi - hitter.xi, victim.yi - hitter.yi)
+				var hf := hitter.facing
+				var behind := ((d - hf + 1) & 7) < 3 and ((victim.facing - hf + 1) & 7) < 3
+				Rules.queue_infraction(sim, hitter, Rules.INF_CHECK_FROM_BEHIND if behind else Rules.INF_ROUGHING)
 	sim.play_sfx(0x7d if (victim.flags & Entity.F_PLAYER2) else 0xa0)
+
+## the board part of knock_down (0x56441..0x566ad): a player hit against the side or end boards is
+## pinned to them (the 0xf0f..0x1055 board animations); returns the victim's current animation
+## when he falls on open ice
+static func board_knockdown(sim: Sim, v: Entity, dir: int) -> int:
+	var x := v.xi
+	var y := v.yi
+	var f := v.facing
+	var mirror := (v.flags4 & Entity.F4_MIRROR) != 0
+	if absi(x) > 0x5f and absi(y) > 0xc9:
+		var a := knockdown_position(sim, v, dir)
+		if a != v.anim:
+			return a
+	if x >= 0x80:
+		# right boards
+		if y < 0xd1 and y > -0xd7:
+			if dir > 4:
+				v.vx = 0
+				if mirror:
+					_set_x(v, -Tables.knockdown_left_x[(8 - f) & 7])
+					return 0xfe1
+				_set_x(v, Tables.knockdown_right_x[f])
+				return 0xf9b
+			return v.anim
+		return knockdown_position(sim, v, dir)
+	if x < -0x7f:
+		# left boards
+		if y > 0xd0 or y < -0xd6:
+			return knockdown_position(sim, v, dir)
+		if dir == 0 or dir > 3:
+			return v.anim
+		v.vx = 0
+		if (y < -0x54 or y > -0xb) and (y < 0x27 or y > 0x74):
+			if mirror:
+				_set_x(v, -Tables.knockdown_right_x[(8 - f) & 7])
+				return 0xf9b
+			_set_x(v, Tables.knockdown_left_x[f])
+			return 0xfe1
+		# in front of a bench door
+		if not mirror:
+			_set_x(v, Tables.knockdown_left2_x[f])
+			return 0x1055
+		_set_x(v, -Tables.knockdown_right2_x[(8 - f) & 7])
+		return 0x1027
+	if y >= 0xee:
+		# top end boards
+		if x > 0x68 or x < -0x68:
+			return knockdown_position(sim, v, dir)
+		if ((dir + 2) & 7) > 4:
+			_set_y(v, Tables.knockdown_top_y[f])
+			v.vy = 0
+			return 0xf0f
+		return v.anim
+	if y < -0xf1:
+		# bottom end boards
+		if x > 0x68 or x < -0x68:
+			return knockdown_position(sim, v, dir)
+		if ((dir + 1) & 7) < 3:
+			_set_y(v, Tables.knockdown_bottom_y[f])
+			v.vy = 0
+			return 0xf55
+	return v.anim
+
+static func _set_x(e: Entity, x: int) -> void:
+	e.x = (x << 16) | (e.x & 0xffff)
+
+static func _set_y(e: Entity, y: int) -> void:
+	e.y = (y << 16) | (e.y & 0xffff)
+
+## knockdown_position (0x5601d): in a corner the player is pinned to the rounded boards: moved onto
+## the corner circle (centre +-0x60, +-0xca) and given the side (0xf9b / 0xfe1) or end (0xf0f /
+## 0xf55) board animation that faces the hit; returns his current animation otherwise
+static func knockdown_position(_sim: Sim, e: Entity, dir: int) -> int:
+	var cx := -0x60 if e.xi < 0 else 0x60
+	var cy := -0xca if e.yi < 0 else 0xca
+	var dx := e.xi - cx
+	var dy := e.yi - cy
+	var d := Sim.approx_distance(dx, dy)
+	var mirror := (e.flags4 & Entity.F4_MIRROR) != 0
+	var f := e.facing
+	if d <= 0x17:
+		return e.anim
+	var ux := ((dx * 0x100) / d) >> 2
+	var uy := ((dy * 0x100) / d) >> 2
+	if absi(uy) < absi(ux):
+		if cx < 0:
+			if dir != 0 and dir - 1 < 3:
+				_set_x(e, cx + ux + 6)
+				_set_y(e, uy + cy + (0 if cy < 1 else -10))
+				e.vx = 0
+				e.vy = 0
+				if not mirror:
+					_set_x(e, e.xi + Tables.knockdown_left_x[f] + 0x9a)
+					return 0xfe1
+				_set_x(e, e.xi - (Tables.knockdown_right_x[(8 - f) & 7] - 0x9a))
+				return 0xf9b
+		elif dir > 4:
+			_set_x(e, cx + ux - 6)
+			_set_y(e, uy + cy + (0 if cy < 1 else -10))
+			e.vx = 0
+			e.vy = 0
+			if not mirror:
+				_set_x(e, e.xi + Tables.knockdown_right_x[f] - 0x9a)
+				return 0xf9b
+			_set_x(e, e.xi - (Tables.knockdown_left_x[(8 - f) & 7] + 0x9a))
+			return 0xfe1
+	elif cy < 0:
+		if ((dir + 1) & 7) < 3:
+			_set_x(e, cx + ux)
+			_set_y(e, uy + cy)
+			e.vx = 0
+			e.vy = 0
+			_set_y(e, e.yi + Tables.knockdown_bottom_y[f] + 0x108)
+			return 0xf55
+	elif ((dir + 2) & 7) > 4:
+		_set_x(e, cx + ux)
+		if cx < 0 and not mirror:
+			_set_x(e, e.xi + 6)
+		if cx > 0 and mirror:
+			_set_x(e, e.xi - 6)
+		_set_y(e, uy + cy - 8)
+		e.vx = 0
+		e.vy = 0
+		_set_y(e, e.yi + Tables.knockdown_top_y[f] - 0x108)
+		return 0xf0f
+	return e.anim
+
+## injure_player (0x55e72): the player is hurt: out for the period (-3) or, after a heavy hit and
+## with bad luck (rating 15 of the player), for the game (-4). The camera looks at him.
+static func injure_player(sim: Sim, e: Entity) -> void:
+	e.flags2 |= Entity.F2_UNSELECTABLE
+	sim.add_crowd(300, 1000)
+	sim.excitement += 0x1e
+	sim.play_sfx(0xa1)
+	sim.camera_target_x = e.xi
+	sim.camera_target_y = e.yi + (0x32 if e.xi < sim.camera_x else 0)
+	sim.action_hold_camera = true
+	var team := sim.team_of(e)
+	var proneness := 8
+	if team.info != null and e.roster_idx >= 0:
+		var p: Database.Player = team.info.player(e.roster_idx)
+		if p != null and p.ratings.size() > 15:
+			proneness = p.ratings[15]
+	var r := sim.random(proneness + 8)
+	var for_game := r > 6 and sim.last_impact >= 0x2e
+	if e.roster_idx >= 0 and e.roster_idx < 28:
+		team.entity_of[e.roster_idx] = -4 if for_game else -3
+		if not for_game:
+			team.injured.append(e.roster_idx)
+	sim.injury_report = [team.index, e.roster_idx, for_game]
+
+## crowd_reaction_sfx (0x58084): 0 a hit, 1 a fall, 2 a fall against the boards (glass)
+static func crowd_reaction_sfx(sim: Sim, kind: int) -> void:
+	if kind == 2:
+		sim.play_sfx(0xb1)
+	if kind != 0 and sim.last_impact > 0x20 and sim.random(2) == 0:
+		sim.play_sfx(0x93)
+		return
+	sim.crowd_toggle = not sim.crowd_toggle
+	sim.play_sfx(0xb0 if sim.crowd_toggle else 0xb2)

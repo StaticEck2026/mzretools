@@ -41,6 +41,13 @@ static var lineup_slot_types: Array = []          # [mode][k]: position type of 
 static var line_table_lists: Array = []           # [type]: preference list of line table offsets (line 0..7 first)
 static var line_preference: Array = []            # [strategy][line]: candidate lines of choose_line
 static var line_rotation: Array = []              # [group * 8 + line]: lines offered by the line change prompt
+static var check_anims: Array = []                # resolve_body_check: checker animation per relative direction
+static var knockdown_right_x: Array = []          # knock_down: x against the right boards per facing
+static var knockdown_left_x: Array = []
+static var knockdown_right2_x: Array = []
+static var knockdown_left2_x: Array = []
+static var knockdown_top_y: Array = []            # y against the end boards per facing
+static var knockdown_bottom_y: Array = []
 static var loaded := false
 
 static func _static_init() -> void:
@@ -90,6 +97,13 @@ static func load_tables() -> void:
 	line_table_lists = _ints(t["line_table_lists"])
 	line_preference = _ints(t["line_preference"])
 	line_rotation = _ints(t["line_rotation"])
+	check_anims = _ints(t["check_anims"])
+	knockdown_right_x = _ints(t["knockdown_right_x"])
+	knockdown_left_x = _ints(t["knockdown_left_x"])
+	knockdown_right2_x = _ints(t["knockdown_right2_x"])
+	knockdown_left2_x = _ints(t["knockdown_left2_x"])
+	knockdown_top_y = _ints(t["knockdown_top_y"])
+	knockdown_bottom_y = _ints(t["knockdown_bottom_y"])
 	loaded = true
 
 ## JSON numbers come back as floats: convert nested arrays of numbers to ints

@@ -214,7 +214,7 @@ static func apply_line_change(sim: Sim, team: Team) -> void:
 static func serving_penalty(e: Entity) -> bool:
 	var st := e.state()
 	return st == Entity.State.PENALTY_BOX or st == Entity.State.DOOR_OPEN or st == Entity.State.EXIT_PENALTY_BOX \
-		or st == Entity.State.GAME_MISCONDUCT or (e.flags2 & Entity.F2_PENALIZED) != 0
+		or (e.flags2 & Entity.F2_PENALIZED) != 0
 
 ## dress_line (0x5e03c): puts the assigned players on the ice at once (period start)
 static func dress_line(sim: Sim, team: Team) -> void:
@@ -441,11 +441,18 @@ static func flush_pending(sim: Sim) -> void:
 		e.state_sp = 0
 		e.state_stack[0] = Entity.State.INIT_PERIOD
 
-## send_team_to_faceoff (0x5bd?): every player without a pending change lines up for the faceoff
+## send_team_to_faceoff (0x511b4): every player without a pending change lines up for the
+## faceoff; nothing during a penalty shot, and after one the players who waited at the bench are
+## taken off (INIT_PERIOD) to be dressed again at the faceoff
 static func send_team_to_faceoff(sim: Sim, team: Team) -> void:
+	if sim.penalty_shot_phase != 0:
+		return
 	for i in 6:
 		var e := sim.entities[team.first_slot + i]
-		if e.line_slot >= 0 and e.next_line_slot == -1 and e.next_roster == -1 and e.timer_b != -100 and e.state() != Entity.State.ALL_GOTO_FACEOFF:
+		if sim.penalty_shot_setup and e.state() == Entity.State.PENALTY_SHOT_WAIT:
+			e.timer_b = 0
+			e.set_state(Entity.State.INIT_PERIOD)
+		elif e.line_slot >= 0 and e.next_line_slot == -1 and e.next_roster == -1 and e.timer_b != -100 and e.state() != Entity.State.ALL_GOTO_FACEOFF:
 			e.set_state_reset(Entity.State.ALL_GOTO_FACEOFF)
 
 ## the defence pair rotates with every forward line change (0, 1, 2, 0, ...)

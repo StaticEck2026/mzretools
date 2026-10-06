@@ -1,11 +1,13 @@
 class_name Rules
 ## Game rules: the clock, stoppages and the infraction queue, faceoff placement, goals, offside and
-## icing. Ports of sim_game_state, update_stoppage, process_infractions, start_stoppage, queue_infraction,
-## game_clock_tick, score_goal, setup_faceoff, check_offside, check_icing, faceoff_resolve and the
-## positioning part of ai_puck_faceoff2. Penalties are recognised but served as a plain faceoff
-## (the penalty box states are not ported).
+## icing, penalties (box, game misconduct, penalty shot). Ports of sim_game_state, update_stoppage,
+## process_infractions, start_stoppage, queue_infraction, maybe_queue_infraction,
+## penalty_box_update, game_clock_tick, score_goal, setup_faceoff, check_offside, check_icing,
+## faceoff_resolve, the positioning part of ai_puck_faceoff2 and the penalty shot routines
+## (sub_6427f, sub_64398, start_penalty_shot, end_penalty_shot).
 
-# infraction / event ids (infraction_queue, infraction_priority, infraction_is_penalty)
+# infraction / event ids (infraction_queue, infraction_priority, infraction_is_penalty). The
+# penalty names follow the speech table off_cd354[type - 9] used by record_penalty.
 const INF_PERIOD_START := 1
 const INF_PERIOD_END := 2
 const INF_FROZEN := 3            # puck frozen, held or out of play
@@ -14,15 +16,26 @@ const INF_PENALTY_SHOT_END := 5
 const INF_ICING := 6
 const INF_GOAL := 7
 const INF_OFFSIDE := 8
-const INF_HOOKING := 9           # 9 .. 21: two minute minors, 22 misconduct, 23 .. 25 majors
-const INF_INJURY := 10
-const INF_CHARGING := 13
-const INF_HIGH_STICK := 14
-const INF_ELBOWING := 19
-const INF_PENALTY_SHOT := 17
-const INF_FIGHT := 22
-const INF_ROUGHING := 23
+const INF_ROUGHING := 9          # 9, 11 .. 21: two minute minors
+const INF_INJURY := 10           # a player is hurt (whistle, no penalty)
+const INF_CHARGING := 11
+const INF_SLASHING := 12
+const INF_ROUGHING_HIT := 13
+const INF_CROSS_CHECK := 14
+const INF_HOOKING := 15
+const INF_TRIPPING := 16
+const INF_INTERFERENCE := 17     # also goalie interference (check_injury)
+const INF_HOLDING := 18
+const INF_HIGH_STICK := 19
+const INF_BOARDING := 20
+const INF_ELBOWING := 21
+const INF_ABUSE_OF_OFFICIAL := 22   # game misconduct (infraction_is_penalty -1)
+const INF_CHECK_FROM_BEHIND := 23   # 23 .. 25: five minute majors
+const INF_BOARDING_MAJOR := 24
+const INF_ELBOWING_MAJOR := 25
+const INF_PENALTY_SHOT := 26        # a foul on a breakaway
 const INF_DISALLOWED := 27
+const INF_DELAYED_CALL := 28
 const INF_TWO_LINE := 29
 const INF_REF_HIT := 30
 
@@ -80,7 +93,17 @@ static func stoppage_done(sim: Sim) -> void:
 			return
 		var e: Entity = sim.entities[inf[1]]
 		var minutes: int = Tables.infraction_is_penalty[inf[0]]
-		if minutes > 0 and e.slot < 12 and e.line_slot > 0 and (e.flags2 & Entity.F2_PENALIZED):
+		if inf[0] == INF_PENALTY_SHOT:
+			begin_penalty_shot(sim)
+			# the referee picks up the puck again: the shooter and the goalie line up, the others
+			# wait at the benches (all_goto_positions with the shot phase set)
+			all_goto_positions(sim)
+			var rs := sim.referee.state()
+			if rs == Entity.State.REF_GOTO_FACEOFF or rs == Entity.State.REF_FACEOFF:
+				sim.referee.set_state(Entity.State.REF_PENALTY_SHOT)
+		elif minutes < 0:
+			game_misconduct(sim, e)
+		elif minutes > 0 and e.slot < 12 and e.line_slot > 0 and (e.flags2 & Entity.F2_PENALIZED):
 			serve_penalty(sim, e, minutes)
 		e.flags2 &= ~Entity.F2_PENALIZED
 		sim.infractions.pop_back()
@@ -208,6 +231,10 @@ static func start_stoppage(sim: Sim, idx: int) -> void:
 						fy = -0x4e if fy < 0 else 0x4e
 				elif type == INF_ICING:
 					fy = -600 if (culprit.flags & Entity.F_ATTACK_UP) else 600
+		if sim.penalty_shot_setup:
+			# after a penalty shot the play resumes where the foul happened
+			fx = sim.penalty_shot_spot.x
+			fy = sim.penalty_shot_spot.y
 		# snap to the nearest dot: x = +-96, y = +-184 in the end zones, neutral zone dots at +-100/+-61
 		fx = clampi(fx, -0x60, 0x60)
 		if fy >= 0x90:
@@ -264,9 +291,142 @@ static func maybe_queue_infraction(sim: Sim, e: Entity, type: int) -> void:
 		elif type == INF_TWO_LINE:
 			if not sim.opt_two_line_pass:
 				return
-		elif not sim.opt_penalties:
-			return
+		else:
+			if not sim.opt_penalties:
+				return
+			# penalized_count > 7, and the team must keep enough players of the culprit's position
+			if e.slot < 12 and sim.team_of(e).penalties.size() > 7:
+				return
+			if e.slot < 12 and not injury_check(sim, e):
+				return
 	queue_infraction(sim, e, type)
+
+## injury_check (0x65b83): may the player be lost (penalty, injury)? A defenceman only while more
+## than 2 defencemen, a forward only while more than 4 forwards of the team are still available.
+static func injury_check(sim: Sim, e: Entity) -> bool:
+	if e.slot >= 12:
+		return true
+	var team := sim.team_of(e)
+	var defence := Lines.position_class(team, 1)
+	var group: Array = defence
+	var need := 2
+	if not defence.has(e.roster_idx):
+		group = Lines.position_class(team, 0)
+		need = 4
+	var count := 0
+	for r: int in group:
+		if team.entity_of[r] == -1 or team.entity_of[r] == -2:
+			count += 1
+	return count > need
+
+# --------------------------------------------------------------------------------------------
+# penalty shot (sub_6427f, sub_64398, start_penalty_shot 0x63f72, end_penalty_shot 0x64439)
+# --------------------------------------------------------------------------------------------
+
+## sub_6427f: is a foul on `victim` a foul on a breakaway? He carries the puck towards the net
+## (moving and facing that way), nobody is between him and the net, he is not deeper than the
+## goal line area and the goalie is in.
+static func breakaway_foul(sim: Sim, victim: Entity) -> bool:
+	if sim.no_stats or not sim.opt_penalties or sim.puck_carrier != victim.slot or not sim.breakaway:
+		return false
+	if (victim.flags & Entity.F_ATTACK_UP) == 0:
+		if victim.vy > 0 or victim.facing < 3 or victim.facing > 5:
+			return false
+	elif victim.vy < 0 or (victim.facing > 1 and victim.facing < 7):
+		return false
+	count_defenders_ahead(sim)
+	sim.breakaway = sim.defenders_ahead != 0
+	if not sim.breakaway:
+		return false
+	return absi(victim.yi) <= 0xe4 and not sim.opponents_of(victim).goalie_pulled()
+
+## the fouls on a breakaway (resolve_body_check, resolve_hook_hit, resolve_poke_hit): the fouled
+## player will take the shot; the culprit gets infraction 0x1a. False when a shot is already set.
+static func award_penalty_shot(sim: Sim, victim: Entity, culprit: Entity) -> bool:
+	if sim.penalty_shot_slot >= 0:
+		return false
+	sim.penalty_shot_slot = victim.slot
+	sim.penalty_shot_user = 1 if victim.slot == sim.user1_slot else -1
+	maybe_queue_infraction(sim, culprit, INF_PENALTY_SHOT)
+	return true
+
+## sub_64398 (penalty_box_update, infraction 0x1a): the shot is called. The faceoff spot of the
+## stoppage is kept for afterwards and the puck goes to centre ice.
+static func begin_penalty_shot(sim: Sim) -> void:
+	if sim.penalty_shot_phase != 0 or sim.penalty_shot_slot < 0:
+		return
+	sim.penalty_shot_team = 1 if sim.penalty_shot_slot > 5 else 0
+	sim.teams[sim.penalty_shot_team].penalty_shots += 1
+	sim.penalty_shot_roster = sim.entities[sim.penalty_shot_slot].roster_idx
+	sim.penalty_shot_phase = 1
+	sim.penalty_shot_spot = Vector2i(sim.faceoff_x, sim.faceoff_y)
+	sim.faceoff_x = 0
+	sim.faceoff_y = 0
+	sim.show_message(7, 0x100)          # PENALTY SHOT
+
+## start_penalty_shot (0x63f72), from ai_puck_faceoff2 once the shooter and the goalie are set:
+## the puck lies at centre ice, the shooter has it and plays the breakaway state
+static func start_penalty_shot(sim: Sim) -> void:
+	var puck := sim.puck
+	puck.set_pos(0, 0)
+	puck.z = 0
+	puck.vx = 0
+	puck.vy = 0
+	puck.vz = 0
+	puck.set_state(Entity.State.PUCK_NORMAL)
+	var shooter := sim.entities[sim.penalty_shot_slot]
+	shooter.flags2 &= ~(Entity.F2_UNSELECTABLE | Entity.F2_NO_COLLIDE)
+	shooter.flags &= ~Entity.F_ARRIVED
+	for i in 8:
+		shooter.set_state_reset(Entity.State.BREAKAWAY)
+	# the defending user controls nobody (find_switch_target(-1)): his goalie plays by himself
+	var defending := 1 - sim.penalty_shot_team
+	if sim.user1_team == defending + 1 and sim.user1_slot != -1:
+		sim.user1_slot = sim.find_switch_target(-1, sim.user1_slot)
+	if sim.user2_team == defending + 1 and sim.user2_slot != -1:
+		sim.user2_slot = sim.find_switch_target(-1, sim.user2_slot)
+	sim.teams[sim.penalty_shot_team].carrier_history = PackedInt32Array([-1, -1, -1])
+	sim.crowd_noise += 100
+	sim.puck_carrier = sim.penalty_shot_slot
+	sim.penalty_shot = true
+	sim.penalty_shot_setup = true
+	sim.penalty_shot_clock = 1000
+	sim.infractions.clear()
+
+## the goalie of the team defending against the penalty shot
+static func defending_goalie(sim: Sim) -> int:
+	var defending := 1 - sim.penalty_shot_team
+	for i in 6:
+		var e := sim.entities[sim.teams[defending].first_slot + i]
+		if e.line_slot == 0:
+			return e.slot
+	return -1
+
+## end_penalty_shot (0x64439): goal, save, miss, timeout: back to the faceoff spot of the foul
+static func end_penalty_shot(sim: Sim) -> void:
+	if not sim.penalty_shot or sim.penalty_shot_phase == 0:
+		return
+	sim.penalty_shot_phase = 0
+	sim.penalty_shot = false
+	sim.penalty_shot_slot = -1
+	queue_infraction(sim, sim.puck, INF_PENALTY_SHOT_END)
+	sim.last_touch_x = sim.penalty_shot_spot.x
+	sim.last_touch_y = sim.penalty_shot_spot.y
+	sim.referee.set_state(Entity.State.REF_PICKUP)
+
+## the game misconduct of penalty_box_update (infraction_is_penalty -1): the player is out for the
+## game and skates off (ai_game_misconduct), no one serves time in the box
+static func game_misconduct(sim: Sim, e: Entity) -> void:
+	if e.slot >= 12 or e.roster_idx < 0:
+		return
+	var team := sim.team_of(e)
+	if team.entity_of[e.roster_idx] > -3:
+		e.next_line_slot = -1
+		e.next_roster = -1
+		e.set_state(Entity.State.GAME_MISCONDUCT)
+	team.entity_of[e.roster_idx] = -5
+	sim.show_message(6, 0x100)          # PENALTY
+
 
 ## update_effects (0x615a3): crowd noise decays towards the ambient level
 static func update_effects(sim: Sim) -> void:
@@ -298,6 +458,12 @@ static func update_lead_change(sim: Sim) -> void:
 
 ## game_clock_tick (0x5dc10): 24 sub ticks per second
 static func game_clock_tick(sim: Sim) -> void:
+	if sim.penalty_shot:
+		# the game clock stands still; the shot must be over within 1000 steps
+		sim.penalty_shot_clock -= 1
+		if sim.penalty_shot_clock <= 0:
+			end_penalty_shot(sim)
+		return
 	if sim.clock_seconds == 0 and sim.clock_sub == 0:
 		return
 	if sim.clock_sub - 1 >= 0:
@@ -346,7 +512,13 @@ static func score_goal(sim: Sim, net: Entity) -> void:
 			var p := sim.entities[scoring.first_slot + i]
 			if p.line_slot > 0 and (p.flags2 & Entity.F2_KNOCKED) == 0:
 				p.flags &= ~Entity.F_ARRIVED
-				p.set_state_reset(Entity.State.CELEBRATE)
+				if p.state() == Entity.State.PENALTY_SHOT_WAIT:
+					# the team mates waiting at the bench come out to celebrate the penalty shot goal
+					p.set_state_reset(Entity.State.BENCH_WAIT)
+					p.set_state_reset(Entity.State.CELEBRATE)
+					p.set_state_reset(Entity.State.EXIT_BENCH)
+				else:
+					p.set_state_reset(Entity.State.CELEBRATE)
 		sim.puck_in_net = false
 		puck.x = (-6 if puck.xi < 0 else 6) * 0x10000
 		puck.vx = 0
@@ -357,7 +529,12 @@ static func score_goal(sim: Sim, net: Entity) -> void:
 		puck.flags3 |= 4
 		puck.set_state(Entity.State.PUCK_IDLE)
 		Anim.set_animation(sim.shadow, 0x7fd)
+		if sim.penalty_shot_phase != 0 and not sim.no_stats:
+			scoring.penalty_shot_goals += 1
 		queue_infraction(sim, sim.entities[conceding.first_slot], INF_GOAL)
+		if not sim.no_stats:
+			end_penalty_shot(sim)
+			sim.penalty_shot_spot = Vector2i.ZERO
 		sim.referee.set_state(Entity.State.REF_NORMAL)
 	else:
 		sim.puck_in_net = false
@@ -669,11 +846,7 @@ static func place_faceoff(sim: Sim) -> void:
 	Anim.set_animation(ref, 0xc57)
 	sim.user1_slot = -1
 	sim.user2_slot = -1
-	if sim.user1_team != 0:
-		sim.user1_slot = sim.find_switch_target(sim.centre_slot(sim.user1_team - 1), -1)
-	if sim.user2_team != 0:
-		sim.user2_slot = sim.find_switch_target(sim.centre_slot(sim.user2_team - 1), -1)
-		sim.entities[sim.user2_slot].flags |= Entity.F_PLAYER2
+	sim.assign_users()
 	sim.faceoff_ready = [1, 4]
 	sim.faceoff_side = [0x8800 if not sim.ends_switched else 0x8000, 0xa000 if not sim.ends_switched else 0xa800]
 	sim.faceoff_dir = [-1, -1]
@@ -728,17 +901,61 @@ static func faceoff_resolve(sim: Sim) -> void:
 	if winner >= 0:
 		sim.team_of(sim.entities[winner]).faceoffs_won += 1
 
-## all_goto_positions (0x512c1): after the whistle everybody skates to the faceoff spot
+## all_players_arrived (0x51440): every player on the ice stands at his faceoff place (timer_b -100)
+static func all_players_arrived(sim: Sim) -> bool:
+	for i in 12:
+		var p := sim.entities[i]
+		if p.line_slot >= 0 and p.timer_b != -100:
+			return false
+	return true
+
+## all_goto_positions (0x512c1), called when the referee starts to pick up the puck:
+##  - a normal stoppage: the goalies go to the faceoff, the skaters to the bench area to wait for
+##    the line change (BENCH_WAIT) when line changes are on, else straight to the faceoff;
+##  - a penalty shot (phase set): the shooter and the defending goalie line up, everybody else
+##    waits at the benches (PENALTY_SHOT_WAIT);
+##  - the stoppage after a penalty shot (setup set): the waiting players come back.
+## Players in the penalty box keep their state (the port keeps the penalty on the entity).
 static func all_goto_positions(sim: Sim) -> void:
 	for i in 12:
 		var e := sim.entities[i]
-		if e.line_slot < 0:
-			continue
-		e.timer_b = 0
 		var s := e.state()
 		if s == Entity.State.PENALTY_BOX or s == Entity.State.DOOR_OPEN or s == Entity.State.EXIT_PENALTY_BOX:
 			continue
-		if s == Entity.State.BENCH or s == Entity.State.EXIT_BENCH or s == Entity.State.BENCH_WAIT or e.next_roster >= 0:
-			continue      # changing: handle_line_change / ai_bench take him to the faceoff afterwards
-		if s != Entity.State.INIT_PERIOD and s != Entity.State.ALL_GOTO_FACEOFF:
-			e.set_state_reset(Entity.State.ALL_GOTO_FACEOFF)
+		if sim.penalty_shot_phase != 0:
+			if e.line_slot > 0:
+				e.timer_b = 0
+				if i == sim.penalty_shot_slot:
+					e.set_state_reset(Entity.State.ALL_GOTO_FACEOFF)
+				elif s != Entity.State.INIT_PERIOD and s != Entity.State.GAME_MISCONDUCT:
+					e.set_state_reset(Entity.State.PENALTY_SHOT_WAIT)
+			if e.line_slot == 0:
+				e.timer_b = 0
+				if e.team == sim.penalty_shot_team:
+					e.set_state_reset(Entity.State.PENALTY_SHOT_WAIT)
+				else:
+					e.next_line_slot = -1
+					e.next_roster = -1
+					e.set_state_reset(Entity.State.ALL_GOTO_FACEOFF)
+			continue
+		if not sim.penalty_shot_setup:
+			if e.line_slot == 0:
+				e.timer_b = 0
+				if s != Entity.State.INIT_PERIOD:
+					e.set_state_reset(Entity.State.ALL_GOTO_FACEOFF)
+			elif e.line_slot > 0:
+				e.timer_b = 0
+				if s != Entity.State.INIT_PERIOD and s != Entity.State.GAME_MISCONDUCT:
+					e.set_state_reset(Entity.State.BENCH_WAIT if sim.opt_line_changes else Entity.State.ALL_GOTO_FACEOFF)
+			continue
+		if s == Entity.State.PENALTY_SHOT_WAIT:
+			if not sim.opt_line_changes:
+				e.set_state_reset(Entity.State.ALL_GOTO_FACEOFF)
+				e.set_state_reset(Entity.State.EXIT_BENCH)
+		elif e.line_slot < 1:
+			if e.line_slot == 0 and s != Entity.State.INIT_PERIOD:
+				e.set_state_reset(Entity.State.ALL_GOTO_FACEOFF)
+		else:
+			e.next_line_slot = -1
+			e.next_roster = -1
+			e.set_state_reset(Entity.State.BENCH_WAIT)

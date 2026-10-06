@@ -6,7 +6,8 @@ extends Node2D
 ## shapes and sound effects are used, otherwise coloured placeholders.
 ##
 ## Environment variables for the headless tooling: NHL_HOME / NHL_AWAY (team indices 0..27,
-## default Boston against Detroit), NHL_SCREENSHOT=path (save the view after NHL_SCREENSHOT_STEPS
+## default Boston against Detroit), NHL_USER1 / NHL_USER2 (the team each user controls: 0 none,
+## 1 home, 2 away; default user 1 home, no user 2), NHL_SCREENSHOT=path (save the view after NHL_SCREENSHOT_STEPS
 ## simulation steps and quit), NHL_FAST_STEPS (simulation steps to run before the first frame).
 
 const VIEW_W := 320
@@ -39,6 +40,8 @@ var crowd_player: AudioStreamPlayer
 
 var home_team := 0
 var away_team := 4
+var user1_team := 1                   # user1_team / user2_team: 0 none, 1 home, 2 away
+var user2_team := 0
 var shot_path := ""
 var shot_steps := 900
 var steps_done := 0
@@ -86,10 +89,19 @@ func _read_settings() -> void:
 	if cfg.load(GameFiles.SETTINGS_PATH) == OK:
 		home_team = cfg.get_value("match", "home", home_team)
 		away_team = cfg.get_value("match", "away", away_team)
+		user1_team = cfg.get_value("match", "user1", user1_team)
+		user2_team = cfg.get_value("match", "user2", user2_team)
 	if OS.has_environment("NHL_HOME"):
 		home_team = int(OS.get_environment("NHL_HOME"))
 	if OS.has_environment("NHL_AWAY"):
 		away_team = int(OS.get_environment("NHL_AWAY"))
+	if OS.has_environment("NHL_USER1"):
+		user1_team = clampi(int(OS.get_environment("NHL_USER1")), 0, 2)
+	if OS.has_environment("NHL_USER2"):
+		user2_team = clampi(int(OS.get_environment("NHL_USER2")), 0, 2)
+	sim.user1_team = user1_team
+	sim.user2_team = user2_team
+	sim.assign_users()
 	shot_path = OS.get_environment("NHL_SCREENSHOT")
 	if OS.has_environment("NHL_SCREENSHOT_STEPS"):
 		shot_steps = int(OS.get_environment("NHL_SCREENSHOT_STEPS"))

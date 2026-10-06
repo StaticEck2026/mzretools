@@ -2,8 +2,8 @@ class_name AI
 ## The AI state machine: ports of the `ai_*` handlers dispatched by sim_update_players through
 ## ai_state_handlers[state]. Every player, the puck, its shadow and the referee run one handler per
 ## step. States and handlers are listed in re/nhl_hockey/STRUCTURES.md; the mapping below follows
-## ai_state_names. Line changes, penalties, the penalty shot, the anthem, the three stars and the
-## cup ceremony are not ported: their states fall through to the default role of the player.
+## ai_state_names. The anthem, the three stars and the cup ceremony are not ported: their states
+## fall through to the default role of the player.
 
 static func dispatch(sim: Sim, e: Entity) -> void:
 	match e.state():
@@ -43,6 +43,9 @@ static func dispatch(sim: Sim, e: Entity) -> void:
 		Entity.State.EXIT_PENALTY_BOX: exit_penalty_box(sim, e)
 		Entity.State.INIT_PERIOD: init_period(sim, e)
 		Entity.State.BREAKAWAY: breakaway(sim, e)
+		Entity.State.REF_PENALTY_SHOT: ref_penalty_shot(sim, e)
+		Entity.State.PENALTY_SHOT_WAIT: penalty_shot_wait(sim, e)
+		Entity.State.GAME_MISCONDUCT: game_misconduct(sim, e)
 		_:
 			# states that are not ported: back to the default role
 			if e.slot < 12 and e.line_slot >= 0:
@@ -83,32 +86,237 @@ static func role_preamble(sim: Sim, e: Entity) -> bool:
 		e.want_dir = 8
 	return true
 
-## ai_choose_direction (0x5f151), reduced to the essential: targets on the far side of a net are
-## reached around the near post
+## net_zone_flags (0x5f04e): outcodes of the player (fe) and his target (ft) against the box
+## lo <= y < hi, -hw <= x < hw around a net: 4 below lo, 1 at or above hi, 2 right, 8 left.
+## ok is false when both are outside on the same side (the straight line cannot cross the box).
+static func net_zone_flags(ex: int, ey: int, tx: int, ty: int, lo: int, hi: int, hw: int) -> Array:
+	var fe := 0
+	var ft := 0
+	if ey < lo:
+		fe = 4
+		if ty < lo:
+			return [false, fe, ft]
+	elif ty < lo:
+		ft = 4
+	if ey < hi:
+		if ty >= hi:
+			ft = 1
+	else:
+		fe = 1
+		if ty >= hi:
+			return [false, fe, ft]
+	if ex < hw:
+		if tx >= hw:
+			ft |= 2
+	else:
+		fe |= 2
+		if tx >= hw:
+			return [false, fe, ft]
+	if ex < -hw:
+		fe |= 8
+		if tx < -hw:
+			return [false, fe, ft]
+	elif tx < -hw:
+		ft |= 8
+	return [true, fe, ft]
+
+## ai_choose_direction (0x5f151): a skater whose straight path to (tx, ty) would cross a net goes
+## around it: the target is replaced by a point beside the post (x = +-(0x2c + m)), in front of the
+## net (fy), behind it (by = +-0xfd) or on the goal line. The top net is handled mirrored (y negated,
+## outcodes 4 and 1 swapped) so 4 always means behind the net and 1 in front of it. Ported from the
+## assembly, including the comparisons of x with the goalie's y (0x5f496, 0x5f611) and the
+## asymmetric cases 2/8 and 6/12 of the outcode switch.
 static func choose_direction(sim: Sim, e: Entity, tx: int, ty: int) -> Vector2i:
 	var goalie_like := e.line_slot == 0 or e.state() == Entity.State.ALL_GOTO_FACEOFF
-	var margin := -6 if goalie_like else 10
-	var half_w := 0x2c + margin
-	for sgn: int in [1, -1]:
-		var front := sgn * (0xe8 - (6 if goalie_like else 0x23))
-		var back := sgn * 0xfc
-		var ey := e.yi
-		var in_band_e := (ey - front) * sgn >= 0 and (ey - back) * sgn <= 0
-		var in_band_t := (ty - front) * sgn >= 0 and (ty - back) * sgn <= 0
-		var e_behind := (ey - back) * sgn > 0
-		var t_behind := (ty - back) * sgn > 0
-		var e_front := (ey - front) * sgn < 0
-		var t_front := (ty - front) * sgn < 0
-		var crosses := (e_behind and t_front) or (e_front and t_behind) or (in_band_e and absi(e.xi) < half_w and not in_band_t) or (in_band_t and absi(tx) < half_w and not in_band_e)
-		if not crosses:
-			continue
-		if absi(e.xi) < half_w or absi(tx) < half_w:
-			var side := half_w if (e.xi if absi(e.xi) >= 0x27 else tx) >= 0 else -half_w
-			var wy := front if e_front or (in_band_e and not e_behind) else back
-			if in_band_e and absi(e.xi) >= half_w:
-				return Vector2i(tx, ty)
-			return Vector2i(side, wy)
-	return Vector2i(tx, ty)
+	var m := -6 if goalie_like else 10
+	if sim.play_stopped and e.slot == Entity.Slot.REFEREE:
+		if absi(ty) < 0xe8 and (e.yi ^ ty) >= 0:
+			return Vector2i(tx, ty)
+	var x := e.xi
+	var ey := e.yi
+	var mtx := tx
+	var mty := ty
+	var hw := 0x2c + (-8 if goalie_like else 0)
+	var near := 6 if goalie_like else 0x23
+	var r := net_zone_flags(x, ey, mtx, mty, 0xe8 - near, 0xfc, hw)
+	var by: int        # behind the net (edx)
+	var fy: int        # in front of the net (eax)
+	var gl: int        # goal line
+	var goalie_team: Team
+	var fe: int
+	var ft: int
+	var attack_up := (e.flags & Entity.F_ATTACK_UP) != 0
+	if r[0]:
+		by = 0xfd
+		fy = 0xe8 - (7 if goalie_like else 0x24)
+		ey = -ey
+		mty = -mty
+		gl = 0xe8
+		goalie_team = sim.opponents_of(e) if attack_up else sim.team_of(e)
+		fe = r[1]
+		ft = r[2]
+		if fe & 5:
+			fe ^= 5
+		if ft & 5:
+			ft ^= 5
+	else:
+		r = net_zone_flags(x, ey, mtx, mty, -0xfc, near - 0xe8, hw)
+		if not r[0]:
+			return Vector2i(tx, ty)
+		by = -0xfd
+		fy = (7 if goalie_like else 0x24) - 0xe8
+		gl = -0xe8
+		goalie_team = sim.team_of(e) if attack_up else sim.opponents_of(e)
+		fe = r[1]
+		ft = r[2]
+	var gs := goalie_team.goalie_slot
+	var g: Entity = sim.entities[gs] if gs >= 0 else null
+	var right := m + 0x2c          # A
+	var left := -0x2c - m          # B
+	var left1 := left + 1
+	# results (the original writes the words of the target in place)
+	var ox := tx
+	var oy := ty
+	if ft == 0:
+		if ey < -0xe8:
+			# behind the goal line, the target inside the box (0x5f4a9)
+			if mty < -0xe8:
+				return Vector2i(ox, oy)
+			if x < left1:
+				ox = left
+			elif x >= right:
+				ox = right
+			else:
+				oy = by
+				if tx >= 0:
+					if right > tx:
+						ox = right
+				elif left1 <= tx:
+					ox = left
+			if absi(x) > 0x26:
+				oy = fy
+			return Vector2i(ox, oy)
+		if goalie_like:
+			if mty < -0xe8:
+				return Vector2i(ox, oy)
+			oy = fy
+			if tx >= 0:
+				if right > tx:
+					ox = right
+			elif left1 <= tx:
+				ox = left
+			if absi(x) > 0x26:
+				oy = by
+			return Vector2i(ox, oy)
+		if mty >= -0xe8:
+			# 0x5f46c
+			if g == null:
+				return Vector2i(ox, oy)
+			if x < tx:
+				if x < g.xi:
+					oy = fy
+			elif x >= g.yi:
+				oy = fy
+			return Vector2i(ox, oy)
+		oy = fy
+		return _around_post(x, tx, g, right, left, by, ox, oy, true)
+	match fe:
+		0:
+			if ey < -0xe8:
+				# 0x5f643
+				if x < left1:
+					ox = left
+				elif x >= right:
+					ox = right
+				else:
+					oy = by
+					if tx >= 0:
+						if right > tx:
+							ox = right
+					elif left1 <= tx:
+						ox = left
+				return Vector2i(ox, oy)
+			if goalie_like:
+				if ft & 1:
+					return Vector2i(ox, oy)
+				oy = fy
+				if tx >= 0:
+					if right > tx:
+						ox = right
+				elif left1 <= tx:
+					ox = left
+				return Vector2i(ox, oy)
+			if mty < -0xe8:
+				# 0x5f602
+				oy = gl
+				if g != null:
+					ox = left if x < g.yi else right
+				elif tx >= 0:
+					if right > tx:
+						ox = right
+				elif left1 <= tx:
+					ox = left
+				return Vector2i(ox, oy)
+			return _around_post(x, tx, g, right, left, by, ox, oy, false)
+		1:
+			oy = fy
+			if ft & 4:
+				return Vector2i(ox, oy)
+			if tx >= 0:
+				if tx < right:
+					ox = right
+			elif tx >= left1:
+				ox = left
+		2:
+			ox = right
+			if (ft & 5) == 0:
+				oy = fy
+		3:
+			if ft == 8:
+				oy = fy
+			else:
+				ox = right
+		4:
+			oy = by
+			if ft & 1:
+				if tx >= 0:
+					if tx < right:
+						ox = right
+				elif tx >= left1:
+					ox = left
+		6:
+			if ft != 8:
+				ox = right
+			else:
+				oy = by
+		8:
+			ox = left
+			if ft & 5:
+				oy = fy
+		9:
+			if ft == 2:
+				oy = fy
+			else:
+				ox = left
+		12:
+			if ft == 2:
+				oy = by
+	return Vector2i(ox, oy)
+
+## the shared tail of ai_choose_direction (0x5f411..0x5f467, 0x5f5c4..0x5f5fd): pass the post on
+## the side away from the goalie, or on the player's side when he is wide of the net. `limit` is
+## the 0x5f431 variant, which gives up when the player is already wide of the post.
+static func _around_post(x: int, tx: int, g: Entity, right: int, left: int, by: int, ox: int, oy: int, limit: bool) -> Vector2i:
+	if g != null and ((tx - g.xi) ^ (x - tx)) < 0:
+		ox = left if x < g.xi else right
+	elif absi(x) >= right:
+		if limit:
+			return Vector2i(ox, oy)
+	else:
+		ox = left if x < 0 else right
+	if absi(x) > 0x26:
+		oy = by
+	return Vector2i(ox, oy)
 
 ## ai_skate_towards (0x5e93b): re-evaluates the direction every 12 steps; `mode` adjusts it
 ## (1 = ai_near_carrier_check, 2 = ai_ref_positioning)
@@ -1261,6 +1469,9 @@ static func all_goto_faceoff(sim: Sim, e: Entity) -> void:
 		e.want_dir = 8
 		e.timer_a = 0
 		var pos := Rules.faceoff_position(sim, e)
+		if sim.penalty_shot_phase != 0 and e.slot == sim.penalty_shot_slot:
+			# the shooter waits just inside his own half at centre ice
+			pos = Vector2i(0, -10 if (e.flags & Entity.F_ATTACK_UP) else 10)
 		e.target_x = pos.x
 		e.target_y = pos.y
 		e.flags2 |= Entity.F2_NO_COLLIDE
@@ -1339,6 +1550,12 @@ static func puck_faceoff(sim: Sim, e: Entity) -> void:
 			# a penalty was pending: it is called now (served as a faceoff)
 			sim.delayed_call = false
 		sim.skip_wait = false
+		if sim.penalty_shot_phase != 0:
+			# the penalty shot: nobody changes (apply_line_change keeps the players on the ice
+			# here and send_team_to_faceoff does nothing during the shot)
+			e.set_state(Entity.State.PUCK_FACEOFF2)
+			e.timer_b = 1000
+			return
 		# line changes at the stoppage: a goalie pulled by the CPU comes back, the CPU coaches pick
 		# their lines (choose_line), the users keep theirs unless a hotkey request is pending
 		# (the line change prompt of the original times out to the same line)
@@ -1388,6 +1605,10 @@ static func puck_faceoff2(sim: Sim, e: Entity) -> void:
 		sim.ref_phase = -1
 		sim.whistle_timer = 0
 		sim.infractions.clear()
+		sim.penalty_shot_setup = false
+		if sim.penalty_shot_phase != 0:
+			penalty_shot_go(sim, e)
+			return
 		Rules.place_faceoff(sim)
 		return
 	e.timer_a -= 1
@@ -1400,6 +1621,207 @@ static func puck_faceoff2(sim: Sim, e: Entity) -> void:
 		var t := (e.timer_a + 6) >> 3
 		if t <= 2:
 			sim.faceoff_timer = 10 - t
+
+## the penalty shot branch of ai_puck_faceoff2 (0x51fc6..0x5214d): the user of the shooter's team
+## takes the shooter, the defending goalie is reset, play resumes and start_penalty_shot hands the
+## puck to the shooter
+static func penalty_shot_go(sim: Sim, e: Entity) -> void:
+	sim.faceoff_pending = false
+	sim.stoppage_countdown = false
+	sim.stoppage_timer = -1
+	sim.announce_timer = -1
+	sim.delayed_call = false
+	sim.pass_target = -1
+	sim.icing_flags = 0
+	sim.action_hold_camera = false
+	sim.camera_target_x = 0
+	sim.camera_target_y = 0
+	sim.last_touch_x = 0
+	sim.last_touch_y = 0
+	sim.last_touch_slot = -1
+	sim.last_passer = -1
+	sim.last_shooter = -1
+	var shot := sim.penalty_shot_slot
+	if sim.user1_slot != shot and sim.user2_slot != shot:
+		if sim.user1_team == sim.penalty_shot_team + 1:
+			sim.user1_slot = sim.find_switch_target(shot, sim.user1_slot)
+		elif sim.user2_team == sim.penalty_shot_team + 1:
+			sim.user2_slot = sim.find_switch_target(shot, sim.user2_slot)
+	var g := Rules.defending_goalie(sim)
+	if g >= 0:
+		var goalie := sim.entities[g]
+		goalie.flags3 = 0
+		goalie.timer_e = 0
+		goalie.timer_f = 0
+		goalie.pass_ok = 0
+		goalie.flags2 &= ~(Entity.F2_UNSELECTABLE | Entity.F2_NO_COLLIDE)
+		goalie.flags &= ~Entity.F_ARRIVED
+	sim.play_stopped = false
+	sim.misc_first_touch = true         # misc_flags 0x10, as after a faceoff
+	e.flags &= ~Entity.F_ARRIVED
+	e.set_state(Entity.State.PUCK_NORMAL)
+	Rules.start_penalty_shot(sim)
+
+## ai_ref_penalty_shot (0x52fb0): the referee carries the puck to centre ice, puts it down, skates
+## to the side and whistles once the shooter and the goalie are ready
+static func ref_penalty_shot(sim: Sim, e: Entity) -> void:
+	if e.flags & Entity.F_BUSY:
+		return
+	var puck := sim.puck
+	if e.flags & Entity.F_STATE_ENTERED:
+		e.flags &= ~Entity.F_STATE_ENTERED
+		e.want_dir = 8
+		e.timer_a = 0
+		e.react_timer = Tables.direction8(-e.xi, -e.yi)     # +0x27: facing towards centre ice
+		e.target_x = 0
+		e.target_y = 0
+		e.timer_b = 0
+		e.flags2 |= Entity.F2_NO_COLLIDE
+		e.push_x = 0
+		e.push_y = 0
+		sim.puck_carrier = Entity.Slot.REFEREE
+		puck.vx = 0
+		puck.vy = 0
+		puck.vz = 0
+		puck.z = -100 * 0x10000
+		Anim.set_animation(e, Anim.REF_GLIDE)
+	if sim.penalty_shot_slot == -1:
+		e.set_state(Entity.State.REF_PICKUP)
+		return
+	if e.timer_b == 100:
+		return
+	if e.timer_b == 1:
+		# the puck is put down at centre ice
+		sim.puck_carrier = -1
+		puck.set_pos(0, 0)
+		puck.z = 0
+		puck.vx = 0
+		puck.vy = 0
+		puck.vz = 0
+		e.timer_b += 1
+	var dx := e.xi - e.target_x
+	var dy := e.yi - e.target_y
+	if dx * dx + dy * dy < 0x40 and absi(e.vx) < 0x10 and absi(e.vy) < 0x10:
+		var want := e.react_timer
+		if e.timer_b != 0:
+			e.set_pos(e.target_x, e.target_y)
+			want = 6
+		e.timer_a -= 1
+		if e.timer_a >= 0:
+			return
+		e.timer_a += 8
+		Anim.set_animation(e, Anim.REF_GLIDE)
+		if want != e.facing:
+			var diff := (want - e.facing) & 7
+			e.facing = (e.facing + (1 if diff < 5 else -1)) & 7
+			return
+		e.vx = 0
+		e.vy = 0
+		if e.timer_b != 0:
+			if not Rules.all_players_arrived(sim):
+				return
+			sim.ref_phase = -1
+			sim.play_sfx(0xa4)          # whistle: the shot may start
+			e.timer_b = 100
+			return
+		# at centre ice: puts the puck down and moves to the side
+		e.flags |= Entity.F_BUSY
+		Anim.set_animation(e, 0xc03)
+		e.target_x = 0x96
+		e.target_y = 10 if (0 if sim.ends_switched else 1) == sim.penalty_shot_team else -10
+		e.timer_b += 1
+		sim.ref_phase = 0
+		sim.action_hold_camera = false
+		return
+	ref_skate_to_point(sim, e, e.target_x, e.target_y)
+
+## ai_all_penalty_shot_wait (0x52db0): everybody but the shooter and the goalie skates to his
+## bench and steps off the ice until the shot is over
+static func penalty_shot_wait(sim: Sim, e: Entity) -> void:
+	if e.flags & Entity.F_BUSY:
+		return
+	if e.timer_a == 100:
+		e.frame = -1
+		PuckLogic._set_x(e, -0xa8)
+		return
+	if sim.penalty_shot_phase == 0:
+		return
+	if e.flags & Entity.F_STATE_ENTERED:
+		e.flags &= ~Entity.F_STATE_ENTERED
+		e.want_dir = 8
+		e.target_y = (0x41 if (e.flags & Entity.F_PLAYER2) else -0x32) + (2 - sim.random(4)) * 0xf
+		e.target_x = -0xa8
+		e.timer_a = 0
+		e.timer_b = 0
+		e.next_line_slot = -1
+		e.next_roster = -1
+	e.timer_a -= 1
+	if e.timer_a < 0:
+		e.timer_a += 8
+		var dy := e.yi - e.target_y
+		var dx := e.xi - e.target_x
+		if absi(dy) < 0x29 and dx < 0x21:
+			if _leave_at_bench(sim, e, dx):
+				e.flags2 |= Entity.F2_UNSELECTABLE
+				e.timer_b = -100
+				e.timer_a = 100
+			return
+	if (e.flags & Entity.F_ARRIVED) == 0:
+		skate_towards(sim, e, e.target_x, e.target_y, 1 if (not sim.play_stopped and e.line_slot != 0) else 0)
+
+## the common end of ai_all_penalty_shot_wait / ai_game_misconduct: at the boards the player turns
+## towards the bench door (facing 4) and steps off (0x7bf, goalies 0xd2d). True once he is off.
+static func _leave_at_bench(_sim: Sim, e: Entity, dx: int) -> bool:
+	Anim.set_animation(e, 1 if e.line_slot == 0 else Anim.GLIDE)
+	e.flags |= Entity.F_ARRIVED
+	if e.facing != 4:
+		e.facing = (e.facing + (1 if e.facing < 4 else -1)) & 7
+	e.vy = 0
+	e.vx = -0x800
+	if dx > 0x10:
+		return false
+	e.vx = 0
+	if e.facing != 4:
+		return false
+	e.vx = -0x800
+	e.facing = 2
+	Anim.set_animation(e, 0xd2d if e.line_slot == 0 else 0x7bf)
+	e.flags |= Entity.F_BUSY
+	return true
+
+## ai_game_misconduct (0x4ab87): the player is thrown out: he skates to the bench door and leaves;
+## his place is taken at the next faceoff (pick_player_for_position, done by assign_line_positions)
+static func game_misconduct(sim: Sim, e: Entity) -> void:
+	if e.flags & Entity.F_BUSY:
+		return
+	if e.timer_a == 100:
+		e.flags2 &= ~Entity.F2_PENALIZED
+		e.frame = -1
+		e.set_state(Entity.State.INIT_PERIOD)
+		return
+	if e.flags & Entity.F_STATE_ENTERED:
+		e.flags &= ~Entity.F_STATE_ENTERED
+		e.flags2 |= Entity.F2_UNSELECTABLE
+		if e.flags & Entity.F_USER:
+			sim.switch_to_nearest(e, 0 if e.slot == sim.user1_slot else 1)
+		e.want_dir = 8
+		e.target_y = 0x24 if (e.flags & Entity.F_PLAYER2) else -0x1c
+		e.target_x = -0xa8
+		e.timer_a = 0
+		e.flags2 |= Entity.F2_NO_COLLIDE
+		e.push_x = 0
+		e.push_y = 0
+	e.timer_a -= 1
+	if e.timer_a < 0:
+		e.timer_a += 8
+		var dy := e.yi - e.target_y
+		var dx := e.xi - e.target_x
+		if absi(dy) < 0x15 and dx < 0x21:
+			if _leave_at_bench(sim, e, dx):
+				e.timer_a = 100
+			return
+	if (e.flags & Entity.F_ARRIVED) == 0:
+		skate_towards(sim, e, e.target_x, e.target_y)
 
 # --------------------------------------------------------------------------------------------
 # penalty box (pen dopen expen)
@@ -1646,6 +2068,9 @@ static func ref_pickup(sim: Sim, e: Entity) -> void:
 
 ## ai_ref_goto_faceoff (0x4f5bf): carries the puck to the dot
 static func ref_goto_faceoff(sim: Sim, e: Entity) -> void:
+	if sim.penalty_shot_phase != 0:
+		e.set_state(Entity.State.REF_PENALTY_SHOT)
+		return
 	if e.flags & Entity.F_BUSY:
 		return
 	var puck := sim.puck

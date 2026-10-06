@@ -35,6 +35,9 @@ class TeamInfo:
 	var penalty_kill: Array = []# 2 x 4
 	var goalie_order: Array = []# 2 roster indices (25..27)
 	var line_table: PackedByteArray = PackedByteArray()   # the raw 0x30 bytes at +0xbc (line_energy / assign_line_positions index it by offset)
+	# +0x2dc..+0x2df rating adjustments of put_player_on_ice: trailing, leading, at home, away
+	# (each mapped to 0 below 4, 1 below 7, else 2; the trailing and away values minus 2)
+	var factors: PackedByteArray = PackedByteArray([7, 7, 7, 3])
 
 	func player(roster_idx: int) -> Player:
 		if roster_idx >= 25:
@@ -80,6 +83,7 @@ func load_team(idx: int) -> TeamInfo:
 	for i in 3:
 		t.goalies.append(read_player(teams_db.decode_s32(base + 0xb0 + i * 4), true, 25 + i))
 	t.line_table = teams_db.slice(base + 0xbc, base + 0xec)
+	t.factors = teams_db.slice(base + 0x2dc, base + 0x2e0)
 	var p := base + 0xbc
 	for i in 4:
 		t.forwards.append([teams_db[p], teams_db[p + 1], teams_db[p + 2]])

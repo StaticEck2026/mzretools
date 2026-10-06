@@ -44,6 +44,35 @@ func run_tests() -> void:
 		fail("direction8")
 	if Tables.position_default_state.size() != 7 or Tables.position_default_state[0] != 14 or Tables.position_default_state[4] != 5:
 		fail("position_default_state " + str(Tables.position_default_state))
+	# randomrange: the 32 bit LCG of the original from its initial seed 0xabcd4321
+	var rsim := Sim.new()
+	rsim.seed = 0xabcd4321
+	var rolls := []
+	for i in 5:
+		rolls.append(rsim.random(100))
+	if rolls != [64, 55, 7, 45, 74]:
+		fail("randomrange sequence " + str(rolls))
+	# ai_choose_direction: a skater in front of the top net heading behind it goes to the front of
+	# the net first; one beside the net goes down the right side; a path clear of the nets is kept
+	var nz := AI.net_zone_flags(0, 150, 0, 240, 0xc5, 0xfc, 0x2c)
+	if nz != [true, 4, 0]:
+		fail("net_zone_flags " + str(nz))
+	var sk := rsim.entities[1]
+	sk.line_slot = 1
+	sk.set_state(Entity.State.DEF_OFFENSE)
+	sk.flags |= Entity.F_ATTACK_UP
+	sk.set_pos(0, 150)
+	var cd := AI.choose_direction(rsim, sk, 0, 260)
+	if cd != Vector2i(0, 0xc4):
+		fail("choose_direction in front of the net: " + str(cd))
+	sk.set_pos(60, 220)
+	cd = AI.choose_direction(rsim, sk, 0, 260)
+	if cd != Vector2i(0x36, 260):
+		fail("choose_direction beside the net: " + str(cd))
+	sk.set_pos(0, 0)
+	cd = AI.choose_direction(rsim, sk, 0, 100)
+	if cd != Vector2i(0, 100):
+		fail("choose_direction clear path: " + str(cd))
 	# animation stepping: the 4 frame skating cycle (0x2e9, frames 41..44 facing up) re-triggered
 	# every step like apply_skating does; the glide pose (0x289) is a single frame per direction
 	var e := Entity.new()
@@ -109,39 +138,48 @@ func run_tests() -> void:
 		maxy = maxi(maxy, absi(p1.yi))
 	if maxx < 40 or maxy < 40:
 		fail("user did not skate far enough: %d,%d" % [maxx, maxy])
-	# a shot from the slot into the empty net scores
-	sim = Sim.new()
-	run_until_play(sim, 1200)
-	var shooter := sim.entities[sim.user1_slot]
-	for i in 6:
-		var g := sim.entities[6 + i]
-		if g.line_slot == 0:
-			g.line_slot = -1        # pull the away goalie
-	shooter.set_pos(0, 150)
-	shooter.vx = 0
-	shooter.vy = 0
-	shooter.heading = 0
-	sim.puck.set_pos(0, 158)
-	sim.puck.vx = 0
-	sim.puck.vy = 0
-	sim.puck_carrier = shooter.slot
-	shooter.set_state(Entity.State.NEAREST)
-	var home_goals := sim.teams[0].goals
-	sim.step(0, 8, 0x20, 0)        # B: start the shot
-	for i in 40:
-		sim.step(0, 8, 0, 0)
-	if sim.puck_carrier == shooter.slot:
-		fail("the shot was not released (anim %x pos %d)" % [shooter.anim, shooter.anim_pos])
+	# a shot from the slot into the empty net scores: the shot height is random (a high one goes
+	# over the net, as in the original), so a few seeds of randomrange are tried
 	var scored := false
-	for i in 300:
-		sim.step(8, 8, 0, 0)
-		if sim.teams[0].goals > home_goals:
-			scored = true
+	var shooter: Entity = null
+	var tries := 0
+	for seed_try: int in [0xabcd4321, 1, 2, 3, 4, 5, 6, 7]:
+		tries += 1
+		sim = Sim.new()
+		run_until_play(sim, 1200)
+		sim.seed = seed_try
+		shooter = sim.entities[sim.user1_slot]
+		for i in 6:
+			var g := sim.entities[6 + i]
+			if g.line_slot == 0:
+				g.line_slot = -1        # pull the away goalie
+		shooter.set_pos(0, 150)
+		shooter.vx = 0
+		shooter.vy = 0
+		shooter.heading = 0
+		sim.puck.set_pos(0, 158)
+		sim.puck.vx = 0
+		sim.puck.vy = 0
+		sim.puck_carrier = shooter.slot
+		shooter.set_state(Entity.State.NEAREST)
+		var home_goals := sim.teams[0].goals
+		sim.step(0, 8, 0x20, 0)        # B: start the shot
+		for i in 40:
+			sim.step(0, 8, 0, 0)
+		if sim.puck_carrier == shooter.slot:
+			fail("the shot was not released (anim %x pos %d)" % [shooter.anim, shooter.anim_pos])
+			break
+		for i in 300:
+			sim.step(8, 8, 0, 0)
+			if sim.teams[0].goals > home_goals:
+				scored = true
+				break
+		if scored:
 			break
 	if not scored:
 		fail("no goal: puck %d,%d v %d,%d carrier %d stopped %s infractions %s" % [sim.puck.xi, sim.puck.yi, sim.puck.vx, sim.puck.vy, sim.puck_carrier, sim.play_stopped, str(sim.infractions)])
 	else:
-		print("goal scored, home %d away %d" % [sim.teams[0].goals, sim.teams[1].goals])
+		print("goal scored, home %d away %d (seed try %d)" % [sim.teams[0].goals, sim.teams[1].goals, tries])
 		# after the goal the play stops and a new faceoff follows at centre ice
 		var again := run_until_play(sim, 2400)
 		if again < 0:
@@ -189,6 +227,24 @@ func run_tests() -> void:
 		fail("penalized player did not return (state %s penalties %s clock %d)" % [Tables.ai_state_names[culprit.state() + 1], str(sim.teams[1].penalties), sim.clock_seconds])
 	else:
 		print("penalty served, player back at %d,%d after %d game seconds" % [culprit.xi, culprit.yi, 300 - sim.clock_seconds])
+	# two users: user 2 plays the away team with his own controls; on the same team the second user
+	# takes another skater
+	sim = Sim.new()
+	sim.user2_team = 2
+	sim.assign_users()
+	if sim.user2_slot < 6 or sim.entities[sim.user2_slot].line_slot != 4:
+		fail("user 2 should control the away centre, slot %d" % sim.user2_slot)
+	run_until_play(sim, 1200)
+	for i in 60:
+		sim.step(8, 6, 0, 0)          # user 2 skates left (he follows the puck to other skaters)
+	var p2 := sim.entities[sim.user2_slot]
+	if p2.vx >= -0x200 or (p2.flags & Entity.F_PLAYER2) == 0:
+		fail("user 2 did not skate left: slot %d vx %d" % [p2.slot, p2.vx])
+	sim = Sim.new()
+	sim.user2_team = 1
+	sim.assign_users()
+	if sim.user2_slot < 0 or sim.user2_slot == sim.user1_slot or sim.user2_slot >= 6 or (sim.entities[sim.user2_slot].flags & Entity.F_PLAYER2):
+		fail("co-op: user 2 slot %d user 1 slot %d" % [sim.user2_slot, sim.user1_slot])
 	# a long simulation must not throw and must keep everybody on the rink
 	sim = Sim.new()
 	var stoppages := 0
@@ -306,8 +362,9 @@ func asset_tests() -> void:
 			dressed.append(sim.entities[i].roster_idx)
 			if sim.entities[i].roster_idx == 10:
 				bourque_e = sim.entities[i]
-		if bourque_e == null or bourque_e.line_slot != 2 or bourque_e.number != 77 or bourque_e.speed_skill != 10 or bourque_e.weight != 10 or bourque_e.shot_skill != 13 or bourque_e.reaction != 8:
-			fail("Bourque (RD) ratings: %s" % str(dressed))
+		if bourque_e == null or bourque_e.line_slot != 2 or bourque_e.number != 77 or bourque_e.speed_skill != 10 or bourque_e.weight != 10 or bourque_e.shot_skill != 13 or bourque_e.reaction != 7:
+			# reaction: rating 13 + 2 home ice (TEAMS.DB +0x2de = 7), stored inverted ((15 ^ 15) + 15) >> 1
+			fail("Bourque (RD) ratings: %s reaction %d" % [str(dressed), bourque_e.reaction if bourque_e != null else -1])
 		dressed.sort()
 		if dressed != [4, 7, 10, 16, 18, 25]:
 			fail("Boston's first line is not dressed: %s" % str(dressed))
@@ -324,6 +381,7 @@ func asset_tests() -> void:
 			sim.step(8, 8, 0, 0)
 		print("BOS - DET after 3000 steps: %d-%d, clock %d:%02d" % [sim.teams[0].goals, sim.teams[1].goals, sim.clock_seconds / 60, sim.clock_seconds % 60])
 		line_change_tests(bos, det)
+		match_rules_tests(bos, det)
 	# sound effects: 30 digital samples, the goal horn (0x9c) is the 7 second sample
 	var snd := Sounds.load_bank(gf.read_raw("pcff001.pat"), gf.read_raw("pcff001.tim"), gf.read_raw("pcff001.dig"))
 	if snd == null or snd.sample_count != 30 or snd.timbre_count != 30:
@@ -457,6 +515,134 @@ func line_change_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 			break
 	if not auto_pull:
 		fail("no extra attacker on the delayed call")
+
+## penalty shot, game misconduct, injuries, board knockdowns (Rules.gd, PuckLogic.gd)
+func match_rules_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
+	# a foul on a breakaway: a penalty shot. Both teams are CPU controlled so the shooter skates.
+	var sim := Sim.new()
+	sim.set_teams(bos, det)
+	run_until_play(sim, 1200)
+	# (not in the first tick of the game: the faceoff wait is skipped while the clock shows 5:00)
+	for i in 30:
+		sim.step(8, 8, 0, 0)
+	var victim := sim.entities[sim.user1_slot]
+	sim.user1_slot = sim.find_switch_target(-1, sim.user1_slot)
+	sim.user1_team = 0
+	var culprit := sim.entities[7]
+	victim.set_pos(0, 60)
+	victim.facing = 0
+	victim.vy = 0x200
+	sim.puck_carrier = victim.slot
+	sim.breakaway = true
+	if not Rules.breakaway_foul(sim, victim):
+		fail("a foul on the breakaway carrier should give a penalty shot")
+		return
+	Rules.award_penalty_shot(sim, victim, culprit)
+	var spot := Vector2i(-1000, -1000)
+	var started := -1
+	var lined_up := true
+	var ended := -1
+	var goals := sim.teams[0].goals
+	for i in 4000:
+		sim.step(8, 8, 0, 0)
+		if spot.x == -1000 and sim.penalty_shot_phase != 0:
+			spot = sim.penalty_shot_spot
+		if started < 0 and sim.penalty_shot:
+			started = i
+			# the shooter has the puck at centre ice, everybody else but the defending goalie is off
+			if sim.puck_carrier != victim.slot or absi(victim.xi) > 2 or absi(victim.yi) > 12 or victim.state() != Entity.State.BREAKAWAY:
+				lined_up = false
+			for k in 12:
+				var p := sim.entities[k]
+				if p == victim or (p.team == 1 and p.line_slot == 0):
+					continue
+				if p.line_slot >= 0 and p.frame != -1:
+					lined_up = false
+		if started >= 0 and ended < 0 and not sim.penalty_shot:
+			ended = i
+		if ended >= 0 and not sim.play_stopped and sim.penalty_shot_phase == 0 and not sim.penalty_shot_setup:
+			break
+	if started < 0:
+		fail("the penalty shot did not start (phase %d ref %s)" % [sim.penalty_shot_phase, Tables.ai_state_names[sim.referee.state() + 1]])
+	elif not lined_up:
+		var off := []
+		for k in 12:
+			var p := sim.entities[k]
+			if p.line_slot >= 0 and p.frame != -1:
+				off.append([k, p.line_slot, Tables.ai_state_names[p.state() + 1], p.xi, p.yi])
+		fail("penalty shot line up: shooter %d at %d,%d carrier %d state %s, on the ice %s" % [victim.slot, victim.xi, victim.yi, sim.puck_carrier, Tables.ai_state_names[victim.state() + 1], str(off)])
+	elif ended < 0 or sim.play_stopped:
+		fail("the penalty shot did not end (clock %d)" % sim.penalty_shot_clock)
+	else:
+		var scored := sim.teams[0].goals > goals
+		var want := Vector2i.ZERO if scored else spot
+		if not scored and (sim.faceoff_x != want.x or sim.faceoff_y != want.y):
+			fail("faceoff after the penalty shot at %d,%d, expected %d,%d" % [sim.faceoff_x, sim.faceoff_y, want.x, want.y])
+		else:
+			print("penalty shot: started after %d steps, over after %d more, %s" % [started, ended - started, "goal" if scored else "no goal"])
+	# three body checks on the referee by a user: abuse of official, the player is thrown out
+	sim = Sim.new()
+	sim.set_teams(bos, det)
+	run_until_play(sim, 1200)
+	var bully := sim.entities[sim.user1_slot]
+	var roster := bully.roster_idx
+	for k in 3:
+		sim.referee.speed = 0x200        # the impact: he cannot stay on his feet
+		sim.referee.anim = 0
+		bully.anim = Anim.BODY_CHECK
+		PuckLogic.check_hit(sim, bully, sim.referee, 0x30)
+	var queued := false
+	for inf: Array in sim.infractions:
+		if inf[0] == Rules.INF_ABUSE_OF_OFFICIAL:
+			queued = true
+	if not queued:
+		fail("three hits on the referee should be a game misconduct (hits %d)" % sim.ref_hits)
+	else:
+		var gone := false
+		for i in 3000:
+			sim.step(8, 8, 0, 0)
+			if sim.teams[0].entity_of[roster] == -5 and not sim.play_stopped:
+				gone = true
+				break
+		if not gone or _dressed(sim, 0).has(roster):
+			fail("the thrown out player is still dressed (status %d)" % sim.teams[0].entity_of[roster])
+		else:
+			print("game misconduct: roster %d out, dressed %s" % [roster, str(_dressed(sim, 0))])
+	# an injury: out for the period (or the game), back in the next period
+	sim = Sim.new()
+	sim.set_teams(bos, det)
+	run_until_play(sim, 1200)
+	var hurt := sim.entities[2]
+	sim.last_impact = 5
+	PuckLogic.injure_player(sim, hurt)
+	if sim.teams[0].entity_of[hurt.roster_idx] != -3 or (hurt.flags2 & Entity.F2_UNSELECTABLE) == 0:
+		fail("a light injury keeps the player out for the period (status %d)" % sim.teams[0].entity_of[hurt.roster_idx])
+	else:
+		var hr := hurt.roster_idx
+		sim.start_period(1)
+		if sim.teams[0].entity_of[hr] == -3:
+			fail("the injured player should be back for the next period")
+	# a check against the right boards pins the victim to them (board animation, x from the table)
+	sim = Sim.new()
+	sim.set_teams(bos, det)
+	run_until_play(sim, 1200)
+	var pinned := sim.entities[8]
+	var hitter := sim.entities[3]
+	pinned.set_pos(0x90, 0)
+	hitter.set_pos(0x80, 0)
+	pinned.goalie_skill = 0
+	pinned.anim = 0
+	pinned.flags2 &= ~Entity.F2_KNOCKED
+	PuckLogic.knock_down(sim, hitter, pinned)
+	var f := pinned.facing
+	if pinned.anim == 0xf9b:
+		if pinned.xi != Tables.knockdown_right_x[f]:
+			fail("board knockdown x %d" % pinned.xi)
+	elif pinned.anim == 0xfe1:
+		if pinned.xi != -Tables.knockdown_left_x[(8 - f) & 7]:
+			fail("board knockdown x %d (mirrored)" % pinned.xi)
+	else:
+		fail("a hit against the boards should use a board animation, got %x" % pinned.anim)
 
 func _dressed(sim: Sim, t: int) -> Array:
 	var out := []
