@@ -1,0 +1,1034 @@
+
+
+
+
+
+       Contents
+
+
+       Introduction .............................................1
+            What is it? .........................................1
+            Why use it? .........................................1
+
+       Installation .............................................4
+            Hardware requirements ...............................4
+            Automated Installation ..............................4
+            Command line options ................................5
+                 -s .............................................5
+                 -c .............................................5
+                 -m .............................................6
+                 -d .............................................6
+                 -g .............................................6
+                 -u .............................................6
+                 -b .............................................7
+                 -l .............................................7
+                 -i .............................................7
+                 -p .............................................7
+                 -x .............................................7
+            386 Memory Managers .................................7
+            Whats the .INI file for? ............................8
+            Upgrading your video card ...........................9
+            Video modes supported by UniVBE .....................9
+
+       Testing UniVBE ...........................................11
+
+       UniPOWER .................................................12
+            UniPOWER.EXE command line options ...................12
+            Problems with the Standby State .....................13
+            What do the DPMS states mean anyway? ................13
+
+       UniCENTER ................................................15
+
+       Credits ..................................................16
+
+
+
+
+
+
+       Introduction
+
+
+
+       What is it?
+
+       The Universal VESA VBE  (or UniVBE_ for short)  is a small  Terminate
+       and Stay  Resident  (TSR) program  that  extends  the Video  BIOS  of
+       SuperVGA  video  cards  to  make  them  compatible  with   the  Video
+       Electronics  Standards  Association  (VESA)  recommended  Video  BIOS
+       Extensions (VBE).  Many new programs like Microsoft  Flight Simulator
+       5 rely on  a fully  functioning VBE in  order to  obtain the  highest
+       performance possible.  UniVBE provides the latest VBE 1.2 standard so
+       you can be sure these programs will not only work correctly, but will
+       run as fast as possible on your system. UniVBE comes in two flavours,
+       the Lite or  unregistered trial  version (UniVBE/Lite)  and the  full
+       professional version  (UniVBE/Pro).  The  professional  version  also
+       includes a high performance 32 bit protected mode interface  based on
+       the soon to  be released VBE  2.0 standard,  and programs written  to
+       take advantage of this can run with blinding speed compared to normal
+       VESA VBE implementations.
+
+       Apart from making your programs run faster and better, UniVBE/Pro can
+       also save  you money  and  help the  environment  at the  same  time!
+       UniVBE/Pro fully supports the new VESA VBE/PM and DPMS  standards for
+       Energy Star compliance, and comes with the UniPOWER_ power management
+       screen savers. If you have one of the new Energy Star compliant video
+       monitor that supports the  Display Power Management Standard  (DPMS),
+       you can install the UniPOWER DOS and Windows screensaver  programs to
+       power down the monitor when not  in use. This allows your  monitor to
+       shut down and use less than 5  watts of power while you are  having a
+       coffee break or otherwise engaged!
+
+       And lastly, to help you configure your video card for optimum results
+       with your  monitor,  UniVBE/Pro  comes with  the  UniCENTER_  utility
+       program, that allows you to adjust  the centering and sizing  for all
+       video modes  supported by  UniVBE/Pro.  Fantastic for  getting  those
+       video modes to look just right!
+
+       Note that  if  you  received  a  bundle  version  of  UniVBE/Lite  or
+       UniVBE/Pro with some application software, the UniCENTER and UniPOWER
+       utility programs  will  not have  been  included.  You will  need  to
+       purchase the  full  registered  version of  UniVBE/Pro  from  SciTech
+       Software in order to obtain these utilities.
+
+
+       Why use it?
+
+       You may already have a vendor supplied VESA VBE TSR program  for your
+       video card, or you video card may have VESA VBE compliance built into
+       the BIOS, so why would you want to use this program?
+
+       The simple answer  is that  most of  the vendor  supplied TSR's  that
+       exist today, and  a lot  of the  not-so-new SuperVGA  cards that  are
+
+                                          1
+
+
+
+
+       around implement an older version of  the VESA VBE interface  (if any
+       at all), or they are just  plain buggy. For this reason, many  of the
+       latest games  and graphics  related programs  that  use the  advanced
+       features of the new VBE 1.2 standard will probably not work  with the
+       TSR or BIOS that you currently have.
+
+       UniVBE fully  implements the  VBE 1.2  standard,  which supports  the
+       following advanced features:
+
+            SuperVGA double buffering.  High performance animation  programs
+            can  use  your  card  to  full  potential  to  implement  double
+            buffering in all video modes. Smooth, flicker free  animation in
+            800x600 and 1024x768 video modes with 256 colors is no  longer a
+            fantasy. Or even the  new 32k and 64k  color modes, if you  have
+            enough memory on your card.
+
+            SuperVGA virtual screens.  Programs may  set up  a huge  virtual
+            display resolutions,  and smoothly  scroll  a window  with  less
+            physical resolution around within this buffer.
+
+            Support for the 32k, 64k and 16.7 million color video  modes. As
+            well as supporting the industry standard 16 and 256  color video
+            modes for resolutions from 320x200 right up to 1280x1024.
+
+            Speed. The bank  switching code  in UniVBE tends  to run  faster
+            than the  routines embedded  in the  VIDEO  BIOS of  some  video
+            cards.
+
+            Extremely small size. When the TSR is resident in  your computer
+            it only requires about  5k of memory which  is smaller than  the
+            size of most vendor  supplied TSR's that  support only a  single
+            video card!
+
+       The professional  version,  UniVBE/Pro  also includes  the  following
+       features:
+
+            High speed 32 bit protected  mode interface. Many of  the latest
+            programs are being  developed in  32 bit  protected mode,  which
+            changes many of  the rules  related to  obtain high  performance
+            from  your  video  card.  UniVBE/Pro's  32  bit  protected  mode
+            interface will give  programs written  to take  advantage of  it
+            that extra zing of performance.
+
+            Supports emulation of all  640x350 and 640x400 resolution  video
+            modes on video adapters that do not directly support this. Works
+            for all 256, 32k and 64k color video modes, which is perfect for
+            high speed animation.
+
+            Supports  mapping  out  video   modes  not  available  on   your
+            particular video card.
+
+            Supports the  UniCENTER_  program  for adjusting  the  supported
+            video modes for optimium performance on your video monitor.
+
+
+
+
+                                          2
+
+
+
+
+            Can be loaded into  high memory. UniVBE/Pro  also comes with  an
+            option to  force it  to load  high if  the  normal DOS  loadhigh
+            command fails.
+
+            Can be  unloaded from  memory once  installed for  use in  batch
+            files.
+
+            Supports the new  VBE/PM 1.0  standard for correctly  signalling
+            power  management  states  to  DPMS  compliant  video  monitors.
+            Supports the following states:
+                 Standby
+                 Suspend
+                 Off
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                          3
+
+
+
+
+       Installation
+
+
+
+       Hardware requirements
+
+       UniVBE will run on any 80x86  based IBM PC compatible  running MSDOS,
+       or an OS/2 2.x DOS  shell. In order to  take advantage of the  32 bit
+       protected mode interface  of UniVBE/Pro,  you must have  at least  an
+       80386  based  computer.  Currently  UniVBE  supports   the  following
+       SuperVGA cards, and more are being added as they are released:
+
+            ATI Technologies 18800, 28800, Mach32
+            Ahead A & B
+            Chips & Technologies 82c451/452/453/450, 655x0
+            Everex EvNR
+            Genoa Systems GVGA
+            OAK Technologies OTI-037C/057/067/077/087
+            Paradise PVGA1A, WD90C00/10/11/20/21/26A/30/31/33
+            NCR 77C20/21/22E/32BLT
+            Trident 88/8900/9000/8900CL/8900D/9200CXr/9400CXi/GUI9420
+            Video7 VEGA, HT208/209/216
+            Tseng Labs ET3000, ET4000, ET4000/W32
+            S3 86c911/924/801/805/928
+            Advance Logic AL2101/2201/2228/2301 SuperVGA
+            MXIC 86000/86010 SuperVGA
+            Primus 2000 SuperVGA
+            RealTek RTG3103/3105/3106 SuperVGA
+            Cirrus Logic CL-GD6205/15/25/35/45, 5402/20/22/24/26/28/29/30/34
+            UMC 85c408
+            Hualon HMC86304
+            Weitek 5086/5186/5286 (on P9000 based boards)
+            Compaq IVGS/AVGA, QVision QV1024/1280
+
+
+       Automated Installation
+
+       Installing UniVBE on your system is a snap. Simply following  these 6
+       simple steps:
+
+       1. Insert the UniVBE distribution diskette into drive A or drive B.
+
+       2. Type 'A:INSTALL'  or  'B:INSTALL' (depending  on  which  drive you
+          inserted the diskette into), and then press the Enter key.
+
+       The installation program will start, and you will be presented with a
+       screen describing the installation configuration.
+
+       3. Verify the  installation directories  for installing  UniVBE into,
+          and change them if  necessary. If you are  installing the UniPOWER
+          screensaver for Windows, change the Windows directory to the place
+          where you have installed Windows. By default this is C:\WINDOWS.
+
+       4. Select the options  you wish  to install  (by default  all options
+          will be turned on).
+
+
+                                          4
+
+
+
+
+       5. Click the  'INSTALL'  button, and  the  installation  program will
+          begin the installation process.
+
+       6. Follow the instructions on the screen,  and eventually you will be
+          prompted to enter  your name to  register UniVBE. Enter  your full
+          name and hit the Enter key and  follow the instructions until your
+          are returned to the DOS prompt.
+
+       Thats it! When the  installation is completed,  you will be  returned
+       into the  directory  that  you  installed  UniVBE  into  (by  default
+       C:\UNIVBE). If you  selected the option  to update your  AUTOEXEC.BAT
+       file, you will  need to  reboot your  machine before  UniVBE will  be
+       active.
+
+       Note that  the shareware  version does  not  come with  an  automated
+       installation utility,  and  you  will have  to  install  the  program
+       manually.
+
+
+       Command line options
+
+       UniVBE supports a number  of different command line  options. Running
+       UNIVBE.EXE with the -h  command line option will  provide you with  a
+       list similar to the following:
+
+           -s<x>    - Force detection of SuperVGA (-s0 for list)
+           -c<x>    - Force detection of SuperVGA chipset (-c0 for list)
+           -m<size> - Force memory size to 'size'
+           -d<x>    - Force DAC type (-d0 for list)
+
+       Professional version only:
+           -g       - Regenerate default .ini file
+           -u       - Unload the Universal VESA VBE from memory
+           -b       - Swap RED and BLUE bytes in 24 bit modes
+           -l       - Force resident code to be loaded high
+           -i       - Ignore a buggy underlying VBE BIOS
+           -p       - Disable Power Management (PM) extensions
+           -x       - Disable 32 bit protected mode interface
+
+       Following is a detailed reference to all of the command line options:
+
+       -s
+            The -s command line option is  used to force UniVBE to  only run
+            the detection logic for  a particular type of  SuperVGA chipset.
+            It is possible that  the detection logic  for some of  the video
+            cards  supported  by  UniVBE  will  hang  the  machine  in  some
+            configurations. If this happens,  you can try forcing  UniVBE to
+            only run the  detection logic  for your video  card for  maximum
+            compatability. If UniVBE is  behaving strangely on  your system,
+            this is the first option that you should try.
+
+            Specifying a command line of -s0 will provide you with a list of
+            all supported SuperVGA types.
+
+       -c
+
+
+                                          5
+
+
+
+
+            The -c command  line option  is used to  force UniVBE  to use  a
+            particular chipset revision. Within each SuperVGA type, there is
+            usually a  number  of  different chipset  revision  levels  that
+            UniVBE must  identify in  order to  work  correctly. UniVBE  can
+            normally automatically  detect the  chipset revision  correctly,
+            however you can use this option  to force a chipset  revision if
+            UniVBE incorrectly  detects this.  Note that  this command  line
+            option is handled for you in the automated installation program.
+
+            Specifying a command line of -c0 will provide you with a list of
+            all supported chipset revisions for your video card.
+
+       -m
+            The -m command line option is used to force  UniVBE to recognise
+            a  specific  amount  of  video  memory.   Generally  UniVBE  can
+            automatically  detect  the   correct  amount  of   video  memory
+            installed on your video card,  however in some cases  UniVBE may
+            detect this value  incorrectly, and you  will have to  force the
+            correct amount (consult your  video card documentation  for your
+            proper memory configuration). Note that this command line option
+            is handled for you in the automated installation program.
+
+            The amount of memory is specified  on the command line  in units
+            of 1Kb, so the value for a 1Mb video card would be -m1024.
+
+       -d
+            The -d command line option is used to force  UniVBE to recognise
+            the presence of a different type  of RAMDAC. The RAMDAC  is used
+            by the video card  to convert the image  in video memory  to the
+            correct colors to  be sent to  the video monitor,  and different
+            RAMDAC's  support  different  maximum  color  resolutions  (some
+            support only 256 colors, while  others support 32k, 64k  or even
+            16.7  million  colors).  Generally   UniVBE  will  be   able  to
+            automatically detect the correct RAMDAC installed  on your video
+            card, however in some cases this may  be incorrectly identified.
+            Note that this  command line option  is handled  for you in  the
+            automated installation program.
+
+            Note that UniVBE is unable to detect the presence of some 16 bit
+            RAMDAC's, and these may be misidentified as 15 bit RAMDAC's.
+
+            Specifying a command line of -d0 will provide you with a list of
+            all supported RAMDAC's.
+
+       -g
+            The -g command line option is used to generate  the default .INI
+            file for UniVBE/Pro. This is normally  handled automatically for
+            you by the installation program, however you can use the command
+            line option to  do this  manually if you  wish. In  order to  do
+            this, you must  first install UniVBE/Pro,  then run with  the -g
+            option to re-generate the .INI file, and  the finally un-install
+            UniVBE/Pro and re-install again (the changes will  not come into
+            effect until you re-install UniVBE/Pro).
+
+       -u
+
+
+                                          6
+
+
+
+
+            The -u command  line option  is used to  unload UniVBE/Pro  from
+            memory. This  allows  you  to  create  batch  files  to  install
+            UniVBE/Pro into memory, run  a specific program and  then remove
+            UniVBE/Pro  from  memory  when  you  are  finished  running  the
+            program.
+
+       -b
+            The -b command line option is used to swap the RED and BLUE byte
+            ordering in 24 bit  or 16.7 million  color modes. On  some video
+            cards (most noteably  the Diamond  cards that  include the  SS24
+            RAMDAC) the order of the RED  and BLUE bytes in video  memory is
+            different to  that supported  by most  other  video cards.  This
+            command line option is used to force these order  to be changed.
+            If the colors look ridiculous in the 24 bit video  modes of your
+            favorite applications,  then  you  probably  need  to  use  this
+            command line option.
+
+       -l
+            The -l command  line option is  used to  force UniVBE/Pro to  be
+            loaded high.  This  is  similar  to the  normal  MSDOS  LoadHigh
+            command,  however  because  of  the  size  of  the  non-resident
+            portions of UniVBE/Pro sometimes this command will fail and load
+            UniVBE/Pro normally into  low memory.  This command line  option
+            will then force UniVBE/Pro to relocate the resident portion into
+            high memory, leaving only a few hundred bytes in low memory.
+
+            Note that  this  option is  fully  compatible with  your  normal
+            LoadHigh command, and  can be  used in combination  with any  of
+            these commands.
+
+       -i
+            The -i command line option is used to force UniVBE/Pro to ignore
+            an underlying VBE BIOS if one is present.  By default UniVBE/Pro
+            will use pass through  techniques to support  functions provided
+            by the underlying BIOS that UniVBE/Pro does not provide. In some
+            severe cases  the  underlying  BIOS  is  buggy  and  will  cause
+            UniVBE/Pro to  behave incorrectly,  so you  will  need to  force
+            UniVBE/Pro to ignore it.
+
+       -p
+            The -p command  line option is  used to  disable the VBE/PM  and
+            DPMS power  management features  of UniVBE/Pro.  You would  only
+            want to use  this option if  you have a  vendor supplied TSR  or
+            BIOS that  you wish  to  use instead  of  UniVBE/Pro's built  in
+            support.
+
+       -x
+            The -x  command  line  option is  used  to  disable the  32  bit
+            protected mode interface  provided by  UniVBE/Pro. Normally  you
+            will want to  leave this option  active, however this  option is
+            useful for  testing  purposes  to  ensure  that  software  works
+            correctly both  with and  without the  protected mode  interface
+            installed (and to see how slow it runs without it!).
+
+
+       386 Memory Managers
+
+                                          7
+
+
+
+
+       Sometimes  a  386  memory  manager  can  conflict  with  the  correct
+       operation of UniVBE  for certain  video card  configurations. If  you
+       have a 386  Memory Manager installed  such as  EMM386, QEMM, QRAM  or
+       386MAX and when attempting the install UniVBE the machine just hangs,
+       or an application attempting to use UniVBE hangs you possibly  have a
+       memory manager conflict. Specifically  if you have  an ATI Mach32  or
+       Mach64 based video  card (Graphics Ultra  Pro, Graphics Ultra  Turbo)
+       you will need to exclude the video BIOS region for correct operation,
+       so proceed to  step 2. To  attempt to solve  this, try the  following
+       steps (you might  also like  to refer  to the  documentation on  your
+       memory  manager  -  QEMM   for  instance  has   a  long  section   on
+       troubleshooting such installation problems):
+
+       1. First do a  clean boot  (with no memory  managers or  TSR programs
+          installed apart from HIMEM.SYS  and MSDOS) and  attempt to install
+          UniVBE. If UniVBE  works in  this configuration,  then you  have a
+          conflict, and proceed  to step 2.  If UniVBE still  does not work,
+          then you possibly have a video card that is not fully supported by
+          UniVBE - please contact  SciTech Software and let  us know so that
+          we can attempt to rectify this in a future release.
+
+       2. Use the  EXCLUDE  option of  your  memory manager  to  exclude the
+          entire video  BIOS  region,  reboot your  machine  and  attempt to
+          install UniVBE once again. For EMM386 and  QEMM the command to put
+          on the command line is:
+
+                      X=C000-CFFF
+
+       3. If step  2 is  successful, you  can try  to  reduce the  amount of
+          memory excluded with the above option  which will provide you with
+          more high memory for TSR programs. To do  this, lower the value in
+          the second number  from CFFF to  a value  such as C7FF  and lower.
+          C7FF will probably work with most configurations.
+
+
+       Whats the .INI file for?
+
+       For most installations, UniVBE will automatically determine the video
+       modes that your card supports. However on some  video configurations,
+       some video modes that UniVBE thinks are possibly available aren't and
+       so an error will occur if a program tries to set the  video mode. The
+       UNIVBE.INI file is used to remove  support for those video  modes. If
+       you selected  the 'Generate  .INI file'  option  in the  installation
+       program, the installation program will automatically  determine which
+       modes are not available and produce an appropriate .INI file for you.
+       If you  did  not  select this  option,  or  the automatic  .INI  file
+       generation procedure does not work on  your system, you can  edit the
+       .INI yourself.
+
+       The format of the .INI file is simple. All the video modes removed by
+       the program are listed under the section '[remove]' in the .INI file.
+       They are listed as the hexadecimal internal mode numbers used  by the
+       TSR (see the file MODES.DOC for  a list of the internal  mode numbers
+       used by UniVBE). An example .INI file might be:
+
+            [remove]
+
+                                          8
+
+
+
+
+            10D
+            10E
+
+       The .INI file is  also used to contain  the information generated  by
+       the UniCENTER program to adjust the centering and sizing of the video
+       modes supported by UniVBE.
+
+
+       Upgrading your video card
+
+       When the time comes to replace  the video card in your system  with a
+       new one, rest  assured that UniVBE  will probably  work just as  well
+       with the new video  cards as with your  old one. However when  you do
+       so, you will  need to delete  the UNIVBE.INI  file from your  \UNIVBE
+       directory, and then  should re-install UniVBE  in order to  correctly
+       generated a new  .INI file  for the  new video  card, or  use the  -g
+       command line option  to do  so manually. You  will also  need to  re-
+       center all of your video modes using the UniCENTER program if you did
+       this with your old video card.
+
+
+       Video modes supported by UniVBE
+
+       UniVBE fully  supports the  VESA VBE  1.2 standard,  which defines  a
+       number of standard video modes numbers.  The new version of  the VESA
+       VBE specs will allow the vendor  to extend the video numbers  used to
+       whatever values they wish, so we have taken the liberty to extend the
+       mode numbers  used by  the UniVBE  to  include modes  not  originally
+       specified in the VBE 1.2 specs, but supported by a number  of popular
+       video cards on the  market. Depending on  how well your  applications
+       have been written, they may or may not be able to use those modes. If
+       you are a developer wishing to take advantage of these  modes, please
+       consult the SuperVGA Kit  (available from SciTech Software)  for more
+       information and programming examples.  Specifically, the video  modes
+       supported are:
+
+            320x200 16/256/32k/64k/16m colors
+            640x350 16/256/32k/64k/16m colors
+            640x400 16/256/32k/64k/16m colors
+            640x480 16/256/32k/64k/16m colors
+            800x600 16/256/32k/64k/16m colors
+            1024x768 16/256/32k/64k/16m colors
+            1280x1024 16/256/32k/64k/16m colors
+
+       Note however that even though  UniVBE may support a  particular video
+       mode, this  mode will  only be  available if  there  is enough  video
+       memory installed, and  if the underlying  video hardware can  support
+       it. UniVBE fully supports the 640x350, 640x400 and 640x480 modes with
+       256/32k and 64k  colors on  all video  cards that  have enough  video
+       memory, using proprietry emulation techniques if the underlying VIDEO
+       BIOS does not directly support it.
+
+       UniVBE does not provide  support for any of  the extended text  modes
+       that your video card  may provide, but will  provide support for  any
+       extended text modes  supported by  an underlying  VESA VBE  compliant
+       BIOS or TSR. Thus if your video card already has a VBE compliant BIOS
+
+                                          9
+
+
+
+
+       or you install your vendor supplied VESA VBE TSR for your  video card
+       before installing UniVBE, an automatic pass-through mechanism will be
+       used to ensure the extended text modes still work correctly.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                         10
+
+
+
+
+       Testing UniVBE
+
+       UniVBE is  also installed  with  the SVTEST16.EXE,  SVTEST32.EXE  and
+       VBETEST.EXE  programs  for  testing  the  operation  of  UniVBE.  The
+       SVTest16 and  SVTest32 programs  are  16 bit  real  mode and  32  bit
+       protected mode  applications  built  with  the  SuperVGA  kit.  These
+       programs will allow you to fully  test all the different  video modes
+       that UniVBE  supports.  The VBETest  program  is  a stress  test  and
+       conformance testing program to full test the VESA  VBE implementation
+       for compliance. You might  want to run this  program on your  current
+       VBE BIOS or TSR,  and then run  it with UniVBE  installed to see  how
+       much better UniVBE is.
+
+       If UniVBE/Pro is installed,  the SVTest32 program  will use the  high
+       speed 32 bit  protected mode interface  for maximum performance.  You
+       can try turning on this interface with the -x command line  option to
+       see how much slower the program runs without it.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                         11
+
+
+
+
+       UniPOWER
+
+
+       UniPOWER is a power management screen  saver that will shut  down any
+       DPMS compliant video monitor via the VESA VBE/PM  interface (provided
+       by UniVBE/Pro).  UniPOWER comes  in  two flavours,  the  UniPOWER.EXE
+       screensaver for DOS and the UniPOWER.SCR screensaver for  Windows. By
+       default  the  installation  program  for  UniVBE  will  install  both
+       UniPOWER for DOS and UniPOWER for Windows.
+
+       The UniPOWER.SCR program  is a standard  Windows screensaver, so  you
+       can use it just like you use all your normal Windows screensavers. By
+       default the installation  program will  have installed and  activated
+       the UniPOWER for Windows screensaver. However you can change  the way
+       that UniPOWER for  Window operates.  First you  need to  open up  the
+       Windows Control  Panel,  and then  hit  the  'Setup' button  for  the
+       installed screensaver (which  should be  'UniPOWER DPMS'). This  will
+       bring  up   a  dialog   box  allowing   you   to  modify   UniPOWER's
+       configuration.  Extensive  online help  is provide  for UniPOWER  for
+       Windows,  so  please  consult  the  online  documentation   for  more
+       information.
+
+       The UniPOWER.EXE screen saver for DOS  is a small Terminate  and Stay
+       Resident (TSR)  program  that  hooks  into  the  mouse  and  keyboard
+       interrupts, and monitors them for activity. If no activity  is sensed
+       for a period of time, UniPOWER  will begin shutting the  monitor down
+       into the  power management  states. When  UniPOWER.EXE is  installed,
+       when you  start  Windows it  will  de-activate itself,  allowing  the
+       UniPOWER.SCR Windows based screen saver  to take over. When  you exit
+       Windows back to the DOS prompt, UniPOWER.EXE will re-activate itself.
+
+
+       UniPOWER.EXE command line options
+
+       Running UNIPOWER.EXE with the -h command line option will provide you
+       with a usage list similar to the following:
+
+       Usage: UniPOWER [-u] [STANDBY delay] <SUSPEND delay> <OFF delay>
+
+       The delay values passed on the command line specify how long UniPOWER
+       will wait until each  of the specified states  is enabled. Note  that
+       each delay is cumulative. That is the time to reach the OFF  state is
+       the total delay for  the STANDBY, SUSPEND and  OFF states. All  delay
+       times are specified  in minutes.  By default  UniPOWER.EXE will  have
+       been installed into your AUTOEXEC.BAT file with a SUSPEND delay  of 5
+       minutes, and  an OFF  delay  of 15  minutes,  and the  STANDBY  state
+       disabled.
+
+       The STANDBY  delay  value is  optional  since  many monitors  do  not
+       support it. Leaving it out will cause that state to be skipped.
+
+       The -u option will unload the TSR from memory
+
+       Note that UniPOWER.EXE  must be  installed  after your  mouse driver,
+       otherwise it will  not be  able to  recognise user  activity via  the
+
+
+                                         12
+
+
+
+
+       mouse. Normally the installation program will ensure that this is the
+       case.
+
+
+       Problems with the Standby State
+
+       By  default  when  you  installed  UniPOWER,  the  Standby  state  is
+       disabled. Some monitors do not support this particular state,  and on
+       some video card  configurations, this  state is  difficult to  signal
+       correctly. You  may  notice that  when  the  Standby state  has  been
+       activated, the video monitor goes  directly in the Off  state, rather
+       than the Standby state. If this happens then your video card  was not
+       able to correctly  signal this  state to  the video  monitor, and  it
+       should disabled.
+
+       If you wish to  activate the Standby  state, be sure  to test it  for
+       correct operation  with your  video monitor  using  the provide  TEST
+       button in the UniPOWER for  Windows configuration dialog box.  If the
+       state is not working correctly, you  will not damage your  video card
+       or your monitor, but the  monitor will incorrectly detect  this state
+       as the Off state.
+
+
+       What do the DPMS states mean anyway?
+
+       In late  1993  the Video  Electronics  Standards Association  (VESA  )
+       completed and ratified  the Display  Power Management Signalling,  or
+       DPMS standard. The DPMS standard allows normal VGA or  SuperVGA video
+       cards to communicate with DPMS compliant video monitors via a special
+       signalling system. This  signalling system allows  the video card  to
+       tell the monitor to go into a number of different  power management or
+       power saving   states, which  effectively allow  the monitor  to  turn
+       itself off when  it is not  in use.  The primary  benefit of this  is
+       dramatically decreased  (up  to  90%!) power  consumption  when  your
+       computer is sitting idle, but it also saves you money.
+
+       There are basically four states that a DPMS compliant monitor  can be
+       in, and  they  are  usually enter  into  one  after the  other  in  a
+       sequential fashion. Each of the different states provides  a tradeoff
+       between minimum power consumption and minimum recovery time (the time
+       it take before you can see  the picture again!). The  following table
+       outlines the currently defined power management states, and  how they
+       relate to each  other. Also  included are some  ballpark figures  for
+       power consumption  and recovery  times, but  you  should consult  the
+       documentation that comes  with your video  monitor for more  accurate
+       figures:
+
+       State   Power    Recovery Time                          Notes
+       On      100%     N/A         Normal use
+       Standby < 80%    ~1 sec      Minimal power reduction (optional)
+       Suspend < 30 watts           ~4 secs                    Substantial
+       power reduction
+       Off     < 5 watts            ~8-20 secs                 Lowest   level
+       or power - non operational
+
+
+
+                                         13
+
+
+
+
+       Note that the Standby  state is optional and  may not be provided  by
+       some monitors.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                         14
+
+
+
+
+       UniCENTER
+
+       If you have  installed the  UniCENTER utility program,  it will  have
+       been placed into the  directory where you also  installed UniVBE/Pro.
+       To use  UniCENTER, first  change to  the  directory where  UniVBE  is
+       installed (the following example assumes the default installation):
+
+            CD \UNIVBE
+
+       Then run the UniCENTER program with the following command:
+
+            UNICENTR
+
+       You will then be presented with a hierarchy of menus allowing  you to
+       display and  adjust  the  parameters  for each  of  the  video  modes
+       supported by your  UniVBE/Pro installation. To  adjust a video  mode,
+       simply follow the instructions on the screen and using the arrow keys
+       to move and size the image. When you are finished hit the enter key -
+       if you adjust the image too far and it goes out of  sync, hit the ESC
+       key and you will be dropped back to the previous menu.
+
+       When you have finished,  exit UniCENTER and  the adjustments will  be
+       saved into  the  UNIVBE.INI  file  (note  that  you  must  re-install
+       UniVBE/Pro for the changes  to take effect). That's  all there is  to
+       it!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                         15
+
+
+
+
+       Credits
+
+       Credits must be  given where  credits are due.  Finn Thoegersen,  the
+       author of  the  VGADOC  package  has provided  us  with  results  and
+       corrections for the code after  testing it on more  SuperVGA adapters
+       than we could possibly hope for.  His VGADOC package along  with John
+       Bridges VGAKIT provided  the information  without which this  package
+       would never have gotten started.  The whole PC graphics  community is
+       deeply in his debt.
+
+       Bob Pendleton must be thanked for originally suggesting that I try to
+       convert the routines in the first  versions of the SuperVGA  kit into
+       an installable VESA compliant TSR. Without his inspiration this thing
+       would probably never have gotten started. Tom Ryan, who used  to work
+       for VESA must  be thanked  for his initial  help during  his stay  at
+       VESA, and of course for coming on board as the Marketing  manager for
+       SciTech Software. Rod Dewell, who also used to work for VESA, must be
+       thanked for being an inspiration in getting UniVBE running better and
+       better, and for being a middle man between VESA and  ourselves. Kevin
+       Gillet from VESA has also been a great inspiration, providing me with
+       the help that we need in terms of getting access to the new VBE specs
+       and VBE directions.  Dan Sallit from  QEMM has been  a great help  in
+       ironing out some of the problems related to 386 Memory Managers.
+
+       The following people  from must  also be thanked  for providing  test
+       video boards  and abundant  amounts  of technical  documentation  and
+       advice: David  Penley from  NCR Microelectronics,  Ian  Kettleborough
+       from Cirrus Logic and of course Tom Ryan who works for us.
+
+       Also a number of people on the Internet and CompuServe  have provided
+       feedback on this package, and we thank them for their help.
+
+       Lastly I would  like to thank  my family and  friends for putting  up
+       with me during the long hours of work that have gone into  making the
+       UniVBE what it is today. Thanks.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                         16
