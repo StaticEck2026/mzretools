@@ -1,8 +1,12 @@
 class_name Hud
 extends Node2D
-## The 320x32 scoreboard window of the match (draw_clock, draw_score_digits, draw_clock_full,
-## draw_line_box, draw_penalty_clocks of HOCKEY.EXE) drawn below the 320x168 ice view, and the
-## message box of the stoppages (draw_message_box). Shapes come from SCRBRD1.PPV: 'hlin'/'vlin'
+## The 320x32 scoreboard window of the match (show_scoreboard, draw_clock, draw_score_digits,
+## draw_clock_full, draw_line_box, draw_penalty_clocks of HOCKEY.EXE) drawn below the 320x168 ice
+## view, and the message box of the stoppages (draw_message_box). show_scoreboard lays the base:
+## 'srb3' of SCRBRD2.PPV, the crests of CRESTS4.PPV at (4, 4) and (0x11c, 4) through the team
+## remap tables (with colour 0x43 -> 0x67), the period number in the 8x7 digits "3000".. at
+## (0x98, 0x16) / (0xa0, 0x16) ("OT" for 0) and the label of the line on the ice ('lin1'..'PK2')
+## at (0x2a, 0x14) / (0xfb, 0x14). Shapes come from SCRBRD1.PPV: 'hlin'/'vlin'
 ## panels (line energies), 'homp'/'visp' (penalties), the 16x13 score digits "0000".."0009"
 ## ("000 " blank), the 16x11 clock digits "1000".. and the 8x4 penalty clock digits "2000"..
 
@@ -20,6 +24,11 @@ var score_digits: Array = []     # 11 textures (10 = blank)
 var clock_digits: Array = []
 var small_digits: Array = []
 var panels: Dictionary = {}      # name -> Texture2D
+var base: Texture2D              # SCRBRD2 'srb3'
+var period_digits: Array = []    # SCRBRD2 "3000".."3009", "300 "
+var period_ot: Texture2D
+var crests: Array = [null, null] # CRESTS4 by team abbreviation
+var line_labels: Array = []      # SCRBRD1 lin1 lin2 lin3 lin4 PP1 PP2 PK1 PK2
 var font_big: Vfn                # SCOR3B (message box shadow)
 var font_small: Vfn              # SCOR2B (message box face)
 var font_hud: Vfn                # HILIGHT
@@ -28,9 +37,28 @@ var text_cache: Dictionary = {}
 var assets_ok := false
 var panel_view: PanelView        # the dithered score font
 
-func setup(s: Sim, pal: GamePalette, scrbrd: Shpi, fonts: Dictionary) -> void:
+func setup(s: Sim, pal: GamePalette, scrbrd: Shpi, fonts: Dictionary, scrbrd2: Shpi = null, crest_bank: Shpi = null) -> void:
 	sim = s
 	palette = pal
+	if scrbrd2 != null and pal != null:
+		base = _tex(scrbrd2.find("srb3"))
+		for d in 10:
+			period_digits.append(_tex(scrbrd2.find("300%d" % d)))
+		period_digits.append(_tex(scrbrd2.find("300 ")))
+		period_ot = _tex(scrbrd2.find("OT  "))
+	if scrbrd != null and pal != null:
+		for n in ["lin1", "lin2", "lin3", "lin4", "PP1 ", "PP2 ", "PK1 ", "PK2 "]:
+			line_labels.append(_tex(scrbrd.find(n)))
+	if crest_bank != null and pal != null:
+		for t in 2:
+			var abbrev := sim.teams[t].abbrev()
+			var shape := crest_bank.find(abbrev.rpad(4))
+			if shape != null and shape.is_image():
+				var remap := pal.table(t, false).duplicate()
+				if remap.size() >= 256:
+					remap[0x43] = 0x67
+					remap[0xff] = 0xff
+				crests[t] = shape.to_texture(pal.colors, remap)
 	if scrbrd != null and pal != null:
 		for set in [["0", score_digits], ["1", clock_digits], ["2", small_digits]]:
 			var prefix: String = set[0]
@@ -62,6 +90,14 @@ func _draw() -> void:
 	if not assets_ok:
 		_draw_fallback()
 		return
+	if base != null:
+		draw_texture(base, Vector2(0, HUD_Y))
+	for t in 2:
+		if crests[t] != null:
+			draw_texture(crests[t], Vector2(4 if t == 0 else 0x11c, HUD_Y + 4))
+		var line := sim.teams[t].current_line
+		if line >= 0 and line < line_labels.size() and line_labels[line] != null:
+			draw_texture(line_labels[line], Vector2(0x2a if t == 0 else 0xfb, HUD_Y + 0x14))
 	for t in 2:
 		var team := sim.teams[t]
 		var penalties := not team.penalties.is_empty()
@@ -156,16 +192,24 @@ func _draw_clock() -> void:
 		draw_texture(clock_digits[seconds / 10], Vector2(CLOCK_X[2], y))
 		draw_texture(clock_digits[seconds % 10], Vector2(CLOCK_X[3], y))
 
-## the period is not part of the original scoreboard (it is shown on the pause screen); it goes
-## into the free space under the clock in the small font
+## show_scoreboard: the period (_period_num, 1 in the first period) in two 8x7 digits, "OT" for 0;
+## after the game nothing changes
 func _draw_period() -> void:
-	var names := ["1ST", "2ND", "3RD", "OT"]
-	var label: String = names[mini(sim.period, 3)]
-	if sim.game_over:
-		label = "FINAL"
-	var tex := _text(font_small_hud, label, palette.colors[0x67])
-	if tex != null:
-		draw_texture(tex, Vector2(160 - tex.get_width() / 2, HUD_Y + 19))
+	var n := sim.period + 1
+	if period_digits.size() < 10:
+		var tex := _text(font_small_hud, "P%d" % n, palette.colors[0x67])
+		if tex != null:
+			draw_texture(tex, Vector2(0x98, HUD_Y + 0x16))
+		return
+	if n == 0:
+		if period_ot != null:
+			draw_texture(period_ot, Vector2(0x98, HUD_Y + 0x16))
+		return
+	n %= 100
+	if period_digits[n / 10] != null:
+		draw_texture(period_digits[n / 10], Vector2(0x98, HUD_Y + 0x16))
+	if period_digits[n % 10] != null:
+		draw_texture(period_digits[n % 10], Vector2(0xa0, HUD_Y + 0x16))
 
 ## draw_message_box (0x66fe2): the message (word_cbec8, set by queue_infraction from
 ## infraction_priority, the goalie hotkeys and the offside warning) in a box at (12, 149) of the

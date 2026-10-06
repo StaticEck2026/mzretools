@@ -54,6 +54,7 @@ var panel_view: PanelView
 var vcr: VcrView
 var pause_menu: PauseMenu
 var box_sprites: Array[Sprite2D] = []   # the players sitting in the penalty boxes (frame 0x17e)
+var end_boards: Sprite2D              # TRINKND.PPV over the sprites near the bottom end (sub_11136)
 var tick_acc := 0.0                   # 100 Hz timer ticks of the replay speed
 var replay_from_menu := false
 var end_shown := false
@@ -103,6 +104,17 @@ func _ready() -> void:
 		b.visible = false
 		world.add_child(b)
 		box_sprites.append(b)
+	end_boards = Sprite2D.new()
+	end_boards.centered = false
+	end_boards.visible = false
+	end_boards.z_index = 4000
+	world.add_child(end_boards)
+	var trinknd := _bank("trinknd")
+	if trinknd != null and palette != null:
+		var shape := trinknd.find("0000")
+		if shape != null and shape.is_image():
+			end_boards.texture = shape.to_texture(palette.colors)
+			end_boards.position = Vector2(0x37 - shape.center_x, 0x225 - shape.center_y)
 	var fonts := _fonts()
 	# the scoreboard, the info panel and the replay panel are drawn over the sprites
 	var ui := CanvasLayer.new()
@@ -110,7 +122,7 @@ func _ready() -> void:
 	add_child(ui)
 	hud = Hud.new()
 	ui.add_child(hud)
-	hud.setup(sim, palette, _bank("scrbrd1"), fonts)
+	hud.setup(sim, palette, _bank("scrbrd1"), fonts, _bank("scrbrd2"), _bank("crests4"))
 	panel_view = PanelView.new()
 	ui.add_child(panel_view)
 	panel_view.setup(sim, palette, fonts, _bank)
@@ -425,6 +437,11 @@ func _update_view() -> void:
 			ph.z_index = WORLD_Y - e.yi
 			ph.visible = visible and not (assets_ok and e.slot < 12)
 	_update_box(scene["box"])
+	# draw_sprites: the near end boards cover the sprites when the camera is at the bottom end
+	var cam_y := sim.camera_y
+	if mode == Mode.REPLAY and sim.replay.frame != null:
+		cam_y = sim.replay.camera().y
+	end_boards.visible = end_boards.texture != null and cam_y < -0x90
 	_update_markers(scene)
 	overlay.queue_redraw()
 
@@ -453,23 +470,66 @@ func _remap_team(slot: int) -> int:
 		return 1
 	return -1
 
-## draw_sprites: the frames under the controlled players and the puck carrier
+## draw_sprites: the frames under the controlled players (389 / 390) and the puck carrier (391);
+## a controlled player outside the view gets an arrow at the edge instead (arrow_frames by the
+## direction of sub_b340b, mirrored on the left side)
+const ARROW_DIR := [0, 1, 5, 0, 3, 2, 4, 3, 7, 8, 6, 7, 0, 1, 5, 0]    # unk_d41b7: edge flags -> direction
+
 func _update_markers(scene: Dictionary) -> void:
 	var ents: Array = scene["entities"]
 	var slots := [scene["u1"], scene["u2"], scene["carrier"]]
+	var origin := _view_origin()
 	for k in 3:
 		var m := markers[k]
 		var slot: int = slots[k]
-		var frame: int = Tables.marker_frames[k] if Tables.marker_frames.size() > k else -1
-		if not assets_ok or slot < 0 or slot >= 12 or scene["blocked"] or not frames.has(frame):
+		if not assets_ok or slot < 0 or slot >= 12 or (k < 2 and scene["blocked"]):
 			m.visible = false
 			continue
 		var e = ents[slot]
+		if e.frame < 0:
+			m.visible = false
+			continue
+		var frame: int = Tables.marker_frames[k]
+		var x: int = e.xi
+		var y: int = e.yi
+		var mirror := false
+		if k < 2:
+			var flags := 0
+			if y < 0x140 - (origin.y + 0xa8):
+				flags = 2
+				y = 0x140 - (origin.y + 0xa8)
+			elif y >= 0x140 - origin.y:
+				flags = 1
+				y = 0x141 - origin.y
+			var right := origin.x + 0x80
+			if flags == 0:
+				if x >= right:
+					x = right - 1
+					flags = 4
+				elif x < origin.x - 0xc0:
+					x = origin.x - 0xc0
+					flags = 8
+			else:
+				if x >= origin.x + 0x74:
+					x = right - 0xd
+					flags |= 4
+				elif x < origin.x - 0xb4:
+					x = origin.x - 0xb4
+					flags |= 8
+			if flags != 0:
+				var dir: int = ARROW_DIR[flags & 0xf]
+				frame = Tables.arrow_frames[k][dir - 1] if dir >= 1 and dir <= 8 else frame
+				mirror = (flags & 8) != 0
+		if not frames.has(frame):
+			m.visible = false
+			continue
 		var shape: Shpi.Shape = frames[frame]
-		m.texture = _texture(frame, 0, false)
-		m.offset = Vector2(-shape.center_x, -shape.center_y)
-		m.position = Vector2(e.xi + WORLD_X, WORLD_Y - e.yi)
-		m.z_index = WORLD_Y - e.yi - 1
+		m.texture = _texture(frame, 0, mirror)
+		m.flip_h = mirror
+		var cx := shape.width - 1 - shape.center_x if mirror else shape.center_x
+		m.offset = Vector2(-cx, -shape.center_y)
+		m.position = Vector2(x + WORLD_X, WORLD_Y - y)
+		m.z_index = WORLD_Y - y - 1
 		m.visible = true
 
 ## draw_player_number: the jersey number below the skates in the NUMSHP digits with the position
