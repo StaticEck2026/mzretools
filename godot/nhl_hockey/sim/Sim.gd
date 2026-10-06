@@ -23,7 +23,7 @@ const MAX_SPEED := 16000
 # option_flags of the original (settings menu): all rules on by default
 var opt_penalties := true           # bit 0
 var opt_offsides := true            # bit 1
-var opt_line_changes := false       # bit 2 (line changes are not ported; players never tire out)
+var opt_line_changes := true        # bit 2: line changes and fatigue (Lines.gd)
 var opt_two_line_pass := true       # bit 3
 var opt_injuries := false           # bit 4
 
@@ -52,7 +52,7 @@ var whistle_ready := false          # bit 2
 var shot_in_flight := false         # bit 4: a shot was taken (goalie_save / score bookkeeping)
 var lead_announced := false         # bit 5
 var leading_team := 0               # bit 6
-var goalie_pulled := false          # bit 7
+var offside_warning := false        # bit 7: a team mate is in the attacking zone before the puck (Lines.offside_warning_check)
 var misc_first_touch := false       # misc_flags bit 4: first touch after the faceoff
 
 var controls_blocked := false       # dword_ccc9c
@@ -102,6 +102,14 @@ var step_count: int = 0
 var sfx_queue: PackedInt32Array = PackedInt32Array()
 var rng := RandomNumberGenerator.new()
 var puck_in_net := false            # byte_c90ba
+# line changes (Lines.gd)
+var req_roster: PackedInt32Array = PackedInt32Array([-1, -1, -1, -1, -1, -1])   # unk_e0384: lineup being assigned
+var req_slot: PackedInt32Array = PackedInt32Array([0, 0, 0, 0, 0, 0])          # unk_e038a: its line slots
+var line_hotkey: PackedInt32Array = PackedInt32Array([-1, -1])                 # word_e0304/word_e0380: F1-F4 / F5-F8 request per team
+# message box (word_cbec8 / dword_cbeca): index into Tables.message_strings, -1 none; the timer
+# counts frames down to 0 and clears the message, 0 = stays until cleared
+var message: int = -1
+var message_timer: int = 0
 var puck_stuck_timer: int = 0x78    # puck +0x28 (frozen puck countdown)
 var puck_goal_timer: int = 0        # puck +0x26 (goal line prediction every 5 steps)
 var penalty_shot := false           # dword_cc128 (not ported, always false)
@@ -135,6 +143,27 @@ func _init() -> void:
 	teams[1].attacks_up = false
 	teams[0].goalie_slot = 0
 	teams[1].goalie_slot = 6
+	new_game()
+
+## init_match: team records for a new game (lines, strategy, energy), then the first period
+func new_game() -> void:
+	for t in 2:
+		var team := teams[t]
+		team.info = team_info[t]
+		team.current_line = 0
+		team.dpair_counter = 0
+		team.goalie_request = 0
+		team.extra_attacker = -1
+		team.goals = 0
+		team.penalties.clear()
+		team.skaters_on_ice = 6
+		for i in 28:
+			team.energy[i] = 0x1000
+			team.entity_of[i] = -2 if Lines.roster_exists(team, i) else -3
+		Lines.adjust_strategy(self, t)
+	for i in 12:
+		entities[i].roster_idx = -1
+		entities[i].line_slot = -1
 	start_period(0)
 
 ## new period: dress the default lines, everyone to the centre faceoff
@@ -148,24 +177,31 @@ func start_period(p: int) -> void:
 		var team := teams[t]
 		var up := (t == 0) != ends_switched     # the home team shoots at +y in the 1st and 3rd period
 		team.attacks_up = up
-		var info: Database.TeamInfo = team_info[t]
-		team.info = info
+		team.info = team_info[t]
+		if p == 1:
+			Lines.adjust_strategy(self, t)       # time_announcements: strategy review in the 2nd period
 		for i in 6:
 			var e := entities[t * 6 + i]
-			e.line_slot = i
-			e.roster_idx = lineup_roster_index(info, i)
 			e.flags &= ~(Entity.F_ATTACK_UP | Entity.F_USER | Entity.F_BUSY | Entity.F_BACKWARDS)
 			if up:
 				e.flags |= Entity.F_ATTACK_UP
 			e.flags2 = 0
+			e.flags3 = 0
 			e.state_sp = 0
 			e.state_stack[0] = Entity.State.INIT_PERIOD
-			team.entity_of[e.roster_idx] = e.slot
-			var player: Database.Player = info.player(e.roster_idx) if info != null else null
-			if player != null:
-				dress_player(e, player)
-			else:
-				_default_skills(e)
+			e.frame = -1
+			e.anim = 0
+			if e.roster_idx >= 0 and e.line_slot >= 0 and team.entity_of[e.roster_idx] == -1:
+				team.entity_of[e.roster_idx] = -2
+			e.line_slot = -1
+		# sub_5e0b0: the current line is dressed at once (dress_line), the players wait at the
+		# bench (INIT_PERIOD) until the faceoff is set up
+		Lines.apply_line_change(self, team)
+		Lines.dress_line(self, team)
+		for i in 6:
+			var e := entities[t * 6 + i]
+			e.state_sp = 0
+			e.state_stack[0] = Entity.State.INIT_PERIOD
 	play_stopped = true
 	faceoff_x = 0
 	faceoff_y = 0
@@ -180,35 +216,61 @@ func start_period(p: int) -> void:
 	stoppage_timer = -1
 	ref_phase = -1
 	if user1_team != 0:
-		user1_slot = (user1_team - 1) * 6 + 4
+		user1_slot = centre_slot(user1_team - 1)
 		entities[user1_slot].flags |= Entity.F_USER
 	if user2_team != 0:
-		user2_slot = (user2_team - 1) * 6 + 4
+		user2_slot = centre_slot(user2_team - 1)
 		entities[user2_slot].flags |= Entity.F_USER | Entity.F_PLAYER2
+
+## the entity of the centre (line slot 4) of a team, or its first skater
+func centre_slot(t: int) -> int:
+	var first := teams[t].first_slot
+	for i in 6:
+		if entities[first + i].line_slot == 4:
+			return first + i
+	for i in 6:
+		if entities[first + i].line_slot > 0:
+			return first + i
+	return first + 1
+
+## 1 home, 2 away: is the team controlled by a user
+func is_user_team(t: int) -> bool:
+	return user1_team == t + 1 or user2_team == t + 1
+
+## word_cbec8 / dword_cbeca: shows a message of Tables.message_strings (0 = until cleared)
+func show_message(idx: int, frames: int) -> void:
+	message = idx
+	message_timer = frames
 
 ## Selects the teams from the databases (Database.load_team); call before the first step
 func set_teams(home: Database.TeamInfo, away: Database.TeamInfo) -> void:
 	team_info = [home, away]
-	start_period(0)
+	new_game()
 
-## The roster index dressed in line slot `slot` (0 goalie, 1 LD, 2 RD, 3 LW, 4 C, 5 RW): the first
-## forward line, the first defence pair and the first goalie of the team's line table
-## (apply_line_change with line 0); without a database the placeholder order is used
-func lineup_roster_index(info: Database.TeamInfo, slot: int) -> int:
-	var fallback := 25 if slot == 0 else slot - 1
-	if info == null:
-		return fallback
-	var idx := fallback
-	match slot:
-		0: idx = info.goalie_order[0]
-		1: idx = info.defense[0][0]
-		2: idx = info.defense[0][1]
-		3: idx = info.forwards[0][0]
-		4: idx = info.forwards[0][1]
-		5: idx = info.forwards[0][2]
-	if idx < 0 or idx > 27 or info.player(idx) == null:
-		return fallback
-	return idx
+## put_player_on_ice (0x5b2a4): the entity takes roster player `roster`: his state when he comes
+## from the bench (EXIT_BENCH) or the penalty box (EXIT_PENALTY_BOX), the bookkeeping of the
+## team record and his ratings
+func put_player_on_ice(e: Entity, roster: int) -> void:
+	var team := team_of(e)
+	e.flags2 &= ~Entity.F2_HOOKED
+	e.roster_idx = roster
+	var where := team.entity_of[roster] if roster >= 0 and roster < 28 else -1
+	if where == -2 or where >= 0:
+		e.set_state_reset(Entity.State.EXIT_BENCH if where == -2 else Entity.State.EXIT_PENALTY_BOX)
+		e.flags &= ~Entity.F_BUSY
+		e.anim = 0
+	if roster >= 0 and roster < 28:
+		team.entity_of[roster] = -1
+	e.flags3 = 0
+	e.timer_e = 0
+	e.timer_f = 0
+	e.pass_ok = 0
+	var player: Database.Player = team.info.player(roster) if team.info != null else null
+	if player != null:
+		dress_player(e, player)
+	else:
+		_default_skills(e)
+	e.energy = team.energy[roster] if roster >= 0 and roster < 28 else 0x1000
 
 ## put_player_on_ice (0x5b2a4): copies the ratings of the player database into the entity.
 ## Skaters (0x14 bytes): [0] hand (1 = left; right handed players are drawn mirrored),
@@ -225,7 +287,6 @@ func dress_player(e: Entity, p: Database.Player) -> void:
 	e.flags4 &= ~Entity.F4_MIRROR
 	if r[0] == 0:
 		e.flags4 |= Entity.F4_MIRROR
-	e.energy = 0x1000
 	if not p.goalie:
 		e.stamina = r[1] - mini(r[1], 3)
 		e.speed_skill = r[2] - mini(r[2], 3)
@@ -238,13 +299,13 @@ func dress_player(e: Entity, p: Database.Player) -> void:
 		e.reaction = ((clampi(r[10], 0, 15) ^ 0xf) + 0xf) >> 1
 		e.awareness = ((clampi(r[11], 0, 15) ^ 0xf) + 0xf) >> 1
 		e.check_skill = r[12]
-		e.stick_skill = r[13]
+		e.endurance = r[13]
 		e.offense = mini(r[14], 15)
 	else:
 		e.check_skill = r[1]
 		e.pass_skill = r[2]
 		e.offense = r[3]
-		e.stick_skill = r[4]
+		e.endurance = r[4]
 		e.shot_skill = r[5]
 		e.stamina = r[6] - mini(r[6], 3)
 		e.speed_skill = r[7] - mini(r[7], 3)
@@ -256,7 +317,7 @@ func dress_player(e: Entity, p: Database.Player) -> void:
 ## default ratings in the 0..15 scale of the player database (put_player_on_ice would read them)
 func _default_skills(e: Entity) -> void:
 	e.weight = 8 + (e.slot % 3)
-	e.speed_skill = 9 if e.line_slot > 0 else 5
+	e.speed_skill = 9 if e.roster_idx < 25 else 5
 	e.stamina = 8
 	e.reaction = 6
 	e.awareness = 7
@@ -265,13 +326,12 @@ func _default_skills(e: Entity) -> void:
 	e.pass_skill = 8
 	e.offense = 7
 	e.goalie_skill = 9
-	e.stick_skill = 8
+	e.endurance = 8
 	e.check_skill = 7
 	e.aggression = 6
 	e.left_handed = 1 if (e.slot % 4) == 1 else 0
 	e.flags4 = Entity.F4_MIRROR if e.left_handed else 0
-	e.number = 10 + e.slot
-	e.energy = 0x1000
+	e.number = 10 + e.roster_idx if e.roster_idx >= 0 else 10 + e.slot
 
 func team_of(e: Entity) -> Team:
 	return teams[e.team]
@@ -317,6 +377,9 @@ func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) ->
 		e.prev_z = e.z
 		if e.line_slot < 0 and e.slot != Entity.Slot.REFEREE:
 			continue
+		var team: Team = teams[e.team] if e.slot < 12 else null
+		if team != null and e.roster_idx >= 0:
+			e.energy = team.energy[e.roster_idx]      # the energy lives in the team record (+0x46)
 		Anim.advance(e)
 		e.timer_c = maxi(0, e.timer_c - 1)
 		e.timer_d = maxi(0, e.timer_d - 1)
@@ -334,6 +397,13 @@ func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) ->
 			move_entity(e)
 		e.speed = maxi(0, e.speed - 2)
 		e.contact = e.speed
+		if team != null and e.roster_idx >= 0:
+			team.energy[e.roster_idx] = e.energy
+	if message_timer > 0:
+		message_timer -= 1
+		if message_timer < 1:
+			message_timer = 0
+			message = -1
 	# the carrier cannot drag the puck through the boards or behind the goal line (end of sim_update_players)
 	if puck.zi < 0x18 and absi(puck.xi) > 0xa0 and puck_carrier >= 0:
 		puck.x = (-0xa0 if puck.xi < 0 else 0xa0) * 0x10000
@@ -431,6 +501,12 @@ func control_player(e: Entity, control: int, pressed: int, player: int) -> void:
 	e.flags |= Entity.F_USER
 	if player == 1:
 		e.flags |= Entity.F_PLAYER2
+	# F1-F4 / F5-F8: a line change request for the team (word_e0304)
+	var t := e.team
+	if line_hotkey[t] >= 0 and not penalty_shot:
+		if not play_stopped or (e.flags2 & Entity.F2_LINE_CHANGE) or faceoff_pending:
+			Lines.request_line_change(self, e, line_hotkey[t])
+		line_hotkey[t] = -1
 	if play_stopped:
 		if faceoff_pending:
 			faceoff_control(e, control, pressed)
@@ -444,6 +520,7 @@ func control_player(e: Entity, control: int, pressed: int, player: int) -> void:
 	var carrying := puck_carrier == e.slot
 	if (e.flags & Entity.F_BUSY) == 0:
 		if carrying:
+			Lines.offside_warning_check(self, e)
 			if e.line_slot == 0 and (e.flags2 & Entity.F2_TURNING):
 				return
 			if action_pass:
@@ -455,6 +532,12 @@ func control_player(e: Entity, control: int, pressed: int, player: int) -> void:
 			if pressed & 0x10:          # A: pass (released next step, in the pushed direction)
 				pending_dir = e.facing
 				action_pass = true
+				return
+			if (pressed & 0x40) and not penalty_shot:
+				# C as the carrier: the line change prompt (request_line_change_button); the prompt
+				# itself is not ported, the next line of the rotation is taken at once
+				if opt_line_changes:
+					Lines.select_line(self, e, Lines.next_line(self, e, 1))
 				return
 			if e.line_slot == 0:
 				return
@@ -634,6 +717,14 @@ func skating_accelerate(e: Entity, dir: int) -> void:
 		e.vx = nvx
 		e.vy = nvy
 	e.speed = 20
+	# fatigue (end of skating_accelerate): now and then a skater loses 0x28 energy; a fresh one
+	# (>= 0xc00 left) gets his endurance rating back
+	if e.slot < 12 and opt_line_changes and not play_stopped and e.line_slot != 0 and random(0x80) == 0:
+		var en := e.energy - 0x28
+		if en < 0xc00:
+			e.energy = maxi(en, 0)
+		else:
+			e.energy = clampi(en + e.endurance, 0, 0x1000)
 
 func stop_skating(e: Entity) -> void:
 	if absi(e.vx) > 0x1000 or absi(e.vy) > 0x1000:

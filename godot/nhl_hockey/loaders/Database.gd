@@ -34,6 +34,7 @@ class TeamInfo:
 	var power_play: Array = []  # 2 x 5
 	var penalty_kill: Array = []# 2 x 4
 	var goalie_order: Array = []# 2 roster indices (25..27)
+	var line_table: PackedByteArray = PackedByteArray()   # the raw 0x30 bytes at +0xbc (line_energy / assign_line_positions index it by offset)
 
 	func player(roster_idx: int) -> Player:
 		if roster_idx >= 25:
@@ -78,6 +79,7 @@ func load_team(idx: int) -> TeamInfo:
 		t.skaters.append(read_player(teams_db.decode_s32(base + 0x4c + i * 4), false, i))
 	for i in 3:
 		t.goalies.append(read_player(teams_db.decode_s32(base + 0xb0 + i * 4), true, 25 + i))
+	t.line_table = teams_db.slice(base + 0xbc, base + 0xec)
 	var p := base + 0xbc
 	for i in 4:
 		t.forwards.append([teams_db[p], teams_db[p + 1], teams_db[p + 2]])

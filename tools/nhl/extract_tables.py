@@ -104,6 +104,29 @@ def main():
     t['marker_frames'] = shorts(le, 0xcc0b2, 3)
     # draw_sprites: off screen arrows per clip direction for user 1 and user 2
     t['arrow_frames'] = [shorts(le, 0xcc0b8 + i * 16, 8) for i in range(2)]
+    # line changes (assign_line_positions, choose_line, pick_next_line):
+    # lineup_slot_types[mode][k]: position type of the k-th player of the lineup (mode 0 with a
+    # goalie: G LD RD C LW RW, mode 1 goalie pulled: LD RD C LW RW extra attacker)
+    t['lineup_slot_types'] = [list(le.read(0xcbc37 + i, 6)) for i in range(2)]
+    # line_table_lists: per position type the preference list of line table offsets (TEAMS.DB +0xbc)
+    # indexed by line 0..7 first, then the other positions, -1 terminated
+    bases = struct.unpack('<8h', le.read(0xcccb8, 16))[1:]
+    lists = []
+    for b in bases:
+        l = []
+        a = 0xcccc8 + b
+        while True:
+            v = le.read(a, 1)[0]
+            if v == 0xff or len(l) > 40:
+                break
+            l.append(v)
+            a += 1
+        lists.append(l)
+    t['line_table_lists'] = lists
+    # line_preference[strategy][line]: 4 candidate lines tried by choose_line (-1 = end)
+    t['line_preference'] = [[list(struct.unpack('<4b', le.read(le.read_u32(0xcbd2e + 4 * i) + 4 * j, 4))) for j in range(4)] for i in range(11)]
+    # line_rotation[group][line]: the lines offered by the line change prompt (pick_next_line)
+    t['line_rotation'] = [list(struct.unpack('<4b', le.read(0xccb5a + 4 * i, 4))) for i in range(24)]
     with open(out, 'w') as f:
         json.dump(t, f, indent=1)
     print(f"wrote {out}: {len(t['anim_sequences'])} animation words, {len(t['ai_state_names'])} states")

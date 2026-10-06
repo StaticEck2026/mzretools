@@ -70,8 +70,8 @@ func run_tests() -> void:
 	else:
 		print("faceoff after ", dropped, " steps")
 	var centre := sim.entities[sim.user1_slot]
-	if sim.user1_slot != 4 or centre.line_slot != 4:
-		fail("user should control the home centre, has slot %d" % sim.user1_slot)
+	if sim.user1_slot < 0 or sim.user1_slot > 5 or centre.line_slot != 4:
+		fail("user should control the home centre, has slot %d (line slot %d)" % [sim.user1_slot, centre.line_slot if sim.user1_slot >= 0 else -9])
 	if absi(sim.puck.xi) > 4 or absi(sim.puck.yi) > 4:
 		fail("puck not at centre ice after the drop: %d,%d" % [sim.puck.xi, sim.puck.yi])
 	# play on: everybody stays inside the boards, the CPU players move, the clock runs
@@ -297,18 +297,33 @@ func asset_tests() -> void:
 		# a game between the two teams: the first lines are dressed with their ratings
 		var sim := Sim.new()
 		sim.set_teams(bos, det)
-		var centre := sim.entities[4]
-		if centre.number != 12 or centre.roster_idx != 7 or centre.left_handed != 0 or (centre.flags4 & Entity.F4_MIRROR) == 0:
+		var centre := sim.entities[sim.user1_slot]
+		if centre.line_slot != 4 or centre.number != 12 or centre.roster_idx != 7 or centre.left_handed != 0 or (centre.flags4 & Entity.F4_MIRROR) == 0:
 			fail("Adam Oates should centre the first line: number %d roster %d" % [centre.number, centre.roster_idx])
-		var bourque_e := sim.entities[2]
-		if bourque_e.number != 77 or bourque_e.speed_skill != 10 or bourque_e.weight != 10 or bourque_e.shot_skill != 13 or bourque_e.reaction != 8:
-			fail("Bourque ratings: speed %d weight %d shot %d reaction %d" % [bourque_e.speed_skill, bourque_e.weight, bourque_e.shot_skill, bourque_e.reaction])
-		if sim.entities[0].number != 30 or sim.entities[6].line_slot != 0:
-			fail("goalies not dressed")
+		var bourque_e: Entity = null
+		var dressed := []
+		for i in 6:
+			dressed.append(sim.entities[i].roster_idx)
+			if sim.entities[i].roster_idx == 10:
+				bourque_e = sim.entities[i]
+		if bourque_e == null or bourque_e.line_slot != 2 or bourque_e.number != 77 or bourque_e.speed_skill != 10 or bourque_e.weight != 10 or bourque_e.shot_skill != 13 or bourque_e.reaction != 8:
+			fail("Bourque (RD) ratings: %s" % str(dressed))
+		dressed.sort()
+		if dressed != [4, 7, 10, 16, 18, 25]:
+			fail("Boston's first line is not dressed: %s" % str(dressed))
+		if sim.teams[0].entity_of[25] != -1 or sim.teams[0].entity_of[26] != -2 or sim.teams[0].entity_of[22] != -3:
+			fail("entity_of bookkeeping: %d %d %d" % [sim.teams[0].entity_of[25], sim.teams[0].entity_of[26], sim.teams[0].entity_of[22]])
+		var det_goalie := -1
+		for i in range(6, 12):
+			if sim.entities[i].line_slot == 0:
+				det_goalie = sim.entities[i].roster_idx
+		if det_goalie != det.goalie_order[0]:
+			fail("Detroit's starting goalie %d not dressed (%d)" % [det.goalie_order[0], det_goalie])
 		run_until_play(sim, 1200)
 		for i in 3000:
 			sim.step(8, 8, 0, 0)
 		print("BOS - DET after 3000 steps: %d-%d, clock %d:%02d" % [sim.teams[0].goals, sim.teams[1].goals, sim.clock_seconds / 60, sim.clock_seconds % 60])
+		line_change_tests(bos, det)
 	# sound effects: 30 digital samples, the goal horn (0x9c) is the 7 second sample
 	var snd := Sounds.load_bank(gf.read_raw("pcff001.pat"), gf.read_raw("pcff001.tim"), gf.read_raw("pcff001.dig"))
 	if snd == null or snd.sample_count != 30 or snd.timbre_count != 30:
@@ -322,3 +337,132 @@ func asset_tests() -> void:
 			fail("crowd loop")
 		if not snd.has(0x90) or not snd.has(0xa4) or snd.effects.size() < 30:
 			fail("effect ids: %d" % snd.effects.size())
+
+## line changes, fatigue and goalie pulling (Lines.gd)
+func line_change_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
+	# the user asks for the second line with F2: the first line skates to the bench and Boston's
+	# second forward line (Hughes 18, Smolinski 20, Murray 44) and second pair come on
+	var sim := Sim.new()
+	sim.set_teams(bos, det)
+	run_until_play(sim, 1200)
+	var before := _dressed(sim, 0)
+	sim.line_hotkey[0] = 1
+	var changed := false
+	for i in 1500:
+		sim.step(8, 8, 0, 0)
+		var now := _dressed(sim, 0)
+		if now.has(8) and now.has(1) and now.has(3) and not now.has(7) and not now.has(18):
+			changed = true
+			break
+	if not changed:
+		fail("F2 line change did not bring the second line on: before %s after %s (line %d)" % [str(before), str(_dressed(sim, 0)), sim.teams[0].current_line])
+	elif sim.teams[0].current_line != 1 or sim.teams[0].dpair_counter != 1:
+		fail("line bookkeeping after F2: line %d pair %d" % [sim.teams[0].current_line, sim.teams[0].dpair_counter])
+	else:
+		print("line change: second line on the ice after F2, dressed %s" % str(_dressed(sim, 0)))
+	# everybody who left is on the bench, nobody is dressed twice
+	var home := sim.teams[0]
+	for i in 6:
+		var e := sim.entities[i]
+		if e.line_slot >= 0 and home.entity_of[e.roster_idx] != -1:
+			fail("player %d on the ice but entity_of = %d" % [e.roster_idx, home.entity_of[e.roster_idx]])
+	# the CPU coach: a tired line is replaced at the next faceoff
+	sim = Sim.new()
+	sim.set_teams(bos, det)
+	run_until_play(sim, 1200)
+	var away := sim.teams[1]
+	for i in 6:
+		var e := sim.entities[6 + i]
+		if e.line_slot > 0:
+			away.energy[e.roster_idx] = 0x400
+	var cpu_before := _dressed(sim, 1)
+	var cpu_changed := false
+	Rules.maybe_queue_infraction(sim, sim.entities[1], Rules.INF_ICING)
+	for i in 3000:
+		sim.step(8, 8, 0, 0)
+		if away.current_line != 0:
+			cpu_changed = true
+	run_until_play(sim, 2400)
+	var cpu_after := _dressed(sim, 1)
+	if not cpu_changed or cpu_after == cpu_before:
+		fail("the CPU did not change its tired line: line %d before %s after %s" % [away.current_line, str(cpu_before), str(cpu_after)])
+	else:
+		print("CPU line change: line %d, dressed %s" % [away.current_line, str(cpu_after)])
+	# fatigue: skaters lose energy during play, benched players recover
+	var tired := false
+	for r in 25:
+		if away.entity_of[r] == -1 and away.energy[r] < 0x1000:
+			tired = true
+	var e_bench := -1
+	for r in 25:
+		if away.entity_of[r] == -2 and cpu_before.has(r):
+			e_bench = away.energy[r]
+	if not tired:
+		fail("no skater lost energy")
+	if e_bench >= 0 and e_bench <= 0x400:
+		fail("benched players do not recover energy: %d" % e_bench)
+	# pulling the goalie: six skaters, the goalie entity takes the extra attacker; F9 again returns him
+	sim = Sim.new()
+	sim.set_teams(bos, det)
+	run_until_play(sim, 1200)
+	Lines.toggle_pull_goalie(sim, 0)
+	if sim.message != Lines.MSG_PULL_GOALIE:
+		fail("PULL GOALIE message not shown (%d)" % sim.message)
+	var pulled := false
+	for i in 1500:
+		sim.step(8, 8, 0, 0)
+		var goalies := 0
+		var skaters := 0
+		for k in 6:
+			var e := sim.entities[k]
+			if e.line_slot == 0:
+				goalies += 1
+			elif e.line_slot > 0:
+				skaters += 1
+		if goalies == 0 and skaters == 6:
+			pulled = true
+			break
+	if not pulled:
+		fail("the goalie was not pulled (dressed %s request %x)" % [str(_dressed(sim, 0)), sim.teams[0].goalie_request])
+	elif sim.teams[0].extra_attacker < 0 or sim.teams[0].entity_of[25] != -2:
+		fail("extra attacker %d, goalie entity_of %d" % [sim.teams[0].extra_attacker, sim.teams[0].entity_of[25]])
+	else:
+		print("goalie pulled: extra attacker roster %d" % sim.teams[0].extra_attacker)
+		Lines.toggle_pull_goalie(sim, 0)
+		var back := false
+		for i in 1500:
+			sim.step(8, 8, 0, 0)
+			for k in 6:
+				if sim.entities[k].line_slot == 0 and sim.entities[k].roster_idx == 25:
+					back = true
+			if back:
+				break
+		if not back:
+			fail("the goalie did not return")
+	# a delayed penalty against Detroit: Boston pulls the goalie by itself while it has the puck
+	sim = Sim.new()
+	sim.set_teams(bos, det)
+	sim.user1_team = 0
+	sim.new_game()
+	run_until_play(sim, 1200)
+	var carrier := sim.entities[sim.centre_slot(0)]
+	sim.puck_carrier = carrier.slot
+	sim.puck.set_pos(carrier.xi, carrier.yi)
+	sim.delayed_call = true
+	var auto_pull := false
+	for i in 20:
+		sim.step(8, 8, 0, 0)
+		if sim.teams[0].goalie_pulled():
+			auto_pull = true
+			break
+	if not auto_pull:
+		fail("no extra attacker on the delayed call")
+
+func _dressed(sim: Sim, t: int) -> Array:
+	var out := []
+	for i in 6:
+		var e := sim.entities[t * 6 + i]
+		if e.line_slot >= 0:
+			out.append(e.roster_idx)
+	out.sort()
+	return out

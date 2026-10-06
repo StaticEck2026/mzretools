@@ -37,6 +37,10 @@ static var rink_tile_names: PackedStringArray     # load_rink: TEAM.TIL / TEAM.M
 static var rink_logo: Array = []                  # 26 x [col, row, col2, row2] tile position of the centre ice logo
 static var marker_frames: PackedInt32Array        # draw_sprites: frames under user 1, user 2 and the puck carrier
 static var arrow_frames: Array = []               # 2 x 8 off screen arrows per clip direction
+static var lineup_slot_types: Array = []          # [mode][k]: position type of the k-th dressed player (assign_line_positions)
+static var line_table_lists: Array = []           # [type]: preference list of line table offsets (line 0..7 first)
+static var line_preference: Array = []            # [strategy][line]: candidate lines of choose_line
+static var line_rotation: Array = []              # [group * 8 + line]: lines offered by the line change prompt
 static var loaded := false
 
 static func _static_init() -> void:
@@ -82,6 +86,10 @@ static func load_tables() -> void:
 	rink_logo = _ints(t["rink_logo"])
 	marker_frames = PackedInt32Array(t["marker_frames"])
 	arrow_frames = _ints(t["arrow_frames"])
+	lineup_slot_types = _ints(t["lineup_slot_types"])
+	line_table_lists = _ints(t["line_table_lists"])
+	line_preference = _ints(t["line_preference"])
+	line_rotation = _ints(t["line_rotation"])
 	loaded = true
 
 ## JSON numbers come back as floats: convert nested arrays of numbers to ints

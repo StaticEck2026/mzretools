@@ -97,6 +97,7 @@ func _read_settings() -> void:
 func _physics_process(_delta: float) -> void:
 	if Input.is_action_just_pressed("pause"):
 		get_tree().paused = not get_tree().paused
+	_hotkeys()
 	var c := controls.step()
 	sim.step(c[0], c[1], c[2], c[3])
 	steps_done += 1
@@ -105,6 +106,18 @@ func _physics_process(_delta: float) -> void:
 	if shot_path != "" and steps_done >= shot_steps and not shot_taken:
 		shot_taken = true
 		_screenshot()
+
+## handle_hotkey: F1-F4 lines of player 1, F5-F8 lines of player 2, F9 / F10 pull the goalie
+func _hotkeys() -> void:
+	for p in 2:
+		var team := (sim.user1_team if p == 0 else sim.user2_team) - 1
+		if team < 0:
+			continue
+		for k in 4:
+			if Input.is_action_just_pressed("p%d_line%d" % [p + 1, k + 1]):
+				sim.line_hotkey[team] = k
+		if Input.is_action_just_pressed("p%d_pull_goalie" % (p + 1)):
+			Lines.toggle_pull_goalie(sim, team)
 
 func _screenshot() -> void:
 	await RenderingServer.frame_post_draw

@@ -34,7 +34,10 @@ static func dispatch(sim: Sim, e: Entity) -> void:
 		Entity.State.REF_GOTO_FACEOFF: ref_goto_faceoff(sim, e)
 		Entity.State.REF_POINT_GOAL: ref_point_goal(sim, e)
 		Entity.State.REF_GET_NEW_PUCK: ref_get_new_puck(sim, e)
-		Entity.State.ALL_GOTO_FACEOFF, Entity.State.BENCH_WAIT: all_goto_faceoff(sim, e)
+		Entity.State.ALL_GOTO_FACEOFF: all_goto_faceoff(sim, e)
+		Entity.State.BENCH: Lines.bench(sim, e)
+		Entity.State.EXIT_BENCH: Lines.exit_bench(sim, e)
+		Entity.State.BENCH_WAIT: Lines.bench_wait(sim, e)
 		Entity.State.PENALTY_BOX: penalty_box(sim, e)
 		Entity.State.DOOR_OPEN: door_open(sim, e)
 		Entity.State.EXIT_PENALTY_BOX: exit_penalty_box(sim, e)
@@ -66,6 +69,8 @@ static func default_skate(_sim: Sim, e: Entity) -> void:
 ## the usual preamble of a positional handler; returns false when the handler must stop
 static func role_preamble(sim: Sim, e: Entity) -> bool:
 	if e.flags & Entity.F_BUSY:
+		return false
+	if Lines.handle_line_change(sim, e):
 		return false
 	if sim.play_stopped:
 		skate_idle(sim, e)
@@ -489,6 +494,10 @@ static func center_offense(sim: Sim, e: Entity) -> void:
 
 ## ai_celebrate_goal (0x4a90f): after a goal the scoring team swarms the scorer
 static func celebrate(sim: Sim, e: Entity) -> void:
+	if e.flags & Entity.F_BUSY:
+		return
+	if Lines.handle_line_change(sim, e):
+		return
 	if sim.puck_carrier == e.slot:
 		sim.puck_carrier = -1
 		if sim.puck.state() == Entity.State.PUCK_NORMAL:
@@ -547,7 +556,7 @@ static func puck_carrier(sim: Sim, e: Entity) -> void:
 			return
 		if choose_pass_target(sim, e):
 			return
-	var idx := e.target_x + 6 if not sim.goalie_pulled else e.line_slot - 1
+	var idx := e.target_x + 6 if not sim.offside_warning else e.line_slot - 1
 	var t: Array = Tables.carrier_targets[clampi(idx, 0, 9)]
 	var tx: int = t[0]
 	var ty: int = t[1]
@@ -558,16 +567,32 @@ static func puck_carrier(sim: Sim, e: Entity) -> void:
 		e.target_x = sim.random(4)
 	skate_towards(sim, e, tx, ty)
 
-## ai_consider_shot (0x54af9): a tired line dumps the puck in and changes (not ported: line
-## changes), here it only triggers a dump from the neutral zone now and then
+## ai_consider_shot (0x54af9): a tired line in the neutral zone changes on the fly: the carrier
+## dumps the puck in and the new line comes on
 static func consider_shot(sim: Sim, e: Entity) -> bool:
-	if not sim.opt_line_changes:
+	if not sim.opt_line_changes or sim.penalty_shot:
 		return false
 	var py := sim.puck.yi if (e.flags & Entity.F_ATTACK_UP) else -sim.puck.yi
-	if py >= 0 and py < 0x4f and sim.random(4) == 0 and sim.clock_seconds > 0xe:
-		desperation_shot(sim, e)
-		return true
-	return false
+	if py < 0 or py >= 0x4f or sim.random(4) != 0 or (e.flags2 & Entity.F2_LINE_CHANGE):
+		return false
+	var team := sim.team_of(e)
+	var other := sim.opponents_of(e)
+	var diff := team.skaters_on_ice - other.skaters_on_ice
+	if (team.flags2 & 0x40) == 0:
+		var avg := Lines.team_avg_energy(sim, team)
+		if sim.clock_seconds <= 0xe or (sim.clock_seconds <= 0x1d and avg > 0x800):
+			return false
+		var threshold := team.energy_threshold if diff == 0 else 0xf33
+		if avg > threshold:
+			return false
+	elif sim.clock_seconds <= 0xe:
+		return false
+	if diff != 0 and Rules.penalty_time_left(sim) <= 0xe:
+		return false
+	Lines.choose_line(sim, other, team)
+	Lines.apply_line_change(sim, team)
+	desperation_shot(sim, e)
+	return true
 
 ## ai_offense_decision (0x55804): shoot when in a good spot, more eagerly when trailing late
 static func offense_decision(sim: Sim, e: Entity) -> bool:
@@ -582,8 +607,8 @@ static func offense_decision(sim: Sim, e: Entity) -> bool:
 	var dx := -puck.xi
 	if dy * dy + dx * dx < 0x2711:
 		var opp := sim.opponents_of(e)
-		if opp.line_request < 0 and false:
-			odds = 1
+		if opp.goalie_pulled():
+			odds = 1          # empty net
 		else:
 			var to_net := Tables.direction8(dx, dy)
 			for i in 6:
@@ -597,7 +622,7 @@ static func offense_decision(sim: Sim, e: Entity) -> bool:
 		odds *= 0x10
 	if sim.random(maxi(1, odds)) < 9:
 		var py := puck.yi if (e.flags & Entity.F_ATTACK_UP) else -puck.yi
-		if py >= 0 and 0xe8 - py >= 0 and not sim.goalie_pulled:
+		if py >= 0 and 0xe8 - py >= 0 and not sim.offside_warning:
 			desperation_shot(sim, e)
 			return true
 	return false
@@ -612,7 +637,7 @@ static func desperation_shot(sim: Sim, e: Entity) -> void:
 static func choose_pass_target(sim: Sim, e: Entity) -> bool:
 	var puck := sim.puck
 	e.pass_ok = 0
-	var r := sim.random(e.offense + 0x10) if not sim.goalie_pulled else 10
+	var r := sim.random(e.offense + 0x10) if not sim.offside_warning else 10
 	if r <= 9 and e.line_slot != 0:
 		return false
 	var idx := sim.random(6)
@@ -675,6 +700,8 @@ static func nearest_to_puck(sim: Sim, e: Entity) -> void:
 			goalie(sim, e)
 		elif (e.flags & Entity.F_USER) == 0:
 			e.set_state_reset(Entity.State.PUCK_CARRIER)
+		return
+	if Lines.handle_line_change(sim, e):
 		return
 	e.react_timer -= 1
 	if e.react_timer < 0:
@@ -975,6 +1002,8 @@ static func goalie(sim: Sim, e: Entity) -> void:
 		e.flags3 &= ~4
 	if ax > -0x31 and ax < 0x31 and ay > 0xc4:
 		e.flags3 &= ~2
+	if Lines.handle_line_change(sim, e):
+		return
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		e.timer_a = 0
@@ -1310,8 +1339,30 @@ static func puck_faceoff(sim: Sim, e: Entity) -> void:
 			# a penalty was pending: it is called now (served as a faceoff)
 			sim.delayed_call = false
 		sim.skip_wait = false
+		# line changes at the stoppage: a goalie pulled by the CPU comes back, the CPU coaches pick
+		# their lines (choose_line), the users keep theirs unless a hotkey request is pending
+		# (the line change prompt of the original times out to the same line)
+		Lines.cpu_pull_goalie_check(sim)
 		for i in 12:
 			sim.entities[i].flags2 &= ~Entity.F2_LINE_CHANGE
+		for t in 2:
+			var team := sim.teams[t]
+			var other := sim.teams[1 - t]
+			if sim.opt_line_changes:
+				if sim.is_user_team(t):
+					if sim.line_hotkey[t] >= 0:
+						var slot := sim.user1_slot if sim.user1_team == t + 1 else sim.user2_slot
+						if slot >= 0:
+							Lines.request_line_change(sim, sim.entities[slot], sim.line_hotkey[t])
+						sim.line_hotkey[t] = -1
+					else:
+						Lines.apply_line_change(sim, team)
+				else:
+					Lines.choose_line(sim, other, team)
+					Lines.apply_line_change(sim, team)
+			else:
+				Lines.apply_line_change(sim, team)
+			Lines.send_team_to_faceoff(sim, team)
 	e.set_state(Entity.State.PUCK_FACEOFF2)
 	e.timer_b = 1000
 

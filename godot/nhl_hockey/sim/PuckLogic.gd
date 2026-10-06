@@ -228,7 +228,7 @@ static func stickhandling_skill(e: Entity) -> int:
 	if a == 0xb1 or a == 0xc9 or a == 0xe1 or a == 0x11d5:
 		return e.check_skill if e.left_handed else e.pass_skill
 	if a == 0x101 or a == 0x119 or a == 0x121d:
-		return e.stick_skill if e.left_handed else e.offense
+		return e.endurance if e.left_handed else e.offense
 	return e.shot_skill
 
 ## goalie_save (0x574ba): a player (usually the goalie) gets to the puck; a hard shot may be

@@ -41,9 +41,10 @@ static func game_state_tick(sim: Sim) -> void:
 		game_clock_tick(sim)
 		if sim.clock_sub == 0x17:
 			penalty_timers(sim)
+	Lines.cpu_line_change(sim)
 	# the 24 Hz tick of sim_game_state: energy, lead changes
 	if sim.step_count % 24 == 0:
-		regenerate_energy(sim)
+		Lines.regenerate_energy(sim)
 		if not sim.play_stopped:
 			update_lead_change(sim)
 
@@ -100,6 +101,10 @@ static func serve_penalty(sim: Sim, e: Entity, minutes: int) -> void:
 		if pen[2] == e.slot:
 			return
 	team.penalties.append([e.roster_idx, minutes * 60, e.slot, minutes == 2])
+	if e.roster_idx >= 0:
+		team.entity_of[e.roster_idx] = 1        # in the box
+	e.next_line_slot = -1
+	e.next_roster = -1
 	e.set_state(Entity.State.PENALTY_BOX)
 	e.flags2 |= Entity.F2_UNSELECTABLE
 	if e.slot == sim.user1_slot:
@@ -107,6 +112,19 @@ static func serve_penalty(sim: Sim, e: Entity, minutes: int) -> void:
 	elif e.slot == sim.user2_slot:
 		sim.switch_to_nearest(e, 1)
 	sim.add_crowd(300, 1000)
+
+## penalty_time_left (0x540f5): seconds until the team with more skaters loses its advantage
+## (the shortest penalty of the short handed team), 0 at even strength
+static func penalty_time_left(sim: Sim) -> int:
+	var home := sim.teams[0]
+	var away := sim.teams[1]
+	if home.skaters_on_ice == away.skaters_on_ice:
+		return 0
+	var short_team := away if home.skaters_on_ice > away.skaters_on_ice else home
+	var left := 0x7fff
+	for pen in short_team.penalties:
+		left = mini(left, pen[1])
+	return left if left != 0x7fff else 0
 
 ## penalty_timers (0x63a37): penalties run with the game clock; the first expired one returns
 static func penalty_timers(sim: Sim) -> void:
@@ -127,6 +145,8 @@ static func penalty_expired(sim: Sim, team: Team, idx: int) -> void:
 	team.penalties.remove_at(idx)
 	var e: Entity = sim.entities[pen[2]]
 	team.skaters_on_ice = clampi(6 - team.penalties.size(), 4, 6)
+	if e.roster_idx >= 0:
+		team.entity_of[e.roster_idx] = -1
 	if e.line_slot < 0:
 		e.line_slot = e.line_slot & 0xff      # DOOR_OPEN only set the high byte
 	if e.line_slot <= 0:
@@ -262,13 +282,6 @@ static func update_effects(sim: Sim) -> void:
 	if sim.excitement > 0:
 		sim.excitement -= 1
 
-## regenerate_energy (0x63d9e): players on the bench recover
-static func regenerate_energy(sim: Sim) -> void:
-	for t in 2:
-		var team := sim.teams[t]
-		for i in 27:
-			if team.entity_of[i] == -2:
-				team.energy[i] = mini(0x1000, team.energy[i] + 8)
 
 ## update_lead_change (0x63c9a)
 static func update_lead_change(sim: Sim) -> void:
@@ -603,6 +616,7 @@ static func place_faceoff(sim: Sim) -> void:
 	sim.last_touch_slot = -1
 	sim.last_passer = -1
 	sim.last_shooter = -1
+	Lines.flush_pending(sim)
 	for i in 12:
 		var e := sim.entities[i]
 		e.flags2 &= ~Entity.F2_OFFSIDE
@@ -656,11 +670,9 @@ static func place_faceoff(sim: Sim) -> void:
 	sim.user1_slot = -1
 	sim.user2_slot = -1
 	if sim.user1_team != 0:
-		var centre := (sim.user1_team - 1) * 6 + 4
-		sim.user1_slot = sim.find_switch_target(centre, -1)
+		sim.user1_slot = sim.find_switch_target(sim.centre_slot(sim.user1_team - 1), -1)
 	if sim.user2_team != 0:
-		var centre2 := (sim.user2_team - 1) * 6 + 4
-		sim.user2_slot = sim.find_switch_target(centre2, -1)
+		sim.user2_slot = sim.find_switch_target(sim.centre_slot(sim.user2_team - 1), -1)
 		sim.entities[sim.user2_slot].flags |= Entity.F_PLAYER2
 	sim.faceoff_ready = [1, 4]
 	sim.faceoff_side = [0x8800 if not sim.ends_switched else 0x8000, 0xa000 if not sim.ends_switched else 0xa800]
@@ -726,5 +738,7 @@ static func all_goto_positions(sim: Sim) -> void:
 		var s := e.state()
 		if s == Entity.State.PENALTY_BOX or s == Entity.State.DOOR_OPEN or s == Entity.State.EXIT_PENALTY_BOX:
 			continue
-		if s != Entity.State.INIT_PERIOD and s != Entity.State.ALL_GOTO_FACEOFF and s != Entity.State.BENCH_WAIT:
+		if s == Entity.State.BENCH or s == Entity.State.EXIT_BENCH or s == Entity.State.BENCH_WAIT or e.next_roster >= 0:
+			continue      # changing: handle_line_change / ai_bench take him to the faceoff afterwards
+		if s != Entity.State.INIT_PERIOD and s != Entity.State.ALL_GOTO_FACEOFF:
 			e.set_state_reset(Entity.State.ALL_GOTO_FACEOFF)

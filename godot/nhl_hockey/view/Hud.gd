@@ -37,7 +37,7 @@ func setup(s: Sim, pal: GamePalette, scrbrd: Shpi, fonts: Dictionary) -> void:
 			for d in 10:
 				out.append(_tex(scrbrd.find("%s00%d" % [prefix, d])))
 			out.append(_tex(scrbrd.find(prefix + "00 ")))
-		for n in ["hlin", "vlin", "homp", "visp"]:
+		for n in ["hlin", "vlin", "homp", "visp", "hpp", "vpp", "hpk", "vpk"]:
 			panels[n] = _tex(scrbrd.find(n))
 		assets_ok = score_digits[0] != null and panels["hlin"] != null
 	font_big = fonts.get("scor3b", null)
@@ -64,7 +64,15 @@ func _draw() -> void:
 	for t in 2:
 		var team := sim.teams[t]
 		var penalties := not team.penalties.is_empty()
-		var panel: Texture2D = panels["homp" if t == 0 else "visp"] if penalties else panels["hlin" if t == 0 else "vlin"]
+		var panel: Texture2D = null
+		if penalties:
+			panel = panels["homp" if t == 0 else "visp"]
+		elif team.current_line < 4:
+			panel = panels["hlin" if t == 0 else "vlin"]
+		elif team.current_line < 6:
+			panel = panels["hpp" if t == 0 else "vpp"]
+		else:
+			panel = panels["hpk" if t == 0 else "vpk"]
 		if panel != null:
 			draw_texture(panel, Vector2(PANEL_X[t], HUD_Y))
 		if penalties:
@@ -80,27 +88,28 @@ func _draw() -> void:
 	_draw_period()
 	_draw_message()
 
-## draw_line_box: two bars per line (left and right of the line number), 20 pixels = full energy,
-## the current line in another colour
+## draw_line_box: two bars per line (left and right of the line number), 20 pixels = full energy
+## (line_avg_energy / 200), the current line in another colour; the power play and penalty
+## killing panels show their two units at the second and third row
 func _draw_line_bars(team: Team, x0: int) -> void:
-	for i in 4:
-		var y := HUD_Y + 8 + 6 * i
-		var energy := 0x1000
-		var w := clampi(energy * 20 / 0x1000, 0, 20)
-		var c := palette.colors[0x21] if i == team.current_line else palette.colors[0x67]
+	var first := 0
+	var last := 4
+	var y := HUD_Y + 8
+	if team.current_line >= 4:
+		first = 4 if team.current_line < 6 else 6
+		last = first + 2
+		y = HUD_Y + 14
+	for line in range(first, last):
+		var energy := Lines.line_avg_energy(sim, team, line)
+		var w := clampi(energy / 200, 0, 20)
+		var c := palette.colors[0x21] if line == team.current_line else palette.colors[0x67]
 		draw_rect(Rect2(x0 + 0x15 - w, y, w, 3), c)
 		draw_rect(Rect2(x0 + 0x20, y, w, 3), c)
+		y += 6
 
-## sub_15707: the energy of the players on the ice (0..8 pixels)
+## draw_energy_bar (sub_15707): the energy of the players on the ice (0..8 pixels)
 func _draw_energy(team: Team, x0: int) -> void:
-	var total := 0
-	var n := 0
-	for i in 6:
-		var e := sim.entities[team.first_slot + i]
-		if e.line_slot > 0:
-			total += e.energy
-			n += 1
-	var w := clampi((total / maxi(n, 1)) * 8 / 0x1000, 0, 8)
+	var w := clampi(Lines.team_avg_energy(sim, team) / 500, 0, 8)
 	var c := palette.colors[0x67]
 	draw_rect(Rect2(x0 + 9 - w, HUD_Y + 0x1a, w, 3), c)
 	draw_rect(Rect2(x0 + 0x10, HUD_Y + 0x1a, w, 3), c)
@@ -159,18 +168,19 @@ func _draw_period() -> void:
 
 ## draw_message_box: box with the message of the stoppage at (12, 149) of the view
 func _draw_message() -> void:
-	if not sim.play_stopped or sim.game_over:
+	if sim.game_over:
 		return
-	var msg := -1
-	match sim.ref_infraction:
-		Rules.INF_ICING: msg = 5
-		Rules.INF_OFFSIDE: msg = 4
-		Rules.INF_TWO_LINE: msg = 3
-		_:
-			if sim.ref_infraction >= 9 and sim.ref_infraction <= 25:
-				msg = 6
-			elif sim.faceoff_pending:
-				msg = 2
+	var msg := sim.message       # PULL GOALIE / RETURN GOALIE / the OFFSIDE warning
+	if msg < 0 and sim.play_stopped:
+		match sim.ref_infraction:
+			Rules.INF_ICING: msg = 5
+			Rules.INF_OFFSIDE: msg = 4
+			Rules.INF_TWO_LINE: msg = 3
+			_:
+				if sim.ref_infraction >= 9 and sim.ref_infraction <= 25:
+					msg = 6
+				elif sim.faceoff_pending:
+					msg = 2
 	if msg < 0 or msg >= Tables.message_strings.size():
 		return
 	var text := Tables.message_strings[msg]
