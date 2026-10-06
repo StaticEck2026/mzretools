@@ -1720,7 +1720,7 @@ undefined8 __watcall sub_7caf7(undefined4 param_1,undefined4 unaff_EDX)
     }
   }
   user1_team = sVar3;
-  sub_7cce5(0);
+  ensure_user_slot(0);
   sub_7cea1();
   if ((((&unk_dff3a)[dword_dff36 >> 0x10] == '\x1b') && (extraout_EDX == 1)) &&
      ((iVar2 != 1 && (iVar5 != 1)))) {
@@ -1831,7 +1831,7 @@ undefined8 __watcall sub_7cb9f(undefined4 param_1,undefined4 unaff_EDX)
     }
   }
   user2_team._0_2_ = sVar3;
-  sub_7cce5(1);
+  ensure_user_slot(1);
   sub_7cea1();
   if ((((&unk_dff3a)[dword_dff36 >> 0x10] == '\x1b') && (extraout_EDX == 1)) &&
      ((iVar2 != 1 && (iVar5 != 1)))) {
@@ -1906,12 +1906,12 @@ void __watcall sub_7cc8a(uint param_1)
 
 
 // ================================================================================================
-// sub_7cce5 @ 0x7cce5 [__watcall]
+// ensure_user_slot @ 0x7cce5 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __watcall sub_7cce5(int param_1)
+void __watcall ensure_user_slot(int param_1)
 
 {
   short *psVar1;
@@ -2110,7 +2110,7 @@ undefined8 __watcall sub_7cfb9(int param_1)
       (&controller_type)[unaff_EBP] = 0;
     }
   }
-  sub_7cce5();
+  ensure_user_slot();
   sub_7cea1();
   if ((((&unk_dff3a)[dword_dff36 >> 0x10] == '\x1b') && (extraout_EDX == 1)) &&
      ((iVar3 != 1 && (iVar6 != 1)))) {
@@ -3849,9 +3849,9 @@ undefined8 __watcall replay_save_highlight(int param_1,undefined4 unaff_EDX)
     byte_e03c6 = user2_team._2_1_;
     byte_e03e3 = away_team_id;
     dword_e0400 = _period_num;
-    dword_e0404 = dword_c5704;
-    dword_e0408 = dword_c5708;
-    dword_e040c = dword_c570c;
+    dword_e0404 = hud_clock_min;
+    dword_e0408 = hud_clock_sec;
+    dword_e040c = hud_clock_tenths;
     word_e0410 = _action_flags;
     dword_e0412 = replay_write_ptr - (int)replay_buffer;
     iVar1 = 0;
@@ -4118,9 +4118,9 @@ void __watcall highlights_play(void)
   user2_team._2_2_ = (ushort)byte_e03c6;
   _away_team_id = (ushort)byte_e03e3;
   _period_num = dword_e0400;
-  dword_c5704 = dword_e0404;
-  dword_c5708 = dword_e0408;
-  dword_c570c = dword_e040c;
+  hud_clock_min = dword_e0404;
+  hud_clock_sec = dword_e0408;
+  hud_clock_tenths = dword_e040c;
   _action_flags = word_e0410;
   replay_write_ptr = replay_buffer + dword_e0412;
   iVar1 = 0;

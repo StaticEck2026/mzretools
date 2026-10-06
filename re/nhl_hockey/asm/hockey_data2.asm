@@ -4135,9 +4135,9 @@ dword_c4d18:                                     ; xref sub_10dcd, flush_key_eve
 ; per player: 1 mouse, 2 joystick 1, 4 joystick 2, 8 keyboard
 controller_type:                                 ; xref sub_10712, sub_1086a, sub_109a1, sub_10a86, sub_10dcd, handle_hotkey +8
     db 0x08 ; 0c4d1c |.|
-byte_c4d1d:                                      ; xref sub_10712, sub_10dcd, handle_hotkey, game_loop, play_game, sub_14056 +3
+byte_c4d1d:                                      ; xref sub_10712, sub_10dcd, handle_hotkey, game_loop, play_game, reset_game_state +3
     db 0x02 ; 0c4d1d |.|
-byte_c4d1e:                                      ; xref sub_10ac6, sub_10c7f
+byte_c4d1e:                                      ; xref scan_keyboard_control, sub_10c7f
     db 0x00, 0x08, 0x00, 0x04, 0x08, 0x02, 0x01, 0x03, 0x02, 0x06, 0x07, 0x05, 0x06, 0x08, 0x00, 0x04 ; 0c4d1e |................|
     db 0x08, 0x00, 0xdc, 0x7b, 0x00, 0x00, 0xcf, 0xbd, 0x00, 0x00, 0xf7, 0x00, 0x00, 0x00, 0xc0, 0x08 ; 0c4d2e |...{............|
     db 0x00, 0x00, 0x62, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xdf, 0xff, 0x00, 0x00, 0xff, 0xdf ; 0c4d3e |..b.............|
@@ -4153,9 +4153,9 @@ byte_c4d1e:                                      ; xref sub_10ac6, sub_10c7f
     times 46 db 0 ; 0c4dde
 dword_c4e0c:                                     ; xref sub_10712, sub_7cfb9, sub_7d145
     db 0x00, 0x00, 0x00, 0x00 ; 0c4e0c |....|
-control_steps_left:                              ; xref run_sim_steps, game_loop, sub_14056, init_match, start_period, simulate_game_offscreen
+control_steps_left:                              ; xref run_sim_steps, game_loop, reset_game_state, init_match, start_period, simulate_game_offscreen
     db 0x00, 0x00, 0x00, 0x00 ; 0c4e10 |....|
-pause_requested:                                 ; xref handle_hotkey, game_loop, play_game, pause_menu, sub_480cc, replay_loop +1
+pause_requested:                                 ; xref handle_hotkey, game_loop, play_game, pause_menu, faceoff_wait_loop, replay_loop +1
     db 0x00, 0x00, 0x00, 0x00 ; 0c4e14 |....|
 ; current control ring buffer entry (p1, p2, hotkey)
 control_entry:                                   ; xref run_sim_steps, read_control_p1, read_control_p2
@@ -4500,17 +4500,21 @@ unk_c56c4:                                       ; xref draw_clock
 unk_c56e4:                                       ; xref draw_clock
     db 0xa0, 0x0f, 0x00, 0x00, 0xa0, 0x0f, 0x00, 0x00, 0xa0, 0x0f, 0x00, 0x00, 0xa0, 0x0f, 0x00, 0x00 ; 0c56e4 |................|
     db 0xa0, 0x0f, 0x00, 0x00, 0xa0, 0x0f, 0x00, 0x00, 0xa0, 0x0f, 0x00, 0x00, 0xa0, 0x0f, 0x00, 0x00 ; 0c56f4 |................|
-dword_c5704:                                     ; xref game_loop, draw_clock, sub_14f31, show_scoreboard, sub_15374, sub_1540a +5
+; clock value drawn by draw_clock: minutes
+hud_clock_min:                                   ; xref game_loop, draw_clock, draw_clock_full, show_scoreboard, sub_15374, draw_clock_update +5
     db 0x05, 0x00, 0x00, 0x00 ; 0c5704 |....|
-dword_c5708:                                     ; xref game_loop, sub_14f31, show_scoreboard, sub_15374, sub_1540a, save_game +4
+; seconds
+hud_clock_sec:                                   ; xref game_loop, draw_clock_full, show_scoreboard, sub_15374, draw_clock_update, save_game +4
     db 0x00, 0x00, 0x00, 0x00 ; 0c5708 |....|
-dword_c570c:                                     ; xref game_loop, sub_14f31, show_scoreboard, sub_15374, sub_1540a, save_game +4
+; tenths (shown in the last minute)
+hud_clock_tenths:                                ; xref game_loop, draw_clock_full, show_scoreboard, sub_15374, draw_clock_update, save_game +4
     db 0x00, 0x00, 0x00, 0x00 ; 0c570c |....|
-dword_c5710:                                     ; xref sub_14f31, sub_15374, sub_1540a
+; last drawn minutes (draw_clock_update)
+hud_shown_min:                                   ; xref draw_clock_full, sub_15374, draw_clock_update
     db 0x63, 0x00, 0x00, 0x00 ; 0c5710 |c...|
-dword_c5714:                                     ; xref sub_14f31, sub_15374, sub_1540a
+hud_shown_sec:                                   ; xref draw_clock_full, sub_15374, draw_clock_update
     db 0x63, 0x00, 0x00, 0x00 ; 0c5714 |c...|
-dword_c5718:                                     ; xref sub_14f31, sub_15374, sub_1540a
+hud_shown_tenths:                                ; xref draw_clock_full, sub_15374, draw_clock_update
     db 0x63, 0x00, 0x00, 0x00 ; 0c5718 |c...|
 word_c571c:                                      ; xref add_penalty_display, sub_14ca0, draw_clock, sub_1cbd8, save_game, savegame_io
     db 0xff, 0xff ; 0c571c |..|
@@ -4579,7 +4583,7 @@ off_c57cc:                                       ; xref show_scoreboard, team_se
     dd aASE_c077f                                ; 0c5838
 dword_c583c:                                     ; xref draw_clock, show_scoreboard
     db 0x00, 0x00, 0x00, 0x00 ; 0c583c |....|
-dword_c5840:                                     ; xref run_sim_steps, game_loop, sub_14056, pause_menu, ai_ref_pickup_puck, save_game +3
+dword_c5840:                                     ; xref run_sim_steps, game_loop, reset_game_state, pause_menu, ai_ref_pickup_puck, save_game +3
     db 0x00, 0x00, 0x00, 0x00 ; 0c5840 |....|
 dword_c5844:                                     ; xref add_penalty_display, draw_clock, show_scoreboard
     db 0x00, 0x00, 0x00, 0x00 ; 0c5844 |....|
@@ -6781,11 +6785,11 @@ dword_c9074:                                     ; xref loading_screen, wait_spr
 replay_buffer:                                   ; xref sub_12034, period_init, savegame_io, sub_67581, replay_buffer_start, replay_record_frame +3
     dd unk_e0416                                 ; 0c9078
 ; pointer to the integer part of puck.x (entities[14])
-p_puck_x:                                        ; xref sub_13c79, ai_defense_offense, ai_defense_defense, ai_wing_defense, ai_center_defense, goalie_puck_vector +32
+p_puck_x:                                        ; xref setup_demo_faceoff, ai_defense_offense, ai_defense_defense, ai_wing_defense, ai_center_defense, goalie_puck_vector +32
     dd word_dff1e                                ; 0c907c
 p_puck_vx:                                       ; xref ai_goalie, ai_nearest_to_puck, ai_ref_pickup_puck, ai_ref_goto_faceoff, one_timer_step, ai_pass_receiver +15
     dd word_dff28                                ; 0c9080
-p_puck_y:                                        ; xref sub_13c79, ai_defense_offense, ai_defense_defense, ai_wing_defense, ai_wing_offense, ai_center_defense +52
+p_puck_y:                                        ; xref setup_demo_faceoff, ai_defense_offense, ai_defense_defense, ai_wing_defense, ai_wing_offense, ai_center_defense +52
     dd word_dff22                                ; 0c9084
 p_puck_vy:                                       ; xref ai_defense_defense, ai_wing_offense, ai_goalie_get_puck, ai_goalie, ai_nearest_to_puck, puck_update +21
     dd word_dff2a                                ; 0c9088
@@ -6808,21 +6812,21 @@ coll_half_w:                                     ; xref collide_player_net, move
 coll_half_h:                                     ; xref try_block_shot, shot_landed, puck_hits_player, goalie_save, move_entity, collide_boards +1
     db 0x00, 0x00 ; 0c909e |..|
 ; slot of the last shooter (stop_flags 0x10 = shot pending)
-last_shooter:                                    ; xref sub_14056, ai_celebrate_goal, try_block_shot, puck_hits_player, goalie_save, do_shot +4
+last_shooter:                                    ; xref reset_game_state, ai_celebrate_goal, try_block_shot, puck_hits_player, goalie_save, do_shot +4
     db 0x00, 0x00 ; 0c90a0 |..|
 ; slot of the player who last released the puck
-last_passer:                                     ; xref sub_14056, do_pass, puck_hits_player, goalie_save, do_shot, follow_puck_user_switch +2
+last_passer:                                     ; xref reset_game_state, do_pass, puck_hits_player, goalie_save, do_shot, follow_puck_user_switch +2
     db 0x00, 0x00 ; 0c90a2 |..|
 ; direction of the pending pass/shot
-pending_dir:                                     ; xref sub_14056, ai_breakaway, control_player, one_timer_step, do_pass, pass_button +9
+pending_dir:                                     ; xref reset_game_state, ai_breakaway, control_player, one_timer_step, do_pass, pass_button +9
     db 0x00, 0x00 ; 0c90a4 |..|
 ; low word shot power, high word pass target slot
-shot_power:                                      ; xref sub_14056, ai_breakaway, control_player, one_timer_step, do_pass, start_shot +4
+shot_power:                                      ; xref reset_game_state, ai_breakaway, control_player, one_timer_step, do_pass, start_shot +4
     db 0x00, 0x00 ; 0c90a6 |..|
-word_c90a8:                                      ; xref sub_14056, control_player, pass_completed, one_timer_step, ai_pass_receiver, ai_puck_faceoff2 +7
+word_c90a8:                                      ; xref reset_game_state, control_player, pass_completed, one_timer_step, ai_pass_receiver, ai_puck_faceoff2 +7
     db 0x00, 0x00 ; 0c90a8 |..|
 ; 1 while the goalie must pass (ai_choose_pass_target)
-goalie_pass_mode:                                ; xref sub_14056, ai_goalie, carrier_reset_target, ai_puck_carrier, carrier_scan_opponents, ai_puck_faceoff2 +6
+goalie_pass_mode:                                ; xref reset_game_state, ai_goalie, carrier_reset_target, ai_puck_carrier, carrier_scan_opponents, ai_puck_faceoff2 +6
     db 0x00, 0x00 ; 0c90aa |..|
 camera_target_x:                                 ; xref init_match, start_period, ai_puck_faceoff2, injure_player, period_init, hold_camera +7
     db 0x00, 0x00 ; 0c90ac |..|
@@ -6831,9 +6835,9 @@ camera_target_y:                                 ; xref init_match, ai_ref_anthe
 dword_c90b0:                                     ; xref ai_ref_faceoff, ai_ref_goto_faceoff, ai_puck_faceoff2, ai_all_goto_faceoff, period_init, sub_5cd4f +6
     db 0x00, 0x00 ; 0c90b0 |..|
 ; dot of the next faceoff: x in the low word, y in the high word
-faceoff_spot:                                    ; xref sub_13c79, init_match, ai_ref_faceoff, ai_ref_goto_faceoff, ai_puck_faceoff2, ai_all_goto_faceoff +10
+faceoff_spot:                                    ; xref setup_demo_faceoff, init_match, ai_ref_faceoff, ai_ref_goto_faceoff, ai_puck_faceoff2, ai_all_goto_faceoff +10
     db 0x00, 0x00 ; 0c90b2 |..|
-word_c90b4:                                      ; xref sub_13c79, init_match, ai_ref_faceoff, ai_ref_goto_faceoff, ai_puck_faceoff2, ai_all_goto_faceoff +8
+word_c90b4:                                      ; xref setup_demo_faceoff, init_match, ai_ref_faceoff, ai_ref_goto_faceoff, ai_puck_faceoff2, ai_all_goto_faceoff +8
     db 0x00, 0x00 ; 0c90b4 |..|
 ; direction the home user holds at the drop
 faceoff_dir_home:                                ; xref faceoff_resolve, faceoff_control, ai_puck_faceoff2, sub_5cd4f, save_game, savegame_io
@@ -6873,21 +6877,21 @@ dword_c90ca:                                     ; xref handle_hotkey, game_loop
     db 0x0c, 0x00 ; 0c90ca |..|
 away_team_id:                                    ; xref sub_190be, sub_1920f, sub_1befd, apply_settings, league_calendar_flow, team_edit_screen +18
     db 0x15, 0x00 ; 0c90cc |..|
-stoppage_timer:                                  ; xref sub_14056, ai_get_cup, ai_stanley_cup, sim_update_players, save_game, savegame_io +7
+stoppage_timer:                                  ; xref reset_game_state, ai_get_cup, ai_stanley_cup, sim_update_players, save_game, savegame_io +7
     db 0xff, 0xff ; 0c90ce |..|
-dword_c90d0:                                     ; xref sub_14056, start_period, save_game, savegame_io, update_line_timers, dump_stats_log
+dword_c90d0:                                     ; xref reset_game_state, start_period, save_game, savegame_io, update_line_timers, dump_stats_log
     db 0x00, 0x00 ; 0c90d0 |..|
-whistle_timer:                                   ; xref sub_14056, start_period, ai_puck_faceoff2, apply_skating, stop_skating, skating_turn +6
+whistle_timer:                                   ; xref reset_game_state, start_period, ai_puck_faceoff2, apply_skating, stop_skating, skating_turn +6
     db 0x00, 0x00 ; 0c90d2 |..|
 ; 0 referee called, 1 collecting the puck, -1 ready for the faceoff
-ref_phase:                                       ; xref sub_14056, init_match, ai_ref_anthem, start_period, ai_ref_get_new_puck, ai_ref_call_penalty +11
+ref_phase:                                       ; xref reset_game_state, init_match, ai_ref_anthem, start_period, ai_ref_get_new_puck, ai_ref_call_penalty +11
     db 0xff ; 0c90d4 |.|
 byte_c90d5:                                      ; xref sub_63475
     db 0xff ; 0c90d5 |.|
 ; infraction the referee signals
-ref_infraction:                                  ; xref sub_14056, start_period, ref_check_announcements, ai_ref_call_penalty, ai_ref_pickup_puck, ai_puck_faceoff2 +5
+ref_infraction:                                  ; xref reset_game_state, start_period, ref_check_announcements, ai_ref_call_penalty, ai_ref_pickup_puck, ai_puck_faceoff2 +5
     db 0x00, 0x00 ; 0c90d6 |..|
-penalized_slot:                                  ; xref sub_14056, ai_puck_faceoff2, save_game, savegame_io, sub_62c37, penalty_box_update +1
+penalized_slot:                                  ; xref reset_game_state, ai_puck_faceoff2, save_game, savegame_io, sub_62c37, penalty_box_update +1
     db 0xff, 0xff ; 0c90d8 |..|
 ; 0-based period, 3 = overtime
 period_idx:                                      ; xref game_loop, sub_13e8f, sub_13fa7, ai_game_misconduct, ref_check_announcements, ai_ref_get_new_puck +24
@@ -7658,41 +7662,41 @@ show_names:                                      ; xref handle_hotkey, init_matc
     db 0x00, 0x00, 0x00, 0x00 ; 0cbc3e |....|
 word_cbc42:                                      ; xref dump_stats_log
     db 0x00, 0x00 ; 0cbc42 |..|
-penalty_box_mode:                                ; xref sub_10f6d, play_game, sub_14056, sub_190be, start_period, ai_puck_faceoff +11
+penalty_box_mode:                                ; xref sub_10f6d, play_game, reset_game_state, sub_190be, start_period, ai_puck_faceoff +11
     db 0x00, 0x00 ; 0cbc44 |..|
-period_over:                                     ; xref run_sim_steps, game_loop, sub_14056, sub_190be, init_match, start_period +7
+period_over:                                     ; xref run_sim_steps, game_loop, reset_game_state, sub_190be, init_match, start_period +7
     db 0x01, 0x00 ; 0cbc46 |..|
-game_over:                                       ; xref run_sim_steps, game_loop, sub_14056, start_period, ai_ref_three_stars, sub_5dd9e +3
+game_over:                                       ; xref run_sim_steps, game_loop, reset_game_state, start_period, ai_ref_three_stars, sub_5dd9e +3
     db 0x01, 0x00 ; 0cbc48 |..|
 word_cbc4a:                                      ; xref demo_game, sub_5b9d1
     db 0x2c, 0x01, 0x58, 0x02, 0xb0, 0x04, 0xb0, 0x04 ; 0cbc4a |,.X.....|
-word_cbc52:                                      ; xref sub_14056, sub_15707, init_match, start_period, ai_puck_faceoff, sim_game_state +4
+word_cbc52:                                      ; xref reset_game_state, sub_15707, init_match, start_period, ai_puck_faceoff, sim_game_state +4
     db 0x00, 0x00 ; 0cbc52 |..|
-word_cbc54:                                      ; xref sub_14056, init_match, start_period, ai_puck_faceoff, end_of_period, save_game +2
+word_cbc54:                                      ; xref reset_game_state, init_match, start_period, ai_puck_faceoff, end_of_period, save_game +2
     db 0x00, 0x00 ; 0cbc54 |..|
-word_cbc56:                                      ; xref sub_14056, sub_157bd, init_match, start_period, start_line_change_ui, line_change_bench_step +8
+word_cbc56:                                      ; xref reset_game_state, draw_line_box, init_match, start_period, start_line_change_ui, line_change_bench_step +8
     db 0x00, 0x00 ; 0cbc56 |..|
-word_cbc58:                                      ; xref sub_14056, init_match, start_period, ai_puck_faceoff, end_of_period, save_game +3
+word_cbc58:                                      ; xref reset_game_state, init_match, start_period, ai_puck_faceoff, end_of_period, save_game +3
     db 0x00, 0x00 ; 0cbc58 |..|
-word_cbc5a:                                      ; xref sub_14056, start_line_change_ui, line_change_bench_step, save_game, savegame_io
+word_cbc5a:                                      ; xref reset_game_state, start_line_change_ui, line_change_bench_step, save_game, savegame_io
     db 0x00, 0x00 ; 0cbc5a |..|
-word_cbc5c:                                      ; xref sub_14056, line_change_bench_step, save_game, savegame_io
+word_cbc5c:                                      ; xref reset_game_state, line_change_bench_step, save_game, savegame_io
     db 0x00, 0x00 ; 0cbc5c |..|
-word_cbc5e:                                      ; xref sub_14056, start_line_change_ui, line_change_bench_step, save_game, savegame_io
+word_cbc5e:                                      ; xref reset_game_state, start_line_change_ui, line_change_bench_step, save_game, savegame_io
     db 0x00, 0x00 ; 0cbc5e |..|
-word_cbc60:                                      ; xref sub_14056, sub_157bd, line_change_bench_step, save_game, savegame_io
+word_cbc60:                                      ; xref reset_game_state, draw_line_box, line_change_bench_step, save_game, savegame_io
     db 0x00, 0x00 ; 0cbc60 |..|
-word_cbc62:                                      ; xref sub_14056, start_line_change_ui, line_change_bench_step, end_of_period, save_game, savegame_io +1
+word_cbc62:                                      ; xref reset_game_state, start_line_change_ui, line_change_bench_step, end_of_period, save_game, savegame_io +1
     db 0x00, 0x00 ; 0cbc62 |..|
-word_cbc64:                                      ; xref sub_14056, end_of_period, save_game, savegame_io, simulate_game_offscreen
+word_cbc64:                                      ; xref reset_game_state, end_of_period, save_game, savegame_io, simulate_game_offscreen
     db 0x00, 0x00 ; 0cbc64 |..|
-word_cbc66:                                      ; xref sub_14056, start_line_change_ui, line_change_bench_step, save_game, savegame_io
+word_cbc66:                                      ; xref reset_game_state, start_line_change_ui, line_change_bench_step, save_game, savegame_io
     db 0x00, 0x00 ; 0cbc66 |..|
-word_cbc68:                                      ; xref sub_14056, save_game, savegame_io
+word_cbc68:                                      ; xref reset_game_state, save_game, savegame_io
     db 0x00, 0x00 ; 0cbc68 |..|
-word_cbc6a:                                      ; xref sub_14056, draw_clock, sub_157bd, start_period, start_line_change_ui, line_change_bench_step +9
+word_cbc6a:                                      ; xref reset_game_state, draw_clock, draw_line_box, start_period, start_line_change_ui, line_change_bench_step +9
     db 0x00, 0x00 ; 0cbc6a |..|
-word_cbc6c:                                      ; xref sub_14056, draw_clock, start_period, ai_puck_faceoff, end_of_period, save_game +3
+word_cbc6c:                                      ; xref reset_game_state, draw_clock, start_period, ai_puck_faceoff, end_of_period, save_game +3
     db 0x00, 0x00 ; 0cbc6c |..|
 unk_cbc6e:
     db 0x02, 0x01, 0x00, 0x03, 0x00, 0x03, 0x02, 0x01, 0x03, 0x02, 0x01, 0x00, 0x01, 0x00, 0x03, 0x02 ; 0cbc6e |................|
@@ -7755,32 +7759,32 @@ unk_cbd66:                                       ; xref savegame_io
     db 0x19, 0x00, 0x04, 0x00, 0xf1, 0xff, 0x00, 0x00, 0x00, 0x00, 0xbf, 0x02, 0x00, 0x00, 0x08, 0x00 ; 0cbe76 |................|
     db 0x04, 0x00, 0x1e, 0x00, 0x00, 0x00 ; 0cbe86 |......|
 ; 7 x (x, y) positions relative to the dot
-faceoff_spots:                                   ; xref sub_13c79, ai_puck_faceoff2, ai_all_goto_faceoff
+faceoff_spots:                                   ; xref setup_demo_faceoff, ai_puck_faceoff2, ai_all_goto_faceoff
     db 0x00, 0x00 ; 0cbe8c |..|
-unk_cbe8e:                                       ; xref sub_13c79, ai_puck_faceoff2, ai_all_goto_faceoff
+unk_cbe8e:                                       ; xref setup_demo_faceoff, ai_puck_faceoff2, ai_all_goto_faceoff
     db 0x24, 0xff, 0xdd, 0xff, 0xd3, 0xff, 0x23, 0x00, 0xd3, 0xff, 0xcc, 0xff, 0xf6, 0xff, 0x00, 0x00 ; 0cbe8e |$.....#.........|
     db 0xf8, 0xff, 0x34, 0x00, 0xf6, 0xff, 0x00, 0x00, 0xc9, 0xff ; 0cbe9e |..4.......|
 ; [6 - skaters_on_ice][line_slot] -> faceoff_spots index
-faceoff_lineup:                                  ; xref sub_13c79, ai_puck_faceoff2, ai_all_goto_faceoff
+faceoff_lineup:                                  ; xref setup_demo_faceoff, ai_puck_faceoff2, ai_all_goto_faceoff
     db 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x00, 0x00, 0x01, 0x05, 0x03, 0x04, 0x02, 0x00, 0x00 ; 0cbea8 |................|
     db 0x00, 0x03, 0x05, 0x01, 0x04, 0x00 ; 0cbeb8 |......|
 dword_cbebe:                                     ; xref ai_ref_three_stars, ref_check_announcements, record_penalty
     db 0x00, 0x00 ; 0cbebe |..|
-word_cbec0:                                      ; xref sub_14056, ai_ref_three_stars, ai_puck_give_cup, ai_ref_get_new_puck, ai_ref_pickup_puck, ai_puck_faceoff2 +11
+word_cbec0:                                      ; xref reset_game_state, ai_ref_three_stars, ai_puck_give_cup, ai_ref_get_new_puck, ai_ref_pickup_puck, ai_puck_faceoff2 +11
     db 0xff, 0xff ; 0cbec0 |..|
-word_cbec2:                                      ; xref sub_14056, resolve_body_check, save_game, savegame_io
+word_cbec2:                                      ; xref reset_game_state, resolve_body_check, save_game, savegame_io
     db 0x00, 0x00 ; 0cbec2 |..|
 word_cbec4:                                      ; xref handle_hotkey, game_loop, play_game, load_player_graphics, sub_13e8f, sub_13fa7 +7
     db 0x00, 0x00 ; 0cbec4 |..|
-dword_cbec6:                                     ; xref sub_14056, start_period, ai_ref_faceoff, ai_ref_get_new_puck, ai_ref_pickup_puck, ai_puck_faceoff2 +7
+dword_cbec6:                                     ; xref reset_game_state, start_period, ai_ref_faceoff, ai_ref_get_new_puck, ai_ref_pickup_puck, ai_puck_faceoff2 +7
     db 0x00, 0x00 ; 0cbec6 |..|
-word_cbec8:                                      ; xref sub_14056, start_period, ai_puck_faceoff2, pull_goalie_logic, period_init, draw_sprites +8
+word_cbec8:                                      ; xref reset_game_state, start_period, ai_puck_faceoff2, pull_goalie_logic, period_init, draw_sprites +8
     db 0xff, 0xff ; 0cbec8 |..|
-dword_cbeca:                                     ; xref game_loop, play_game, sub_14056, sub_1b982, sub_1baf3, init_match +19
+dword_cbeca:                                     ; xref game_loop, play_game, reset_game_state, sub_1b982, sub_1baf3, init_match +19
     db 0x00, 0x00 ; 0cbeca |..|
-dword_cbecc:                                     ; xref game_loop, play_game, sub_14056, sub_480cc, start_period, ai_ref_pickup_puck +9
+dword_cbecc:                                     ; xref game_loop, play_game, reset_game_state, faceoff_wait_loop, start_period, ai_ref_pickup_puck +9
     db 0xff, 0xff ; 0cbecc |..|
-word_cbece:                                      ; xref sub_14056, start_period, ai_puck_faceoff2, save_game, savegame_io, load_cutscene_clip +3
+word_cbece:                                      ; xref reset_game_state, start_period, ai_puck_faceoff2, save_game, savegame_io, load_cutscene_clip +3
     db 0xff, 0xff ; 0cbece |..|
 off_cbed0:                                       ; xref game_loop, play_game, load_cutscene_clip
     dd aFanom                                    ; 0cbed0
@@ -7851,9 +7855,9 @@ unk_cc080:                                       ; xref game_loop, play_game, lo
     db 0x91, 0x00, 0x00, 0x00, 0x97, 0x00, 0x00, 0x00, 0x52, 0x00, 0x00, 0x00, 0xae, 0x01, 0x00, 0x00 ; 0cc080 |........R.......|
     db 0x47, 0x00, 0x00, 0x00, 0xd4, 0x01, 0x00, 0x00, 0xd5, 0x01, 0x00, 0x00, 0xd6, 0x01, 0x00, 0x00 ; 0cc090 |G...............|
     db 0xd7, 0x01, 0x00, 0x00, 0xd8, 0x01, 0x00, 0x00, 0xd9, 0x01, 0x00, 0x00 ; 0cc0a0 |............|
-dword_cc0ac:                                     ; xref sub_14056, save_game, savegame_io, sub_62c37
+dword_cc0ac:                                     ; xref reset_game_state, save_game, savegame_io, sub_62c37
     db 0x00, 0x00, 0x00, 0x00 ; 0cc0ac |....|
-word_cc0b0:                                      ; xref sub_14056, draw_sprites, save_game, savegame_io, sub_63475, process_infractions +2
+word_cc0b0:                                      ; xref reset_game_state, draw_sprites, save_game, savegame_io, sub_63475, process_infractions +2
     db 0xff, 0xff, 0x85, 0x01 ; 0cc0b0 |....|
 dword_cc0b4:                                     ; xref draw_sprites, replay_draw_frame
     db 0x86, 0x01, 0x87, 0x01, 0x7f, 0x01, 0x80, 0x01, 0x81, 0x01, 0x61, 0x01, 0x60, 0x01, 0x61, 0x01 ; 0cc0b4 |..........a.`.a.|
@@ -7872,18 +7876,18 @@ word_cc0de:                                      ; xref sub_13e8f, sub_13fa7, ai
     db 0x00, 0x00 ; 0cc0de |..|
 dword_cc0e0:                                     ; xref load_effect_frames, sub_1ba85, savegame_io
     db 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ; 0cc0e0 |............|
-dword_cc0ec:                                     ; xref sub_13c79, sub_13e8f, sub_13fa7, demo_game, intro_sequence, match_sequence +4
+dword_cc0ec:                                     ; xref setup_demo_faceoff, sub_13e8f, sub_13fa7, demo_game, intro_sequence, match_sequence +4
     db 0x00, 0x00, 0x00, 0x00 ; 0cc0ec |....|
 ; a user pressed a button before the faceoff
-skip_faceoff_wait:                               ; xref play_game, sub_13e8f, sub_13fa7, demo_game, sub_480cc, control_player +1
+skip_faceoff_wait:                               ; xref play_game, sub_13e8f, sub_13fa7, demo_game, faceoff_wait_loop, control_player +1
     db 0x00, 0x00, 0x00, 0x00 ; 0cc0f0 |....|
 one_timer_pending:                               ; xref control_player, one_timer_step, ai_pass_receiver, do_pass, take_puck, collide_net +5
     db 0x00, 0x00, 0x00, 0x00 ; 0cc0f4 |....|
-breakaway_flag:                                  ; xref sub_14056, ai_puck_carrier, take_puck, do_shot, collide_net, bounce_off_boards +8
+breakaway_flag:                                  ; xref reset_game_state, ai_puck_carrier, take_puck, do_shot, collide_net, bounce_off_boards +8
     db 0x00, 0x00 ; 0cc0f8 |..|
 dword_cc0fa:                                     ; xref ai_puck_faceoff2
     db 0x00, 0x00 ; 0cc0fa |..|
-penalty_shot_slot:                               ; xref sub_14056, ai_nearest_to_puck, all_goto_positions, ai_puck_faceoff2, ai_all_goto_faceoff, handle_line_change +12
+penalty_shot_slot:                               ; xref reset_game_state, ai_nearest_to_puck, all_goto_positions, ai_puck_faceoff2, ai_all_goto_faceoff, handle_line_change +12
     db 0x00, 0x00, 0x00, 0x00 ; 0cc0fc |....|
 dword_cc100:                                     ; xref save_game, savegame_io, show_penalty, record_penalty, sub_64398, dump_stats_log
     db 0x00, 0x00, 0x00, 0x00 ; 0cc100 |....|
@@ -7897,16 +7901,16 @@ dword_cc110:                                     ; xref score_goal, save_game, s
     db 0x00, 0x00, 0x00, 0x00 ; 0cc110 |....|
 dword_cc114:                                     ; xref score_goal, save_game, savegame_io, start_stoppage, sub_64398, end_penalty_shot
     db 0x00, 0x00, 0x00, 0x00 ; 0cc114 |....|
-penalty_shot_phase:                              ; xref sub_14056, ai_ref_goto_faceoff, control_player, send_team_to_faceoff, all_goto_positions, ai_puck_faceoff +14
+penalty_shot_phase:                              ; xref reset_game_state, ai_ref_goto_faceoff, control_player, send_team_to_faceoff, all_goto_positions, ai_puck_faceoff +14
     db 0x00, 0x00, 0x00, 0x00 ; 0cc118 |....|
-penalty_shot_setup:                              ; xref sub_14056, offside_entry_check, send_team_to_faceoff, all_goto_positions, ai_puck_faceoff, ai_puck_faceoff2 +12
+penalty_shot_setup:                              ; xref reset_game_state, offside_entry_check, send_team_to_faceoff, all_goto_positions, ai_puck_faceoff, ai_puck_faceoff2 +12
     db 0x00, 0x00, 0x00, 0x00 ; 0cc11c |....|
 dword_cc120:                                     ; xref game_clock_tick, save_game, savegame_io, start_penalty_shot, dump_stats_log
     db 0x00, 0x00, 0x00, 0x00 ; 0cc120 |....|
 ; result of count_defenders_ahead
-defenders_ahead:                                 ; xref sub_14056, do_shot, period_init, save_game, savegame_io, count_defenders_ahead +3
+defenders_ahead:                                 ; xref reset_game_state, do_shot, period_init, save_game, savegame_io, count_defenders_ahead +3
     db 0x00, 0x00, 0x00, 0x00 ; 0cc124 |....|
-penalty_shot_active:                             ; xref run_sim_steps, game_loop, sub_14056, puck_update, offside_entry_check, control_player +17
+penalty_shot_active:                             ; xref run_sim_steps, game_loop, reset_game_state, puck_update, offside_entry_check, control_player +17
     db 0x00, 0x00, 0x00, 0x00 ; 0cc128 |....|
 penalty_shot_timer:                              ; xref puck_update, ai_puck_normal, save_game, savegame_io, dump_stats_log
     db 0x00, 0x00, 0x00, 0x00 ; 0cc12c |....|
@@ -14635,31 +14639,31 @@ control_ring:                                    ; xref sub_10dcd, get_key_event
 ; numshp.PPV "%04d" digits 0-9
 digit_shapes:                                    ; xref draw_player_number, load_player_graphics, sub_13bb4
     times 40 db 0 ; 0d8c18
-dword_d8c40:                                     ; xref game_loop, blit_sprite, sub_480cc, draw_penalty_box_overlay, draw_message_box, simulate_game_offscreen +1
+dword_d8c40:                                     ; xref game_loop, blit_sprite, faceoff_wait_loop, draw_penalty_box_overlay, draw_message_box, simulate_game_offscreen +1
     db 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ; 0d8c40 |............|
 ; G D D L C R X
 position_letter_shapes:                          ; xref draw_player_number, load_player_graphics
     times 28 db 0 ; 0d8c4c
 dword_d8c68:                                     ; xref load_rink_end_shapes, sub_1b982, highlights_play
     db 0x00, 0x00, 0x00, 0x00 ; 0d8c68 |....|
-dword_d8c6c:                                     ; xref game_loop, sub_14056, init_match, replay_loop, start_period, save_game +2
+dword_d8c6c:                                     ; xref game_loop, reset_game_state, init_match, replay_loop, start_period, save_game +2
     db 0x00, 0x00, 0x00, 0x00 ; 0d8c6c |....|
 dword_d8c70:                                     ; xref sub_11136, load_rink_end_shapes
     db 0x00, 0x00 ; 0d8c70 |..|
-dword_d8c72:                                     ; xref game_loop, sub_480cc, simulate_game_offscreen, instant_replay
+dword_d8c72:                                     ; xref game_loop, faceoff_wait_loop, simulate_game_offscreen, instant_replay
     db 0x00, 0x00 ; 0d8c72 |..|
-dword_d8c74:                                     ; xref game_loop, init_match, sub_480cc, replay_loop, simulate_game_offscreen, instant_replay
+dword_d8c74:                                     ; xref game_loop, init_match, faceoff_wait_loop, replay_loop, simulate_game_offscreen, instant_replay
     db 0x00, 0x00, 0x00, 0x00 ; 0d8c74 |....|
-dword_d8c78:                                     ; xref run_sim_steps, game_loop, sub_14056, save_game, savegame_io, write_stats_table +1
+dword_d8c78:                                     ; xref run_sim_steps, game_loop, reset_game_state, save_game, savegame_io, write_stats_table +1
     db 0x00, 0x00 ; 0d8c78 |..|
-dword_d8c7a:                                     ; xref game_loop, sub_480cc, simulate_game_offscreen, instant_replay
+dword_d8c7a:                                     ; xref game_loop, faceoff_wait_loop, simulate_game_offscreen, instant_replay
     db 0x00, 0x00 ; 0d8c7a |..|
-dword_d8c7c:                                     ; xref game_loop, init_match, sub_480cc, replay_loop, simulate_game_offscreen, instant_replay
+dword_d8c7c:                                     ; xref game_loop, init_match, faceoff_wait_loop, replay_loop, simulate_game_offscreen, instant_replay
     db 0x00, 0x00, 0x00, 0x00 ; 0d8c7c |....|
 dword_d8c80:                                     ; xref load_player_graphics, sub_13bb4, sub_1b982, highlights_play
     db 0x00, 0x00, 0x00, 0x00 ; 0d8c80 |....|
 ; 1-based period shown on the scoreboard
-period_num:                                      ; xref sub_10f6d, handle_hotkey, game_loop, play_game, sub_14056, sub_190be +29
+period_num:                                      ; xref sub_10f6d, handle_hotkey, game_loop, play_game, reset_game_state, sub_190be +29
     db 0x00, 0x00, 0x00, 0x00 ; 0d8c84 |....|
 unk_d8c88:                                       ; xref fade_palette_to
     times 768 db 0 ; 0d8c88
@@ -14740,7 +14744,7 @@ unk_dae94:                                       ; xref sub_5b881, savegame_io
     resb 19                                      ; 0dae94 (bss)
 unk_daea7:                                       ; xref faceoff_resolve
     resb 479                                     ; 0daea7 (bss)
-unk_db086:                                       ; xref compute_three_stars, show_penalty, sub_62807
+unk_db086:                                       ; xref compute_three_stars, show_penalty, goal_milestone_check
     resb 2                                       ; 0db086 (bss)
 word_db088:                                      ; xref sub_1befd, season_record_result, compare_player_stats, compute_three_stars, sub_5b881, save_game +2
     resb 2                                       ; 0db088 (bss)
@@ -14833,15 +14837,17 @@ unk_dc26c:                                       ; xref draw_line_indicator, sho
     resb 32                                      ; 0dc26c (bss)
 dword_dc28c:                                     ; xref game_loop, draw_clock, savegame_io, simulate_game_offscreen
     resb 4                                       ; 0dc28c (bss)
-unk_dc290:                                       ; xref sub_15995, load_scoreboard_shapes
+; penalty clock digits 0..9
+small_digit_shapes:                              ; xref draw_penalty_clocks, load_scoreboard_shapes
     resb 40                                      ; 0dc290 (bss)
-dword_dc2b8:                                     ; xref sub_15995
+small_blank_digit:                               ; xref draw_penalty_clocks
     resb 4                                       ; 0dc2b8 (bss)
 dword_dc2bc:                                     ; xref draw_clock, load_scoreboard_shapes
     resb 4                                       ; 0dc2bc (bss)
 dword_dc2c0:                                     ; xref draw_clock, load_scoreboard_shapes
     resb 4                                       ; 0dc2c0 (bss)
-unk_dc2c4:                                       ; xref draw_score_digits, load_scoreboard_shapes
+; scoreboard digits (draw_score_digits)
+score_digit_shapes:                              ; xref draw_score_digits, load_scoreboard_shapes
     resb 44                                      ; 0dc2c4 (bss)
 dword_dc2f0:                                     ; xref sub_1b982, load_scoreboard_shapes, highlights_play
     resb 4                                       ; 0dc2f0 (bss)
@@ -14849,9 +14855,11 @@ unk_dc2f4:                                       ; xref draw_clock, load_scorebo
     resb 12                                      ; 0dc2f4 (bss)
 unk_dc300:                                       ; xref draw_clock, load_scoreboard_shapes
     resb 12                                      ; 0dc300 (bss)
-unk_dc30c:                                       ; xref sub_14f31, sub_1540a, load_scoreboard_shapes
+; clock digit shapes 0..9
+hud_digit_shapes:                                ; xref draw_clock_full, draw_clock_update, load_scoreboard_shapes
     resb 40                                      ; 0dc30c (bss)
-dword_dc334:                                     ; xref sub_14f31, sub_1540a
+; blank clock digit shape
+hud_blank_digit:                                 ; xref draw_clock_full, draw_clock_update
     resb 4                                       ; 0dc334 (bss)
 dword_dc338:                                     ; xref sub_15b76, game_over_check, sub_1b982
     resb 4                                       ; 0dc338 (bss)
@@ -15075,15 +15083,15 @@ dword_dd6a4:                                     ; xref sub_314b4, sub_31599, su
     resb 2                                       ; 0dd6a4 (bss)
 dword_dd6a6:                                     ; xref load_rink, load_rink_tiles
     resb 2                                       ; 0dd6a6 (bss)
-dword_dd6a8:                                     ; xref game_loop, load_rink, sub_480cc, simulate_game_offscreen, instant_replay
+dword_dd6a8:                                     ; xref game_loop, load_rink, faceoff_wait_loop, simulate_game_offscreen, instant_replay
     resb 2                                       ; 0dd6a8 (bss)
-dword_dd6aa:                                     ; xref game_loop, pause_menu, load_rink, draw_rink, sub_480cc, draw_penalty_box_overlay +4
+dword_dd6aa:                                     ; xref game_loop, pause_menu, load_rink, draw_rink, faceoff_wait_loop, draw_penalty_box_overlay +4
     resb 2                                       ; 0dd6aa (bss)
 dword_dd6ac:                                     ; xref pause_menu, load_rink, draw_rink, draw_penalty_box_overlay, draw_message_box, sub_8c58c
     resb 2                                       ; 0dd6ac (bss)
-dword_dd6ae:                                     ; xref game_loop, load_rink, sub_480cc, simulate_game_offscreen, instant_replay
+dword_dd6ae:                                     ; xref game_loop, load_rink, faceoff_wait_loop, simulate_game_offscreen, instant_replay
     resb 2                                       ; 0dd6ae (bss)
-dword_dd6b0:                                     ; xref game_loop, load_rink, draw_rink, sub_480cc, simulate_game_offscreen, instant_replay
+dword_dd6b0:                                     ; xref game_loop, load_rink, draw_rink, faceoff_wait_loop, simulate_game_offscreen, instant_replay
     resb 2                                       ; 0dd6b0 (bss)
 word_dd6b2:                                      ; xref load_rink, draw_rink, sub_8c290, sub_8c6f0
     resb 90                                      ; 0dd6b2 (bss)
@@ -15233,15 +15241,15 @@ byte_deb70:                                      ; xref loading_screen_timer, lo
     resb 1                                       ; 0deb70 (bss)
 byte_deb71:                                      ; xref loading_screen_timer, loading_screen
     resb 3                                       ; 0deb71 (bss)
-unk_deb74:                                       ; xref sub_1c3f6, sub_62807
+unk_deb74:                                       ; xref sub_1c3f6, goal_milestone_check
     resb 4                                       ; 0deb74 (bss)
-unk_deb78:                                       ; xref sub_1c3f6, sub_62807
+unk_deb78:                                       ; xref sub_1c3f6, goal_milestone_check
     resb 4                                       ; 0deb78 (bss)
-unk_deb7c:                                       ; xref sub_1c3f6, show_penalty, sub_62807
+unk_deb7c:                                       ; xref sub_1c3f6, show_penalty, goal_milestone_check
     resb 4                                       ; 0deb7c (bss)
-unk_deb80:                                       ; xref sub_1c3f6, sub_62807
+unk_deb80:                                       ; xref sub_1c3f6, goal_milestone_check
     resb 788                                     ; 0deb80 (bss)
-unk_dee94:                                       ; xref sub_14056, save_game, savegame_io, start_crowd_sound, update_effects, draw_nets_and_effects +1
+unk_dee94:                                       ; xref reset_game_state, save_game, savegame_io, start_crowd_sound, update_effects, draw_nets_and_effects +1
     resb 2                                       ; 0dee94 (bss)
 unk_dee96:                                       ; xref save_game
     resb 1                                       ; 0dee96 (bss)
@@ -15257,13 +15265,13 @@ dword_defe0:                                     ; xref draw_penalty_box_overlay
     resb 36                                      ; 0defe0 (bss)
 dword_df004:                                     ; xref draw_penalty_box_overlay
     resb 8                                       ; 0df004 (bss)
-dword_df00c:                                     ; xref handle_hotkey, game_loop, play_game, sub_14056, save_game, savegame_io
+dword_df00c:                                     ; xref handle_hotkey, game_loop, play_game, reset_game_state, save_game, savegame_io
     resb 4                                       ; 0df00c (bss)
-dword_df010:                                     ; xref handle_hotkey, game_loop, play_game, sub_14056, save_game, savegame_io
+dword_df010:                                     ; xref handle_hotkey, game_loop, play_game, reset_game_state, save_game, savegame_io
     resb 4                                       ; 0df010 (bss)
 palette_save:                                    ; xref sub_10f6d, handle_hotkey, game_loop, sub_13e8f, sub_1920f, sub_1a534 +17
     resb 768                                     ; 0df014 (bss)
-unk_df314:                                       ; xref game_loop, play_game, demo_game, sub_480cc, savegame_io, simulate_game_offscreen +2
+unk_df314:                                       ; xref game_loop, play_game, demo_game, faceoff_wait_loop, savegame_io, simulate_game_offscreen +2
     resb 766                                     ; 0df314 (bss)
 dword_df612:                                     ; xref team_select_screen2, write_stats_table
     resb 2                                       ; 0df612 (bss)
@@ -15304,13 +15312,13 @@ word_df640:                                      ; xref ai_puck_faceoff, sub_5a6
     resb 2                                       ; 0df640 (bss)
 word_df642:                                      ; xref compute_three_stars, sub_5b881
     resb 2                                       ; 0df642 (bss)
-word_df644:                                      ; xref sub_62807, simulate_game_offscreen
+word_df644:                                      ; xref goal_milestone_check, simulate_game_offscreen
     resb 2                                       ; 0df644 (bss)
-word_df646:                                      ; xref sub_62807, simulate_game_offscreen
+word_df646:                                      ; xref goal_milestone_check, simulate_game_offscreen
     resb 2                                       ; 0df646 (bss)
 dword_df648:                                     ; xref ref_check_announcements, simulate_game_offscreen, sub_7cea1
     resb 2                                       ; 0df648 (bss)
-dword_df64a:                                     ; xref sub_13c79, sub_1c852, update_carrier, penalty_time_left, update_lead_change, sub_64398 +2
+dword_df64a:                                     ; xref setup_demo_faceoff, sub_1c852, update_carrier, penalty_time_left, update_lead_change, sub_64398 +2
     resb 2                                       ; 0df64a (bss)
 word_df64c:                                      ; xref sub_1c852, season_record_result, score_goal, sub_5b881, announce_goal, sub_671e8 +2
     resb 1                                       ; 0df64c (bss)
@@ -15394,7 +15402,7 @@ word_df746:                                      ; xref simulate_game_offscreen
     resb 2                                       ; 0df746 (bss)
 dword_df748:                                     ; xref ref_check_announcements, simulate_game_offscreen
     resb 2                                       ; 0df748 (bss)
-dword_df74a:                                     ; xref sub_13c79, sub_1c852, update_carrier, penalty_time_left, update_lead_change, sub_64398 +2
+dword_df74a:                                     ; xref setup_demo_faceoff, sub_1c852, update_carrier, penalty_time_left, update_lead_change, sub_64398 +2
     resb 2                                       ; 0df74a (bss)
 word_df74c:                                      ; xref sub_1c852, season_record_result, score_goal, sub_5b881, simulate_game_offscreen
     resb 6                                       ; 0df74c (bss)
@@ -15450,7 +15458,7 @@ word_df81a:                                      ; xref puck_update, simulate_ga
 byte_df81b:                                      ; xref ai_puck_faceoff2, score_goal
     resb 1                                       ; 0df81b (bss)
 ; 17 entity records of 0x80 bytes: 0-5 home, 6-11 away, 12/13 nets, 14 puck, 15 shadow, 16 referee
-entities:                                        ; xref sub_13c79, sub_487d9, start_period, ai_ref_three_stars, ai_defense_defense, ai_goalie +60
+entities:                                        ; xref setup_demo_faceoff, sub_487d9, start_period, ai_ref_three_stars, ai_defense_defense, ai_goalie +60
     resb 2                                       ; 0df81c (bss)
 unk_df81e:                                       ; xref draw_sprites, sub_5de42
     resb 2                                       ; 0df81e (bss)
@@ -15472,7 +15480,7 @@ unk_df861:                                       ; xref goal_ends_penalty, game_
     resb 30                                      ; 0df861 (bss)
 unk_df87f:                                       ; xref ai_ref_pickup_puck
     resb 669                                     ; 0df87f (bss)
-unk_dfb1c:                                       ; xref ai_puck_faceoff, update_offside_flags, switch_to_nearest, sub_5b881, savegame_io, sub_7cce5
+unk_dfb1c:                                       ; xref ai_puck_faceoff, update_offside_flags, switch_to_nearest, sub_5b881, savegame_io, ensure_user_slot
     resb 640                                     ; 0dfb1c (bss)
 unk_dfd9c:                                       ; xref init_match
     resb 128                                     ; 0dfd9c (bss)
@@ -15581,7 +15589,7 @@ byte_e0073:                                      ; xref sub_5ba89
     resb 1                                       ; 0e0073 (bss)
 byte_e0074:                                      ; xref sub_5ba89
     resb 40                                      ; 0e0074 (bss)
-dword_e009c:                                     ; xref sub_14056, update_crowd_random, save_game, savegame_io
+dword_e009c:                                     ; xref reset_game_state, update_crowd_random, save_game, savegame_io
     resb 4                                       ; 0e009c (bss)
 ; 105 shape pointers of F000149.PPV (nets, ice marks, crowd)
 effect_frames:                                   ; xref load_effect_frames, draw_nets_and_effects, replay_draw_frame
@@ -15590,37 +15598,37 @@ dword_e0220:                                     ; xref draw_nets_and_effects, r
     resb 16                                      ; 0e0220 (bss)
 dword_e0230:                                     ; xref draw_nets_and_effects, replay_draw_frame
     resb 20                                      ; 0e0230 (bss)
-dword_e0244:                                     ; xref game_loop, play_game, sub_1b982, sub_1baf3, sub_480cc, start_period +4
+dword_e0244:                                     ; xref game_loop, play_game, sub_1b982, sub_1baf3, faceoff_wait_loop, start_period +4
     resb 4                                       ; 0e0244 (bss)
 dword_e0248:                                     ; xref savegame_io, load_cutscene_clip, update_announcer
     resb 4                                       ; 0e0248 (bss)
-word_e024c:                                      ; xref sub_14056, save_game, savegame_io, sub_62807
+word_e024c:                                      ; xref reset_game_state, save_game, savegame_io, goal_milestone_check
     resb 1                                       ; 0e024c (bss)
-byte_e024d:                                      ; xref sub_14056, sub_62807
+byte_e024d:                                      ; xref reset_game_state, goal_milestone_check
     resb 1                                       ; 0e024d (bss)
-word_e024e:                                      ; xref sub_14056, save_game, savegame_io
+word_e024e:                                      ; xref reset_game_state, save_game, savegame_io
     resb 1                                       ; 0e024e (bss)
-byte_e024f:                                      ; xref sub_14056
+byte_e024f:                                      ; xref reset_game_state
     resb 1                                       ; 0e024f (bss)
-byte_e0250:                                      ; xref sub_14056, init_match, start_period, ai_ref_three_stars, ai_puck_faceoff2, show_penalty +2
+byte_e0250:                                      ; xref reset_game_state, init_match, start_period, ai_ref_three_stars, ai_puck_faceoff2, show_penalty +2
     resb 60                                      ; 0e0250 (bss)
-byte_e028c:                                      ; xref sub_14056, init_match, start_period, ai_ref_three_stars, ai_puck_faceoff2, show_penalty +2
+byte_e028c:                                      ; xref reset_game_state, init_match, start_period, ai_ref_three_stars, ai_puck_faceoff2, show_penalty +2
     resb 60                                      ; 0e028c (bss)
-byte_e02c8:                                      ; xref sub_14056, init_match, start_period, ai_ref_three_stars, ai_puck_faceoff2, show_penalty +2
+byte_e02c8:                                      ; xref reset_game_state, init_match, start_period, ai_ref_three_stars, ai_puck_faceoff2, show_penalty +2
     resb 60                                      ; 0e02c8 (bss)
-word_e0304:                                      ; xref handle_hotkey, game_loop, sub_14056, start_period, control_player, period_init +2
+word_e0304:                                      ; xref handle_hotkey, game_loop, reset_game_state, start_period, control_player, period_init +2
     resb 2                                       ; 0e0304 (bss)
-word_e0306:                                      ; xref handle_hotkey, game_loop, sub_14056, start_period, period_init, save_game +1
+word_e0306:                                      ; xref handle_hotkey, game_loop, reset_game_state, start_period, period_init, save_game +1
     resb 2                                       ; 0e0306 (bss)
-byte_e0308:                                      ; xref sub_14056, init_match, start_period, ai_ref_three_stars, ai_puck_faceoff2, show_penalty +2
+byte_e0308:                                      ; xref reset_game_state, init_match, start_period, ai_ref_three_stars, ai_puck_faceoff2, show_penalty +2
     resb 60                                      ; 0e0308 (bss)
-byte_e0344:                                      ; xref sub_14056, init_match, start_period, ai_ref_three_stars, ai_puck_faceoff2, show_penalty +3
+byte_e0344:                                      ; xref reset_game_state, init_match, start_period, ai_ref_three_stars, ai_puck_faceoff2, show_penalty +3
     resb 58                                      ; 0e0344 (bss)
 unk_e037e:                                       ; xref control_player
     resb 2                                       ; 0e037e (bss)
-word_e0380:                                      ; xref handle_hotkey, sub_14056, save_game, savegame_io
+word_e0380:                                      ; xref handle_hotkey, reset_game_state, save_game, savegame_io
     resb 2                                       ; 0e0380 (bss)
-word_e0382:                                      ; xref handle_hotkey, sub_14056, save_game, savegame_io
+word_e0382:                                      ; xref handle_hotkey, reset_game_state, save_game, savegame_io
     resb 2                                       ; 0e0382 (bss)
 unk_e0384:                                       ; xref player_available, assign_line_positions, apply_line_change, save_game, savegame_io
     resb 6                                       ; 0e0384 (bss)
@@ -15655,15 +15663,15 @@ dword_e03a8:                                     ; xref sub_5cd4f
     resb 2                                       ; 0e03a8 (bss)
 dword_e03aa:                                     ; xref ai_center_defense, ai_goalie, carrier_scan_opponents, puck_player_interaction, puck_hits_player, bounce_off_boards +7
     resb 2                                       ; 0e03aa (bss)
-dword_e03ac:                                     ; xref sub_13c79, ai_ref_anthem, ai_defense_defense, ai_wing_defense, ai_center_defense, ai_penalty_box +33
+dword_e03ac:                                     ; xref setup_demo_faceoff, ai_ref_anthem, ai_defense_defense, ai_wing_defense, ai_center_defense, ai_penalty_box +33
     resb 2                                       ; 0e03ac (bss)
 dword_e03ae:                                     ; xref ai_wing_offense, ai_bench, ai_goalie, carrier_scan_opponents, collide_net, bounce_off_boards +2
     resb 2                                       ; 0e03ae (bss)
 dword_e03b0:                                     ; xref ai_defense_defense, ai_wing_offense, ai_bench, goalie_clamp_target, ai_goalie, carrier_scan_opponents +14
     resb 2                                       ; 0e03b0 (bss)
-dword_e03b2:                                     ; xref sub_13c79, ai_game_misconduct, ai_penalty_box, ai_goalie, carrier_scan_opponents, ai_puck_faceoff2 +5
+dword_e03b2:                                     ; xref setup_demo_faceoff, ai_game_misconduct, ai_penalty_box, ai_goalie, carrier_scan_opponents, ai_puck_faceoff2 +5
     resb 2                                       ; 0e03b2 (bss)
-dword_e03b4:                                     ; xref sub_13c79, ai_game_misconduct, ai_penalty_box, ai_goalie, carrier_scan_opponents, ai_nearest_to_puck +12
+dword_e03b4:                                     ; xref setup_demo_faceoff, ai_game_misconduct, ai_penalty_box, ai_goalie, carrier_scan_opponents, ai_nearest_to_puck +12
     resb 2                                       ; 0e03b4 (bss)
 dword_e03b6:                                     ; xref collide_net, collide_pair
     resb 2                                       ; 0e03b6 (bss)
@@ -15673,13 +15681,13 @@ dword_e03b9:                                     ; xref puck_hits_player, replay
     resb 1                                       ; 0e03b9 (bss)
 dword_e03ba:                                     ; xref sub_492f9, ai_defense_offense, ai_defense_defense, ai_wing_defense, ai_wing_offense, ai_center_offense +40
     resb 2                                       ; 0e03ba (bss)
-dword_e03bc:                                     ; xref sub_13c79, ai_ref_anthem, sub_492f9, ai_three_stars, ai_get_cup, ai_defense_offense +87
+dword_e03bc:                                     ; xref setup_demo_faceoff, ai_ref_anthem, sub_492f9, ai_three_stars, ai_get_cup, ai_defense_offense +87
     resb 1                                       ; 0e03bc (bss)
 dword_e03bd:                                     ; xref puck_hits_player, replay_seek_frames
     resb 1                                       ; 0e03bd (bss)
-dword_e03be:                                     ; xref sub_13c79, sub_492f9, ai_get_cup, ai_defense_defense, ai_celebrate_goal, ai_game_misconduct +38
+dword_e03be:                                     ; xref setup_demo_faceoff, sub_492f9, ai_get_cup, ai_defense_defense, ai_celebrate_goal, ai_game_misconduct +38
     resb 2                                       ; 0e03be (bss)
-dword_e03c0:                                     ; xref sub_13c79, sub_480cc, ai_ref_anthem, sub_492f9, ai_three_stars, ai_get_cup +71
+dword_e03c0:                                     ; xref setup_demo_faceoff, faceoff_wait_loop, ai_ref_anthem, sub_492f9, ai_three_stars, ai_get_cup +71
     resb 1                                       ; 0e03c0 (bss)
 byte_e03c1:                                      ; xref replay_seek_frames
     resb 3                                       ; 0e03c1 (bss)
@@ -15729,25 +15737,25 @@ draw_order_keys:                                 ; xref move_entity, collide_nei
 ; position of each entity in the y-sorted draw list
 draw_order_pos:                                  ; xref puck_check_players, move_entity, collide_neighbours, draw_rink_marks, sub_5ba89, savegame_io
     resb 34                                      ; 0e9a7a (bss)
-word_e9a9c:                                      ; xref sub_14056, save_game, savegame_io
+word_e9a9c:                                      ; xref reset_game_state, save_game, savegame_io
     resb 2                                       ; 0e9a9c (bss)
-dword_e9a9e:                                     ; xref handle_hotkey, get_frame_ticks, game_loop, sub_14056, sub_480cc, ai_ref_pickup_puck +12
+dword_e9a9e:                                     ; xref handle_hotkey, get_frame_ticks, game_loop, reset_game_state, faceoff_wait_loop, ai_ref_pickup_puck +12
     resb 2                                       ; 0e9a9e (bss)
-word_e9aa0:                                      ; xref handle_hotkey, get_frame_ticks, game_loop, sub_14056, sub_480cc, ai_ref_pickup_puck +7
+word_e9aa0:                                      ; xref handle_hotkey, get_frame_ticks, game_loop, reset_game_state, faceoff_wait_loop, ai_ref_pickup_puck +7
     resb 2                                       ; 0e9aa0 (bss)
-word_e9aa2:                                      ; xref sub_14056, save_game, savegame_io
+word_e9aa2:                                      ; xref reset_game_state, save_game, savegame_io
     resb 2                                       ; 0e9aa2 (bss)
-word_e9aa4:                                      ; xref sub_14056, update_crowd_random, save_game, savegame_io
+word_e9aa4:                                      ; xref reset_game_state, update_crowd_random, save_game, savegame_io
     resb 2                                       ; 0e9aa4 (bss)
-excitement:                                      ; xref sub_14056, update_crowd_random, save_game, savegame_io
+excitement:                                      ; xref reset_game_state, update_crowd_random, save_game, savegame_io
     resb 2                                       ; 0e9aa6 (bss)
-word_e9aa8:                                      ; xref sub_14056, shot_landed, injure_player, knock_down, take_puck, collide_net +9
+word_e9aa8:                                      ; xref reset_game_state, shot_landed, injure_player, knock_down, take_puck, collide_net +9
     resb 2                                       ; 0e9aa8 (bss)
-word_e9aaa:                                      ; xref sub_14056, save_game, savegame_io
+word_e9aaa:                                      ; xref reset_game_state, save_game, savegame_io
     resb 2                                       ; 0e9aaa (bss)
 dword_e9aac:                                     ; xref ref_check_announcements, sub_5ba07, save_game, savegame_io, record_penalty
     resb 2                                       ; 0e9aac (bss)
-dword_e9aae:                                     ; xref sub_14056, ai_ref_call_penalty, ai_puck_faceoff2, save_game, savegame_io, record_penalty
+dword_e9aae:                                     ; xref reset_game_state, ai_ref_call_penalty, ai_puck_faceoff2, save_game, savegame_io, record_penalty
     resb 2                                       ; 0e9aae (bss)
 word_e9ab0:                                      ; xref score_goal, save_game, savegame_io
     resb 2                                       ; 0e9ab0 (bss)
@@ -15755,7 +15763,7 @@ dword_e9ab2:                                     ; xref save_game, savegame_io, 
     resb 2                                       ; 0e9ab2 (bss)
 word_e9ab4:                                      ; xref save_game, savegame_io, load_cutscene_clip, update_announcer
     resb 2                                       ; 0e9ab4 (bss)
-dword_e9ab6:                                     ; xref sub_14056, ref_check_announcements, ai_ref_call_penalty, injure_player, put_player_on_ice, save_game +1
+dword_e9ab6:                                     ; xref reset_game_state, ref_check_announcements, ai_ref_call_penalty, injure_player, put_player_on_ice, save_game +1
     resb 1                                       ; 0e9ab6 (bss)
 dword_e9ab7:                                     ; xref ai_exit_penalty_box
     resb 1                                       ; 0e9ab7 (bss)
@@ -15782,7 +15790,7 @@ last_touch_y:                                    ; xref carrier_zone_entry, upda
     resb 2                                       ; 0e9ac4 (bss)
 last_touch_x:                                    ; xref update_carrier, ai_puck_faceoff2, score_goal, save_game, savegame_io, start_stoppage +1
     resb 2                                       ; 0e9ac6 (bss)
-dword_e9ac8:                                     ; xref sub_14056, start_period, save_game, savegame_io, show_penalty, announce_goal +2
+dword_e9ac8:                                     ; xref reset_game_state, start_period, save_game, savegame_io, show_penalty, announce_goal +2
     resb 1                                       ; 0e9ac8 (bss)
 byte_e9ac9:                                      ; xref show_penalty, announce_goal, record_penalty, announce_injury
     resb 1                                       ; 0e9ac9 (bss)
@@ -15804,7 +15812,7 @@ byte_e9ad1:                                      ; xref announce_goal
     resb 1                                       ; 0e9ad1 (bss)
 byte_e9ad2:                                      ; xref announce_goal
     resb 1                                       ; 0e9ad2 (bss)
-byte_e9ad3:                                      ; xref sub_14056, ai_ref_pickup_puck, period_init, save_game, savegame_io, announce_goal
+byte_e9ad3:                                      ; xref reset_game_state, ai_ref_pickup_puck, period_init, save_game, savegame_io, announce_goal
     resb 1                                       ; 0e9ad3 (bss)
 byte_e9ad4:                                      ; xref ai_ref_pickup_puck
     resb 1                                       ; 0e9ad4 (bss)
@@ -15844,7 +15852,7 @@ word_e9b28:                                      ; xref check_injury, injure_pla
     resb 2                                       ; 0e9b28 (bss)
 unk_e9b2a:                                       ; xref savegame_io, start_crowd_sound, update_effects
     resb 2                                       ; 0e9b2a (bss)
-unk_e9b2c:                                       ; xref sub_14056, savegame_io, start_crowd_sound, update_effects
+unk_e9b2c:                                       ; xref reset_game_state, savegame_io, start_crowd_sound, update_effects
     resb 32                                      ; 0e9b2c (bss)
 unk_e9b4c:                                       ; xref sub_61b85, announce_goal, record_penalty, announce_injury
     resb 88                                      ; 0e9b4c (bss)

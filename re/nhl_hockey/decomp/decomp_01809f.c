@@ -3174,9 +3174,9 @@ void __watcall load_scoreboard_shapes(void)
   }
   make_path(auStack_28,puVar1,aScrbrd1,&aPPV);
   dword_dc2f0 = loadfile(auStack_28,0x20);
-  sub_90b80(dword_dc2f0,a000000010002000300040005,&unk_dc2c4);
-  sub_90b80(dword_dc2f0,a100010011002100310041005,&unk_dc30c);
-  sub_90b80(dword_dc2f0,a200020012002200320042005,&unk_dc290);
+  sub_90b80(dword_dc2f0,a000000010002000300040005,&score_digit_shapes);
+  sub_90b80(dword_dc2f0,a100010011002100310041005,&hud_digit_shapes);
+  sub_90b80(dword_dc2f0,a200020012002200320042005,&small_digit_shapes);
   sub_90b80(dword_dc2f0,aVlinvppVpk,&unk_dc300);
   sub_90b80(dword_dc2f0,aHlinhppHpk,&unk_dc2f4);
   dword_dc2c0 = locateshape(dword_dc2f0,&aVisp);

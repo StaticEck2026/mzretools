@@ -37,7 +37,7 @@ settimeout:
 ; waittimeout  [0xb3999, 14 bytes, 4 instructions]
 ; busy waits until the timeout set by settimeout expires
 ; annotations: external
-; called by: set_video_mode, intro_sequence, team_select_screen2, loading_screen, wait_sprite_fade, sub_480cc, fade_ambient_audio, replay_menu, load_sound_config, broadcast_booth_screen, stanley_cup_tree_screen, playoff_results_screen (+1 more)
+; called by: set_video_mode, intro_sequence, team_select_screen2, loading_screen, wait_sprite_fade, faceoff_wait_loop, fade_ambient_audio, replay_menu, load_sound_config, broadcast_booth_screen, stanley_cup_tree_screen, playoff_results_screen (+1 more)
 ; ====================================================================================================
 waittimeout:
     mov eax, dword ptr [dword_d2fdc]             ; 0b3999 a1dc2f0d00
@@ -2452,7 +2452,7 @@ sub_b4cb4:
 
 ; ====================================================================================================
 ; sub_b4cd8  [0xb4cd8, 26 bytes, 12 instructions]
-; called by: draw_score_digits, draw_line_indicator, sub_14f31, show_scoreboard, sub_1540a, sub_15995, blit_sprite, instant_replay, replay_control_loop
+; called by: draw_score_digits, draw_line_indicator, draw_clock_full, show_scoreboard, draw_clock_update, draw_penalty_clocks, blit_sprite, instant_replay, replay_control_loop
 ; ====================================================================================================
 sub_b4cd8:
     push ebp                                     ; 0b4cd8 55
@@ -2471,7 +2471,7 @@ sub_b4cd8:
 
 ; ====================================================================================================
 ; sub_b4cf2  [0xb4cf2, 225 bytes, 89 instructions]
-; called by: draw_clock, show_scoreboard, sub_157bd
+; called by: draw_clock, show_scoreboard, draw_line_box
 ; ====================================================================================================
 sub_b4cf2:
     push ebp                                     ; 0b4cf2 55

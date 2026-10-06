@@ -3197,10 +3197,11 @@ loc_7cce1:
 
 
 ; ====================================================================================================
-; sub_7cce5  [0x7cce5, 444 bytes, 122 instructions]
+; ensure_user_slot  [0x7cce5, 444 bytes, 122 instructions]
+; gives a user without a selected player the team mate nearest to the puck
 ; called by: sub_7cfb9
 ; ====================================================================================================
-sub_7cce5:
+ensure_user_slot:
     push 0x28                                    ; 07cce5 6828000000
     call __CHK                                   ; 07ccea e85dfc0000
     push ebx                                     ; 07ccef 53
@@ -3527,7 +3528,7 @@ loc_7d074:
     mov byte ptr [ebp + controller_type], ah     ; 07d076 88a51c4d0c00
 loc_7d07c:
     mov eax, ebp                                 ; 07d07c 89e8
-    call sub_7cce5                               ; 07d07e e862fcffff
+    call ensure_user_slot                        ; 07d07e e862fcffff
     call sub_7cea1                               ; 07d083 e819feffff
     mov eax, dword ptr [dword_dff36]             ; 07d088 a136ff0d00
     sar eax, 0x10                                ; 07d08d c1f810
@@ -7076,11 +7077,11 @@ loc_7fa7c:
     mov byte ptr [byte_e03e3], al                ; 07fa9f a2e3030e00
     mov eax, dword ptr [period_num]              ; 07faa4 a1848c0d00
     mov dword ptr [dword_e0400], eax             ; 07faa9 a300040e00
-    mov eax, dword ptr [dword_c5704]             ; 07faae a104570c00
+    mov eax, dword ptr [hud_clock_min]           ; 07faae a104570c00
     mov dword ptr [dword_e0404], eax             ; 07fab3 a304040e00
-    mov eax, dword ptr [dword_c5708]             ; 07fab8 a108570c00
+    mov eax, dword ptr [hud_clock_sec]           ; 07fab8 a108570c00
     mov dword ptr [dword_e0408], eax             ; 07fabd a308040e00
-    mov eax, dword ptr [dword_c570c]             ; 07fac2 a10c570c00
+    mov eax, dword ptr [hud_clock_tenths]        ; 07fac2 a10c570c00
     mov dword ptr [dword_e040c], eax             ; 07fac7 a30c040e00
     mov ax, word ptr [action_flags]              ; 07facc 66a1bc900c00
     mov word ptr [word_e0410], ax                ; 07fad2 66a310040e00
@@ -7661,11 +7662,11 @@ highlights_play:
     mov eax, dword ptr [dword_e0400]             ; 080160 a100040e00
     mov dword ptr [period_num], eax              ; 080165 a3848c0d00
     mov eax, dword ptr [dword_e0404]             ; 08016a a104040e00
-    mov dword ptr [dword_c5704], eax             ; 08016f a304570c00
+    mov dword ptr [hud_clock_min], eax           ; 08016f a304570c00
     mov eax, dword ptr [dword_e0408]             ; 080174 a108040e00
-    mov dword ptr [dword_c5708], eax             ; 080179 a308570c00
+    mov dword ptr [hud_clock_sec], eax           ; 080179 a308570c00
     mov eax, dword ptr [dword_e040c]             ; 08017e a10c040e00
-    mov dword ptr [dword_c570c], eax             ; 080183 a30c570c00
+    mov dword ptr [hud_clock_tenths], eax        ; 080183 a30c570c00
     mov ax, word ptr [word_e0410]                ; 080188 66a110040e00
     mov word ptr [action_flags], ax              ; 08018e 66a3bc900c00
     mov eax, dword ptr [replay_buffer]           ; 080194 a178900c00

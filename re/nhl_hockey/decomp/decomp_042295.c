@@ -3103,12 +3103,12 @@ void __watcall init_match(void)
 
 
 // ================================================================================================
-// sub_480cc @ 0x480cc [__watcall]
+// faceoff_wait_loop @ 0x480cc [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-undefined8 __watcall sub_480cc(void)
+undefined8 __watcall faceoff_wait_loop(void)
 
 {
   short sVar1;

@@ -9512,7 +9512,7 @@ sub_594b2:
 ; ====================================================================================================
 ; update_ambient_audio  [0x594cd, 635 bytes, 181 instructions]
 ; adjusts the ambient/crowd sample volume while sound is enabled
-; called by: game_loop, sub_480cc, fade_ambient_audio, replay_seek_frames, simulate_game_offscreen
+; called by: game_loop, faceoff_wait_loop, fade_ambient_audio, replay_seek_frames, simulate_game_offscreen
 ; ====================================================================================================
 update_ambient_audio:
     push 0x14                                    ; 0594cd 6814000000
@@ -9780,7 +9780,7 @@ loc_597df:
 
 ; ====================================================================================================
 ; fade_ambient_audio  [0x597e3, 128 bytes, 37 instructions]
-; called by: sub_10f6d, handle_hotkey, game_loop, sub_480cc, start_period, simulate_game_offscreen
+; called by: sub_10f6d, handle_hotkey, game_loop, faceoff_wait_loop, start_period, simulate_game_offscreen
 ; ====================================================================================================
 fade_ambient_audio:
     push 0x1c                                    ; 0597e3 681c000000
@@ -9942,7 +9942,7 @@ loc_5997e:
 
 ; ====================================================================================================
 ; stop_crowd_loop  [0x59981, 56 bytes, 15 instructions]
-; called by: sub_10f6d, handle_hotkey, game_loop, awards_screen, ea_sports_intro, credits_screen, boxscore_screen, team_select_screen2, sub_480cc, faceoff_resolve, ai_puck_faceoff2, play_sample_by_ptr (+1 more)
+; called by: sub_10f6d, handle_hotkey, game_loop, awards_screen, ea_sports_intro, credits_screen, boxscore_screen, team_select_screen2, faceoff_wait_loop, faceoff_resolve, ai_puck_faceoff2, play_sample_by_ptr (+1 more)
 ; ====================================================================================================
 stop_crowd_loop:
     push 8                                       ; 059981 6808000000
@@ -10639,7 +10639,7 @@ loc_59fdb:
 
 ; ====================================================================================================
 ; find_switch_target  [0x59fe1, 90 bytes, 34 instructions]
-; called by: control_player, ai_puck_faceoff, ai_puck_faceoff2, do_pass, switch_to_nearest, follow_puck_user_switch, start_penalty_shot, sub_7cce5
+; called by: control_player, ai_puck_faceoff, ai_puck_faceoff2, do_pass, switch_to_nearest, follow_puck_user_switch, start_penalty_shot, ensure_user_slot
 ; ====================================================================================================
 find_switch_target:
     push 0xc                                     ; 059fe1 680c000000

@@ -6749,7 +6749,7 @@ loc_4f095:
     jmp loc_4f5b7                                ; 04f0ad e905050000
 
 loc_4f0b2:
-    call sub_62807                               ; 04f0b2 e850370100
+    call goal_milestone_check                    ; 04f0b2 e850370100
     jmp loc_4f0c6                                ; 04f0b7 eb0d
 
 loc_4f0b9:
@@ -7847,7 +7847,7 @@ loc_4fd42:
 
 ; ====================================================================================================
 ; flush_key_events  [0x4fd47, 27 bytes, 8 instructions]
-; called by: run_sim_steps, game_loop, play_game, sub_14056, demo_game, sub_1b982, boxscore_screen, init_match, start_period, dump_stats_log, simulate_game_offscreen
+; called by: run_sim_steps, game_loop, play_game, reset_game_state, demo_game, sub_1b982, boxscore_screen, init_match, start_period, dump_stats_log, simulate_game_offscreen
 ; ====================================================================================================
 flush_key_events:
     push 8                                       ; 04fd47 6808000000
@@ -9056,7 +9056,7 @@ loc_50a00:
 ; ====================================================================================================
 ; read_control_p1  [0x50a05, 127 bytes, 33 instructions]
 ; latest control byte for player 1, newly pressed buttons
-; called by: sub_480cc, sim_update_players, simulate_game_offscreen
+; called by: faceoff_wait_loop, sim_update_players, simulate_game_offscreen
 ; ====================================================================================================
 read_control_p1:
     push 0x10                                    ; 050a05 6810000000
@@ -9100,7 +9100,7 @@ loc_50a59:
 
 ; ====================================================================================================
 ; read_control_p2  [0x50a84, 90 bytes, 22 instructions]
-; called by: sub_480cc, sim_update_players, simulate_game_offscreen
+; called by: faceoff_wait_loop, sim_update_players, simulate_game_offscreen
 ; ====================================================================================================
 read_control_p2:
     push 0x10                                    ; 050a84 6810000000

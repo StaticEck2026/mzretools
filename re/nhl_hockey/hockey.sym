@@ -7,7 +7,7 @@
 000109a1	func	sub_109a1	91	__watcall
 000109fc	func	sub_109fc	138	__watcall
 00010a86	func	sub_10a86	64	__watcall
-00010ac6	func	sub_10ac6	441	__watcall
+00010ac6	func	scan_keyboard_control	441	__watcall
 00010c7f	func	sub_10c7f	334	__watcall
 00010dcd	func	sub_10dcd	210	__watcall
 00010e9f	func	set_video_mode	206	__watcall
@@ -36,10 +36,10 @@
 00013a2f	func	load_rink_end_shapes	98	__watcall
 00013a91	func	load_player_graphics	291	__watcall
 00013bb4	func	sub_13bb4	197	__watcall
-00013c79	func	sub_13c79	534	__watcall
+00013c79	func	setup_demo_faceoff	534	__watcall
 00013e8f	func	sub_13e8f	280	__watcall
 00013fa7	func	sub_13fa7	175	__watcall
-00014056	func	sub_14056	657	__watcall
+00014056	func	reset_game_state	657	__watcall
 000142e7	func	sub_142e7	55	__watcall
 0001431e	func	make_path	74	__watcall
 00014368	func	sub_14368	218	__watcall
@@ -67,14 +67,14 @@
 00014c22	func	add_penalty_display	126	__watcall
 00014ca0	func	sub_14ca0	81	__watcall
 00014cf1	func	draw_clock	576	__watcall
-00014f31	func	sub_14f31	405	__watcall
+00014f31	func	draw_clock_full	405	__watcall
 000150c6	func	show_scoreboard	686	__watcall
 00015374	func	sub_15374	150	__watcall
-0001540a	func	sub_1540a	587	__watcall
+0001540a	func	draw_clock_update	587	__watcall
 00015655	func	sub_15655	178	__watcall
 00015707	func	sub_15707	182	__watcall
-000157bd	func	sub_157bd	472	__watcall
-00015995	func	sub_15995	481	__watcall
+000157bd	func	draw_line_box	472	__watcall
+00015995	func	draw_penalty_clocks	481	__watcall
 00015b76	func	sub_15b76	186	__watcall
 00015c30	func	game_over_check	177	__watcall
 00015ce1	func	sub_15ce1	138	__watcall
@@ -452,7 +452,7 @@
 000479e9	func	loading_screen	584	__watcall
 00047c31	func	wait_sprite_fade	165	__watcall
 00047cd6	func	init_match	1014	__watcall
-000480cc	func	sub_480cc	572	__watcall
+000480cc	func	faceoff_wait_loop	578	__watcall
 0004830e	func	match_sequence	37	__watcall
 00048333	func	replay_loop	247	__watcall
 0004842a	func	ai_anthem	176	__watcall
@@ -733,7 +733,7 @@
 000624b9	func	record_penalty	683	__watcall
 00062764	func	announce_injury	148	__watcall
 000627f8	func	sub_627f8	15	__watcall
-00062807	func	sub_62807	1072	__watcall
+00062807	func	goal_milestone_check	1072	__watcall
 00062c37	func	sub_62c37	160	__watcall
 00062cd7	func	sub_62cd7	34	__watcall
 00062cf9	func	maybe_queue_infraction	135	__watcall
@@ -1020,7 +1020,7 @@
 0007cb9f	func	sub_7cb9f	20	__watcall
 0007cbb3	func	sub_7cbb3	215	__watcall
 0007cc8a	func	sub_7cc8a	91	__watcall
-0007cce5	func	sub_7cce5	444	__watcall
+0007cce5	func	ensure_user_slot	444	__watcall
 0007cea1	func	sub_7cea1	280	__watcall
 0007cfb9	func	sub_7cfb9	376	__watcall
 0007d137	func	sub_7d137	14	__watcall
@@ -4732,12 +4732,12 @@
 000c56b5	data	off_c56b5	4	ptr
 000c56c4	data	unk_c56c4	0	
 000c56e4	data	unk_c56e4	0	
-000c5704	data	dword_c5704	4	
-000c5708	data	dword_c5708	4	
-000c570c	data	dword_c570c	4	
-000c5710	data	dword_c5710	4	
-000c5714	data	dword_c5714	4	
-000c5718	data	dword_c5718	4	
+000c5704	data	hud_clock_min	4	
+000c5708	data	hud_clock_sec	4	
+000c570c	data	hud_clock_tenths	4	
+000c5710	data	hud_shown_min	4	
+000c5714	data	hud_shown_sec	4	
+000c5718	data	hud_shown_tenths	4	
 000c571c	data	word_c571c	2	
 000c571e	data	unk_c571e	0	
 000c5720	data	unk_c5720	0	
@@ -7542,16 +7542,16 @@
 000dc268	data	byte_dc268	1	
 000dc26c	data	unk_dc26c	0	
 000dc28c	data	dword_dc28c	4	
-000dc290	data	unk_dc290	0	
-000dc2b8	data	dword_dc2b8	4	
+000dc290	data	small_digit_shapes	0	
+000dc2b8	data	small_blank_digit	4	
 000dc2bc	data	dword_dc2bc	4	
 000dc2c0	data	dword_dc2c0	4	
-000dc2c4	data	unk_dc2c4	0	
+000dc2c4	data	score_digit_shapes	0	
 000dc2f0	data	dword_dc2f0	4	
 000dc2f4	data	unk_dc2f4	0	
 000dc300	data	unk_dc300	0	
-000dc30c	data	unk_dc30c	0	
-000dc334	data	dword_dc334	4	
+000dc30c	data	hud_digit_shapes	0	
+000dc334	data	hud_blank_digit	4	
 000dc338	data	dword_dc338	4	
 000dc33c	data	dword_dc33c	4	
 000dc340	data	unk_dc340	0	

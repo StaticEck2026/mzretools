@@ -6949,10 +6949,9 @@ loc_47cd0:
 
 
 ; ====================================================================================================
-; init_match  [0x47cd6, 1020 bytes, 232 instructions]
+; init_match  [0x47cd6, 1014 bytes, 226 instructions]
 ; init_match: resets both teams, loads lines, player sprites
 ; called by: match_sequence
-; blocks: 47cd6-480cb 48308-4830d
 ; ====================================================================================================
 init_match:
     push 0x28                                    ; 047cd6 6828000000
@@ -7209,10 +7208,11 @@ loc_4809c:
 
 
 ; ====================================================================================================
-; sub_480cc  [0x480cc, 572 bytes, 138 instructions]
+; faceoff_wait_loop  [0x480cc, 578 bytes, 144 instructions]
+; renders the rink while the players line up; A/B skips the wait
 ; no references found
 ; ====================================================================================================
-sub_480cc:
+faceoff_wait_loop:
     test ecx, ecx                                ; 0480cc 85c9
     jge loc_480d8                                ; 0480ce 7d08
     xor ebp, ebp                                 ; 0480d0 31ed
@@ -7367,7 +7367,6 @@ loc_482fb:
 loc_48307:
     pop ebp                                      ; 048307 5d
 loc_48308:
-    ; ---- chunk of init_match
     pop edi                                      ; 048308 5f
     pop esi                                      ; 048309 5e
     pop edx                                      ; 04830a 5a
@@ -7464,7 +7463,7 @@ loc_483e5:
     mov dword ptr [dword_d8c74], eax             ; 048407 a3748c0d00
     mov ecx, dword ptr [dword_d8c7c]             ; 04840c 8b0d7c8c0d00
     cmp ecx, 0x40                                ; 048412 83f940
-    jle sub_480cc                                ; 048415 0f8eb1fcffff
+    jle faceoff_wait_loop                        ; 048415 0f8eb1fcffff
     mov dword ptr [dword_d8c7c], 0x40            ; 04841b c7057c8c0d004000..
     jmp loc_480d8                                ; 048425 e9aefcffff
 

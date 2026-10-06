@@ -15,10 +15,10 @@ undefined4 __watcall sub_627f8(void)
 
 
 // ================================================================================================
-// sub_62807 @ 0x62807 [__watcall]
+// goal_milestone_check @ 0x62807 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_62807(int param_1,undefined4 unaff_EDX,int unaff_EBX)
+undefined8 __watcall goal_milestone_check(int param_1,undefined4 unaff_EDX,int unaff_EBX)
 
 {
   int iVar1;
@@ -4346,9 +4346,9 @@ simulate_game_offscreen
   sVar6 = randomrange(0x78);
   clock_seconds = sVar6 + 0x3c;
   clock_sub = 0;
-  dword_c5704 = (int)clock_seconds / 0x3c;
-  dword_c5708 = (int)clock_seconds % 0x3c;
-  dword_c570c = 0;
+  hud_clock_min = (int)clock_seconds / 0x3c;
+  hud_clock_sec = (int)clock_seconds % 0x3c;
+  hud_clock_tenths = 0;
   _period_num = param_5;
   period_idx = (short)param_5 - 1;
   dword_df622 = CONCAT22(*unaff_EBX,(undefined2)dword_df622);
@@ -4610,7 +4610,7 @@ simulate_game_offscreen
     if ((period_over != 0) &&
        (iVar20 = (int)(CONCAT22(clock_seconds,period_idx) | CONCAT22(clock_sub,clock_seconds)) >>
                  0x10, iVar20 == 0)) {
-      iVar20 = (dword_c5708 + dword_c5704 * 0x3c) * 100 + dword_c570c;
+      iVar20 = (hud_clock_sec + hud_clock_min * 0x3c) * 100 + hud_clock_tenths;
       dword_dc28c = iVar20;
     }
     *(undefined4 *)((int)puVar18 + -4) = 0x69c27;

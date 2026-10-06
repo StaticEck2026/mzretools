@@ -4580,9 +4580,9 @@ longlong __watcall save_game(undefined4 param_1,uint unaff_EDX)
   *(undefined2 *)(puVar6 + 0x15) = (undefined2)dword_c5407;
   *(undefined2 *)((int)puVar6 + 0x56) = (undefined2)dword_c540b;
   *(undefined2 *)(puVar6 + 0x16) = (undefined2)dword_c540f;
-  *(undefined2 *)((int)puVar6 + 0x5a) = (undefined2)dword_c5704;
-  *(undefined2 *)(puVar6 + 0x17) = (undefined2)dword_c5708;
-  *(undefined2 *)((int)puVar6 + 0x5e) = (undefined2)dword_c570c;
+  *(undefined2 *)((int)puVar6 + 0x5a) = (undefined2)hud_clock_min;
+  *(undefined2 *)(puVar6 + 0x17) = (undefined2)hud_clock_sec;
+  *(undefined2 *)((int)puVar6 + 0x5e) = (undefined2)hud_clock_tenths;
   *(undefined2 *)(puVar6 + 0x18) = word_cc0b0;
   *(undefined2 *)((int)puVar6 + 0x62) = (undefined2)dword_d8c78;
   *(undefined2 *)(puVar6 + 0x19) = (undefined2)dword_d8c6c;
@@ -4909,9 +4909,9 @@ longlong __watcall savegame_io(undefined4 param_1,uint unaff_EDX)
   dword_c5407 = (int)*(short *)(pcVar6 + 0x54);
   dword_c540b = (int)*(short *)(pcVar6 + 0x56);
   dword_c540f = (int)*(short *)(pcVar6 + 0x58);
-  dword_c5704 = (int)*(short *)(pcVar6 + 0x5a);
-  dword_c5708 = (int)*(short *)(pcVar6 + 0x5c);
-  dword_c570c = (int)*(short *)(pcVar6 + 0x5e);
+  hud_clock_min = (int)*(short *)(pcVar6 + 0x5a);
+  hud_clock_sec = (int)*(short *)(pcVar6 + 0x5c);
+  hud_clock_tenths = (int)*(short *)(pcVar6 + 0x5e);
   word_cc0b0 = *(undefined2 *)(pcVar6 + 0x60);
   dword_d8c78 = (int)*(short *)(pcVar6 + 0x62);
   dword_d8c6c = (int)*(short *)(pcVar6 + 100);

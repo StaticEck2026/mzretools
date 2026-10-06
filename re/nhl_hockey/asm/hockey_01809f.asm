@@ -1296,7 +1296,7 @@ loc_18f79:
 
 ; ====================================================================================================
 ; sub_18f86  [0x18f86, 7 bytes, 2 instructions]
-; called by: sub_62807
+; called by: goal_milestone_check
 ; ====================================================================================================
 sub_18f86:
     push 4                                       ; 018f86 6804000000
@@ -6488,18 +6488,18 @@ loc_1cc6d:
     call loadfile                                ; 01cc7b e8201c0700
     add esp, 8                                   ; 01cc80 83c408
     mov dword ptr [dword_dc2f0], eax             ; 01cc83 a3f0c20d00
-    push unk_dc2c4                               ; 01cc88 68c4c20d00
+    push score_digit_shapes                      ; 01cc88 68c4c20d00
     push a000000010002000300040005               ; 01cc8d 68880a0c00        "0000000100020003000400050006000700080009000 "
     push eax                                     ; 01cc92 50
     call sub_90b80                               ; 01cc93 e8e83e0700
     add esp, 0xc                                 ; 01cc98 83c40c
-    push unk_dc30c                               ; 01cc9b 680cc30d00
+    push hud_digit_shapes                        ; 01cc9b 680cc30d00
     push a100010011002100310041005               ; 01cca0 68b50a0c00        "1000100110021003100410051006100710081009100 "
     mov edx, dword ptr [dword_dc2f0]             ; 01cca5 8b15f0c20d00
     push edx                                     ; 01ccab 52
     call sub_90b80                               ; 01ccac e8cf3e0700
     add esp, 0xc                                 ; 01ccb1 83c40c
-    push unk_dc290                               ; 01ccb4 6890c20d00
+    push small_digit_shapes                      ; 01ccb4 6890c20d00
     push a200020012002200320042005               ; 01ccb9 68e20a0c00        "2000200120022003200420052006200720082009200 "
     mov ebx, dword ptr [dword_dc2f0]             ; 01ccbe 8b1df0c20d00
     push ebx                                     ; 01ccc4 53

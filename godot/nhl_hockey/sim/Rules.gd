@@ -39,6 +39,8 @@ static func game_state_tick(sim: Sim) -> void:
 		setup_faceoff(sim)
 	if not sim.play_stopped:
 		game_clock_tick(sim)
+		if sim.clock_sub == 0x17:
+			penalty_timers(sim)
 	# the 24 Hz tick of sim_game_state: energy, lead changes
 	if sim.step_count % 24 == 0:
 		regenerate_energy(sim)
@@ -70,28 +72,75 @@ static func update_stoppage(sim: Sim) -> void:
 static func stoppage_done(sim: Sim) -> void:
 	if sim.ref_phase == 0:
 		return
-	# penalties would be served here; the port only records them and drops them from the queue
+	# penalty_box_update: the penalized players are sent to the box (minors 2, majors 5 minutes)
 	while not sim.infractions.is_empty():
 		var inf: Array = sim.infractions[sim.infractions.size() - 1]
 		if not inf[2]:
 			return
 		var e: Entity = sim.entities[inf[1]]
-		if Tables.infraction_is_penalty[inf[0]] != 0:
-			e.flags2 &= ~Entity.F2_PENALIZED
+		var minutes: int = Tables.infraction_is_penalty[inf[0]]
+		if minutes > 0 and e.slot < 12 and e.line_slot > 0 and (e.flags2 & Entity.F2_PENALIZED):
+			serve_penalty(sim, e, minutes)
+		e.flags2 &= ~Entity.F2_PENALIZED
 		sim.infractions.pop_back()
 	for t in 2:
 		var team := sim.teams[t]
-		var n := 6
-		for i in 6:
-			var p := sim.entities[t * 6 + i]
-			if p.line_slot < 0:
-				n -= 1
-		team.skaters_on_ice = n
+		# a team never plays with fewer than 3 skaters: extra penalties are stacked
+		team.skaters_on_ice = clampi(6 - team.penalties.size(), 4, 6)
 	sim.stoppage_countdown = false
 	var ps := sim.puck.state()
 	if ps == Entity.State.PUCK_FACEOFF or ps == Entity.State.PUCK_FACEOFF2:
 		return
 	sim.puck.set_state(Entity.State.PUCK_FACEOFF)
+
+## the player goes to the penalty box (penalty_box_update, record_penalty)
+static func serve_penalty(sim: Sim, e: Entity, minutes: int) -> void:
+	var team := sim.team_of(e)
+	for pen in team.penalties:
+		if pen[2] == e.slot:
+			return
+	team.penalties.append([e.roster_idx, minutes * 60, e.slot, minutes == 2])
+	e.set_state(Entity.State.PENALTY_BOX)
+	e.flags2 |= Entity.F2_UNSELECTABLE
+	if e.slot == sim.user1_slot:
+		sim.switch_to_nearest(e, 0)
+	elif e.slot == sim.user2_slot:
+		sim.switch_to_nearest(e, 1)
+	sim.add_crowd(300, 1000)
+
+## penalty_timers (0x63a37): penalties run with the game clock; the first expired one returns
+static func penalty_timers(sim: Sim) -> void:
+	for t in 2:
+		var team := sim.teams[t]
+		var i := 0
+		while i < team.penalties.size():
+			var pen: Array = team.penalties[i]
+			pen[1] -= 1
+			if pen[1] <= 0:
+				penalty_expired(sim, team, i)
+			else:
+				i += 1
+
+## penalty_expired (0x639f9): the player leaves the box
+static func penalty_expired(sim: Sim, team: Team, idx: int) -> void:
+	var pen: Array = team.penalties[idx]
+	team.penalties.remove_at(idx)
+	var e: Entity = sim.entities[pen[2]]
+	team.skaters_on_ice = clampi(6 - team.penalties.size(), 4, 6)
+	if e.line_slot < 0:
+		e.line_slot = e.line_slot & 0xff      # DOOR_OPEN only set the high byte
+	if e.line_slot <= 0:
+		e.line_slot = 5 if e.slot % 6 == 5 else maxi(1, e.slot % 6)
+	e.set_state(Entity.State.EXIT_PENALTY_BOX)
+
+## goal_ends_penalty (0x63d69): a power play goal releases the first minor of the conceding team
+static func goal_ends_penalty(sim: Sim, conceding: Team, scoring: Team) -> void:
+	if conceding.skaters_on_ice >= scoring.skaters_on_ice:
+		return
+	for i in conceding.penalties.size():
+		if conceding.penalties[i][3]:
+			penalty_expired(sim, conceding, i)
+			return
 
 ## process_infractions (0x637b5): the first queued event stops the play; penalties against the
 ## team that does not have the puck are delayed until it touches it
@@ -268,6 +317,7 @@ static func score_goal(sim: Sim, net: Entity) -> void:
 		if sim.last_touch_slot >= 0 and sim.same_team(sim.last_touch_slot, scoring.first_slot):
 			sim.last_shooter = sim.last_touch_slot
 		PuckLogic.shot_landed(sim)
+		goal_ends_penalty(sim, conceding, scoring)
 		sim.play_sfx(0x9c)        # goal horn
 		sim.action_hold_camera = true
 		sim.camera_target_x = sim.camera_x
@@ -556,7 +606,7 @@ static func place_faceoff(sim: Sim) -> void:
 	for i in 12:
 		var e := sim.entities[i]
 		e.flags2 &= ~Entity.F2_OFFSIDE
-		if e.line_slot < 0:
+		if e.line_slot < 0 or e.state() == Entity.State.PENALTY_BOX or e.state() == Entity.State.DOOR_OPEN:
 			continue
 		# sub_5e0dd: a player coming onto the ice gets his role on the stack (and NEAREST for the centre)
 		if e.state() == Entity.State.INIT_PERIOD or e.state() == Entity.State.ALL_GOTO_FACEOFF:
@@ -674,5 +724,7 @@ static func all_goto_positions(sim: Sim) -> void:
 			continue
 		e.timer_b = 0
 		var s := e.state()
+		if s == Entity.State.PENALTY_BOX or s == Entity.State.DOOR_OPEN or s == Entity.State.EXIT_PENALTY_BOX:
+			continue
 		if s != Entity.State.INIT_PERIOD and s != Entity.State.ALL_GOTO_FACEOFF and s != Entity.State.BENCH_WAIT:
 			e.set_state_reset(Entity.State.ALL_GOTO_FACEOFF)

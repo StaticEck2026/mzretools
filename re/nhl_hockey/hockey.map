@@ -27,7 +27,8 @@ sub_1086a: code1 NEAR 86a-9a0 R86a-9a0
 sub_109a1: code1 NEAR 9a1-9fb R9a1-9fb
 sub_109fc: code1 NEAR 9fc-a85 R9fc-a85
 sub_10a86: code1 NEAR a86-ac5 Ra86-ac5
-sub_10ac6: code1 NEAR ac6-c7e Rac6-c7e
+#@ polls the configured keys and builds the keyboard control byte
+scan_keyboard_control: code1 NEAR ac6-c7e Rac6-c7e
 sub_10c7f: code1 NEAR c7f-dcc Rc7f-dcc
 sub_10dcd: code1 NEAR dcd-e9e Rdcd-e9e
 #@ switches between 640x480 (menus) and 320x200 (game) through initgraphics
@@ -74,10 +75,12 @@ load_rink_end_shapes: code1 NEAR 3a2f-3a90 R3a2f-3a90
 #@ HILIGHT/numshp .PPV banks and .VFN fonts of the match
 load_player_graphics: code1 NEAR 3a91-3bb3 R3a91-3bb3
 sub_13bb4: code1 NEAR 3bb4-3c78 R3bb4-3c78
-sub_13c79: code1 NEAR 3c79-3e8e R3c79-3e8e
+#@ puts everybody on the centre ice faceoff spots (intro / demo)
+setup_demo_faceoff: code1 NEAR 3c79-3e8e R3c79-3e8e
 sub_13e8f: code1 NEAR 3e8f-3fa6 R3e8f-3fa6
 sub_13fa7: code1 NEAR 3fa7-4055 R3fa7-4055
-sub_14056: code1 NEAR 4056-42e6 R4056-42e6
+#@ clears the match globals before a game
+reset_game_state: code1 NEAR 4056-42e6 R4056-42e6
 sub_142e7: code1 NEAR 42e7-431d R42e7-431d
 #@ make_path(dst, dir, name, ext)
 make_path: code1 NEAR 431e-4367 R431e-4367
@@ -118,14 +121,18 @@ add_penalty_display: code1 NEAR 4c22-4c9f R4c22-4c9f
 sub_14ca0: code1 NEAR 4ca0-4cf0 R4ca0-4cf0
 #@ draws the score/clock overlay
 draw_clock: code1 NEAR 4cf1-4f30 R4cf1-4f30
-sub_14f31: code1 NEAR 4f31-50c5 R4f31-50c5
+#@ draws every clock digit (mm:ss, or ss.t in the last minute) and remembers them
+draw_clock_full: code1 NEAR 4f31-50c5 R4f31-50c5
 show_scoreboard: code1 NEAR 50c6-5373 R50c6-5373
 sub_15374: code1 NEAR 5374-5409 R5374-5409
-sub_1540a: code1 NEAR 540a-5654 R540a-5654
+#@ redraws only the clock digits that changed since the last frame
+draw_clock_update: code1 NEAR 540a-5654 R540a-5654
 sub_15655: code1 NEAR 5655-5706 R5655-5706
 sub_15707: code1 NEAR 5707-57bc R5707-57bc
-sub_157bd: code1 NEAR 57bd-5994 R57bd-5994
-sub_15995: code1 NEAR 5995-5b75 R5995-5b75
+#@ line change indicator: current / selected line of a team
+draw_line_box: code1 NEAR 57bd-5994 R57bd-5994
+#@ four penalty timers as mm:ss (4 x 8 byte entries)
+draw_penalty_clocks: code1 NEAR 5995-5b75 R5995-5b75
 sub_15b76: code1 NEAR 5b76-5c2f R5b76-5c2f
 #@ season/playoff: does this result end the game
 game_over_check: code1 NEAR 5c30-5ce0 R5c30-5ce0
@@ -587,8 +594,9 @@ loading_screen_timer: code1 NEAR 37951-379e8 R37951-379e8
 loading_screen: code1 NEAR 379e9-37c30 R379e9-37c30
 wait_sprite_fade: code1 NEAR 37c31-37cd5 R37c31-37cd5
 #@ init_match: resets both teams, loads lines, player sprites
-init_match: code1 NEAR 37cd6-380cb R37cd6-380cb R38308-3830d
-sub_480cc: code1 NEAR 380cc-38307 R380cc-38307
+init_match: code1 NEAR 37cd6-380cb R37cd6-380cb
+#@ renders the rink while the players line up; A/B skips the wait
+faceoff_wait_loop: code1 NEAR 380cc-3830d R380cc-3830d
 #@ runs the anthem / intro sequence then the game
 match_sequence: code1 NEAR 3830e-38332 R3830e-38332
 replay_loop: code1 NEAR 38333-38429 R38333-38429
@@ -1045,7 +1053,8 @@ record_penalty: code1 NEAR 524b9-52763 R524b9-52763
 #@ speech and display for an injury
 announce_injury: code1 NEAR 52764-527f7 R52764-527f7
 sub_627f8: code1 NEAR 527f8-52806 R527f8-52806 unreferenced
-sub_62807: code1 NEAR 52807-52c36 R52807-52c36
+#@ announcer: goal and point milestones of the scorer
+goal_milestone_check: code1 NEAR 52807-52c36 R52807-52c36
 sub_62c37: code1 NEAR 52c37-52cd6 R52c37-52cd6
 sub_62cd7: code1 NEAR 52cd7-52cf8 R52cd7-52cf8 unreferenced
 #@ filters rule events by the option flags before queue_infraction
@@ -1403,7 +1412,8 @@ sub_7caf7: code1 NEAR 6caf7-6cb9e R6caf7-6cb9e
 sub_7cb9f: code1 NEAR 6cb9f-6cbb2 R6cb9f-6cbb2
 sub_7cbb3: code1 NEAR 6cbb3-6cc89 R6cbb3-6cc89
 sub_7cc8a: code1 NEAR 6cc8a-6cce4 R6cc8a-6cce4
-sub_7cce5: code1 NEAR 6cce5-6cea0 R6cce5-6cea0
+#@ gives a user without a selected player the team mate nearest to the puck
+ensure_user_slot: code1 NEAR 6cce5-6cea0 R6cce5-6cea0
 sub_7cea1: code1 NEAR 6cea1-6cfb8 R6cea1-6cfb8 R6d131-6d136
 sub_7cfb9: code1 NEAR 6cfb9-6d130 R6cfb9-6d130
 sub_7d137: code1 NEAR 6d137-6d144 R6d137-6d144
@@ -5250,12 +5260,16 @@ aOfFreeDiskSpace: data2 VAR 56a1
 off_c56b5: data2 VAR 56b5
 unk_c56c4: data2 VAR 56c4
 unk_c56e4: data2 VAR 56e4
-dword_c5704: data2 VAR 5704
-dword_c5708: data2 VAR 5708
-dword_c570c: data2 VAR 570c
-dword_c5710: data2 VAR 5710
-dword_c5714: data2 VAR 5714
-dword_c5718: data2 VAR 5718
+#@ clock value drawn by draw_clock: minutes
+hud_clock_min: data2 VAR 5704
+#@ seconds
+hud_clock_sec: data2 VAR 5708
+#@ tenths (shown in the last minute)
+hud_clock_tenths: data2 VAR 570c
+#@ last drawn minutes (draw_clock_update)
+hud_shown_min: data2 VAR 5710
+hud_shown_sec: data2 VAR 5714
+hud_shown_tenths: data2 VAR 5718
 word_c571c: data2 VAR 571c
 unk_c571e: data2 VAR 571e
 unk_c5720: data2 VAR 5720
@@ -8127,16 +8141,20 @@ byte_dc267: data2 VAR 1c267
 byte_dc268: data2 VAR 1c268
 unk_dc26c: data2 VAR 1c26c
 dword_dc28c: data2 VAR 1c28c
-unk_dc290: data2 VAR 1c290
-dword_dc2b8: data2 VAR 1c2b8
+#@ penalty clock digits 0..9
+small_digit_shapes: data2 VAR 1c290
+small_blank_digit: data2 VAR 1c2b8
 dword_dc2bc: data2 VAR 1c2bc
 dword_dc2c0: data2 VAR 1c2c0
-unk_dc2c4: data2 VAR 1c2c4
+#@ scoreboard digits (draw_score_digits)
+score_digit_shapes: data2 VAR 1c2c4
 dword_dc2f0: data2 VAR 1c2f0
 unk_dc2f4: data2 VAR 1c2f4
 unk_dc300: data2 VAR 1c300
-unk_dc30c: data2 VAR 1c30c
-dword_dc334: data2 VAR 1c334
+#@ clock digit shapes 0..9
+hud_digit_shapes: data2 VAR 1c30c
+#@ blank clock digit shape
+hud_blank_digit: data2 VAR 1c334
 dword_dc338: data2 VAR 1c338
 dword_dc33c: data2 VAR 1c33c
 unk_dc340: data2 VAR 1c340

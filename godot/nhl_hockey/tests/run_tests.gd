@@ -164,6 +164,31 @@ func run_tests() -> void:
 		fail("ends not switched in the second period")
 	else:
 		print("second period after ", period_steps, " steps")
+	# a hooking minor: the player serves 2 minutes in the box and his team plays short handed
+	sim = Sim.new()
+	run_until_play(sim, 1200)
+	var culprit := sim.entities[7]
+	Rules.maybe_queue_infraction(sim, culprit, Rules.INF_HOOKING)
+	var in_box := false
+	var back := false
+	var short_handed_faceoff := false
+	for i in 6000:
+		sim.step(8, 8, 0, 0)
+		if culprit.state() == Entity.State.DOOR_OPEN and culprit.line_slot < 0:
+			in_box = true
+		if in_box and sim.faceoff_pending and sim.teams[1].skaters_on_ice == 5:
+			short_handed_faceoff = true
+		if in_box and culprit.line_slot > 0 and culprit.state() != Entity.State.EXIT_PENALTY_BOX and culprit.state() != Entity.State.DOOR_OPEN:
+			back = true
+			break
+	if not in_box:
+		fail("penalized player never reached the box (state %s line %d pos %d,%d penalties %s)" % [Tables.ai_state_names[culprit.state() + 1], culprit.line_slot, culprit.xi, culprit.yi, str(sim.teams[1].penalties)])
+	elif not short_handed_faceoff:
+		fail("no short handed faceoff (skaters %d)" % sim.teams[1].skaters_on_ice)
+	elif not back:
+		fail("penalized player did not return (state %s penalties %s clock %d)" % [Tables.ai_state_names[culprit.state() + 1], str(sim.teams[1].penalties), sim.clock_seconds])
+	else:
+		print("penalty served, player back at %d,%d after %d game seconds" % [culprit.xi, culprit.yi, 300 - sim.clock_seconds])
 	# a long simulation must not throw and must keep everybody on the rink
 	sim = Sim.new()
 	var stoppages := 0

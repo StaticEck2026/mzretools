@@ -603,7 +603,7 @@ loc_6ad80:
 ; ====================================================================================================
 ; present_frame  [0x6ada7, 181 bytes, 46 instructions]
 ; copies the off-screen game surface to the screen
-; called by: game_loop, sub_480cc, simulate_game_offscreen, instant_replay
+; called by: game_loop, faceoff_wait_loop, simulate_game_offscreen, instant_replay
 ; ====================================================================================================
 present_frame:
     push 0x10                                    ; 06ada7 6810000000
@@ -763,7 +763,7 @@ loc_6af48:
 
 ; ====================================================================================================
 ; set_view_rect  [0x6af52, 69 bytes, 17 instructions]
-; called by: game_loop, load_rink, sub_480cc, simulate_game_offscreen, instant_replay
+; called by: game_loop, load_rink, faceoff_wait_loop, simulate_game_offscreen, instant_replay
 ; ====================================================================================================
 set_view_rect:
     push 0x14                                    ; 06af52 6814000000
@@ -787,7 +787,7 @@ set_view_rect:
 
 ; ====================================================================================================
 ; set_camera_offset  [0x6af97, 22 bytes, 5 instructions]
-; called by: game_loop, load_rink, sub_480cc, simulate_game_offscreen, instant_replay
+; called by: game_loop, load_rink, faceoff_wait_loop, simulate_game_offscreen, instant_replay
 ; ====================================================================================================
 set_camera_offset:
     push 4                                       ; 06af97 6804000000
@@ -845,7 +845,7 @@ loc_6b001:
 
 ; ====================================================================================================
 ; begin_frame  [0x6b008, 139 bytes, 37 instructions]
-; called by: game_loop, sub_480cc, simulate_game_offscreen, instant_replay
+; called by: game_loop, faceoff_wait_loop, simulate_game_offscreen, instant_replay
 ; ====================================================================================================
 begin_frame:
     push 0x2c                                    ; 06b008 682c000000

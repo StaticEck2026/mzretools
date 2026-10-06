@@ -22,10 +22,11 @@ sub_627f8:
 
 
 ; ====================================================================================================
-; sub_62807  [0x62807, 1072 bytes, 326 instructions]
+; goal_milestone_check  [0x62807, 1072 bytes, 326 instructions]
+; announcer: goal and point milestones of the scorer
 ; called by: ai_ref_pickup_puck
 ; ====================================================================================================
-sub_62807:
+goal_milestone_check:
     push 0x30                                    ; 062807 6830000000
     call __CHK                                   ; 06280c e83ba10200
     push ebx                                     ; 062811 53
@@ -9493,14 +9494,14 @@ loc_694b6:
     mov edx, ebx                                 ; 069538 89da
     sar edx, 0x1f                                ; 06953a c1fa1f
     idiv ecx                                     ; 06953d f7f9
-    mov dword ptr [dword_c5704], eax             ; 06953f a304570c00
+    mov dword ptr [hud_clock_min], eax           ; 06953f a304570c00
     mov eax, ebx                                 ; 069544 89d8
     mov edx, ebx                                 ; 069546 89da
     sar edx, 0x1f                                ; 069548 c1fa1f
     idiv ecx                                     ; 06954b f7f9
-    mov dword ptr [dword_c5708], edx             ; 06954d 891508570c00
+    mov dword ptr [hud_clock_sec], edx           ; 06954d 891508570c00
     xor ecx, ecx                                 ; 069553 31c9
-    mov dword ptr [dword_c570c], ecx             ; 069555 890d0c570c00
+    mov dword ptr [hud_clock_tenths], ecx        ; 069555 890d0c570c00
     mov eax, dword ptr [esp + 0x114]             ; 06955b 8b842414010000
     mov dword ptr [period_num], eax              ; 069562 a3848c0d00
     mov eax, dword ptr [esp + 0x114]             ; 069567 8b842414010000
@@ -9907,12 +9908,12 @@ loc_69b9e:
     sar edx, 0x10                                ; 069be7 c1fa10
     or eax, edx                                  ; 069bea 09d0
     jne loc_69c22                                ; 069bec 7534
-    mov edx, dword ptr [dword_c5704]             ; 069bee 8b1504570c00
+    mov edx, dword ptr [hud_clock_min]           ; 069bee 8b1504570c00
     mov eax, edx                                 ; 069bf4 89d0
     shl eax, 4                                   ; 069bf6 c1e004
     sub eax, edx                                 ; 069bf9 29d0
     shl eax, 2                                   ; 069bfb c1e002
-    mov edx, dword ptr [dword_c5708]             ; 069bfe 8b1508570c00
+    mov edx, dword ptr [hud_clock_sec]           ; 069bfe 8b1508570c00
     add edx, eax                                 ; 069c04 01c2
     mov eax, edx                                 ; 069c06 89d0
     shl eax, 2                                   ; 069c08 c1e002
@@ -9920,7 +9921,7 @@ loc_69b9e:
     shl eax, 3                                   ; 069c0d c1e003
     add eax, edx                                 ; 069c10 01d0
     shl eax, 2                                   ; 069c12 c1e002
-    mov edx, dword ptr [dword_c570c]             ; 069c15 8b150c570c00
+    mov edx, dword ptr [hud_clock_tenths]        ; 069c15 8b150c570c00
     add eax, edx                                 ; 069c1b 01d0
     mov dword ptr [dword_dc28c], eax             ; 069c1d a38cc20d00
 loc_69c22:

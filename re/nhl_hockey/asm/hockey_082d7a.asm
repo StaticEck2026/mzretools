@@ -826,7 +826,7 @@ sub_8373e:
 
 ; ====================================================================================================
 ; sub_8374d  [0x8374d, 63 bytes, 19 instructions]
-; called by: handle_hotkey, game_loop, credits_screen, sub_480cc
+; called by: handle_hotkey, game_loop, credits_screen, faceoff_wait_loop
 ; ====================================================================================================
 sub_8374d:
     push 0x10                                    ; 08374d 6810000000

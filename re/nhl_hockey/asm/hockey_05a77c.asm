@@ -3241,7 +3241,7 @@ sub_5cd4f:
 ; ====================================================================================================
 ; draw_sprites  [0x5ce12, 2533 bytes, 749 instructions]
 ; draws nets, players (y-sorted), puck, indicators
-; called by: game_loop, sub_480cc, simulate_game_offscreen
+; called by: game_loop, faceoff_wait_loop, simulate_game_offscreen
 ; ====================================================================================================
 draw_sprites:
     push 0x6c                                    ; 05ce12 686c000000
@@ -4844,7 +4844,7 @@ loc_5e07b:
 
 ; ====================================================================================================
 ; sub_5e086  [0x5e086, 42 bytes, 11 instructions]
-; called by: sub_14056
+; called by: reset_game_state
 ; ====================================================================================================
 sub_5e086:
     push 8                                       ; 05e086 6808000000
@@ -4862,7 +4862,7 @@ sub_5e086:
 
 ; ====================================================================================================
 ; sub_5e0b0  [0x5e0b0, 45 bytes, 9 instructions]
-; called by: sub_13c79
+; called by: setup_demo_faceoff
 ; ====================================================================================================
 sub_5e0b0:
     push 4                                       ; 05e0b0 6804000000
@@ -7720,13 +7720,13 @@ loc_5ff05:
     mov dx, word ptr [dword_c540f]               ; 060156 668b150f540c00
     mov word ptr [eax], dx                       ; 06015d 668910
     add eax, 2                                   ; 060160 83c002
-    mov dx, word ptr [dword_c5704]               ; 060163 668b1504570c00
+    mov dx, word ptr [hud_clock_min]             ; 060163 668b1504570c00
     mov word ptr [eax], dx                       ; 06016a 668910
     add eax, 2                                   ; 06016d 83c002
-    mov dx, word ptr [dword_c5708]               ; 060170 668b1508570c00
+    mov dx, word ptr [hud_clock_sec]             ; 060170 668b1508570c00
     mov word ptr [eax], dx                       ; 060177 668910
     add eax, 2                                   ; 06017a 83c002
-    mov dx, word ptr [dword_c570c]               ; 06017d 668b150c570c00
+    mov dx, word ptr [hud_clock_tenths]          ; 06017d 668b150c570c00
     mov word ptr [eax], dx                       ; 060184 668910
     add eax, 2                                   ; 060187 83c002
     mov dx, word ptr [word_cc0b0]                ; 06018a 668b15b0c00c00
@@ -8513,13 +8513,13 @@ loc_60a5d:
     mov dword ptr [dword_c540f], eax             ; 060c98 a30f540c00
     add ebx, 2                                   ; 060c9d 83c302
     movsx eax, word ptr [ebx]                    ; 060ca0 0fbf03
-    mov dword ptr [dword_c5704], eax             ; 060ca3 a304570c00
+    mov dword ptr [hud_clock_min], eax           ; 060ca3 a304570c00
     add ebx, 2                                   ; 060ca8 83c302
     movsx eax, word ptr [ebx]                    ; 060cab 0fbf03
-    mov dword ptr [dword_c5708], eax             ; 060cae a308570c00
+    mov dword ptr [hud_clock_sec], eax           ; 060cae a308570c00
     add ebx, 2                                   ; 060cb3 83c302
     movsx eax, word ptr [ebx]                    ; 060cb6 0fbf03
-    mov dword ptr [dword_c570c], eax             ; 060cb9 a30c570c00
+    mov dword ptr [hud_clock_tenths], eax        ; 060cb9 a30c570c00
     add ebx, 2                                   ; 060cbe 83c302
     mov ax, word ptr [ebx]                       ; 060cc1 668b03
     mov word ptr [word_cc0b0], ax                ; 060cc4 66a3b0c00c00
@@ -9516,7 +9516,7 @@ loc_619b7:
 
 ; ====================================================================================================
 ; sub_619c8  [0x619c8, 95 bytes, 21 instructions]
-; called by: sub_62807, sub_62c37
+; called by: goal_milestone_check, sub_62c37
 ; ====================================================================================================
 sub_619c8:
     push 8                                       ; 0619c8 6808000000

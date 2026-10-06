@@ -3933,7 +3933,7 @@ void __watcall ai_ref_pickup_puck(int param_1)
             period_over = 1;
             return;
           }
-          sub_62807();
+          goal_milestone_check();
         }
         else {
 LAB_0004f0b9:

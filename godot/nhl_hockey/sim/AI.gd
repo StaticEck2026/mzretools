@@ -35,6 +35,9 @@ static func dispatch(sim: Sim, e: Entity) -> void:
 		Entity.State.REF_POINT_GOAL: ref_point_goal(sim, e)
 		Entity.State.REF_GET_NEW_PUCK: ref_get_new_puck(sim, e)
 		Entity.State.ALL_GOTO_FACEOFF, Entity.State.BENCH_WAIT: all_goto_faceoff(sim, e)
+		Entity.State.PENALTY_BOX: penalty_box(sim, e)
+		Entity.State.DOOR_OPEN: door_open(sim, e)
+		Entity.State.EXIT_PENALTY_BOX: exit_penalty_box(sim, e)
 		Entity.State.INIT_PERIOD: init_period(sim, e)
 		Entity.State.BREAKAWAY: breakaway(sim, e)
 		_:
@@ -1346,6 +1349,91 @@ static func puck_faceoff2(sim: Sim, e: Entity) -> void:
 		var t := (e.timer_a + 6) >> 3
 		if t <= 2:
 			sim.faceoff_timer = 10 - t
+
+# --------------------------------------------------------------------------------------------
+# penalty box (pen dopen expen)
+# --------------------------------------------------------------------------------------------
+
+## ai_penalty_box (0x4adab): skate to the box at the boards (x = 0xa0, one seat per penalty)
+static func penalty_box(sim: Sim, e: Entity) -> void:
+	if e.flags & Entity.F_BUSY:
+		return
+	var team := sim.team_of(e)
+	if e.flags & Entity.F_STATE_ENTERED:
+		e.flags &= ~Entity.F_STATE_ENTERED
+		e.flags2 |= Entity.F2_UNSELECTABLE
+		e.want_dir = 8
+		var seat := 0
+		for i in team.penalties.size():
+			if team.penalties[i][2] == e.slot:
+				seat = mini(i, 2)
+		var side := 0xb if (e.flags & Entity.F_PLAYER2) else -0xb
+		e.target_y = (seat + 3) * side
+		e.target_x = 0xa0
+		e.timer_a = 0
+		e.flags2 |= Entity.F2_NO_COLLIDE
+		e.push_x = 0
+		e.push_y = 0
+	var dx := e.xi - e.target_x
+	var dy := e.yi - e.target_y
+	if absi(dy) >= 0xd or dx <= -0x19:
+		skate_towards(sim, e, e.target_x, e.target_y)
+		return
+	e.timer_a -= 1
+	if e.timer_a >= 0:
+		return
+	e.timer_a += 8
+	e.flags |= Entity.F_ARRIVED
+	Anim.set_animation(e, Anim.GLIDE)
+	if e.facing != 4:
+		var diff := (4 - e.facing) & 7
+		e.facing = (e.facing + (1 if diff < 5 else -1)) & 7
+	e.vy = 0
+	e.vx = 0x1000
+	if dx > -9:
+		e.vx = 0
+		if e.facing == 4:
+			# over the boards into the box
+			e.flags |= Entity.F_BUSY
+			e.facing = 2
+			Anim.set_animation(e, Anim.FACEOFF)
+			e.flags2 &= ~Entity.F2_PENALIZED
+			e.set_state(Entity.State.DOOR_OPEN)
+
+## ai_door_open (0x4affb): in the box: off the ice until the penalty expires
+static func door_open(_sim: Sim, e: Entity) -> void:
+	if e.flags & Entity.F_BUSY:
+		return
+	if e.line_slot >= 0:
+		e.line_slot = (e.line_slot & 0xff) | ~0xff      # high byte 0xff: hidden, still a skater slot
+		e.frame = -1
+		e.vx = 0
+		e.vy = 0
+
+## ai_exit_penalty_box (0x4b02d): steps back onto the ice next to the box
+static func exit_penalty_box(sim: Sim, e: Entity) -> void:
+	if e.flags & Entity.F_BUSY:
+		return
+	if e.flags & Entity.F_STATE_ENTERED:
+		e.flags = (e.flags & ~(Entity.F_STATE_ENTERED | Entity.F_USER)) | Entity.F_ARRIVED
+		e.flags2 |= Entity.F2_UNSELECTABLE
+		var seat := mini(sim.team_of(e).penalties.size(), 2)
+		var side := 0xb if (e.flags & Entity.F_PLAYER2) else -0xb
+		e.set_pos(0x9e, (seat + 3) * side)
+		e.vx = 0
+		e.vy = 0
+		e.facing = 2
+		e.flags |= Entity.F_BUSY
+		Anim.set_animation(e, 0x7bf)
+		return
+	e.facing = 4
+	e.next_line_slot = -1
+	e.next_roster = -1
+	e.flags &= ~(Entity.F_ARRIVED | Entity.F_USER)
+	e.flags2 &= ~(Entity.F2_UNSELECTABLE | Entity.F2_NO_COLLIDE)
+	e.vx = -0x1000
+	e.frame = 0
+	set_default_state(sim, e)
 
 # --------------------------------------------------------------------------------------------
 # referee (rfaceoff rnorm rcallpen rpickup rgotofo rpointgoal rgetnew)

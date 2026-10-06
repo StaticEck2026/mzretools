@@ -3130,7 +3130,7 @@ loc_33db9:
 ; ====================================================================================================
 ; draw_rink  [0x33dd3, 151 bytes, 47 instructions]
 ; scrolls the pre-rendered rink to the camera position
-; called by: game_loop, sub_480cc, simulate_game_offscreen, instant_replay
+; called by: game_loop, faceoff_wait_loop, simulate_game_offscreen, instant_replay
 ; ====================================================================================================
 draw_rink:
     push 0x10                                    ; 033dd3 6810000000

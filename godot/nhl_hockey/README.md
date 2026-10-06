@@ -30,7 +30,7 @@ behaviour matches the DOS game (see "Porting conventions" below).
 | Step loop, physics | `sim/Sim.gd` | `sim_tick`, `sim_update_players` (update order, friction, speed clamp, gravity), `move_entity`, `collide_boards`, `collide_corner` (puck over the glass), `collide_net` (goals, posts), `sub_53ce5` (players against the net), `collide_neighbours`/`collide_pair` (body contact) |
 | Controls | `sim/Sim.gd`, `sim/Controls.gd` | `control_player` (pass, shot, one timer, switch, hook, body check), `faceoff_control`, `apply_skating` with skating backwards, `skating_turn`, `skating_accelerate`, `stop_skating`, `brake`, `goalie_move`, `switch_to_nearest`, `find_switch_target` |
 | Puck | `sim/PuckLogic.gd` | `puck_update`, `predict_puck_goal_line`, `update_carrier`, `puck_check_players`, `puck_player_interaction`, `goalie_save`, `puck_hits_player`, `attach_puck_to_stick`, `take_puck`, passes (`do_pass`, `pass_to_entity`, `pass_lead`, `pass_lane_ok`), shots (`start_shot`, `shot_control`, `do_shot`, `shot_setup`), checking (`body_check`, `hook_button`, `start_hook`, `start_poke_check`, `try_block_shot`, `resolve_body_check`, `knock_down`) |
-| Rules | `sim/Rules.gd` | `sim_game_state`, `update_stoppage`, `process_infractions`, `start_stoppage` (faceoff spot selection), `queue_infraction`, `game_clock_tick` (24 ticks per second), `score_goal`, `setup_faceoff` (period end), `check_offside`, `check_icing`, `update_offside_flags`, `two_line_pass_check`, `count_defenders_ahead`, the faceoff positioning of `ai_puck_faceoff2`, `faceoff_resolve`, `all_goto_positions` |
+| Rules | `sim/Rules.gd` | `sim_game_state`, `update_stoppage`, `process_infractions`, `start_stoppage` (faceoff spot selection), `queue_infraction`, `penalty_box_update` (serving penalties), `penalty_timers`, `goal_ends_penalty`, `game_clock_tick` (24 ticks per second), `score_goal`, `setup_faceoff` (period end), `check_offside`, `check_icing`, `update_offside_flags`, `two_line_pass_check`, `count_defenders_ahead`, the faceoff positioning of `ai_puck_faceoff2`, `faceoff_resolve`, `all_goto_positions` |
 | AI | `sim/AI.gd` | the state dispatch and the handlers `defo defd wingd wingo centd cento score goalie goalieget puckc nearest shoot passrec fowait faceoff pnorm pshad pnothing pface pface2 rfaceoff rnorm rcallpen rpickup rgotofo rpointgoal rgetnew agotofo initper abreak` plus the helpers `ai_skate_towards`, `ai_chase_puck`, `ai_try_check`, `ai_near_carrier_check`, `ai_ref_positioning`, `ref_skate_to_point`, `ai_consider_shot`, `ai_offense_decision`, `ai_choose_pass_target`, `ai_desperation_shot`, the one timer logic (`sub_50b55`) |
 | Camera | `sim/Sim.gd` | `update_camera` (follows the carrier, the referee during stoppages, the faceoff dot) |
 | View | `view/Main.gd` | 320x200 viewport, 384x592 rink surface, y-sorted sprites with hotspots, mirrored frames, nets, scoreboard/clock/period HUD, queued sound effects |
@@ -38,14 +38,15 @@ behaviour matches the DOS game (see "Porting conventions" below).
 The headless test (`tests/run_tests.gd`) checks the RefPack decoder, the tables, the animation stepping, a
 complete game start (opening faceoff after about 4 seconds, CPU players moving, the clock running), the
 skating controls, a shot into the empty net (goal, whistle, faceoff at centre ice), the end of a period
-(teams switch ends) and a 6000 step game without script errors.
+(teams switch ends), a hooking minor served in the box and a 6000 step game without script errors.
 
 ## Not ported yet, and known simplifications
 
-- Penalties are recognised (hooking, charging, roughing, injuries with the odds of the original) but are
-  served as a plain stoppage: the penalty box, power plays and the penalty shot (`ai_penalty_box`,
-  `ai_exit_penalty_box`, `ai_door_open`, `penalty_box_update`, `ai_ref_penalty_shot`,
-  `ai_all_penalty_shot_wait`) are not ported.
+- Penalties (hooking, charging, roughing, with the odds of the original) are served: the player skates to
+  the box (`ai_penalty_box`, `ai_door_open`), his team plays short handed (faceoff lineups shrink), the
+  penalty runs with the clock (`penalty_timers`) and ends with a power play goal (`goal_ends_penalty`) or
+  by time (`ai_exit_penalty_box`). Not ported: the penalty shot (`ai_ref_penalty_shot`,
+  `ai_all_penalty_shot_wait`), misconducts, injuries, the penalty announcements.
 - Line changes and fatigue (`handle_line_change`, `apply_line_change`, `choose_line`, `ai_bench`,
   `ai_exit_bench`, `ai_bench_wait`, `cpu_line_change`) are not ported; the same six players stay on the
   ice with full energy, so `opt_line_changes` is off.

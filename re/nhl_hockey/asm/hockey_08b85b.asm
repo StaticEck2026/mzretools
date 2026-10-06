@@ -992,7 +992,7 @@ sub_8c223:
 ; randomrange  [0x8c230, 94 bytes, 33 instructions]
 ; EA random(range) 16 bit LCG
 ; annotations: external
-; called by: sub_14056, demo_game, simulate_pending_games, init_match, ai_anthem, ai_ref_anthem, ai_three_stars, ai_ref_three_stars, ai_puck_give_cup, ai_wing_offense, ai_center_offense, ai_celebrate_goal (+48 more)
+; called by: reset_game_state, demo_game, simulate_pending_games, init_match, ai_anthem, ai_ref_anthem, ai_three_stars, ai_ref_three_stars, ai_puck_give_cup, ai_wing_offense, ai_center_offense, ai_celebrate_goal (+48 more)
 ; ====================================================================================================
 randomrange:
     push ebp                                     ; 08c230 55
@@ -1771,7 +1771,7 @@ loc_8c8bf:
 ; direction8  [0x8c8e8, 89 bytes, 39 instructions]
 ; 8-way direction index from a (dx, dy) vector
 ; annotations: external
-; called by: sub_109fc, sub_13c79, ai_ref_anthem, sub_492f9, ai_stanley_cup, ai_goalie, carrier_near_net_check, carrier_scan_opponents, ref_skate_to_point, ai_ref_pickup_puck, ai_ref_point_goal, ai_breakaway (+26 more)
+; called by: sub_109fc, setup_demo_faceoff, ai_ref_anthem, sub_492f9, ai_stanley_cup, ai_goalie, carrier_near_net_check, carrier_scan_opponents, ref_skate_to_point, ai_ref_pickup_puck, ai_ref_point_goal, ai_breakaway (+26 more)
 ; ====================================================================================================
 direction8:
     push ebp                                     ; 08c8e8 55
@@ -8774,7 +8774,7 @@ sub_902a0:
 ; _memset_fill  [0x902b0, 49 bytes, 24 instructions]
 ; byte fill helper of memset
 ; annotations: external
-; called by: fade_palette_to, load_award_stats, sub_14056, intro_sequence, sub_1faa7, season_record_result, savegame_io, fade_palette, sub_7651b, initgraphics, memset, bitlz_decode
+; called by: fade_palette_to, load_award_stats, reset_game_state, intro_sequence, sub_1faa7, season_record_result, savegame_io, fade_palette, sub_7651b, initgraphics, memset, bitlz_decode
 ; ====================================================================================================
 _memset_fill:
     or ecx, ecx                                  ; 0902b0 09c9
@@ -10228,7 +10228,7 @@ sub_90d14:
 ; fillrect  [0x90d20, 415 bytes, 131 instructions]
 ; fillrect(x, y, w, h, color)
 ; annotations: external
-; called by: sub_15707, sub_157bd, sub_29d00, team_select_screen, league_dialog_box, sub_2c46b, draw_dialog_frame, sub_302b9, draw_penalty_box_overlay, draw_message_box, draw_box, highlight_menu_item (+20 more)
+; called by: sub_15707, draw_line_box, sub_29d00, team_select_screen, league_dialog_box, sub_2c46b, draw_dialog_frame, sub_302b9, draw_penalty_box_overlay, draw_message_box, draw_box, highlight_menu_item (+20 more)
 ; ====================================================================================================
 fillrect:
     push esi                                     ; 090d20 56

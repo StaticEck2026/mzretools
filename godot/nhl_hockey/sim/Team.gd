@@ -25,6 +25,7 @@ var flags: int = 0                   # +0x44
 var energy: PackedInt32Array = PackedInt32Array()      # +0x46, 27 x 0..0x1000
 var entity_of: PackedInt32Array = PackedInt32Array()   # +0x7e, 27 x entity slot or -2 (bench)
 var goalie_slot: int = -1            # +0xfa
+var penalties: Array = []            # +0xb6 list: [roster_idx, seconds left, entity slot, minor]
 var first_slot: int = 0              # index of players[0] in Sim.entities
 var attacks_up: bool = false         # the goal this team shoots at is at +y (flags & 0x80 of its players)
 

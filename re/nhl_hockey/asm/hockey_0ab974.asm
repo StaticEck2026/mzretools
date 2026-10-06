@@ -11951,7 +11951,7 @@ loc_b2cac:
 
 ; ====================================================================================================
 ; sub_b2cbe  [0xb2cbe, 15 bytes, 6 instructions]
-; called by: sub_1086a, sub_10ac6, sub_10c7f, sub_11161, sub_2fedf, sub_31250, sub_6bd69, sub_6eab5, database_dialog_box
+; called by: sub_1086a, scan_keyboard_control, sub_10c7f, sub_11161, sub_2fedf, sub_31250, sub_6bd69, sub_6eab5, database_dialog_box
 ; ====================================================================================================
 sub_b2cbe:
     push ebp                                     ; 0b2cbe 55
@@ -12087,7 +12087,7 @@ loc_b2db2:
 ; ====================================================================================================
 ; setmousepos  [0xb2db4, 22 bytes, 8 instructions]
 ; annotations: external
-; called by: sub_10712, handle_hotkey, game_loop, play_game, sub_14056, check_disk_space_for_game, pause_menu, run_menu, menu_page_a, menu_page_b, team_select_screen, league_name_entry (+25 more)
+; called by: sub_10712, handle_hotkey, game_loop, play_game, reset_game_state, check_disk_space_for_game, pause_menu, run_menu, menu_page_a, menu_page_b, team_select_screen, league_name_entry (+25 more)
 ; ====================================================================================================
 setmousepos:
     push ebp                                     ; 0b2db4 55
