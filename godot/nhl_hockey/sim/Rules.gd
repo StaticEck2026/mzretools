@@ -549,6 +549,7 @@ static func update_effects(sim: Sim) -> void:
 			sim.crowd_noise = sim.random(0x20)
 	if sim.excitement > 0:
 		sim.excitement -= 1
+	Crowd.update(sim)
 
 
 ## update_lead_change (0x63c9a)
@@ -615,6 +616,7 @@ static func score_goal(sim: Sim, net: Entity) -> void:
 		else:
 			sim.crowd_noise = maxi(sim.crowd_noise, 800)
 			sim.excitement += 10
+		Crowd.bench_cheer(sim, scorer_team)
 		# everyone celebrates / skates to the bench
 		for i in 6:
 			var p := sim.entities[scoring.first_slot + i]

@@ -55,6 +55,8 @@ var vcr: VcrView
 var pause_menu: PauseMenu
 var box_sprites: Array[Sprite2D] = []   # the players sitting in the penalty boxes (frame 0x17e)
 var end_boards: Sprite2D              # TRINKND.PPV over the sprites near the bottom end (sub_11136)
+var effect_frames: Dictionary = {}    # F000_149.PPV "0000".."0104" (load_effect_frames)
+var crowd_sprites: Array[Sprite2D] = []  # draw_nets_and_effects: 18 figures, per bench base / figure / overlay
 var tick_acc := 0.0                   # 100 Hz timer ticks of the replay speed
 var replay_from_menu := false
 var end_shown := false
@@ -104,6 +106,18 @@ func _ready() -> void:
 		b.visible = false
 		world.add_child(b)
 		box_sprites.append(b)
+	for i in 18 + 6:
+		var c := Sprite2D.new()
+		c.centered = false
+		c.visible = false
+		c.z_index = -600 + i
+		world.add_child(c)
+		crowd_sprites.append(c)
+	var fx_bank := _bank("f000_149")
+	if fx_bank != null:
+		for sh in fx_bank.shapes:
+			if sh.is_image() and sh.name.strip_edges().is_valid_int():
+				effect_frames[int(sh.name)] = sh
 	end_boards = Sprite2D.new()
 	end_boards.centered = false
 	end_boards.visible = false
@@ -411,16 +425,40 @@ func _update_view() -> void:
 	for i in ents.size():
 		var e = ents[i]
 		var visible: bool = e.on_ice() or e.slot == Entity.Slot.PUCK or e.slot == Entity.Slot.NET_TOP or e.slot == Entity.Slot.NET_BOTTOM
+		var z: int = WORLD_Y - e.yi
+		var force_mirror := false
 		if e.slot == Entity.Slot.SHADOW:
+			# draw_sprites: the shadow entity shows the puck's shadow (0x189) while the puck is up,
+			# frames 0x22a..0x237 (over the end boards behind the bottom goal line), 0x284..0x288
+			# mirrored on the left; draw_nets_and_effects draws the Stanley Cup (frames > 0x361)
+			var f: int = e.frame
+			var puck_e = ents[Entity.Slot.PUCK]
 			visible = false
-		if e.slot == Entity.Slot.PUCK and (e.zi < 0 or carrier == Entity.Slot.REFEREE):
-			visible = false      # in the referee's hand
+			if f >= 0x284 and f <= 0x288:
+				visible = true
+				force_mirror = e.xi < 0
+			elif f == 0x189 and puck_e.zi >= 0 and carrier != Entity.Slot.REFEREE:
+				visible = true
+			elif f > 0x229 and f < 0x238:
+				visible = true
+				if e.yi < 0:
+					z = 4100
+			elif f > 0x361 and mode != Mode.REPLAY and sim.intermission_camera:
+				visible = true
+				z = -550
+		if e.slot == Entity.Slot.PUCK:
+			if e.zi < 0 or carrier == Entity.Slot.REFEREE:
+				visible = false      # in the referee's hand
+			elif carrier >= 0 or e.zi <= 0xc:
+				z = -400             # under the players (drawn before them); in the air it is sorted in
+			if carrier < 0 and e.yi < -0x108 and e.zi >= 0:
+				z = 4100             # behind the bottom goal line: over the end boards
 		var sx: int = e.xi + WORLD_X
 		var sy: int = WORLD_Y - e.yi - (e.zi * 3) / 2
 		var spr := sprites[i]
 		var ph := placeholders[i]
 		if assets_ok and e.frame >= 0 and frames.has(e.frame):
-			var mirrored: bool = (e.flags4 & Entity.F4_MIRROR) != 0 and e.slot < 12
+			var mirrored: bool = ((e.flags4 & Entity.F4_MIRROR) != 0 and e.slot < 12) or force_mirror
 			var team := _remap_team(e.slot)
 			var shape: Shpi.Shape = frames[e.frame]
 			spr.texture = _texture(e.frame, team, mirrored)
@@ -428,7 +466,7 @@ func _update_view() -> void:
 			var cx := shape.width - 1 - shape.center_x if mirrored else shape.center_x
 			spr.offset = Vector2(-cx, -shape.center_y)
 			spr.position = Vector2(sx, sy)
-			spr.z_index = WORLD_Y - e.yi
+			spr.z_index = z
 			spr.visible = visible
 			ph.visible = false
 		else:
@@ -437,6 +475,7 @@ func _update_view() -> void:
 			ph.z_index = WORLD_Y - e.yi
 			ph.visible = visible and not (assets_ok and e.slot < 12)
 	_update_box(scene["box"])
+	_update_crowd()
 	# draw_sprites: the near end boards cover the sprites when the camera is at the bottom end
 	var cam_y := sim.camera_y
 	if mode == Mode.REPLAY and sim.replay.frame != null:
@@ -444,6 +483,60 @@ func _update_view() -> void:
 	end_boards.visible = end_boards.texture != null and cam_y < -0x90
 	_update_markers(scene)
 	overlay.queue_redraw()
+
+## draw_nets_and_effects: the 18 figures at their spots (mirrored at the bottom end), then the
+## away and the home bench: the base picture 0x60 under overlay frames (> 100) or when nobody
+## stands up, the bench frame in the team colours, and frame 100 over the home bench
+func _update_crowd() -> void:
+	var ids: Array = []
+	var counters: Array = []
+	if mode == Mode.REPLAY and sim.replay.frame != null:
+		ids = sim.replay.frame.effect_ids
+		counters = sim.replay.frame.effect_frames
+	else:
+		for r: Crowd.Record in sim.crowd:
+			ids.append(r.id)
+			counters.append(r.counter)
+	for c in crowd_sprites:
+		c.visible = false
+	if not assets_ok or effect_frames.is_empty() or ids.size() < 20:
+		return
+	for i in 18:
+		var id: int = ids[i]
+		if id < 0:
+			continue
+		var spot: Array = Tables.crowd_spots[id]
+		_effect(crowd_sprites[i], Crowd.frame_of(id, counters[i]), spot[0], spot[1], spot[1] > 0xc0, -1)
+	var k := 18
+	for team in [1, 0]:
+		var rec: int = 0x13 if team == 1 else 0x12
+		var id: int = ids[rec]
+		var f := -1 if id < 0 else Crowd.frame_of(id, counters[rec])
+		if f > 100 or id < 0:
+			_effect(crowd_sprites[k], 0x60, 4, Tables.bench_y[team], false, team)
+		k += 1
+		if f >= 0:
+			var spot: Array = Tables.crowd_spots[id]
+			_effect(crowd_sprites[k], f, spot[0], spot[1], false, team)
+		k += 1
+		if team == 0:
+			_effect(crowd_sprites[k], 100, 4, Tables.bench_y[0], false, -1)
+		k += 1
+
+func _effect(spr: Sprite2D, frame: int, x: int, y: int, mirror: bool, team: int) -> void:
+	if not effect_frames.has(frame):
+		spr.visible = false
+		return
+	var shape: Shpi.Shape = effect_frames[frame]
+	var key := "fx%d|%d|%d" % [frame, team, 1 if mirror else 0]
+	if not tex_cache.has(key):
+		tex_cache[key] = shape.to_texture(palette.colors, palette.table(team, mirror) if team >= 0 else PackedByteArray())
+	spr.texture = tex_cache[key]
+	spr.flip_h = mirror
+	var cx := shape.width - 1 - shape.center_x if mirror else shape.center_x
+	spr.offset = Vector2(-cx, -shape.center_y)
+	spr.position = Vector2(x, y)
+	spr.visible = true
 
 ## draw_sprites: the players sitting in the boxes, frame 0x17e at (0xb3, -(n + 3) * 0xb) for the
 ## home team and (0xb3, (n + 3) * 0xb) for the visitors, up to three each

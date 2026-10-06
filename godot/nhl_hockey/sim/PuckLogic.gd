@@ -1168,7 +1168,8 @@ static func knock_down(sim: Sim, hitter: Entity, victim: Entity) -> void:
 						Rules.queue_infraction(sim, hitter, Rules.INF_INJURY)
 						return
 			elif (victim.facing & 3) == 0 and hitter.aggression > 9 and hitter.slot < 12:
-				anim = 0x993               # a big hit (the crowd chants)
+				anim = 0x993               # a big hit: the hitter's bench cheers
+				Crowd.bench_cheer(sim, hitter.team)
 			else:
 				anim = 0x681               # spins down sideways
 		else:

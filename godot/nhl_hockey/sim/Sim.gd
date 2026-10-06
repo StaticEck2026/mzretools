@@ -94,6 +94,8 @@ var box_count := [0, 0]            # penalized_count / byte_e9abb: players sitti
 var last_sfx := -1                 # crowd_noise low word: the last play_sfx id (recorded by the replay)
 var replay_disabled := false       # game_flags 0x10: nothing is recorded
 var replay := Replay.new()
+var crowd: Array = []              # unk_dee94: Crowd.Record x 20 (the figures around the ice and the benches)
+var crowd_busy := PackedByteArray() # unk_e9b2a: spots in use
 var injury_stoppage := false       # dword_cbec6: a player was hurt; the faceoff follows without the referee's walk
 var fade_in := false               # word_cbec4: the view cuts (fades in) to the next scene
 var penalty_box_mode := false      # word_c90de: a penalty is being handed out (no new calls)
@@ -196,6 +198,7 @@ func _init() -> void:
 
 ## init_match: team records for a new game (lines, strategy, energy), then the first period
 func new_game() -> void:
+	Crowd.reset(self)
 	for t in 2:
 		var team := teams[t]
 		team.info = team_info[t]
@@ -515,14 +518,11 @@ func play_sfx(id: int) -> void:
 		id = 0x91
 	sfx_queue.append(id)
 
-## the effect records for the replay frame (10 frame nibble bytes, 20 id bytes)
+## the crowd figures for the replay frame (10 frame counter bytes, 20 spot bytes)
 func effect_record_bytes() -> PackedByteArray:
-	var out := PackedByteArray()
-	out.resize(30)
-	out.fill(0xff)
-	for i in 10:
-		out[i] = 0
-	return out
+	if crowd.size() < Crowd.RECORDS:
+		Crowd.reset(self)
+	return Crowd.record_bytes(self)
 
 func add_crowd(amount: int, cap: int) -> void:
 	if crowd_noise < cap + 1:

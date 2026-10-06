@@ -118,6 +118,12 @@ def main():
     t['penalty_names'] = [cstr(le, le.read_u32(0xcd304 + i * 4)) for i in range(18)]
     t['star_names'] = [cstr(le, le.read_u32(0xcca0a + i * 4)) for i in range(3)]
     t['announcer_ppv_names'] = [cstr(le, le.read_u32(0xcbed0 + i * 4)) for i in range(11)]
+    # draw_nets_and_effects / update_effects: the animated crowd figures and the benches. Per
+    # figure (aGgG + 2) the position on the rink surface and the offset of its frame sequence in
+    # unk_cce00 ([n, frame, ...], n < 0: the last frames repeat at random); frames of F000_149.PPV
+    t['crowd_spots'] = [shorts(le, 0xccef8 + i * 6, 3) for i in range(0xab)]
+    t['crowd_sequences'] = list(struct.unpack('<248b', le.read(0xcce00, 248)))   # runs into 'ggG' (aGgG is data)
+    t['bench_y'] = [shorts(le, 0xcd2f8 + i * 4 + 2, 1)[0] for i in range(2)]
     # team names and cities (table of 0xba byte records is runtime data; the fixed list of full
     # names follows the abbreviations in the data object)
     names = []

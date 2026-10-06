@@ -110,7 +110,9 @@ func run_tests() -> void:
 		sim.step(8, 8, 0, 0)
 		for j in 12:
 			var p := sim.entities[j]
-			if p.line_slot >= 0 and (absi(p.xi) > 160 or absi(p.yi) > 264):
+			var at_door := p.state() in [Entity.State.BENCH, Entity.State.BENCH_WAIT, Entity.State.EXIT_BENCH,
+				Entity.State.PENALTY_BOX, Entity.State.DOOR_OPEN, Entity.State.EXIT_PENALTY_BOX]
+			if p.line_slot >= 0 and not at_door and (absi(p.xi) > 160 or absi(p.yi) > 264):
 				fail("player %d left the rink: %d,%d at step %d" % [j, p.xi, p.yi, i])
 				break
 		if absi(sim.puck.xi) > 170 or absi(sim.puck.yi) > 270:
@@ -384,6 +386,7 @@ func asset_tests() -> void:
 		match_rules_tests(bos, det)
 		ceremony_tests(bos, det)
 		replay_tests(bos, det)
+		crowd_tests(bos, det)
 	# sound effects: 30 digital samples, the goal horn (0x9c) is the 7 second sample
 	var snd := Sounds.load_bank(gf.read_raw("pcff001.pat"), gf.read_raw("pcff001.tim"), gf.read_raw("pcff001.dig"))
 	if snd == null or snd.sample_count != 30 or snd.timbre_count != 30:
@@ -848,3 +851,34 @@ func replay_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 	if r.wrapped and r.frame_count() != Replay.FRAMES:
 		fail("replay: %d frames in a full ring" % r.frame_count())
 	print("replay: %d frames, wrapped %s" % [r.frame_count(), r.wrapped])
+
+## the crowd figures: idle at the start, distinct spots, sequences of F000_149 frames, the bench
+## cheers a goal
+func crowd_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
+	var sim := Sim.new()
+	sim.set_teams(bos, det)
+	for r: Crowd.Record in sim.crowd:
+		if r.id != -1 or r.timer < 60 or r.timer > 99:
+			fail("crowd record at the start: id %d timer %d" % [r.id, r.timer])
+			break
+	for i in 300:
+		sim.step(8, 8, 0, 0)
+	var seen := {}
+	var active := 0
+	for i in 18:
+		var r: Crowd.Record = sim.crowd[i]
+		if r.id < 0:
+			continue
+		active += 1
+		if seen.has(r.id):
+			fail("crowd spot %d used twice" % r.id)
+		seen[r.id] = true
+		if r.frame != Crowd.frame_of(r.id, r.counter) or r.frame < 0 or r.frame > 104:
+			fail("crowd frame %d of spot %d counter %d" % [r.frame, r.id, r.counter])
+	if active < 5:
+		fail("only %d crowd figures after 300 steps" % active)
+	Crowd.bench_cheer(sim, 1)
+	var bench: Crowd.Record = sim.crowd[Crowd.AWAY_BENCH]
+	if bench.id != 0x88 or bench.y != Tables.bench_y[1]:
+		fail("away bench cheer: spot %d at y %d" % [bench.id, bench.y])
+	print("crowd: %d figures after 300 steps" % active)

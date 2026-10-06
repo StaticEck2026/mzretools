@@ -234,6 +234,7 @@ static func period_end(sim: Sim) -> void:
 		sim.entities[i].flags &= ~Entity.F_USER
 	var winner := 1 if diff < 0 else 0
 	var team := sim.teams[winner]
+	Crowd.bench_cheer(sim, winner)
 	var first := winner * 6
 	var taker := first
 	if sim.cup_final:
@@ -404,6 +405,7 @@ static func get_cup(sim: Sim, e: Entity) -> void:
 			e.pass_target = 0
 			e.flags |= Entity.F_BUSY
 			Anim.set_animation(e, 0xe83)
+			Crowd.bench_cheer(sim, e.team)
 			if e.roster_idx >= 0 and e.roster_idx < 28:
 				sim.team_of(e).energy[e.roster_idx] = 0x800
 			AI.default_skate(sim, e)

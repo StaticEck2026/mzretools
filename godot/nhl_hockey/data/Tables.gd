@@ -46,6 +46,9 @@ static var clip_scripts: Array = []              # scoreboard clips: [count, fra
 static var clip_frame_steps: Array = []           # steps per clip frame
 static var clip_closes: Array = []                # the panel closes after the clip
 static var announcer_ppv_names: PackedStringArray  # the clip files (FANOM, GOAL, CLAP ...) of InfoPanel.CLIP_*
+static var crowd_spots: Array = []                # per crowd figure: [x, y, offset in crowd_sequences] on the rink surface
+static var crowd_sequences: PackedInt32Array      # [n, frame, ...] (n < 0: the last frames repeat at random), F000_149.PPV frames
+static var bench_y: PackedInt32Array              # y of the home / away bench (unk_cd2f8)
 static var penalty_names: PackedStringArray       # show_penalty: name per penalty (type - 9)
 static var anthem_country: Array = []             # init_match: 0 Canada, 1 USA per team
 static var anthem_length: Array = []              # steps of the anthem per country
@@ -115,6 +118,9 @@ static func load_tables() -> void:
 	clip_frame_steps = _ints(t["clip_frame_steps"])
 	clip_closes = _ints(t["clip_closes"])
 	announcer_ppv_names = PackedStringArray(t["announcer_ppv_names"])
+	crowd_spots = t["crowd_spots"]
+	crowd_sequences = PackedInt32Array(t["crowd_sequences"])
+	bench_y = PackedInt32Array(t["bench_y"])
 	penalty_names = PackedStringArray(t["penalty_names"])
 	anthem_country = _ints(t["anthem_country"])
 	anthem_length = _ints(t["anthem_length"])
