@@ -444,23 +444,77 @@ def write_wav(path, sample):
         f.write(hdr + b'data' + struct.pack('<I', len(pcm)) + pcm)
 
 # ----------------------------------------------------------------------------------------------
-# VIV speech bank index (speech_load_bank @0x83897) - layout partially verified
+# VIV speech bank (speech_load_bank @0x83897, sub_83bf3, bytepair_decode @0x97a38) - verified
 # ----------------------------------------------------------------------------------------------
 
 def read_viv_index(data):
-    '''Header: three big endian u16 values (unknown, entry count, unknown), followed by one entry
-    per clip: u32 BE offset, u32 BE size, zero terminated name. Returns [(name, offset, size)].'''
-    v0, count, v2 = struct.unpack_from('>3H', data, 0)
+    '''EA 0xC0FB archive: u16 BE 0xC0FB, u16 BE index size, u16 BE entry count, then per entry a
+    24 bit BE offset, a 24 bit BE size (read_be32 reads three bytes) and a zero terminated name.
+    Returns [(name, offset, size)] (XBRUCE2.VIV stores 8 of its .int names twice).'''
+    magic, hsize, count = struct.unpack_from('>3H', data, 0)
+    if magic != 0xc0fb:
+        raise ValueError('not a C0FB archive')
     pos = 6
     out = []
     for _ in range(count):
-        off, size = struct.unpack_from('>II', data, pos)
-        pos += 8
+        off = int.from_bytes(data[pos:pos + 3], 'big')
+        size = int.from_bytes(data[pos + 3:pos + 6], 'big')
+        pos += 6
         end = data.index(b'\0', pos)
-        name = data[pos:end].decode('latin-1')
+        out.append((data[pos:end].decode('latin-1'), off, size))
         pos = end + 1
-        out.append((name, off, size))
     return out
+
+def bytepair_decode(src):
+    '''Pack code 0x46/0x47 (unpack -> bytepair_decode): 0x47 0xFB, 3 bytes, the unpacked size (24 bit
+    BE), the escape byte, the number of pairs, the pairs (code, left, right); then the data: a
+    pair code expands recursively, the escape byte is followed by a literal (0 ends the data).'''
+    q = 5 if src[0:2] == b'\x47\xfb' else 2
+    total = int.from_bytes(src[q:q + 3], 'big')
+    flag = [0] * 256
+    left = [0] * 256
+    right = [0] * 256
+    flag[src[q + 3]] = 1
+    r = q + 5
+    for _ in range(src[q + 4]):
+        c = src[r]
+        left[c], right[c], flag[c] = src[r + 1], src[r + 2], 0xff
+        r += 3
+    out = bytearray()
+    while r < len(src) and len(out) < total:
+        b = src[r]
+        r += 1
+        if flag[b] == 0:
+            out.append(b)
+        elif flag[b] == 0xff:
+            stack = [b]
+            while stack:
+                c = stack.pop()
+                if flag[c] == 0xff:
+                    stack += [right[c], left[c]]
+                else:
+                    out.append(c)
+        else:
+            lit = src[r]
+            r += 1
+            if lit == 0:
+                break
+            out.append(lit)
+    return bytes(out)
+
+def viv_clip(data, off, size):
+    '''A speech clip as a Sample: raw entries are unsigned 8 bit at 5512 Hz, packed ones (0x47 0xFB)
+    unpack to a 5 byte header and a running sum of signed 8 bit samples at 11025 Hz.'''
+    raw = data[off:off + size]
+    if raw[0:2] == b'\x47\xfb':
+        un = bytepair_decode(raw)
+        acc = 0
+        pcm = bytearray()
+        for b in un[5:]:
+            acc = (acc + b) & 0xff
+            pcm.append(acc)
+        return Sample(11025, bytes(pcm))
+    return Sample(5512, bytes(b ^ 0x80 for b in raw))
 
 # ----------------------------------------------------------------------------------------------
 # Rink tiles (.til) and tile map (.map)

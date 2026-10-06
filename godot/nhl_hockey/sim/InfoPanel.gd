@@ -106,6 +106,7 @@ static func _log(sim: Sim, entry: Array) -> void:
 static func announce_goal(sim: Sim, team: int, scorer: int, assist1: int, assist2: int) -> void:
 	var t := elapsed(sim)
 	_log(sim, ["goal", team, scorer, assist1, assist2, sim.period, t.x, t.y])
+	sim.goal_call = [team, scorer, assist1, assist2]       # said once the panel is up (ref_pickup)
 	if team == 0:
 		load_clip(sim, CLIP_GOAL if sim.random(0x14) < 10 else CLIP_SIREN)
 	var scoring := sim.teams[team]
@@ -127,7 +128,7 @@ static func announce_goal(sim: Sim, team: int, scorer: int, assist1: int, assist
 ## record_penalty (0x624b9) and show_penalty type 2: "12:34 BOS Penalty", the player, the
 ## penalty, "2 minutes" / "game misconduct"; or the penalty shot. A clip of the crowd (GUILTY for
 ## an away penalty now and then) or of the foul when the panel is free.
-static func record_penalty(sim: Sim, team: int, roster: int, type: int, minutes: int) -> void:
+static func record_penalty(sim: Sim, team: int, roster: int, type: int, minutes: int, queue_index: int = 0) -> void:
 	var t := elapsed(sim)
 	_log(sim, ["penalty", team, roster, type, sim.period, t.x, t.y])
 	var idx := type - 9
@@ -158,6 +159,24 @@ static func record_penalty(sim: Sim, team: int, roster: int, type: int, minutes:
 	open(sim)
 	if sim.crowd_noise > 400:
 		sim.crowd_noise = 400
+	# the announcer (say_penalty_shot / say_penalty): "and number" for the next penalty of the same
+	# team, "penalties on" when another one of the team is queued, the time after the last one
+	if idx == 0x11:
+		var st := sim.penalty_shot_team
+		Speech.say(sim, Speech.penalty_shot(Speech.abbrev(sim, st), Speech.number(sim, st, sim.penalty_shot_roster), t.x, t.y))
+		return
+	var first := sim.last_penalty_team != team
+	if first:
+		sim.last_penalty_team = team
+	var count := 1 if first else 2
+	if queue_index > 0 and queue_index - 1 < sim.infractions.size():
+		var nxt: int = sim.infractions[queue_index - 1][1]
+		if nxt < 12 and (1 if nxt >= 6 else 0) == team:
+			count += 1
+	Speech.say(sim, Speech.penalty(Speech.abbrev(sim, team), Speech.number(sim, team, roster), minutes, type, t.x, t.y,
+		first, count, queue_index == 0))
+	if queue_index == 0:
+		sim.last_penalty_team = -1
 
 ## announce_injury (0x62764) and show_penalty type 3
 static func announce_injury(sim: Sim, team: int, roster: int, for_game: bool) -> void:
@@ -169,9 +188,10 @@ static func announce_injury(sim: Sim, team: int, roster: int, for_game: bool) ->
 		"gone for the game" if for_game else "gone for 1 period", "", ""])
 	open(sim)
 
-## play_speech: the announcer line is queued for the audio layer (XBRUCE2.VIV)
-static func speech(sim: Sim, id: int) -> void:
-	sim.speech_queue.append(id)
+## play_speech (0x59a11): a song of the music driver (the organ: 0..5 the home team's, 6..8
+## random ones, 9 the clapping, 10 the anthem, 11 ...), queued for the audio layer
+static func music(sim: Sim, id: int) -> void:
+	sim.music_queue.append(id)
 
 ## the announcer and crowd clips are on: option byte 2 bit 0 and sound
 static func speech_on(sim: Sim) -> bool:
@@ -190,15 +210,15 @@ static func ref_announcements(sim: Sim) -> bool:
 		return false
 	if sim.clock_seconds < sim.period_length / 2 and sim.clock_seconds > 0x3b and sim.half_announce:
 		sim.half_announce = false
-		speech(sim, 2)
+		music(sim, 2)
 		return false
 	if sim.period == 2 and sim.clock_seconds <= sim.announce_time:
 		sim.announce_time = -1
-		speech(sim, 5)
+		music(sim, 5)
 		return false
 	var d := sim.teams[1].skaters_on_ice - sim.teams[0].skaters_on_ice
 	if speech_on(sim) and d != 0 and sim.random(4) == 0:
-		speech(sim, 1 if d < 1 else 4)
+		music(sim, 1 if d < 1 else 4)
 		return false
 	var r := sim.random(8)
 	if r == 0:
@@ -208,11 +228,11 @@ static func ref_announcements(sim: Sim) -> bool:
 			return true
 	elif r == 1:
 		load_clip(sim, CLIP_CLAP)
-		speech(sim, 9)
+		music(sim, 9)
 		open(sim)
 		return true
 	elif r < 5:
-		speech(sim, r + 4)
+		music(sim, r + 4)
 	elif r == 5:
-		speech(sim, 0xb)
+		music(sim, 0xb)
 	return false

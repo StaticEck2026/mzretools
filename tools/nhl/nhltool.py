@@ -9,7 +9,7 @@
 #   nhltool.py wav FILE OUT.wav            convert an 8SVX sample to WAV
 #   nhltool.py font FONT.VFN OUT.png       render the glyph sheet of a 1 bpp font
 #   nhltool.py rink RINK.TIL RINK.MAP OUT.png [--pal PALFILE]
-#   nhltool.py viv FILE [OUTDIR]           list or extract an announcer speech bank
+#   nhltool.py viv FILE [OUTDIR]           list an announcer speech bank or export its clips as WAV
 #   nhltool.py sprites GAMEDIR OUTDIR      export the 1134 player sprite frames (banks 000_049.PPV ...)
 #                                          --home/--away team indices, --team 0|1 jersey colours, --mirrored
 #   nhltool.py rinkfull GAMEDIR OUT.png    the rink surface with the home team's centre ice logo
@@ -21,7 +21,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from formats import (ShapeBank, Font, load_sample, write_wav, read_viv_index, render_tile_map,  # noqa: E402
+from formats import (ShapeBank, Font, load_sample, write_wav, read_viv_index, viv_clip, render_tile_map,  # noqa: E402
                      write_png, unpack, pack_code, PackError, game_palette, mirrored_remap, SoundBank,
                      write_wav_pcm8, place_tile_map)
 
@@ -135,9 +135,8 @@ def cmd_viv(args):
     if args.outdir:
         os.makedirs(args.outdir, exist_ok=True)
         for name, off, size in entries:
-            with open(os.path.join(args.outdir, name), 'wb') as f:
-                f.write(data[off:off + size])
-        print(f"extracted {len(entries)} clips to {args.outdir}")
+            write_wav(os.path.join(args.outdir, name.lower() + '.wav'), viv_clip(data, off, size))
+        print(f"extracted {len(entries)} clips to {args.outdir} as WAV")
 
 def team_palette(args):
     '''--gamedir/--home/--away: the match palette with the jersey colours of the two teams'''

@@ -148,14 +148,28 @@ Timbres are matched to the samples by their length (three pairs share a length; 
 The `.KMS` files are the organ songs and jingles for the music driver (`music_load_kms`, `load_music_banks`), with
 a `.CFG` each; `.BGP` are the sound card drivers and `.SCN`/`.PAT`/`.TIM` their patch sets.
 
-## Announcer speech (`speech_load_bank`, `speech_queue_clip`)
+## Announcer speech (`speech_load_bank`, `speech_queue_clip`, `speech_release_clip`)
 
 The clips referenced in the code (`pause.cor`, `goalnum.cor`, `scor1per.bar`, `nhl.int`, `roughing.pen`, ...) are
-not separate files: they are entries of a speech bank, `XBRUCE2.VIV`. *Unverified* index layout:
-three big endian u16 values (unknown, entry count, unknown) followed by, per entry, u32 BE offset, u32 BE size and
-a zero terminated name. Entries whose data starts with `'G'` carry a 6 byte header before the sample
-(`speech_load_bank` subtracts 5 from the size); the others are raw. A sentence is built by queueing clips
-(`speech_queue_clip`) and played with `speech_play_sentence` (`say_goal`, `say_penalty`, `say_time_remaining`...).
+entries of the speech bank `XBRUCE2.VIV`, an EA `0xC0FB` archive: u16 BE `0xC0FB`, u16 BE size of the index,
+u16 BE entry count (344), then per entry a 24 bit BE offset, a 24 bit BE size (`read_be32` reads three bytes)
+and a zero terminated name (eight `.int` names appear twice). An entry is either raw unsigned 8 bit PCM played
+at 5512 Hz (`speech_load_bank`: duration = size * 100 / 5512 ticks) or packed with pack code `0x47 0xFB`
+(`unpack` -> `bytepair_decode`, 0x97a38): 3 bytes, the unpacked size (24 bit BE), the escape byte, the number
+of byte pairs and the pairs (code, left, right); in the data a pair code expands recursively (`sub_979f8`),
+the escape byte is followed by a literal, an escape followed by 0 ends it. The unpacked data skips a 5 byte
+header and is a running sum (`sub_83bf3`) of signed 8 bit samples at 11025 Hz. Clip types: `.num` numbers
+(`0`..`99`, `01`..`09` for the seconds), `.tea` / `.frm` / `.hom` / `.awa` team names (by `team_abbrev`),
+`.rnk` arenas, `.pen` penalties, `.cor` / `.bar` / `.int` phrases.
+
+`speech_queue_clip` only loads a clip (once per sentence); `speech_release_clip` appends it to the playback
+list, so the release order is what is said: `say_goal` "bos.tea goalnum.cor 12.num [pause.cor asstnum.cor
+77.num [pause.cor andnum.cor 8.num]]", `say_penalty` "det.tea pennum.cor (pensnum.cor when more are queued,
+andnum.cor for the next one of the same team) 19.num pause.cor 2min.cor|5min.cor|gamemisc.cor hooking.pen
+pause.cor [at.cor pause.cor 12.num 05.num]", `say_penalty_shot`, `say_star` "3rdstar.cor bos.frm pause.cor
+number.cor 77.num", `sub_854ac` "oneleft.cor" (one minute left, from `game_clock_tick`; without speech the
+tone 0x97). The timer routine `sub_832bc` (100 Hz) starts each clip 0x1a ticks before the previous one ends
+and keeps `speech_busy` set 0x1a ticks after the last. `nhltool.py viv XBRUCE2.VIV OUT` exports the clips as WAV.
 
 ## Rink (`load_rink`, `load_rink_tiles`)
 

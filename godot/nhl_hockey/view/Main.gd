@@ -42,6 +42,7 @@ var letter_shapes: Dictionary = {}    # line slot -> NUMSHP position letter
 var assets_ok := false
 
 var sounds: Sounds
+var announcer: Announcer             # XBRUCE2.VIV sentences (Speech.gd)
 var sfx_players: Array[AudioStreamPlayer] = []
 var crowd_player: AudioStreamPlayer
 var sfx_on := true                    # option_flags 0x80 (S)
@@ -334,6 +335,8 @@ func _stop_sounds() -> void:
 	for p in sfx_players:
 		p.stop()
 	sim.sfx_queue.clear()
+	if announcer != null:
+		announcer.stop()
 
 ## handle_hotkey: F1-F4 lines of player 1, F5-F8 lines of player 2, F9 / F10 pull the goalie,
 ## Tab the numbers of every player, S the sound effects, M the music (the crowd loop)
@@ -744,6 +747,10 @@ func _load_assets() -> void:
 			var s := numshp.find(letters[k])
 			if s != null:
 				letter_shapes[k] = s.to_texture(palette.colors, palette.table(0, false))
+	# the announcer (speech_load_bank: XBRUCE2.VIV)
+	announcer = Announcer.new()
+	add_child(announcer)
+	announcer.setup(sim, Viv.parse(GameFiles.read_raw("xbruce2.viv")))
 	# sound effects (PCFF001.PAT / .TIM / .DIG)
 	sounds = Sounds.load_bank(GameFiles.read_raw("pcff001.pat"), GameFiles.read_raw("pcff001.tim"), GameFiles.read_raw("pcff001.dig"))
 	if sounds != null and sounds.has(Sounds.CROWD_LOOP):

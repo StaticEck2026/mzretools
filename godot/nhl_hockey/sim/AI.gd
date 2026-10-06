@@ -1993,6 +1993,18 @@ static func ref_pickup(sim: Sim, e: Entity) -> void:
 	# the referee waits while the panel opens and plays its clip (not for the fans or the clapping)
 	if sim.clip != InfoPanel.CLIP_CLAP and sim.clip != InfoPanel.CLIP_FAN_ANTHEM and sim.panel >= 0 and sim.panel < InfoPanel.HELD:
 		Anim.set_animation(e, Anim.REF_GLIDE)
+		# the goal is announced once the panel was up for a while (say_goal_wrapper); after an
+		# overtime goal the panel opens again
+		if sim.panel >= 0xec and not sim.goal_call.is_empty():
+			var g: Array = sim.goal_call
+			var assists: Array = []
+			for k in [2, 3]:
+				if g[k] >= 0:
+					assists.append(Speech.number(sim, g[0], g[k]))
+			Speech.say(sim, Speech.goal(Speech.abbrev(sim, g[0]), Speech.number(sim, g[0], g[1]), assists))
+			sim.goal_call = []
+			if sim.period >= 3:
+				sim.panel = 0x38
 		return
 	var puck := sim.puck
 	if not sim.infractions.is_empty():

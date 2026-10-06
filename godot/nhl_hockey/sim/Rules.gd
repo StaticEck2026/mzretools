@@ -156,7 +156,7 @@ static func penalty_box_update(sim: Sim) -> void:
 		if minutes < 0:
 			sim.infractions.pop_back()
 			e.flags2 &= ~Entity.F2_PENALIZED
-			game_misconduct(sim, e)
+			game_misconduct(sim, e, sim.infractions.size())
 			ref_announce(sim, type, e.slot)
 			return
 		if minutes > 0:
@@ -178,7 +178,7 @@ static func penalty_box_update(sim: Sim) -> void:
 					return
 				inf[1] = server.slot
 			sim.infraction_type_served = type
-			serve_penalty(sim, e, minutes, server)
+			serve_penalty(sim, e, minutes, server, sim.infractions.size() - 1)
 			e.flags2 &= ~Entity.F2_PENALIZED
 			ref_announce(sim, type, e.slot)
 			return
@@ -189,7 +189,7 @@ static func penalty_box_update(sim: Sim) -> void:
 
 ## the player goes to the penalty box (penalty_box_update, record_penalty)
 ## (the culprit's minutes and the panel entry; server is the skater who sits in the box)
-static func serve_penalty(sim: Sim, e: Entity, minutes: int, server: Entity = null) -> void:
+static func serve_penalty(sim: Sim, e: Entity, minutes: int, server: Entity = null, queue_index: int = 0) -> void:
 	if server == null:
 		server = e
 	var team := sim.team_of(e)
@@ -199,7 +199,7 @@ static func serve_penalty(sim: Sim, e: Entity, minutes: int, server: Entity = nu
 	team.penalties.append([server.roster_idx, minutes * 60, server.slot, minutes == 2])
 	if not sim.no_stats:
 		team.add_stat(e.roster_idx, Team.ST_PIM, minutes)
-	InfoPanel.record_penalty(sim, team.index, e.roster_idx, sim.infraction_type_served, minutes)
+	InfoPanel.record_penalty(sim, team.index, e.roster_idx, sim.infraction_type_served, minutes, queue_index)
 	if server != e:
 		sim.panel_text[4] = "served by #%d" % server.number
 	if server.roster_idx >= 0:
@@ -523,7 +523,7 @@ static func end_penalty_shot(sim: Sim) -> void:
 
 ## the game misconduct of penalty_box_update (infraction_is_penalty -1): the player is out for the
 ## game and skates off (ai_game_misconduct), no one serves time in the box
-static func game_misconduct(sim: Sim, e: Entity) -> void:
+static func game_misconduct(sim: Sim, e: Entity, queue_index: int = 0) -> void:
 	if e.slot >= 12 or e.roster_idx < 0:
 		return
 	var team := sim.team_of(e)
@@ -533,7 +533,7 @@ static func game_misconduct(sim: Sim, e: Entity) -> void:
 		e.set_state(Entity.State.GAME_MISCONDUCT)
 	team.entity_of[e.roster_idx] = -5
 	sim.show_message(6, 0x100)          # PENALTY
-	InfoPanel.record_penalty(sim, team.index, e.roster_idx, INF_ABUSE_OF_OFFICIAL, -1)
+	InfoPanel.record_penalty(sim, team.index, e.roster_idx, INF_ABUSE_OF_OFFICIAL, -1, queue_index)
 
 
 ## update_effects (0x615a3): crowd noise decays towards the ambient level
@@ -583,8 +583,12 @@ static func game_clock_tick(sim: Sim) -> void:
 	else:
 		sim.clock_seconds -= 1
 		sim.clock_sub += 0x17
-	if sim.clock_seconds == 0x3c:
-		sim.play_sfx(0x97)   # one minute warning
+	# one minute left: the tone (on 61 and 60 seconds) or the announcer
+	if sim.clock_seconds == 0x3d or sim.clock_seconds == 0x3c:
+		if not InfoPanel.speech_on(sim):
+			sim.play_sfx(0x97)
+		elif sim.clock_seconds == 0x3c:
+			Speech.say(sim, Speech.one_minute())
 
 # --------------------------------------------------------------------------------------------
 # goals (score_goal 0x5ab36) and the end of a period (setup_faceoff 0x5d852)

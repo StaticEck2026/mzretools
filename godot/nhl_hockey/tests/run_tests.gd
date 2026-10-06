@@ -387,6 +387,7 @@ func asset_tests() -> void:
 		ceremony_tests(bos, det)
 		replay_tests(bos, det)
 		crowd_tests(bos, det)
+		speech_tests(bos, det, gf)
 	# sound effects: 30 digital samples, the goal horn (0x9c) is the 7 second sample
 	var snd := Sounds.load_bank(gf.read_raw("pcff001.pat"), gf.read_raw("pcff001.tim"), gf.read_raw("pcff001.dig"))
 	if snd == null or snd.sample_count != 30 or snd.timbre_count != 30:
@@ -882,3 +883,55 @@ func crowd_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 	if bench.id != 0x88 or bench.y != Tables.bench_y[1]:
 		fail("away bench cheer: spot %d at y %d" % [bench.id, bench.y])
 	print("crowd: %d figures after 300 steps" % active)
+
+## the announcer: XBRUCE2.VIV clips (raw 5512 Hz and byte pair packed 11025 Hz) and the sentences
+func speech_tests(bos: Database.TeamInfo, det: Database.TeamInfo, gf: Node) -> void:
+	var viv := Viv.parse(gf.read_raw("xbruce2.viv"))
+	if viv == null or viv.count != 344 or viv.entries.size() != 336:
+		fail("XBRUCE2.VIV index")
+		return
+	var raw := viv.samples("goalnum.cor")
+	var packed := viv.samples("la.rnk")
+	if raw.is_empty() or raw[1] != 5512 or raw[0].size() != 8192:
+		fail("raw speech clip")
+	if packed.is_empty() or packed[1] != 11025 or packed[0].size() != 23768 or packed[0][11] != 0xff:
+		fail("packed speech clip: %s" % str(packed[0].size() if not packed.is_empty() else -1))
+	# every clip a sentence can name exists in the bank
+	var sentences := [
+		Speech.goal("BOS", 12, [77, 8]),
+		Speech.penalty("DET", 19, 2, Rules.INF_HOOKING, 12, 5, true, 1, true),
+		Speech.penalty("DET", 5, -1, Rules.INF_ABUSE_OF_OFFICIAL, 0, 30, false, 2, true),
+		Speech.penalty_shot("BOS", 12, 1, 0),
+		Speech.star(1, "BOS", 77),
+		Speech.one_minute(),
+		Speech.game_intro("BOS", "DET"),
+	]
+	for snt: PackedStringArray in sentences:
+		for c in snt:
+			if not viv.has(c):
+				fail("speech clip %s is not in the bank" % c)
+	for t in 28:
+		var a: String = Tables.team_abbrev[t]
+		if not viv.has(a + ".tea") or not viv.has(a + ".frm"):
+			fail("team clips of " + a)
+	for idx in Speech.PENALTY_CLIPS.size():
+		var n: String = Speech.PENALTY_CLIPS[idx]
+		if n != "" and n != "penshot" and not viv.has(n + ".pen"):
+			fail("penalty clip " + n)
+	if str(Speech.time(0, 1)) != str(PackedStringArray(["at.cor", "pause.cor", "1second.cor"])) \
+			or str(Speech.time(12, 5)) != str(PackedStringArray(["at.cor", "pause.cor", "12.num", "05.num"])):
+		fail("time of the period: %s / %s" % [Speech.time(0, 1), Speech.time(12, 5)])
+	# a goal is announced once the panel is up
+	var sim := Sim.new()
+	sim.set_teams(bos, det)
+	run_until_play(sim, 1200)
+	sim.announcer_queue.clear()
+	InfoPanel.announce_goal(sim, 0, 3, 10, -1)
+	sim.play_stopped = true
+	sim.panel = 0xf0
+	sim.referee.set_state(Entity.State.REF_PICKUP)
+	AI.ref_pickup(sim, sim.referee)
+	if sim.announcer_queue.size() != 1 or sim.announcer_queue[0][0] != "bos.tea" or not sim.goal_call.is_empty():
+		fail("goal sentence: %s" % str(sim.announcer_queue))
+	else:
+		print("speech: ", " ".join(sim.announcer_queue[0]))

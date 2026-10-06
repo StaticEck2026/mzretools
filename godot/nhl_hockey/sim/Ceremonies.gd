@@ -25,7 +25,7 @@ static func begin_anthem(sim: Sim) -> void:
 	InfoPanel.reset(sim)
 	InfoPanel.load_clip(sim, InfoPanel.CLIP_USA_FLAG if country == 1 else InfoPanel.CLIP_CANADA_FLAG)
 	InfoPanel.open(sim)
-	InfoPanel.speech(sim, 10)          # the anthem
+	InfoPanel.music(sim, 10)           # the anthem
 	sim.period_over = false
 	sim.user1_slot = -1
 	sim.user2_slot = -1
@@ -686,6 +686,7 @@ static func _announce_star(sim: Sim, index: int) -> void:
 	sim.panel_text[1] = "%s Star" % Tables.star_names[index]
 	var st: Array = sim.stars[index] if index < sim.stars.size() else [0, 0]
 	sim.panel_text[2] = star_caption(sim, st[0], st[1])
+	Speech.say(sim, Speech.star(index + 1, Speech.abbrev(sim, st[0]), Speech.number(sim, st[0], st[1])))
 
 ## ai_ref_three_stars (0x495b8), the hidden referee runs the presentation: the 3rd, 2nd and 1st
 ## star in turn come out of the bench (entity 5 for the home team, 6 for the away team), skate a
