@@ -2436,7 +2436,7 @@ void sub_9d700(byte param_1,char param_2)
   sub_902a0();
   iVar1 = (uint)param_1 * 0x4e;
   if (param_1 == 9) {
-    iVar2 = sub_8f114();
+    iVar2 = snd_patch_timbre();
     param_2 = '<';
   }
   else {
@@ -2514,7 +2514,7 @@ void sub_9d858(byte param_1)
   undefined4 uVar1;
   
   sub_902a0();
-  uVar1 = sub_8f114();
+  uVar1 = snd_patch_timbre();
   *(undefined4 *)(&unk_f27f6 + (uint)param_1 * 0x4e) = uVar1;
   return;
 }

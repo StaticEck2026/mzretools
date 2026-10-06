@@ -4833,7 +4833,7 @@ loc_7deda:
     test ecx, ecx                                ; 07dee5 85c9
     je loc_7def8                                 ; 07dee7 740f
     mov eax, ecx                                 ; 07dee9 89c8
-    call sub_8f1fe                               ; 07deeb e80e130100
+    call kms_unload                              ; 07deeb e80e130100
     xor esi, esi                                 ; 07def0 31f6
     mov dword ptr [ebx + unk_ed368], esi         ; 07def2 89b368d30e00
 loc_7def8:
@@ -4848,7 +4848,7 @@ loc_7df00:
     test edi, edi                                ; 07df0b 85ff
     je loc_7df1e                                 ; 07df0d 740f
     mov eax, edi                                 ; 07df0f 89f8
-    call sub_8f1fe                               ; 07df11 e8e8120100
+    call kms_unload                              ; 07df11 e8e8120100
     xor ebp, ebp                                 ; 07df16 31ed
     mov dword ptr [ebx + unk_ed38c], ebp         ; 07df18 89ab8cd30e00
 loc_7df1e:
@@ -4862,7 +4862,7 @@ loc_7df26:
     mov eax, dword ptr [ebx + dword_ed380]       ; 07df2b 8b8380d30e00
     test eax, eax                                ; 07df31 85c0
     je loc_7df42                                 ; 07df33 740d
-    call sub_8f1fe                               ; 07df35 e8c4120100
+    call kms_unload                              ; 07df35 e8c4120100
     xor ecx, ecx                                 ; 07df3a 31c9
     mov dword ptr [ebx + dword_ed380], ecx       ; 07df3c 898b80d30e00
 loc_7df42:
@@ -5011,10 +5011,11 @@ off_7e05f:
     dd aNeitherTeams                             ; 07e063
 
 ; ====================================================================================================
-; sub_7e067  [0x7e067, 147 bytes, 58 instructions]
+; replay_draw_button  [0x7e067, 147 bytes, 58 instructions]
+; frames a VCR button (top / left colour 0x10, bottom / right 0x15)
 ; called by: instant_replay, replay_control_loop, replay_menu
 ; ====================================================================================================
-sub_7e067:
+replay_draw_button:
     push 0x34                                    ; 07e067 6834000000
     call __CHK                                   ; 07e06c e8dbe80000
     push ebx                                     ; 07e071 53
@@ -5078,7 +5079,7 @@ loc_7e0f3:
 
 ; ====================================================================================================
 ; instant_replay  [0x7e0fa, 2027 bytes, 470 instructions]
-; called by: handle_hotkey, sub_1a817, highlights_play
+; called by: handle_hotkey, menu_go_to_replay, highlights_play
 ;   uses string "gadget6"
 ;   uses string "gadget5"
 ;   uses string "gad1"
@@ -5175,9 +5176,9 @@ loc_7e1ee:
     call blit_rle_frame                          ; 07e223 e8b06a0300
     add esp, 0xc                                 ; 07e228 83c40c
     mov eax, 6                                   ; 07e22b b806000000
-    call sub_7e067                               ; 07e230 e832feffff
+    call replay_draw_button                      ; 07e230 e832feffff
     mov eax, 2                                   ; 07e235 b802000000
-    call sub_7e067                               ; 07e23a e828feffff
+    call replay_draw_button                      ; 07e23a e828feffff
     mov eax, dword ptr [dword_ed6dc]             ; 07e23f a1dcd60e00
     sub eax, 0xa8                                ; 07e244 2da8000000
     push eax                                     ; 07e249 50
@@ -5210,7 +5211,7 @@ loc_7e1ee:
     mov word ptr [word_ed758], bx                ; 07e2c9 66891d58d70e00
     add dword ptr [dword_c7444], 0x3e8           ; 07e2d0 810544740c00e803..
     add dword ptr [dword_c7448], 0x3e8           ; 07e2da 810548740c00e803..
-    call sub_67581                               ; 07e2e4 e89892feff
+    call replay_oldest_frame                     ; 07e2e4 e89892feff
     mov dword ptr [dword_e03a4], eax             ; 07e2e9 a3a4030e00
     xor ebp, ebp                                 ; 07e2ee 31ed
     mov dword ptr [esp + 0x14], ebp              ; 07e2f0 896c2414
@@ -5599,10 +5600,11 @@ loc_7e8dd:
 
 
 ; ====================================================================================================
-; sub_7e8e5  [0x7e8e5, 89 bytes, 36 instructions]
+; replay_button_at  [0x7e8e5, 89 bytes, 36 instructions]
+; the VCR button under a screen position
 ; called by: replay_control_loop
 ; ====================================================================================================
-sub_7e8e5:
+replay_button_at:
     push 0x10                                    ; 07e8e5 6810000000
     call __CHK                                   ; 07e8ea e85de00000
     push ecx                                     ; 07e8ef 51
@@ -5645,10 +5647,11 @@ loc_7e932:
 
 
 ; ====================================================================================================
-; sub_7e93e  [0x7e93e, 110 bytes, 44 instructions]
+; replay_sprite_at  [0x7e93e, 110 bytes, 44 instructions]
+; the replay sprite under a rink position (the camera follows it)
 ; called by: replay_control_loop
 ; ====================================================================================================
-sub_7e93e:
+replay_sprite_at:
     push 0x1c                                    ; 07e93e 681c000000
     call __CHK                                   ; 07e943 e804e00000
     push ebx                                     ; 07e948 53
@@ -5759,7 +5762,7 @@ loc_7ea52:
     mov edx, dword ptr [dword_ed6dc]             ; 07ea5b 8b15dcd60e00
     mov eax, dword ptr [dword_ed6e0]             ; 07ea61 a1e0d60e00
     mov ebx, esp                                 ; 07ea66 89e3
-    call sub_7e8e5                               ; 07ea68 e878feffff
+    call replay_button_at                        ; 07ea68 e878feffff
     test eax, eax                                ; 07ea6d 85c0
     je loc_7ea80                                 ; 07ea6f 740f
     cmp dword ptr [dword_ed6f8], 0               ; 07ea71 833df8d60e0000
@@ -5949,7 +5952,7 @@ loc_7eca1:
     jge loc_7eeb3                                ; 07ecab 0f8d02020000
     mov edx, dword ptr [dword_ed708]             ; 07ecb1 8b1508d70e00
     mov eax, dword ptr [dword_ed704]             ; 07ecb7 a104d70e00
-    call sub_7e93e                               ; 07ecbc e87dfcffff
+    call replay_sprite_at                        ; 07ecbc e87dfcffff
     mov dword ptr [dword_ed74c], eax             ; 07ecc1 a34cd70e00
     test byte ptr [esp + 0xc], 2                 ; 07ecc6 f644240c02
     je loc_7eeb3                                 ; 07eccb 0f84e2010000
@@ -6168,7 +6171,7 @@ loc_7efb8:
     test dword ptr [dword_ed754], eax            ; 07efc2 850554d70e00
     je loc_7efd2                                 ; 07efc8 7408
     mov eax, dword ptr [esp]                     ; 07efca 8b0424
-    call sub_7e067                               ; 07efcd e895f0ffff
+    call replay_draw_button                      ; 07efcd e895f0ffff
 loc_7efd2:
     mov ebp, dword ptr [esp]                     ; 07efd2 8b2c24
     inc ebp                                      ; 07efd5 45
@@ -6211,7 +6214,7 @@ loc_7f009:
     call blit_rle_frame                          ; 07f05b e8785c0300
     add esp, 0xc                                 ; 07f060 83c40c
     mov eax, 2                                   ; 07f063 b802000000
-    call sub_7e067                               ; 07f068 e8faefffff
+    call replay_draw_button                      ; 07f068 e8faefffff
     mov eax, dword ptr [dword_ed6dc]             ; 07f06d a1dcd60e00
     sub eax, 0xa8                                ; 07f072 2da8000000
     push eax                                     ; 07f077 50
@@ -6378,7 +6381,7 @@ loc_7f21d:
     call sub_b500c                               ; 07f243 e8c45d0300
     add esp, 0xc                                 ; 07f248 83c40c
     mov eax, 7                                   ; 07f24b b807000000
-    call sub_7e067                               ; 07f250 e812eeffff
+    call replay_draw_button                      ; 07f250 e812eeffff
     call setdefaultscreen                        ; 07f255 e84e590300
     push 0xc8                                    ; 07f25a 68c8000000
     push 0                                       ; 07f25f 6a00

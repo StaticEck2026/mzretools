@@ -3220,7 +3220,7 @@ LAB_000566ad:
         else if (((*(byte *)((int)unaff_EDX + 0x36) & 3) == 0) &&
                 ((9 < *(byte *)(param_1 + 100) && (*(short *)(param_1 + 0x6a) < 0xc)))) {
           sVar5 = 0x993;
-          play_crowd_chant((*(byte *)(param_1 + 0x44) & 0x40) != 0);
+          bench_cheer((*(byte *)(param_1 + 0x44) & 0x40) != 0);
         }
         else {
           sVar5 = 0x681;
@@ -5592,7 +5592,7 @@ play_sfx(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4
       return;
     }
     if ((dword_c541f == 4) && (uVar1 == 0xaa)) {
-      sub_8f270(dword_ed7a4,dword_d2427);
+      kms_play(dword_ed7a4,dword_d2427);
       return;
     }
     if (uVar1 == 0x90) {
@@ -5621,9 +5621,9 @@ sub_59945(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined
   
   __CHK(0xc);
   if (crowd_loop_channel != -1) {
-    sVar1 = sub_8f80e(crowd_loop_channel,param_1,crowd_loop_channel,unaff_ECX,unaff_EDX,unaff_EBX);
+    sVar1 = kms_finished(crowd_loop_channel,param_1,crowd_loop_channel,unaff_ECX,unaff_EDX,unaff_EBX);
     if (sVar1 == 0) {
-      sub_8f7ae(crowd_loop_channel);
+      kms_fade_out(crowd_loop_channel);
       crowd_loop_channel = -1;
     }
   }
@@ -5642,9 +5642,9 @@ void __watcall stop_crowd_loop(void)
   
   __CHK(8);
   if (crowd_loop_channel != -1) {
-    sVar1 = sub_8f80e(crowd_loop_channel);
+    sVar1 = kms_finished(crowd_loop_channel);
     if (sVar1 == 0) {
-      sub_8f67d(crowd_loop_channel);
+      snd_stop_handle(crowd_loop_channel);
       crowd_loop_channel = -1;
     }
   }
@@ -5663,7 +5663,7 @@ play_sample_by_ptr(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefin
   __CHK(0xc);
   stop_crowd_loop();
   if ((((byte)dword_c541f & 0x11) == 0) && (param_1 != 0)) {
-    crowd_loop_channel = sub_8f270(param_1,dword_d2427,param_1,unaff_ECX,unaff_EDX,unaff_EBX);
+    crowd_loop_channel = kms_play(param_1,dword_d2427,param_1,unaff_ECX,unaff_EDX,unaff_EBX);
   }
   return;
 }
@@ -5681,7 +5681,7 @@ void __watcall sfx_set_volume(void)
   __CHK(4);
   if (crowd_loop_channel != -1) {
     do {
-      sVar1 = sub_8f80e(crowd_loop_channel);
+      sVar1 = kms_finished(crowd_loop_channel);
     } while (sVar1 == 0);
   }
   return;
@@ -5724,16 +5724,16 @@ void __watcall play_speech(int param_1)
 
 
 // ================================================================================================
-// speech_period_summary @ 0x59a7e [__watcall]
+// announce_one_minute_left @ 0x59a7e [__watcall]
 // ================================================================================================
 
-void __watcall speech_period_summary(void)
+void __watcall announce_one_minute_left(void)
 
 {
   __CHK(4);
   if (((sound_enabled != '\0') && ((option_flags._1_1_ & 1) != 0)) && ((game_flags & 0x10) == 0)) {
     sub_837a8();
-    sub_854ac();
+    say_one_minute_left();
     return;
   }
   return;

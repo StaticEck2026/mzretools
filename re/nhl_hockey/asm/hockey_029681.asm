@@ -7174,7 +7174,7 @@ loc_2f1e3:
     test ebx, ebx                                ; 02f277 85db
     je loc_2f282                                 ; 02f279 7407
     mov eax, ebx                                 ; 02f27b 89d8
-    call sub_8f1fe                               ; 02f27d e87cff0500
+    call kms_unload                              ; 02f27d e87cff0500
 loc_2f282:
     xor ecx, ecx                                 ; 02f282 31c9
     mov dword ptr [esp + 0x780], ecx             ; 02f284 898c2480070000
@@ -7504,7 +7504,7 @@ loc_2f5de:
 ; ====================================================================================================
 ; team_select_screen2  [0x2f5ee, 2019 bytes, 599 instructions]
 ; ctbkgd/cttitle3 team selection
-; called by: team_select_hub
+; called by: menu_game_statistics
 ;   uses string "ctbkgd"
 ;   uses string "!pal"
 ;   uses string "bkgd"
@@ -8140,7 +8140,7 @@ loc_2fd76:
 loc_2fda5:
     call stop_crowd_loop                         ; 02fda5 e8d79b0200
     mov eax, dword ptr [ebp - 0x14]              ; 02fdaa 8b45ec
-    call sub_8f1fe                               ; 02fdad e84cf40500
+    call kms_unload                              ; 02fdad e84cf40500
 loc_2fdb2:
     lea eax, [ebp - 0x74]                        ; 02fdb2 8d458c
     push eax                                     ; 02fdb5 50

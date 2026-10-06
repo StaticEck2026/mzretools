@@ -4301,17 +4301,17 @@ void __watcall srand(uint __seed)
 
 
 // ================================================================================================
-// sub_8eb5b @ 0x8eb5b [__watcall]
+// sound_timer_install @ 0x8eb5b [__watcall]
 // ================================================================================================
 
 longlong __watcall
-sub_8eb5b(undefined4 param_1,uint unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+sound_timer_install(undefined4 param_1,uint unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
-  sub_8eb93();
-  addtimer(sub_98f11,unaff_EDX,unaff_ECX,unaff_EBX);
+  sound_shutdown();
+  addtimer(sound_timer,unaff_EDX,unaff_ECX,unaff_EBX);
   if (byte_d41cc == '\0') {
-    sub_b3454(sub_8eb93);
+    sub_b3454(sound_shutdown);
     byte_d41cc = '\x01';
   }
   return (ulonglong)unaff_EDX << 0x20;
@@ -4319,18 +4319,18 @@ sub_8eb5b(undefined4 param_1,uint unaff_EDX,undefined4 unaff_EBX,undefined4 unaf
 
 
 // ================================================================================================
-// sub_8eb93 @ 0x8eb93 [__watcall]
+// sound_shutdown @ 0x8eb93 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_8eb93(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+sound_shutdown(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   int extraout_EDX;
   int iVar1;
   int extraout_EDX_00;
   
-  removetimer(sub_98f11,unaff_EDX,unaff_ECX,unaff_EBX);
+  removetimer(sound_timer,unaff_EDX,unaff_ECX,unaff_EBX);
   iVar1 = dword_d4f64;
   while (-1 < (int)(iVar1 - 1U)) {
     sub_971be(iVar1 - 1U & 0xff);
@@ -4338,10 +4338,10 @@ sub_8eb93(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined
   }
   iVar1 = 0;
   do {
-    sub_8f1fe((&unk_edcfc)[iVar1 * 6]);
+    kms_unload((&unk_edcfc)[iVar1 * 6]);
     iVar1 = extraout_EDX_00 + 1;
   } while (iVar1 < 0xd);
-  sub_8edd2();
+  unload_patches();
   sub_8ebe2();
   return;
 }
@@ -4401,7 +4401,7 @@ undefined4 __watcall loadpatches(char *param_1,undefined4 unaff_EDX)
   char local_20 [16];
   int local_10;
   
-  sub_8edd2();
+  unload_patches();
   if (*param_1 == '\0') {
     uVar1 = 0xfffffffb;
   }
@@ -4417,22 +4417,22 @@ undefined4 __watcall loadpatches(char *param_1,undefined4 unaff_EDX)
       sub_b3abc(uVar1);
       sub_8ff3e(&local_10);
       sprintf(local_20,a03sFF03dPAT,unaff_EDX,(uint)byte_f23cd);
-      dword_f23ea = sub_8ee2f(local_20);
+      dword_f23ea = load_patch_file(local_20);
       if (dword_f23ea == 0) {
-        sub_8edd2();
+        unload_patches();
         uVar1 = 0xfffffffe;
       }
       else {
         for (iVar3 = 0; iVar3 < (int)(uint)byte_f23cf; iVar3 = iVar3 + 1) {
           sprintf(local_20,a03sFF03dTIM,unaff_EDX,(uint)(byte)(&unk_f23e0)[iVar3]);
-          iVar2 = sub_8ee4f(local_20,&unk_f2416 + iVar3);
+          iVar2 = load_timbre_file(local_20,&unk_f2416 + iVar3);
           (&unk_f23ee)[iVar3] = iVar2;
           if (iVar2 == 0) {
-            sub_8edd2();
+            unload_patches();
             return 0xfffffffd;
           }
         }
-        sub_8efbb();
+        bind_patch_timbres();
         uVar1 = 0;
       }
     }
@@ -4442,10 +4442,10 @@ undefined4 __watcall loadpatches(char *param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_8edd2 @ 0x8edd2 [__watcall]
+// unload_patches @ 0x8edd2 [__watcall]
 // ================================================================================================
 
-void __watcall sub_8edd2(void)
+void __watcall unload_patches(void)
 
 {
   int iVar1;
@@ -4465,11 +4465,11 @@ void __watcall sub_8edd2(void)
 
 
 // ================================================================================================
-// sub_8ee2f @ 0x8ee2f [__watcall]
+// load_patch_file @ 0x8ee2f [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_8ee2f(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+load_patch_file(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   snd_patch_bank = sub_59493(2,param_1,unaff_EBX,unaff_ECX,unaff_EDX);
@@ -4493,10 +4493,10 @@ void __watcall sub_8ee43(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_8ee4f @ 0x8ee4f [__watcall]
+// load_timbre_file @ 0x8ee4f [__watcall]
 // ================================================================================================
 
-int __watcall sub_8ee4f(undefined4 param_1,int *unaff_EDX)
+int __watcall load_timbre_file(undefined4 param_1,int *unaff_EDX)
 
 {
   ushort uVar1;
@@ -4511,7 +4511,7 @@ int __watcall sub_8ee4f(undefined4 param_1,int *unaff_EDX)
   *unaff_EDX = 0;
   iVar2 = sub_59493(3,param_1);
   if (iVar2 != 0) {
-    sub_8ef50();
+    timbre_bank_add();
     if (byte_d41cd == '\0') {
       uVar6 = 0x2e646967;
     }
@@ -4556,10 +4556,10 @@ int __watcall sub_8ee4f(undefined4 param_1,int *unaff_EDX)
 
 
 // ================================================================================================
-// sub_8ef50 @ 0x8ef50 [__watcall]
+// timbre_bank_add @ 0x8ef50 [__watcall]
 // ================================================================================================
 
-void __watcall sub_8ef50(undefined4 param_1)
+void __watcall timbre_bank_add(undefined4 param_1)
 
 {
   int iVar1;
@@ -4586,7 +4586,7 @@ void __watcall sub_8ef76(undefined4 param_1)
   undefined4 local_4;
   
   local_4 = param_1;
-  sub_8ef91();
+  timbre_bank_remove();
   sub_8ff1e(&local_4);
   sub_8ff3e(&stack0xfffffff8);
   return;
@@ -4594,10 +4594,10 @@ void __watcall sub_8ef76(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_8ef91 @ 0x8ef91 [__watcall]
+// timbre_bank_remove @ 0x8ef91 [__watcall]
 // ================================================================================================
 
-void __watcall sub_8ef91(int param_1)
+void __watcall timbre_bank_remove(int param_1)
 
 {
   int iVar1;
@@ -4615,10 +4615,10 @@ void __watcall sub_8ef91(int param_1)
 
 
 // ================================================================================================
-// sub_8efbb @ 0x8efbb [__watcall]
+// bind_patch_timbres @ 0x8efbb [__watcall]
 // ================================================================================================
 
-void __watcall sub_8efbb(void)
+void __watcall bind_patch_timbres(void)
 
 {
   undefined *puVar1;
@@ -4697,10 +4697,10 @@ int snd_patch_record(byte param_1)
 
 
 // ================================================================================================
-// sub_8f114 @ 0x8f114 [__watcall]
+// snd_patch_timbre @ 0x8f114 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_8f114(void)
+undefined4 __watcall snd_patch_timbre(void)
 
 {
   int iVar1;
@@ -4729,7 +4729,7 @@ undefined8 __watcall music_load_kms(undefined4 param_1,undefined4 unaff_EDX)
   undefined4 *puVar5;
   undefined auStack_28 [16];
   
-  iVar1 = sub_8f247(0);
+  iVar1 = kms_find_song(0);
   if (-1 < iVar1) {
     puVar4 = &unk_d41d2;
     puVar5 = &unk_edcfc + iVar1 * 6;
@@ -4763,11 +4763,11 @@ LAB_0008f1f4:
 
 
 // ================================================================================================
-// sub_8f1fe @ 0x8f1fe [__watcall]
+// kms_unload @ 0x8f1fe [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_8f1fe(uint param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+kms_unload(uint param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   int iVar1;
@@ -4775,8 +4775,8 @@ sub_8f1fe(uint param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaf
   int extraout_EDX_00;
   
   if (0x1ff < param_1) {
-    sub_8f67d(param_1,param_1,unaff_EBX,unaff_ECX,unaff_EDX,unaff_EBX);
-    iVar1 = sub_8f247(extraout_EDX);
+    snd_stop_handle(param_1,param_1,unaff_EBX,unaff_ECX,unaff_EDX,unaff_EBX);
+    iVar1 = kms_find_song(extraout_EDX);
     if (-1 < iVar1) {
       sub_8ff1e(&unk_edd00 + iVar1 * 6);
       sub_8ff1e(&unk_edd04 + iVar1 * 6);
@@ -4788,10 +4788,10 @@ sub_8f1fe(uint param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaf
 
 
 // ================================================================================================
-// sub_8f247 @ 0x8f247 [__watcall]
+// kms_find_song @ 0x8f247 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_8f247(int param_1,undefined4 unaff_EDX)
+undefined8 __watcall kms_find_song(int param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
@@ -4808,14 +4808,14 @@ undefined8 __watcall sub_8f247(int param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_8f270 @ 0x8f270 [__watcall]
+// kms_play @ 0x8f270 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_8f270(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+kms_play(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
-  sub_8f4a7(param_1,unaff_EDX,0,unaff_ECX,unaff_EBX);
+  kms_start(param_1,unaff_EDX,0,unaff_ECX,unaff_EBX);
   return;
 }
 
@@ -4848,7 +4848,7 @@ sub_8f27a(int param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,u
   
   puVar9 = &unk_edcfc + param_1 * 6;
   param_8 = puVar9;
-  uVar11 = sub_97166(param_2);
+  uVar11 = drv_index(param_2);
   if ((int)(uint)uVar11 < 0) {
     param_5 = 0;
   }
@@ -4862,7 +4862,7 @@ sub_8f27a(int param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,u
     bStack00000028 = 0;
     word_d4f88 = word_d4f88 + 1;
     for (; bStack00000020 != 0; bStack00000020 = bStack00000020 - 1) {
-      puVar6 = (undefined *)sub_8f433((int)uVar12,(int)((ulonglong)uVar12 >> 0x20),puVar9);
+      puVar6 = (undefined *)kms_alloc_track((int)uVar12,(int)((ulonglong)uVar12 >> 0x20),puVar9);
       if (puVar6 == (undefined *)0x0) {
         param_5 = 0;
         break;
@@ -4881,7 +4881,7 @@ sub_8f27a(int param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,u
       *(short *)(puVar6 + 0x4c) = (short)uVar4;
       if (iVar3 != 0) {
         puVar7 = (undefined2 *)(iVar3 + 8 + (int)puVar9 * 0x10);
-        uVar5 = sub_8f451(*puVar7);
+        uVar5 = kms_track_channel(*puVar7);
         puVar6[0x50] = uVar5;
         if ((byte)puVar6[0x50] == 0xffffffff) {
           param_5 = 0;
@@ -4890,13 +4890,13 @@ sub_8f27a(int param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,u
         param_10 = (undefined)uVar11;
         puVar6[0x51] = param_10;
         uVar10 = (uint)uVar11 & 0xff;
-        sub_9720b(uVar10,puVar6[0x50],*(undefined4 *)(puVar7 + 1));
-        sub_998a0(uVar10,puVar6[0x50]);
-        sub_99522(puVar6,1,0);
-        sub_99522(puVar6,7,*(undefined *)(puVar7 + 3));
+        drv_channel_config(uVar10,puVar6[0x50],*(undefined4 *)(puVar7 + 1));
+        snd_program_change(uVar10,puVar6[0x50]);
+        kms_controller(puVar6,1,0);
+        kms_controller(puVar6,7,*(undefined *)(puVar7 + 3));
         puVar9 = (undefined4 *)(uint)*(byte *)((int)puVar7 + 7);
-        sub_99522(puVar6,10);
-        uVar12 = sub_996b0(puVar6,0x4000);
+        kms_controller(puVar6,10);
+        uVar12 = kms_pitch_bend(puVar6,0x4000);
       }
       puVar6[1] = 1;
       if (0 < unaff_retaddr) {
@@ -4916,10 +4916,10 @@ sub_8f27a(int param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,u
 
 
 // ================================================================================================
-// sub_8f433 @ 0x8f433 [__watcall]
+// kms_alloc_track @ 0x8f433 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_8f433(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall kms_alloc_track(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   undefined1 *puVar1;
@@ -4937,10 +4937,10 @@ LAB_0008f44f:
 
 
 // ================================================================================================
-// sub_8f451 @ 0x8f451 [__watcall]
+// kms_track_channel @ 0x8f451 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_8f451(ushort param_1,undefined4 unaff_EDX)
+undefined8 __watcall kms_track_channel(ushort param_1,undefined4 unaff_EDX)
 
 {
   short sVar1;
@@ -4956,28 +4956,28 @@ LAB_0008f48a:
 
 
 // ================================================================================================
-// sub_8f48f @ 0x8f48f [__watcall]
+// kms_load_start @ 0x8f48f [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_8f48f(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_ECX)
+kms_load_start(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   undefined8 uVar1;
   
   uVar1 = music_load_kms();
   if ((int)uVar1 != 0) {
-    sub_8f4a7((int)uVar1,(int)((ulonglong)uVar1 >> 0x20),0,unaff_ECX,unaff_EBX);
+    kms_start((int)uVar1,(int)((ulonglong)uVar1 >> 0x20),0,unaff_ECX,unaff_EBX);
   }
   return;
 }
 
 
 // ================================================================================================
-// sub_8f4a7 @ 0x8f4a7 [__watcall]
+// kms_start @ 0x8f4a7 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_8f4a7(undefined4 param_1,undefined4 param_2,int unaff_EBX)
+undefined4 __watcall kms_start(undefined4 param_1,undefined4 param_2,int unaff_EBX)
 
 {
   byte bVar1;
@@ -4998,10 +4998,10 @@ undefined4 __watcall sub_8f4a7(undefined4 param_1,undefined4 param_2,int unaff_E
   byte bStack_1c;
   byte bStack_14;
   
-  uVar13 = sub_8f247();
+  uVar13 = kms_find_song();
   iVar7 = (int)uVar13;
   if (-1 < iVar7) {
-    uVar13 = sub_97166((int)((ulonglong)uVar13 >> 0x20));
+    uVar13 = drv_index((int)((ulonglong)uVar13 >> 0x20));
     if (-1 < (int)(uint)uVar13) {
       iVar2 = (&unk_edd00)[iVar7 * 6];
       iVar3 = (&unk_edd04)[iVar7 * 6];
@@ -5019,7 +5019,7 @@ LAB_0008f420:
           word_d4f88 = word_d4f88 + -1;
           return uStack_38;
         }
-        puVar6 = (undefined *)sub_8f433((int)uVar12,(int)((ulonglong)uVar12 >> 0x20),puVar10);
+        puVar6 = (undefined *)kms_alloc_track((int)uVar12,(int)((ulonglong)uVar12 >> 0x20),puVar10);
         if (puVar6 == (undefined *)0x0) {
           uStack_38 = 0;
           goto LAB_0008f420;
@@ -5038,7 +5038,7 @@ LAB_0008f420:
         *(short *)(puVar6 + 0x4c) = (short)uVar4;
         if (iVar3 != 0) {
           puVar8 = (undefined2 *)(iVar3 + 8 + (int)puVar10 * 0x10);
-          uVar5 = sub_8f451(*puVar8);
+          uVar5 = kms_track_channel(*puVar8);
           puVar6[0x50] = uVar5;
           if ((byte)puVar6[0x50] == 0xffffffff) {
             uStack_38 = 0;
@@ -5047,13 +5047,13 @@ LAB_0008f420:
           uStack_24 = (undefined)uVar13;
           puVar6[0x51] = uStack_24;
           uVar11 = (uint)uVar13 & 0xff;
-          sub_9720b(uVar11,puVar6[0x50],*(undefined4 *)(puVar8 + 1));
-          sub_998a0(uVar11,puVar6[0x50]);
-          sub_99522(puVar6,1,0);
-          sub_99522(puVar6,7,*(undefined *)(puVar8 + 3));
+          drv_channel_config(uVar11,puVar6[0x50],*(undefined4 *)(puVar8 + 1));
+          snd_program_change(uVar11,puVar6[0x50]);
+          kms_controller(puVar6,1,0);
+          kms_controller(puVar6,7,*(undefined *)(puVar8 + 3));
           puVar10 = (undefined4 *)(uint)*(byte *)((int)puVar8 + 7);
-          sub_99522(puVar6,10);
-          uVar12 = sub_996b0(puVar6,0x4000);
+          kms_controller(puVar6,10);
+          uVar12 = kms_pitch_bend(puVar6,0x4000);
         }
         puVar6[1] = 1;
         if (0 < unaff_EBX) {
@@ -5115,11 +5115,11 @@ int __watcall snd_play_patch(ushort param_1,int unaff_EDX,undefined unaff_BL)
         local_14 = (byte)uVar7;
         *pbVar6 = local_14 | 0xc0;
         (&DAT_000f21fd)[iVar2] = local_18;
-        sub_997b7(bVar1 & 0x7f,2,pbVar6);
+        snd_queue_message(bVar1 & 0x7f,2,pbVar6);
         *pbVar6 = local_14 | 0xb0;
         (&DAT_000f21fd)[iVar2] = 7;
         (&DAT_000f21fe)[iVar2] = unaff_BL;
-        sub_997b7(bVar1 & 0x7f,3,pbVar6);
+        snd_queue_message(bVar1 & 0x7f,3,pbVar6);
         uVar7 = uVar7 & 0xff;
         uVar3 = 0x24;
       }
@@ -5127,11 +5127,11 @@ int __watcall snd_play_patch(ushort param_1,int unaff_EDX,undefined unaff_BL)
         *pbVar6 = 0xb9;
         (&DAT_000f21fd)[iVar2] = 7;
         (&DAT_000f21fe)[iVar2] = unaff_BL;
-        sub_997b7(bVar1 & 0x7f,3,pbVar6);
+        snd_queue_message(bVar1 & 0x7f,3,pbVar6);
         uVar3 = param_1 - 0x74 & 0xff;
         uVar7 = 9;
       }
-      sVar4 = sub_99700(uVar3,0x7f,unaff_EDX,uVar7,bVar1 & 0x7f,0xff,0xff);
+      sVar4 = snd_note_on(uVar3,0x7f,unaff_EDX,uVar7,bVar1 & 0x7f,0xff,0xff);
       dword_d4f9a = dword_d4f9a + -4;
       return (int)sVar4;
     }
@@ -5176,10 +5176,10 @@ void __watcall sound_stopall(void)
 
 
 // ================================================================================================
-// sub_8f67d @ 0x8f67d [__watcall]
+// snd_stop_handle @ 0x8f67d [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_8f67d(uint param_1,undefined4 unaff_EDX)
+undefined8 __watcall snd_stop_handle(uint param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
@@ -5208,7 +5208,7 @@ undefined8 __watcall sub_8f67d(uint param_1,undefined4 unaff_EDX)
       puVar5 = &unk_f1a1c;
       for (sVar6 = 0; iVar1 = dword_d4f9a, sVar6 < 0x20; sVar6 = sVar6 + 1) {
         if (param_1 == *puVar3) {
-          sub_99620(puVar3);
+          snd_note_off(puVar3);
         }
         puVar3 = puVar3 + 3;
       }
@@ -5219,11 +5219,11 @@ undefined8 __watcall sub_8f67d(uint param_1,undefined4 unaff_EDX)
           *pbVar4 = puVar5[0x50] | 0xb0;
           (&DAT_000f21fd)[iVar1] = 0x7b;
           (&DAT_000f21fe)[iVar1] = 0;
-          sub_997b7(puVar5[0x51] & 0x7f,3,pbVar4);
+          snd_queue_message(puVar5[0x51] & 0x7f,3,pbVar4);
           *pbVar4 = puVar5[0x50] | 0xb0;
           (&DAT_000f21fd)[iVar1] = 7;
           (&DAT_000f21fe)[iVar1] = 0;
-          sub_997b7(puVar5[0x51] & 0x7f,3,pbVar4);
+          snd_queue_message(puVar5[0x51] & 0x7f,3,pbVar4);
           puVar5[1] = 0;
           *(undefined4 *)(puVar5 + 2) = 0;
         }
@@ -5232,8 +5232,8 @@ undefined8 __watcall sub_8f67d(uint param_1,undefined4 unaff_EDX)
       *pbVar4 = 0xb9;
       (&DAT_000f21fd)[iVar1] = 7;
       (&DAT_000f21fe)[iVar1] = 0x7f;
-      sub_997b7(byte_f1d61 & 0x7f,3,pbVar4);
-      sub_98f46();
+      snd_queue_message(byte_f1d61 & 0x7f,3,pbVar4);
+      sound_timer_tick();
       dword_d4f9a = dword_d4f9a + -4;
     }
     uVar2 = 0;
@@ -5245,10 +5245,10 @@ LAB_0008f1f7:
 
 
 // ================================================================================================
-// sub_8f7ae @ 0x8f7ae [__watcall]
+// kms_fade_out @ 0x8f7ae [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_8f7ae(int param_1,undefined2 unaff_DX)
+undefined4 __watcall kms_fade_out(int param_1,undefined2 unaff_DX)
 
 {
   undefined1 *puVar1;
@@ -5271,10 +5271,10 @@ undefined4 __watcall sub_8f7ae(int param_1,undefined2 unaff_DX)
 
 
 // ================================================================================================
-// sub_8f80e @ 0x8f80e [__watcall]
+// kms_finished @ 0x8f80e [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_8f80e(int param_1,uint unaff_EDX)
+longlong __watcall kms_finished(int param_1,uint unaff_EDX)
 
 {
   undefined1 *puVar1;
@@ -5294,10 +5294,10 @@ longlong __watcall sub_8f80e(int param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_8f846 @ 0x8f846 [__watcall]
+// kms_fade_done @ 0x8f846 [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_8f846(int param_1,uint unaff_EDX)
+longlong __watcall kms_fade_done(int param_1,uint unaff_EDX)
 
 {
   undefined1 *puVar1;
@@ -5317,10 +5317,10 @@ longlong __watcall sub_8f846(int param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_8f87e @ 0x8f87e [__watcall]
+// kms_track_marker @ 0x8f87e [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_8f87e(int param_1,char unaff_DL)
+undefined4 __watcall kms_track_marker(int param_1,char unaff_DL)
 
 {
   undefined1 *puVar1;
@@ -5341,10 +5341,10 @@ undefined4 __watcall sub_8f87e(int param_1,char unaff_DL)
 
 
 // ================================================================================================
-// sub_8f8b7 @ 0x8f8b7 [__watcall]
+// music_mute @ 0x8f8b7 [__watcall]
 // ================================================================================================
 
-void __watcall sub_8f8b7(void)
+void __watcall music_mute(void)
 
 {
   int iVar1;
@@ -5360,7 +5360,7 @@ void __watcall sub_8f8b7(void)
       *pbVar2 = DAT_000f1a6c | 0xb0;
       (&DAT_000f21fd)[iVar1] = 7;
       (&DAT_000f21fe)[iVar1] = 0;
-      sub_997b7(0,3,pbVar2);
+      snd_queue_message(0,3,pbVar2);
     }
   }
   dword_d4f9a = dword_d4f9a + -4;
@@ -5369,17 +5369,17 @@ void __watcall sub_8f8b7(void)
 
 
 // ================================================================================================
-// sub_8f91c @ 0x8f91c [__watcall]
+// music_unmute @ 0x8f91c [__watcall]
 // ================================================================================================
 
-void __watcall sub_8f91c(void)
+void __watcall music_unmute(void)
 
 {
   short sVar1;
   
   for (sVar1 = 0; sVar1 < 0x18; sVar1 = sVar1 + 1) {
     if (unk_f1a1d != '\0') {
-      sub_99522(&unk_f1a1c,7,(&unk_f234d)[(uint)DAT_000f1a6c * 7]);
+      kms_controller(&unk_f1a1c,7,(&unk_f234d)[(uint)DAT_000f1a6c * 7]);
     }
   }
   dword_d4f8a = 0;
@@ -5559,11 +5559,11 @@ void __watcall sub_8fb24(int param_1,undefined4 unaff_EDX,int unaff_EBX,undefine
   int iVar2;
   
   if (param_1 != 0) {
-    uVar1 = sub_97166(unaff_EDX);
+    uVar1 = drv_index(unaff_EDX);
     if (-1 < (int)uVar1) {
       iVar2 = sub_8dbd4(param_1);
       (&unk_f22fc)[unaff_EBX * 5] = 0;
-      sub_97268(uVar1 & 0xff,unaff_EBX,iVar2,0x10,*(undefined4 *)(iVar2 + 4),
+      drv_play_sample(uVar1 & 0xff,unaff_EBX,iVar2,0x10,*(undefined4 *)(iVar2 + 4),
                 *(undefined4 *)(iVar2 + 8),*(undefined4 *)(iVar2 + 0xc),*(undefined2 *)(iVar2 + 2),
                 unaff_ECX,0);
     }
@@ -5583,11 +5583,11 @@ void __watcall playsample(int param_1,undefined4 unaff_EDX,int unaff_EBX,undefin
   int iVar2;
   
   if (param_1 != 0) {
-    uVar1 = sub_97166(unaff_EDX);
+    uVar1 = drv_index(unaff_EDX);
     if (-1 < (int)uVar1) {
       iVar2 = sub_8dbd4(param_1);
       (&unk_f22fc)[unaff_EBX * 5] = 0;
-      sub_97268(uVar1 & 0xff,unaff_EBX,iVar2,0x10,*(uint *)(iVar2 + 4) >> 1,
+      drv_play_sample(uVar1 & 0xff,unaff_EBX,iVar2,0x10,*(uint *)(iVar2 + 4) >> 1,
                 *(uint *)(iVar2 + 8) >> 1,*(uint *)(iVar2 + 0xc) >> 1,*(undefined2 *)(iVar2 + 2),
                 unaff_ECX,1);
     }
@@ -5608,10 +5608,10 @@ sub_8fbe5(int param_1,undefined4 param_2,int unaff_EBX,undefined4 unaff_ECX,unde
   undefined8 uVar1;
   
   if (param_1 != 0) {
-    uVar1 = sub_97166(param_2,unaff_EBX);
+    uVar1 = drv_index(param_2,unaff_EBX);
     if (-1 < (int)(uint)uVar1) {
       (&unk_f22fc)[unaff_EBX * 5] = 0;
-      sub_97268((uint)uVar1 & 0xff,(int)((ulonglong)uVar1 >> 0x20),param_1,0,unaff_ECX,0,0,param_5,
+      drv_play_sample((uint)uVar1 & 0xff,(int)((ulonglong)uVar1 >> 0x20),param_1,0,unaff_ECX,0,0,param_5,
                 param_6,0);
     }
   }
@@ -5631,10 +5631,10 @@ sub_8fc37(int param_1,undefined4 param_2,int unaff_EBX,undefined4 unaff_ECX,unde
   undefined8 uVar1;
   
   if (param_1 != 0) {
-    uVar1 = sub_97166(param_2,unaff_ECX);
+    uVar1 = drv_index(param_2,unaff_ECX);
     if (-1 < (int)(uint)uVar1) {
       (&unk_f22fc)[unaff_EBX * 5] = 0;
-      sub_97268((uint)uVar1 & 0xff,unaff_EBX,param_1,0,(int)((ulonglong)uVar1 >> 0x20) / 2,0,0,
+      drv_play_sample((uint)uVar1 & 0xff,unaff_EBX,param_1,0,(int)((ulonglong)uVar1 >> 0x20) / 2,0,0,
                 param_5,param_6,1);
     }
   }
@@ -5660,19 +5660,19 @@ undefined4 __watcall sound_channel_status(uint param_1,int unaff_EDX)
 
 
 // ================================================================================================
-// sub_8fcac @ 0x8fcac [__watcall]
+// sound_channel_stop @ 0x8fcac [__watcall]
 // ================================================================================================
 
-void __watcall sub_8fcac(void)
+void __watcall sound_channel_stop(void)
 
 {
   int iVar1;
   undefined8 uVar2;
   
-  uVar2 = sub_97166();
+  uVar2 = drv_index();
   iVar1 = (int)((ulonglong)uVar2 >> 0x20);
   if (-1 < (int)(uint)uVar2) {
-    sub_97268((uint)uVar2 & 0xff,iVar1,(iVar1 + 1) * 0x1000 + 0xff,0,0,0,0,0,0,0);
+    drv_play_sample((uint)uVar2 & 0xff,iVar1,(iVar1 + 1) * 0x1000 + 0xff,0,0,0,0,0,0,0);
   }
   return;
 }
@@ -5690,10 +5690,10 @@ void __watcall sound_fade(undefined4 param_1,int unaff_EDX,int unaff_EBX)
   undefined8 uVar3;
   
   if (unaff_EBX == 0) {
-    sub_8fcac();
+    sound_channel_stop();
   }
   else {
-    uVar3 = sub_97166();
+    uVar3 = drv_index();
     uVar1 = (uint)uVar3;
     if (-1 < (int)uVar1) {
       iVar2 = sub_971f8(uVar1 & 0xff,(int)((ulonglong)uVar3 >> 0x20) * 0x10000 + 10);
@@ -5719,7 +5719,7 @@ sub_8fd67(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 
   uint uVar1;
   undefined8 uVar2;
   
-  uVar2 = sub_97166();
+  uVar2 = drv_index();
   uVar1 = (uint)uVar2;
   if (-1 < (int)uVar1) {
     sub_971f8(uVar1 & 0xff,(int)((ulonglong)uVar2 >> 0x20) * 0x10000 + 0x33,uVar1,unaff_ECX,
@@ -5742,7 +5742,7 @@ void __watcall sub_8fd84(uint param_1,byte unaff_DL,undefined unaff_BL)
   if (((int)param_1 < dword_d4f64) && (-1 < (int)param_1)) {
     local_4 = unaff_DL | 0xc0;
     local_3 = unaff_BL;
-    sub_997b7(param_1 & 0xff,2,&local_4);
+    snd_queue_message(param_1 & 0xff,2,&local_4);
   }
   return;
 }
@@ -5761,7 +5761,7 @@ void __watcall sub_8fdb2(uint param_1,byte unaff_DL,undefined unaff_BL)
     local_4[0] = unaff_DL | 0xb0;
     local_4[1] = 7;
     local_4[2] = unaff_BL;
-    sub_997b7(param_1 & 0xff,3,local_4);
+    snd_queue_message(param_1 & 0xff,3,local_4);
   }
   return;
 }
@@ -5780,7 +5780,7 @@ void __watcall sub_8fde5(uint param_1,byte unaff_DL,byte unaff_BL)
     local_4[0] = unaff_DL | 0xe0;
     local_4[1] = 0;
     local_4[2] = unaff_BL & 0x7f;
-    sub_997b7(param_1 & 0xff,3,local_4);
+    snd_queue_message(param_1 & 0xff,3,local_4);
   }
   return;
 }
@@ -5801,7 +5801,7 @@ void __watcall sub_8fe1c(uint param_1,byte unaff_DL,undefined unaff_BL)
     local_4 = unaff_DL | 0x90;
     local_2 = 0x7f;
     local_3 = unaff_BL;
-    sub_997b7(param_1 & 0xff,3,&local_4);
+    snd_queue_message(param_1 & 0xff,3,&local_4);
   }
   return;
 }
@@ -5822,7 +5822,7 @@ void __watcall sub_8fe4f(uint param_1,byte unaff_DL,undefined unaff_BL)
     local_4 = unaff_DL | 0x80;
     local_2 = 0;
     local_3 = unaff_BL;
-    sub_997b7(param_1 & 0xff,3,&local_4);
+    snd_queue_message(param_1 & 0xff,3,&local_4);
   }
   return;
 }

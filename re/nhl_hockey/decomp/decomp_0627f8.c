@@ -1012,10 +1012,10 @@ void __watcall update_stoppage(void)
 
 
 // ================================================================================================
-// update_lead_change @ 0x63c73 [__watcall]
+// update_power_play @ 0x63c73 [__watcall]
 // ================================================================================================
 
-void __watcall update_lead_change(void)
+void __watcall update_power_play(void)
 
 {
   bool bVar1;
@@ -3097,10 +3097,10 @@ void __watcall sub_671e8(short param_1)
 
 
 // ================================================================================================
-// sub_672f9 @ 0x672f9 [__watcall]
+// choose_goalie @ 0x672f9 [__watcall]
 // ================================================================================================
 
-void __watcall sub_672f9(short param_1,short unaff_DX)
+void __watcall choose_goalie(short param_1,short unaff_DX)
 
 {
   short sVar1;
@@ -3228,10 +3228,10 @@ void __watcall sub_67564(void)
 
 
 // ================================================================================================
-// sub_67581 @ 0x67581 [__watcall]
+// replay_oldest_frame @ 0x67581 [__watcall]
 // ================================================================================================
 
-undefined * __watcall sub_67581(void)
+undefined * __watcall replay_oldest_frame(void)
 
 {
   __CHK(4);

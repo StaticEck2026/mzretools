@@ -35,9 +35,9 @@ undefined8 __watcall load_sound_config(uint param_1,undefined4 unaff_EDX)
       dword_ed7a8 = 0;
     }
     else if (dword_c541f == 4) {
-      sub_8f1fe(dword_ed7a4);
+      kms_unload(dword_ed7a4);
     }
-    sub_8eb93();
+    sound_shutdown();
   }
   dword_ccc94 = 0x20;
   dword_d2423 = 0;
@@ -94,7 +94,7 @@ LAB_00082f66:
         byte_d2439 = '\x01';
       }
     }
-    sub_8eb5b();
+    sound_timer_install();
     if (((-1 < dword_d2427) && (iVar4 = sub_97079(dword_d2427), iVar4 != -1)) &&
        ((dword_d242b < 0 || (local_20 = sub_97079(dword_d242b), local_20 != -1)))) {
       dword_d2423 = -1;
@@ -132,7 +132,7 @@ LAB_00082f66:
         sub_30f12();
         param_1 = 0x10;
       }
-      sub_8eb93();
+      sound_shutdown();
       settimeout(100);
       waittimeout();
     }
@@ -158,7 +158,7 @@ LAB_00082f66:
         dword_c541f = 8;
         play_sample_by_ptr(uVar1,uVar1);
         sfx_set_volume();
-        sub_8f1fe(extraout_EDX);
+        kms_unload(extraout_EDX);
         sub_30f12();
       }
       bVar5 = byte_d2439 == '\0';
@@ -199,10 +199,10 @@ LAB_00082f66:
 
 
 // ================================================================================================
-// sub_832bc @ 0x832bc [__watcall]
+// speech_timer @ 0x832bc [__watcall]
 // ================================================================================================
 
-void __watcall sub_832bc(void)
+void __watcall speech_timer(void)
 
 {
   int iVar1;
@@ -364,7 +364,7 @@ sub_8357a(undefined param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4
     speech_begin();
     dword_ed7b0 = allocmem(aSpeechBank,0x3b93,dword_ccc94);
     sub_83459(unaff_EDX);
-    addtimer(sub_832bc);
+    addtimer(speech_timer);
     speech_enabled = 1;
   }
   return;
@@ -380,7 +380,7 @@ void __watcall sub_8363c(void)
 {
   __CHK(0x20);
   if (speech_enabled != 0) {
-    removetimer(sub_832bc);
+    removetimer(speech_timer);
     if (*(int *)(dword_ed7b0 + 0x3b78) != 0) {
       close(*(int *)(dword_ed7b0 + 0x3b7c));
     }
@@ -481,7 +481,7 @@ sub_8378c(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined
 
 {
   __CHK(8);
-  sub_8fcac(dword_d2431,3,unaff_EBX,unaff_ECX,unaff_EDX);
+  sound_channel_stop(dword_d2431,3,unaff_EBX,unaff_ECX,unaff_EDX);
   return;
 }
 
@@ -496,8 +496,8 @@ sub_837a8(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined
 {
   __CHK(8);
   if (speech_enabled != 0) {
-    sub_8fcac(dword_d2431,0,unaff_EBX,unaff_ECX,unaff_EDX);
-    sub_8fcac(dword_d2431,1);
+    sound_channel_stop(dword_d2431,0,unaff_EBX,unaff_ECX,unaff_EDX);
+    sound_channel_stop(dword_d2431,1);
   }
   return;
 }
@@ -676,10 +676,10 @@ longlong __watcall sub_83bc7(int param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_83bf3 @ 0x83bf3 [__watcall]
+// speech_delta_decode @ 0x83bf3 [__watcall]
 // ================================================================================================
 
-void __watcall sub_83bf3(int param_1,undefined4 unaff_EDX)
+void __watcall speech_delta_decode(int param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
@@ -737,7 +737,7 @@ void __watcall sub_83cae(int param_1)
   }
   iVar1 = param_1 * 0x26;
   *(int *)(iVar1 + 0xe + dword_ed7b0) = iVar2;
-  uVar3 = sub_83bf3(param_1);
+  uVar3 = speech_delta_decode(param_1);
   *(undefined4 *)(iVar1 + 0x16 + dword_ed7b0) = uVar3;
   iVar2 = *(int *)(dword_ed7b0 + 0x3b70);
   uVar4 = sub_961d0();
@@ -2484,10 +2484,10 @@ say_goal(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 p
 
 
 // ================================================================================================
-// sub_854ac @ 0x854ac [__watcall]
+// say_one_minute_left @ 0x854ac [__watcall]
 // ================================================================================================
 
-int __watcall sub_854ac(void)
+int __watcall say_one_minute_left(void)
 
 {
   int iVar1;

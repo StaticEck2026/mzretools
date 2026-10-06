@@ -141,14 +141,14 @@ sound effects (`dig`) and the speech bank (`viv`).
 
 | Format | Loader(s) | Notes |
 |---|---|---|
-| `.fsh` / `.qfs` / `.vsh` / `.qvs` shape banks and the `.PPV` sprite and HUD banks (the `.iff` files of the installation are 8SVX music loops, `.KMS` music sequences) | `loadshapes`, `loadfile_auto`, `locateshape`, `getshape`, `shapecount`, `blit_sprite`, `blit_rle_frame` | EA **SHPI** bank: `"SHPI"`, size, entry count (+8), directory id, then 8-byte directory entries (4 character tag, offset) from +0x10. Each entry: type byte + 24-bit block size, width (+4), height (+6), hotspot x/y (+8/+0xa), position x/y (+0xc/+0xe), pixels from +0x10: plain 8-bit for type 0x7b, run length coded for the sprite frames (type bit 7). Palettes are entries named `!pal`, `embpal` etc. `q*` variants are compressed. |
+| `.fsh` / `.qfs` / `.vsh` / `.qvs` shape banks and the `.PPV` sprite and HUD banks (the `.iff` files of the installation are 8SVX menu loops, `.KMS` the songs) | `loadshapes`, `loadfile_auto`, `locateshape`, `getshape`, `shapecount`, `blit_sprite`, `blit_rle_frame` | EA **SHPI** bank: `"SHPI"`, size, entry count (+8), directory id, then 8-byte directory entries (4 character tag, offset) from +0x10. Each entry: type byte + 24-bit block size, width (+4), height (+6), hotspot x/y (+8/+0xa), position x/y (+0xc/+0xe), pixels from +0x10: plain 8-bit for type 0x7b, run length coded for the sprite frames (type bit 7). Palettes are entries named `!pal`, `embpal` etc. `q*` variants are compressed. |
 | compressed files | `unpack` (0x97eb8), `unpackfile` | EA packers, header byte 1 = `0xFB` (RefPack `10FB` family), type byte selects the variant |
 | `.vfn` fonts | `loadfile`, `setfont` | bitmap fonts (EASN.vfn, scor2b, scor3b, kaufm020 ...) |
 | `.iff` sound (`VHDR`) | `loadsound`, `playsample` | IFF **8SVX** samples (the menu screens' music loops) |
-| `PCFF001.PAT` / `.TIM` / `.DIG` | `snd_play_patch`, `snd_patch_record` | the sound effect bank of the digital driver: id -> patch record -> timbre -> signed 8 bit sample (30 samples, 11025 Hz) |
+| `PCFF001.PAT` / `.TIM` / `.DIG` | `snd_play_patch`, `snd_patch_record`, `load_timbre_file`, `bind_patch_timbres` | the patch bank: id -> patch record -> timbre (FM: the OPL2 registers and the driver's envelopes in PCFF000.TIM; digital: the sample id in PCFF001.DIG, 30 signed 8 bit samples mixed at 11025 Hz) |
 | `HOMEPALS.BIN`, `AWAYPALS.BIN`, `RINKPAL.QFS` | `load_team_palettes`, `setremaptable` | match palette and the per team colour remap tables of the sprites |
 | `.cor` / `.bar` / `.int` | `sub_84ddd`, `sub_847ce`, `sub_59c1d` ... | announcer speech clips: `.cor` words and numbers ("1minute", "goalnum", "pennum"), `.bar` phrases ("scor1per", "eastfind", "stanleyd"), `.int` intros ("nhl", "lineups", "goodnite") |
-| `.PAT` / `.TIM`, `.KMS` + `.CFG`, `.BGP` | `loadpatches`, `music_load_kms`, `load_music_banks` | instrument patches per sound driver (`%0.3sFF%03d.PAT/.TIM`), the organ songs and jingles, the sound card drivers |
+| `.PAT` / `.TIM`, `.KMS` + `.CFG`, `.BGP`, `.SCN` | `loadpatches`, `music_load_kms`, `kms_track_tick`, `load_music_banks`, `play_speech` | the patch set of each sound card (`%0.3sFF%03d.PAT/.TIM`, chosen by the `.SCN`), the songs (MIDI like event lists for the 100 Hz sequencer), the sound card drivers (byte pair packed 16 bit images) |
 | `.pen` | | penalty announcements (roughing, charging, slashing, hooking, tripping ...) |
 | `.db`, `.dbx`, `.org`, `.HI`, `.SET`, `.sav` | `db_open_files`, `db_load_team_roster`, `db_read_player`, `savegame_io` ... | databases and saves: `teams.db` (28 teams, rosters as offsets into `key.db`, line tables), `key.db` (player names, numbers, positions), `att.db` (ratings), `career.db`, `season.db`, `carteams.db`, `schedule.db`, `gsummary.db`, `game.set`, `game.sav`, league directories `*.nhl`, `*.po`, `*.lp` |
 | `RINK.QFS`, `TEAM.til` / `.map` | `load_rink`, `load_rink_tiles` | the 384x592 rink surface and the 8x8 tile maps of the 26 centre ice logos |
@@ -164,7 +164,7 @@ like `defo defd wingo wingd cento centd goalie puckc nearest shoot passrec`.
 
 ## Named routines
 
-761 routines and 182 variables are named so far (the rest keep `sub_<address>` / `dword_<address>` names).
+825 routines and 190 variables are named so far (the rest keep `sub_<address>` / `dword_<address>` names).
 Library names in lower case without prefix (`reservemem`, `locateshape`, `initgraphics`, `addtimer`,
 `unpack`, ...) are EA's own names recovered from their error messages; C runtime functions carry their
 standard names; game routines use `snake_case` names describing what was understood of them, with the 47 AI

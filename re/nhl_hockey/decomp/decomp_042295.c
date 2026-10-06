@@ -3344,12 +3344,12 @@ LAB_0004821a:
 
 
 // ================================================================================================
-// replay_loop @ 0x48333 [__watcall]
+// sequence_loop @ 0x48333 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-undefined8 __watcall replay_loop(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall sequence_loop(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   short sVar1;
@@ -3929,12 +3929,12 @@ LAB_00048ea9:
 
 
 // ================================================================================================
-// start_period @ 0x48f0b [__watcall]
+// three_stars_sequence @ 0x48f0b [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __watcall start_period(void)
+void __watcall three_stars_sequence(void)
 
 {
   uint uVar1;
@@ -4064,7 +4064,7 @@ void __watcall start_period(void)
     *(undefined4 *)(puVar6 + -4) = 0x4921f;
     sub_66dda();
     *(undefined4 *)(puVar6 + -4) = 0x49224;
-    iVar3 = replay_loop();
+    iVar3 = sequence_loop();
     if (iVar3 < 0) {
       crowd_noise._2_2_ = 0;
     }
@@ -4438,7 +4438,7 @@ void __watcall ai_get_cup(int param_1)
         *(undefined2 *)(*(int *)(param_1 + 0x6c) + 0x46 + (*(int *)(param_1 + 0x44) >> 0x18) * 2) =
              0x800;
         ai_default_skate(param_1);
-        play_crowd_chant((*(byte *)(param_1 + 0x44) & 0x40) != 0);
+        bench_cheer((*(byte *)(param_1 + 0x44) & 0x40) != 0);
         return;
       }
     }

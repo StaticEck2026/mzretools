@@ -4313,7 +4313,7 @@ LAB_0002e6c6:
   freemem();
   if (*(int *)((int)puVar9 + 0x76c) != 0) {
     *(undefined4 *)((int)puVar9 + -4) = 0x2f282;
-    sub_8f1fe(*(int *)((int)puVar9 + 0x76c));
+    kms_unload(*(int *)((int)puVar9 + 0x76c));
   }
   *(undefined4 *)((int)puVar9 + 0x780) = 0;
   if (*(int *)((int)puVar9 + 0x7b4) == 3) {
@@ -4670,7 +4670,7 @@ void __watcall team_select_screen2(void)
   fade_palette(1,auStack_38c,0x10);
   if (sound_enabled == '\0') {
     stop_crowd_loop();
-    sub_8f1fe(local_38[3]);
+    kms_unload(local_38[3]);
   }
   else if (dword_c721d != 0) {
     do {

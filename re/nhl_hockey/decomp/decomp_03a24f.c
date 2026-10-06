@@ -2099,7 +2099,7 @@ void __watcall load_cfg_palette(void)
     setpalette(iVar1,1,&cStack_28);
     iVar1 = iVar1 + 1;
   } while (iVar1 < 4);
-  sub_b3454(sub_8eb93);
+  sub_b3454(sound_shutdown);
   setmousepos(0,0);
   set_dialog_colors(2,3,1,3,0);
   sub_8fe83(1);

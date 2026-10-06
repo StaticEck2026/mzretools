@@ -1631,7 +1631,7 @@ pause_menu:
     jmp loc_193bf                                ; 0193b3 eb0a
 
 loc_193b5:
-    mov dword ptr [funcptr_cef23], sub_1a817     ; 0193b5 c70523ef0c0017a8..
+    mov dword ptr [funcptr_cef23], menu_go_to_replay ; 0193b5 c70523ef0c0017a8..
 loc_193bf:
     lea eax, [esp + 0x3d4]                       ; 0193bf 8d8424d4030000
     push eax                                     ; 0193c6 50
@@ -2782,10 +2782,11 @@ loc_1a55a:
 
 
 ; ====================================================================================================
-; sub_1a5a1  [0x1a5a1, 16 bytes, 4 instructions]
+; menu_back_to_game  [0x1a5a1, 16 bytes, 4 instructions]
+; pause menu: Back to Game (closes the menu)
 ; address taken (function pointer)
 ; ====================================================================================================
-sub_1a5a1:
+menu_back_to_game:
     push 4                                       ; 01a5a1 6804000000
     call __CHK                                   ; 01a5a6 e8a1230700
     mov eax, 1                                   ; 01a5ab b801000000
@@ -3005,10 +3006,11 @@ loc_1a80c:
 
 
 ; ====================================================================================================
-; sub_1a817  [0x1a817, 147 bytes, 35 instructions]
+; menu_go_to_replay  [0x1a817, 147 bytes, 35 instructions]
+; pause menu: Go To Replay
 ; called by: pause_menu
 ; ====================================================================================================
-sub_1a817:
+menu_go_to_replay:
     push 0x1c                                    ; 01a817 681c000000
     call __CHK                                   ; 01a81c e82b210700
     push ebx                                     ; 01a821 53
@@ -3113,10 +3115,11 @@ sub_1a922:
 
 
 ; ====================================================================================================
-; team_select_hub  [0x1a96d, 63 bytes, 16 instructions]
+; menu_game_statistics  [0x1a96d, 63 bytes, 16 instructions]
+; pause menu: Game Statistics ...
 ; address taken (function pointer)
 ; ====================================================================================================
-team_select_hub:
+menu_game_statistics:
     push 0x1c                                    ; 01a96d 681c000000
     call __CHK                                   ; 01a972 e8d51f0700
     push ebx                                     ; 01a977 53
@@ -3258,16 +3261,17 @@ sub_1aac4:
 
 
 ; ====================================================================================================
-; sub_1ab0b  [0x1ab0b, 46 bytes, 12 instructions]
+; menu_home_goalie1  [0x1ab0b, 46 bytes, 12 instructions]
+; pause menu: the home team's first goalie
 ; address taken (function pointer)
 ; ====================================================================================================
-sub_1ab0b:
+menu_home_goalie1:
     push 8                                       ; 01ab0b 6808000000
     call __CHK                                   ; 01ab10 e8371e0700
     push edx                                     ; 01ab15 52
     xor edx, edx                                 ; 01ab16 31d2
     xor eax, eax                                 ; 01ab18 31c0
-    call sub_672f9                               ; 01ab1a e8dac70400
+    call choose_goalie                           ; 01ab1a e8dac70400
     mov eax, dword ptr [off_cee5f]               ; 01ab1f a15fee0c00
     mov byte ptr [eax], 1                        ; 01ab24 c60001
     mov eax, dword ptr [off_cee7f]               ; 01ab27 a17fee0c00
@@ -3278,16 +3282,17 @@ loc_1ab2f:
 
 
 ; ====================================================================================================
-; sub_1ab39  [0x1ab39, 41 bytes, 11 instructions]
+; menu_home_goalie2  [0x1ab39, 41 bytes, 11 instructions]
+; pause menu: the home team's second goalie
 ; address taken (function pointer)
 ; ====================================================================================================
-sub_1ab39:
+menu_home_goalie2:
     push 8                                       ; 01ab39 6808000000
     call __CHK                                   ; 01ab3e e8091e0700
     push edx                                     ; 01ab43 52
     mov edx, 1                                   ; 01ab44 ba01000000
     xor eax, eax                                 ; 01ab49 31c0
-    call sub_672f9                               ; 01ab4b e8a9c70400
+    call choose_goalie                           ; 01ab4b e8a9c70400
     mov eax, dword ptr [off_cee5f]               ; 01ab50 a15fee0c00
     mov byte ptr [eax], 2                        ; 01ab55 c60002
     mov eax, dword ptr [off_cee7f]               ; 01ab58 a17fee0c00
@@ -3296,16 +3301,17 @@ sub_1ab39:
 
 
 ; ====================================================================================================
-; sub_1ab62  [0x1ab62, 51 bytes, 15 instructions]
+; menu_home_no_goalie  [0x1ab62, 51 bytes, 15 instructions]
+; pause menu: the home team plays without a goalie
 ; address taken (function pointer)
 ; ====================================================================================================
-sub_1ab62:
+menu_home_no_goalie:
     push 8                                       ; 01ab62 6808000000
     call __CHK                                   ; 01ab67 e8e01d0700
     push edx                                     ; 01ab6c 52
     mov edx, 0xffffffff                          ; 01ab6d baffffffff
     xor eax, eax                                 ; 01ab72 31c0
-    call sub_672f9                               ; 01ab74 e880c70400
+    call choose_goalie                           ; 01ab74 e880c70400
     mov eax, dword ptr [off_cee5f]               ; 01ab79 a15fee0c00
     mov byte ptr [eax], 2                        ; 01ab7e c60002
     mov eax, dword ptr [off_cee7f]               ; 01ab81 a17fee0c00
@@ -3319,16 +3325,17 @@ loc_1ab8e:
 
 
 ; ====================================================================================================
-; sub_1ab95  [0x1ab95, 51 bytes, 15 instructions]
+; menu_away_goalie1  [0x1ab95, 51 bytes, 15 instructions]
+; pause menu: the away team's first goalie
 ; address taken (function pointer)
 ; ====================================================================================================
-sub_1ab95:
+menu_away_goalie1:
     push 8                                       ; 01ab95 6808000000
     call __CHK                                   ; 01ab9a e8ad1d0700
     push edx                                     ; 01ab9f 52
     xor edx, edx                                 ; 01aba0 31d2
     mov eax, 1                                   ; 01aba2 b801000000
-    call sub_672f9                               ; 01aba7 e84dc70400
+    call choose_goalie                           ; 01aba7 e84dc70400
     mov eax, dword ptr [off_ceebf]               ; 01abac a1bfee0c00
     mov byte ptr [eax], 1                        ; 01abb1 c60001
     mov eax, dword ptr [off_ceedf]               ; 01abb4 a1dfee0c00
@@ -3343,16 +3350,17 @@ loc_1abc1:
 
 
 ; ====================================================================================================
-; sub_1abc8  [0x1abc8, 41 bytes, 11 instructions]
+; menu_away_goalie2  [0x1abc8, 41 bytes, 11 instructions]
+; pause menu: the away team's second goalie
 ; address taken (function pointer)
 ; ====================================================================================================
-sub_1abc8:
+menu_away_goalie2:
     push 8                                       ; 01abc8 6808000000
     call __CHK                                   ; 01abcd e87a1d0700
     push edx                                     ; 01abd2 52
     mov edx, 1                                   ; 01abd3 ba01000000
     mov eax, edx                                 ; 01abd8 89d0
-    call sub_672f9                               ; 01abda e81ac70400
+    call choose_goalie                           ; 01abda e81ac70400
     mov eax, dword ptr [off_ceebf]               ; 01abdf a1bfee0c00
     mov byte ptr [eax], 2                        ; 01abe4 c60002
     mov eax, dword ptr [off_ceedf]               ; 01abe7 a1dfee0c00
@@ -3361,16 +3369,17 @@ sub_1abc8:
 
 
 ; ====================================================================================================
-; sub_1abf1  [0x1abf1, 52 bytes, 12 instructions]
+; menu_away_no_goalie  [0x1abf1, 52 bytes, 12 instructions]
+; pause menu: the away team plays without a goalie
 ; address taken (function pointer)
 ; ====================================================================================================
-sub_1abf1:
+menu_away_no_goalie:
     push 8                                       ; 01abf1 6808000000
     call __CHK                                   ; 01abf6 e8511d0700
     push edx                                     ; 01abfb 52
     mov edx, 0xffffffff                          ; 01abfc baffffffff
     mov eax, 1                                   ; 01ac01 b801000000
-    call sub_672f9                               ; 01ac06 e8eec60400
+    call choose_goalie                           ; 01ac06 e8eec60400
     mov eax, dword ptr [off_ceebf]               ; 01ac0b a1bfee0c00
     mov byte ptr [eax], 2                        ; 01ac10 c60002
     mov eax, dword ptr [off_ceedf]               ; 01ac13 a1dfee0c00

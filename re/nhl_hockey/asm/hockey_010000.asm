@@ -1413,7 +1413,7 @@ loc_10e9a:
 ; ====================================================================================================
 ; set_video_mode  [0x10e9f, 206 bytes, 67 instructions]
 ; switches between 640x480 (menus) and 320x200 (game) through initgraphics
-; called by: main, sub_10f6d, game_loop, play_game, demo_game, sub_190be, sub_1920f, sub_1a817, simulate_game_offscreen, instant_replay, highlights_play
+; called by: main, sub_10f6d, game_loop, play_game, demo_game, sub_190be, sub_1920f, menu_go_to_replay, simulate_game_offscreen, instant_replay, highlights_play
 ; ====================================================================================================
 set_video_mode:
     push 0x28                                    ; 010e9f 6828000000
@@ -1936,7 +1936,7 @@ loc_11450:
 ; ====================================================================================================
 ; get_frame_ticks  [0x1145f, 59 bytes, 14 instructions]
 ; timer ticks accumulated since the last frame
-; called by: game_loop, replay_loop, simulate_game_offscreen
+; called by: game_loop, sequence_loop, simulate_game_offscreen
 ; ====================================================================================================
 get_frame_ticks:
     push 8                                       ; 01145f 6808000000
@@ -1958,7 +1958,7 @@ get_frame_ticks:
 ; ====================================================================================================
 ; run_sim_steps  [0x1149a, 182 bytes, 49 instructions]
 ; runs N fixed simulation steps, handles hotkeys and the game clock
-; called by: game_loop, replay_loop, simulate_game_offscreen
+; called by: game_loop, sequence_loop, simulate_game_offscreen
 ; ====================================================================================================
 run_sim_steps:
     push 0xc                                     ; 01149a 680c000000
@@ -2058,7 +2058,7 @@ loc_1158b:
 
 ; ====================================================================================================
 ; fade_palette_to  [0x11598, 227 bytes, 72 instructions]
-; called by: sub_10f6d, handle_hotkey, game_loop, sub_13e8f, sub_1a817, boxscore_screen, faceoff_wait_loop, start_period, simulate_game_offscreen, instant_replay, coach_clip_player
+; called by: sub_10f6d, handle_hotkey, game_loop, sub_13e8f, menu_go_to_replay, boxscore_screen, faceoff_wait_loop, three_stars_sequence, simulate_game_offscreen, instant_replay, coach_clip_player
 ; ====================================================================================================
 fade_palette_to:
     push 0x18                                    ; 011598 6818000000
@@ -2581,7 +2581,7 @@ loc_11cdb:
     xor ebx, ebx                                 ; 011cdb 31db
     mov dword ptr [input_enabled], ebx           ; 011cdd 891d0c4d0c00
     call sub_61b85                               ; 011ce3 e89dfe0400
-    call start_period                            ; 011ce8 e81e720300
+    call three_stars_sequence                    ; 011ce8 e81e720300
     call sub_1920f                               ; 011ced e81d750000
     mov dword ptr [dword_c53f7], 1               ; 011cf2 c705f7530c000100..
 loc_11cfc:
@@ -2798,7 +2798,7 @@ loc_11fec:
 ; ====================================================================================================
 ; set_state  [0x11ff4, 29 bytes, 10 instructions]
 ; set_state(entity, state): replaces the active AI state, flags |= 2 (state entered)
-; called by: set_state_reset, init_match, start_period, ai_ref_three_stars, ai_defense_offense, ai_defense_defense, ai_wing_defense, ai_wing_offense, ai_center_defense, ai_center_offense, ai_celebrate_goal, ai_game_misconduct (+26 more)
+; called by: set_state_reset, init_match, three_stars_sequence, ai_ref_three_stars, ai_defense_offense, ai_defense_defense, ai_wing_defense, ai_wing_offense, ai_center_defense, ai_center_offense, ai_celebrate_goal, ai_game_misconduct (+26 more)
 ; ====================================================================================================
 set_state:
     push 8                                       ; 011ff4 6808000000
@@ -4526,7 +4526,7 @@ loc_13546:
     call fade_palette                            ; 013577 e8ad2e0600
     call stop_crowd_loop                         ; 01357c e800640400
     mov eax, edi                                 ; 013581 89f8
-    call sub_8f1fe                               ; 013583 e876bc0700
+    call kms_unload                              ; 013583 e876bc0700
     jmp loc_13634                                ; 013588 e9a7000000
 
 loc_1358d:
@@ -4742,7 +4742,7 @@ loc_1383e:
 loc_13848:
     call stop_crowd_loop                         ; 013848 e834610400
     mov eax, edi                                 ; 01384d 89f8
-    call sub_8f1fe                               ; 01384f e8aab90700
+    call kms_unload                              ; 01384f e8aab90700
 loc_13854:
     mov eax, esp                                 ; 013854 89e0
     push eax                                     ; 013856 50
@@ -4871,7 +4871,7 @@ loc_13957:
 ; ====================================================================================================
 ; load_sprite_banks  [0x1395f, 208 bytes, 70 instructions]
 ; loads the 23 player sprite banks "%d00_%d49.PPV"/"%d50_%d99.PPV"
-; called by: load_player_graphics, sub_1a534, sub_1a817, simulate_game_offscreen
+; called by: load_player_graphics, sub_1a534, menu_go_to_replay, simulate_game_offscreen
 ;   uses string "%d50%d99"
 ;   uses string "%d00%d49"
 ;   uses string "%d50_%d99"
@@ -9001,7 +9001,7 @@ loc_166cf:
 loc_166fe:
     call stop_crowd_loop                         ; 0166fe e87e320400
     mov eax, dword ptr [dword_dc33c]             ; 016703 a13cc30d00
-    call sub_8f1fe                               ; 016708 e8f18a0700
+    call kms_unload                              ; 016708 e8f18a0700
 loc_1670d:
     mov eax, dword ptr [esp + 0x33c]             ; 01670d 8b84243c030000
     push eax                                     ; 016714 50
@@ -10013,9 +10013,9 @@ loc_1743d:
 loc_1746b:
     call stop_crowd_loop                         ; 01746b e811250400
     mov eax, dword ptr [esp + 0x354]             ; 017470 8b842454030000
-    call sub_8f1fe                               ; 017477 e8827d0700
+    call kms_unload                              ; 017477 e8827d0700
     mov eax, dword ptr [esp + 0x350]             ; 01747c 8b842450030000
-    call sub_8f1fe                               ; 017483 e8767d0700
+    call kms_unload                              ; 017483 e8767d0700
 loc_17488:
     lea eax, [esp + 0x300]                       ; 017488 8d842400030000
     push eax                                     ; 01748f 50

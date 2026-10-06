@@ -2582,7 +2582,7 @@ loc_33776:
 ; ====================================================================================================
 ; load_rink  [0x3377c, 1164 bytes, 326 instructions]
 ; rink .til/.map tiles ("TILES", "Error loading file")
-; called by: play_game, demo_game, sub_1a534, sub_1a817, simulate_game_offscreen, highlights_play
+; called by: play_game, demo_game, sub_1a534, menu_go_to_replay, simulate_game_offscreen, highlights_play
 ;   uses string "rink"
 ;   uses string ".til"
 ;   uses string "Invalid file '%s' size %d\n"

@@ -1775,11 +1775,11 @@ loc_63c4e:
 
 
 ; ====================================================================================================
-; update_lead_change  [0x63c73, 201 bytes, 57 instructions]
-; detects lead changes, plays the crowd reaction
+; update_power_play  [0x63c73, 201 bytes, 57 instructions]
+; the skaters on the ice differ: a power play starts (stop_flags 0x20 / 0x40, team +4)
 ; called by: sim_game_state
 ; ====================================================================================================
-update_lead_change:
+update_power_play:
     push 0x10                                    ; 063c73 6810000000
     call __CHK                                   ; 063c78 e8cf8c0200
     push ebx                                     ; 063c7d 53
@@ -6160,7 +6160,7 @@ loc_66d9b:
 
 ; ====================================================================================================
 ; sub_66dda  [0x66dda, 44 bytes, 12 instructions]
-; called by: init_match, start_period, ref_check_announcements, ai_ref_pickup_puck, announce_goal, record_penalty, announce_injury
+; called by: init_match, three_stars_sequence, ref_check_announcements, ai_ref_pickup_puck, announce_goal, record_penalty, announce_injury
 ; ====================================================================================================
 sub_66dda:
     push 8                                       ; 066dda 6808000000
@@ -6559,10 +6559,11 @@ loc_672f4:
 
 
 ; ====================================================================================================
-; sub_672f9  [0x672f9, 204 bytes, 62 instructions]
-; called by: sub_1ab0b, sub_1ab39, sub_1ab62, sub_1ab95, sub_1abc8, sub_1abf1
+; choose_goalie  [0x672f9, 204 bytes, 62 instructions]
+; choose_goalie(team, 0 / 1, -1 none): the goalie choice of the pause menu
+; called by: menu_home_goalie1, menu_home_goalie2, menu_home_no_goalie, menu_away_goalie1, menu_away_goalie2, menu_away_no_goalie
 ; ====================================================================================================
-sub_672f9:
+choose_goalie:
     push 0x10                                    ; 0672f9 6810000000
     call __CHK                                   ; 0672fe e849560200
     push ebx                                     ; 067303 53
@@ -6808,10 +6809,11 @@ sub_67564:
 
 
 ; ====================================================================================================
-; sub_67581  [0x67581, 31 bytes, 8 instructions]
+; replay_oldest_frame  [0x67581, 31 bytes, 8 instructions]
+; index of the oldest recorded replay frame in the ring
 ; called by: instant_replay
 ; ====================================================================================================
-sub_67581:
+replay_oldest_frame:
     push 4                                       ; 067581 6804000000
     call __CHK                                   ; 067586 e8c1530200
     test byte ptr [action_flags], 0x10           ; 06758b f605bc900c0010

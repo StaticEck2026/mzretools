@@ -5838,10 +5838,11 @@ loc_9715c:
 
 
 ; ====================================================================================================
-; sub_97166  [0x97166, 25 bytes, 7 instructions]
-; called by: sub_8f27a, sub_8fb24, playsample, sub_8fbe5, sub_8fc37, sub_8fcac, sound_fade, sub_8fd67
+; drv_index  [0x97166, 25 bytes, 7 instructions]
+; index of a loaded sound driver
+; called by: sub_8f27a, sub_8fb24, playsample, sub_8fbe5, sub_8fc37, sound_channel_stop, sound_fade, sub_8fd67
 ; ====================================================================================================
-sub_97166:
+drv_index:
     cmp dword ptr [dword_d4f64], 0               ; 097166 833d644f0d0000
     jg loc_97175                                 ; 09716d 7f06
     mov eax, 0xffffffff                          ; 09716f b8ffffffff
@@ -5904,7 +5905,7 @@ sub_971ab:
 
 ; ====================================================================================================
 ; sub_971be  [0x971be, 29 bytes, 12 instructions]
-; called by: sub_8eb93
+; called by: sound_shutdown
 ; ====================================================================================================
 sub_971be:
     push ebx                                     ; 0971be 53
@@ -5923,10 +5924,11 @@ loc_971d7:
 
 
 ; ====================================================================================================
-; sub_971db  [0x971db, 29 bytes, 12 instructions]
-; called by: sub_98f46
+; drv_tick  [0x971db, 29 bytes, 12 instructions]
+; the timer tick of a sound driver
+; called by: sound_timer_tick
 ; ====================================================================================================
-sub_971db:
+drv_tick:
     push ebx                                     ; 0971db 53
     push ecx                                     ; 0971dc 51
     push edx                                     ; 0971dd 52
@@ -5944,7 +5946,7 @@ loc_971f4:
 
 ; ====================================================================================================
 ; sub_971f8  [0x971f8, 19 bytes, 7 instructions]
-; called by: sound_channel_status, sound_fade, sub_8fd67, sub_97079, sub_98f46
+; called by: sound_channel_status, sound_fade, sub_8fd67, sub_97079, sound_timer_tick
 ; ====================================================================================================
 sub_971f8:
     push ebx                                     ; 0971f8 53
@@ -5957,10 +5959,11 @@ sub_971f8:
 
 
 ; ====================================================================================================
-; sub_9720b  [0x9720b, 35 bytes, 13 instructions]
+; drv_channel_config  [0x9720b, 35 bytes, 13 instructions]
+; channel setup of a sound driver
 ; called by: sub_8f27a
 ; ====================================================================================================
-sub_9720b:
+drv_channel_config:
     push ecx                                     ; 09720b 51
     and eax, 0xff                                ; 09720c 25ff000000
     cmp eax, dword ptr [dword_d4f64]             ; 097211 3b05644f0d00
@@ -5978,10 +5981,11 @@ loc_9722c:
 
 
 ; ====================================================================================================
-; sub_9722e  [0x9722e, 58 bytes, 22 instructions]
-; called by: sub_990cb, sub_99522, sub_99620, sub_996b0, sub_99700, sub_99822, sub_998a0
+; drv_send_midi  [0x9722e, 58 bytes, 22 instructions]
+; MIDI message to a sound driver (adds 24 to the note of a note on / off)
+; called by: kms_track_tick, kms_controller, snd_note_off, kms_pitch_bend, snd_note_on, snd_flush_messages, snd_program_change
 ; ====================================================================================================
-sub_9722e:
+drv_send_midi:
     push ecx                                     ; 09722e 51
     xor ecx, ecx                                 ; 09722f 31c9
     mov cl, al                                   ; 097231 88c1
@@ -6010,10 +6014,11 @@ loc_97266:
 
 
 ; ====================================================================================================
-; sub_97268  [0x97268, 67 bytes, 28 instructions]
-; called by: sub_8fb24, sub_8fbe5, sub_8fc37, sub_8fcac
+; drv_play_sample  [0x97268, 67 bytes, 28 instructions]
+; plays a sample through a sound driver
+; called by: sub_8fb24, sub_8fbe5, sub_8fc37, sound_channel_stop
 ; ====================================================================================================
-sub_97268:
+drv_play_sample:
     push esi                                     ; 097268 56
     push edi                                     ; 097269 57
     push ebp                                     ; 09726a 55
@@ -6127,7 +6132,7 @@ sub_972e5:
 
 ; ====================================================================================================
 ; sub_972f0  [0x972f0, 5 bytes, 2 instructions]
-; called by: sub_83bf3, sub_840a9, sub_96844, sub_96e7c
+; called by: speech_delta_decode, sub_840a9, sub_96844, sub_96e7c
 ; ====================================================================================================
 sub_972f0:
     mov eax, dword ptr [esp + 4]                 ; 0972f0 8b442404
@@ -6903,10 +6908,11 @@ loc_979e6:
 
 
 ; ====================================================================================================
-; sub_979f8  [0x979f8, 64 bytes, 21 instructions]
+; bytepair_expand  [0x979f8, 64 bytes, 21 instructions]
+; expands a byte pair code recursively
 ; called by: bytepair_decode
 ; ====================================================================================================
-sub_979f8:
+bytepair_expand:
     push ebx                                     ; 0979f8 53
     push edx                                     ; 0979f9 52
 loc_979fa:
@@ -6918,7 +6924,7 @@ loc_979fa:
     mov eax, dword ptr [dword_edeec]             ; 097a0a a1ecde0e00
     mov al, byte ptr [edx + eax]                 ; 097a0f 8a0402
     and eax, 0xff                                ; 097a12 25ff000000
-    call sub_979f8                               ; 097a17 e8dcffffff
+    call bytepair_expand                         ; 097a17 e8dcffffff
     mov eax, dword ptr [dword_edef4]             ; 097a1c a1f4de0e00
     mov al, byte ptr [edx + eax]                 ; 097a21 8a0402
     jmp loc_979fa                                ; 097a24 ebd4
@@ -7044,11 +7050,11 @@ loc_97b56:
     mov eax, dword ptr [dword_edeec]             ; 097b5e a1ecde0e00
     mov al, byte ptr [edx + eax]                 ; 097b63 8a0402
     and eax, 0xff                                ; 097b66 25ff000000
-    call sub_979f8                               ; 097b6b e888feffff
+    call bytepair_expand                         ; 097b6b e888feffff
     mov eax, dword ptr [dword_edef4]             ; 097b70 a1f4de0e00
     mov al, byte ptr [edx + eax]                 ; 097b75 8a0402
     and eax, 0xff                                ; 097b78 25ff000000
-    call sub_979f8                               ; 097b7d e876feffff
+    call bytepair_expand                         ; 097b7d e876feffff
     jmp loc_97b30                                ; 097b82 ebac
 
 loc_97b84:
@@ -7680,7 +7686,7 @@ loc_9801e:
 
 ; ====================================================================================================
 ; sub_98028  [0x98028, 26 bytes, 10 instructions]
-; called by: sub_83bf3
+; called by: speech_delta_decode
 ; ====================================================================================================
 sub_98028:
     push 1                                       ; 098028 6a01
@@ -9442,10 +9448,11 @@ loc_98f0a:
 
 
 ; ====================================================================================================
-; sub_98f11  [0x98f11, 53 bytes, 15 instructions]
-; called by: sub_8eb5b, sub_8eb93
+; sound_timer  [0x98f11, 53 bytes, 15 instructions]
+; the 100 Hz timer callback of the sound layer
+; called by: sound_timer_install, sound_shutdown
 ; ====================================================================================================
-sub_98f11:
+sound_timer:
     push edx                                     ; 098f11 52
     mov ah, byte ptr [byte_d4f5e]                ; 098f12 8a255e4f0d00
     test ah, ah                                  ; 098f18 84e4
@@ -9457,7 +9464,7 @@ sub_98f11:
     mov dl, ah                                   ; 098f2f 88e2
     inc dl                                       ; 098f31 fec2
     mov byte ptr [byte_d4f5e], dl                ; 098f33 88155e4f0d00
-    call sub_98f46                               ; 098f39 e808000000
+    call sound_timer_tick                        ; 098f39 e808000000
     dec byte ptr [byte_d4f5e]                    ; 098f3e fe0d5e4f0d00
 loc_98f44:
     pop edx                                      ; 098f44 5a
@@ -9465,10 +9472,11 @@ loc_98f44:
 
 
 ; ====================================================================================================
-; sub_98f46  [0x98f46, 389 bytes, 136 instructions]
-; called by: sub_8f67d, sub_98f11
+; sound_timer_tick  [0x98f46, 389 bytes, 136 instructions]
+; fades, driver ticks, queued MIDI messages, the song tracks, effect note lengths
+; called by: snd_stop_handle, sound_timer
 ; ====================================================================================================
-sub_98f46:
+sound_timer_tick:
     push ebx                                     ; 098f46 53
     push ecx                                     ; 098f47 51
     push edx                                     ; 098f48 52
@@ -9506,7 +9514,7 @@ loc_98f54:
     jg loc_98fa5                                 ; 098f97 7f0c
     mov eax, dword ptr [ebx + 0xc]               ; 098f99 8b430c
     mov edx, ecx                                 ; 098f9c 89ca
-    call sub_8fcac                               ; 098f9e e8096dffff
+    call sound_channel_stop                      ; 098f9e e8096dffff
     xor esi, esi                                 ; 098fa3 31f6
 loc_98fa5:
     mov dword ptr [ebx], esi                     ; 098fa5 8933
@@ -9524,7 +9532,7 @@ loc_98fa7:
     je loc_98fd7                                 ; 098fc9 740c
     xor eax, eax                                 ; 098fcb 31c0
     mov al, byte ptr [dword_d4f96]               ; 098fcd a0964f0d00
-    call sub_971db                               ; 098fd2 e804e2ffff
+    call drv_tick                                ; 098fd2 e804e2ffff
 loc_98fd7:
     xor ecx, ecx                                 ; 098fd7 31c9
     jmp loc_98fed                                ; 098fd9 eb12
@@ -9534,13 +9542,13 @@ loc_98fdb:
     je loc_98fec                                 ; 098fe1 7409
     xor eax, eax                                 ; 098fe3 31c0
     mov al, cl                                   ; 098fe5 88c8
-    call sub_971db                               ; 098fe7 e8efe1ffff
+    call drv_tick                                ; 098fe7 e8efe1ffff
 loc_98fec:
     inc ecx                                      ; 098fec 41
 loc_98fed:
     cmp ecx, dword ptr [dword_d4f64]             ; 098fed 3b0d644f0d00
     jl loc_98fdb                                 ; 098ff3 7ce6
-    call sub_99822                               ; 098ff5 e828080000
+    call snd_flush_messages                      ; 098ff5 e828080000
     cmp dword ptr [dword_d4f8a], 0               ; 098ffa 833d8a4f0d0000
     jne loc_9909a                                ; 099001 0f8593000000
     mov ebx, unk_f1a1c                           ; 099007 bb1c1a0f00
@@ -9578,7 +9586,7 @@ loc_9900e:
     mov byte ptr [esi + 0x11], al                ; 099061 884611
 loc_99064:
     mov eax, ebx                                 ; 099064 89d8
-    call sub_990cb                               ; 099066 e860000000
+    call kms_track_tick                          ; 099066 e860000000
 loc_9906b:
     add ebx, 0x54                                ; 09906b 83c354
     inc ecx                                      ; 09906e 41
@@ -9594,7 +9602,7 @@ loc_9907b:
     mov dword ptr [ebx + 8], esi                 ; 099085 897308
     jne loc_99091                                ; 099088 7507
     mov eax, ebx                                 ; 09908a 89d8
-    call sub_99620                               ; 09908c e88f050000
+    call snd_note_off                            ; 09908c e88f050000
 loc_99091:
     add ebx, 0xc                                 ; 099091 83c30c
     inc ecx                                      ; 099094 41
@@ -9611,7 +9619,7 @@ loc_9909a:
     je loc_990c4                                 ; 0990b6 740c
     xor eax, eax                                 ; 0990b8 31c0
     mov al, byte ptr [dword_d4f96]               ; 0990ba a0964f0d00
-    call sub_971db                               ; 0990bf e817e1ffff
+    call drv_tick                                ; 0990bf e817e1ffff
 loc_990c4:
     pop ebp                                      ; 0990c4 5d
     pop edi                                      ; 0990c5 5f
@@ -9623,10 +9631,11 @@ loc_990c4:
 
 
 ; ====================================================================================================
-; sub_990cb  [0x990cb, 1111 bytes, 329 instructions]
-; called by: sub_98f46
+; kms_track_tick  [0x990cb, 1111 bytes, 329 instructions]
+; one track of a song: 128 a tick, a step every 32000 / tempo, its events and note lengths
+; called by: sound_timer_tick
 ; ====================================================================================================
-sub_990cb:
+kms_track_tick:
     push ebx                                     ; 0990cb 53
     push ecx                                     ; 0990cc 51
     push edx                                     ; 0990cd 52
@@ -9660,7 +9669,7 @@ loc_99116:
     cmp al, byte ptr [esi]                       ; 099120 3a06
     jne loc_9912b                                ; 099122 7507
     mov eax, edx                                 ; 099124 89d0
-    call sub_99620                               ; 099126 e8f5040000
+    call snd_note_off                            ; 099126 e8f5040000
 loc_9912b:
     add edx, 0xc                                 ; 09912b 83c20c
     inc ebx                                      ; 09912e 43
@@ -9676,7 +9685,7 @@ loc_9912f:
     mov al, byte ptr [esi + 0x51]                ; 099146 8a4651
     mov ebx, edi                                 ; 099149 89fb
     mov edx, 3                                   ; 09914b ba03000000
-    call sub_997b7                               ; 099150 e862060000
+    call snd_queue_message                       ; 099150 e862060000
     mov dword ptr [esi + 0xa], 0                 ; 099155 c7460a00000000
     mov byte ptr [esi + 1], 0                    ; 09915c c6460100
     jmp loc_99513                                ; 099160 e9ae030000
@@ -9712,7 +9721,7 @@ loc_99185:
     mov bl, byte ptr [eax + unk_f234d]           ; 0991af 8a984d230f00
     mov edx, 7                                   ; 0991b5 ba07000000
     mov eax, esi                                 ; 0991ba 89f0
-    call sub_99522                               ; 0991bc e861030000
+    call kms_controller                          ; 0991bc e861030000
 loc_991c1:
     add word ptr [esi + 0x4a], 0x80              ; 0991c1 6681464a8000
 loc_991c7:
@@ -9734,7 +9743,7 @@ loc_991e8:
     mov dword ptr [edx + 8], ebp                 ; 0991f3 896a08
     jne loc_991ff                                ; 0991f6 7507
     mov eax, edx                                 ; 0991f8 89d0
-    call sub_99620                               ; 0991fa e821040000
+    call snd_note_off                            ; 0991fa e821040000
 loc_991ff:
     add edx, 0xc                                 ; 0991ff 83c20c
     inc ebx                                      ; 099202 43
@@ -9759,7 +9768,7 @@ loc_99225:
     je loc_99503                                 ; 099234 0f84c9020000
     mov edx, ebx                                 ; 09923a 89da
     mov eax, unk_f1884                           ; 09923c b884180f00
-    call sub_99925                               ; 099241 e8df060000
+    call kms_read_event                          ; 099241 e8df060000
     xor eax, eax                                 ; 099246 31c0
     mov al, byte ptr [byte_f188e]                ; 099248 a08e180f00
     mov ebp, dword ptr [esi + 0xa]               ; 09924d 8b6e0a
@@ -9853,7 +9862,7 @@ loc_99331:
 loc_9933e:
     and edx, 0xff                                ; 09933e 81e2ff000000
     mov eax, dword ptr [esi + 2]                 ; 099344 8b4602
-    call sub_9966e                               ; 099347 e822030000
+    call kms_set_tempo                           ; 099347 e822030000
     jmp loc_994df                                ; 09934c e98e010000
 
 loc_99351:
@@ -9900,7 +9909,7 @@ loc_993ac:
     mov al, byte ptr [esi + 0x51]                ; 0993bd 8a4651
     mov ebx, unk_f1784                           ; 0993c0 bb84170f00
 loc_993c5:
-    call sub_9722e                               ; 0993c5 e864deffff
+    call drv_send_midi                           ; 0993c5 e864deffff
     jmp loc_994df                                ; 0993ca e910010000
 
 loc_993cf:
@@ -9910,7 +9919,7 @@ loc_993cf:
     mov bl, byte ptr [dword_f1888]               ; 0993db 8a1d88180f00
     and edx, 0xff                                ; 0993e1 81e2ff000000
     mov eax, esi                                 ; 0993e7 89f0
-    call sub_99522                               ; 0993e9 e834010000
+    call kms_controller                          ; 0993e9 e834010000
     jmp loc_994df                                ; 0993ee e9ec000000
 
 loc_993f3:
@@ -9947,7 +9956,7 @@ loc_99428:
 loc_99436:
     movsx edx, word ptr [dword_f1888]            ; 099436 0fbf1588180f00
     mov eax, esi                                 ; 09943d 89f0
-    call sub_996b0                               ; 09943f e86c020000
+    call kms_pitch_bend                          ; 09943f e86c020000
     jmp loc_994df                                ; 099444 e996000000
 
 loc_99449:
@@ -10000,14 +10009,14 @@ loc_994b0:
     mov dl, byte ptr [byte_f188d]                ; 0994cd 8a158d180f00
     xor eax, eax                                 ; 0994d3 31c0
     mov al, byte ptr [byte_f188c]                ; 0994d5 a08c180f00
-    call sub_99700                               ; 0994da e821020000
+    call snd_note_on                             ; 0994da e821020000
 loc_994df:
     mov ebx, dword ptr [esi + 0xa]               ; 0994df 8b5e0a
     test ebx, ebx                                ; 0994e2 85db
     je loc_99225                                 ; 0994e4 0f843bfdffff
     mov edx, ebx                                 ; 0994ea 89da
     mov eax, dword_f1890                         ; 0994ec b890180f00
-    call sub_99925                               ; 0994f1 e82f040000
+    call kms_read_event                          ; 0994f1 e82f040000
     mov eax, dword ptr [dword_f1890]             ; 0994f6 a190180f00
     mov dword ptr [esi + 0xe], eax               ; 0994fb 89460e
     jmp loc_99225                                ; 0994fe e922fdffff
@@ -10027,10 +10036,11 @@ loc_9951a:
 
 
 ; ====================================================================================================
-; sub_99522  [0x99522, 254 bytes, 88 instructions]
-; called by: sub_8f27a, sub_8f91c, sub_990cb
+; kms_controller  [0x99522, 254 bytes, 88 instructions]
+; controller of a track (volume scaled by the song's volume, pan adjusted)
+; called by: sub_8f27a, music_unmute, kms_track_tick
 ; ====================================================================================================
-sub_99522:
+kms_controller:
     push ecx                                     ; 099522 51
     push esi                                     ; 099523 56
     push edi                                     ; 099524 57
@@ -10119,7 +10129,7 @@ loc_99600:
     mov al, byte ptr [ecx + 0x51]                ; 099605 8a4151
     mov ebx, esi                                 ; 099608 89f3
     mov edx, 3                                   ; 09960a ba03000000
-    call sub_9722e                               ; 09960f e81adcffff
+    call drv_send_midi                           ; 09960f e81adcffff
     sub dword ptr [dword_d4f9a], 4               ; 099614 832d9a4f0d0004
     pop ebp                                      ; 09961b 5d
     pop edi                                      ; 09961c 5f
@@ -10129,10 +10139,11 @@ loc_99600:
 
 
 ; ====================================================================================================
-; sub_99620  [0x99620, 78 bytes, 27 instructions]
-; called by: sub_8f67d, sub_98f46, sub_990cb
+; snd_note_off  [0x99620, 78 bytes, 27 instructions]
+; note off of an entry of the note table
+; called by: snd_stop_handle, sound_timer_tick, kms_track_tick
 ; ====================================================================================================
-sub_99620:
+snd_note_off:
     push ebx                                     ; 099620 53
     push ecx                                     ; 099621 51
     push edx                                     ; 099622 52
@@ -10152,7 +10163,7 @@ sub_99620:
     xor eax, eax                                 ; 09964d 31c0
     mov al, byte ptr [ecx + 7]                   ; 09964f 8a4107
     mov edx, 3                                   ; 099652 ba03000000
-    call sub_9722e                               ; 099657 e8d2dbffff
+    call drv_send_midi                           ; 099657 e8d2dbffff
     mov dword ptr [ecx], 0                       ; 09965c c70100000000
     sub dword ptr [dword_d4f9a], 4               ; 099662 832d9a4f0d0004
     pop esi                                      ; 099669 5e
@@ -10163,10 +10174,11 @@ sub_99620:
 
 
 ; ====================================================================================================
-; sub_9966e  [0x9966e, 66 bytes, 29 instructions]
-; called by: sub_990cb
+; kms_set_tempo  [0x9966e, 66 bytes, 29 instructions]
+; tempo event: 32000 / tempo for every track of the song
+; called by: kms_track_tick
 ; ====================================================================================================
-sub_9966e:
+kms_set_tempo:
     push ebx                                     ; 09966e 53
     push ecx                                     ; 09966f 51
     push esi                                     ; 099670 56
@@ -10203,10 +10215,11 @@ loc_996a0:
 
 
 ; ====================================================================================================
-; sub_996b0  [0x996b0, 80 bytes, 26 instructions]
-; called by: sub_8f27a, sub_990cb
+; kms_pitch_bend  [0x996b0, 80 bytes, 26 instructions]
+; pitch bend of a track
+; called by: sub_8f27a, kms_track_tick
 ; ====================================================================================================
-sub_996b0:
+kms_pitch_bend:
     push ebx                                     ; 0996b0 53
     push ecx                                     ; 0996b1 51
     push esi                                     ; 0996b2 56
@@ -10227,7 +10240,7 @@ sub_996b0:
     mov al, byte ptr [eax + 0x51]                ; 0996e3 8a4051
     and eax, 0xff                                ; 0996e6 25ff000000
     mov edx, 3                                   ; 0996eb ba03000000
-    call sub_9722e                               ; 0996f0 e839dbffff
+    call drv_send_midi                           ; 0996f0 e839dbffff
     sub dword ptr [dword_d4f9a], 4               ; 0996f5 832d9a4f0d0004
     pop esi                                      ; 0996fc 5e
     pop ecx                                      ; 0996fd 59
@@ -10236,10 +10249,11 @@ sub_996b0:
 
 
 ; ====================================================================================================
-; sub_99700  [0x99700, 183 bytes, 57 instructions]
-; called by: snd_play_patch, sub_990cb
+; snd_note_on  [0x99700, 183 bytes, 57 instructions]
+; note on: a free entry of the 32 entry note table with its length
+; called by: snd_play_patch, kms_track_tick
 ; ====================================================================================================
-sub_99700:
+snd_note_on:
     push esi                                     ; 099700 56
     push edi                                     ; 099701 57
     sub esp, 8                                   ; 099702 83ec08
@@ -10283,14 +10297,14 @@ loc_9975b:
     xor eax, eax                                 ; 099774 31c0
     mov al, byte ptr [esp + 0x14]                ; 099776 8a442414
     mov edx, 3                                   ; 09977a ba03000000
-    call sub_9722e                               ; 09977f e8aadaffff
+    call drv_send_midi                           ; 09977f e8aadaffff
     jmp loc_997a6                                ; 099784 eb20
 
 loc_99786:
     xor eax, eax                                 ; 099786 31c0
     mov al, byte ptr [esp + 0x14]                ; 099788 8a442414
     mov edx, 3                                   ; 09978c ba03000000
-    call sub_997b7                               ; 099791 e821000000
+    call snd_queue_message                       ; 099791 e821000000
     jmp loc_997a6                                ; 099796 eb0e
 
 loc_99798:
@@ -10309,10 +10323,11 @@ loc_997a6:
 
 
 ; ====================================================================================================
-; sub_997b7  [0x997b7, 107 bytes, 31 instructions]
-; called by: snd_play_patch, sub_8f67d, sub_8f8b7, sub_8fd84, sub_8fdb2, sub_8fde5, sub_8fe1c, sub_8fe4f, sub_990cb, sub_99700
+; snd_queue_message  [0x997b7, 107 bytes, 31 instructions]
+; queues a MIDI message for the next timer tick
+; called by: snd_play_patch, snd_stop_handle, music_mute, sub_8fd84, sub_8fdb2, sub_8fde5, sub_8fe1c, sub_8fe4f, kms_track_tick, snd_note_on
 ; ====================================================================================================
-sub_997b7:
+snd_queue_message:
     push ecx                                     ; 0997b7 51
     push esi                                     ; 0997b8 56
     mov cl, al                                   ; 0997b9 88c1
@@ -10351,10 +10366,11 @@ loc_9981f:
 
 
 ; ====================================================================================================
-; sub_99822  [0x99822, 126 bytes, 41 instructions]
-; called by: sub_98f46
+; snd_flush_messages  [0x99822, 126 bytes, 41 instructions]
+; sends the queued MIDI messages to the drivers
+; called by: sound_timer_tick
 ; ====================================================================================================
-sub_99822:
+snd_flush_messages:
     push ebx                                     ; 099822 53
     push ecx                                     ; 099823 51
     push edx                                     ; 099824 52
@@ -10384,7 +10400,7 @@ loc_9985e:
     mov dx, si                                   ; 09986c 6689f2
     mov al, byte ptr [eax + unk_f1704]           ; 09986f 8a8004170f00
     and eax, 0xff                                ; 099875 25ff000000
-    call sub_9722e                               ; 09987a e8afd9ffff
+    call drv_send_midi                           ; 09987a e8afd9ffff
     inc esi                                      ; 09987f 46
     add ecx, esi                                 ; 099880 01f1
     movsx eax, cx                                ; 099882 0fbfc1
@@ -10402,10 +10418,11 @@ loc_9989b:
 
 
 ; ====================================================================================================
-; sub_998a0  [0x998a0, 59 bytes, 18 instructions]
+; snd_program_change  [0x998a0, 59 bytes, 18 instructions]
+; program change on a channel
 ; called by: sub_8f27a
 ; ====================================================================================================
-sub_998a0:
+snd_program_change:
     push ecx                                     ; 0998a0 51
     push esi                                     ; 0998a1 56
     mov ah, bl                                   ; 0998a2 88dc
@@ -10419,7 +10436,7 @@ sub_998a0:
     mov byte ptr [ebx + 1], ah                   ; 0998bf 886301
     and eax, 0xff                                ; 0998c2 25ff000000
     mov edx, 2                                   ; 0998c7 ba02000000
-    call sub_9722e                               ; 0998cc e85dd9ffff
+    call drv_send_midi                           ; 0998cc e85dd9ffff
     sub dword ptr [dword_d4f9a], 4               ; 0998d1 832d9a4f0d0004
     pop esi                                      ; 0998d8 5e
     pop ecx                                      ; 0998d9 59
@@ -10447,10 +10464,11 @@ jpt_998dd:
     dd loc_999a5                                 ; 099921
 
 ; ====================================================================================================
-; sub_99925  [0x99925, 230 bytes, 88 instructions]
-; called by: sub_990cb
+; kms_read_event  [0x99925, 230 bytes, 88 instructions]
+; parses a KMS event (delta time, code, arguments, length)
+; called by: kms_track_tick
 ; ====================================================================================================
-sub_99925:
+kms_read_event:
     push ebx                                     ; 099925 53
     push ecx                                     ; 099926 51
     push esi                                     ; 099927 56
@@ -10563,7 +10581,7 @@ loc_999fc:
 
 ; ====================================================================================================
 ; sub_99a0b  [0x99a0b, 3 bytes, 2 instructions]
-; called by: sub_99925
+; called by: kms_read_event
 ; ====================================================================================================
 sub_99a0b:
     mov eax, dword ptr [eax]                     ; 099a0b 8b00
@@ -10572,7 +10590,7 @@ sub_99a0b:
 
 ; ====================================================================================================
 ; sub_99a0e  [0x99a0e, 4 bytes, 2 instructions]
-; called by: sub_99925
+; called by: kms_read_event
 ; ====================================================================================================
 sub_99a0e:
     mov ax, word ptr [eax]                       ; 099a0e 668b00

@@ -7847,7 +7847,7 @@ loc_4fd42:
 
 ; ====================================================================================================
 ; flush_key_events  [0x4fd47, 27 bytes, 8 instructions]
-; called by: run_sim_steps, game_loop, play_game, reset_game_state, demo_game, sub_1b982, boxscore_screen, init_match, start_period, dump_stats_log, simulate_game_offscreen
+; called by: run_sim_steps, game_loop, play_game, reset_game_state, demo_game, sub_1b982, boxscore_screen, init_match, three_stars_sequence, dump_stats_log, simulate_game_offscreen
 ; ====================================================================================================
 flush_key_events:
     push 8                                       ; 04fd47 6808000000

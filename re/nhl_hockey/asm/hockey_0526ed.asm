@@ -5694,7 +5694,7 @@ loc_567dd:
     test byte ptr [ecx + 0x44], 0x40             ; 0567f5 f6414440
     setne al                                     ; 0567f9 0f95c0
     and eax, 0xff                                ; 0567fc 25ff000000
-    call play_crowd_chant                        ; 056801 e870ad0000
+    call bench_cheer                             ; 056801 e870ad0000
     jmp loc_5685e                                ; 056806 eb56
 
 loc_56808:
@@ -9478,7 +9478,7 @@ loc_59485:
 
 ; ====================================================================================================
 ; sub_59493  [0x59493, 31 bytes, 12 instructions]
-; called by: sub_8ee2f, sub_8ee4f, music_load_kms
+; called by: load_patch_file, load_timbre_file, music_load_kms
 ; ====================================================================================================
 sub_59493:
     push 0x14                                    ; 059493 6814000000
@@ -9498,7 +9498,7 @@ loc_594ac:
 
 ; ====================================================================================================
 ; sub_594b2  [0x594b2, 27 bytes, 9 instructions]
-; called by: loadpatches, sub_8ee4f, loadsound
+; called by: loadpatches, load_timbre_file, loadsound
 ; ====================================================================================================
 sub_594b2:
     push 0x14                                    ; 0594b2 6814000000
@@ -9783,7 +9783,7 @@ loc_597df:
 
 ; ====================================================================================================
 ; fade_ambient_audio  [0x597e3, 128 bytes, 37 instructions]
-; called by: sub_10f6d, handle_hotkey, game_loop, faceoff_wait_loop, start_period, simulate_game_offscreen
+; called by: sub_10f6d, handle_hotkey, game_loop, faceoff_wait_loop, three_stars_sequence, simulate_game_offscreen
 ; ====================================================================================================
 fade_ambient_audio:
     push 0x1c                                    ; 0597e3 681c000000
@@ -9892,7 +9892,7 @@ loc_598f8:
     jne loc_5991c                                ; 059907 7513
     mov edx, dword ptr [dword_d2427]             ; 059909 8b1527240d00
     mov eax, dword ptr [dword_ed7a4]             ; 05990f a1a4d70e00
-    call sub_8f270                               ; 059914 e857590300
+    call kms_play                                ; 059914 e857590300
     pop edx                                      ; 059919 5a
     pop ecx                                      ; 05991a 59
     ret                                          ; 05991b c3
@@ -9931,11 +9931,11 @@ sub_59945:
     cmp ebx, -1                                  ; 059959 83fbff
     je loc_5997e                                 ; 05995c 7420
     mov eax, ebx                                 ; 05995e 89d8
-    call sub_8f80e                               ; 059960 e8a95e0300
+    call kms_finished                            ; 059960 e8a95e0300
     test ax, ax                                  ; 059965 6685c0
     jne loc_5997e                                ; 059968 7514
     mov eax, dword ptr [crowd_loop_channel]      ; 05996a a184cc0c00
-    call sub_8f7ae                               ; 05996f e83a5e0300
+    call kms_fade_out                            ; 05996f e83a5e0300
     mov dword ptr [crowd_loop_channel], 0xffffffff ; 059974 c70584cc0c00ffff..
 loc_5997e:
     pop edx                                      ; 05997e 5a
@@ -9955,11 +9955,11 @@ stop_crowd_loop:
     cmp edx, -1                                  ; 059992 83faff
     je loc_599b7                                 ; 059995 7420
     mov eax, edx                                 ; 059997 89d0
-    call sub_8f80e                               ; 059999 e8705e0300
+    call kms_finished                            ; 059999 e8705e0300
     test ax, ax                                  ; 05999e 6685c0
     jne loc_599b7                                ; 0599a1 7514
     mov eax, dword ptr [crowd_loop_channel]      ; 0599a3 a184cc0c00
-    call sub_8f67d                               ; 0599a8 e8d05c0300
+    call snd_stop_handle                         ; 0599a8 e8d05c0300
     mov dword ptr [crowd_loop_channel], 0xffffffff ; 0599ad c70584cc0c00ffff..
 loc_599b7:
     pop edx                                      ; 0599b7 5a
@@ -9983,7 +9983,7 @@ play_sample_by_ptr:
     je loc_599eb                                 ; 0599d7 7412
     mov edx, dword ptr [dword_d2427]             ; 0599d9 8b1527240d00
     mov eax, ebx                                 ; 0599df 89d8
-    call sub_8f270                               ; 0599e1 e88a580300
+    call kms_play                                ; 0599e1 e88a580300
     mov dword ptr [crowd_loop_channel], eax      ; 0599e6 a384cc0c00
 loc_599eb:
     pop edx                                      ; 0599eb 5a
@@ -10002,7 +10002,7 @@ sfx_set_volume:
     je loc_59a10                                 ; 0599ff 740f
 loc_59a01:
     mov eax, dword ptr [crowd_loop_channel]      ; 059a01 a184cc0c00
-    call sub_8f80e                               ; 059a06 e8035e0300
+    call kms_finished                            ; 059a06 e8035e0300
     test ax, ax                                  ; 059a0b 6685c0
     je loc_59a01                                 ; 059a0e 74f1
 loc_59a10:
@@ -10012,7 +10012,7 @@ loc_59a10:
 ; ====================================================================================================
 ; play_speech  [0x59a11, 109 bytes, 35 instructions]
 ; play_speech(id): announcer / crowd sample tables
-; called by: game_loop, init_match, ref_check_announcements, score_goal, update_lead_change
+; called by: game_loop, init_match, ref_check_announcements, score_goal, update_power_play
 ; ====================================================================================================
 play_speech:
     push 0xc                                     ; 059a11 680c000000
@@ -10061,11 +10061,11 @@ loc_59a7d:
 
 
 ; ====================================================================================================
-; speech_period_summary  [0x59a7e, 47 bytes, 10 instructions]
-; scor?per.bar announcer clips
+; announce_one_minute_left  [0x59a7e, 47 bytes, 10 instructions]
+; the announcer's one minute call (speech on, not in a replay)
 ; called by: game_clock_tick
 ; ====================================================================================================
-speech_period_summary:
+announce_one_minute_left:
     push 4                                       ; 059a7e 6804000000
     call __CHK                                   ; 059a83 e8c42e0300
     cmp byte ptr [sound_enabled], 0              ; 059a88 803d30240d0000
@@ -10075,7 +10075,7 @@ speech_period_summary:
     test byte ptr [game_flags], 0x10             ; 059a9a f605bb900c0010
     jne loc_59a7d                                ; 059aa1 75da
     call sub_837a8                               ; 059aa3 e8009d0200
-    jmp sub_854ac                                ; 059aa8 e9ffb90200
+    jmp say_one_minute_left                      ; 059aa8 e9ffb90200
 
 
 ; ====================================================================================================
@@ -10418,7 +10418,7 @@ loc_59d97:
 ; ====================================================================================================
 ; set_animation  [0x59d9a, 33 bytes, 8 instructions]
 ; set_animation(entity, sequence)
-; called by: init_match, ai_anthem, ai_ref_anthem, start_period, sub_49260, ai_three_stars, ai_get_cup, ai_puck_give_cup, ai_stanley_cup, ai_celebrate_goal, ai_exit_bench, ai_game_misconduct (+42 more)
+; called by: init_match, ai_anthem, ai_ref_anthem, three_stars_sequence, sub_49260, ai_three_stars, ai_get_cup, ai_puck_give_cup, ai_stanley_cup, ai_celebrate_goal, ai_exit_bench, ai_game_misconduct (+42 more)
 ; ====================================================================================================
 set_animation:
     push 4                                       ; 059d9a 6804000000

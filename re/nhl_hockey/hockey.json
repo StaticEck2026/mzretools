@@ -601,7 +601,7 @@
     "demo_game",
     "sub_190be",
     "sub_1920f",
-    "sub_1a817",
+    "menu_go_to_replay",
     "simulate_game_offscreen",
     "instant_replay",
     "highlights_play"
@@ -917,7 +917,7 @@
    "instructions": 14,
    "callers": [
     "game_loop",
-    "replay_loop",
+    "sequence_loop",
     "simulate_game_offscreen"
    ],
    "callees": [
@@ -956,7 +956,7 @@
    "instructions": 49,
    "callers": [
     "game_loop",
-    "replay_loop",
+    "sequence_loop",
     "simulate_game_offscreen"
    ],
    "callees": [
@@ -1040,10 +1040,10 @@
     "handle_hotkey",
     "game_loop",
     "sub_13e8f",
-    "sub_1a817",
+    "menu_go_to_replay",
     "boxscore_screen",
     "faceoff_wait_loop",
-    "start_period",
+    "three_stars_sequence",
     "simulate_game_offscreen",
     "instant_replay",
     "coach_clip_player"
@@ -1100,7 +1100,7 @@
     "pause_menu",
     "sub_1b982",
     "draw_rink",
-    "start_period",
+    "three_stars_sequence",
     "flush_key_events",
     "update_ambient_audio",
     "fade_ambient_audio",
@@ -1318,7 +1318,7 @@
    "callers": [
     "set_state_reset",
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "ai_ref_three_stars",
     "ai_defense_offense",
     "ai_defense_defense",
@@ -1747,7 +1747,7 @@
     "setfontstate",
     "setfont",
     "music_load_kms",
-    "sub_8f1fe",
+    "kms_unload",
     "loadsound",
     "playsample",
     "sound_channel_status",
@@ -1919,7 +1919,7 @@
    "callers": [
     "load_player_graphics",
     "sub_1a534",
-    "sub_1a817",
+    "menu_go_to_replay",
     "simulate_game_offscreen"
    ],
    "callees": [
@@ -4423,7 +4423,7 @@
     "releasememblock",
     "loadshapes",
     "music_load_kms",
-    "sub_8f1fe",
+    "kms_unload",
     "loadsound",
     "playsample",
     "sound_channel_status",
@@ -4648,7 +4648,7 @@
     "setfont",
     "rand",
     "music_load_kms",
-    "sub_8f1fe",
+    "kms_unload",
     "loadsound",
     "playsample",
     "sound_channel_status",
@@ -6775,7 +6775,7 @@
     "sub_12034",
     "make_path",
     "sub_1a534",
-    "sub_1a817",
+    "menu_go_to_replay",
     "sub_1baf3",
     "set_hub_title",
     "say_series_result_wrapper",
@@ -6933,7 +6933,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_1a5a1",
+   "name": "menu_back_to_game",
    "addr": 107937,
    "size": 16,
    "blocks": [
@@ -6953,7 +6953,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "pause menu: Back to Game (closes the menu)"
+   ],
    "reasons": [
     "fptr"
    ],
@@ -7098,7 +7100,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_1a817",
+   "name": "menu_go_to_replay",
    "addr": 108567,
    "size": 147,
    "blocks": [
@@ -7134,7 +7136,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "pause menu: Go To Replay"
+   ],
    "reasons": [
     "fptr"
    ],
@@ -7215,7 +7219,7 @@
    "noreturn": false
   },
   {
-   "name": "team_select_hub",
+   "name": "menu_game_statistics",
    "addr": 108909,
    "size": 63,
    "blocks": [
@@ -7240,7 +7244,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "pause menu: Game Statistics ..."
+   ],
    "reasons": [
     "fptr"
    ],
@@ -7358,7 +7364,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_1ab0b",
+   "name": "menu_home_goalie1",
    "addr": 109323,
    "size": 46,
    "blocks": [
@@ -7370,7 +7376,7 @@
    "instructions": 12,
    "callers": [],
    "callees": [
-    "sub_672f9",
+    "choose_goalie",
     "__CHK"
    ],
    "strings": [],
@@ -7383,7 +7389,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "pause menu: the home team's first goalie"
+   ],
    "reasons": [
     "fptr"
    ],
@@ -7391,7 +7399,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_1ab39",
+   "name": "menu_home_goalie2",
    "addr": 109369,
    "size": 41,
    "blocks": [
@@ -7403,7 +7411,7 @@
    "instructions": 11,
    "callers": [],
    "callees": [
-    "sub_672f9",
+    "choose_goalie",
     "__CHK"
    ],
    "strings": [],
@@ -7415,7 +7423,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "pause menu: the home team's second goalie"
+   ],
    "reasons": [
     "fptr"
    ],
@@ -7423,7 +7433,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_1ab62",
+   "name": "menu_home_no_goalie",
    "addr": 109410,
    "size": 51,
    "blocks": [
@@ -7435,7 +7445,7 @@
    "instructions": 15,
    "callers": [],
    "callees": [
-    "sub_672f9",
+    "choose_goalie",
     "__CHK"
    ],
    "strings": [],
@@ -7448,7 +7458,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "pause menu: the home team plays without a goalie"
+   ],
    "reasons": [
     "fptr"
    ],
@@ -7456,7 +7468,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_1ab95",
+   "name": "menu_away_goalie1",
    "addr": 109461,
    "size": 51,
    "blocks": [
@@ -7468,7 +7480,7 @@
    "instructions": 15,
    "callers": [],
    "callees": [
-    "sub_672f9",
+    "choose_goalie",
     "__CHK"
    ],
    "strings": [],
@@ -7481,7 +7493,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "pause menu: the away team's first goalie"
+   ],
    "reasons": [
     "fptr"
    ],
@@ -7489,7 +7503,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_1abc8",
+   "name": "menu_away_goalie2",
    "addr": 109512,
    "size": 41,
    "blocks": [
@@ -7501,7 +7515,7 @@
    "instructions": 11,
    "callers": [],
    "callees": [
-    "sub_672f9",
+    "choose_goalie",
     "__CHK"
    ],
    "strings": [],
@@ -7513,7 +7527,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "pause menu: the away team's second goalie"
+   ],
    "reasons": [
     "fptr"
    ],
@@ -7521,7 +7537,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_1abf1",
+   "name": "menu_away_no_goalie",
    "addr": 109553,
    "size": 52,
    "blocks": [
@@ -7533,7 +7549,7 @@
    "instructions": 12,
    "callers": [],
    "callees": [
-    "sub_672f9",
+    "choose_goalie",
     "__CHK"
    ],
    "strings": [],
@@ -7546,7 +7562,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "pause menu: the away team plays without a goalie"
+   ],
    "reasons": [
     "fptr"
    ],
@@ -14229,7 +14247,7 @@
     "setfontstate",
     "setfont",
     "music_load_kms",
-    "sub_8f1fe",
+    "kms_unload",
     "loadsound",
     "playsample",
     "sound_channel_status",
@@ -14539,7 +14557,7 @@
    ],
    "instructions": 599,
    "callers": [
-    "team_select_hub"
+    "menu_game_statistics"
    ],
    "callees": [
     "make_path",
@@ -14560,7 +14578,7 @@
     "setfontstate",
     "setfont",
     "music_load_kms",
-    "sub_8f1fe",
+    "kms_unload",
     "loadsound",
     "playsample",
     "sound_channel_status",
@@ -16929,7 +16947,7 @@
     "play_game",
     "demo_game",
     "sub_1a534",
-    "sub_1a817",
+    "menu_go_to_replay",
     "simulate_game_offscreen",
     "highlights_play"
    ],
@@ -20158,7 +20176,7 @@
     "set_dialog_colors",
     "load_sound_config",
     "__CHK",
-    "sub_8eb93",
+    "sound_shutdown",
     "sub_8fe83",
     "fopen",
     "fclose",
@@ -23191,7 +23209,7 @@
    "noreturn": false
   },
   {
-   "name": "replay_loop",
+   "name": "sequence_loop",
    "addr": 295731,
    "size": 247,
    "blocks": [
@@ -23202,7 +23220,7 @@
    ],
    "instructions": 64,
    "callers": [
-    "start_period"
+    "three_stars_sequence"
    ],
    "callees": [
     "get_frame_ticks",
@@ -23228,7 +23246,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "runs the simulation and the drawing for the anthem and three stars sequences"
+   ],
    "reasons": [
     "call"
    ],
@@ -23429,7 +23449,7 @@
    ],
    "instructions": 313,
    "callers": [
-    "start_period"
+    "three_stars_sequence"
    ],
    "callees": [
     "game_over_check",
@@ -23475,7 +23495,7 @@
    "noreturn": false
   },
   {
-   "name": "start_period",
+   "name": "three_stars_sequence",
    "addr": 298763,
    "size": 853,
    "blocks": [
@@ -23491,7 +23511,7 @@
    "callees": [
     "fade_palette_to",
     "set_state",
-    "replay_loop",
+    "sequence_loop",
     "compute_three_stars",
     "flush_key_events",
     "fade_ambient_audio",
@@ -23577,7 +23597,7 @@
    "tags": [],
    "annotations": [],
    "comments": [
-    "fades, resets flags, setup for a new period"
+    "the three stars after the game: compute_three_stars, the stars skate out, the announcer"
    ],
    "reasons": [
     "call"
@@ -23782,7 +23802,7 @@
     "ai_default_skate",
     "ref_skate_to_point",
     "set_animation",
-    "play_crowd_chant",
+    "bench_cheer",
     "__CHK"
    ],
    "strings": [],
@@ -26247,7 +26267,7 @@
     "sub_1b982",
     "boxscore_screen",
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "dump_stats_log",
     "simulate_game_offscreen"
    ],
@@ -29134,7 +29154,7 @@
     "crowd_reaction_sfx",
     "play_sfx",
     "set_animation",
-    "play_crowd_chant",
+    "bench_cheer",
     "maybe_queue_infraction",
     "queue_infraction",
     "start_stoppage",
@@ -30363,8 +30383,8 @@
    ],
    "instructions": 12,
    "callers": [
-    "sub_8ee2f",
-    "sub_8ee4f",
+    "load_patch_file",
+    "load_timbre_file",
     "music_load_kms"
    ],
    "callees": [
@@ -30399,7 +30419,7 @@
    "instructions": 9,
    "callers": [
     "loadpatches",
-    "sub_8ee4f",
+    "load_timbre_file",
     "loadsound"
    ],
    "callees": [
@@ -30530,7 +30550,7 @@
     "handle_hotkey",
     "game_loop",
     "faceoff_wait_loop",
-    "start_period",
+    "three_stars_sequence",
     "simulate_game_offscreen"
    ],
    "callees": [
@@ -30638,7 +30658,7 @@
    "callees": [
     "speech_busy",
     "__CHK",
-    "sub_8f270",
+    "kms_play",
     "snd_play_sfx"
    ],
    "strings": [],
@@ -30676,8 +30696,8 @@
    "callers": [],
    "callees": [
     "__CHK",
-    "sub_8f7ae",
-    "sub_8f80e"
+    "kms_fade_out",
+    "kms_finished"
    ],
    "strings": [],
    "vars": [
@@ -30724,8 +30744,8 @@
    ],
    "callees": [
     "__CHK",
-    "sub_8f67d",
-    "sub_8f80e"
+    "snd_stop_handle",
+    "kms_finished"
    ],
    "strings": [],
    "vars": [
@@ -30765,7 +30785,7 @@
    "callees": [
     "stop_crowd_loop",
     "__CHK",
-    "sub_8f270"
+    "kms_play"
    ],
    "strings": [],
    "vars": [
@@ -30801,7 +30821,7 @@
    ],
    "callees": [
     "__CHK",
-    "sub_8f80e"
+    "kms_finished"
    ],
    "strings": [],
    "vars": [
@@ -30834,7 +30854,7 @@
     "init_match",
     "ref_check_announcements",
     "score_goal",
-    "update_lead_change"
+    "update_power_play"
    ],
    "callees": [
     "play_sample_by_ptr",
@@ -30861,7 +30881,7 @@
    "noreturn": false
   },
   {
-   "name": "speech_period_summary",
+   "name": "announce_one_minute_left",
    "addr": 367230,
    "size": 47,
    "blocks": [
@@ -30876,7 +30896,7 @@
    ],
    "callees": [
     "sub_837a8",
-    "sub_854ac",
+    "say_one_minute_left",
     "__CHK"
    ],
    "strings": [],
@@ -30890,7 +30910,7 @@
    "tags": [],
    "annotations": [],
    "comments": [
-    "scor?per.bar announcer clips"
+    "the announcer's one minute call (speech on, not in a replay)"
    ],
    "reasons": [
     "call"
@@ -31485,7 +31505,7 @@
     "init_match",
     "ai_anthem",
     "ai_ref_anthem",
-    "start_period",
+    "three_stars_sequence",
     "sub_49260",
     "ai_three_stars",
     "ai_get_cup",
@@ -32205,7 +32225,7 @@
     "time_announcements",
     "goal_disallowed_check",
     "hold_camera",
-    "play_crowd_chant",
+    "bench_cheer",
     "maybe_queue_infraction",
     "queue_infraction",
     "goal_ends_penalty",
@@ -32785,7 +32805,7 @@
     "cpu_line_change",
     "sub_5e0b0",
     "sub_671e8",
-    "sub_672f9",
+    "choose_goalie",
     "simulate_game_offscreen",
     "sub_7cbb3"
    ],
@@ -32901,7 +32921,7 @@
    "callers": [
     "run_sim_steps",
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "period_init",
     "simulate_game_offscreen"
    ],
@@ -33028,7 +33048,7 @@
     "setup_faceoff",
     "update_effects",
     "update_stoppage",
-    "update_lead_change",
+    "update_power_play",
     "__CHK"
    ],
    "strings": [],
@@ -33417,7 +33437,7 @@
     "set_state_reset",
     "game_over_check",
     "put_player_on_ice",
-    "play_crowd_chant",
+    "bench_cheer",
     "queue_infraction",
     "clear_infractions",
     "__CHK"
@@ -33477,7 +33497,7 @@
    ],
    "callees": [
     "play_sfx",
-    "speech_period_summary",
+    "announce_one_minute_left",
     "time_announcements",
     "end_penalty_shot",
     "__CHK"
@@ -33558,7 +33578,7 @@
    "instructions": 11,
    "callers": [
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "ai_exit_penalty_box",
     "ai_puck_faceoff2",
     "sub_5ba89",
@@ -34973,7 +34993,7 @@
    "noreturn": false
   },
   {
-   "name": "start_crowd_sound",
+   "name": "start_crowd_figure",
    "addr": 398530,
    "size": 180,
    "blocks": [
@@ -34984,7 +35004,7 @@
    ],
    "instructions": 57,
    "callers": [
-    "play_crowd_chant",
+    "bench_cheer",
     "update_effects"
    ],
    "callees": [
@@ -35004,7 +35024,7 @@
    "tags": [],
    "annotations": [],
    "comments": [
-    "starts a crowd/arena sample on a channel"
+    "starts the animation of a fan, photographer or bench figure"
    ],
    "reasons": [
     "call"
@@ -35013,7 +35033,7 @@
    "noreturn": false
   },
   {
-   "name": "play_crowd_chant",
+   "name": "bench_cheer",
    "addr": 398710,
    "size": 44,
    "blocks": [
@@ -35030,7 +35050,7 @@
     "setup_faceoff"
    ],
    "callees": [
-    "start_crowd_sound",
+    "start_crowd_figure",
     "__CHK"
    ],
    "strings": [],
@@ -35040,7 +35060,7 @@
    "tags": [],
    "annotations": [],
    "comments": [
-    "crowd chant sample for a team"
+    "the bench of the scoring team cheers"
    ],
    "reasons": [
     "call"
@@ -35063,7 +35083,7 @@
     "sim_game_state"
    ],
    "callees": [
-    "start_crowd_sound",
+    "start_crowd_figure",
     "randomrange",
     "__CHK"
    ],
@@ -36529,7 +36549,7 @@
    "noreturn": false
   },
   {
-   "name": "update_lead_change",
+   "name": "update_power_play",
    "addr": 408691,
    "size": 201,
    "blocks": [
@@ -36562,7 +36582,7 @@
    "tags": [],
    "annotations": [],
    "comments": [
-    "detects lead changes, plays the crowd reaction"
+    "the skaters on the ice differ: a power play starts (stop_flags 0x20 / 0x40, team +4)"
    ],
    "reasons": [
     "call"
@@ -37690,7 +37710,7 @@
    "instructions": 12,
    "callers": [
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "ref_check_announcements",
     "ai_ref_pickup_puck",
     "announce_goal",
@@ -37857,7 +37877,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_672f9",
+   "name": "choose_goalie",
    "addr": 422649,
    "size": 204,
    "blocks": [
@@ -37868,12 +37888,12 @@
    ],
    "instructions": 62,
    "callers": [
-    "sub_1ab0b",
-    "sub_1ab39",
-    "sub_1ab62",
-    "sub_1ab95",
-    "sub_1abc8",
-    "sub_1abf1"
+    "menu_home_goalie1",
+    "menu_home_goalie2",
+    "menu_home_no_goalie",
+    "menu_away_goalie1",
+    "menu_away_goalie2",
+    "menu_away_no_goalie"
    ],
    "callees": [
     "apply_line_change",
@@ -37893,7 +37913,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "choose_goalie(team, 0 / 1, -1 none): the goalie choice of the pause menu"
+   ],
    "reasons": [
     "call"
    ],
@@ -37994,7 +38016,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_67581",
+   "name": "replay_oldest_frame",
    "addr": 423297,
    "size": 31,
    "blocks": [
@@ -38020,7 +38042,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "index of the oldest recorded replay frame in the ring"
+   ],
    "reasons": [
     "call"
    ],
@@ -45977,7 +46001,7 @@
     "exit_game_dialog",
     "sub_1a8aa",
     "sub_1a922",
-    "team_select_hub",
+    "menu_game_statistics",
     "sub_1a9ac",
     "sub_1aa6d",
     "sub_1aac4",
@@ -49819,7 +49843,7 @@
    ],
    "callees": [
     "__CHK",
-    "sub_8f1fe"
+    "kms_unload"
    ],
    "strings": [],
    "vars": [
@@ -49934,7 +49958,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_7e067",
+   "name": "replay_draw_button",
    "addr": 516199,
    "size": 147,
    "blocks": [
@@ -49964,7 +49988,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "frames a VCR button (top / left colour 0x10, bottom / right 0x15)"
+   ],
    "reasons": [
     "call"
    ],
@@ -49984,7 +50010,7 @@
    "instructions": 470,
    "callers": [
     "handle_hotkey",
-    "sub_1a817",
+    "menu_go_to_replay",
     "highlights_play"
    ],
    "callees": [
@@ -49994,7 +50020,7 @@
     "make_path",
     "draw_rink",
     "sound_pause_all",
-    "sub_67581",
+    "replay_oldest_frame",
     "replay_seek_frames",
     "replay_draw_frame",
     "present_frame",
@@ -50002,7 +50028,7 @@
     "set_camera_offset",
     "begin_frame",
     "event_queue_reset",
-    "sub_7e067",
+    "replay_draw_button",
     "replay_control_loop",
     "select_game_surface",
     "sub_8c1e2",
@@ -50096,7 +50122,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_7e8e5",
+   "name": "replay_button_at",
    "addr": 518373,
    "size": 89,
    "blocks": [
@@ -50123,7 +50149,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "the VCR button under a screen position"
+   ],
    "reasons": [
     "call"
    ],
@@ -50131,7 +50159,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_7e93e",
+   "name": "replay_sprite_at",
    "addr": 518462,
    "size": 110,
    "blocks": [
@@ -50156,7 +50184,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "the replay sprite under a rink position (the camera follows it)"
+   ],
    "reasons": [
     "call"
    ],
@@ -50180,9 +50210,9 @@
    "callees": [
     "event_queue_pop",
     "event_queue_reset",
-    "sub_7e067",
-    "sub_7e8e5",
-    "sub_7e93e",
+    "replay_draw_button",
+    "replay_button_at",
+    "replay_sprite_at",
     "replay_menu",
     "select_game_surface",
     "__CHK",
@@ -50251,7 +50281,7 @@
     "message_dialog",
     "event_queue_pop",
     "event_queue_reset",
-    "sub_7e067",
+    "replay_draw_button",
     "replay_save_dialog",
     "replay_save_highlight",
     "sub_7fc12",
@@ -51826,11 +51856,11 @@
     "__CHK",
     "allocmem",
     "freemem",
-    "sub_8eb5b",
-    "sub_8eb93",
+    "sound_timer_install",
+    "sound_shutdown",
     "loadpatches",
     "music_load_kms",
-    "sub_8f1fe",
+    "kms_unload",
     "strcpy",
     "fopen",
     "fclose",
@@ -51919,7 +51949,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_832bc",
+   "name": "speech_timer",
    "addr": 537276,
    "size": 265,
    "blocks": [
@@ -51950,7 +51980,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "100 Hz: starts the next clip 0x1a ticks before the current one ends"
+   ],
    "reasons": [
     "fptr"
    ],
@@ -52011,7 +52043,7 @@
     "say_penalty_shot",
     "say_star",
     "say_goal",
-    "sub_854ac",
+    "say_one_minute_left",
     "sub_85507",
     "say_player_name",
     "preload_speech"
@@ -52099,7 +52131,7 @@
     "say_penalty_shot",
     "say_star",
     "say_goal",
-    "sub_854ac",
+    "say_one_minute_left",
     "sub_85507",
     "say_player_name",
     "preload_speech"
@@ -52137,7 +52169,7 @@
     "load_sound_config"
    ],
    "callees": [
-    "sub_832bc",
+    "speech_timer",
     "speech_reset",
     "sub_83459",
     "speech_begin",
@@ -52191,7 +52223,7 @@
     "load_sound_config"
    ],
    "callees": [
-    "sub_832bc",
+    "speech_timer",
     "__CHK",
     "freemem",
     "releasememblock",
@@ -52307,7 +52339,7 @@
     "say_penalty_shot",
     "say_star",
     "say_goal",
-    "sub_854ac",
+    "say_one_minute_left",
     "sub_85507",
     "preload_speech"
    ],
@@ -52417,7 +52449,7 @@
    ],
    "callees": [
     "__CHK",
-    "sub_8fcac"
+    "sound_channel_stop"
    ],
    "strings": [],
    "vars": [
@@ -52450,8 +52482,8 @@
     "handle_hotkey",
     "game_loop",
     "pause_menu",
-    "start_period",
-    "speech_period_summary",
+    "three_stars_sequence",
+    "announce_one_minute_left",
     "say_goal_wrapper",
     "say_star_wrapper",
     "say_penalty_wrapper",
@@ -52460,7 +52492,7 @@
    ],
    "callees": [
     "__CHK",
-    "sub_8fcac"
+    "sound_channel_stop"
    ],
    "strings": [],
    "vars": [
@@ -52653,7 +52685,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_83bf3",
+   "name": "speech_delta_decode",
    "addr": 539635,
    "size": 187,
    "blocks": [
@@ -52681,7 +52713,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "running sum of the unpacked speech samples"
+   ],
    "reasons": [
     "call"
    ],
@@ -52704,7 +52738,7 @@
     "sub_84539"
    ],
    "callees": [
-    "sub_83bf3",
+    "speech_delta_decode",
     "__CHK",
     "sub_961d0"
    ],
@@ -52985,7 +53019,7 @@
     "say_penalty_shot",
     "say_star",
     "say_goal",
-    "sub_854ac",
+    "say_one_minute_left",
     "say_player_name",
     "preload_speech"
    ],
@@ -53172,7 +53206,7 @@
     "say_penalty_shot",
     "say_star",
     "say_goal",
-    "sub_854ac"
+    "say_one_minute_left"
    ],
    "callees": [
     "sub_83e6d",
@@ -53355,7 +53389,7 @@
     "say_penalty_shot",
     "say_star",
     "say_goal",
-    "sub_854ac",
+    "say_one_minute_left",
     "say_player_name",
     "preload_speech"
    ],
@@ -54525,7 +54559,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_854ac",
+   "name": "say_one_minute_left",
    "addr": 545964,
    "size": 91,
    "blocks": [
@@ -54536,7 +54570,7 @@
    ],
    "instructions": 25,
    "callers": [
-    "speech_period_summary"
+    "announce_one_minute_left"
    ],
    "callees": [
     "speech_reset",
@@ -54560,9 +54594,11 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "queues oneleft.cor"
+   ],
    "reasons": [
-    "tail"
+    "map"
    ],
    "convention": "__watcall",
    "noreturn": false
@@ -57683,23 +57719,23 @@
     "sub_1920f",
     "pause_menu",
     "sub_1a534",
-    "sub_1a5a1",
+    "menu_back_to_game",
     "sub_1a5b1",
     "sub_1a5d4",
     "exit_game_dialog",
-    "sub_1a817",
+    "menu_go_to_replay",
     "sub_1a8aa",
     "sub_1a922",
-    "team_select_hub",
+    "menu_game_statistics",
     "sub_1a9ac",
     "sub_1aa6d",
     "sub_1aac4",
-    "sub_1ab0b",
-    "sub_1ab39",
-    "sub_1ab62",
-    "sub_1ab95",
-    "sub_1abc8",
-    "sub_1abf1",
+    "menu_home_goalie1",
+    "menu_home_goalie2",
+    "menu_home_no_goalie",
+    "menu_away_goalie1",
+    "menu_away_goalie2",
+    "menu_away_no_goalie",
     "sub_1ac25",
     "sub_1ac9a",
     "sub_1acf1",
@@ -58003,14 +58039,14 @@
     "wait_sprite_fade",
     "init_match",
     "match_sequence",
-    "replay_loop",
+    "sequence_loop",
     "ai_anthem",
     "ai_ref_anthem",
     "sub_48789",
     "sub_487d9",
     "compare_player_stats",
     "compute_three_stars",
-    "start_period",
+    "three_stars_sequence",
     "sub_49260",
     "sub_492f9",
     "ai_three_stars",
@@ -58177,7 +58213,7 @@
     "play_sample_by_ptr",
     "sfx_set_volume",
     "play_speech",
-    "speech_period_summary",
+    "announce_one_minute_left",
     "speech_busy",
     "say_goal_wrapper",
     "say_star_wrapper",
@@ -58263,8 +58299,8 @@
     "skating_turn",
     "save_game",
     "savegame_io",
-    "start_crowd_sound",
-    "play_crowd_chant",
+    "start_crowd_figure",
+    "bench_cheer",
     "update_effects",
     "draw_nets_and_effects",
     "sub_619c8",
@@ -58296,7 +58332,7 @@
     "lead_time_stats",
     "update_line_timers",
     "update_stoppage",
-    "update_lead_change",
+    "update_power_play",
     "clear_infractions",
     "goal_ends_penalty",
     "start_penalty_shot",
@@ -58326,10 +58362,10 @@
     "update_announcer",
     "draw_message_box",
     "sub_671e8",
-    "sub_672f9",
+    "choose_goalie",
     "load_team_palettes",
     "sub_67564",
-    "sub_67581",
+    "replay_oldest_frame",
     "replay_buffer_start",
     "replay_record_frame",
     "replay_seek_frames",
@@ -58572,10 +58608,10 @@
     "sub_7df4e",
     "sub_7e032",
     "sub_7e03f",
-    "sub_7e067",
+    "replay_draw_button",
     "instant_replay",
-    "sub_7e8e5",
-    "sub_7e93e",
+    "replay_button_at",
+    "replay_sprite_at",
     "replay_control_loop",
     "replay_menu",
     "replay_save_dialog",
@@ -58605,7 +58641,7 @@
     "sound_card_menu_b",
     "sound_setup_screen",
     "load_sound_config",
-    "sub_832bc",
+    "speech_timer",
     "sub_833c5",
     "speech_reset",
     "sub_83459",
@@ -58624,7 +58660,7 @@
     "read_clip_name",
     "speech_load_bank",
     "sub_83bc7",
-    "sub_83bf3",
+    "speech_delta_decode",
     "sub_83cae",
     "sub_83d78",
     "sub_83e32",
@@ -58667,7 +58703,7 @@
     "say_penalty_shot",
     "say_star",
     "say_goal",
-    "sub_854ac",
+    "say_one_minute_left",
     "sub_85507",
     "say_player_name",
     "preload_speech",
@@ -59762,7 +59798,7 @@
     "playoff_setup_screen",
     "loading_screen",
     "faceoff_wait_loop",
-    "start_period",
+    "three_stars_sequence",
     "ai_puck_faceoff2",
     "update_announcer",
     "load_team_palettes",
@@ -60953,7 +60989,7 @@
    "callers": [
     "sub_83459",
     "loadpatches",
-    "sub_8ee4f",
+    "load_timbre_file",
     "loadsound",
     "sub_8fb24",
     "playsample",
@@ -62051,7 +62087,7 @@
     "loading_screen",
     "ui_init",
     "sub_8357a",
-    "sub_8eb5b"
+    "sound_timer_install"
    ],
    "callees": [
     "fatalerror"
@@ -62094,7 +62130,7 @@
     "wait_sprite_fade",
     "ui_shutdown",
     "sub_8363c",
-    "sub_8eb93"
+    "sound_shutdown"
    ],
    "callees": [],
    "strings": [],
@@ -63239,7 +63275,7 @@
     "awards_screen",
     "credits_screen",
     "pause_menu",
-    "sub_1a817",
+    "menu_go_to_replay",
     "sub_1b982",
     "player_card_screen",
     "goalie_card_screen",
@@ -63494,7 +63530,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8eb5b",
+   "name": "sound_timer_install",
    "addr": 584539,
    "size": 56,
    "blocks": [
@@ -63509,8 +63545,8 @@
    ],
    "callees": [
     "addtimer",
-    "sub_8eb93",
-    "sub_98f11",
+    "sound_shutdown",
+    "sound_timer",
     "sub_b3454"
    ],
    "strings": [],
@@ -63521,7 +63557,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "installs the sound timer"
+   ],
    "reasons": [
     "call"
    ],
@@ -63529,7 +63567,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8eb93",
+   "name": "sound_shutdown",
    "addr": 584595,
    "size": 79,
    "blocks": [
@@ -63542,15 +63580,15 @@
    "callers": [
     "load_cfg_palette",
     "load_sound_config",
-    "sub_8eb5b"
+    "sound_timer_install"
    ],
    "callees": [
     "removetimer",
     "sub_8ebe2",
-    "sub_8edd2",
-    "sub_8f1fe",
+    "unload_patches",
+    "kms_unload",
     "sub_971be",
-    "sub_98f11"
+    "sound_timer"
    ],
    "strings": [],
    "vars": [
@@ -63561,7 +63599,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "removes the sound timer, resets the drivers, unloads the songs"
+   ],
    "reasons": [
     "call",
     "fptr"
@@ -63581,7 +63621,7 @@
    ],
    "instructions": 73,
    "callers": [
-    "sub_8eb93"
+    "sound_shutdown"
    ],
    "callees": [],
    "strings": [],
@@ -63629,10 +63669,10 @@
     "sub_594b2",
     "sub_8dbd4",
     "sub_8dbdc",
-    "sub_8edd2",
-    "sub_8ee2f",
-    "sub_8ee4f",
-    "sub_8efbb",
+    "unload_patches",
+    "load_patch_file",
+    "load_timbre_file",
+    "bind_patch_timbres",
     "sub_8fed2",
     "sub_8ff3e",
     "sprintf",
@@ -63671,7 +63711,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8edd2",
+   "name": "unload_patches",
    "addr": 585170,
    "size": 93,
    "blocks": [
@@ -63682,7 +63722,7 @@
    ],
    "instructions": 28,
    "callers": [
-    "sub_8eb93",
+    "sound_shutdown",
     "loadpatches"
    ],
    "callees": [
@@ -63701,7 +63741,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "frees the patch and timbre files"
+   ],
    "reasons": [
     "call"
    ],
@@ -63709,7 +63751,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8ee2f",
+   "name": "load_patch_file",
    "addr": 585263,
    "size": 20,
    "blocks": [
@@ -63733,7 +63775,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "loads the .PAT file"
+   ],
    "reasons": [
     "call"
    ],
@@ -63752,7 +63796,7 @@
    ],
    "instructions": 5,
    "callers": [
-    "sub_8edd2"
+    "unload_patches"
    ],
    "callees": [
     "sub_8ff1e"
@@ -63771,7 +63815,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8ee4f",
+   "name": "load_timbre_file",
    "addr": 585295,
    "size": 257,
    "blocks": [
@@ -63788,7 +63832,7 @@
     "sub_59493",
     "sub_594b2",
     "sub_8dbd4",
-    "sub_8ef50",
+    "timbre_bank_add",
     "sub_8fe89",
     "sub_8ff7c"
    ],
@@ -63800,7 +63844,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "loads a .TIM and finds the samples of its digital timbres in the .DIG"
+   ],
    "reasons": [
     "call"
    ],
@@ -63808,7 +63854,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8ef50",
+   "name": "timbre_bank_add",
    "addr": 585552,
    "size": 38,
    "blocks": [
@@ -63819,7 +63865,7 @@
    ],
    "instructions": 18,
    "callers": [
-    "sub_8ee4f"
+    "load_timbre_file"
    ],
    "callees": [],
    "strings": [],
@@ -63830,7 +63876,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "registers a loaded .TIM"
+   ],
    "reasons": [
     "call"
    ],
@@ -63849,10 +63897,10 @@
    ],
    "instructions": 9,
    "callers": [
-    "sub_8edd2"
+    "unload_patches"
    ],
    "callees": [
-    "sub_8ef91",
+    "timbre_bank_remove",
     "sub_8ff1e",
     "sub_8ff3e"
    ],
@@ -63870,7 +63918,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8ef91",
+   "name": "timbre_bank_remove",
    "addr": 585617,
    "size": 42,
    "blocks": [
@@ -63892,7 +63940,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "unregisters a .TIM"
+   ],
    "reasons": [
     "call"
    ],
@@ -63900,7 +63950,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8efbb",
+   "name": "bind_patch_timbres",
    "addr": 585659,
    "size": 284,
    "blocks": [
@@ -63930,7 +63980,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "links the .PAT records to their timbres (key 0x80 type 0 program) and drivers"
+   ],
    "reasons": [
     "call"
    ],
@@ -63949,10 +64001,10 @@
    ],
    "instructions": 24,
    "callers": [
-    "sub_8efbb",
-    "sub_8f114",
+    "bind_patch_timbres",
+    "snd_patch_timbre",
     "snd_play_patch",
-    "sub_990cb",
+    "kms_track_tick",
     "sub_9e026",
     "sub_9fc24",
     "sub_a08d7"
@@ -63978,7 +64030,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8f114",
+   "name": "snd_patch_timbre",
    "addr": 586004,
    "size": 39,
    "blocks": [
@@ -64004,7 +64056,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "the timbre pointer (+0x10) of a sound id's patch record"
+   ],
    "reasons": [
     "call"
    ],
@@ -64030,11 +64084,11 @@
     "team_select_screen2",
     "load_music_banks",
     "load_sound_config",
-    "sub_8f48f"
+    "kms_load_start"
    ],
    "callees": [
     "sub_59493",
-    "sub_8f247",
+    "kms_find_song",
     "sub_8fed2",
     "sub_8ff1e"
    ],
@@ -64063,7 +64117,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8f1fe",
+   "name": "kms_unload",
    "addr": 586238,
    "size": 73,
    "blocks": [
@@ -64081,11 +64135,11 @@
     "team_select_screen2",
     "sub_7dec8",
     "load_sound_config",
-    "sub_8eb93"
+    "sound_shutdown"
    ],
    "callees": [
-    "sub_8f247",
-    "sub_8f67d",
+    "kms_find_song",
+    "snd_stop_handle",
     "sub_8ff1e"
    ],
    "strings": [],
@@ -64096,7 +64150,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "stops a song and frees its KMS and CFG"
+   ],
    "reasons": [
     "call"
    ],
@@ -64104,7 +64160,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8f247",
+   "name": "kms_find_song",
    "addr": 586311,
    "size": 41,
    "blocks": [
@@ -64116,8 +64172,8 @@
    "instructions": 20,
    "callers": [
     "music_load_kms",
-    "sub_8f1fe",
-    "sub_8f4a7"
+    "kms_unload",
+    "kms_start"
    ],
    "callees": [],
    "strings": [],
@@ -64128,7 +64184,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "slot of a song handle among the 13 loaded songs"
+   ],
    "reasons": [
     "call"
    ],
@@ -64136,7 +64194,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8f270",
+   "name": "kms_play",
    "addr": 586352,
    "size": 10,
    "blocks": [
@@ -64151,7 +64209,7 @@
     "play_sample_by_ptr"
    ],
    "callees": [
-    "sub_8f4a7"
+    "kms_start"
    ],
    "strings": [],
    "vars": [],
@@ -64159,7 +64217,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "plays a loaded song (play_sample_by_ptr)"
+   ],
    "reasons": [
     "call"
    ],
@@ -64179,13 +64239,13 @@
    "instructions": 133,
    "callers": [],
    "callees": [
-    "sub_8f433",
-    "sub_8f451",
-    "sub_97166",
-    "sub_9720b",
-    "sub_99522",
-    "sub_996b0",
-    "sub_998a0",
+    "kms_alloc_track",
+    "kms_track_channel",
+    "drv_index",
+    "drv_channel_config",
+    "kms_controller",
+    "kms_pitch_bend",
+    "snd_program_change",
     "sub_b3fb0"
    ],
    "strings": [],
@@ -64205,7 +64265,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8f433",
+   "name": "kms_alloc_track",
    "addr": 586803,
    "size": 30,
    "blocks": [
@@ -64227,7 +64287,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "a free 0x54 byte track record (24)"
+   ],
    "reasons": [
     "call"
    ],
@@ -64235,7 +64297,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8f451",
+   "name": "kms_track_channel",
    "addr": 586833,
    "size": 62,
    "blocks": [
@@ -64258,7 +64320,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "the first MIDI channel of a CFG channel mask"
+   ],
    "reasons": [
     "call"
    ],
@@ -64266,7 +64330,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8f48f",
+   "name": "kms_load_start",
    "addr": 586895,
    "size": 19,
    "blocks": [
@@ -64279,7 +64343,7 @@
    "callers": [],
    "callees": [
     "music_load_kms",
-    "sub_8f4a7"
+    "kms_start"
    ],
    "strings": [],
    "vars": [],
@@ -64289,7 +64353,9 @@
     "unreferenced"
    ],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "music_load_kms and kms_start"
+   ],
    "reasons": [
     "gap"
    ],
@@ -64297,7 +64363,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8f4a7",
+   "name": "kms_start",
    "addr": 586919,
    "size": 29,
    "blocks": [
@@ -64308,11 +64374,11 @@
    ],
    "instructions": 12,
    "callers": [
-    "sub_8f270",
-    "sub_8f48f"
+    "kms_play",
+    "kms_load_start"
    ],
    "callees": [
-    "sub_8f247"
+    "kms_find_song"
    ],
    "strings": [],
    "vars": [],
@@ -64320,7 +64386,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "starts the tracks of a loaded song on the first MIDI channel of each CFG mask"
+   ],
    "reasons": [
     "call"
    ],
@@ -64343,8 +64411,8 @@
    ],
    "callees": [
     "snd_patch_record",
-    "sub_99700",
-    "sub_997b7"
+    "snd_note_on",
+    "snd_queue_message"
    ],
    "strings": [],
    "vars": [
@@ -64413,7 +64481,7 @@
     "sub_10f6d",
     "handle_hotkey",
     "game_loop",
-    "start_period",
+    "three_stars_sequence",
     "simulate_game_offscreen"
    ],
    "callees": [],
@@ -64438,7 +64506,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8f67d",
+   "name": "snd_stop_handle",
    "addr": 587389,
    "size": 305,
    "blocks": [
@@ -64450,12 +64518,12 @@
    "instructions": 87,
    "callers": [
     "stop_crowd_loop",
-    "sub_8f1fe"
+    "kms_unload"
    ],
    "callees": [
-    "sub_98f46",
-    "sub_99620",
-    "sub_997b7"
+    "sound_timer_tick",
+    "snd_note_off",
+    "snd_queue_message"
    ],
    "strings": [],
    "vars": [
@@ -64472,7 +64540,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "stops a song (all notes off, volume 0) or the note of an effect"
+   ],
    "reasons": [
     "call"
    ],
@@ -64480,7 +64550,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8f7ae",
+   "name": "kms_fade_out",
    "addr": 587694,
    "size": 96,
    "blocks": [
@@ -64503,7 +64573,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "fades a song out over n timer ticks"
+   ],
    "reasons": [
     "call"
    ],
@@ -64511,7 +64583,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8f80e",
+   "name": "kms_finished",
    "addr": 587790,
    "size": 56,
    "blocks": [
@@ -64536,7 +64608,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "1 when no track of the song runs any more"
+   ],
    "reasons": [
     "call"
    ],
@@ -64544,7 +64618,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8f846",
+   "name": "kms_fade_done",
    "addr": 587846,
    "size": 56,
    "blocks": [
@@ -64567,7 +64641,9 @@
     "unreferenced"
    ],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "1 when no track of the song is fading"
+   ],
    "reasons": [
     "gap"
    ],
@@ -64575,7 +64651,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8f87e",
+   "name": "kms_track_marker",
    "addr": 587902,
    "size": 57,
    "blocks": [
@@ -64597,7 +64673,9 @@
     "unreferenced"
    ],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "the marker (event 0xea) of a song's track on a channel"
+   ],
    "reasons": [
     "gap"
    ],
@@ -64605,7 +64683,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8f8b7",
+   "name": "music_mute",
    "addr": 587959,
    "size": 101,
    "blocks": [
@@ -64617,7 +64695,7 @@
    "instructions": 31,
    "callers": [],
    "callees": [
-    "sub_997b7"
+    "snd_queue_message"
    ],
    "strings": [],
    "vars": [
@@ -64632,7 +64710,9 @@
     "unreferenced"
    ],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "volume 0 on every track"
+   ],
    "reasons": [
     "gap"
    ],
@@ -64640,7 +64720,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8f91c",
+   "name": "music_unmute",
    "addr": 588060,
    "size": 71,
    "blocks": [
@@ -64652,7 +64732,7 @@
    "instructions": 29,
    "callers": [],
    "callees": [
-    "sub_99522"
+    "kms_controller"
    ],
    "strings": [],
    "vars": [
@@ -64666,7 +64746,9 @@
     "unreferenced"
    ],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "restores the volume of every track"
+   ],
    "reasons": [
     "gap"
    ],
@@ -64925,8 +65007,8 @@
    "callers": [],
    "callees": [
     "sub_8dbd4",
-    "sub_97166",
-    "sub_97268"
+    "drv_index",
+    "drv_play_sample"
    ],
    "strings": [],
    "vars": [
@@ -64978,7 +65060,7 @@
    ],
    "callees": [
     "sub_8dbd4",
-    "sub_97166"
+    "drv_index"
    ],
    "strings": [],
    "vars": [
@@ -65011,11 +65093,11 @@
    ],
    "instructions": 36,
    "callers": [
-    "sub_832bc"
+    "speech_timer"
    ],
    "callees": [
-    "sub_97166",
-    "sub_97268"
+    "drv_index",
+    "drv_play_sample"
    ],
    "strings": [],
    "vars": [
@@ -65044,11 +65126,11 @@
    ],
    "instructions": 37,
    "callers": [
-    "sub_832bc"
+    "speech_timer"
    ],
    "callees": [
-    "sub_97166",
-    "sub_97268"
+    "drv_index",
+    "drv_play_sample"
    ],
    "strings": [],
    "vars": [
@@ -65130,7 +65212,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8fcac",
+   "name": "sound_channel_stop",
    "addr": 588972,
    "size": 51,
    "blocks": [
@@ -65144,11 +65226,11 @@
     "sub_8378c",
     "sub_837a8",
     "sound_fade",
-    "sub_98f46"
+    "sound_timer_tick"
    ],
    "callees": [
-    "sub_97166",
-    "sub_97268"
+    "drv_index",
+    "drv_play_sample"
    ],
    "strings": [],
    "vars": [],
@@ -65156,7 +65238,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "stops the sample of a sound channel (end of a fade)"
+   ],
    "reasons": [
     "call"
    ],
@@ -65207,8 +65291,8 @@
     "cmv_play"
    ],
    "callees": [
-    "sub_8fcac",
-    "sub_97166",
+    "sound_channel_stop",
+    "drv_index",
     "sub_971f8"
    ],
    "strings": [],
@@ -65245,7 +65329,7 @@
    "instructions": 12,
    "callers": [],
    "callees": [
-    "sub_97166",
+    "drv_index",
     "sub_971f8"
    ],
    "strings": [],
@@ -65278,7 +65362,7 @@
     "update_ambient_audio"
    ],
    "callees": [
-    "sub_997b7"
+    "snd_queue_message"
    ],
    "strings": [],
    "vars": [
@@ -65311,7 +65395,7 @@
     "sound_pause_all"
    ],
    "callees": [
-    "sub_997b7"
+    "snd_queue_message"
    ],
    "strings": [],
    "vars": [
@@ -65343,7 +65427,7 @@
     "update_ambient_audio"
    ],
    "callees": [
-    "sub_997b7"
+    "snd_queue_message"
    ],
    "strings": [],
    "vars": [
@@ -65375,7 +65459,7 @@
     "update_ambient_audio"
    ],
    "callees": [
-    "sub_997b7"
+    "snd_queue_message"
    ],
    "strings": [],
    "vars": [
@@ -65408,7 +65492,7 @@
     "sound_pause_all"
    ],
    "callees": [
-    "sub_997b7"
+    "snd_queue_message"
    ],
    "strings": [],
    "vars": [
@@ -65467,8 +65551,8 @@
    ],
    "instructions": 31,
    "callers": [
-    "sub_8ee4f",
-    "sub_8efbb"
+    "load_timbre_file",
+    "bind_patch_timbres"
    ],
    "callees": [],
    "strings": [],
@@ -65533,7 +65617,7 @@
     "sub_8ee43",
     "sub_8ef76",
     "music_load_kms",
-    "sub_8f1fe"
+    "kms_unload"
    ],
    "callees": [
     "freemem"
@@ -65623,7 +65707,7 @@
    ],
    "instructions": 19,
    "callers": [
-    "sub_8ee4f",
+    "load_timbre_file",
     "loadsound"
    ],
    "callees": [],
@@ -65683,10 +65767,10 @@
     "pause_menu",
     "sub_1a534",
     "exit_game_dialog",
-    "sub_1a817",
+    "menu_go_to_replay",
     "sub_1a8aa",
     "sub_1a922",
-    "team_select_hub",
+    "menu_game_statistics",
     "sub_1a9ac",
     "sub_1aa6d",
     "sub_1aac4",
@@ -65722,7 +65806,7 @@
     "line_editor",
     "loading_screen",
     "faceoff_wait_loop",
-    "start_period",
+    "three_stars_sequence",
     "simulate_game_offscreen",
     "database_screen",
     "ratings_edit_screen",
@@ -65945,7 +66029,7 @@
    "callers": [
     "sub_8e45c",
     "snd_patch_record",
-    "sub_8f114",
+    "snd_patch_timbre",
     "sub_972ab",
     "sub_972b8",
     "sub_972c0",
@@ -67831,7 +67915,7 @@
     "lines_teams_b",
     "replay_save_highlight",
     "speech_load_bank",
-    "sub_83bf3",
+    "speech_delta_decode",
     "sub_83d78",
     "sub_91dc4",
     "read",
@@ -67882,7 +67966,7 @@
     "read_be32",
     "read_clip_name",
     "speech_load_bank",
-    "sub_83bf3",
+    "speech_delta_decode",
     "sub_83d78",
     "sub_b0a14"
    ],
@@ -74530,7 +74614,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_97166",
+   "name": "drv_index",
    "addr": 618854,
    "size": 25,
    "blocks": [
@@ -74546,7 +74630,7 @@
     "playsample",
     "sub_8fbe5",
     "sub_8fc37",
-    "sub_8fcac",
+    "sound_channel_stop",
     "sound_fade",
     "sub_8fd67"
    ],
@@ -74560,7 +74644,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "index of a loaded sound driver"
+   ],
    "reasons": [
     "call"
    ],
@@ -74669,7 +74755,7 @@
    ],
    "instructions": 12,
    "callers": [
-    "sub_8eb93"
+    "sound_shutdown"
    ],
    "callees": [],
    "strings": [],
@@ -74689,7 +74775,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_971db",
+   "name": "drv_tick",
    "addr": 618971,
    "size": 29,
    "blocks": [
@@ -74700,7 +74786,7 @@
    ],
    "instructions": 12,
    "callers": [
-    "sub_98f46"
+    "sound_timer_tick"
    ],
    "callees": [],
    "strings": [],
@@ -74712,7 +74798,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "the timer tick of a sound driver"
+   ],
    "reasons": [
     "call"
    ],
@@ -74735,7 +74823,7 @@
     "sound_fade",
     "sub_8fd67",
     "sub_97079",
-    "sub_98f46"
+    "sound_timer_tick"
    ],
    "callees": [],
    "strings": [],
@@ -74754,7 +74842,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_9720b",
+   "name": "drv_channel_config",
    "addr": 619019,
    "size": 35,
    "blocks": [
@@ -74777,7 +74865,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "channel setup of a sound driver"
+   ],
    "reasons": [
     "call"
    ],
@@ -74785,7 +74875,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_9722e",
+   "name": "drv_send_midi",
    "addr": 619054,
    "size": 58,
    "blocks": [
@@ -74796,13 +74886,13 @@
    ],
    "instructions": 22,
    "callers": [
-    "sub_990cb",
-    "sub_99522",
-    "sub_99620",
-    "sub_996b0",
-    "sub_99700",
-    "sub_99822",
-    "sub_998a0"
+    "kms_track_tick",
+    "kms_controller",
+    "snd_note_off",
+    "kms_pitch_bend",
+    "snd_note_on",
+    "snd_flush_messages",
+    "snd_program_change"
    ],
    "callees": [],
    "strings": [],
@@ -74814,7 +74904,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "MIDI message to a sound driver (adds 24 to the note of a note on / off)"
+   ],
    "reasons": [
     "call"
    ],
@@ -74822,7 +74914,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_97268",
+   "name": "drv_play_sample",
    "addr": 619112,
    "size": 67,
    "blocks": [
@@ -74836,7 +74928,7 @@
     "sub_8fb24",
     "sub_8fbe5",
     "sub_8fc37",
-    "sub_8fcac"
+    "sound_channel_stop"
    ],
    "callees": [],
    "strings": [],
@@ -74848,7 +74940,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "plays a sample through a sound driver"
+   ],
    "reasons": [
     "call"
    ],
@@ -75063,7 +75157,7 @@
    ],
    "instructions": 2,
    "callers": [
-    "sub_83bf3",
+    "speech_delta_decode",
     "sub_840a9",
     "sub_96844",
     "sub_96e7c"
@@ -75342,7 +75436,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_979f8",
+   "name": "bytepair_expand",
    "addr": 621048,
    "size": 64,
    "blocks": [
@@ -75367,7 +75461,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "expands a byte pair code recursively"
+   ],
    "reasons": [
     "call"
    ],
@@ -75389,7 +75485,7 @@
     "unpack"
    ],
    "callees": [
-    "sub_979f8"
+    "bytepair_expand"
    ],
    "strings": [],
    "vars": [
@@ -75563,7 +75659,7 @@
    ],
    "instructions": 10,
    "callers": [
-    "sub_83bf3"
+    "speech_delta_decode"
    ],
    "callees": [
     "unpack"
@@ -77054,7 +77150,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_98f11",
+   "name": "sound_timer",
    "addr": 626449,
    "size": 53,
    "blocks": [
@@ -77065,11 +77161,11 @@
    ],
    "instructions": 15,
    "callers": [
-    "sub_8eb5b",
-    "sub_8eb93"
+    "sound_timer_install",
+    "sound_shutdown"
    ],
    "callees": [
-    "sub_98f46"
+    "sound_timer_tick"
    ],
    "strings": [],
    "vars": [
@@ -77081,7 +77177,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "the 100 Hz timer callback of the sound layer"
+   ],
    "reasons": [
     "fptr"
    ],
@@ -77089,7 +77187,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_98f46",
+   "name": "sound_timer_tick",
    "addr": 626502,
    "size": 389,
    "blocks": [
@@ -77100,16 +77198,16 @@
    ],
    "instructions": 136,
    "callers": [
-    "sub_8f67d",
-    "sub_98f11"
+    "snd_stop_handle",
+    "sound_timer"
    ],
    "callees": [
-    "sub_8fcac",
-    "sub_971db",
+    "sound_channel_stop",
+    "drv_tick",
     "sub_971f8",
-    "sub_990cb",
-    "sub_99620",
-    "sub_99822",
+    "kms_track_tick",
+    "snd_note_off",
+    "snd_flush_messages",
     "sub_a2ac8"
    ],
    "strings": [],
@@ -77126,7 +77224,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "fades, driver ticks, queued MIDI messages, the song tracks, effect note lengths"
+   ],
    "reasons": [
     "call"
    ],
@@ -77134,7 +77234,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_990cb",
+   "name": "kms_track_tick",
    "addr": 626891,
    "size": 1111,
    "blocks": [
@@ -77145,18 +77245,18 @@
    ],
    "instructions": 329,
    "callers": [
-    "sub_98f46"
+    "sound_timer_tick"
    ],
    "callees": [
     "snd_patch_record",
-    "sub_9722e",
-    "sub_99522",
-    "sub_99620",
-    "sub_9966e",
-    "sub_996b0",
-    "sub_99700",
-    "sub_997b7",
-    "sub_99925",
+    "drv_send_midi",
+    "kms_controller",
+    "snd_note_off",
+    "kms_set_tempo",
+    "kms_pitch_bend",
+    "snd_note_on",
+    "snd_queue_message",
+    "kms_read_event",
     "sub_a2ac8"
    ],
    "strings": [],
@@ -77178,7 +77278,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "one track of a song: 128 a tick, a step every 32000 / tempo, its events and note lengths"
+   ],
    "reasons": [
     "call"
    ],
@@ -77186,7 +77288,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_99522",
+   "name": "kms_controller",
    "addr": 628002,
    "size": 254,
    "blocks": [
@@ -77198,11 +77300,11 @@
    "instructions": 88,
    "callers": [
     "sub_8f27a",
-    "sub_8f91c",
-    "sub_990cb"
+    "music_unmute",
+    "kms_track_tick"
    ],
    "callees": [
-    "sub_9722e"
+    "drv_send_midi"
    ],
    "strings": [],
    "vars": [
@@ -77215,7 +77317,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "controller of a track (volume scaled by the song's volume, pan adjusted)"
+   ],
    "reasons": [
     "call"
    ],
@@ -77223,7 +77327,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_99620",
+   "name": "snd_note_off",
    "addr": 628256,
    "size": 78,
    "blocks": [
@@ -77234,12 +77338,12 @@
    ],
    "instructions": 27,
    "callers": [
-    "sub_8f67d",
-    "sub_98f46",
-    "sub_990cb"
+    "snd_stop_handle",
+    "sound_timer_tick",
+    "kms_track_tick"
    ],
    "callees": [
-    "sub_9722e"
+    "drv_send_midi"
    ],
    "strings": [],
    "vars": [
@@ -77250,7 +77354,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "note off of an entry of the note table"
+   ],
    "reasons": [
     "call"
    ],
@@ -77258,7 +77364,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_9966e",
+   "name": "kms_set_tempo",
    "addr": 628334,
    "size": 66,
    "blocks": [
@@ -77269,7 +77375,7 @@
    ],
    "instructions": 29,
    "callers": [
-    "sub_990cb"
+    "kms_track_tick"
    ],
    "callees": [],
    "strings": [],
@@ -77280,7 +77386,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "tempo event: 32000 / tempo for every track of the song"
+   ],
    "reasons": [
     "call"
    ],
@@ -77288,7 +77396,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_996b0",
+   "name": "kms_pitch_bend",
    "addr": 628400,
    "size": 80,
    "blocks": [
@@ -77300,10 +77408,10 @@
    "instructions": 26,
    "callers": [
     "sub_8f27a",
-    "sub_990cb"
+    "kms_track_tick"
    ],
    "callees": [
-    "sub_9722e"
+    "drv_send_midi"
    ],
    "strings": [],
    "vars": [
@@ -77314,7 +77422,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "pitch bend of a track"
+   ],
    "reasons": [
     "call"
    ],
@@ -77322,7 +77432,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_99700",
+   "name": "snd_note_on",
    "addr": 628480,
    "size": 183,
    "blocks": [
@@ -77334,11 +77444,11 @@
    "instructions": 57,
    "callers": [
     "snd_play_patch",
-    "sub_990cb"
+    "kms_track_tick"
    ],
    "callees": [
-    "sub_9722e",
-    "sub_997b7"
+    "drv_send_midi",
+    "snd_queue_message"
    ],
    "strings": [],
    "vars": [
@@ -77350,7 +77460,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "note on: a free entry of the 32 entry note table with its length"
+   ],
    "reasons": [
     "call"
    ],
@@ -77358,7 +77470,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_997b7",
+   "name": "snd_queue_message",
    "addr": 628663,
    "size": 107,
    "blocks": [
@@ -77370,15 +77482,15 @@
    "instructions": 31,
    "callers": [
     "snd_play_patch",
-    "sub_8f67d",
-    "sub_8f8b7",
+    "snd_stop_handle",
+    "music_mute",
     "sub_8fd84",
     "sub_8fdb2",
     "sub_8fde5",
     "sub_8fe1c",
     "sub_8fe4f",
-    "sub_990cb",
-    "sub_99700"
+    "kms_track_tick",
+    "snd_note_on"
    ],
    "callees": [],
    "strings": [],
@@ -77392,7 +77504,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "queues a MIDI message for the next timer tick"
+   ],
    "reasons": [
     "call"
    ],
@@ -77400,7 +77514,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_99822",
+   "name": "snd_flush_messages",
    "addr": 628770,
    "size": 126,
    "blocks": [
@@ -77411,10 +77525,10 @@
    ],
    "instructions": 41,
    "callers": [
-    "sub_98f46"
+    "sound_timer_tick"
    ],
    "callees": [
-    "sub_9722e"
+    "drv_send_midi"
    ],
    "strings": [],
    "vars": [
@@ -77427,7 +77541,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "sends the queued MIDI messages to the drivers"
+   ],
    "reasons": [
     "call"
    ],
@@ -77435,7 +77551,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_998a0",
+   "name": "snd_program_change",
    "addr": 628896,
    "size": 59,
    "blocks": [
@@ -77449,7 +77565,7 @@
     "sub_8f27a"
    ],
    "callees": [
-    "sub_9722e"
+    "drv_send_midi"
    ],
    "strings": [],
    "vars": [
@@ -77460,7 +77576,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "program change on a channel"
+   ],
    "reasons": [
     "call"
    ],
@@ -77468,7 +77586,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_99925",
+   "name": "kms_read_event",
    "addr": 629029,
    "size": 230,
    "blocks": [
@@ -77479,7 +77597,7 @@
    ],
    "instructions": 88,
    "callers": [
-    "sub_990cb"
+    "kms_track_tick"
    ],
    "callees": [
     "sub_99a0b",
@@ -77493,7 +77611,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "parses a KMS event (delta time, code, arguments, length)"
+   ],
    "reasons": [
     "call"
    ],
@@ -77512,7 +77632,7 @@
    ],
    "instructions": 2,
    "callers": [
-    "sub_99925"
+    "kms_read_event"
    ],
    "callees": [],
    "strings": [],
@@ -77540,7 +77660,7 @@
    ],
    "instructions": 2,
    "callers": [
-    "sub_99925"
+    "kms_read_event"
    ],
    "callees": [],
    "strings": [],
@@ -82326,7 +82446,7 @@
     "sub_9daac"
    ],
    "callees": [
-    "sub_8f114",
+    "snd_patch_timbre",
     "sub_902a0",
     "sub_9da99",
     "sub_a6635"
@@ -82395,7 +82515,7 @@
     "sub_9daac"
    ],
    "callees": [
-    "sub_8f114",
+    "snd_patch_timbre",
     "sub_902a0"
    ],
    "strings": [],
@@ -86327,8 +86447,8 @@
    ],
    "instructions": 4,
    "callers": [
-    "sub_98f46",
-    "sub_990cb",
+    "sound_timer_tick",
+    "kms_track_tick",
     "sub_9d880"
    ],
    "callees": [],
@@ -102967,7 +103087,7 @@
    "callers": [
     "load_cfg_palette",
     "inittimer",
-    "sub_8eb5b",
+    "sound_timer_install",
     "sub_b29f0",
     "initmouse",
     "sub_b3036",
@@ -103447,7 +103567,7 @@
     "game_loop",
     "ea_sports_intro",
     "pause_menu",
-    "replay_loop",
+    "sequence_loop",
     "simulate_game_offscreen",
     "instant_replay"
    ],
@@ -103522,7 +103642,7 @@
     "sub_3170d",
     "loading_screen",
     "wait_sprite_fade",
-    "replay_loop",
+    "sequence_loop",
     "fade_ambient_audio",
     "replay_menu",
     "load_sound_config",
@@ -106350,7 +106470,7 @@
     "sub_78be7",
     "sub_7c852",
     "sub_7c901",
-    "sub_7e067",
+    "replay_draw_button",
     "replay_menu",
     "replay_save_dialog",
     "sub_80682",
@@ -128440,8 +128560,8 @@
     "sub_1b982",
     "init_match",
     "faceoff_wait_loop",
-    "replay_loop",
-    "start_period",
+    "sequence_loop",
+    "three_stars_sequence",
     "ai_ref_pickup_puck",
     "next_key_event",
     "ai_puck_faceoff2",
@@ -128564,7 +128684,7 @@
     "game_loop",
     "reset_game_state",
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "simulate_game_offscreen"
    ]
   },
@@ -128579,7 +128699,7 @@
     "play_game",
     "pause_menu",
     "faceoff_wait_loop",
-    "replay_loop",
+    "sequence_loop",
     "simulate_game_offscreen"
    ]
   },
@@ -129427,7 +129547,7 @@
     "ai_ref_three_stars",
     "ref_check_announcements",
     "penalty_odds",
-    "speech_period_summary",
+    "announce_one_minute_left",
     "speech_busy",
     "say_goal_wrapper",
     "say_star_wrapper",
@@ -129448,7 +129568,7 @@
     "game_clock_tick",
     "end_of_period",
     "goal_milestone_check",
-    "update_lead_change",
+    "update_power_play",
     "simulate_game_offscreen",
     "edit_lines_screen_b",
     "settings_menu",
@@ -131910,7 +132030,7 @@
     "sub_1a534",
     "sub_1a5b1",
     "sub_1a5d4",
-    "sub_1a817",
+    "menu_go_to_replay",
     "savegame_io",
     "instant_replay"
    ]
@@ -131926,7 +132046,7 @@
     "sub_1a534",
     "sub_1a5b1",
     "sub_1a5d4",
-    "sub_1a817",
+    "menu_go_to_replay",
     "savegame_io",
     "instant_replay"
    ]
@@ -133985,7 +134105,7 @@
     "game_loop",
     "play_game",
     "draw_rink",
-    "replay_loop",
+    "sequence_loop",
     "period_init",
     "simulate_game_offscreen",
     "instant_replay",
@@ -134002,7 +134122,7 @@
     "game_loop",
     "play_game",
     "draw_rink",
-    "replay_loop",
+    "sequence_loop",
     "period_init",
     "simulate_game_offscreen",
     "instant_replay",
@@ -137217,7 +137337,7 @@
     "sub_12034",
     "period_init",
     "savegame_io",
-    "sub_67581",
+    "replay_oldest_frame",
     "replay_buffer_start",
     "replay_record_frame",
     "replay_seek_frames",
@@ -137458,7 +137578,7 @@
    "kind": "ptr",
    "xrefs": [
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "ai_defense_offense",
     "ai_defense_defense",
     "ai_wing_defense",
@@ -137516,7 +137636,7 @@
     "breakaway_foul",
     "note_breakaway",
     "update_camera",
-    "sub_672f9",
+    "choose_goalie",
     "replay_record_frame",
     "dump_stats_log",
     "simulate_game_offscreen",
@@ -137535,7 +137655,7 @@
    "kind": null,
    "xrefs": [
     "game_loop",
-    "replay_loop",
+    "sequence_loop",
     "ai_puck_give_cup",
     "draw_sprites",
     "replay_draw_frame",
@@ -137553,8 +137673,8 @@
    "xrefs": [
     "game_loop",
     "init_match",
-    "replay_loop",
-    "start_period",
+    "sequence_loop",
+    "three_stars_sequence",
     "ai_puck_give_cup",
     "ai_celebrate_goal",
     "ai_ref_normal",
@@ -137586,7 +137706,7 @@
    "kind": null,
    "xrefs": [
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "ai_puck_give_cup",
     "ai_celebrate_goal",
     "ai_ref_normal",
@@ -137777,7 +137897,7 @@
    "kind": null,
    "xrefs": [
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "ai_puck_faceoff2",
     "injure_player",
     "period_init",
@@ -137799,7 +137919,7 @@
    "xrefs": [
     "init_match",
     "ai_ref_anthem",
-    "start_period",
+    "three_stars_sequence",
     "ai_puck_faceoff2",
     "injure_player",
     "period_init",
@@ -137942,7 +138062,7 @@
     "handle_hotkey",
     "run_sim_steps",
     "draw_clock",
-    "start_period",
+    "three_stars_sequence",
     "ai_defense_offense",
     "ai_defense_defense",
     "ai_wing_defense",
@@ -137993,7 +138113,7 @@
     "collide_pair",
     "cpu_line_change",
     "play_sfx",
-    "speech_period_summary",
+    "announce_one_minute_left",
     "say_goal_wrapper",
     "choose_line",
     "time_announcements",
@@ -138030,11 +138150,11 @@
     "zone_time_stats",
     "update_line_timers",
     "update_stoppage",
-    "update_lead_change",
+    "update_power_play",
     "breakaway_foul",
     "update_camera",
     "update_announcer",
-    "sub_672f9",
+    "choose_goalie",
     "replay_record_frame",
     "dump_stats_log",
     "simulate_game_offscreen",
@@ -138053,7 +138173,7 @@
    "xrefs": [
     "sub_12034",
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "ai_goalie",
     "ai_shoot",
     "request_line_change_button",
@@ -138090,7 +138210,7 @@
     "penalty_box_update",
     "process_infractions",
     "update_camera",
-    "sub_67581",
+    "replay_oldest_frame",
     "replay_buffer_start",
     "replay_record_frame",
     "replay_seek_frames",
@@ -138141,7 +138261,7 @@
     "sub_63475",
     "lead_time_stats",
     "update_stoppage",
-    "update_lead_change",
+    "update_power_play",
     "replay_record_frame",
     "dump_stats_log",
     "simulate_game_offscreen"
@@ -138187,7 +138307,7 @@
    "kind": null,
    "xrefs": [
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "ai_game_misconduct",
     "ai_penalty_box",
     "control_player",
@@ -138229,7 +138349,7 @@
    "kind": null,
    "xrefs": [
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "control_player",
     "ai_puck_faceoff",
     "ai_puck_faceoff2",
@@ -138247,7 +138367,7 @@
     "savegame_io",
     "start_penalty_shot",
     "sub_671e8",
-    "sub_672f9",
+    "choose_goalie",
     "replay_record_frame",
     "dump_stats_log",
     "simulate_game_offscreen",
@@ -138287,7 +138407,7 @@
     "savegame_io",
     "start_penalty_shot",
     "sub_671e8",
-    "sub_672f9",
+    "choose_goalie",
     "dump_stats_log",
     "simulate_game_offscreen",
     "ensure_user_slot",
@@ -138315,7 +138435,7 @@
     "sub_190be",
     "pause_menu",
     "sub_1a534",
-    "sub_1a817",
+    "menu_go_to_replay",
     "sub_1bbcc",
     "team_select_screen",
     "draw_team_logos",
@@ -138378,7 +138498,7 @@
     "sub_1920f",
     "pause_menu",
     "sub_1a534",
-    "sub_1a817",
+    "menu_go_to_replay",
     "sub_1bbcc",
     "sub_1befd",
     "team_select_screen",
@@ -138480,7 +138600,7 @@
    "kind": null,
    "xrefs": [
     "reset_game_state",
-    "start_period",
+    "three_stars_sequence",
     "save_game",
     "savegame_io",
     "update_line_timers",
@@ -138494,7 +138614,7 @@
    "kind": null,
    "xrefs": [
     "reset_game_state",
-    "start_period",
+    "three_stars_sequence",
     "ai_puck_faceoff2",
     "apply_skating",
     "stop_skating",
@@ -138516,7 +138636,7 @@
     "reset_game_state",
     "init_match",
     "ai_ref_anthem",
-    "start_period",
+    "three_stars_sequence",
     "ai_ref_get_new_puck",
     "ai_ref_call_penalty",
     "ai_ref_pickup_puck",
@@ -138551,7 +138671,7 @@
    "kind": null,
    "xrefs": [
     "reset_game_state",
-    "start_period",
+    "three_stars_sequence",
     "ref_check_announcements",
     "ai_ref_call_penalty",
     "ai_ref_pickup_puck",
@@ -138881,7 +139001,7 @@
     "play_game",
     "reset_game_state",
     "sub_190be",
-    "start_period",
+    "three_stars_sequence",
     "ai_puck_faceoff",
     "ai_puck_faceoff2",
     "sim_game_state",
@@ -138907,7 +139027,7 @@
     "reset_game_state",
     "sub_190be",
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "ai_ref_three_stars",
     "ai_ref_pickup_puck",
     "end_period_flag",
@@ -138926,7 +139046,7 @@
     "run_sim_steps",
     "game_loop",
     "reset_game_state",
-    "start_period",
+    "three_stars_sequence",
     "ai_ref_three_stars",
     "sub_5dd9e",
     "save_game",
@@ -138953,7 +139073,7 @@
     "reset_game_state",
     "draw_energy_bar",
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "ai_puck_faceoff",
     "sim_game_state",
     "end_of_period",
@@ -138970,7 +139090,7 @@
    "xrefs": [
     "reset_game_state",
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "ai_puck_faceoff",
     "end_of_period",
     "save_game",
@@ -138987,7 +139107,7 @@
     "reset_game_state",
     "draw_line_box",
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "start_line_change_ui",
     "line_change_bench_step",
     "control_player",
@@ -139008,7 +139128,7 @@
    "xrefs": [
     "reset_game_state",
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "ai_puck_faceoff",
     "end_of_period",
     "save_game",
@@ -139129,7 +139249,7 @@
     "reset_game_state",
     "draw_clock",
     "draw_line_box",
-    "start_period",
+    "three_stars_sequence",
     "start_line_change_ui",
     "line_change_bench_step",
     "control_player",
@@ -139151,7 +139271,7 @@
    "xrefs": [
     "reset_game_state",
     "draw_clock",
-    "start_period",
+    "three_stars_sequence",
     "ai_puck_faceoff",
     "end_of_period",
     "save_game",
@@ -139379,7 +139499,7 @@
     "sub_13e8f",
     "sub_13fa7",
     "faceoff_wait_loop",
-    "start_period",
+    "three_stars_sequence",
     "ai_puck_faceoff2",
     "period_init",
     "save_game",
@@ -139394,7 +139514,7 @@
    "kind": null,
    "xrefs": [
     "reset_game_state",
-    "start_period",
+    "three_stars_sequence",
     "ai_ref_faceoff",
     "ai_ref_get_new_puck",
     "ai_ref_pickup_puck",
@@ -139415,7 +139535,7 @@
    "kind": null,
    "xrefs": [
     "reset_game_state",
-    "start_period",
+    "three_stars_sequence",
     "ai_puck_faceoff2",
     "pull_goalie_logic",
     "period_init",
@@ -139443,7 +139563,7 @@
     "sub_1baf3",
     "init_match",
     "faceoff_wait_loop",
-    "start_period",
+    "three_stars_sequence",
     "ref_check_announcements",
     "ai_ref_pickup_puck",
     "ai_ref_goto_faceoff",
@@ -139473,7 +139593,7 @@
     "play_game",
     "reset_game_state",
     "faceoff_wait_loop",
-    "start_period",
+    "three_stars_sequence",
     "ai_ref_pickup_puck",
     "ai_puck_faceoff2",
     "sim_update_players",
@@ -139493,7 +139613,7 @@
    "kind": null,
    "xrefs": [
     "reset_game_state",
-    "start_period",
+    "three_stars_sequence",
     "ai_puck_faceoff2",
     "save_game",
     "savegame_io",
@@ -139741,7 +139861,7 @@
     "sub_13e8f",
     "sub_13fa7",
     "ai_ref_anthem",
-    "start_period",
+    "three_stars_sequence",
     "ai_ref_three_stars",
     "ai_goalie",
     "ref_check_announcements",
@@ -139799,7 +139919,7 @@
     "demo_game",
     "intro_sequence",
     "match_sequence",
-    "start_period",
+    "three_stars_sequence",
     "ref_check_announcements",
     "dress_line_if_start",
     "ai_puck_faceoff2"
@@ -140753,7 +140873,7 @@
    "xrefs": [
     "play_sfx",
     "simulate_game_offscreen",
-    "sub_854ac"
+    "say_one_minute_left"
    ]
   },
   {
@@ -140893,7 +141013,7 @@
    "kind": null,
    "xrefs": [
     "savegame_io",
-    "start_crowd_sound",
+    "start_crowd_figure",
     "update_effects",
     "replay_draw_frame"
    ]
@@ -140904,7 +141024,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "start_crowd_sound",
+    "start_crowd_figure",
     "update_effects"
    ]
   },
@@ -140925,7 +141045,7 @@
    "kind": null,
    "xrefs": [
     "savegame_io",
-    "start_crowd_sound",
+    "start_crowd_figure",
     "replay_draw_frame"
    ]
   },
@@ -142756,9 +142876,9 @@
    "size": 4,
    "kind": "ptr",
    "xrefs": [
-    "sub_1ab0b",
-    "sub_1ab39",
-    "sub_1ab62",
+    "menu_home_goalie1",
+    "menu_home_goalie2",
+    "menu_home_no_goalie",
     "sub_1c852",
     "sub_1cb7f"
    ]
@@ -142769,9 +142889,9 @@
    "size": 4,
    "kind": "ptr",
    "xrefs": [
-    "sub_1ab0b",
-    "sub_1ab39",
-    "sub_1ab62",
+    "menu_home_goalie1",
+    "menu_home_goalie2",
+    "menu_home_no_goalie",
     "sub_1cb7f"
    ]
   },
@@ -142781,8 +142901,8 @@
    "size": 4,
    "kind": "ptr",
    "xrefs": [
-    "sub_1ab0b",
-    "sub_1ab62",
+    "menu_home_goalie1",
+    "menu_home_no_goalie",
     "sub_1cb7f"
    ]
   },
@@ -142802,9 +142922,9 @@
    "size": 4,
    "kind": "ptr",
    "xrefs": [
-    "sub_1ab95",
-    "sub_1abc8",
-    "sub_1abf1",
+    "menu_away_goalie1",
+    "menu_away_goalie2",
+    "menu_away_no_goalie",
     "sub_1c852",
     "sub_1cb7f"
    ]
@@ -142815,9 +142935,9 @@
    "size": 4,
    "kind": "ptr",
    "xrefs": [
-    "sub_1ab95",
-    "sub_1abc8",
-    "sub_1abf1",
+    "menu_away_goalie1",
+    "menu_away_goalie2",
+    "menu_away_no_goalie",
     "sub_1cb7f"
    ]
   },
@@ -142827,8 +142947,8 @@
    "size": 4,
    "kind": "ptr",
    "xrefs": [
-    "sub_1ab95",
-    "sub_1abf1",
+    "menu_away_goalie1",
+    "menu_away_no_goalie",
     "sub_1cb7f"
    ]
   },
@@ -146394,8 +146514,8 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_7e067",
-    "sub_7e8e5"
+    "replay_draw_button",
+    "replay_button_at"
    ]
   },
   {
@@ -146404,8 +146524,8 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_7e067",
-    "sub_7e8e5"
+    "replay_draw_button",
+    "replay_button_at"
    ]
   },
   {
@@ -146414,8 +146534,8 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_7e067",
-    "sub_7e8e5"
+    "replay_draw_button",
+    "replay_button_at"
    ]
   },
   {
@@ -146424,8 +146544,8 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_7e067",
-    "sub_7e8e5"
+    "replay_draw_button",
+    "replay_button_at"
    ]
   },
   {
@@ -147140,10 +147260,10 @@
     "calendar_screen",
     "league_calendar_flow",
     "team_info_screen",
-    "start_period",
+    "three_stars_sequence",
     "ai_ref_three_stars",
     "ref_check_announcements",
-    "speech_period_summary",
+    "announce_one_minute_left",
     "speech_busy",
     "say_goal_wrapper",
     "say_star_wrapper",
@@ -147162,7 +147282,7 @@
     "preload_speech_wrapper",
     "score_goal",
     "game_clock_tick",
-    "update_lead_change",
+    "update_power_play",
     "simulate_game_offscreen",
     "sub_6be95",
     "database_screen",
@@ -147231,7 +147351,7 @@
     "locker_room_menu",
     "sound_setup_screen",
     "load_sound_config",
-    "sub_832bc",
+    "speech_timer",
     "sub_8378c",
     "sub_837a8",
     "playoff_tree_screen",
@@ -147533,7 +147653,7 @@
     "say_penalty_shot",
     "say_star",
     "say_goal",
-    "sub_854ac",
+    "say_one_minute_left",
     "preload_speech"
    ],
    "text": "oneleft.cor"
@@ -147878,7 +147998,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_832bc",
+    "speech_timer",
     "sub_8357a"
    ]
   },
@@ -147907,7 +148027,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_832bc",
+    "speech_timer",
     "sub_8357a",
     "sub_8363c",
     "sub_836ca",
@@ -147926,7 +148046,7 @@
     "say_penalty_shot",
     "say_star",
     "say_goal",
-    "sub_854ac",
+    "say_one_minute_left",
     "sub_85507",
     "preload_speech"
    ]
@@ -150171,7 +150291,7 @@
    "size": 1,
    "kind": null,
    "xrefs": [
-    "sub_8eb5b"
+    "sound_timer_install"
    ]
   },
   {
@@ -150180,8 +150300,8 @@
    "size": 1,
    "kind": null,
    "xrefs": [
-    "sub_8ee4f",
-    "sub_8efbb",
+    "load_timbre_file",
+    "bind_patch_timbres",
     "sub_8fe83"
    ]
   },
@@ -151382,7 +151502,7 @@
    "kind": null,
    "xrefs": [
     "sub_97079",
-    "sub_97166"
+    "drv_index"
    ]
   },
   {
@@ -151805,8 +151925,8 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_997b7",
-    "sub_99822"
+    "snd_queue_message",
+    "snd_flush_messages"
    ]
   },
   {
@@ -151815,8 +151935,8 @@
    "size": 1,
    "kind": null,
    "xrefs": [
-    "sub_997b7",
-    "sub_99822"
+    "snd_queue_message",
+    "snd_flush_messages"
    ]
   },
   {
@@ -151825,7 +151945,7 @@
    "size": 1,
    "kind": null,
    "xrefs": [
-    "sub_98f46"
+    "sound_timer_tick"
    ]
   },
   {
@@ -151834,7 +151954,7 @@
    "size": 1,
    "kind": null,
    "xrefs": [
-    "sub_98f11"
+    "sound_timer"
    ]
   },
   {
@@ -151843,11 +151963,11 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_8eb93",
+    "sound_shutdown",
     "sub_8ebe2",
-    "sub_8efbb",
-    "sub_8f80e",
-    "sub_8f846",
+    "bind_patch_timbres",
+    "kms_finished",
+    "kms_fade_done",
     "sound_channel_status",
     "sub_8fd84",
     "sub_8fdb2",
@@ -151855,14 +151975,14 @@
     "sub_8fe1c",
     "sub_8fe4f",
     "sub_97079",
-    "sub_97166",
+    "drv_index",
     "sub_971be",
-    "sub_971db",
-    "sub_9720b",
-    "sub_9722e",
-    "sub_97268",
-    "sub_98f11",
-    "sub_98f46"
+    "drv_tick",
+    "drv_channel_config",
+    "drv_send_midi",
+    "drv_play_sample",
+    "sound_timer",
+    "sound_timer_tick"
    ]
   },
   {
@@ -151871,7 +151991,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_8f451"
+    "kms_track_channel"
    ]
   },
   {
@@ -151880,13 +152000,13 @@
    "size": 2,
    "kind": null,
    "xrefs": [
-    "sub_8efbb",
+    "bind_patch_timbres",
     "sub_8f27a",
     "sound_stopall",
-    "sub_8f67d",
-    "sub_8f7ae",
-    "sub_98f11",
-    "sub_997b7"
+    "snd_stop_handle",
+    "kms_fade_out",
+    "sound_timer",
+    "snd_queue_message"
    ]
   },
   {
@@ -151895,9 +152015,9 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_8f8b7",
-    "sub_8f91c",
-    "sub_98f46"
+    "music_mute",
+    "music_unmute",
+    "sound_timer_tick"
    ]
   },
   {
@@ -151908,7 +152028,7 @@
    "xrefs": [
     "snd_play_patch",
     "sound_stopall",
-    "sub_8f67d",
+    "snd_stop_handle",
     "sfx_enable",
     "sfx_disable"
    ]
@@ -151921,7 +152041,7 @@
    "xrefs": [
     "music_enable",
     "music_disable",
-    "sub_990cb"
+    "kms_track_tick"
    ]
   },
   {
@@ -151932,7 +152052,7 @@
    "xrefs": [
     "sub_8ebe2",
     "sub_97079",
-    "sub_98f46"
+    "sound_timer_tick"
    ]
   },
   {
@@ -151942,14 +152062,14 @@
    "kind": null,
    "xrefs": [
     "snd_play_patch",
-    "sub_8f67d",
-    "sub_8f8b7",
-    "sub_990cb",
-    "sub_99522",
-    "sub_99620",
-    "sub_996b0",
-    "sub_99700",
-    "sub_998a0",
+    "snd_stop_handle",
+    "music_mute",
+    "kms_track_tick",
+    "kms_controller",
+    "snd_note_off",
+    "kms_pitch_bend",
+    "snd_note_on",
+    "snd_program_change",
     "sub_9daac",
     "sub_9dc9f",
     "sub_9e676",
@@ -158438,8 +158558,8 @@
     "game_loop",
     "reset_game_state",
     "init_match",
-    "replay_loop",
-    "start_period",
+    "sequence_loop",
+    "three_stars_sequence",
     "save_game",
     "savegame_io",
     "write_stats_table"
@@ -158479,7 +158599,7 @@
     "game_loop",
     "init_match",
     "faceoff_wait_loop",
-    "replay_loop",
+    "sequence_loop",
     "simulate_game_offscreen",
     "instant_replay"
    ]
@@ -158520,7 +158640,7 @@
     "game_loop",
     "init_match",
     "faceoff_wait_loop",
-    "replay_loop",
+    "sequence_loop",
     "simulate_game_offscreen",
     "instant_replay"
    ]
@@ -158560,7 +158680,7 @@
     "team_edit_screen",
     "init_match",
     "compute_three_stars",
-    "start_period",
+    "three_stars_sequence",
     "sub_5a669",
     "time_announcements",
     "sub_5b9d1",
@@ -159337,7 +159457,7 @@
     "sub_10f6d",
     "game_loop",
     "pause_menu",
-    "sub_1a817",
+    "menu_go_to_replay",
     "sub_1b982",
     "format_player_name",
     "highlights_play",
@@ -162088,7 +162208,7 @@
     "reset_game_state",
     "save_game",
     "savegame_io",
-    "start_crowd_sound",
+    "start_crowd_figure",
     "update_effects",
     "draw_nets_and_effects",
     "replay_record_frame"
@@ -162203,16 +162323,16 @@
     "sub_1920f",
     "sub_1a534",
     "exit_game_dialog",
-    "sub_1a817",
+    "menu_go_to_replay",
     "sub_1a8aa",
     "sub_1a922",
-    "team_select_hub",
+    "menu_game_statistics",
     "sub_1a9ac",
     "sub_1aa6d",
     "sub_1aac4",
     "calendar_screen",
     "faceoff_wait_loop",
-    "start_period",
+    "three_stars_sequence",
     "simulate_game_offscreen",
     "player_ratings_card",
     "sub_6df06",
@@ -162284,12 +162404,12 @@
     "zone_time_stats",
     "lead_time_stats",
     "update_line_timers",
-    "update_lead_change",
+    "update_power_play",
     "goal_ends_penalty",
     "note_breakaway",
     "begin_penalty_shot",
     "sub_671e8",
-    "sub_672f9",
+    "choose_goalie",
     "write_stats_table",
     "simulate_game_offscreen",
     "sub_7cbb3",
@@ -162534,7 +162654,7 @@
     "sub_1c852",
     "update_carrier",
     "penalty_time_left",
-    "update_lead_change",
+    "update_power_play",
     "begin_penalty_shot",
     "dump_stats_log",
     "simulate_game_offscreen"
@@ -162552,7 +162672,7 @@
     "sub_5b881",
     "announce_goal",
     "sub_671e8",
-    "sub_672f9",
+    "choose_goalie",
     "simulate_game_offscreen"
    ]
   },
@@ -162562,7 +162682,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_672f9"
+    "choose_goalie"
    ]
   },
   {
@@ -162839,7 +162959,7 @@
     "zone_time_stats",
     "lead_time_stats",
     "update_line_timers",
-    "update_lead_change",
+    "update_power_play",
     "goal_ends_penalty",
     "note_breakaway",
     "begin_penalty_shot",
@@ -163018,7 +163138,7 @@
     "sub_1c852",
     "update_carrier",
     "penalty_time_left",
-    "update_lead_change",
+    "update_power_play",
     "begin_penalty_shot",
     "dump_stats_log",
     "simulate_game_offscreen"
@@ -163308,7 +163428,7 @@
    "xrefs": [
     "setup_demo_faceoff",
     "sub_487d9",
-    "start_period",
+    "three_stars_sequence",
     "ai_ref_three_stars",
     "ai_defense_defense",
     "ai_goalie",
@@ -163554,7 +163674,7 @@
    "kind": null,
    "xrefs": [
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "ai_celebrate_goal",
     "ai_ref_get_new_puck",
     "ai_ref_pickup_puck",
@@ -163580,7 +163700,7 @@
    "kind": null,
    "xrefs": [
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "simulate_game_offscreen"
    ]
   },
@@ -163600,7 +163720,7 @@
    "kind": null,
    "xrefs": [
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "score_goal",
     "simulate_game_offscreen"
    ]
@@ -163631,7 +163751,7 @@
    "kind": null,
    "xrefs": [
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "simulate_game_offscreen"
    ]
   },
@@ -163642,7 +163762,7 @@
    "kind": null,
    "xrefs": [
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "simulate_game_offscreen"
    ]
   },
@@ -163711,7 +163831,7 @@
    "kind": null,
    "xrefs": [
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "simulate_game_offscreen"
    ]
   },
@@ -163873,7 +163993,7 @@
    "kind": null,
    "xrefs": [
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "faceoff_resolve",
     "ai_puck_faceoff2",
     "score_goal",
@@ -163893,7 +164013,7 @@
    "kind": null,
    "xrefs": [
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "faceoff_resolve",
     "ai_puck_faceoff2",
     "update_camera",
@@ -163907,7 +164027,7 @@
    "kind": null,
    "xrefs": [
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "update_camera",
     "simulate_game_offscreen"
    ]
@@ -163919,7 +164039,7 @@
    "kind": null,
    "xrefs": [
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "faceoff_resolve",
     "simulate_game_offscreen"
    ]
@@ -163931,7 +164051,7 @@
    "kind": null,
    "xrefs": [
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "simulate_game_offscreen"
    ]
   },
@@ -163942,7 +164062,7 @@
    "kind": null,
    "xrefs": [
     "init_match",
-    "start_period"
+    "three_stars_sequence"
    ]
   },
   {
@@ -163971,7 +164091,7 @@
    "kind": null,
    "xrefs": [
     "init_match",
-    "start_period"
+    "three_stars_sequence"
    ]
   },
   {
@@ -163981,7 +164101,7 @@
    "kind": null,
    "xrefs": [
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "update_camera"
    ]
   },
@@ -163992,7 +164112,7 @@
    "kind": null,
    "xrefs": [
     "init_match",
-    "start_period"
+    "three_stars_sequence"
    ]
   },
   {
@@ -164100,7 +164220,7 @@
     "sub_1b982",
     "sub_1baf3",
     "faceoff_wait_loop",
-    "start_period",
+    "three_stars_sequence",
     "ai_puck_faceoff2",
     "load_cutscene_clip",
     "update_announcer",
@@ -164168,7 +164288,7 @@
    "xrefs": [
     "reset_game_state",
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "ai_ref_three_stars",
     "ai_puck_faceoff2",
     "show_penalty",
@@ -164184,7 +164304,7 @@
    "xrefs": [
     "reset_game_state",
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "ai_ref_three_stars",
     "ai_puck_faceoff2",
     "show_penalty",
@@ -164200,7 +164320,7 @@
    "xrefs": [
     "reset_game_state",
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "ai_ref_three_stars",
     "ai_puck_faceoff2",
     "show_penalty",
@@ -164217,7 +164337,7 @@
     "handle_hotkey",
     "game_loop",
     "reset_game_state",
-    "start_period",
+    "three_stars_sequence",
     "control_player",
     "period_init",
     "save_game",
@@ -164233,7 +164353,7 @@
     "handle_hotkey",
     "game_loop",
     "reset_game_state",
-    "start_period",
+    "three_stars_sequence",
     "period_init",
     "save_game",
     "savegame_io"
@@ -164247,7 +164367,7 @@
    "xrefs": [
     "reset_game_state",
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "ai_ref_three_stars",
     "ai_puck_faceoff2",
     "show_penalty",
@@ -164263,7 +164383,7 @@
    "xrefs": [
     "reset_game_state",
     "init_match",
-    "start_period",
+    "three_stars_sequence",
     "ai_ref_three_stars",
     "ai_puck_faceoff2",
     "show_penalty",
@@ -164426,7 +164546,7 @@
     "sub_12034",
     "period_init",
     "savegame_io",
-    "sub_67581",
+    "replay_oldest_frame",
     "replay_buffer_start",
     "replay_record_frame",
     "replay_seek_frames",
@@ -165443,7 +165563,7 @@
    "size": 2,
    "kind": null,
    "xrefs": [
-    "start_period",
+    "three_stars_sequence",
     "ai_penalty_box",
     "ai_door_open",
     "ai_exit_penalty_box",
@@ -165465,7 +165585,7 @@
    "size": 1,
    "kind": null,
    "xrefs": [
-    "start_period",
+    "three_stars_sequence",
     "ai_penalty_box",
     "ai_door_open",
     "ai_exit_penalty_box",
@@ -165585,7 +165705,7 @@
    "kind": null,
    "xrefs": [
     "reset_game_state",
-    "start_period",
+    "three_stars_sequence",
     "save_game",
     "savegame_io",
     "show_penalty",
@@ -165889,9 +166009,9 @@
    "kind": null,
    "xrefs": [
     "init_match",
-    "replay_loop",
+    "sequence_loop",
     "ai_ref_anthem",
-    "start_period",
+    "three_stars_sequence",
     "ai_ref_three_stars"
    ]
   },
@@ -165917,7 +166037,7 @@
    "kind": null,
    "xrefs": [
     "savegame_io",
-    "start_crowd_sound",
+    "start_crowd_figure",
     "update_effects"
    ]
   },
@@ -165929,7 +166049,7 @@
    "xrefs": [
     "reset_game_state",
     "savegame_io",
-    "start_crowd_sound",
+    "start_crowd_figure",
     "update_effects"
    ]
   },
@@ -166224,7 +166344,7 @@
     "count_dressed_players",
     "replay_draw_frame",
     "instant_replay",
-    "sub_7e93e",
+    "replay_sprite_at",
     "replay_control_loop"
    ]
   },
@@ -166275,7 +166395,7 @@
     "replay_seek_frames",
     "replay_draw_frame",
     "instant_replay",
-    "sub_7e93e",
+    "replay_sprite_at",
     "replay_control_loop"
    ]
   },
@@ -168390,7 +168510,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_832bc",
+    "speech_timer",
     "speech_reset",
     "sub_8357a",
     "sub_8363c",
@@ -168408,7 +168528,7 @@
     "say_penalty_shot",
     "say_star",
     "say_goal",
-    "sub_854ac"
+    "say_one_minute_left"
    ]
   },
   {
@@ -168419,14 +168539,14 @@
    "xrefs": [
     "intro_sequence",
     "sub_6be95",
-    "sub_832bc",
+    "speech_timer",
     "sub_83459",
     "sub_8357a",
     "sub_8363c",
     "sub_8374d",
     "speech_load_bank",
     "sub_83bc7",
-    "sub_83bf3",
+    "speech_delta_decode",
     "sub_83cae",
     "sub_83d78",
     "sub_83e6d",
@@ -169720,11 +169840,11 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_8eb93",
+    "sound_shutdown",
     "sub_8ebe2",
     "music_load_kms",
-    "sub_8f1fe",
-    "sub_8f247",
+    "kms_unload",
+    "kms_find_song",
     "sub_8f27a"
    ]
   },
@@ -169753,9 +169873,9 @@
    "kind": null,
    "xrefs": [
     "sub_8ebe2",
-    "sub_8ef50",
-    "sub_8ef91",
-    "sub_8efbb"
+    "timbre_bank_add",
+    "timbre_bank_remove",
+    "bind_patch_timbres"
    ]
   },
   {
@@ -169765,10 +169885,10 @@
    "kind": null,
    "xrefs": [
     "sub_8ebe2",
-    "sub_8ee2f",
-    "sub_8efbb",
+    "load_patch_file",
+    "bind_patch_timbres",
     "snd_patch_record",
-    "sub_8f114"
+    "snd_patch_timbre"
    ],
    "comments": [
     "the loaded .PAT sound bank (snd_patch_record)"
@@ -169931,7 +170051,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_971db"
+    "drv_tick"
    ]
   },
   {
@@ -169949,7 +170069,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_9720b"
+    "drv_channel_config"
    ]
   },
   {
@@ -169958,7 +170078,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_9722e"
+    "drv_send_midi"
    ]
   },
   {
@@ -169967,7 +170087,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_97268"
+    "drv_play_sample"
    ]
   },
   {
@@ -170015,7 +170135,7 @@
    "kind": null,
    "xrefs": [
     "bitlz_decode",
-    "sub_979f8",
+    "bytepair_expand",
     "bytepair_decode"
    ]
   },
@@ -170025,7 +170145,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_979f8",
+    "bytepair_expand",
     "bytepair_decode"
    ]
   },
@@ -170046,7 +170166,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_979f8",
+    "bytepair_expand",
     "bytepair_decode"
    ]
   },
@@ -170056,7 +170176,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_979f8",
+    "bytepair_expand",
     "bytepair_decode"
    ]
   },
@@ -170097,8 +170217,8 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_997b7",
-    "sub_99822"
+    "snd_queue_message",
+    "snd_flush_messages"
    ]
   },
   {
@@ -170107,7 +170227,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_99822"
+    "snd_flush_messages"
    ]
   },
   {
@@ -170116,8 +170236,8 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_990cb",
-    "sub_99925"
+    "kms_track_tick",
+    "kms_read_event"
    ]
   },
   {
@@ -170126,7 +170246,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_990cb"
+    "kms_track_tick"
    ]
   },
   {
@@ -170135,7 +170255,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_990cb"
+    "kms_track_tick"
    ]
   },
   {
@@ -170144,7 +170264,7 @@
    "size": 1,
    "kind": null,
    "xrefs": [
-    "sub_990cb"
+    "kms_track_tick"
    ]
   },
   {
@@ -170153,7 +170273,7 @@
    "size": 1,
    "kind": null,
    "xrefs": [
-    "sub_990cb"
+    "kms_track_tick"
    ]
   },
   {
@@ -170162,7 +170282,7 @@
    "size": 1,
    "kind": null,
    "xrefs": [
-    "sub_990cb"
+    "kms_track_tick"
    ]
   },
   {
@@ -170171,7 +170291,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_990cb"
+    "kms_track_tick"
    ]
   },
   {
@@ -170182,10 +170302,10 @@
    "xrefs": [
     "sub_8ebe2",
     "sound_stopall",
-    "sub_8f67d",
-    "sub_98f46",
-    "sub_990cb",
-    "sub_99700"
+    "snd_stop_handle",
+    "sound_timer_tick",
+    "kms_track_tick",
+    "snd_note_on"
    ]
   },
   {
@@ -170195,7 +170315,7 @@
    "kind": null,
    "xrefs": [
     "sound_stopall",
-    "sub_8f67d"
+    "snd_stop_handle"
    ]
   },
   {
@@ -170205,16 +170325,16 @@
    "kind": null,
    "xrefs": [
     "sub_8ebe2",
-    "sub_8f433",
-    "sub_8f67d",
-    "sub_8f7ae",
-    "sub_8f80e",
-    "sub_8f846",
-    "sub_8f87e",
-    "sub_8f8b7",
-    "sub_8f91c",
-    "sub_98f46",
-    "sub_9966e"
+    "kms_alloc_track",
+    "snd_stop_handle",
+    "kms_fade_out",
+    "kms_finished",
+    "kms_fade_done",
+    "kms_track_marker",
+    "music_mute",
+    "music_unmute",
+    "sound_timer_tick",
+    "kms_set_tempo"
    ]
   },
   {
@@ -170241,7 +170361,7 @@
    "size": 1,
    "kind": null,
    "xrefs": [
-    "sub_8f67d"
+    "snd_stop_handle"
    ]
   },
   {
@@ -170251,14 +170371,14 @@
    "kind": null,
    "xrefs": [
     "snd_play_patch",
-    "sub_8f67d",
-    "sub_8f8b7",
-    "sub_990cb",
-    "sub_99522",
-    "sub_99620",
-    "sub_996b0",
-    "sub_99700",
-    "sub_998a0",
+    "snd_stop_handle",
+    "music_mute",
+    "kms_track_tick",
+    "kms_controller",
+    "snd_note_off",
+    "kms_pitch_bend",
+    "snd_note_on",
+    "snd_program_change",
     "sub_9daac",
     "sub_9dc9f",
     "sub_9e676",
@@ -170278,7 +170398,7 @@
     "sub_8fbe5",
     "sub_8fc37",
     "sound_fade",
-    "sub_98f46"
+    "sound_timer_tick"
    ]
   },
   {
@@ -170323,9 +170443,9 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_8f91c",
-    "sub_990cb",
-    "sub_99522"
+    "music_unmute",
+    "kms_track_tick",
+    "kms_controller"
    ]
   },
   {
@@ -170334,7 +170454,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_99522"
+    "kms_controller"
    ]
   },
   {
@@ -170344,7 +170464,7 @@
    "kind": null,
    "xrefs": [
     "sub_8ebe2",
-    "sub_8f451"
+    "kms_track_channel"
    ]
   },
   {
@@ -170354,7 +170474,7 @@
    "kind": null,
    "xrefs": [
     "loadpatches",
-    "sub_8edd2"
+    "unload_patches"
    ]
   },
   {
@@ -170373,7 +170493,7 @@
    "kind": null,
    "xrefs": [
     "loadpatches",
-    "sub_8edd2"
+    "unload_patches"
    ]
   },
   {
@@ -170392,7 +170512,7 @@
    "kind": null,
    "xrefs": [
     "loadpatches",
-    "sub_8edd2"
+    "unload_patches"
    ]
   },
   {
@@ -170402,7 +170522,7 @@
    "kind": null,
    "xrefs": [
     "loadpatches",
-    "sub_8edd2"
+    "unload_patches"
    ]
   },
   {
@@ -170412,7 +170532,7 @@
    "kind": null,
    "xrefs": [
     "loadpatches",
-    "sub_8edd2"
+    "unload_patches"
    ]
   },
   {
@@ -170430,7 +170550,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_8efbb",
+    "bind_patch_timbres",
     "sub_97079"
    ]
   },

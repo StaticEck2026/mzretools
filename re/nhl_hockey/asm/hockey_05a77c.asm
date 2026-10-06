@@ -437,7 +437,7 @@ loc_5ad1a:
 loc_5ad2e:
     mov eax, dword ptr [esp + 2]                 ; 05ad2e 8b442402
     sar eax, 0x10                                ; 05ad32 c1f810
-    call play_crowd_chant                        ; 05ad35 e83c680000
+    call bench_cheer                             ; 05ad35 e83c680000
     cmp word ptr [esp + 4], 0                    ; 05ad3a 66837c240400
     jne loc_5ad6b                                ; 05ad40 7529
     test byte ptr [settings2], 1                 ; 05ad42 f60500540c0001
@@ -2025,7 +2025,7 @@ loc_5bee3:
 ; ====================================================================================================
 ; apply_line_change  [0x5bef4, 284 bytes, 81 instructions]
 ; moves the requested line onto the ice, benches the others
-; called by: init_match, request_line_change, cpu_line_change_select, ai_puck_faceoff, ai_puck_faceoff2, ai_consider_shot, maybe_pull_goalie, cpu_line_change, sub_5e0b0, sub_671e8, sub_672f9, simulate_game_offscreen (+1 more)
+; called by: init_match, request_line_change, cpu_line_change_select, ai_puck_faceoff, ai_puck_faceoff2, ai_consider_shot, maybe_pull_goalie, cpu_line_change, sub_5e0b0, sub_671e8, choose_goalie, simulate_game_offscreen (+1 more)
 ; ====================================================================================================
 apply_line_change:
     push 0x1c                                    ; 05bef4 681c000000
@@ -2233,7 +2233,7 @@ loc_5c17a:
 ; ====================================================================================================
 ; sim_tick  [0x5c1c4, 30 bytes, 6 instructions]
 ; one simulation step: AI, player/puck physics, rules
-; called by: run_sim_steps, init_match, start_period, period_init, simulate_game_offscreen
+; called by: run_sim_steps, init_match, three_stars_sequence, period_init, simulate_game_offscreen
 ; ====================================================================================================
 sim_tick:
     push 4                                       ; 05c1c4 6804000000
@@ -2401,7 +2401,7 @@ loc_5c349:
     call regenerate_energy                       ; 05c389 e854feffff
     test byte ptr [game_flags], 1                ; 05c38e f605bb900c0001
     jne loc_5c39c                                ; 05c395 7505
-    call update_lead_change                      ; 05c397 e8d7780000
+    call update_power_play                       ; 05c397 e8d7780000
 loc_5c39c:
     test byte ptr [option_flags], 4              ; 05c39c f605ff530c0004
     je loc_5c40c                                 ; 05c3a3 0f8463000000
@@ -4257,7 +4257,7 @@ loc_5d9f4:
     cmp word ptr [dword_e03c0], 0                ; 05d9fe 66833dc0030e0000
     setl al                                      ; 05da06 0f9cc0
     and eax, 0xff                                ; 05da09 25ff000000
-    call play_crowd_chant                        ; 05da0e e8633b0000
+    call bench_cheer                             ; 05da0e e8633b0000
     cmp word ptr [dword_e03bc], 8                ; 05da13 66833dbc030e0008
     jne loc_5da94                                ; 05da1b 0f8573000000
     mov byte ptr [byte_ccca0], 1                 ; 05da21 c605a0cc0c0001
@@ -4475,7 +4475,7 @@ loc_5dcd3:
     mov word ptr [word_e9aa0], dx                ; 05dce4 668915a09a0e00
     xor ebx, ebx                                 ; 05dceb 31db
     mov dword ptr [input_enabled], ebx           ; 05dced 891d0c4d0c00
-    call speech_period_summary                   ; 05dcf3 e886bdffff
+    call announce_one_minute_left                ; 05dcf3 e886bdffff
     mov edx, dword ptr [dword_e9a9e]             ; 05dcf8 8b159e9a0e00
     sar edx, 0x10                                ; 05dcfe c1fa10
     mov dword ptr [input_enabled], edx           ; 05dd01 89150c4d0c00
@@ -4529,7 +4529,7 @@ sort_draw_order:
 ; ====================================================================================================
 ; sort_draw_order2  [0x5dd7c, 34 bytes, 11 instructions]
 ; sort_draw_order without clearing action_flags bit 7
-; called by: init_match, start_period, ai_exit_penalty_box, ai_puck_faceoff2, sub_5ba89, savegame_io, simulate_game_offscreen
+; called by: init_match, three_stars_sequence, ai_exit_penalty_box, ai_puck_faceoff2, sub_5ba89, savegame_io, simulate_game_offscreen
 ; ====================================================================================================
 sort_draw_order2:
     push 0x20                                    ; 05dd7c 6820000000
@@ -9049,11 +9049,11 @@ loc_6147f:
 
 
 ; ====================================================================================================
-; start_crowd_sound  [0x614c2, 180 bytes, 57 instructions]
-; starts a crowd/arena sample on a channel
-; called by: play_crowd_chant, update_effects
+; start_crowd_figure  [0x614c2, 180 bytes, 57 instructions]
+; starts the animation of a fan, photographer or bench figure
+; called by: bench_cheer, update_effects
 ; ====================================================================================================
-start_crowd_sound:
+start_crowd_figure:
     push 0x14                                    ; 0614c2 6814000000
     call __CHK                                   ; 0614c7 e880b40200
     push ebx                                     ; 0614cc 53
@@ -9114,11 +9114,11 @@ start_crowd_sound:
 
 
 ; ====================================================================================================
-; play_crowd_chant  [0x61576, 44 bytes, 13 instructions]
-; crowd chant sample for a team
+; bench_cheer  [0x61576, 44 bytes, 13 instructions]
+; the bench of the scoring team cheers
 ; called by: ai_get_cup, knock_down, score_goal, setup_faceoff
 ; ====================================================================================================
-play_crowd_chant:
+bench_cheer:
     push 8                                       ; 061576 6808000000
     call __CHK                                   ; 06157b e8ccb30200
     push edx                                     ; 061580 52
@@ -9132,7 +9132,7 @@ loc_61591:
     mov edx, 0x87                                ; 061591 ba87000000
     mov eax, 0x12                                ; 061596 b812000000
 loc_6159b:
-    call start_crowd_sound                       ; 06159b e822ffffff
+    call start_crowd_figure                      ; 06159b e822ffffff
     pop edx                                      ; 0615a0 5a
     ret                                          ; 0615a1 c3
 
@@ -9265,7 +9265,7 @@ loc_6170e:
     movsx edx, si                                ; 06170e 0fbfd6
     mov eax, dword ptr [esp - 2]                 ; 061711 8b4424fe
     sar eax, 0x10                                ; 061715 c1f810
-    call start_crowd_sound                       ; 061718 e8a5fdffff
+    call start_crowd_figure                      ; 061718 e8a5fdffff
     jmp loc_61848                                ; 06171d e926010000
 
 loc_61722:

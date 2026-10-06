@@ -7396,10 +7396,11 @@ loc_4832e:
     call sound_resume_all                        ; 04832e e830150100
 
 ; ====================================================================================================
-; replay_loop  [0x48333, 247 bytes, 64 instructions]
-; called by: start_period
+; sequence_loop  [0x48333, 247 bytes, 64 instructions]
+; runs the simulation and the drawing for the anthem and three stars sequences
+; called by: three_stars_sequence
 ; ====================================================================================================
-replay_loop:
+sequence_loop:
     push 0x28                                    ; 048333 6828000000
     call __CHK                                   ; 048338 e80f460400
     push ebx                                     ; 04833d 53
@@ -8144,7 +8145,7 @@ loc_48abf:
 
 ; ====================================================================================================
 ; compute_three_stars  [0x48ac8, 1091 bytes, 313 instructions]
-; called by: start_period
+; called by: three_stars_sequence
 ; ====================================================================================================
 compute_three_stars:
     push 0xf4                                    ; 048ac8 68f4000000
@@ -8494,11 +8495,11 @@ loc_48ecf:
 
 
 ; ====================================================================================================
-; start_period  [0x48f0b, 853 bytes, 171 instructions]
-; fades, resets flags, setup for a new period
+; three_stars_sequence  [0x48f0b, 853 bytes, 171 instructions]
+; the three stars after the game: compute_three_stars, the stars skate out, the announcer
 ; called by: game_loop
 ; ====================================================================================================
-start_period:
+three_stars_sequence:
     push 0x24                                    ; 048f0b 6824000000
     call __CHK                                   ; 048f10 e8373a0400
     push ebx                                     ; 048f15 53
@@ -8658,7 +8659,7 @@ loc_49095:
     mov word ptr [dword_c909a], cx               ; 04920c 66890d9a900c00
     mov word ptr [camera_target_y], cx           ; 049213 66890dae900c00
     call sub_66dda                               ; 04921a e8bbdb0100
-    call replay_loop                             ; 04921f e80ff1ffff
+    call sequence_loop                           ; 04921f e80ff1ffff
     test eax, eax                                ; 049224 85c0
     jge loc_4922f                                ; 049226 7d07
     mov word ptr [word_cc0de], cx                ; 049228 66890ddec00c00
@@ -9375,7 +9376,7 @@ loc_49a29:
     test byte ptr [ebx + 0x44], 0x40             ; 049aa5 f6434440
     setne al                                     ; 049aa9 0f95c0
     and eax, 0xff                                ; 049aac 25ff000000
-    call play_crowd_chant                        ; 049ab1 e8c07a0100
+    call bench_cheer                             ; 049ab1 e8c07a0100
     pop esi                                      ; 049ab6 5e
     pop edx                                      ; 049ab7 5a
     pop ecx                                      ; 049ab8 59

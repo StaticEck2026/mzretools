@@ -3432,7 +3432,7 @@ loc_9d723:
     add al, 0x5c                                 ; 09d727 045c
     and eax, 0xff                                ; 09d729 25ff000000
     push eax                                     ; 09d72e 50
-    call sub_8f114                               ; 09d72f e8e019ffff
+    call snd_patch_timbre                        ; 09d72f e8e019ffff
     add esp, 4                                   ; 09d734 83c404
     mov edx, eax                                 ; 09d737 89c2
     mov byte ptr [esp + 0x10], 0x3c              ; 09d739 c64424103c
@@ -3554,7 +3554,7 @@ sub_9d858:
     xor eax, eax                                 ; 09d85e 31c0
     mov al, byte ptr [esp + 0xc]                 ; 09d860 8a44240c
     push eax                                     ; 09d864 50
-    call sub_8f114                               ; 09d865 e8aa18ffff
+    call snd_patch_timbre                        ; 09d865 e8aa18ffff
     mov edx, eax                                 ; 09d86a 89c2
     add esp, 4                                   ; 09d86c 83c404
     xor eax, eax                                 ; 09d86f 31c0
@@ -11897,7 +11897,7 @@ packed_size:
 
 ; ====================================================================================================
 ; sub_a2ac8  [0xa2ac8, 7 bytes, 4 instructions]
-; called by: sub_98f46, sub_990cb, sub_9d880
+; called by: sound_timer_tick, kms_track_tick, sub_9d880
 ; ====================================================================================================
 sub_a2ac8:
     test eax, eax                                ; 0a2ac8 85c0

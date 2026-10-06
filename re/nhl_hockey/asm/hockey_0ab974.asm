@@ -12773,7 +12773,7 @@ loc_b3449:
 
 ; ====================================================================================================
 ; sub_b3454  [0xb3454, 9 bytes, 2 instructions]
-; called by: load_cfg_palette, inittimer, sub_8eb5b, sub_b29f0, initmouse, sub_b3036, sub_b3e98
+; called by: load_cfg_palette, inittimer, sound_timer_install, sub_b29f0, initmouse, sub_b3036, sub_b3e98
 ; ====================================================================================================
 sub_b3454:
     mov eax, dword ptr [esp + 4]                 ; 0b3454 8b442404
@@ -13271,7 +13271,7 @@ sub_b3962:
 ; ticks_elapsed  [0xb396e, 19 bytes, 5 instructions]
 ; ticks since the previous call
 ; annotations: external
-; called by: game_loop, ea_sports_intro, pause_menu, replay_loop, simulate_game_offscreen, instant_replay
+; called by: game_loop, ea_sports_intro, pause_menu, sequence_loop, simulate_game_offscreen, instant_replay
 ; ====================================================================================================
 ticks_elapsed:
     mov ebx, dword ptr [dword_d4298]             ; 0b396e 8b1d98420d00

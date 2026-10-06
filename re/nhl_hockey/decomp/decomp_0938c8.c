@@ -3471,10 +3471,10 @@ LAB_0009715c:
 
 
 // ================================================================================================
-// sub_97166 @ 0x97166 [__watcall]
+// drv_index @ 0x97166 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_97166(int param_1)
+undefined4 __watcall drv_index(int param_1)
 
 {
   if (dword_d4f64 < 1) {
@@ -3539,11 +3539,11 @@ sub_971be(uint param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaf
 
 
 // ================================================================================================
-// sub_971db @ 0x971db [__watcall]
+// drv_tick @ 0x971db [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_971db(uint param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+drv_tick(uint param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   if ((int)(param_1 & 0xff) < dword_d4f64) {
@@ -3567,10 +3567,10 @@ sub_971f8(uint param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaf
 
 
 // ================================================================================================
-// sub_9720b @ 0x9720b [__watcall]
+// drv_channel_config @ 0x9720b [__watcall]
 // ================================================================================================
 
-void __watcall sub_9720b(uint param_1,undefined2 unaff_DX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+void __watcall drv_channel_config(uint param_1,undefined2 unaff_DX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   if ((int)(param_1 & 0xff) < dword_d4f64) {
@@ -3581,10 +3581,10 @@ void __watcall sub_9720b(uint param_1,undefined2 unaff_DX,undefined4 unaff_EBX,u
 
 
 // ================================================================================================
-// sub_9722e @ 0x9722e [__watcall]
+// drv_send_midi @ 0x9722e [__watcall]
 // ================================================================================================
 
-void __watcall sub_9722e(byte param_1,undefined2 unaff_DX,undefined *unaff_EBX,undefined4 unaff_ECX)
+void __watcall drv_send_midi(byte param_1,undefined2 unaff_DX,undefined *unaff_EBX,undefined4 unaff_ECX)
 
 {
   ushort uVar1;
@@ -3603,11 +3603,11 @@ void __watcall sub_9722e(byte param_1,undefined2 unaff_DX,undefined *unaff_EBX,u
 
 
 // ================================================================================================
-// sub_97268 @ 0x97268 [__watcall]
+// drv_play_sample @ 0x97268 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_97268(uint param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,undefined4 param_5,
+drv_play_sample(uint param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,undefined4 param_5,
          undefined4 param_6,undefined4 param_7,undefined4 param_8,undefined4 param_9,
          undefined4 param_10)
 
@@ -4163,17 +4163,17 @@ int __watcall bitlz_decode(byte *param_1,char *unaff_EDX,int unaff_EBX)
 
 
 // ================================================================================================
-// sub_979f8 @ 0x979f8 [__watcall]
+// bytepair_expand @ 0x979f8 [__watcall]
 // ================================================================================================
 
-void __watcall sub_979f8(byte param_1)
+void __watcall bytepair_expand(byte param_1)
 
 {
   int extraout_EDX;
   
   while( true ) {
     if (*(char *)((uint)param_1 + dword_edef8) == '\0') break;
-    sub_979f8(*(undefined *)((uint)param_1 + dword_edeec));
+    bytepair_expand(*(undefined *)((uint)param_1 + dword_edeec));
     param_1 = *(byte *)(extraout_EDX + dword_edef4);
   }
   *dword_edee8 = param_1;
@@ -4245,8 +4245,8 @@ int __watcall bytepair_decode(byte *param_1,byte *unaff_EDX)
         }
         if (-1 < (char)dword_edef8[bVar2]) break;
         dword_edef0 = pbVar5;
-        sub_979f8(dword_edeec[bVar2]);
-        sub_979f8(dword_edef4[extraout_EDX]);
+        bytepair_expand(dword_edeec[bVar2]);
+        bytepair_expand(dword_edef4[extraout_EDX]);
       }
       param_1 = dword_edef0 + 2;
       if (*pbVar5 == 0) break;
@@ -5723,15 +5723,15 @@ undefined4 * loadfile_auto(undefined4 param_1,uint param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_98f11 @ 0x98f11 [__watcall]
+// sound_timer @ 0x98f11 [__watcall]
 // ================================================================================================
 
-void __watcall sub_98f11(void)
+void __watcall sound_timer(void)
 
 {
   if (((byte_d4f5e == '\0') && (word_d4f88 == 0)) && (dword_d4f64 != 0)) {
     byte_d4f5e = '\x01';
-    sub_98f46();
+    sound_timer_tick();
     byte_d4f5e = byte_d4f5e + -1;
   }
   return;
@@ -5739,10 +5739,10 @@ void __watcall sub_98f11(void)
 
 
 // ================================================================================================
-// sub_98f46 @ 0x98f46 [__watcall]
+// sound_timer_tick @ 0x98f46 [__watcall]
 // ================================================================================================
 
-void __watcall sub_98f46(void)
+void __watcall sound_timer_tick(void)
 
 {
   byte bVar1;
@@ -5767,7 +5767,7 @@ void __watcall sub_98f46(void)
       if (iVar9 != *piVar6) {
         sub_971f8((&unk_f230c)[iVar4 * 0x14],iVar9 * 0x10000 + iVar4 * 0x1000000 + 0x32);
         if (iVar9 < 1) {
-          sub_8fcac((&unk_f2308)[iVar4 * 5],iVar4);
+          sound_channel_stop((&unk_f2308)[iVar4 * 5],iVar4);
           iVar9 = 0;
         }
         *piVar6 = iVar9;
@@ -5778,15 +5778,15 @@ void __watcall sub_98f46(void)
   if (-1 < (int)dword_d4f96) {
     iVar4 = sub_971f8(dword_d4f96 & 0xff,8);
     if (iVar4 != 0) {
-      sub_971db(dword_d4f96 & 0xff);
+      drv_tick(dword_d4f96 & 0xff);
     }
   }
   for (uVar5 = 0; (int)uVar5 < dword_d4f64; uVar5 = uVar5 + 1) {
     if (uVar5 != dword_d4f96) {
-      sub_971db(uVar5 & 0xff);
+      drv_tick(uVar5 & 0xff);
     }
   }
-  sub_99822();
+  snd_flush_messages();
   if (dword_d4f8a == 0) {
     puVar7 = &unk_f1a1c;
     iVar4 = 0;
@@ -5813,7 +5813,7 @@ void __watcall sub_98f46(void)
             }
           }
         }
-        sub_990cb(puVar7,uVar5);
+        kms_track_tick(puVar7,uVar5);
       }
       puVar7 = puVar7 + 0x54;
       iVar4 = iVar4 + 1;
@@ -5823,7 +5823,7 @@ void __watcall sub_98f46(void)
     do {
       if ((*(char *)((int)puVar8 + 5) == -1) &&
          (iVar9 = puVar8[2], puVar8[2] = iVar9 + -1, iVar9 + -1 == 0)) {
-        sub_99620(puVar8);
+        snd_note_off(puVar8);
       }
       puVar8 = puVar8 + 3;
       iVar4 = iVar4 + 1;
@@ -5832,7 +5832,7 @@ void __watcall sub_98f46(void)
   if (-1 < (int)dword_d4f96) {
     iVar4 = sub_971f8(dword_d4f96 & 0xff,8);
     if (iVar4 != 0) {
-      sub_971db(dword_d4f96 & 0xff);
+      drv_tick(dword_d4f96 & 0xff);
     }
   }
   return;
@@ -5840,10 +5840,10 @@ void __watcall sub_98f46(void)
 
 
 // ================================================================================================
-// sub_990cb @ 0x990cb [__watcall]
+// kms_track_tick @ 0x990cb [__watcall]
 // ================================================================================================
 
-void __watcall sub_990cb(char *param_1)
+void __watcall kms_track_tick(char *param_1)
 
 {
   char cVar1;
@@ -5873,7 +5873,7 @@ void __watcall sub_990cb(char *param_1)
       piVar6 = &unk_f189c;
       for (sVar3 = 0; sVar3 < 0x20; sVar3 = sVar3 + 1) {
         if ((*piVar6 == *(int *)(param_1 + 2)) && (*(char *)((int)piVar6 + 5) == *param_1)) {
-          sub_99620(piVar6);
+          snd_note_off(piVar6);
           piVar6 = extraout_EDX;
         }
         piVar6 = piVar6 + 3;
@@ -5881,7 +5881,7 @@ void __watcall sub_990cb(char *param_1)
       *pbVar9 = param_1[0x50] | 0xb0;
       (&DAT_000f21fd)[iVar2] = 0x7b;
       (&DAT_000f21fe)[iVar2] = 0;
-      sub_997b7(param_1[0x51],3,pbVar9);
+      snd_queue_message(param_1[0x51],3,pbVar9);
       param_1[10] = '\0';
       param_1[0xb] = '\0';
       param_1[0xc] = '\0';
@@ -5899,7 +5899,7 @@ void __watcall sub_990cb(char *param_1)
       if ((sVar3 != 0) &&
          (uVar10 = sub_a2ac8((int)sVar3,(int)*(short *)(*(int *)(param_1 + 6) + 0xc)),
          (int)uVar10 != (int)((ulonglong)uVar10 >> 0x20))) {
-        sub_99522(param_1,7);
+        kms_controller(param_1,7);
       }
     }
   }
@@ -5910,7 +5910,7 @@ void __watcall sub_990cb(char *param_1)
     for (sVar3 = 0; sVar3 < 0x20; sVar3 = sVar3 + 1) {
       if ((*(char *)((int)puVar7 + 5) == *param_1) &&
          (iVar5 = puVar7[2], puVar7[2] = iVar5 + -1, iVar5 + -1 == 0)) {
-        sub_99620(puVar7);
+        snd_note_off(puVar7);
         puVar7 = extraout_EDX_00;
       }
       puVar7 = puVar7 + 3;
@@ -5918,7 +5918,7 @@ void __watcall sub_990cb(char *param_1)
     if (*(int *)(param_1 + 0xe) == 0) {
       if (*(int *)(param_1 + 10) != 0) {
         while ((*(int *)(param_1 + 0xe) == 0 && (*(int *)(param_1 + 10) != 0))) {
-          sub_99925(&unk_f1884,*(int *)(param_1 + 10));
+          kms_read_event(&unk_f1884,*(int *)(param_1 + 10));
           uVar4 = (uint)byte_f188e;
           iVar5 = *(int *)(param_1 + 10);
           *(uint *)(param_1 + 10) = iVar5 + uVar4;
@@ -5937,7 +5937,7 @@ void __watcall sub_990cb(char *param_1)
                  (iVar5 = snd_patch_record(byte_f188c + 0x5c), iVar5 != 0)) {
                 local_1c = *(byte *)(iVar5 + 0xf) & 0x7f;
               }
-              sub_99700(byte_f188c,byte_f188d,dword_f1888,param_1[0x50],local_1c,*param_1,
+              snd_note_on(byte_f188c,byte_f188d,dword_f1888,param_1[0x50],local_1c,*param_1,
                         *(undefined4 *)(param_1 + 2));
             }
           }
@@ -5988,13 +5988,13 @@ LAB_00099329:
               sVar3 = 2;
               pbVar8 = pbVar9;
 LAB_000993c5:
-              sub_9722e(cVar1,sVar3,pbVar8);
+              drv_send_midi(cVar1,sVar3,pbVar8);
             }
             else if (byte_f188c < 0xde) {
-              sub_9966e(*(undefined4 *)(param_1 + 2),byte_f188d);
+              kms_set_tempo(*(undefined4 *)(param_1 + 2),byte_f188d);
             }
             else if ((byte_f188c == 0xdf) && ((param_1[1] & 8U) == 0)) {
-              sub_99522(param_1,byte_f188d,dword_f1888 & 0xff);
+              kms_controller(param_1,byte_f188d,dword_f1888 & 0xff);
             }
           }
           else if (byte_f188c < 0xe3) {
@@ -6019,7 +6019,7 @@ LAB_000993c5:
             }
           }
           else if (byte_f188c < 0xe6) {
-            sub_996b0(param_1,(int)(short)dword_f1888);
+            kms_pitch_bend(param_1,(int)(short)dword_f1888);
           }
           else if (byte_f188c < 0xe8) {
             if (byte_f188c == 0xe6) {
@@ -6043,7 +6043,7 @@ LAB_000993c5:
             }
           }
           if (*(int *)(param_1 + 10) != 0) {
-            sub_99925(&dword_f1890,*(int *)(param_1 + 10));
+            kms_read_event(&dword_f1890,*(int *)(param_1 + 10));
             *(undefined4 *)(param_1 + 0xe) = dword_f1890;
           }
         }
@@ -6062,10 +6062,10 @@ LAB_00099513:
 
 
 // ================================================================================================
-// sub_99522 @ 0x99522 [__watcall]
+// kms_controller @ 0x99522 [__watcall]
 // ================================================================================================
 
-void __watcall sub_99522(int param_1,byte unaff_DL,byte unaff_BL)
+void __watcall kms_controller(int param_1,byte unaff_DL,byte unaff_BL)
 
 {
   byte bVar1;
@@ -6099,17 +6099,17 @@ void __watcall sub_99522(int param_1,byte unaff_DL,byte unaff_BL)
     }
   }
   (&DAT_000f21fe)[iVar2] = unaff_BL;
-  sub_9722e(*(undefined *)(param_1 + 0x51),3,pbVar3);
+  drv_send_midi(*(undefined *)(param_1 + 0x51),3,pbVar3);
   dword_d4f9a = dword_d4f9a + -4;
   return;
 }
 
 
 // ================================================================================================
-// sub_99620 @ 0x99620 [__watcall]
+// snd_note_off @ 0x99620 [__watcall]
 // ================================================================================================
 
-void __watcall sub_99620(undefined4 *param_1)
+void __watcall snd_note_off(undefined4 *param_1)
 
 {
   int iVar1;
@@ -6121,7 +6121,7 @@ void __watcall sub_99620(undefined4 *param_1)
   *pbVar2 = *(byte *)((int)param_1 + 6) | 0x80;
   (&DAT_000f21fd)[iVar1] = *(undefined *)(param_1 + 1);
   (&DAT_000f21fe)[iVar1] = 0;
-  sub_9722e(*(undefined *)((int)param_1 + 7),3);
+  drv_send_midi(*(undefined *)((int)param_1 + 7),3);
   *param_1 = 0;
   dword_d4f9a = dword_d4f9a + -4;
   return;
@@ -6129,10 +6129,10 @@ void __watcall sub_99620(undefined4 *param_1)
 
 
 // ================================================================================================
-// sub_9966e @ 0x9966e [__watcall]
+// kms_set_tempo @ 0x9966e [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_9966e(int param_1,byte unaff_DL)
+undefined4 __watcall kms_set_tempo(int param_1,byte unaff_DL)
 
 {
   short sVar1;
@@ -6150,10 +6150,10 @@ undefined4 __watcall sub_9966e(int param_1,byte unaff_DL)
 
 
 // ================================================================================================
-// sub_996b0 @ 0x996b0 [__watcall]
+// kms_pitch_bend @ 0x996b0 [__watcall]
 // ================================================================================================
 
-void __watcall sub_996b0(int param_1,undefined4 unaff_EDX)
+void __watcall kms_pitch_bend(int param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
@@ -6165,18 +6165,18 @@ void __watcall sub_996b0(int param_1,undefined4 unaff_EDX)
   *pbVar2 = *(byte *)(param_1 + 0x50) | 0xe0;
   (&DAT_000f21fd)[iVar1] = 0;
   (&DAT_000f21fe)[iVar1] = (byte)((uint)unaff_EDX >> 8) & 0x7f;
-  sub_9722e(*(undefined *)(param_1 + 0x51),3);
+  drv_send_midi(*(undefined *)(param_1 + 0x51),3);
   dword_d4f9a = dword_d4f9a + -4;
   return;
 }
 
 
 // ================================================================================================
-// sub_99700 @ 0x99700 [__watcall]
+// snd_note_on @ 0x99700 [__watcall]
 // ================================================================================================
 
 int __watcall
-sub_99700(undefined param_1,undefined param_2,int param_3,byte unaff_CL,undefined param_5,
+snd_note_on(undefined param_1,undefined param_2,int param_3,byte unaff_CL,undefined param_5,
          char param_6,int param_7)
 
 {
@@ -6207,10 +6207,10 @@ sub_99700(undefined param_1,undefined param_2,int param_3,byte unaff_CL,undefine
       (&DAT_000f21fd)[iVar1] = param_1;
       (&DAT_000f21fe)[iVar1] = param_2;
       if (param_6 == -1) {
-        sub_997b7(param_5,3);
+        snd_queue_message(param_5,3);
       }
       else {
-        sub_9722e(param_5,3);
+        drv_send_midi(param_5,3);
       }
       goto LAB_000997a6;
     }
@@ -6225,10 +6225,10 @@ LAB_000997a6:
 
 
 // ================================================================================================
-// sub_997b7 @ 0x997b7 [__watcall]
+// snd_queue_message @ 0x997b7 [__watcall]
 // ================================================================================================
 
-void __watcall sub_997b7(undefined param_1,short unaff_DX,undefined *unaff_EBX)
+void __watcall snd_queue_message(undefined param_1,short unaff_DX,undefined *unaff_EBX)
 
 {
   undefined1 *puVar1;
@@ -6252,10 +6252,10 @@ void __watcall sub_997b7(undefined param_1,short unaff_DX,undefined *unaff_EBX)
 
 
 // ================================================================================================
-// sub_99822 @ 0x99822 [__watcall]
+// snd_flush_messages @ 0x99822 [__watcall]
 // ================================================================================================
 
-void __watcall sub_99822(void)
+void __watcall snd_flush_messages(void)
 
 {
   short sVar1;
@@ -6269,7 +6269,7 @@ void __watcall sub_99822(void)
       if (((&unk_f1705)[sVar1] & 0xf0) == 0xc0) {
         sVar2 = 2;
       }
-      sub_9722e((&unk_f1704)[sVar1],sVar2,&unk_f1705 + sVar1);
+      drv_send_midi((&unk_f1704)[sVar1],sVar2,&unk_f1705 + sVar1);
       sVar1 = sVar1 + sVar2 + 1;
     } while (sVar1 < dword_d4f58);
     dword_d4f58 = 0;
@@ -6280,10 +6280,10 @@ void __watcall sub_99822(void)
 
 
 // ================================================================================================
-// sub_998a0 @ 0x998a0 [__watcall]
+// snd_program_change @ 0x998a0 [__watcall]
 // ================================================================================================
 
-void __watcall sub_998a0(undefined param_1,byte unaff_DL,undefined unaff_BL)
+void __watcall snd_program_change(undefined param_1,byte unaff_DL,undefined unaff_BL)
 
 {
   int iVar1;
@@ -6294,17 +6294,17 @@ void __watcall sub_998a0(undefined param_1,byte unaff_DL,undefined unaff_BL)
   dword_d4f9a = dword_d4f9a + 4;
   *pbVar2 = unaff_DL | 0xc0;
   (&DAT_000f21fd)[iVar1] = unaff_BL;
-  sub_9722e(param_1,2);
+  drv_send_midi(param_1,2);
   dword_d4f9a = dword_d4f9a + -4;
   return;
 }
 
 
 // ================================================================================================
-// sub_99925 @ 0x99925 [__watcall]
+// kms_read_event @ 0x99925 [__watcall]
 // ================================================================================================
 
-void __watcall sub_99925(int *param_1,byte *unaff_EDX)
+void __watcall kms_read_event(int *param_1,byte *unaff_EDX)
 
 {
   byte bVar1;

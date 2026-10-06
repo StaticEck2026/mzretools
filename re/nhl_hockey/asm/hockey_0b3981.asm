@@ -24,7 +24,7 @@ sub_b3981:
 ; settimeout  [0xb3989, 16 bytes, 4 instructions]
 ; settimeout(ticks)
 ; annotations: external
-; called by: set_video_mode, ea_sports_intro, intro_sequence, team_select_screen2, sub_3170d, loading_screen, wait_sprite_fade, replay_loop, fade_ambient_audio, replay_menu, load_sound_config, broadcast_booth_screen (+4 more)
+; called by: set_video_mode, ea_sports_intro, intro_sequence, team_select_screen2, sub_3170d, loading_screen, wait_sprite_fade, sequence_loop, fade_ambient_audio, replay_menu, load_sound_config, broadcast_booth_screen (+4 more)
 ; ====================================================================================================
 settimeout:
     mov eax, dword ptr [esp + 4]                 ; 0b3989 8b442404

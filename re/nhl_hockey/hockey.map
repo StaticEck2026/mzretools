@@ -201,24 +201,33 @@ sub_1920f: code1 NEAR 920f-935c R920f-935c
 #@ in-game desk menu ("pause")
 pause_menu: code1 NEAR 935d-a533 R935d-a533
 sub_1a534: code1 NEAR a534-a5a0 Ra534-a5a0
-sub_1a5a1: code1 NEAR a5a1-a5b0 Ra5a1-a5b0
+#@ pause menu: Back to Game (closes the menu)
+menu_back_to_game: code1 NEAR a5a1-a5b0 Ra5a1-a5b0
 sub_1a5b1: code1 NEAR a5b1-a5d3 Ra5b1-a5d3
 sub_1a5d4: code1 NEAR a5d4-a6a6 Ra5d4-a6a6
 #@ "Exiting the game. Do you wish to e..."
 exit_game_dialog: code1 NEAR a6a7-a816 Ra6a7-a816
-sub_1a817: code1 NEAR a817-a8a9 Ra817-a8a9
+#@ pause menu: Go To Replay
+menu_go_to_replay: code1 NEAR a817-a8a9 Ra817-a8a9
 sub_1a8aa: code1 NEAR a8aa-a921 Ra8aa-a921
 sub_1a922: code1 NEAR a922-a96c Ra922-a96c
-team_select_hub: code1 NEAR a96d-a9ab Ra96d-a9ab
+#@ pause menu: Game Statistics ...
+menu_game_statistics: code1 NEAR a96d-a9ab Ra96d-a9ab
 sub_1a9ac: code1 NEAR a9ac-aa6c Ra9ac-aa6c
 sub_1aa6d: code1 NEAR aa6d-aac3 Raa6d-aac3
 sub_1aac4: code1 NEAR aac4-ab0a Raac4-ab0a
-sub_1ab0b: code1 NEAR ab0b-ab38 Rab0b-ab38
-sub_1ab39: code1 NEAR ab39-ab61 Rab39-ab61
-sub_1ab62: code1 NEAR ab62-ab94 Rab62-ab94
-sub_1ab95: code1 NEAR ab95-abc7 Rab95-abc7
-sub_1abc8: code1 NEAR abc8-abf0 Rabc8-abf0
-sub_1abf1: code1 NEAR abf1-ac24 Rabf1-ac24
+#@ pause menu: the home team's first goalie
+menu_home_goalie1: code1 NEAR ab0b-ab38 Rab0b-ab38
+#@ pause menu: the home team's second goalie
+menu_home_goalie2: code1 NEAR ab39-ab61 Rab39-ab61
+#@ pause menu: the home team plays without a goalie
+menu_home_no_goalie: code1 NEAR ab62-ab94 Rab62-ab94
+#@ pause menu: the away team's first goalie
+menu_away_goalie1: code1 NEAR ab95-abc7 Rab95-abc7
+#@ pause menu: the away team's second goalie
+menu_away_goalie2: code1 NEAR abc8-abf0 Rabc8-abf0
+#@ pause menu: the away team plays without a goalie
+menu_away_no_goalie: code1 NEAR abf1-ac24 Rabf1-ac24
 sub_1ac25: code1 NEAR ac25-ac99 Rac25-ac99
 sub_1ac9a: code1 NEAR ac9a-acf0 Rac9a-acf0
 sub_1acf1: code1 NEAR acf1-ad15 Racf1-ad15
@@ -604,7 +613,8 @@ init_match: code1 NEAR 37cd6-380cb R37cd6-380cb
 faceoff_wait_loop: code1 NEAR 380cc-3830d R380cc-3830d
 #@ runs the anthem / intro sequence then the game
 match_sequence: code1 NEAR 3830e-38332 R3830e-38332
-replay_loop: code1 NEAR 38333-38429 R38333-38429
+#@ runs the simulation and the drawing for the anthem and three stars sequences
+sequence_loop: code1 NEAR 38333-38429 R38333-38429
 #@ AI state 'anth'
 ai_anthem: code1 NEAR 3842a-384d9 R3842a-384d9
 #@ AI state 'ranth'
@@ -613,8 +623,8 @@ sub_48789: code1 NEAR 38789-387d8 R38789-387d8
 sub_487d9: code1 NEAR 387d9-3883a R387d9-3883a
 compare_player_stats: code1 NEAR 3883b-38ac7 R3883b-38ac7
 compute_three_stars: code1 NEAR 38ac8-38f0a R38ac8-38f0a
-#@ fades, resets flags, setup for a new period
-start_period: code1 NEAR 38f0b-3925f R38f0b-3925f
+#@ the three stars after the game: compute_three_stars, the stars skate out, the announcer
+three_stars_sequence: code1 NEAR 38f0b-3925f R38f0b-3925f
 sub_49260: code1 NEAR 39260-392f8 R39260-392f8
 sub_492f9: code1 NEAR 392f9-3945f R392f9-3945f
 #@ AI state '3star'
@@ -905,8 +915,8 @@ play_sample_by_ptr: code1 NEAR 499b9-499ed R499b9-499ed
 sfx_set_volume: code1 NEAR 499ee-49a10 R499ee-49a10
 #@ play_speech(id): announcer / crowd sample tables
 play_speech: code1 NEAR 49a11-49a7d R49a11-49a7d
-#@ scor?per.bar announcer clips
-speech_period_summary: code1 NEAR 49a7e-49aac R49a7e-49aac
+#@ the announcer's one minute call (speech on, not in a replay)
+announce_one_minute_left: code1 NEAR 49a7e-49aac R49a7e-49aac
 speech_busy: code1 NEAR 49aad-49acf R49aad-49acf
 say_goal_wrapper: code1 NEAR 49ad0-49b0e R49ad0-49b0e
 say_star_wrapper: code1 NEAR 49b0f-49b3b R49b0f-49b3b
@@ -1039,10 +1049,10 @@ skating_turn: code1 NEAR 4f98a-4fb02 R4f98a-4fb02
 save_game: code1 NEAR 4fb03-50611 R4fb03-50611
 #@ "Error Loading Game", "Error Saving Game"
 savegame_io: code1 NEAR 50612-514c1 R50612-514c1
-#@ starts a crowd/arena sample on a channel
-start_crowd_sound: code1 NEAR 514c2-51575 R514c2-51575
-#@ crowd chant sample for a team
-play_crowd_chant: code1 NEAR 51576-515a1 R51576-515a1
+#@ starts the animation of a fan, photographer or bench figure
+start_crowd_figure: code1 NEAR 514c2-51575 R514c2-51575
+#@ the bench of the scoring team cheers
+bench_cheer: code1 NEAR 51576-515a1 R51576-515a1
 #@ animates ice marks, crowd and other effect sprites
 update_effects: code1 NEAR 515a2-51861 R515a2-51861
 draw_nets_and_effects: code1 NEAR 51862-519c7 R51862-519c7
@@ -1094,8 +1104,8 @@ lead_time_stats: code1 NEAR 53b57-53b84 R53b57-53b84
 update_line_timers: code1 NEAR 53b85-53bf7 R53b85-53bf7
 #@ whistle/stoppage timers, resumes play
 update_stoppage: code1 NEAR 53bf8-53c72 R53bf8-53c72
-#@ detects lead changes, plays the crowd reaction
-update_lead_change: code1 NEAR 53c73-53d3b R53c73-53d3b
+#@ the skaters on the ice differ: a power play starts (stop_flags 0x20 / 0x40, team +4)
+update_power_play: code1 NEAR 53c73-53d3b R53c73-53d3b
 clear_infractions: code1 NEAR 53d3c-53d68 R53d3c-53d68
 #@ a power play goal ends the penalty
 goal_ends_penalty: code1 NEAR 53d69-53f71 R53d69-53f71
@@ -1137,11 +1147,13 @@ update_announcer: code1 NEAR 56e06-56fe1 R56e06-56fe1
 #@ text box with the message from message_strings[]
 draw_message_box: code1 NEAR 56fe2-571e7 R56fe2-571e7
 sub_671e8: code1 NEAR 571e8-572f8 R571e8-572f8
-sub_672f9: code1 NEAR 572f9-573c4 R572f9-573c4
+#@ choose_goalie(team, 0 / 1, -1 none): the goalie choice of the pause menu
+choose_goalie: code1 NEAR 572f9-573c4 R572f9-573c4
 #@ HOMEPALS.BIN / AWAYPALS.BIN jersey colours
 load_team_palettes: code1 NEAR 573c5-57563 R573c5-57563
 sub_67564: code1 NEAR 57564-57580 R57564-57580
-sub_67581: code1 NEAR 57581-5759f R57581-5759f
+#@ index of the oldest recorded replay frame in the ring
+replay_oldest_frame: code1 NEAR 57581-5759f R57581-5759f
 replay_buffer_start: code1 NEAR 575a0-575d5 R575a0-575d5
 #@ packs entity positions and frames into the replay ring buffer every other step
 replay_record_frame: code1 NEAR 575d6-578ff R575d6-578ff
@@ -1446,10 +1458,13 @@ sub_7dec8: code1 NEAR 6dec8-6df4d R6dec8-6df4d
 sub_7df4e: code1 NEAR 6df4e-6e031 R6df4e-6e031
 sub_7e032: code1 NEAR 6e032-6e03e R6e032-6e03e unreferenced
 sub_7e03f: code1 NEAR 6e03f-6e05e R6e03f-6e05e unreferenced
-sub_7e067: code1 NEAR 6e067-6e0f9 R6e067-6e0f9
+#@ frames a VCR button (top / left colour 0x10, bottom / right 0x15)
+replay_draw_button: code1 NEAR 6e067-6e0f9 R6e067-6e0f9
 instant_replay: code1 NEAR 6e0fa-6e8e4 R6e0fa-6e8e4
-sub_7e8e5: code1 NEAR 6e8e5-6e93d R6e8e5-6e93d
-sub_7e93e: code1 NEAR 6e93e-6e9ab R6e93e-6e9ab
+#@ the VCR button under a screen position
+replay_button_at: code1 NEAR 6e8e5-6e93d R6e8e5-6e93d
+#@ the replay sprite under a rink position (the camera follows it)
+replay_sprite_at: code1 NEAR 6e93e-6e9ab R6e93e-6e9ab
 #@ VCR style controls of the instant replay
 replay_control_loop: code1 NEAR 6e9ac-6f09c R6e9ac-6f09c
 #@ gadget6/gad1 .PPV
@@ -1493,7 +1508,8 @@ sound_card_menu_b: code1 NEAR 72805-7291d R72805-7291d
 sound_setup_screen: code1 NEAR 7291e-72d79 R7291e-72d79
 #@ slapshot MT32HOCK NHL .CFG emmcopybuf
 load_sound_config: code1 NEAR 72d7a-732bb R72d7a-732bb
-sub_832bc: code1 NEAR 732bc-733c4 R732bc-733c4
+#@ 100 Hz: starts the next clip 0x1a ticks before the current one ends
+speech_timer: code1 NEAR 732bc-733c4 R732bc-733c4
 sub_833c5: code1 NEAR 733c5-733f9 R733c5-733f9
 speech_reset: code1 NEAR 733fa-73458 R733fa-73458
 sub_83459: code1 NEAR 73459-7351f R73459-7351f
@@ -1513,7 +1529,8 @@ read_clip_name: code1 NEAR 7385f-73896 R7385f-73896
 #@ loads a .VIV speech bank (XBRUCE2.VIV)
 speech_load_bank: code1 NEAR 73897-73bc6 R73897-73bc6
 sub_83bc7: code1 NEAR 73bc7-73bf2 R73bc7-73bf2
-sub_83bf3: code1 NEAR 73bf3-73cad R73bf3-73cad
+#@ running sum of the unpacked speech samples
+speech_delta_decode: code1 NEAR 73bf3-73cad R73bf3-73cad
 sub_83cae: code1 NEAR 73cae-73d77 R73cae-73d77
 sub_83d78: code1 NEAR 73d78-73e31 R73d78-73e31
 sub_83e32: code1 NEAR 73e32-73e6c R73e32-73e6c
@@ -1566,7 +1583,8 @@ say_penalty_shot: code1 NEAR 7511e-75212 R7511e-75212
 say_star: code1 NEAR 75213-7531e R75213-7531e
 #@ goal and assists by number
 say_goal: code1 NEAR 7531f-754ab R7531f-754ab
-sub_854ac: code1 NEAR 754ac-75506 R754ac-75506
+#@ queues oneleft.cor
+say_one_minute_left: code1 NEAR 754ac-75506 R754ac-75506
 sub_85507: code1 NEAR 75507-7556f R75507-7556f
 #@ %02d.%s numbered clips
 say_player_name: code1 NEAR 75570-7579d R75570-7579d
@@ -1785,44 +1803,67 @@ sub_8eb21: code1 NEAR 7eb21-7eb26 R7eb21-7eb26
 #@ Watcom LCG rand(): seed * 0x41c64e6d + 0x3039
 rand: code1 NEAR 7eb27-7eb4a R7eb27-7eb4a external
 srand: code1 NEAR 7eb4b-7eb5a R7eb4b-7eb5a external
-sub_8eb5b: code1 NEAR 7eb5b-7eb92 R7eb5b-7eb92
-sub_8eb93: code1 NEAR 7eb93-7ebe1 R7eb93-7ebe1
+#@ installs the sound timer
+sound_timer_install: code1 NEAR 7eb5b-7eb92 R7eb5b-7eb92
+#@ removes the sound timer, resets the drivers, unloads the songs
+sound_shutdown: code1 NEAR 7eb93-7ebe1 R7eb93-7ebe1
 sub_8ebe2: code1 NEAR 7ebe2-7ecbf R7ebe2-7ecbf
 #@ loads the music patches %0.3sFF%03d.PAT/.TIM
 loadpatches: code1 NEAR 7ecc0-7edd1 R7ecc0-7edd1 external
-sub_8edd2: code1 NEAR 7edd2-7ee2e R7edd2-7ee2e
-sub_8ee2f: code1 NEAR 7ee2f-7ee42 R7ee2f-7ee42
+#@ frees the patch and timbre files
+unload_patches: code1 NEAR 7edd2-7ee2e R7edd2-7ee2e
+#@ loads the .PAT file
+load_patch_file: code1 NEAR 7ee2f-7ee42 R7ee2f-7ee42
 sub_8ee43: code1 NEAR 7ee43-7ee4e R7ee43-7ee4e
-sub_8ee4f: code1 NEAR 7ee4f-7ef4f R7ee4f-7ef4f
-sub_8ef50: code1 NEAR 7ef50-7ef75 R7ef50-7ef75
+#@ loads a .TIM and finds the samples of its digital timbres in the .DIG
+load_timbre_file: code1 NEAR 7ee4f-7ef4f R7ee4f-7ef4f
+#@ registers a loaded .TIM
+timbre_bank_add: code1 NEAR 7ef50-7ef75 R7ef50-7ef75
 sub_8ef76: code1 NEAR 7ef76-7ef90 R7ef76-7ef90
-sub_8ef91: code1 NEAR 7ef91-7efba R7ef91-7efba
-sub_8efbb: code1 NEAR 7efbb-7f0d6 R7efbb-7f0d6
+#@ unregisters a .TIM
+timbre_bank_remove: code1 NEAR 7ef91-7efba R7ef91-7efba
+#@ links the .PAT records to their timbres (key 0x80 type 0 program) and drivers
+bind_patch_timbres: code1 NEAR 7efbb-7f0d6 R7efbb-7f0d6
 #@ record of a sound id in the loaded .PAT bank (256 byte id map at +2, 0x14 byte records from +0x102)
 snd_patch_record: code1 NEAR 7f0d7-7f113 R7f0d7-7f113
-sub_8f114: code1 NEAR 7f114-7f13a R7f114-7f13a
+#@ the timbre pointer (+0x10) of a sound id's patch record
+snd_patch_timbre: code1 NEAR 7f114-7f13a R7f114-7f13a
 #@ loads a .KMS music sequence and its .CFG into a free music slot
 music_load_kms: code1 NEAR 7f13b-7f1fd R7f13b-7f1fd
-sub_8f1fe: code1 NEAR 7f1fe-7f246 R7f1fe-7f246
-sub_8f247: code1 NEAR 7f247-7f26f R7f247-7f26f
-sub_8f270: code1 NEAR 7f270-7f279 R7f270-7f279
+#@ stops a song and frees its KMS and CFG
+kms_unload: code1 NEAR 7f1fe-7f246 R7f1fe-7f246
+#@ slot of a song handle among the 13 loaded songs
+kms_find_song: code1 NEAR 7f247-7f26f R7f247-7f26f
+#@ plays a loaded song (play_sample_by_ptr)
+kms_play: code1 NEAR 7f270-7f279 R7f270-7f279
 sub_8f27a: code1 NEAR 7f27a-7f432 R7f27a-7f432
-sub_8f433: code1 NEAR 7f433-7f450 R7f433-7f450
-sub_8f451: code1 NEAR 7f451-7f48e R7f451-7f48e
-sub_8f48f: code1 NEAR 7f48f-7f4a1 R7f48f-7f4a1 unreferenced
-sub_8f4a7: code1 NEAR 7f4a7-7f4c3 R7f4a7-7f4c3
+#@ a free 0x54 byte track record (24)
+kms_alloc_track: code1 NEAR 7f433-7f450 R7f433-7f450
+#@ the first MIDI channel of a CFG channel mask
+kms_track_channel: code1 NEAR 7f451-7f48e R7f451-7f48e
+#@ music_load_kms and kms_start
+kms_load_start: code1 NEAR 7f48f-7f4a1 R7f48f-7f4a1 unreferenced
+#@ starts the tracks of a loaded song on the first MIDI channel of each CFG mask
+kms_start: code1 NEAR 7f4a7-7f4c3 R7f4a7-7f4c3
 #@ sound driver: plays a sound id as a MIDI note; ids >= 0x80 are percussion notes (channel 9, note id - 0x74), ids < 0x80 program changes on channels 12..15
 snd_play_patch: code1 NEAR 7f4c4-7f61c R7f4c4-7f61c
 #@ plays a sound effect id at full volume (play_sfx -> snd_play_patch(id, 0, 0x7f))
 snd_play_sfx: code1 NEAR 7f61d-7f632 R7f61d-7f632
 sound_stopall: code1 NEAR 7f633-7f67c R7f633-7f67c external
-sub_8f67d: code1 NEAR 7f67d-7f7ad R7f67d-7f7ad
-sub_8f7ae: code1 NEAR 7f7ae-7f80d R7f7ae-7f80d
-sub_8f80e: code1 NEAR 7f80e-7f845 R7f80e-7f845
-sub_8f846: code1 NEAR 7f846-7f87d R7f846-7f87d unreferenced
-sub_8f87e: code1 NEAR 7f87e-7f8b6 R7f87e-7f8b6 unreferenced
-sub_8f8b7: code1 NEAR 7f8b7-7f91b R7f8b7-7f91b unreferenced
-sub_8f91c: code1 NEAR 7f91c-7f962 R7f91c-7f962 unreferenced
+#@ stops a song (all notes off, volume 0) or the note of an effect
+snd_stop_handle: code1 NEAR 7f67d-7f7ad R7f67d-7f7ad
+#@ fades a song out over n timer ticks
+kms_fade_out: code1 NEAR 7f7ae-7f80d R7f7ae-7f80d
+#@ 1 when no track of the song runs any more
+kms_finished: code1 NEAR 7f80e-7f845 R7f80e-7f845
+#@ 1 when no track of the song is fading
+kms_fade_done: code1 NEAR 7f846-7f87d R7f846-7f87d unreferenced
+#@ the marker (event 0xea) of a song's track on a channel
+kms_track_marker: code1 NEAR 7f87e-7f8b6 R7f87e-7f8b6 unreferenced
+#@ volume 0 on every track
+music_mute: code1 NEAR 7f8b7-7f91b R7f8b7-7f91b unreferenced
+#@ restores the volume of every track
+music_unmute: code1 NEAR 7f91c-7f962 R7f91c-7f962 unreferenced
 sfx_enable: code1 NEAR 7f963-7f96d R7f963-7f96d external
 sfx_disable: code1 NEAR 7f96e-7f978 R7f96e-7f978 external
 music_enable: code1 NEAR 7f979-7f983 R7f979-7f983 external
@@ -1836,7 +1877,8 @@ playsample: code1 NEAR 7fb8e-7fbe4 R7fb8e-7fbe4 external
 sub_8fbe5: code1 NEAR 7fbe5-7fc36 R7fbe5-7fc36
 sub_8fc37: code1 NEAR 7fc37-7fc89 R7fc37-7fc89
 sound_channel_status: code1 NEAR 7fc8a-7fcab R7fc8a-7fcab external
-sub_8fcac: code1 NEAR 7fcac-7fcde R7fcac-7fcde
+#@ stops the sample of a sound channel (end of a fade)
+sound_channel_stop: code1 NEAR 7fcac-7fcde R7fcac-7fcde
 sound_fade: code1 NEAR 7fcdf-7fd66 R7fcdf-7fd66 external
 sub_8fd67: code1 NEAR 7fd67-7fd83 R7fd67-7fd83 unreferenced
 sub_8fd84: code1 NEAR 7fd84-7fdb1 R7fd84-7fdb1
@@ -2097,16 +2139,21 @@ sub_96ac4: code1 NEAR 86ac4-86c4a R86ac4-86c4a
 sub_96c4c: code1 NEAR 86c4c-86e7a R86c4c-86e7a
 sub_96e7c: code1 NEAR 86e7c-87078 R86e7c-87078
 sub_97079: code1 NEAR 87079-87165 R87079-87165
-sub_97166: code1 NEAR 87166-8717e R87166-8717e
+#@ index of a loaded sound driver
+drv_index: code1 NEAR 87166-8717e R87166-8717e
 sub_9717f: code1 NEAR 8717f-87193 R8717f-87193
 sub_97194: code1 NEAR 87194-871aa R87194-871aa
 sub_971ab: code1 NEAR 871ab-871bd R871ab-871bd
 sub_971be: code1 NEAR 871be-871da R871be-871da
-sub_971db: code1 NEAR 871db-871f7 R871db-871f7
+#@ the timer tick of a sound driver
+drv_tick: code1 NEAR 871db-871f7 R871db-871f7
 sub_971f8: code1 NEAR 871f8-8720a R871f8-8720a
-sub_9720b: code1 NEAR 8720b-8722d R8720b-8722d
-sub_9722e: code1 NEAR 8722e-87267 R8722e-87267
-sub_97268: code1 NEAR 87268-872aa R87268-872aa
+#@ channel setup of a sound driver
+drv_channel_config: code1 NEAR 8720b-8722d R8720b-8722d
+#@ MIDI message to a sound driver (adds 24 to the note of a note on / off)
+drv_send_midi: code1 NEAR 8722e-87267 R8722e-87267
+#@ plays a sample through a sound driver
+drv_play_sample: code1 NEAR 87268-872aa R87268-872aa
 sub_972ab: code1 NEAR 872ab-872b7 R872ab-872b7
 sub_972b8: code1 NEAR 872b8-872bf R872b8-872bf
 sub_972c0: code1 NEAR 872c0-872c7 R872c0-872c7
@@ -2124,7 +2171,8 @@ sub_9767c: code1 NEAR 8767c-87712 R8767c-87712
 sub_97714: code1 NEAR 87714-8773f R87714-8773f
 #@ pack codes 30/32/34: bit coded LZ
 bitlz_decode: code1 NEAR 87740-879f7 R87740-879f7
-sub_979f8: code1 NEAR 879f8-87a37 R879f8-87a37
+#@ expands a byte pair code recursively
+bytepair_expand: code1 NEAR 879f8-87a37 R879f8-87a37
 #@ pack code 46
 bytepair_decode: code1 NEAR 87a38-87bb4 R87a38-87bb4
 #@ pack codes 60/62/66: running sum
@@ -2180,18 +2228,30 @@ sub_98d20: code1 NEAR 88d20-88dd6 R88d20-88dd6
 removewindow: code1 NEAR 88dd8-88e4c R88dd8-88e4c external
 #@ loads a file trying the .fsh/.vsh/.qfs/.qvs variants, unpacks compressed ones
 loadfile_auto: code1 NEAR 88e50-88f10 R88e50-88f10 external
-sub_98f11: code1 NEAR 88f11-88f45 R88f11-88f45
-sub_98f46: code1 NEAR 88f46-890ca R88f46-890ca
-sub_990cb: code1 NEAR 890cb-89521 R890cb-89521
-sub_99522: code1 NEAR 89522-8961f R89522-8961f
-sub_99620: code1 NEAR 89620-8966d R89620-8966d
-sub_9966e: code1 NEAR 8966e-896af R8966e-896af
-sub_996b0: code1 NEAR 896b0-896ff R896b0-896ff
-sub_99700: code1 NEAR 89700-897b6 R89700-897b6
-sub_997b7: code1 NEAR 897b7-89821 R897b7-89821
-sub_99822: code1 NEAR 89822-8989f R89822-8989f
-sub_998a0: code1 NEAR 898a0-898da R898a0-898da
-sub_99925: code1 NEAR 89925-89a0a R89925-89a0a
+#@ the 100 Hz timer callback of the sound layer
+sound_timer: code1 NEAR 88f11-88f45 R88f11-88f45
+#@ fades, driver ticks, queued MIDI messages, the song tracks, effect note lengths
+sound_timer_tick: code1 NEAR 88f46-890ca R88f46-890ca
+#@ one track of a song: 128 a tick, a step every 32000 / tempo, its events and note lengths
+kms_track_tick: code1 NEAR 890cb-89521 R890cb-89521
+#@ controller of a track (volume scaled by the song's volume, pan adjusted)
+kms_controller: code1 NEAR 89522-8961f R89522-8961f
+#@ note off of an entry of the note table
+snd_note_off: code1 NEAR 89620-8966d R89620-8966d
+#@ tempo event: 32000 / tempo for every track of the song
+kms_set_tempo: code1 NEAR 8966e-896af R8966e-896af
+#@ pitch bend of a track
+kms_pitch_bend: code1 NEAR 896b0-896ff R896b0-896ff
+#@ note on: a free entry of the 32 entry note table with its length
+snd_note_on: code1 NEAR 89700-897b6 R89700-897b6
+#@ queues a MIDI message for the next timer tick
+snd_queue_message: code1 NEAR 897b7-89821 R897b7-89821
+#@ sends the queued MIDI messages to the drivers
+snd_flush_messages: code1 NEAR 89822-8989f R89822-8989f
+#@ program change on a channel
+snd_program_change: code1 NEAR 898a0-898da R898a0-898da
+#@ parses a KMS event (delta time, code, arguments, length)
+kms_read_event: code1 NEAR 89925-89a0a R89925-89a0a
 sub_99a0b: code1 NEAR 89a0b-89a0d R89a0b-89a0d
 sub_99a0e: code1 NEAR 89a0e-89a11 R89a0e-89a11
 sub_99a12: code1 NEAR 89a12-89a44 R89a12-89a44

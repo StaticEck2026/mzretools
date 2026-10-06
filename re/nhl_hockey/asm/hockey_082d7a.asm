@@ -60,9 +60,9 @@ loc_82dd0:
     cmp ecx, 4                                   ; 082dd0 83f904
     jne loc_82ddf                                ; 082dd3 750a
     mov eax, dword ptr [dword_ed7a4]             ; 082dd5 a1a4d70e00
-    call sub_8f1fe                               ; 082dda e81fc40000
+    call kms_unload                              ; 082dda e81fc40000
 loc_82ddf:
-    call sub_8eb93                               ; 082ddf e8afbd0000
+    call sound_shutdown                          ; 082ddf e8afbd0000
 loc_82de4:
     mov dword ptr [dword_ccc94], 0x20            ; 082de4 c70594cc0c002000..
     xor edi, edi                                 ; 082dee 31ff
@@ -166,7 +166,7 @@ loc_82f66:
     xor al, al                                   ; 082f93 30c0
     mov byte ptr [byte_d2439], al                ; 082f95 a239240d00
 loc_82f9a:
-    call sub_8eb5b                               ; 082f9a e8bcbb0000
+    call sound_timer_install                     ; 082f9a e8bcbb0000
     mov ebx, dword ptr [dword_d2427]             ; 082f9f 8b1d27240d00
     test ebx, ebx                                ; 082fa5 85db
     jl loc_82fdb                                 ; 082fa7 7c32
@@ -246,7 +246,7 @@ loc_8307b:
     call play_sample_by_ptr                      ; 08309f e81569fdff
     call sfx_set_volume                          ; 0830a4 e84569fdff
     mov eax, edx                                 ; 0830a9 89d0
-    call sub_8f1fe                               ; 0830ab e84ec10000
+    call kms_unload                              ; 0830ab e84ec10000
     call sub_30f12                               ; 0830b0 e85ddefaff
 loc_830b5:
     mov dword ptr [dword_c541f], esi             ; 0830b5 89351f540c00
@@ -381,7 +381,7 @@ loc_83225:
 loc_83238:
     mov dword ptr [dword_d2423], 0xffffffff      ; 083238 c70523240d00ffff..
 loc_83242:
-    call sub_8eb93                               ; 083242 e84cb90000
+    call sound_shutdown                          ; 083242 e84cb90000
     push 0x64                                    ; 083247 6a64
     call settimeout                              ; 083249 e83b070300
     add esp, 4                                   ; 08324e 83c404
@@ -416,10 +416,11 @@ loc_832a7:
 
 
 ; ====================================================================================================
-; sub_832bc  [0x832bc, 265 bytes, 75 instructions]
+; speech_timer  [0x832bc, 265 bytes, 75 instructions]
+; 100 Hz: starts the next clip 0x1a ticks before the current one ends
 ; called by: sub_8357a, sub_8363c
 ; ====================================================================================================
-sub_832bc:
+speech_timer:
     push 0x20                                    ; 0832bc 6820000000
     call __CHK                                   ; 0832c1 e886960000
     push ebx                                     ; 0832c6 53
@@ -525,7 +526,7 @@ sub_833c5:
 
 ; ====================================================================================================
 ; speech_reset  [0x833fa, 95 bytes, 21 instructions]
-; called by: sub_8357a, sub_8460f, sub_84657, say_highlight_intro, say_series_result, say_game_intro, say_playoff_game_intro, say_penalty, say_penalty_shot, say_star, say_goal, sub_854ac (+3 more)
+; called by: sub_8357a, sub_8460f, sub_84657, say_highlight_intro, say_series_result, say_game_intro, say_playoff_game_intro, say_penalty, say_penalty_shot, say_star, say_goal, say_one_minute_left (+3 more)
 ; ====================================================================================================
 speech_reset:
     push 0xc                                     ; 0833fa 680c000000
@@ -611,7 +612,7 @@ loc_8346a:
 
 ; ====================================================================================================
 ; speech_begin  [0x83520, 90 bytes, 24 instructions]
-; called by: sub_8357a, sub_8460f, sub_84657, say_highlight_intro, say_series_result, say_game_intro, say_playoff_game_intro, say_penalty, say_penalty_shot, say_star, say_goal, sub_854ac (+3 more)
+; called by: sub_8357a, sub_8460f, sub_84657, say_highlight_intro, say_series_result, say_game_intro, say_playoff_game_intro, say_penalty, say_penalty_shot, say_star, say_goal, say_one_minute_left (+3 more)
 ; ====================================================================================================
 speech_begin:
     push 0xc                                     ; 083520 680c000000
@@ -690,7 +691,7 @@ sub_8357a:
     mov dword ptr [dword_ed7b0], eax             ; 083613 a3b0d70e00
     mov eax, esi                                 ; 083618 89f0
     call sub_83459                               ; 08361a e83afeffff
-    push sub_832bc                               ; 08361f 68bc320800
+    push speech_timer                            ; 08361f 68bc320800
     call addtimer                                ; 083624 e897ae0000
     add esp, 4                                   ; 083629 83c404
     mov dword ptr [speech_enabled], 1            ; 08362c c705bb270d000100..
@@ -716,7 +717,7 @@ sub_8363c:
     push ebp                                     ; 08364b 55
     cmp dword ptr [speech_enabled], 0            ; 08364c 833dbb270d0000
     je loc_836c3                                 ; 083653 746e
-    push sub_832bc                               ; 083655 68bc320800
+    push speech_timer                            ; 083655 68bc320800
     call removetimer                             ; 08365a e899ae0000
     add esp, 4                                   ; 08365f 83c404
     mov eax, dword ptr [dword_ed7b0]             ; 083662 a1b0d70e00
@@ -794,7 +795,7 @@ loc_8370e:
 
 ; ====================================================================================================
 ; speech_available  [0x83711, 45 bytes, 13 instructions]
-; called by: sub_8460f, sub_84657, say_highlight_intro, say_series_result, say_game_intro, say_playoff_game_intro, say_penalty, say_penalty_shot, say_star, say_goal, sub_854ac, sub_85507 (+1 more)
+; called by: sub_8460f, sub_84657, say_highlight_intro, say_series_result, say_game_intro, say_playoff_game_intro, say_penalty, say_penalty_shot, say_star, say_goal, say_one_minute_left, sub_85507 (+1 more)
 ; ====================================================================================================
 speech_available:
     push 4                                       ; 083711 6804000000
@@ -861,14 +862,14 @@ sub_8378c:
     push edx                                     ; 083796 52
     mov eax, dword ptr [dword_d2431]             ; 083797 a131240d00
     mov edx, 3                                   ; 08379c ba03000000
-    call sub_8fcac                               ; 0837a1 e806c50000
+    call sound_channel_stop                      ; 0837a1 e806c50000
     pop edx                                      ; 0837a6 5a
     ret                                          ; 0837a7 c3
 
 
 ; ====================================================================================================
 ; sub_837a8  [0x837a8, 49 bytes, 13 instructions]
-; called by: sub_10f6d, handle_hotkey, game_loop, pause_menu, start_period, speech_period_summary, say_goal_wrapper, say_star_wrapper, say_penalty_wrapper, say_penalty_shot_wrapper, sub_8373e
+; called by: sub_10f6d, handle_hotkey, game_loop, pause_menu, three_stars_sequence, announce_one_minute_left, say_goal_wrapper, say_star_wrapper, say_penalty_wrapper, say_penalty_shot_wrapper, sub_8373e
 ; ====================================================================================================
 sub_837a8:
     push 8                                       ; 0837a8 6808000000
@@ -878,10 +879,10 @@ sub_837a8:
     je loc_837d7                                 ; 0837ba 741b
     mov eax, dword ptr [dword_d2431]             ; 0837bc a131240d00
     xor edx, edx                                 ; 0837c1 31d2
-    call sub_8fcac                               ; 0837c3 e8e4c40000
+    call sound_channel_stop                      ; 0837c3 e8e4c40000
     mov eax, dword ptr [dword_d2431]             ; 0837c8 a131240d00
     mov edx, 1                                   ; 0837cd ba01000000
-    call sub_8fcac                               ; 0837d2 e8d5c40000
+    call sound_channel_stop                      ; 0837d2 e8d5c40000
 loc_837d7:
     pop edx                                      ; 0837d7 5a
     ret                                          ; 0837d8 c3
@@ -1249,10 +1250,11 @@ loc_83bdb:
 
 
 ; ====================================================================================================
-; sub_83bf3  [0x83bf3, 187 bytes, 65 instructions]
+; speech_delta_decode  [0x83bf3, 187 bytes, 65 instructions]
+; running sum of the unpacked speech samples
 ; called by: sub_83cae
 ; ====================================================================================================
-sub_83bf3:
+speech_delta_decode:
     push 0x38                                    ; 083bf3 6838000000
     call __CHK                                   ; 083bf8 e84f8d0000
     push ebx                                     ; 083bfd 53
@@ -1364,7 +1366,7 @@ loc_83cf2:
     mov eax, dword ptr [dword_ed7b0]             ; 083d01 a1b0d70e00
     mov dword ptr [ecx + eax + 0xe], edx         ; 083d06 8954010e
     mov eax, ebx                                 ; 083d0a 89d8
-    call sub_83bf3                               ; 083d0c e8e2feffff
+    call speech_delta_decode                     ; 083d0c e8e2feffff
     mov edx, eax                                 ; 083d11 89c2
     mov eax, dword ptr [dword_ed7b0]             ; 083d13 a1b0d70e00
     mov dword ptr [ecx + eax + 0x16], edx        ; 083d18 89540116
@@ -1677,7 +1679,7 @@ loc_83f9a:
 ; ====================================================================================================
 ; speech_queue_clip  [0x83faf, 135 bytes, 43 instructions]
 ; speech_queue_clip(name): adds a clip of the speech bank to the sentence
-; called by: sub_8460f, sub_84657, say_highlight_intro, say_series_result, say_game_intro, say_playoff_game_intro, say_time_remaining, say_penalty, say_penalty_shot, say_star, say_goal, sub_854ac (+2 more)
+; called by: sub_8460f, sub_84657, say_highlight_intro, say_series_result, say_game_intro, say_playoff_game_intro, say_time_remaining, say_penalty, say_penalty_shot, say_star, say_goal, say_one_minute_left (+2 more)
 ; ====================================================================================================
 speech_queue_clip:
     push 0x14                                    ; 083faf 6814000000
@@ -1970,7 +1972,7 @@ loc_8426a:
 
 ; ====================================================================================================
 ; speech_play_sentence  [0x8426f, 75 bytes, 22 instructions]
-; called by: sub_8460f, sub_84657, sub_8474e, say_highlight_intro, say_series_result, say_game_intro, say_playoff_game_intro, say_penalty, say_penalty_shot, say_star, say_goal, sub_854ac
+; called by: sub_8460f, sub_84657, sub_8474e, say_highlight_intro, say_series_result, say_game_intro, say_playoff_game_intro, say_penalty, say_penalty_shot, say_star, say_goal, say_one_minute_left
 ; ====================================================================================================
 speech_play_sentence:
     push 4                                       ; 08426f 6804000000
@@ -2217,7 +2219,7 @@ loc_84416:
 
 ; ====================================================================================================
 ; speech_release_clip  [0x84418, 289 bytes, 91 instructions]
-; called by: sub_8460f, sub_84657, say_highlight_intro, say_series_result, say_game_intro, say_playoff_game_intro, release_time_remaining_clips, say_penalty, say_penalty_shot, say_star, say_goal, sub_854ac (+2 more)
+; called by: sub_8460f, sub_84657, say_highlight_intro, say_series_result, say_game_intro, say_playoff_game_intro, release_time_remaining_clips, say_penalty, say_penalty_shot, say_star, say_goal, say_one_minute_left (+2 more)
 ; ====================================================================================================
 speech_release_clip:
     push 0x54                                    ; 084418 6854000000
@@ -3749,11 +3751,12 @@ loc_854a4:
 
 
 ; ====================================================================================================
-; sub_854ac  [0x854ac, 91 bytes, 25 instructions]
-; called by: speech_period_summary
+; say_one_minute_left  [0x854ac, 91 bytes, 25 instructions]
+; queues oneleft.cor
+; called by: announce_one_minute_left
 ;   uses string "oneleft.cor"
 ; ====================================================================================================
-sub_854ac:
+say_one_minute_left:
     push 8                                       ; 0854ac 6808000000
     call __CHK                                   ; 0854b1 e896740000
     push ebx                                     ; 0854b6 53

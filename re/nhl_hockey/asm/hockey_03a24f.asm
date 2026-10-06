@@ -4687,7 +4687,7 @@ loc_3dbb8:
     inc esi                                      ; 03dbd7 46
     cmp esi, 4                                   ; 03dbd8 83fe04
     jl loc_3dbb8                                 ; 03dbdb 7cdb
-    push sub_8eb93                               ; 03dbdd 6893eb0800
+    push sound_shutdown                          ; 03dbdd 6893eb0800
     call sub_b3454                               ; 03dbe2 e86d580700
     add esp, 4                                   ; 03dbe7 83c404
     push 0                                       ; 03dbea 6a00

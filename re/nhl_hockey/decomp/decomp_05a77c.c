@@ -230,7 +230,7 @@ void __watcall score_goal(undefined4 *param_1)
           crowd_noise._2_2_ = 0x708;
         }
       }
-      play_crowd_chant((int)(uint)CONCAT12(bVar7,uStackY_1e) >> 0x10);
+      bench_cheer((int)(uint)CONCAT12(bVar7,uStackY_1e) >> 0x10);
       if (!bVar7) {
         if (((option_flags._1_1_ & 1) == 0) || (sound_enabled == '\0')) {
           bVar2 = true;
@@ -1442,7 +1442,7 @@ void __watcall sim_game_state(void)
       update_crowd_random();
       regenerate_energy();
       if ((game_flags & 1) == 0) {
-        update_lead_change();
+        update_power_play();
       }
       cVar1 = word_cc0d8._1_1_;
       if (((byte)option_flags & 4) != 0) {
@@ -2407,7 +2407,7 @@ void __watcall setup_faceoff(void)
         iVar5 = 0;
       }
       piVar6 = &entities + iVar5 * 0x20;
-      play_crowd_chant(dword_e03be._2_2_ < 0);
+      bench_cheer(dword_e03be._2_2_ < 0);
       if (dword_e03ba._2_2_ == 8) {
         byte_ccca0 = 1;
         game_flags = game_flags | 0x80;
@@ -2552,7 +2552,7 @@ void __watcall game_clock_tick(void)
         _input_enabled = 0;
         puVar2 = &uStackY_14;
         uStackY_14 = 0x5dcf8;
-        speech_period_summary();
+        announce_one_minute_left();
         _input_enabled = dword_e9a9e >> 0x10;
       }
     }
@@ -5147,10 +5147,10 @@ LAB_00061249:
 
 
 // ================================================================================================
-// start_crowd_sound @ 0x614c2 [__watcall]
+// start_crowd_figure @ 0x614c2 [__watcall]
 // ================================================================================================
 
-void __watcall start_crowd_sound(int param_1,int unaff_EDX)
+void __watcall start_crowd_figure(int param_1,int unaff_EDX)
 
 {
   int iVar1;
@@ -5178,11 +5178,11 @@ void __watcall start_crowd_sound(int param_1,int unaff_EDX)
 
 
 // ================================================================================================
-// play_crowd_chant @ 0x61576 [__watcall]
+// bench_cheer @ 0x61576 [__watcall]
 // ================================================================================================
 
 void __watcall
-play_crowd_chant(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+bench_cheer(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   undefined4 uVar1;
@@ -5197,7 +5197,7 @@ play_crowd_chant(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined
     uVar2 = 0x88;
     uVar1 = 0x13;
   }
-  start_crowd_sound(uVar1,uVar2,unaff_EBX,unaff_ECX,unaff_EDX);
+  start_crowd_figure(uVar1,uVar2,unaff_EBX,unaff_ECX,unaff_EDX);
   return;
 }
 
@@ -5283,7 +5283,7 @@ void __watcall update_effects(void)
           }
         }
 LAB_0006170e:
-        start_crowd_sound((int)sStackY_18,(int)sVar10);
+        start_crowd_figure((int)sStackY_18,(int)sVar10);
       }
     }
     else {

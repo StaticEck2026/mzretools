@@ -765,7 +765,7 @@ longlong __watcall pause_menu(int param_1,uint unaff_EDX)
   uVar16 = sub_12034();
   funcptr_cef23 = (undefined *)((ulonglong)uVar16 >> 0x20);
   if ((int)uVar16 == 0) {
-    funcptr_cef23 = sub_1a817;
+    funcptr_cef23 = menu_go_to_replay;
   }
   getmouse(&local_44,&local_48,&local_4c);
   pause_requested = 0;
@@ -1246,10 +1246,10 @@ sub_1a534(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined
 
 
 // ================================================================================================
-// sub_1a5a1 @ 0x1a5a1 [__watcall]
+// menu_back_to_game @ 0x1a5a1 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_1a5a1(void)
+undefined4 __watcall menu_back_to_game(void)
 
 {
   __CHK(4);
@@ -1360,11 +1360,11 @@ longlong __watcall exit_game_dialog(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_1a817 @ 0x1a817 [__watcall]
+// menu_go_to_replay @ 0x1a817 [__watcall]
 // ================================================================================================
 
 undefined8 __watcall
-sub_1a817(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+menu_go_to_replay(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   int iVar1;
@@ -1426,11 +1426,11 @@ sub_1a922(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined
 
 
 // ================================================================================================
-// team_select_hub @ 0x1a96d [__watcall]
+// menu_game_statistics @ 0x1a96d [__watcall]
 // ================================================================================================
 
 undefined8 __watcall
-team_select_hub(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+menu_game_statistics(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   __CHK(0x1c);
@@ -1508,14 +1508,14 @@ sub_1aac4(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined
 
 
 // ================================================================================================
-// sub_1ab0b @ 0x1ab0b [__watcall]
+// menu_home_goalie1 @ 0x1ab0b [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_1ab0b(undefined4 param_1,uint unaff_EDX)
+longlong __watcall menu_home_goalie1(undefined4 param_1,uint unaff_EDX)
 
 {
   __CHK(8);
-  sub_672f9(0,0);
+  choose_goalie(0,0);
   *off_cee5f = 1;
   *off_cee7f = 2;
   *off_cee9f = 2;
@@ -1524,14 +1524,14 @@ longlong __watcall sub_1ab0b(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_1ab39 @ 0x1ab39 [__watcall]
+// menu_home_goalie2 @ 0x1ab39 [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_1ab39(undefined4 param_1,uint unaff_EDX)
+longlong __watcall menu_home_goalie2(undefined4 param_1,uint unaff_EDX)
 
 {
   __CHK(8);
-  sub_672f9(0,1);
+  choose_goalie(0,1);
   *off_cee5f = 2;
   *off_cee7f = 1;
   *off_cee9f = 2;
@@ -1540,14 +1540,14 @@ longlong __watcall sub_1ab39(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_1ab62 @ 0x1ab62 [__watcall]
+// menu_home_no_goalie @ 0x1ab62 [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_1ab62(undefined4 param_1,uint unaff_EDX)
+longlong __watcall menu_home_no_goalie(undefined4 param_1,uint unaff_EDX)
 
 {
   __CHK(8);
-  sub_672f9(0,0xffffffff);
+  choose_goalie(0,0xffffffff);
   *off_cee5f = 2;
   *off_cee7f = 2;
   *off_cee9f = 1;
@@ -1556,14 +1556,14 @@ longlong __watcall sub_1ab62(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_1ab95 @ 0x1ab95 [__watcall]
+// menu_away_goalie1 @ 0x1ab95 [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_1ab95(undefined4 param_1,uint unaff_EDX)
+longlong __watcall menu_away_goalie1(undefined4 param_1,uint unaff_EDX)
 
 {
   __CHK(8);
-  sub_672f9(1,0);
+  choose_goalie(1,0);
   *off_ceebf = 1;
   *off_ceedf = 2;
   *off_ceeff = 2;
@@ -1572,14 +1572,14 @@ longlong __watcall sub_1ab95(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_1abc8 @ 0x1abc8 [__watcall]
+// menu_away_goalie2 @ 0x1abc8 [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_1abc8(undefined4 param_1,uint unaff_EDX)
+longlong __watcall menu_away_goalie2(undefined4 param_1,uint unaff_EDX)
 
 {
   __CHK(8);
-  sub_672f9(1);
+  choose_goalie(1);
   *off_ceebf = 2;
   *off_ceedf = 1;
   *off_ceeff = 2;
@@ -1588,14 +1588,14 @@ longlong __watcall sub_1abc8(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_1abf1 @ 0x1abf1 [__watcall]
+// menu_away_no_goalie @ 0x1abf1 [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_1abf1(undefined4 param_1,uint unaff_EDX)
+longlong __watcall menu_away_no_goalie(undefined4 param_1,uint unaff_EDX)
 
 {
   __CHK(8);
-  sub_672f9(1,0xffffffff);
+  choose_goalie(1,0xffffffff);
   *off_ceebf = 2;
   *off_ceedf = 2;
   *off_ceeff = 1;

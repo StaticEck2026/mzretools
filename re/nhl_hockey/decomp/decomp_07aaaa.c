@@ -2835,7 +2835,7 @@ void __watcall sub_7dec8(void)
   iVar1 = 0;
   do {
     if ((&unk_ed368)[iVar1] != 0) {
-      sub_8f1fe((&unk_ed368)[iVar1]);
+      kms_unload((&unk_ed368)[iVar1]);
       (&unk_ed368)[iVar1] = 0;
       iVar1 = extraout_EDX;
     }
@@ -2844,7 +2844,7 @@ void __watcall sub_7dec8(void)
   iVar1 = 0;
   do {
     if ((&unk_ed38c)[iVar1] != 0) {
-      sub_8f1fe((&unk_ed38c)[iVar1]);
+      kms_unload((&unk_ed38c)[iVar1]);
       (&unk_ed38c)[iVar1] = 0;
       iVar1 = extraout_EDX_00;
     }
@@ -2853,7 +2853,7 @@ void __watcall sub_7dec8(void)
   iVar1 = 0;
   do {
     if ((&dword_ed380)[iVar1] != 0) {
-      sub_8f1fe();
+      kms_unload();
       (&dword_ed380)[iVar1] = 0;
       iVar1 = extraout_EDX_01;
     }
@@ -2945,10 +2945,10 @@ sub_7e03f(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined
 
 
 // ================================================================================================
-// sub_7e067 @ 0x7e067 [__watcall]
+// replay_draw_button @ 0x7e067 [__watcall]
 // ================================================================================================
 
-void __watcall sub_7e067(int param_1)
+void __watcall replay_draw_button(int param_1)
 
 {
   undefined4 uVar1;
@@ -3026,8 +3026,8 @@ void __watcall instant_replay(int param_1)
   dword_ed6d8 = loadfile(auStack_38,0);
   dword_ed6e4 = locateshape(dword_ed6d8,&aGad1);
   blit_rle_frame(dword_ed6e4,0,0);
-  sub_7e067(6);
-  sub_7e067(2);
+  replay_draw_button(6);
+  replay_draw_button(2);
   drawshape_remap(pointer_shapes,dword_ed6e0,dword_ed6dc + -0xa8);
   sVar2 = (short)dword_d8c7c;
   dword_c66d4 = 1;
@@ -3044,7 +3044,7 @@ void __watcall instant_replay(int param_1)
   word_ed758 = 0;
   dword_c7444 = dword_c7444 + 1000;
   dword_c7448 = dword_c7448 + 1000;
-  dword_e03a4 = sub_67581(CONCAT22(extraout_var,(short)dword_d8c74),0);
+  dword_e03a4 = replay_oldest_frame(CONCAT22(extraout_var,(short)dword_d8c74),0);
   local_28._0_2_ = 0;
   local_28._2_2_ = 0;
   replay_seek_frames(0);
@@ -3209,10 +3209,10 @@ void __watcall instant_replay(int param_1)
 
 
 // ================================================================================================
-// sub_7e8e5 @ 0x7e8e5 [__watcall]
+// replay_button_at @ 0x7e8e5 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_7e8e5(int param_1,int unaff_EDX,int *unaff_EBX)
+undefined4 __watcall replay_button_at(int param_1,int unaff_EDX,int *unaff_EBX)
 
 {
   int iVar1;
@@ -3234,10 +3234,10 @@ undefined4 __watcall sub_7e8e5(int param_1,int unaff_EDX,int *unaff_EBX)
 
 
 // ================================================================================================
-// sub_7e93e @ 0x7e93e [__watcall]
+// replay_sprite_at @ 0x7e93e [__watcall]
 // ================================================================================================
 
-int __watcall sub_7e93e(int param_1,int unaff_EDX)
+int __watcall replay_sprite_at(int param_1,int unaff_EDX)
 
 {
   int iVar1;
@@ -3313,7 +3313,7 @@ undefined8 __watcall replay_control_loop(int *param_1,undefined4 unaff_EDX)
   }
   uVar3 = dword_ed6fc;
   if (dword_ed6fc != 0) {
-    iVar2 = sub_7e8e5(dword_ed6e0,dword_ed6dc,&local_28);
+    iVar2 = replay_button_at(dword_ed6e0,dword_ed6dc,&local_28);
     if ((iVar2 == 0) || ((dword_ed6f8 != 0 && (local_28 == 7)))) {
       uVar3 = 0;
     }
@@ -3359,7 +3359,7 @@ LAB_0007ec02:
     if (uVar3 < 4) {
 LAB_0007eca1:
       if ((dword_ed6dc < 0xa8) &&
-         (dword_ed74c = sub_7e93e(_dword_ed704,_dword_ed708), (uStack_1c & 2) != 0)) {
+         (dword_ed74c = replay_sprite_at(_dword_ed704,_dword_ed708), (uStack_1c & 2) != 0)) {
         if (dword_ed74c == -1) {
           dword_ed70c = 1;
           dword_cd4fa._2_2_ = 0xffff;
@@ -3528,7 +3528,7 @@ LAB_0007eec9:
     local_28 = 0;
     do {
       if ((dword_ed754 & 1 << ((byte)local_28 & 0x1f)) != 0) {
-        sub_7e067(local_28);
+        replay_draw_button(local_28);
       }
       local_28 = local_28 + 1;
     } while ((int)local_28 < 9);
@@ -3544,7 +3544,7 @@ LAB_0007eec9:
     select_game_surface();
     setclip(0,0x140,0,0x20);
     blit_rle_frame(dword_ed6e4,0,0);
-    sub_7e067(2);
+    replay_draw_button(2);
     drawshape_remap(pointer_shapes,dword_ed6e0,dword_ed6dc + -0xa8);
   }
   *param_1 = iVar7;
@@ -3623,7 +3623,7 @@ void __watcall replay_menu(undefined4 param_1,undefined4 unaff_EDX,undefined4 un
   select_game_surface();
   setclip(0xc2,0xf0,0,0x20);
   sub_b500c(dword_ed6e4,0,0);
-  sub_7e067(7);
+  replay_draw_button(7);
   setdefaultscreen();
   setclip(0,0x140,0,200);
   puVar2 = (undefined4 *)

@@ -4102,7 +4102,7 @@ sub_8dbc0:
 
 ; ====================================================================================================
 ; sub_8dbd4  [0x8dbd4, 7 bytes, 3 instructions]
-; called by: sub_83459, loadpatches, sub_8ee4f, loadsound, sub_8fb24, playsample, savefileblocka, sub_96844, sub_96e7c, sub_9d090
+; called by: sub_83459, loadpatches, load_timbre_file, loadsound, sub_8fb24, playsample, savefileblocka, sub_96844, sub_96e7c, sub_9d090
 ; ====================================================================================================
 sub_8dbd4:
     mov eax, dword ptr [esp + 4]                 ; 08dbd4 8b442404
@@ -5113,7 +5113,7 @@ loc_8e4b8:
 ; addtimer  [0x8e4c0, 55 bytes, 16 instructions]
 ; registers a timer callback ("addtimer - LIST FULL")
 ; annotations: external
-; called by: main, sub_1b0f3, loading_screen, ui_init, sub_8357a, sub_8eb5b
+; called by: main, sub_1b0f3, loading_screen, ui_init, sub_8357a, sound_timer_install
 ;   uses string "addtimer - LIST FULL\n"
 ; ====================================================================================================
 addtimer:
@@ -5144,7 +5144,7 @@ loc_8e4e9:
 ; ====================================================================================================
 ; removetimer  [0x8e4f8, 45 bytes, 17 instructions]
 ; annotations: external
-; called by: sub_1b18b, wait_sprite_fade, ui_shutdown, sub_8363c, sub_8eb93
+; called by: sub_1b18b, wait_sprite_fade, ui_shutdown, sub_8363c, sound_shutdown
 ; ====================================================================================================
 removetimer:
     push esi                                     ; 08e4f8 56
@@ -5851,7 +5851,7 @@ setfontstate:
 ; setfont  [0x8ea18, 212 bytes, 61 instructions]
 ; selects a loaded .VFN font
 ; annotations: external
-; called by: main, sub_10f6d, game_loop, awards_screen, credits_screen, pause_menu, sub_1a817, sub_1b982, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen (+28 more)
+; called by: main, sub_10f6d, game_loop, awards_screen, credits_screen, pause_menu, menu_go_to_replay, sub_1b982, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen (+28 more)
 ; ====================================================================================================
 setfont:
     mov edx, dword ptr [esp + 4]                 ; 08ea18 8b542404
@@ -6018,20 +6018,21 @@ loc_8eb59:
 
 
 ; ====================================================================================================
-; sub_8eb5b  [0x8eb5b, 56 bytes, 18 instructions]
+; sound_timer_install  [0x8eb5b, 56 bytes, 18 instructions]
+; installs the sound timer
 ; called by: load_sound_config
 ; ====================================================================================================
-sub_8eb5b:
+sound_timer_install:
     push ebx                                     ; 08eb5b 53
     push ecx                                     ; 08eb5c 51
     push edx                                     ; 08eb5d 52
-    call sub_8eb93                               ; 08eb5e e830000000
-    push sub_98f11                               ; 08eb63 68118f0900
+    call sound_shutdown                          ; 08eb5e e830000000
+    push sound_timer                             ; 08eb63 68118f0900
     call addtimer                                ; 08eb68 e853f9ffff
     add esp, 4                                   ; 08eb6d 83c404
     cmp byte ptr [byte_d41cc], 0                 ; 08eb70 803dcc410d0000
     jne loc_8eb8d                                ; 08eb77 7514
-    push sub_8eb93                               ; 08eb79 6893eb0800
+    push sound_shutdown                          ; 08eb79 6893eb0800
     call sub_b3454                               ; 08eb7e e8d1480200
     add esp, 4                                   ; 08eb83 83c404
     mov byte ptr [byte_d41cc], 1                 ; 08eb86 c605cc410d0001
@@ -6044,14 +6045,15 @@ loc_8eb8d:
 
 
 ; ====================================================================================================
-; sub_8eb93  [0x8eb93, 79 bytes, 29 instructions]
-; called by: load_cfg_palette, load_sound_config, sub_8eb5b
+; sound_shutdown  [0x8eb93, 79 bytes, 29 instructions]
+; removes the sound timer, resets the drivers, unloads the songs
+; called by: load_cfg_palette, load_sound_config, sound_timer_install
 ; ====================================================================================================
-sub_8eb93:
+sound_shutdown:
     push ebx                                     ; 08eb93 53
     push ecx                                     ; 08eb94 51
     push edx                                     ; 08eb95 52
-    push sub_98f11                               ; 08eb96 68118f0900
+    push sound_timer                             ; 08eb96 68118f0900
     call removetimer                             ; 08eb9b e858f9ffff
     add esp, 4                                   ; 08eba0 83c404
     mov edx, dword ptr [dword_d4f64]             ; 08eba3 8b15644f0d00
@@ -6071,11 +6073,11 @@ loc_8ebbb:
     shl eax, 2                                   ; 08ebbd c1e002
     sub eax, edx                                 ; 08ebc0 29d0
     mov eax, dword ptr [eax*8 + unk_edcfc]       ; 08ebc2 8b04c5fcdc0e00
-    call sub_8f1fe                               ; 08ebc9 e830060000
+    call kms_unload                              ; 08ebc9 e830060000
     inc edx                                      ; 08ebce 42
     cmp edx, 0xd                                 ; 08ebcf 83fa0d
     jl loc_8ebbb                                 ; 08ebd2 7ce7
-    call sub_8edd2                               ; 08ebd4 e8f9010000
+    call unload_patches                          ; 08ebd4 e8f9010000
     call sub_8ebe2                               ; 08ebd9 e804000000
     pop edx                                      ; 08ebde 5a
     pop ecx                                      ; 08ebdf 59
@@ -6085,7 +6087,7 @@ loc_8ebbb:
 
 ; ====================================================================================================
 ; sub_8ebe2  [0x8ebe2, 222 bytes, 73 instructions]
-; called by: sub_8eb93
+; called by: sound_shutdown
 ; ====================================================================================================
 sub_8ebe2:
     push ebx                                     ; 08ebe2 53
@@ -6197,7 +6199,7 @@ loadpatches:
     sub esp, 0x14                                ; 08ecc3 83ec14
     mov ecx, eax                                 ; 08ecc6 89c1
     mov esi, edx                                 ; 08ecc8 89d6
-    call sub_8edd2                               ; 08ecca e803010000
+    call unload_patches                          ; 08ecca e803010000
     cmp byte ptr [ecx], 0                        ; 08eccf 803900
     jne loc_8ecde                                ; 08ecd2 750a
     mov eax, 0xfffffffb                          ; 08ecd4 b8fbffffff
@@ -6242,11 +6244,11 @@ loc_8ed0a:
     call sprintf                                 ; 08ed4b e89a1d0000
     add esp, 0x10                                ; 08ed50 83c410
     mov eax, esp                                 ; 08ed53 89e0
-    call sub_8ee2f                               ; 08ed55 e8d5000000
+    call load_patch_file                         ; 08ed55 e8d5000000
     mov dword ptr [dword_f23ea], eax             ; 08ed5a a3ea230f00
     test eax, eax                                ; 08ed5f 85c0
     jne loc_8ed6f                                ; 08ed61 750c
-    call sub_8edd2                               ; 08ed63 e86a000000
+    call unload_patches                          ; 08ed63 e86a000000
     mov eax, 0xfffffffe                          ; 08ed68 b8feffffff
     jmp loc_8edcb                                ; 08ed6d eb5c
 
@@ -6269,11 +6271,11 @@ loc_8ed73:
     mov edx, unk_f2416                           ; 08ed94 ba16240f00
     add edx, ecx                                 ; 08ed99 01ca
     mov eax, esp                                 ; 08ed9b 89e0
-    call sub_8ee4f                               ; 08ed9d e8ad000000
+    call load_timbre_file                        ; 08ed9d e8ad000000
     mov dword ptr [ecx + unk_f23ee], eax         ; 08eda2 8981ee230f00
     test eax, eax                                ; 08eda8 85c0
     jne loc_8edb8                                ; 08edaa 750c
-    call sub_8edd2                               ; 08edac e821000000
+    call unload_patches                          ; 08edac e821000000
     mov eax, 0xfffffffd                          ; 08edb1 b8fdffffff
     jmp loc_8edcb                                ; 08edb6 eb13
 
@@ -6284,7 +6286,7 @@ loc_8edb9:
     mov al, byte ptr [byte_f23cf]                ; 08edbb a0cf230f00
     cmp ebx, eax                                 ; 08edc0 39c3
     jl loc_8ed73                                 ; 08edc2 7caf
-    call sub_8efbb                               ; 08edc4 e8f2010000
+    call bind_patch_timbres                      ; 08edc4 e8f2010000
     xor eax, eax                                 ; 08edc9 31c0
 loc_8edcb:
     add esp, 0x14                                ; 08edcb 83c414
@@ -6295,10 +6297,11 @@ loc_8edcb:
 
 
 ; ====================================================================================================
-; sub_8edd2  [0x8edd2, 93 bytes, 28 instructions]
-; called by: sub_8eb93, loadpatches
+; unload_patches  [0x8edd2, 93 bytes, 28 instructions]
+; frees the patch and timbre files
+; called by: sound_shutdown, loadpatches
 ; ====================================================================================================
-sub_8edd2:
+unload_patches:
     push ecx                                     ; 08edd2 51
     push edx                                     ; 08edd3 52
     push esi                                     ; 08edd4 56
@@ -6334,10 +6337,11 @@ loc_8ee2b:
 
 
 ; ====================================================================================================
-; sub_8ee2f  [0x8ee2f, 20 bytes, 7 instructions]
+; load_patch_file  [0x8ee2f, 20 bytes, 7 instructions]
+; loads the .PAT file
 ; called by: loadpatches
 ; ====================================================================================================
-sub_8ee2f:
+load_patch_file:
     push edx                                     ; 08ee2f 52
     mov edx, eax                                 ; 08ee30 89c2
     mov eax, 2                                   ; 08ee32 b802000000
@@ -6349,7 +6353,7 @@ sub_8ee2f:
 
 ; ====================================================================================================
 ; sub_8ee43  [0x8ee43, 12 bytes, 5 instructions]
-; called by: sub_8edd2
+; called by: unload_patches
 ; ====================================================================================================
 sub_8ee43:
     push eax                                     ; 08ee43 50
@@ -6360,10 +6364,11 @@ sub_8ee43:
 
 
 ; ====================================================================================================
-; sub_8ee4f  [0x8ee4f, 257 bytes, 80 instructions]
+; load_timbre_file  [0x8ee4f, 257 bytes, 80 instructions]
+; loads a .TIM and finds the samples of its digital timbres in the .DIG
 ; called by: loadpatches
 ; ====================================================================================================
-sub_8ee4f:
+load_timbre_file:
     push ebx                                     ; 08ee4f 53
     push ecx                                     ; 08ee50 51
     push esi                                     ; 08ee51 56
@@ -6378,7 +6383,7 @@ sub_8ee4f:
     mov dword ptr [esp + 4], eax                 ; 08ee6a 89442404
     test eax, eax                                ; 08ee6e 85c0
     je loc_8ef47                                 ; 08ee70 0f84d1000000
-    call sub_8ef50                               ; 08ee76 e8d5000000
+    call timbre_bank_add                         ; 08ee76 e8d5000000
     cmp byte ptr [byte_d41cd], 0                 ; 08ee7b 803dcd410d0000
     je loc_8ee8b                                 ; 08ee82 7407
     mov edx, 0x6769642e                          ; 08ee84 ba2e646967
@@ -6460,10 +6465,11 @@ loc_8ef4a:
 
 
 ; ====================================================================================================
-; sub_8ef50  [0x8ef50, 38 bytes, 18 instructions]
-; called by: sub_8ee4f
+; timbre_bank_add  [0x8ef50, 38 bytes, 18 instructions]
+; registers a loaded .TIM
+; called by: load_timbre_file
 ; ====================================================================================================
-sub_8ef50:
+timbre_bank_add:
     push ebx                                     ; 08ef50 53
     push edx                                     ; 08ef51 52
     mov ebx, eax                                 ; 08ef52 89c3
@@ -6489,12 +6495,12 @@ loc_8ef6d:
 
 ; ====================================================================================================
 ; sub_8ef76  [0x8ef76, 27 bytes, 9 instructions]
-; called by: sub_8edd2
+; called by: unload_patches
 ; ====================================================================================================
 sub_8ef76:
     push eax                                     ; 08ef76 50
     push edx                                     ; 08ef77 52
-    call sub_8ef91                               ; 08ef78 e814000000
+    call timbre_bank_remove                      ; 08ef78 e814000000
     lea eax, [esp + 4]                           ; 08ef7d 8d442404
     call sub_8ff1e                               ; 08ef81 e8980f0000
     mov eax, esp                                 ; 08ef86 89e0
@@ -6504,10 +6510,11 @@ sub_8ef76:
 
 
 ; ====================================================================================================
-; sub_8ef91  [0x8ef91, 42 bytes, 22 instructions]
+; timbre_bank_remove  [0x8ef91, 42 bytes, 22 instructions]
+; unregisters a .TIM
 ; called by: sub_8ef76
 ; ====================================================================================================
-sub_8ef91:
+timbre_bank_remove:
     push ebx                                     ; 08ef91 53
     push edx                                     ; 08ef92 52
     push esi                                     ; 08ef93 56
@@ -6536,10 +6543,11 @@ loc_8efb1:
 
 
 ; ====================================================================================================
-; sub_8efbb  [0x8efbb, 284 bytes, 85 instructions]
+; bind_patch_timbres  [0x8efbb, 284 bytes, 85 instructions]
+; links the .PAT records to their timbres (key 0x80 type 0 program) and drivers
 ; called by: loadpatches
 ; ====================================================================================================
-sub_8efbb:
+bind_patch_timbres:
     push ebx                                     ; 08efbb 53
     push ecx                                     ; 08efbc 51
     push edx                                     ; 08efbd 52
@@ -6650,7 +6658,7 @@ loc_8f0cf:
 ; ====================================================================================================
 ; snd_patch_record  [0x8f0d7, 61 bytes, 24 instructions]
 ; record of a sound id in the loaded .PAT bank (256 byte id map at +2, 0x14 byte records from +0x102)
-; called by: sub_8efbb, sub_8f114, snd_play_patch, sub_990cb, sub_9e026, sub_9fc24, sub_a08d7
+; called by: bind_patch_timbres, snd_patch_timbre, snd_play_patch, kms_track_tick, sub_9e026, sub_9fc24, sub_a08d7
 ; ====================================================================================================
 snd_patch_record:
     push ds                                      ; 08f0d7 1e
@@ -6683,10 +6691,11 @@ loc_8f0eb:
 
 
 ; ====================================================================================================
-; sub_8f114  [0x8f114, 39 bytes, 15 instructions]
+; snd_patch_timbre  [0x8f114, 39 bytes, 15 instructions]
+; the timbre pointer (+0x10) of a sound id's patch record
 ; called by: sub_9d700, sub_9d858
 ; ====================================================================================================
-sub_8f114:
+snd_patch_timbre:
     push ds                                      ; 08f114 1e
     call sub_902a0                               ; 08f115 e886110000
     cmp dword ptr [snd_patch_bank], 0            ; 08f11a 833d5cde0e0000
@@ -6709,7 +6718,7 @@ loc_8f127:
 ; ====================================================================================================
 ; music_load_kms  [0x8f13b, 195 bytes, 65 instructions]
 ; loads a .KMS music sequence and its .CFG into a free music slot
-; called by: awards_screen, ea_sports_intro, credits_screen, boxscore_screen, team_select_screen2, load_music_banks, load_sound_config, sub_8f48f
+; called by: awards_screen, ea_sports_intro, credits_screen, boxscore_screen, team_select_screen2, load_music_banks, load_sound_config, kms_load_start
 ;   uses string "KMS"
 ;   uses string "CFG"
 ; ====================================================================================================
@@ -6723,7 +6732,7 @@ music_load_kms:
     sub esp, 0x10                                ; 08f141 83ec10
     mov ebp, eax                                 ; 08f144 89c5
     xor eax, eax                                 ; 08f146 31c0
-    call sub_8f247                               ; 08f148 e8fa000000
+    call kms_find_song                           ; 08f148 e8fa000000
     test eax, eax                                ; 08f14d 85c0
     jge loc_8f158                                ; 08f14f 7d07
 loc_8f151:
@@ -6791,18 +6800,19 @@ loc_8f1f8:
 
 
 ; ====================================================================================================
-; sub_8f1fe  [0x8f1fe, 73 bytes, 26 instructions]
-; called by: awards_screen, ea_sports_intro, credits_screen, boxscore_screen, team_select_screen2, sub_7dec8, load_sound_config, sub_8eb93
+; kms_unload  [0x8f1fe, 73 bytes, 26 instructions]
+; stops a song and frees its KMS and CFG
+; called by: awards_screen, ea_sports_intro, credits_screen, boxscore_screen, team_select_screen2, sub_7dec8, load_sound_config, sound_shutdown
 ; ====================================================================================================
-sub_8f1fe:
+kms_unload:
     push ebx                                     ; 08f1fe 53
     push edx                                     ; 08f1ff 52
     mov edx, eax                                 ; 08f200 89c2
     cmp eax, 0x200                               ; 08f202 3d00020000
     jb loc_8f244                                 ; 08f207 723b
-    call sub_8f67d                               ; 08f209 e86f040000
+    call snd_stop_handle                         ; 08f209 e86f040000
     mov eax, edx                                 ; 08f20e 89d0
-    call sub_8f247                               ; 08f210 e832000000
+    call kms_find_song                           ; 08f210 e832000000
     test eax, eax                                ; 08f215 85c0
     jl loc_8f244                                 ; 08f217 7c2b
     mov edx, eax                                 ; 08f219 89c2
@@ -6825,10 +6835,11 @@ loc_8f244:
 
 
 ; ====================================================================================================
-; sub_8f247  [0x8f247, 41 bytes, 20 instructions]
-; called by: music_load_kms, sub_8f1fe, sub_8f4a7
+; kms_find_song  [0x8f247, 41 bytes, 20 instructions]
+; slot of a song handle among the 13 loaded songs
+; called by: music_load_kms, kms_unload, kms_start
 ; ====================================================================================================
-sub_8f247:
+kms_find_song:
     push ecx                                     ; 08f247 51
     push edx                                     ; 08f248 52
     mov ecx, eax                                 ; 08f249 89c1
@@ -6855,13 +6866,14 @@ loc_8f262:
 
 
 ; ====================================================================================================
-; sub_8f270  [0x8f270, 10 bytes, 5 instructions]
+; kms_play  [0x8f270, 10 bytes, 5 instructions]
+; plays a loaded song (play_sample_by_ptr)
 ; called by: play_sfx, play_sample_by_ptr
 ; ====================================================================================================
-sub_8f270:
+kms_play:
     push ebx                                     ; 08f270 53
     xor ebx, ebx                                 ; 08f271 31db
-    call sub_8f4a7                               ; 08f273 e82f020000
+    call kms_start                               ; 08f273 e82f020000
     pop ebx                                      ; 08f278 5b
     ret                                          ; 08f279 c3
 
@@ -6879,7 +6891,7 @@ sub_8f27a:
     add ebx, eax                                 ; 08f289 01c3
     mov dword ptr [esp + 0x10], ebx              ; 08f28b 895c2410
     mov eax, edx                                 ; 08f28f 89d0
-    call sub_97166                               ; 08f291 e8d07e0000
+    call drv_index                               ; 08f291 e8d07e0000
     mov dword ptr [esp + 0x18], eax              ; 08f296 89442418
     test eax, eax                                ; 08f29a 85c0
     jl loc_8f4bd                                 ; 08f29c 0f8c1b020000
@@ -6900,7 +6912,7 @@ sub_8f27a:
 loc_8f2d7:
     cmp byte ptr [esp + 0x20], 0                 ; 08f2d7 807c242000
     je loc_8f420                                 ; 08f2dc 0f843e010000
-    call sub_8f433                               ; 08f2e2 e84c010000
+    call kms_alloc_track                         ; 08f2e2 e84c010000
     mov esi, eax                                 ; 08f2e7 89c6
     mov edi, eax                                 ; 08f2e9 89c7
     test eax, eax                                ; 08f2eb 85c0
@@ -6947,7 +6959,7 @@ loc_8f2f8:
     add ecx, ebx                                 ; 08f369 01d9
     xor eax, eax                                 ; 08f36b 31c0
     mov ax, word ptr [ecx]                       ; 08f36d 668b01
-    call sub_8f451                               ; 08f370 e8dc000000
+    call kms_track_channel                       ; 08f370 e8dc000000
     mov byte ptr [esi + 0x50], al                ; 08f375 884650
     xor eax, eax                                 ; 08f378 31c0
     mov al, byte ptr [esi + 0x50]                ; 08f37a 8a4650
@@ -6965,30 +6977,30 @@ loc_8f38d:
     mov dl, byte ptr [esi + 0x50]                ; 08f399 8a5650
     movzx ebp, al                                ; 08f39c 0fb6e8
     mov eax, ebp                                 ; 08f39f 89e8
-    call sub_9720b                               ; 08f3a1 e8657e0000
+    call drv_channel_config                      ; 08f3a1 e8657e0000
     xor ebx, ebx                                 ; 08f3a6 31db
     mov bl, byte ptr [ecx + 0xc]                 ; 08f3a8 8a590c
     xor edx, edx                                 ; 08f3ab 31d2
     mov dl, byte ptr [esi + 0x50]                ; 08f3ad 8a5650
     mov eax, ebp                                 ; 08f3b0 89e8
-    call sub_998a0                               ; 08f3b2 e8e9a40000
+    call snd_program_change                      ; 08f3b2 e8e9a40000
     xor ebx, ebx                                 ; 08f3b7 31db
     mov edx, 1                                   ; 08f3b9 ba01000000
     mov eax, esi                                 ; 08f3be 89f0
-    call sub_99522                               ; 08f3c0 e85da10000
+    call kms_controller                          ; 08f3c0 e85da10000
     xor ebx, ebx                                 ; 08f3c5 31db
     mov bl, byte ptr [ecx + 6]                   ; 08f3c7 8a5906
     mov edx, 7                                   ; 08f3ca ba07000000
     mov eax, esi                                 ; 08f3cf 89f0
-    call sub_99522                               ; 08f3d1 e84ca10000
+    call kms_controller                          ; 08f3d1 e84ca10000
     xor ebx, ebx                                 ; 08f3d6 31db
     mov bl, byte ptr [ecx + 7]                   ; 08f3d8 8a5907
     mov edx, 0xa                                 ; 08f3db ba0a000000
     mov eax, esi                                 ; 08f3e0 89f0
-    call sub_99522                               ; 08f3e2 e83ba10000
+    call kms_controller                          ; 08f3e2 e83ba10000
     mov edx, 0x4000                              ; 08f3e7 ba00400000
     mov eax, esi                                 ; 08f3ec 89f0
-    call sub_996b0                               ; 08f3ee e8bda20000
+    call kms_pitch_bend                          ; 08f3ee e8bda20000
 loc_8f3f3:
     mov byte ptr [edi + 1], 1                    ; 08f3f3 c6470101
     cmp dword ptr [esp], 0                       ; 08f3f7 833c2400
@@ -7017,10 +7029,11 @@ loc_8f42b:
 
 
 ; ====================================================================================================
-; sub_8f433  [0x8f433, 30 bytes, 13 instructions]
+; kms_alloc_track  [0x8f433, 30 bytes, 13 instructions]
+; a free 0x54 byte track record (24)
 ; called by: sub_8f27a
 ; ====================================================================================================
-sub_8f433:
+kms_alloc_track:
     push edx                                     ; 08f433 52
     mov eax, unk_f1a1c                           ; 08f434 b81c1a0f00
     xor edx, edx                                 ; 08f439 31d2
@@ -7041,10 +7054,11 @@ loc_8f44f:
 
 
 ; ====================================================================================================
-; sub_8f451  [0x8f451, 62 bytes, 25 instructions]
+; kms_track_channel  [0x8f451, 62 bytes, 25 instructions]
+; the first MIDI channel of a CFG channel mask
 ; called by: sub_8f27a
 ; ====================================================================================================
-sub_8f451:
+kms_track_channel:
     push ebx                                     ; 08f451 53
     push ecx                                     ; 08f452 51
     push edx                                     ; 08f453 52
@@ -7078,16 +7092,17 @@ loc_8f48a:
 
 
 ; ====================================================================================================
-; sub_8f48f  [0x8f48f, 19 bytes, 8 instructions]  <unreferenced>
+; kms_load_start  [0x8f48f, 19 bytes, 8 instructions]  <unreferenced>
+; music_load_kms and kms_start
 ; no references found
 ; ====================================================================================================
-sub_8f48f:
+kms_load_start:
     push ebx                                     ; 08f48f 53
     call music_load_kms                          ; 08f490 e8a6fcffff
     test eax, eax                                ; 08f495 85c0
     je loc_8f4a0                                 ; 08f497 7407
     xor ebx, ebx                                 ; 08f499 31db
-    call sub_8f4a7                               ; 08f49b e807000000
+    call kms_start                               ; 08f49b e807000000
 loc_8f4a0:
     pop ebx                                      ; 08f4a0 5b
     ret                                          ; 08f4a1 c3
@@ -7095,10 +7110,11 @@ loc_8f4a0:
     db 0xe8, 0x94, 0xfc, 0xff, 0xff ; 08f4a2 |.....| (unexplored)
 
 ; ====================================================================================================
-; sub_8f4a7  [0x8f4a7, 29 bytes, 12 instructions]
-; called by: sub_8f270, sub_8f48f
+; kms_start  [0x8f4a7, 29 bytes, 12 instructions]
+; starts the tracks of a loaded song on the first MIDI channel of each CFG mask
+; called by: kms_play, kms_load_start
 ; ====================================================================================================
-sub_8f4a7:
+kms_start:
     push ecx                                     ; 08f4a7 51
     push esi                                     ; 08f4a8 56
     push edi                                     ; 08f4a9 57
@@ -7106,7 +7122,7 @@ sub_8f4a7:
     sub esp, 0x24                                ; 08f4ab 83ec24
     push eax                                     ; 08f4ae 50
     push ebx                                     ; 08f4af 53
-    call sub_8f247                               ; 08f4b0 e892fdffff
+    call kms_find_song                           ; 08f4b0 e892fdffff
     test eax, eax                                ; 08f4b5 85c0
     jge sub_8f27a                                ; 08f4b7 0f8dbdfdffff
 loc_8f4bd:
@@ -7184,7 +7200,7 @@ loc_8f52b:
     mov ebx, ecx                                 ; 08f565 89cb
     mov edx, 3                                   ; 08f567 ba03000000
     mov eax, edi                                 ; 08f56c 89f8
-    call sub_997b7                               ; 08f56e e844a20000
+    call snd_queue_message                       ; 08f56e e844a20000
     push 0xff                                    ; 08f573 68ff000000
     push 0xff                                    ; 08f578 68ff000000
     push edi                                     ; 08f57d 57
@@ -7212,7 +7228,7 @@ loc_8f592:
     mov ebx, ecx                                 ; 08f5bd 89cb
     mov edx, 2                                   ; 08f5bf ba02000000
     mov eax, edi                                 ; 08f5c4 89f8
-    call sub_997b7                               ; 08f5c6 e8eca10000
+    call snd_queue_message                       ; 08f5c6 e8eca10000
     mov al, byte ptr [esp + 4]                   ; 08f5cb 8a442404
     or al, 0xb0                                  ; 08f5cf 0cb0
     mov byte ptr [ecx], al                       ; 08f5d1 8801
@@ -7222,7 +7238,7 @@ loc_8f592:
     mov ebx, ecx                                 ; 08f5de 89cb
     mov edx, 3                                   ; 08f5e0 ba03000000
     mov eax, edi                                 ; 08f5e5 89f8
-    call sub_997b7                               ; 08f5e7 e8cba10000
+    call snd_queue_message                       ; 08f5e7 e8cba10000
     push 0xff                                    ; 08f5ec 68ff000000
     push 0xff                                    ; 08f5f1 68ff000000
     push edi                                     ; 08f5f6 57
@@ -7232,7 +7248,7 @@ loc_8f592:
     mov edx, 0x7f                                ; 08f5ff ba7f000000
     mov eax, 0x24                                ; 08f604 b824000000
 loc_8f609:
-    call sub_99700                               ; 08f609 e8f2a00000
+    call snd_note_on                             ; 08f609 e8f2a00000
     cwde                                         ; 08f60e 98
     sub dword ptr [dword_d4f9a], 4               ; 08f60f 832d9a4f0d0004
 loc_8f616:
@@ -7263,7 +7279,7 @@ snd_play_sfx:
 ; ====================================================================================================
 ; sound_stopall  [0x8f633, 74 bytes, 25 instructions]
 ; annotations: external
-; called by: sub_10f6d, handle_hotkey, game_loop, start_period, simulate_game_offscreen
+; called by: sub_10f6d, handle_hotkey, game_loop, three_stars_sequence, simulate_game_offscreen
 ; ====================================================================================================
 sound_stopall:
     push ebx                                     ; 08f633 53
@@ -7299,10 +7315,11 @@ loc_8f679:
 
 
 ; ====================================================================================================
-; sub_8f67d  [0x8f67d, 305 bytes, 87 instructions]
-; called by: stop_crowd_loop, sub_8f1fe
+; snd_stop_handle  [0x8f67d, 305 bytes, 87 instructions]
+; stops a song (all notes off, volume 0) or the note of an effect
+; called by: stop_crowd_loop, kms_unload
 ; ====================================================================================================
-sub_8f67d:
+snd_stop_handle:
     push ebx                                     ; 08f67d 53
     push ecx                                     ; 08f67e 51
     push edx                                     ; 08f67f 52
@@ -7345,7 +7362,7 @@ loc_8f6e2:
     cmp ebp, dword ptr [ecx]                     ; 08f6e2 3b29
     jne loc_8f6ed                                ; 08f6e4 7507
     mov eax, ecx                                 ; 08f6e6 89c8
-    call sub_99620                               ; 08f6e8 e8339f0000
+    call snd_note_off                            ; 08f6e8 e8339f0000
 loc_8f6ed:
     add ecx, 0xc                                 ; 08f6ed 83c10c
     inc edi                                      ; 08f6f0 47
@@ -7371,7 +7388,7 @@ loc_8f70d:
     and eax, 0xff                                ; 08f726 25ff000000
     mov ebx, ecx                                 ; 08f72b 89cb
     mov edx, 3                                   ; 08f72d ba03000000
-    call sub_997b7                               ; 08f732 e880a00000
+    call snd_queue_message                       ; 08f732 e880a00000
     mov al, byte ptr [esi + 0x50]                ; 08f737 8a4650
     or al, 0xb0                                  ; 08f73a 0cb0
     mov byte ptr [ecx], al                       ; 08f73c 8801
@@ -7382,7 +7399,7 @@ loc_8f70d:
     and eax, 0xff                                ; 08f74b 25ff000000
     mov ebx, ecx                                 ; 08f750 89cb
     mov edx, 3                                   ; 08f752 ba03000000
-    call sub_997b7                               ; 08f757 e85ba00000
+    call snd_queue_message                       ; 08f757 e85ba00000
     mov byte ptr [esi + 1], 0                    ; 08f75c c6460100
     mov dword ptr [esi + 2], 0                   ; 08f760 c7460200000000
 loc_8f767:
@@ -7399,8 +7416,8 @@ loc_8f76b:
     and eax, 0xff                                ; 08f783 25ff000000
     mov ebx, ecx                                 ; 08f788 89cb
     mov edx, 3                                   ; 08f78a ba03000000
-    call sub_997b7                               ; 08f78f e823a00000
-    call sub_98f46                               ; 08f794 e8ad970000
+    call snd_queue_message                       ; 08f78f e823a00000
+    call sound_timer_tick                        ; 08f794 e8ad970000
     xor eax, eax                                 ; 08f799 31c0
     sub dword ptr [dword_d4f9a], 4               ; 08f79b 832d9a4f0d0004
 loc_8f7a2:
@@ -7409,10 +7426,11 @@ loc_8f7a2:
 
 
 ; ====================================================================================================
-; sub_8f7ae  [0x8f7ae, 96 bytes, 38 instructions]
+; kms_fade_out  [0x8f7ae, 96 bytes, 38 instructions]
+; fades a song out over n timer ticks
 ; called by: sub_59945
 ; ====================================================================================================
-sub_8f7ae:
+kms_fade_out:
     push ebx                                     ; 08f7ae 53
     push ecx                                     ; 08f7af 51
     push esi                                     ; 08f7b0 56
@@ -7458,10 +7476,11 @@ loc_8f7fa:
 
 
 ; ====================================================================================================
-; sub_8f80e  [0x8f80e, 56 bytes, 24 instructions]
+; kms_finished  [0x8f80e, 56 bytes, 24 instructions]
+; 1 when no track of the song runs any more
 ; called by: sub_59945, stop_crowd_loop, sfx_set_volume
 ; ====================================================================================================
-sub_8f80e:
+kms_finished:
     push ebx                                     ; 08f80e 53
     push edx                                     ; 08f80f 52
     mov ebx, eax                                 ; 08f810 89c3
@@ -7495,10 +7514,11 @@ loc_8f83e:
 
 
 ; ====================================================================================================
-; sub_8f846  [0x8f846, 56 bytes, 24 instructions]  <unreferenced>
+; kms_fade_done  [0x8f846, 56 bytes, 24 instructions]  <unreferenced>
+; 1 when no track of the song is fading
 ; no references found
 ; ====================================================================================================
-sub_8f846:
+kms_fade_done:
     push ebx                                     ; 08f846 53
     push edx                                     ; 08f847 52
     mov ebx, eax                                 ; 08f848 89c3
@@ -7532,10 +7552,11 @@ loc_8f876:
 
 
 ; ====================================================================================================
-; sub_8f87e  [0x8f87e, 57 bytes, 27 instructions]  <unreferenced>
+; kms_track_marker  [0x8f87e, 57 bytes, 27 instructions]  <unreferenced>
+; the marker (event 0xea) of a song's track on a channel
 ; no references found
 ; ====================================================================================================
-sub_8f87e:
+kms_track_marker:
     push ebx                                     ; 08f87e 53
     push ecx                                     ; 08f87f 51
     mov ecx, eax                                 ; 08f880 89c1
@@ -7571,10 +7592,11 @@ loc_8f8a9:
 
 
 ; ====================================================================================================
-; sub_8f8b7  [0x8f8b7, 101 bytes, 31 instructions]  <unreferenced>
+; music_mute  [0x8f8b7, 101 bytes, 31 instructions]  <unreferenced>
+; volume 0 on every track
 ; no references found
 ; ====================================================================================================
-sub_8f8b7:
+music_mute:
     push ebx                                     ; 08f8b7 53
     push ecx                                     ; 08f8b8 51
     push edx                                     ; 08f8b9 52
@@ -7602,7 +7624,7 @@ loc_8f8e6:
     mov ebx, ecx                                 ; 08f8fb 89cb
     mov edx, 3                                   ; 08f8fd ba03000000
     xor eax, eax                                 ; 08f902 31c0
-    call sub_997b7                               ; 08f904 e8ae9e0000
+    call snd_queue_message                       ; 08f904 e8ae9e0000
 loc_8f909:
     inc edi                                      ; 08f909 47
 loc_8f90a:
@@ -7613,10 +7635,11 @@ loc_8f90a:
 
 
 ; ====================================================================================================
-; sub_8f91c  [0x8f91c, 71 bytes, 29 instructions]  <unreferenced>
+; music_unmute  [0x8f91c, 71 bytes, 29 instructions]  <unreferenced>
+; restores the volume of every track
 ; no references found
 ; ====================================================================================================
-sub_8f91c:
+music_unmute:
     push ebx                                     ; 08f91c 53
     push ecx                                     ; 08f91d 51
     push edx                                     ; 08f91e 52
@@ -7637,7 +7660,7 @@ loc_8f929:
     mov bl, byte ptr [eax + unk_f234d]           ; 08f93d 8a984d230f00
     mov edx, 7                                   ; 08f943 ba07000000
     mov eax, ecx                                 ; 08f948 89c8
-    call sub_99522                               ; 08f94a e8d39b0000
+    call kms_controller                          ; 08f94a e8d39b0000
 loc_8f94f:
     inc esi                                      ; 08f94f 46
 loc_8f950:
@@ -7889,7 +7912,7 @@ sub_8fb24:
     mov ebp, ecx                                 ; 08fb30 89cd
     test edi, edi                                ; 08fb32 85ff
     je loc_8fb87                                 ; 08fb34 7451
-    call sub_97166                               ; 08fb36 e82b760000
+    call drv_index                               ; 08fb36 e82b760000
     mov dword ptr [esp], eax                     ; 08fb3b 890424
     test eax, eax                                ; 08fb3e 85c0
     jl loc_8fb87                                 ; 08fb40 7c45
@@ -7919,7 +7942,7 @@ loc_8fb72:
     mov ebx, eax                                 ; 08fb7c 89c3
     mov edx, esi                                 ; 08fb7e 89f2
     mov eax, edi                                 ; 08fb80 89f8
-    call sub_97268                               ; 08fb82 e8e1760000
+    call drv_play_sample                         ; 08fb82 e8e1760000
 loc_8fb87:
     add esp, 4                                   ; 08fb87 83c404
     pop ebp                                      ; 08fb8a 5d
@@ -7945,7 +7968,7 @@ playsample:
     mov ebp, ecx                                 ; 08fb9a 89cd
     test edi, edi                                ; 08fb9c 85ff
     je loc_8fb87                                 ; 08fb9e 74e7
-    call sub_97166                               ; 08fba0 e8c1750000
+    call drv_index                               ; 08fba0 e8c1750000
     mov dword ptr [esp], eax                     ; 08fba5 890424
     test eax, eax                                ; 08fba8 85c0
     jl loc_8fb87                                 ; 08fbaa 7cdb
@@ -7977,7 +8000,7 @@ playsample:
 
 ; ====================================================================================================
 ; sub_8fbe5  [0x8fbe5, 82 bytes, 36 instructions]
-; called by: sub_832bc
+; called by: speech_timer
 ; ====================================================================================================
 sub_8fbe5:
     push esi                                     ; 08fbe5 56
@@ -7989,7 +8012,7 @@ sub_8fbe5:
     mov edx, ebx                                 ; 08fbef 89da
     test esi, esi                                ; 08fbf1 85f6
     je loc_8fc2e                                 ; 08fbf3 7439
-    call sub_97166                               ; 08fbf5 e86c750000
+    call drv_index                               ; 08fbf5 e86c750000
     mov dword ptr [esp], eax                     ; 08fbfa 890424
     test eax, eax                                ; 08fbfd 85c0
     jl loc_8fc2e                                 ; 08fbff 7c2d
@@ -8010,7 +8033,7 @@ sub_8fbe5:
     mov al, byte ptr [esp + 0x18]                ; 08fc21 8a442418
     xor ecx, ecx                                 ; 08fc25 31c9
     mov ebx, esi                                 ; 08fc27 89f3
-    call sub_97268                               ; 08fc29 e83a760000
+    call drv_play_sample                         ; 08fc29 e83a760000
 loc_8fc2e:
     add esp, 4                                   ; 08fc2e 83c404
 loc_8fc31:
@@ -8022,7 +8045,7 @@ loc_8fc31:
 
 ; ====================================================================================================
 ; sub_8fc37  [0x8fc37, 83 bytes, 37 instructions]
-; called by: sub_832bc
+; called by: speech_timer
 ; ====================================================================================================
 sub_8fc37:
     push esi                                     ; 08fc37 56
@@ -8034,7 +8057,7 @@ sub_8fc37:
     mov edx, ecx                                 ; 08fc40 89ca
     test esi, esi                                ; 08fc42 85f6
     je loc_8fc31                                 ; 08fc44 74eb
-    call sub_97166                               ; 08fc46 e81b750000
+    call drv_index                               ; 08fc46 e81b750000
     mov ecx, eax                                 ; 08fc4b 89c1
     test eax, eax                                ; 08fc4d 85c0
     jl loc_8fc31                                 ; 08fc4f 7ce0
@@ -8060,7 +8083,7 @@ sub_8fc37:
     xor ecx, ecx                                 ; 08fc7d 31c9
     mov ebx, esi                                 ; 08fc7f 89f3
     mov edx, edi                                 ; 08fc81 89fa
-    call sub_97268                               ; 08fc83 e8e0750000
+    call drv_play_sample                         ; 08fc83 e8e0750000
     jmp loc_8fc31                                ; 08fc88 eba7
 
 
@@ -8086,13 +8109,14 @@ loc_8fc9c:
 
 
 ; ====================================================================================================
-; sub_8fcac  [0x8fcac, 51 bytes, 22 instructions]
-; called by: sub_8378c, sub_837a8, sound_fade, sub_98f46
+; sound_channel_stop  [0x8fcac, 51 bytes, 22 instructions]
+; stops the sample of a sound channel (end of a fade)
+; called by: sub_8378c, sub_837a8, sound_fade, sound_timer_tick
 ; ====================================================================================================
-sub_8fcac:
+sound_channel_stop:
     push ebx                                     ; 08fcac 53
     push ecx                                     ; 08fcad 51
-    call sub_97166                               ; 08fcae e8b3740000
+    call drv_index                               ; 08fcae e8b3740000
     mov ecx, eax                                 ; 08fcb3 89c1
     test eax, eax                                ; 08fcb5 85c0
     jl loc_8fcdc                                 ; 08fcb7 7c23
@@ -8108,7 +8132,7 @@ sub_8fcac:
     xor eax, eax                                 ; 08fcd1 31c0
     mov al, cl                                   ; 08fcd3 88c8
     xor ecx, ecx                                 ; 08fcd5 31c9
-    call sub_97268                               ; 08fcd7 e88c750000
+    call drv_play_sample                         ; 08fcd7 e88c750000
 loc_8fcdc:
     pop ecx                                      ; 08fcdc 59
     pop ebx                                      ; 08fcdd 5b
@@ -8131,11 +8155,11 @@ sound_fade:
     mov dword ptr [esp], ebx                     ; 08fcea 891c24
     test ebx, ebx                                ; 08fced 85db
     jne loc_8fcf8                                ; 08fcef 7507
-    call sub_8fcac                               ; 08fcf1 e8b6ffffff
+    call sound_channel_stop                      ; 08fcf1 e8b6ffffff
     jmp loc_8fd5f                                ; 08fcf6 eb67
 
 loc_8fcf8:
-    call sub_97166                               ; 08fcf8 e869740000
+    call drv_index                               ; 08fcf8 e869740000
     mov edi, eax                                 ; 08fcfd 89c7
     test eax, eax                                ; 08fcff 85c0
     jl loc_8fd5f                                 ; 08fd01 7c5c
@@ -8180,7 +8204,7 @@ loc_8fd5f:
 ; ====================================================================================================
 sub_8fd67:
     push ebx                                     ; 08fd67 53
-    call sub_97166                               ; 08fd68 e8f9730000
+    call drv_index                               ; 08fd68 e8f9730000
     mov ebx, eax                                 ; 08fd6d 89c3
     test eax, eax                                ; 08fd6f 85c0
     jl loc_8fd82                                 ; 08fd71 7c0f
@@ -8210,7 +8234,7 @@ sub_8fd84:
     and eax, 0xff                                ; 08fd9d 25ff000000
     mov ebx, esp                                 ; 08fda2 89e3
     mov edx, 2                                   ; 08fda4 ba02000000
-    call sub_997b7                               ; 08fda9 e8099a0000
+    call snd_queue_message                       ; 08fda9 e8099a0000
 loc_8fdae:
     add esp, 4                                   ; 08fdae 83c404
     ret                                          ; 08fdb1 c3
@@ -8233,7 +8257,7 @@ sub_8fdb2:
     and eax, 0xff                                ; 08fdd0 25ff000000
     mov ebx, esp                                 ; 08fdd5 89e3
     mov edx, 3                                   ; 08fdd7 ba03000000
-    call sub_997b7                               ; 08fddc e8d6990000
+    call snd_queue_message                       ; 08fddc e8d6990000
 loc_8fde1:
     add esp, 4                                   ; 08fde1 83c404
     ret                                          ; 08fde4 c3
@@ -8258,7 +8282,7 @@ sub_8fde5:
     and eax, 0xff                                ; 08fe07 25ff000000
     mov ebx, esp                                 ; 08fe0c 89e3
     mov edx, 3                                   ; 08fe0e ba03000000
-    call sub_997b7                               ; 08fe13 e89f990000
+    call snd_queue_message                       ; 08fe13 e89f990000
 loc_8fe18:
     add esp, 4                                   ; 08fe18 83c404
     ret                                          ; 08fe1b c3
@@ -8281,7 +8305,7 @@ sub_8fe1c:
     and eax, 0xff                                ; 08fe3a 25ff000000
     mov ebx, esp                                 ; 08fe3f 89e3
     mov edx, 3                                   ; 08fe41 ba03000000
-    call sub_997b7                               ; 08fe46 e86c990000
+    call snd_queue_message                       ; 08fe46 e86c990000
 loc_8fe4b:
     add esp, 4                                   ; 08fe4b 83c404
     ret                                          ; 08fe4e c3
@@ -8305,7 +8329,7 @@ sub_8fe4f:
     and eax, 0xff                                ; 08fe6e 25ff000000
     mov ebx, esp                                 ; 08fe73 89e3
     mov edx, 3                                   ; 08fe75 ba03000000
-    call sub_997b7                               ; 08fe7a e838990000
+    call snd_queue_message                       ; 08fe7a e838990000
 loc_8fe7f:
     add esp, 4                                   ; 08fe7f 83c404
     ret                                          ; 08fe82 c3
@@ -8322,7 +8346,7 @@ sub_8fe83:
 
 ; ====================================================================================================
 ; sub_8fe89  [0x8fe89, 73 bytes, 31 instructions]
-; called by: sub_8ee4f, sub_8efbb
+; called by: load_timbre_file, bind_patch_timbres
 ; ====================================================================================================
 sub_8fe89:
     push ebx                                     ; 08fe89 53
@@ -8395,7 +8419,7 @@ sub_8fed2:
 
 ; ====================================================================================================
 ; sub_8ff1e  [0x8ff1e, 32 bytes, 17 instructions]
-; called by: sub_8ee43, sub_8ef76, music_load_kms, sub_8f1fe
+; called by: sub_8ee43, sub_8ef76, music_load_kms, kms_unload
 ; ====================================================================================================
 sub_8ff1e:
     push ebx                                     ; 08ff1e 53
@@ -8464,7 +8488,7 @@ sub_8ff5e:
 
 ; ====================================================================================================
 ; sub_8ff7c  [0x8ff7c, 52 bytes, 19 instructions]
-; called by: sub_8ee4f, loadsound
+; called by: load_timbre_file, loadsound
 ; ====================================================================================================
 sub_8ff7c:
     push ebx                                     ; 08ff7c 53
@@ -8766,7 +8790,7 @@ loc_9028a:
 
 ; ====================================================================================================
 ; sub_902a0  [0x902a0, 9 bytes, 2 instructions]
-; called by: sub_8e45c, snd_patch_record, sub_8f114, sub_972ab, sub_972b8, sub_972c0, sub_972c8, sub_972d5, sub_972dd, sub_972e5, sub_9d698, sub_9d6e6 (+38 more)
+; called by: sub_8e45c, snd_patch_record, snd_patch_timbre, sub_972ab, sub_972b8, sub_972c0, sub_972c8, sub_972d5, sub_972dd, sub_972e5, sub_9d698, sub_9d6e6 (+38 more)
 ; ====================================================================================================
 sub_902a0:
     mov ds, word ptr cs:[word_90048]             ; 0902a0 662e8e1d48000900
@@ -10195,7 +10219,7 @@ loc_90ce3:
 ; ====================================================================================================
 ; read_bytes  [0x90cea, 42 bytes, 17 instructions]  <int21h>
 ; read_bytes(fd, count, buffer)
-; called by: file_read, sub_1466b, read_be32, read_clip_name, speech_load_bank, sub_83bf3, sub_83d78, sub_b0a14
+; called by: file_read, sub_1466b, read_be32, read_clip_name, speech_load_bank, speech_delta_decode, sub_83d78, sub_b0a14
 ; ====================================================================================================
 read_bytes:
     push 0x3f00                                  ; 090cea 68003f0000
