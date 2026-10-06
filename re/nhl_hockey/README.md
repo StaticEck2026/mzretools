@@ -135,9 +135,11 @@ Key facts for a reimplementation:
 The game loads everything through a small set of loaders, so assets can be converted with standalone tools.
 The complete game directory is committed next to this file (`*.PPV`, `*.QFS`, `*.TIL/.MAP`, `*.VFN`, `*.DB`,
 `*.BIN`, the sound driver banks, `XBRUCE2.VIV`, ...), and every reader in `tools/nhl/formats.py` has been verified
-against it; [FORMATS.md](FORMATS.md) has the exact layouts. `tools/nhl/nhltool.py` exports shapes and sprite
-frames in team colours (`shapes`, `sprites`), the rink with a team's logo (`rinkfull`), fonts (`font`), the
-sound effects (`dig`) and the speech bank (`viv`).
+against it; [FORMATS.md](FORMATS.md) has the exact layouts. The pack codes no file uses and the CMV movies (on the
+CD only) are checked against the game's own decoders instead, run in an emulator by `tools/nhl/test_pack.py`.
+`tools/nhl/nhltool.py` exports shapes and sprite frames in team colours (`shapes`, `sprites`), the rink with a
+team's logo (`rinkfull`), fonts (`font`), the sound effects (`dig`), the speech bank (`viv`), the menu
+recordings (`wav`) and movie frames (`cmv`), and lists the league files (`schedule`, `gsummary`, `cfg`).
 
 | Format | Loader(s) | Notes |
 |---|---|---|
@@ -153,6 +155,7 @@ sound effects (`dig`) and the speech bank (`viv`).
 | `.db`, `.dbx`, `.org`, `.HI`, `.SET`, `.sav` | `db_open_files`, `db_load_team_roster`, `db_read_player`, `savegame_io` ... | databases and saves: `teams.db` (28 teams, rosters as offsets into `key.db`, line tables), `key.db` (player names, numbers, positions), `att.db` (ratings), `career.db`, `season.db`, `carteams.db`, `schedule.db`, `gsummary.db`, `game.set`, `game.sav`, league directories `*.nhl`, `*.po`, `*.lp` |
 | `RINK.QFS`, `TEAM.til` / `.map` | `load_rink`, `load_rink_tiles` | the 384x592 rink surface and the 8x8 tile maps of the 26 centre ice logos |
 | `nhl.cfg`, `ALLFILES.TXT` | `load_nhl_cfg`, `load_cfg_palette` | installation path configuration and file list |
+| `TITLE.CMV`, `CLIPnnnn.CMV` | `ea_sports_intro`, `cmv_play`, `cmv_next_frame`, `cmv_decode_frame` | the intro and the coach clip movies (on the CD): little endian chunks `MVIh` / `MVIf` / `MVIe`, 4x4 blocks copied from the two previous frames or stored |
 
 Sprite animation sequences are referenced by name (table around `0xc1e00`): skater `skate`, `glide`,
 `turnl/turnr`, `stop`, `passf/passb`, `shotf/shotb`, `onetimef/b`, `fakeshotf/b`, `sweepchk`,

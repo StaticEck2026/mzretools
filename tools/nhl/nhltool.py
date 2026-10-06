@@ -15,6 +15,10 @@
 #   nhltool.py rinkfull GAMEDIR OUT.png    the rink surface with the home team's centre ice logo
 #   nhltool.py dig GAMEDIR OUTDIR          the digital sound effects (PCFF001.DIG) as WAV files
 #   nhltool.py kms FILE.KMS [--events]     the tracks (and events) of a song of the music driver
+#   nhltool.py schedule FILE [--all]       the games of SCHEDULE.DB / LSSCHED.DB (--all: unplayed ones too)
+#   nhltool.py gsummary FILE               the events of GSUMMARY.DB
+#   nhltool.py cfg NHL.CFG                 the sound card, CD drive and installed files
+#   nhltool.py cmv FILE.CMV [OUTDIR]       describe a movie (TITLE.CMV, CLIPnnnn.CMV), export its frames as PNG
 #
 import argparse
 import json
@@ -25,7 +29,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from formats import (ShapeBank, Font, load_sample, write_wav, read_viv_index, viv_clip, render_tile_map, read_kms,  # noqa: E402
                      write_png, unpack, pack_code, PackError, game_palette, mirrored_remap, SoundBank,
                      write_wav_pcm8, place_tile_map, team_abbreviations, read_schedule, read_gsummary,
-                     read_nhl_cfg, SCHEDULE_GAMES)
+                     read_nhl_cfg, SCHEDULE_GAMES, CmvPlayer)
 
 def read(path):
     with open(path, 'rb') as f:
@@ -277,6 +281,29 @@ def cmd_cfg(args):
     print(f"sound card {c['sound_card']} ({c['sound_card_name']}), CD drive {c['cd_drive']}, "
           f"{len(c['installed'])} files installed")
 
+def cmd_cmv(args):
+    '''Describes a CMV movie and exports its frames (colours outside the movie's palette range in gray)'''
+    player = CmvPlayer(read(args.file))
+    frames = player.decode()
+    h = player.header
+    if not h:
+        sys.exit('no MVIh chunk')
+    tags = {}
+    for t, _ in player.chunks:
+        tags[t] = tags.get(t, 0) + 1
+    print(f"{h['width']}x{h['height']}, {h['frames']} frames at {h['rate']} per second, block {h['block']}, "
+          f"colours {h['first_colour']}..{h['first_colour'] + h['colours'] - 1}, {player.segments} segments; chunks: "
+          + ' '.join(f'{t} {n}' for t, n in tags.items()))
+    if args.outdir:
+        os.makedirs(args.outdir, exist_ok=True)
+        pal = list(GRAY)
+        for i, (r, g, b) in enumerate(h['palette']):
+            if h['first_colour'] + i < 256:
+                pal[h['first_colour'] + i] = (r, g, b)
+        for i, px in enumerate(frames):
+            write_png(os.path.join(args.outdir, f'frame_{i:04d}.png'), h['width'], h['height'], px, pal)
+        print(f'wrote {len(frames)} frames to {args.outdir}')
+
 def main():
     ap = argparse.ArgumentParser(description='NHL Hockey (DOS) asset tool')
     sub = ap.add_subparsers(dest='cmd', required=True)
@@ -299,6 +326,7 @@ def main():
     p = sub.add_parser('schedule'); p.add_argument('file'); p.add_argument('--all', action='store_true'); p.set_defaults(fn=cmd_schedule)
     p = sub.add_parser('gsummary'); p.add_argument('file'); p.set_defaults(fn=cmd_gsummary)
     p = sub.add_parser('cfg'); p.add_argument('file'); p.set_defaults(fn=cmd_cfg)
+    p = sub.add_parser('cmv'); p.add_argument('file'); p.add_argument('outdir', nargs='?'); p.set_defaults(fn=cmd_cmv)
     args = ap.parse_args()
     args.fn(args)
 

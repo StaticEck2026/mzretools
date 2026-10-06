@@ -919,3 +919,103 @@ def read_nhl_cfg(text):
     card = int(lines[0], 16)
     return {'sound_card': card, 'sound_card_name': SOUND_CARDS[card] if card < len(SOUND_CARDS) else '?',
             'cd_drive': lines[1] if len(lines) > 1 else '', 'installed': lines[2:]}
+
+# ----------------------------------------------------------------------------------------------
+# CMV movies (TITLE.CMV, the coach clips clipNNNN.cmv): ea_sports_intro, cmv_play, cmv_* and the
+# chunk streamer iff_parse; no movie is part of the installation, the frame decoder is checked against
+# the game's cmv_decode_frame in an emulator (tools/nhl/test_pack.py)
+# ----------------------------------------------------------------------------------------------
+
+def read_cmv_chunks(data):
+    '''the chunks of a movie: 4 character tag, u32 LE size including the 8 byte header (iff_parse; a tag
+    starting with a digit 1..8 goes to a secondary stream). Returns [(tag, chunk bytes)]'''
+    out = []
+    pos = 0
+    while pos + 8 <= len(data):
+        tag = data[pos:pos + 4]
+        size = struct.unpack_from('<I', data, pos + 4)[0]
+        if size < 8:
+            break
+        out.append((tag.decode('latin-1'), data[pos:pos + size]))
+        pos += size
+    return out
+
+def read_cmv_header(chunk):
+    '''MVIh (cmv_load_palette; the field names are those of the library's mvi_print_info): +10 frames,
+    +12 width, +14 height, +16 block size, +18 frame rate (frames per second), +20 first colour, +22
+    colours, +24 the palette (8 bit RGB, shifted to 6 bits for the DAC)'''
+    f = struct.unpack_from('<7H', chunk, 10)
+    n = f[6]
+    return {'frames': f[0], 'width': f[1], 'height': f[2], 'block': f[3], 'rate': f[4], 'first_colour': f[5],
+            'colours': n, 'palette': [tuple(chunk[24 + 3 * i: 27 + 3 * i]) for i in range(n)]}
+
+def cmv_decode_frame(ops, data, prev, prev2, width, height):
+    '''cmv_decode_frame: one op byte per 4x4 block (row by row): op != 0xff copies the block of the previous
+    frame displaced by ((op & 15) - 7, (op >> 4) - 7); 0xff takes the next byte b of the data stream: b !=
+    0xff copies from the frame before the previous one displaced the same way, 0xff is followed by 16
+    literal pixels (4 rows of 4)'''
+    cur = bytearray(width * height)
+
+    def block(src, a):
+        # 4 bytes from a; the game reads past the frame there (a vector pointing outside), here zeros
+        if 0 <= a and a + 4 <= len(src):
+            return src[a:a + 4]
+        return bytes(src[i] if 0 <= i < len(src) else 0 for i in range(a, a + 4))
+    d = 0
+    k = 0
+    for by in range(0, height, 4):
+        for bx in range(0, width, 4):
+            op = ops[k]
+            k += 1
+            if op != 0xff:
+                src, mv = prev, op
+            else:
+                b = data[d]
+                d += 1
+                if b == 0xff:
+                    for r in range(4):
+                        o = (by + r) * width + bx
+                        cur[o:o + 4] = block(data, d)
+                        d += 4
+                    continue
+                src, mv = prev2, b
+            off = ((mv & 15) - 7) + ((mv >> 4) - 7) * width
+            for r in range(4):
+                o = (by + r) * width + bx
+                cur[o:o + 4] = block(src, o + off)
+    return bytes(cur), d
+
+class CmvPlayer:
+    '''decodes the frames of a movie: MVIh header (palette, size; starts a segment), MVIf frames (+8 u16 0 =
+    raw pixels from +10, else the ops of the blocks from +10 followed by the data stream), MVIe end of a
+    segment; three frames rotate (cmv_next_frame). The players stop at another tag; chunks of the secondary
+    streams (tag "1".."8") never reach them'''
+    def __init__(self, data):
+        self.chunks = read_cmv_chunks(data)
+        self.header = None
+        self.frames = []
+        self.segments = 0
+
+    def decode(self):
+        prev = prev2 = None
+        for tag, c in self.chunks:
+            if '1' <= tag[0] <= '8':
+                continue
+            if tag == 'MVIh':
+                self.header = read_cmv_header(c)
+                w, h = self.header['width'], self.header['height']
+                prev = prev2 = bytes(w * h)
+            elif tag == 'MVIf' and self.header:
+                w, h = self.header['width'], self.header['height']
+                if struct.unpack_from('<H', c, 8)[0] == 0:
+                    cur = bytes(c[10:10 + w * h])
+                else:
+                    nops = (w // 4) * (h // 4)
+                    cur, _ = cmv_decode_frame(c[10:10 + nops], c[10 + nops:], prev, prev2, w, h)
+                prev2, prev = prev, cur
+                self.frames.append(cur)
+            elif tag == 'MVIe':
+                self.segments += 1
+            else:
+                break
+        return self.frames

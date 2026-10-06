@@ -268,6 +268,40 @@ bytes per team: name, tile column, tile row, column/row of a second copy or -1) 
 EDM, LA, NJ and PIT store half of a symmetric logo and draw the second copy mirrored (flag 0x6000: right to
 left, bottom to top, every tile flipped). `nhltool.py rinkfull GAMEDIR OUT.png --home N` renders the result.
 
+## Movies (`ea_sports_intro`, `cmv_play`, `cmv_load_palette`, `cmv_next_frame`, `cmv_decode_frame`)
+
+Two kinds of movie, read from the CD unless the installation copied them (`NHL.CFG` lists none and none is in
+the game directory): `TITLE.CMV`, the intro after the EA SPORTS screen (`ea_sports_intro`: `EASCRN.QFS` with
+its 200x200 mask `msk1`, the title music `TITLE30.IFF` with digital sound, else the `MTTITLE` / `ADTITLE`
+song), and `CLIPnnnn.CMV`, a coach clip picked at random from `clip0001` .. `clip0050` (`coach_clip_player`,
+after the intermission box score, not in the all star game: backdrop `COACHCUT.QFS`, the sound `COACH.IFF`
+started on the first frame, the announcer's "coachclp" introduction). `cmv_play` shows a clip at (353, 84) of
+the 640x480 screen (a 228x176 area is cleared first). Both stream the file through the CD buffer of
+`cdstream_open` (300000 bytes, read in 0x2000 byte blocks, 1.5 s prefetched) and `iff_parse`. `mvi_*`
+(0x86690 ..) is a second implementation of the same block codec with its own file reader; `mvi_open` is never
+called. The layout below is from the code: `tools/nhl/test_pack.py` runs the game's `cmv_next_frame` on
+synthetic movies and compares the frames with `formats.CmvPlayer` (`nhltool.py cmv FILE [OUTDIR]` exports
+them as PNG).
+
+A movie is a sequence of chunks: a 4 character tag and a u32 *little endian* size including the 8 byte
+header (not IFF's big endian). `iff_parse` passes a chunk whose tag starts with a digit 1 .. 8 to that
+secondary buffer; the players only see the others and stop at an unknown tag:
+
+| Tag | Content |
+|---|---|
+| `MVIh` | header, starts a segment (`cmv_load_palette`, fresh frame buffers): +10 u16 frames, +12 width, +14 height, +16 block size (4; `mvi_print_info`'s "Block Size", not read by `cmv_*`), +18 frame rate (frames per second: a frame lasts 100 / rate ticks of the 100 Hz timer), +20 first colour, +22 number of colours, +24 the colours (3 bytes, 8 bit RGB, shifted right by 2 for the DAC) from the first colour on |
+| `MVIf` | a frame: +8 u16 0 = width x height raw pixels from +10; otherwise (width / 4) x (height / 4) op bytes from +10, one per 4x4 block row by row, then the data stream of the 0xff ops |
+| `MVIe` | end of a segment: the intro stops after the second, a coach clip after the third |
+
+Frame ops (`cmv_decode_frame`; offsets of the table `cmv_load_palette` builds at +0x2c of the cmv object):
+an op other than 0xff copies the block of the previous frame displaced by dx = (op & 15) - 7, dy = (op >> 4) - 7;
+0xff takes the next data byte b: b != 0xff copies from the frame before the previous one with the same
+displacement, b = 0xff is followed by the 16 pixels of the block (4 rows of 4). The displacement is the linear
+offset dx + dy * width, so a block at the left edge copies from the end of the row above. Three frame windows
+rotate (`cmv_next_frame`): the new frame is written into the oldest. Frames are always decoded but only drawn
+when the player is not behind its schedule; `cmv_play` decodes a segment's frames while the frame count of its
+`MVIh` is above 1 (it counts down per frame), the intro decodes every frame.
+
 ## Databases and saves
 
 | File | Layout |
@@ -283,7 +317,7 @@ left, bottom to top, every tile flipped). `nhltool.py rinkfull GAMEDIR OUT.png -
 | `*.nhl`, `*.po`, `*.lp` | league directories (exhibition, playoff, league) |
 | `NHL.CFG`, `ALLFILES.TXT` | `NHL.CFG` (`load_nhl_cfg`, `load_cfg_palette`, `load_sound_config`): line 1 the sound card as `%04x`, an index into the table at 0xd243a (0 none, 1 PC speaker, 2 AdLib, 3 Sound Blaster, 4 MT-32, 5 Gravis UltraSound; rewritten when the card changes), line 2 the CD drive letter (`ALLFILES.TXT` is read from its root), then the files copied to the hard disk; every other file of `ALLFILES.TXT` is read from the CD (`file_on_disk[]`). The installation's file: Sound Blaster, drive D, 441 files (`nhltool.py cfg NHL.CFG`). `SND.CFG` (one byte, 2) is not read by `HOCKEY.EXE` |
 | `*.HI` | saved instant replay highlights (`replay_save_highlight`) |
-| `*.cmv` | coach "clip" movies played between periods (`coach_clip_player`), IFF chunked (`iff_parse`) |
+| `TITLE.CMV`, `CLIPnnnn.CMV` | the intro and the coach clip movies (on the CD), see Movies |
 
 Settings block (`apply_settings`): +0 u32 flags, +4 league directory (13 chars), +0x11 and +0x31 strings, +0x51 home
 team id, +0x55 away team id, +0x59 option flags, +0x5d, +0x61, +0x65 controller of player 1 (0 none, 1 mouse,

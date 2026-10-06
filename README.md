@@ -444,11 +444,11 @@ Besides the map it can write an annotated listing (symbolic operands, callers, r
 
 ### leemu.py
 
-`leemu.py` runs routines of an LE executable in the Unicorn CPU emulator (`pip install unicorn`): the objects are mapped at their base addresses with the fixups applied, and `LEEmu.call(address, eax=..., edx=...)` calls a routine with the Watcom register convention. `tools/nhl/test_pack.py` uses it to run the game's own decompressors on test buffers and compare them with the Python reimplementations.
+`leemu.py` runs routines of an LE executable in the Unicorn CPU emulator (`pip install unicorn`): the objects are mapped at their base addresses with the fixups applied, and `LEEmu.call(address, eax=..., edx=...)` calls a routine with the Watcom register convention. `tools/nhl/test_pack.py` uses it to run the game's own decompressors and movie frame decoder on test buffers and compare them with the Python reimplementations.
 
 ### nhl/ and godot/
 
-`tools/nhl/nhltool.py` reads the data files of NHL Hockey using the formats recovered from the disassembly (RefPack and EA's other pack codes, SHPI shape banks, VFN fonts, 8SVX/RIFF samples, rink tile maps, VIV speech banks) and converts them to PNG/WAV; `tools/nhl/extract_tables.py` pulls the static tables (animation sequences, direction vectors, AI state names, ...) out of the executable into JSON. [godot/nhl_hockey](godot/nhl_hockey) is a Godot 4 project rebuilding the game from that material: it loads the original assets from the user's installation at runtime and ports the simulation routine by routine from the decompiled code.
+`tools/nhl/nhltool.py` reads the data files of NHL Hockey using the formats recovered from the disassembly (RefPack and EA's other pack codes, SHPI shape banks, VFN fonts, 8SVX/RIFF samples, rink tile maps, VIV speech banks, the league files, CMV movies) and converts them to PNG/WAV; `tools/nhl/extract_tables.py` pulls the static tables (animation sequences, direction vectors, AI state names, ...) out of the executable into JSON. [godot/nhl_hockey](godot/nhl_hockey) is a Godot 4 project rebuilding the game from that material: it loads the original assets from the user's installation at runtime and ports the simulation routine by routine from the decompiled code.
 
 ## other
 

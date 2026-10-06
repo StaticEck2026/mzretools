@@ -4,12 +4,14 @@
 # byte pair (46, the .BGP drivers) and the VIV speech code, so the other codes are exercised with the test
 # encoders below; with HOCKEY.EXE and the unicorn module the game's own decoders (refpack_decode,
 # bitlz_decode, bytepair_decode, delta_decode, pack7a_decode) run in an emulator on the same buffers and
-# their output is compared with formats.py.
+# their output is compared with formats.py. The same for the frame decoder of the CMV movies (no movie is
+# part of the installation): synthetic movies through formats.CmvPlayer and the game's cmv_next_frame.
 #
 #   test_pack.py [GAMEDIR]          (GAMEDIR with HOCKEY.EXE and the data files, default re/nhl_hockey)
 #
 import os
 import random
+import struct
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -204,6 +206,43 @@ def delta_compress(data, code=0x60):
         prev = b
     return bytes(out)
 
+def cmv_movie(width, height, frames, rate=15, palette=()):
+    '''a CMV movie: MVIh, the frames (raw pixels or (ops, data) of cmv_decode_frame), MVIe'''
+    def chunk(tag, body):
+        return tag + struct.pack('<I', len(body) + 8) + body
+    out = chunk(b'MVIh', bytes(2) + struct.pack('<7H', len(frames), width, height, 4, rate, 0, len(palette)) +
+                bytes(c for rgb in palette for c in rgb))
+    for f in frames:
+        if isinstance(f, tuple):
+            out += chunk(b'MVIf', struct.pack('<H', 1) + f[0] + f[1])
+        else:
+            out += chunk(b'MVIf', struct.pack('<H', 0) + f)
+    return out + chunk(b'MVIe', b'')
+
+def cmv_random_frame(rnd, width, height):
+    '''ops and data of a frame with every kind of block; the vectors stay inside the frame'''
+    ops, data = bytearray(), bytearray()
+
+    def vector(o):
+        while True:
+            mv = rnd.randrange(255)
+            off = ((mv & 15) - 7) + ((mv >> 4) - 7) * width
+            if 0 <= o + off and o + off + 3 * width + 4 <= width * height:
+                return mv
+    for by in range(0, height, 4):
+        for bx in range(0, width, 4):
+            o = by * width + bx
+            kind = rnd.randrange(3)
+            if kind == 0:
+                ops.append(vector(o))
+            elif kind == 1:
+                ops.append(0xff)
+                data.append(vector(o))
+            else:
+                ops.append(0xff)
+                data += bytes([0xff] + [rnd.randrange(256) for _ in range(16)])
+    return bytes(ops), bytes(data)
+
 # ----------------------------------------------------------------------------------------------
 
 def samples(gamedir):
@@ -287,6 +326,41 @@ def main():
             failures += not ok
             print(f'{"ok  " if ok else "FAIL"} {n}: {len(packed)} -> {len(data)} bytes' +
                   (f' ({routine} agrees)' if emu and ok else ''))
+    # CMV movies: formats.CmvPlayer and the game's cmv_next_frame / cmv_decode_frame on the same frames
+    rnd = random.Random(1995)
+    for w, h, n in ((32, 24, 8), (64, 48, 6), (228, 176, 3)):
+        frames = [bytes(rnd.randrange(256) for _ in range(w * h))]
+        frames += [cmv_random_frame(rnd, w, h) for _ in range(n - 1)]
+        frames.insert(3, bytes(rnd.randrange(256) for _ in range(w * h)))
+        movie = cmv_movie(w, h, frames)
+        player = formats.CmvPlayer(movie)
+        got = player.decode()
+        ok = len(got) == len(frames) and player.header['width'] == w
+        game = ''
+        if emu:
+            emu.free_all()
+            # the cmv object of cmv_load_palette with three windows of windowdefp: +0x20 stride,
+            # +0x28 the row offsets (row 0 at +0x10 of the shape), +0x2c the shape
+            rows = emu.alloc(struct.pack('<I', 0x10))
+            wins = []
+            for _ in range(3):
+                shape = emu.alloc(0x10 + w * h)
+                win = emu.alloc(0x40)
+                emu.write(win + 0x20, struct.pack('<I', w))
+                emu.write(win + 0x28, struct.pack('<II', rows, shape))
+                wins.append(win)
+            table = [((i & 15) - 7) + ((i >> 4) - 7) * w for i in range(256)]
+            cmv = emu.alloc(struct.pack('<11I', len(frames), w, h, 15, 4, 0, 0, 0, *wins) +
+                            struct.pack('<256i', *table))
+            agree = True
+            for (tag, c), mine in zip([x for x in formats.read_cmv_chunks(movie) if x[0] == 'MVIf'], got):
+                addr = emu.alloc(c + bytes(32))
+                shape = emu.call(J['cmv_next_frame'], eax=cmv, edx=addr)
+                agree = agree and emu.read(shape + 0x10, w * h) == mine
+            game = ' cmv_next_frame ' + ('agrees' if agree else 'DIFFERS')
+            ok = ok and agree
+        failures += not ok
+        print(f'{"ok  " if ok else "FAIL"} cmv {w}x{h}: {len(frames)} frames, {len(movie)} bytes{game}')
     print(f'{failures} failures' + ('' if emu else ' (without the emulator check)'))
     return 1 if failures else 0
 
