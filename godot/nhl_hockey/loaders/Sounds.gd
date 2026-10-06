@@ -1,5 +1,25 @@
 class_name Sounds
 ## IFF 8SVX / RIFF WAV samples as read by loadsound(), returned as AudioStreamWAV.
+##
+## The simulation queues the sample ids of the original (play_sfx -> sound id). Which file holds
+## which sample is not recoverable from the executable alone, so the mapping is a user editable
+## table: put the sample files of your installation into the game directory and name them here.
+## Known ids (from the code that queues them): 0x7d/0xa0 hit (away/home), 0x90 period horn,
+## 0x97 one minute warning, 0x98/0x99 pass (low/high), 0x9a slap shot, 0x9b puck pick up,
+## 0x9c goal horn, 0x9d/0xa3 puck hits a body/stick, 0xa1 big hit, 0xa2 stung by the puck,
+## 0xa4 whistle, 0xa6/0x96 crowd, 0xaa wrist shot, 0xab puck drop/bounce, 0xac post,
+## 0xad boards, 0xae glass, 0xb0/0xb2 skates, 0xb1 body into the boards.
+const SFX_FILES := {
+	0x9c: "goalhorn.snd",
+	0xa4: "whistle.snd",
+	0xab: "puckdrop.snd",
+	0xac: "post.snd",
+	0xad: "boards.snd",
+	0xaa: "wristshot.snd",
+	0x9a: "slapshot.snd",
+	0x99: "pass.snd",
+	0x90: "horn.snd",
+}
 
 static func load_sample(data: PackedByteArray) -> AudioStreamWAV:
 	if data.size() < 12:

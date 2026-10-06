@@ -605,7 +605,7 @@ void __watcall sub_190be(void)
   int iVar2;
   
   __CHK(0x14);
-  if (_dword_cbc44 >> 0x10 == -1) {
+  if (_penalty_box_mode >> 0x10 == -1) {
     wait_sprite_fade();
   }
   else {
@@ -639,7 +639,7 @@ void __watcall sub_190be(void)
       }
     }
   }
-  _dword_cbc44 = CONCAT22(0xffff,dword_cbc44);
+  _penalty_box_mode = CONCAT22(0xffff,penalty_box_mode);
   pause_menu(1);
   byte_c542f = 0;
   byte_c5430 = 0;

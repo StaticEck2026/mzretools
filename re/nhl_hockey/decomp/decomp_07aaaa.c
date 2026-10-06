@@ -1724,7 +1724,7 @@ undefined8 __watcall sub_7caf7(undefined4 param_1,undefined4 unaff_EDX)
   sub_7cea1();
   if ((((&unk_dff3a)[dword_dff36 >> 0x10] == '\x1b') && (extraout_EDX == 1)) &&
      ((iVar2 != 1 && (iVar5 != 1)))) {
-    word_dff42 = 0;
+    faceoff_timer = 0;
   }
   iVar4 = 1;
   do {
@@ -1835,7 +1835,7 @@ undefined8 __watcall sub_7cb9f(undefined4 param_1,undefined4 unaff_EDX)
   sub_7cea1();
   if ((((&unk_dff3a)[dword_dff36 >> 0x10] == '\x1b') && (extraout_EDX == 1)) &&
      ((iVar2 != 1 && (iVar5 != 1)))) {
-    word_dff42 = 0;
+    faceoff_timer = 0;
   }
   iVar4 = 1;
   do {
@@ -2114,7 +2114,7 @@ undefined8 __watcall sub_7cfb9(int param_1)
   sub_7cea1();
   if ((((&unk_dff3a)[dword_dff36 >> 0x10] == '\x1b') && (extraout_EDX == 1)) &&
      ((iVar3 != 1 && (iVar6 != 1)))) {
-    word_dff42 = 0;
+    faceoff_timer = 0;
   }
   iVar5 = 1;
   do {

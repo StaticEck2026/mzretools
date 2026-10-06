@@ -3540,7 +3540,7 @@ loc_7d07c:
     cmp ebx, edx                                 ; 07d0a2 39d3
     je loc_7d0af                                 ; 07d0a4 7409
     xor edx, edx                                 ; 07d0a6 31d2
-    mov word ptr [word_dff42], dx                ; 07d0a8 66891542ff0d00
+    mov word ptr [faceoff_timer], dx             ; 07d0a8 66891542ff0d00
 loc_7d0af:
     mov edx, 1                                   ; 07d0af ba01000000
 loc_7d0b4:

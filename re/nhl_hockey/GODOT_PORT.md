@@ -5,9 +5,11 @@ the disassembly is to make the *behaviour* of the original recoverable (simulati
 data formats); the DOS specific layer (DOS/4GW, VGA, PIT timer, port I/O, EA's memory manager) is replaced by the
 engine and does not need to be ported.
 
-The port itself has been started in [godot/nhl_hockey](../../godot/nhl_hockey) (Godot 4.3 project: asset
-loaders, static tables extracted from the EXE, entity records, animation, skating physics, controls, camera and
-the match view). [STRUCTURES.md](STRUCTURES.md) documents the data structures the port mirrors and
+The port itself lives in [godot/nhl_hockey](../../godot/nhl_hockey) (Godot 4.3 project): asset loaders, the
+static tables extracted from the EXE, entity and team records, animation, physics and collisions, controls, the
+puck handling (passes, shots, saves, deflections), the rules (stoppages, faceoffs, goals, offside, icing, the
+clock) and the AI state machine are translated from the decompiled routines; penalties, line changes and the
+ceremonies are the main parts still missing (see its README for the exact list). [STRUCTURES.md](STRUCTURES.md) documents the data structures the port mirrors and
 [FORMATS.md](FORMATS.md) the file formats its loaders (and `tools/nhl`) read.
 
 ## 1. What to port and what to replace

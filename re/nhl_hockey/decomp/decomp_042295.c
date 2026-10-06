@@ -2945,10 +2945,10 @@ void __watcall init_match(void)
   byte_e0308 = 0;
   byte_e028c = 0;
   byte_e0250 = 0;
-  dword_c90b2._2_2_ = 0;
+  faceoff_spot._2_2_ = 0;
   byte_e02c8 = 0;
   _period_num = 0xffffffff;
-  dword_c90b2._0_2_ = 0;
+  faceoff_spot._0_2_ = 0;
   _dword_c9100 = _dword_c9100 + (int)_away_team_id + user2_team._2_2_ * 0x10000;
   show_names = 0;
   dword_e9b04 = 0x708;
@@ -2960,15 +2960,15 @@ void __watcall init_match(void)
   local_28 = 0x47dc6;
   apply_line_change(0xdf614);
   local_28 = 0x47dd0;
-  sub_5e0dd(0xdf614);
+  dress_line(0xdf614);
   local_28 = 0x47dda;
   sub_5b826(0xdf714);
   local_28 = 0x47de4;
   apply_line_change(0xdf714);
   local_28 = 0x47dee;
-  sub_5e0dd(0xdf714);
+  dress_line(0xdf714);
   local_28 = 0x47df3;
-  sub_5e01a();
+  reset_players_for_faceoff();
   puVar8 = &unk_dfd9c;
   for (iStackY_18 = 0; (short)iStackY_18 < 2; iStackY_18 = iStackY_18 + 1) {
     for (sVar4 = 0; sVar4 < 5; sVar4 = sVar4 + 1) {
@@ -3064,7 +3064,7 @@ void __watcall init_match(void)
   word_e002e = 0x289;
   local_28 = 0x4801a;
   set_state(&referee,0x26);
-  dword_c90d4 = 0;
+  ref_phase = 0;
   action_flags = action_flags | 0x40;
   puVar9 = &local_28;
   local_28 = 0x4802d;
@@ -3073,7 +3073,7 @@ void __watcall init_match(void)
   *(undefined4 *)((int)puVar9 + -4) = 0x48032;
   sim_tick();
   *(undefined4 *)(puVar10 + -4) = 0x48037;
-  sub_5dd7c();
+  sort_draw_order2();
   dword_d8c6c = 0;
   control_steps_left = 0;
   *p_puck_carrier = 0xff;
@@ -3156,7 +3156,7 @@ code_r0x000480cc:
     read_control_p1();
     if (((dword_e03be._2_1_ & 0x10) != 0) || ((dword_e03be._2_1_ & 0x20) != 0)) {
 LAB_0004821a:
-      dword_cc0f0 = 1;
+      skip_faceoff_wait = 1;
       word_cbec4 = 1;
 LAB_0004824e:
       _input_enabled = 0;
@@ -3165,7 +3165,7 @@ LAB_0004824e:
         dword_cbeca = CONCAT22(0xffff,(undefined2)dword_cbeca);
       }
       if (pause_requested == 0) {
-        if (dword_cc0f0 != 0) {
+        if (skip_faceoff_wait != 0) {
           getpalette(0,0x100,&palette_save);
           fade_palette_to(1,&palette_save,0x10);
         }
@@ -3254,7 +3254,7 @@ LAB_0004824e:
         dword_cbeca = CONCAT22(0xffff,(undefined2)dword_cbeca);
       }
       if (pause_requested == 0) {
-        if (dword_cc0f0 != 0) {
+        if (skip_faceoff_wait != 0) {
           getpalette(0,0x100,&palette_save);
           fade_palette_to(1,&palette_save,0x10);
         }
@@ -3332,7 +3332,7 @@ LAB_0004824e:
     read_control_p1();
     if (((dword_e03be._2_1_ & 0x10) != 0) || ((dword_e03be._2_1_ & 0x20) != 0)) {
 LAB_0004821a:
-      dword_cc0f0 = 1;
+      skip_faceoff_wait = 1;
       word_cbec4 = 1;
       goto LAB_0004824e;
     }
@@ -3373,7 +3373,7 @@ LAB_0004824e:
         dword_cbeca = CONCAT22(0xffff,(undefined2)dword_cbeca);
       }
       if (pause_requested == 0) {
-        if (dword_cc0f0 != 0) {
+        if (skip_faceoff_wait != 0) {
           getpalette(0,0x100,&palette_save);
           fade_palette_to(1,&palette_save,0x10);
         }
@@ -3451,7 +3451,7 @@ LAB_0004824e:
     read_control_p1();
     if (((dword_e03be._2_1_ & 0x10) != 0) || ((dword_e03be._2_1_ & 0x20) != 0)) {
 LAB_0004821a:
-      dword_cc0f0 = 1;
+      skip_faceoff_wait = 1;
       word_cbec4 = 1;
       goto LAB_0004824e;
     }
@@ -3568,7 +3568,7 @@ void __watcall ai_ref_anthem(int *param_1)
         *(undefined2 *)((int)param_1 + 0x32) = 0;
         set_animation(param_1,0xa5b);
         camera_target_y._0_2_ = 0;
-        dword_c90d4 = 1;
+        ref_phase = 1;
         crowd_noise._2_2_ = 800;
       }
       iVar5 = (*param_1 >> 0x10) - (param_1[10] >> 0x10);
@@ -3834,12 +3834,12 @@ void __watcall compute_three_stars(void)
     if (dword_df722._2_2_ != dword_df622._2_2_) {
       uVar8 = (ushort)(0 < (short)(dword_df722._2_2_ - dword_df622._2_2_));
       uVar12 = (uint)(short)uVar8;
-      if (dword_e9ac2 < 6 != uVar12) {
+      if (last_touch_slot < 6 != uVar12) {
         dword_e9af0._2_2_ = 0;
         dword_e9af4._0_2_ = (short)((uint)*(undefined4 *)(&word_df642 + uVar12 * 0x80) >> 0x10);
         dword_e9af4._2_2_ = (short)dword_e9af4 >> 0xf;
         dword_e9af0._0_2_ = uVar8;
-        iVar6 = sub_15c30(dword_df622 >> 0x10,dword_df722 >> 0x10);
+        iVar6 = game_over_check(dword_df622 >> 0x10,dword_df722 >> 0x10);
         if (iVar6 != 0) {
           sVar3 = sub_48789(0,uVar12,(int)(short)dword_e9af4);
         }
@@ -3961,8 +3961,8 @@ void __watcall start_period(void)
     compute_three_stars();
     uVar1 = dword_cbeca;
     dword_e9ac8._0_1_ = 0xff;
-    dword_cbc44 = 0;
-    dword_c90d6 = 0;
+    penalty_box_mode = 0;
+    ref_infraction = 0;
     whistle_timer = 0;
     dword_c90d0 = 0;
     dword_cbeca = dword_cbeca & 0xffff0000;
@@ -3995,7 +3995,7 @@ void __watcall start_period(void)
     user2_slot = 0xffff;
     _user1_slot = 0xffff;
     byte_e9abb = 0;
-    word_e9aba = 0;
+    penalized_count = 0;
     puVar4 = &entities;
     iVar3 = 0;
     do {
@@ -4044,7 +4044,7 @@ void __watcall start_period(void)
     word_e002e = 0xffff;
     puStack_18 = (undefined *)0x491c8;
     set_state(&referee,0x15);
-    dword_c90d4 = 0;
+    ref_phase = 0;
     action_flags = action_flags | 0x40;
     ppuVar5 = &puStack_18;
     puStack_18 = (undefined *)0x491db;
@@ -4053,7 +4053,7 @@ void __watcall start_period(void)
     *(undefined4 *)((int)ppuVar5 + -4) = 0x491e0;
     sim_tick();
     *(undefined4 *)(puVar6 + -4) = 0x491e5;
-    sub_5dd7c();
+    sort_draw_order2();
     dword_d8c6c = 0;
     control_steps_left = 0;
     *p_puck_carrier = 0xff;
@@ -4438,7 +4438,7 @@ void __watcall ai_get_cup(int param_1)
         *(undefined2 *)(*(int *)(param_1 + 0x6c) + 0x46 + (*(int *)(param_1 + 0x44) >> 0x18) * 2) =
              0x800;
         ai_default_skate(param_1);
-        sub_61576((*(byte *)(param_1 + 0x44) & 0x40) != 0);
+        play_crowd_chant((*(byte *)(param_1 + 0x44) & 0x40) != 0);
         return;
       }
     }

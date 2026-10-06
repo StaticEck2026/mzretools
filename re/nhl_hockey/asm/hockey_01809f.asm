@@ -1422,7 +1422,7 @@ sub_190be:
     push ecx                                     ; 0190c9 51
     push edx                                     ; 0190ca 52
     push esi                                     ; 0190cb 56
-    mov eax, dword ptr [dword_cbc44]             ; 0190cc a144bc0c00
+    mov eax, dword ptr [penalty_box_mode]        ; 0190cc a144bc0c00
     sar eax, 0x10                                ; 0190d1 c1f810
     cmp eax, -1                                  ; 0190d4 83f8ff
     je loc_191c4                                 ; 0190d7 0f84e7000000

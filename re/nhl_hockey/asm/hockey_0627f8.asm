@@ -404,9 +404,9 @@ loc_62c4e:
     ret                                          ; 062c54 c3
 
 loc_62c55:
-    cmp word ptr [word_c90d8], 0                 ; 062c55 66833dd8900c0000
+    cmp word ptr [penalized_slot], 0             ; 062c55 66833dd8900c0000
     jl loc_62c4e                                 ; 062c5d 7cef
-    mov eax, dword ptr [dword_c90d6]             ; 062c5f a1d6900c00
+    mov eax, dword ptr [ref_infraction]          ; 062c5f a1d6900c00
     sar eax, 0x10                                ; 062c64 c1f810
     shl eax, 7                                   ; 062c67 c1e007
     add eax, entities                            ; 062c6a 051cf80d00
@@ -466,7 +466,7 @@ sub_62cd7:
 ; ====================================================================================================
 ; maybe_queue_infraction  [0x62cf9, 135 bytes, 36 instructions]
 ; filters rule events by the option flags before queue_infraction
-; called by: sub_4dcdd, update_carrier, resolve_body_check, check_injury, knock_down, resolve_hook_hit, resolve_poke_hit, score_goal
+; called by: offside_entry_check, update_carrier, resolve_body_check, check_injury, knock_down, resolve_hook_hit, resolve_poke_hit, score_goal
 ; ====================================================================================================
 maybe_queue_infraction:
     push 8                                       ; 062cf9 6808000000
@@ -477,7 +477,7 @@ maybe_queue_infraction:
     jne loc_62d7e                                ; 062d0d 0f856b000000
     cmp word ptr [ebx + 0x6a], 0x10              ; 062d13 66837b6a10
     je loc_62d7e                                 ; 062d18 0f8460000000
-    cmp dword ptr [dword_cc128], 0               ; 062d1e 833d28c10c0000
+    cmp dword ptr [penalty_shot_active], 0       ; 062d1e 833d28c10c0000
     jne loc_62d7e                                ; 062d25 7557
     cmp dx, 6                                    ; 062d27 6683fa06
     je loc_62d74                                 ; 062d2b 7447
@@ -498,7 +498,7 @@ loc_62d4b:
     test byte ptr [ebx + 0x44], 0x40             ; 062d54 f6434440
     setne al                                     ; 062d58 0f95c0
     and eax, 0xff                                ; 062d5b 25ff000000
-    cmp byte ptr [eax + word_e9aba], 8           ; 062d60 80b8ba9a0e0008
+    cmp byte ptr [eax + penalized_count], 8      ; 062d60 80b8ba9a0e0008
     jge loc_62d7e                                ; 062d67 7d15
     mov eax, ebx                                 ; 062d69 89d8
     call injury_check                            ; 062d6b e8132e0000
@@ -517,7 +517,7 @@ loc_62d7e:
 ; ====================================================================================================
 ; queue_infraction  [0x62d80, 290 bytes, 78 instructions]
 ; queue_infraction(entity, event): records a rule event, boosts the crowd on big hits
-; called by: ai_goalie, puck_update, two_line_pass_check, sub_54990, knock_down, collide_corner, score_goal, setup_faceoff, maybe_queue_infraction, end_penalty_shot
+; called by: ai_goalie, puck_update, two_line_pass_check, net_push_off, knock_down, collide_corner, score_goal, setup_faceoff, maybe_queue_infraction, end_penalty_shot
 ; ====================================================================================================
 queue_infraction:
     push 0xc                                     ; 062d80 680c000000
@@ -528,9 +528,9 @@ queue_infraction:
     mov ecx, edx                                 ; 062d8e 89d1
     test byte ptr [action_flags], 0x80           ; 062d90 f605bc900c0080
     jne loc_62e9f                                ; 062d97 0f8502010000
-    cmp word ptr [dword_cbc44], 0                ; 062d9d 66833d44bc0c0000
+    cmp word ptr [penalty_box_mode], 0           ; 062d9d 66833d44bc0c0000
     jne loc_62e9f                                ; 062da5 0f85f4000000
-    cmp dword ptr [dword_cc11c], 0               ; 062dab 833d1cc10c0000
+    cmp dword ptr [penalty_shot_setup], 0        ; 062dab 833d1cc10c0000
     jne loc_62df7                                ; 062db2 7543
     movsx edx, cx                                ; 062db4 0fbfd1
     shl edx, 2                                   ; 062db7 c1e202
@@ -615,10 +615,11 @@ loc_62e9f:
 
 
 ; ====================================================================================================
-; sub_62ea2  [0x62ea2, 71 bytes, 20 instructions]
+; ref_announce  [0x62ea2, 71 bytes, 20 instructions]
+; referee state for the call (points at the goal or signals the penalty)
 ; called by: penalty_box_update, start_stoppage, process_infractions
 ; ====================================================================================================
-sub_62ea2:
+ref_announce:
     push 8                                       ; 062ea2 6808000000
     call __CHK                                   ; 062ea7 e8a09a0200
     push edx                                     ; 062eac 52
@@ -626,9 +627,9 @@ sub_62ea2:
     je loc_62ee7                                 ; 062eb1 7434
     cmp ax, 0x1c                                 ; 062eb3 663d1c00
     je loc_62ee7                                 ; 062eb7 742e
-    mov word ptr [dword_c90d6], ax               ; 062eb9 66a3d6900c00
+    mov word ptr [ref_infraction], ax            ; 062eb9 66a3d6900c00
     xor edx, edx                                 ; 062ebf 31d2
-    mov word ptr [dword_c90d4], dx               ; 062ec1 668915d4900c00
+    mov word ptr [ref_phase], dx                 ; 062ec1 668915d4900c00
     cmp ax, 7                                    ; 062ec8 663d0700
     jne loc_62ed5                                ; 062ecc 7507
     mov edx, 0x23                                ; 062ece ba23000000
@@ -662,7 +663,7 @@ penalty_box_update:
     push ebp                                     ; 062ef8 55
     mov ebp, esp                                 ; 062ef9 89e5
     sub esp, 0x14                                ; 062efb 83ec14
-    cmp word ptr [dword_c90d4], 0                ; 062efe 66833dd4900c0000
+    cmp word ptr [ref_phase], 0                  ; 062efe 66833dd4900c0000
     je loc_6346c                                 ; 062f06 0f8460050000
     call speech_busy                             ; 062f0c e89c6bffff
     test eax, eax                                ; 062f11 85c0
@@ -887,7 +888,7 @@ loc_63194:
     call record_penalty                          ; 0631db e8d9f2ffff
     movsx eax, si                                ; 0631e0 0fbfc6
     movsx dx, byte ptr [eax*2 + unk_e9a17]       ; 0631e3 660fbe1445179a0e..
-    mov word ptr [word_c90d8], dx                ; 0631ec 668915d8900c00
+    mov word ptr [penalized_slot], dx            ; 0631ec 668915d8900c00
     xor bl, bl                                   ; 0631f3 30db
     mov byte ptr [eax*2 + unk_e9a17], bl         ; 0631f5 881c45179a0e00
     mov byte ptr [eax*2 + byte_e9a16], bl        ; 0631fc 881c45169a0e00
@@ -895,13 +896,13 @@ loc_63194:
 
 loc_63208:
     movsx dx, bl                                 ; 063208 660fbed3
-    mov word ptr [word_c90d8], dx                ; 06320c 668915d8900c00
+    mov word ptr [penalized_slot], dx            ; 06320c 668915d8900c00
     xor dl, dl                                   ; 063213 30d2
     mov byte ptr [eax + unk_e9a17], dl           ; 063215 8890179a0e00
     mov byte ptr [eax + byte_e9a16], dl          ; 06321b 8890169a0e00
     test byte ptr [action_flags], 0x80           ; 063221 f605bc900c0080
     jne loc_63238                                ; 063228 750e
-    cmp word ptr [dword_cbc44], 0                ; 06322a 66833d44bc0c0000
+    cmp word ptr [penalty_box_mode], 0           ; 06322a 66833d44bc0c0000
     je loc_63461                                 ; 063232 0f8429020000
 loc_63238:
     cmp word ptr [ebp - 8], 7                    ; 063238 66837df807
@@ -940,7 +941,7 @@ loc_63293:
     setne al                                     ; 0632a5 0f95c0
     xor ah, ah                                   ; 0632a8 30e4
     cwde                                         ; 0632aa 98
-    call sub_14c22                               ; 0632ab e87219fbff
+    call add_penalty_display                     ; 0632ab e87219fbff
     mov dx, word ptr [dword_e9ab8]               ; 0632b0 668b15b89a0e00
     mov cx, word ptr [clock_seconds]             ; 0632b7 668b0ddc900c00
     sub edx, ecx                                 ; 0632be 29ca
@@ -1083,11 +1084,11 @@ loc_63432:
     call set_state                               ; 06344f e8a0ebfaff
     mov eax, dword ptr [ebp - 0x14]              ; 063454 8b45ec
     mov ax, word ptr [eax + 0x6a]                ; 063457 668b406a
-    mov word ptr [word_c90d8], ax                ; 06345b 66a3d8900c00
+    mov word ptr [penalized_slot], ax            ; 06345b 66a3d8900c00
 loc_63461:
     mov eax, dword ptr [ebp - 0xa]               ; 063461 8b45f6
     sar eax, 0x10                                ; 063464 c1f810
-    call sub_62ea2                               ; 063467 e836faffff
+    call ref_announce                            ; 063467 e836faffff
 loc_6346c:
     mov esp, ebp                                 ; 06346c 89ec
 loc_6346e:
@@ -1136,13 +1137,13 @@ loc_634bc:
     or byte ptr [stop_flags], 4                  ; 0634e0 800dbe900c0004
     mov edi, 0xffffffff                          ; 0634e7 bfffffffff
     mov word ptr [word_cc0b0], di                ; 0634ec 66893db0c00c00
-    mov word ptr [dword_cbc44], 1                ; 0634f3 66c70544bc0c0001..
+    mov word ptr [penalty_box_mode], 1           ; 0634f3 66c70544bc0c0001..
     mov edx, dword ptr [p_puck_carrier]          ; 0634fc 8b1594900c00
     mov byte ptr [edx], 0xff                     ; 063502 c602ff
     mov edx, 0x1a                                ; 063505 ba1a000000
     mov eax, puck                                ; 06350a b81cff0d00
     call set_state_reset                         ; 06350f e8fdeafaff
-    mov word ptr [word_dff42], 0x1c20            ; 063514 66c70542ff0d0020..
+    mov word ptr [faceoff_timer], 0x1c20         ; 063514 66c70542ff0d0020..
     mov byte ptr [byte_c90d5], 0xff              ; 06351d c605d5900c00ff
     xor ebx, ebx                                 ; 063524 31db
     mov word ptr [whistle_timer], bx             ; 063526 66891dd2900c00
@@ -1178,12 +1179,12 @@ start_stoppage:
     mov byte ptr [game_flags], dh                ; 063574 8835bb900c00
     xor edx, edx                                 ; 06357a 31d2
     mov word ptr [word_c90b4], dx                ; 06357c 668915b4900c00
-    mov word ptr [dword_c90b2], dx               ; 063583 668915b2900c00
+    mov word ptr [faceoff_spot], dx              ; 063583 668915b2900c00
     cmp al, 7                                    ; 06358a 3c07
     je loc_63643                                 ; 06358c 0f84b1000000
-    mov dx, word ptr [word_e9ac6]                ; 063592 668b15c69a0e00
-    mov word ptr [dword_c90b2], dx               ; 063599 668915b2900c00
-    mov dx, word ptr [word_e9ac4]                ; 0635a0 668b15c49a0e00
+    mov dx, word ptr [last_touch_x]              ; 063592 668b15c69a0e00
+    mov word ptr [faceoff_spot], dx              ; 063599 668915b2900c00
+    mov dx, word ptr [last_touch_y]              ; 0635a0 668b15c49a0e00
     mov word ptr [word_c90b4], dx                ; 0635a7 668915b4900c00
     cmp al, 3                                    ; 0635ae 3c03
     je loc_63643                                 ; 0635b0 0f848d000000
@@ -1191,7 +1192,7 @@ start_stoppage:
     je loc_63643                                 ; 0635b8 0f8485000000
     mov edx, dword ptr [p_puck_x]                ; 0635be 8b157c900c00
     mov dx, word ptr [edx]                       ; 0635c4 668b12
-    mov word ptr [dword_c90b2], dx               ; 0635c7 668915b2900c00
+    mov word ptr [faceoff_spot], dx              ; 0635c7 668915b2900c00
     mov edx, dword ptr [p_puck_y]                ; 0635ce 8b1584900c00
     mov dx, word ptr [edx]                       ; 0635d4 668b12
     mov word ptr [word_c90b4], dx                ; 0635d7 668915b4900c00
@@ -1199,13 +1200,13 @@ start_stoppage:
     jne loc_6361a                                ; 0635e0 7538
     test dx, dx                                  ; 0635e2 6685d2
     jge loc_635f4                                ; 0635e5 7d0d
-    mov edx, dword ptr [dword_c90b2]             ; 0635e7 8b15b2900c00
+    mov edx, dword ptr [faceoff_spot]            ; 0635e7 8b15b2900c00
     sar edx, 0x10                                ; 0635ed c1fa10
     neg edx                                      ; 0635f0 f7da
     jmp loc_635fd                                ; 0635f2 eb09
 
 loc_635f4:
-    mov edx, dword ptr [dword_c90b2]             ; 0635f4 8b15b2900c00
+    mov edx, dword ptr [faceoff_spot]            ; 0635f4 8b15b2900c00
     sar edx, 0x10                                ; 0635fa c1fa10
 loc_635fd:
     cmp edx, 0x4e                                ; 0635fd 83fa4e
@@ -1235,16 +1236,16 @@ loc_63637:
 loc_6363c:
     mov word ptr [word_c90b4], dx                ; 06363c 668915b4900c00
 loc_63643:
-    cmp dword ptr [dword_cc11c], 0               ; 063643 833d1cc10c0000
+    cmp dword ptr [penalty_shot_setup], 0        ; 063643 833d1cc10c0000
     je loc_63664                                 ; 06364a 7418
     mov ax, word ptr [dword_cc110]               ; 06364c 66a110c10c00
-    mov word ptr [dword_c90b2], ax               ; 063652 66a3b2900c00
+    mov word ptr [faceoff_spot], ax              ; 063652 66a3b2900c00
     mov ax, word ptr [dword_cc114]               ; 063658 66a114c10c00
     mov word ptr [word_c90b4], ax                ; 06365e 66a3b4900c00
 loc_63664:
-    cmp word ptr [dword_c90b2], 0x60             ; 063664 66833db2900c0060
+    cmp word ptr [faceoff_spot], 0x60            ; 063664 66833db2900c0060
     jl loc_63679                                 ; 06366c 7c0b
-    mov word ptr [dword_c90b2], 0x60             ; 06366e 66c705b2900c0060..
+    mov word ptr [faceoff_spot], 0x60            ; 06366e 66c705b2900c0060..
     jmp loc_63690                                ; 063677 eb17
 
 loc_63679:
@@ -1252,11 +1253,11 @@ loc_63679:
     sar edx, 0x10                                ; 06367f c1fa10
     cmp edx, -0x60                               ; 063682 83faa0
     jg loc_63690                                 ; 063685 7f09
-    mov word ptr [dword_c90b2], 0xffa0           ; 063687 66c705b2900c00a0..
+    mov word ptr [faceoff_spot], 0xffa0          ; 063687 66c705b2900c00a0..
 loc_63690:
     cmp word ptr [word_c90b4], 0x90              ; 063690 66813db4900c0090..
     jl loc_636c3                                 ; 063699 7c28
-    cmp word ptr [dword_c90b2], 0                ; 06369b 66833db2900c0000
+    cmp word ptr [faceoff_spot], 0               ; 06369b 66833db2900c0000
     jge loc_636ac                                ; 0636a3 7d07
     mov edx, 0xffffffa0                          ; 0636a5 baa0ffffff
     jmp loc_636b1                                ; 0636aa eb05
@@ -1264,16 +1265,16 @@ loc_63690:
 loc_636ac:
     mov edx, 0x60                                ; 0636ac ba60000000
 loc_636b1:
-    mov word ptr [dword_c90b2], dx               ; 0636b1 668915b2900c00
+    mov word ptr [faceoff_spot], dx              ; 0636b1 668915b2900c00
     mov word ptr [word_c90b4], 0xb8              ; 0636b8 66c705b4900c00b8..
     jmp loc_636fa                                ; 0636c1 eb37
 
 loc_636c3:
-    mov edx, dword ptr [dword_c90b2]             ; 0636c3 8b15b2900c00
+    mov edx, dword ptr [faceoff_spot]            ; 0636c3 8b15b2900c00
     sar edx, 0x10                                ; 0636c9 c1fa10
     cmp edx, 0xffffff70                          ; 0636cc 81fa70ffffff
     jg loc_636fa                                 ; 0636d2 7f26
-    cmp word ptr [dword_c90b2], 0                ; 0636d4 66833db2900c0000
+    cmp word ptr [faceoff_spot], 0               ; 0636d4 66833db2900c0000
     jge loc_636e5                                ; 0636dc 7d07
     mov edx, 0xffffffa0                          ; 0636de baa0ffffff
     jmp loc_636ea                                ; 0636e3 eb05
@@ -1281,7 +1282,7 @@ loc_636c3:
 loc_636e5:
     mov edx, 0x60                                ; 0636e5 ba60000000
 loc_636ea:
-    mov word ptr [dword_c90b2], dx               ; 0636ea 668915b2900c00
+    mov word ptr [faceoff_spot], dx              ; 0636ea 668915b2900c00
     mov word ptr [word_c90b4], 0xff48            ; 0636f1 66c705b4900c0048..
 loc_636fa:
     xor eax, eax                                 ; 0636fa 31c0
@@ -1295,12 +1296,12 @@ loc_63701:
     add edx, entities                            ; 063714 81c21cf80d00
     test byte ptr [edx + 0x44], 0x80             ; 06371a f6424480
     jne loc_6374d                                ; 06371e 752d
-    mov edx, dword ptr [dword_c90b2]             ; 063720 8b15b2900c00
+    mov edx, dword ptr [faceoff_spot]            ; 063720 8b15b2900c00
     sar edx, 0x10                                ; 063726 c1fa10
     cmp edx, -0x4e                               ; 063729 83fab2
     jg loc_6377d                                 ; 06372c 7f4f
     mov word ptr [word_c90b4], si                ; 06372e 668935b4900c00
-    cmp word ptr [dword_c90b2], 0                ; 063735 66833db2900c0000
+    cmp word ptr [faceoff_spot], 0               ; 063735 66833db2900c0000
     jge loc_63746                                ; 06373d 7d07
     mov edx, 0xffffff9c                          ; 06373f ba9cffffff
     jmp loc_63776                                ; 063744 eb30
@@ -1313,7 +1314,7 @@ loc_6374d:
     cmp word ptr [word_c90b4], 0x4e              ; 06374d 66833db4900c004e
     jl loc_6377d                                 ; 063755 7c26
     mov word ptr [word_c90b4], 0x3d              ; 063757 66c705b4900c003d..
-    cmp word ptr [dword_c90b2], 0                ; 063760 66833db2900c0000
+    cmp word ptr [faceoff_spot], 0               ; 063760 66833db2900c0000
     jge loc_63771                                ; 063768 7d07
     mov edx, 0xffffff9c                          ; 06376a ba9cffffff
     jmp loc_63776                                ; 06376f eb05
@@ -1321,7 +1322,7 @@ loc_6374d:
 loc_63771:
     mov edx, 0x64                                ; 063771 ba64000000
 loc_63776:
-    mov word ptr [dword_c90b2], dx               ; 063776 668915b2900c00
+    mov word ptr [faceoff_spot], dx              ; 063776 668915b2900c00
 loc_6377d:
     inc eax                                      ; 06377d 40
     movsx edx, ax                                ; 06377e 0fbfd0
@@ -1334,7 +1335,7 @@ loc_6378f:
     mov eax, 0xa4                                ; 06379e b8a4000000
     call play_sfx                                ; 0637a3 e8dc60ffff
     mov eax, 5                                   ; 0637a8 b805000000
-    call sub_62ea2                               ; 0637ad e8f0f6ffff
+    call ref_announce                            ; 0637ad e8f0f6ffff
     pop esi                                      ; 0637b2 5e
     pop edx                                      ; 0637b3 5a
     ret                                          ; 0637b4 c3
@@ -1353,7 +1354,7 @@ process_infractions:
     push edx                                     ; 0637c1 52
     test byte ptr [action_flags], 0x80           ; 0637c2 f605bc900c0080
     jne loc_63926                                ; 0637c9 0f8557010000
-    mov dx, word ptr [dword_cbc44]               ; 0637cf 668b1544bc0c00
+    mov dx, word ptr [penalty_box_mode]          ; 0637cf 668b1544bc0c00
     test dx, dx                                  ; 0637d6 6685d2
     jne loc_63926                                ; 0637d9 0f8547010000
     jmp loc_63913                                ; 0637df e92f010000
@@ -1386,7 +1387,7 @@ loc_6382b:
     or al, 8                                     ; 06383c 0c08
     mov byte ptr [game_flags], al                ; 06383e a2bb900c00
     mov eax, 0x1c                                ; 063843 b81c000000
-    call sub_62ea2                               ; 063848 e855f6ffff
+    call ref_announce                            ; 063848 e855f6ffff
     jmp loc_63912                                ; 06384d e9c0000000
 
 loc_63852:
@@ -1409,7 +1410,7 @@ loc_63879:
     or cl, 0x80                                  ; 06388f 80c980
     mov byte ptr [eax + unk_e9a17], cl           ; 063892 8888179a0e00
     movsx eax, bl                                ; 063898 0fbec3
-    movsx ax, byte ptr [eax + unk_c9104]         ; 06389b 660fbe8004910c00
+    movsx ax, byte ptr [eax + stoppage_duration] ; 06389b 660fbe8004910c00
     shl eax, 5                                   ; 0638a3 c1e005
     cmp ax, word ptr [stoppage_timer]            ; 0638a6 663b05ce900c00
     jle loc_638b5                                ; 0638ad 7e06
@@ -1419,7 +1420,7 @@ loc_638b5:
     je loc_638c8                                 ; 0638bd 7409
     mov word ptr [stoppage_timer], 0x140         ; 0638bf 66c705ce900c0040..
 loc_638c8:
-    cmp dword ptr [dword_cc11c], 0               ; 0638c8 833d1cc10c0000
+    cmp dword ptr [penalty_shot_setup], 0        ; 0638c8 833d1cc10c0000
     je loc_638f5                                 ; 0638cf 7424
     cmp bl, 5                                    ; 0638d1 80fb05
     jne loc_638f5                                ; 0638d4 751f
@@ -1432,7 +1433,7 @@ loc_638c8:
 
 loc_638f5:
     movsx eax, bl                                ; 0638f5 0fbec3
-    movsx ax, byte ptr [eax + unk_c9142]         ; 0638f8 660fbe8042910c00
+    movsx ax, byte ptr [eax + announce_delay]    ; 0638f8 660fbe8042910c00
     shl eax, 5                                   ; 063900 c1e005
 loc_63903:
     cmp ax, word ptr [word_cc0b0]                ; 063903 663b05b0c00c00
@@ -1455,7 +1456,7 @@ loc_63926:
 
 ; ====================================================================================================
 ; sub_6392a  [0x6392a, 122 bytes, 30 instructions]
-; called by: sub_639f9, sub_63d69
+; called by: penalty_expired, goal_ends_penalty
 ; ====================================================================================================
 sub_6392a:
     push 0xc                                     ; 06392a 680c000000
@@ -1494,10 +1495,11 @@ loc_6394b:
 
 
 ; ====================================================================================================
-; sub_639a4  [0x639a4, 85 bytes, 26 instructions]
+; zone_time_stats  [0x639a4, 85 bytes, 26 instructions]
+; time in the attacking zone statistics
 ; called by: update_line_timers
 ; ====================================================================================================
-sub_639a4:
+zone_time_stats:
     push 8                                       ; 0639a4 6808000000
     call __CHK                                   ; 0639a9 e89e8f0200
     push edx                                     ; 0639ae 52
@@ -1535,10 +1537,11 @@ loc_639f7:
 
 
 ; ====================================================================================================
-; sub_639f9  [0x639f9, 62 bytes, 21 instructions]
-; called by: sub_63a37
+; penalty_expired  [0x639f9, 62 bytes, 21 instructions]
+; releases a player from the box
+; called by: penalty_timers
 ; ====================================================================================================
-sub_639f9:
+penalty_expired:
     push 0xc                                     ; 0639f9 680c000000
     call __CHK                                   ; 0639fe e8498f0200
     push ebx                                     ; 063a03 53
@@ -1565,10 +1568,11 @@ loc_63a34:
 
 
 ; ====================================================================================================
-; sub_63a37  [0x63a37, 288 bytes, 83 instructions]
+; penalty_timers  [0x63a37, 288 bytes, 83 instructions]
+; counts down the penalties of a team
 ; called by: update_line_timers
 ; ====================================================================================================
-sub_63a37:
+penalty_timers:
     push 0x1c                                    ; 063a37 681c000000
     call __CHK                                   ; 063a3c e80b8f0200
     push ebx                                     ; 063a41 53
@@ -1649,7 +1653,7 @@ loc_63b1b:
     mov edx, dword ptr [esp - 3]                 ; 063b20 8b5424fd
     sar edx, 0x18                                ; 063b24 c1fa18
     mov eax, ecx                                 ; 063b27 89c8
-    call sub_639f9                               ; 063b29 e8cbfeffff
+    call penalty_expired                         ; 063b29 e8cbfeffff
     mov edx, dword ptr [esp - 2]                 ; 063b2e 8b5424fe
     jmp loc_63b45                                ; 063b32 eb11
 
@@ -1662,17 +1666,18 @@ loc_63b34:
 loc_63b45:
     sar edx, 0x18                                ; 063b45 c1fa18
     mov eax, ecx                                 ; 063b48 89c8
-    call sub_639f9                               ; 063b4a e8aafeffff
+    call penalty_expired                         ; 063b4a e8aafeffff
 loc_63b4f:
     add esp, 4                                   ; 063b4f 83c404
     jmp loc_6346f                                ; 063b52 e918f9ffff
 
 
 ; ====================================================================================================
-; sub_63b57  [0x63b57, 46 bytes, 13 instructions]
+; lead_time_stats  [0x63b57, 46 bytes, 13 instructions]
+; time leading statistics
 ; called by: update_line_timers
 ; ====================================================================================================
-sub_63b57:
+lead_time_stats:
     push 4                                       ; 063b57 6804000000
     call __CHK                                   ; 063b5c e8eb8d0200
     mov ah, byte ptr [stop_flags]                ; 063b61 8a25be900c00
@@ -1704,7 +1709,7 @@ update_line_timers:
     mov byte ptr [misc_flags], ah                ; 063b99 8825c0900c00
     test byte ptr [game_flags], 1                ; 063b9f f605bb900c0001
     jne loc_63bf6                                ; 063ba6 754e
-    cmp dword ptr [dword_cc128], 0               ; 063ba8 833d28c10c0000
+    cmp dword ptr [penalty_shot_active], 0       ; 063ba8 833d28c10c0000
     jne loc_63bf6                                ; 063baf 7545
     mov dx, word ptr [dword_c90d0]               ; 063bb1 668b15d0900c00
     dec edx                                      ; 063bb8 4a
@@ -1715,12 +1720,12 @@ update_line_timers:
     or dh, 0x40                                  ; 063bc7 80ce40
     mov byte ptr [misc_flags], dh                ; 063bca 8835c0900c00
     add word ptr [dword_c90d0], 0x18             ; 063bd0 668305d0900c0018
-    call sub_639a4                               ; 063bd8 e8c7fdffff
-    call sub_63b57                               ; 063bdd e875ffffff
+    call zone_time_stats                         ; 063bd8 e8c7fdffff
+    call lead_time_stats                         ; 063bdd e875ffffff
     mov eax, team_home                           ; 063be2 b814f60d00
-    call sub_63a37                               ; 063be7 e84bfeffff
+    call penalty_timers                          ; 063be7 e84bfeffff
     mov eax, team_away                           ; 063bec b814f70d00
-    call sub_63a37                               ; 063bf1 e841feffff
+    call penalty_timers                          ; 063bf1 e841feffff
 loc_63bf6:
     pop edx                                      ; 063bf6 5a
     ret                                          ; 063bf7 c3
@@ -1847,10 +1852,10 @@ loc_63d38:
 
 
 ; ====================================================================================================
-; sub_63d3c  [0x63d3c, 45 bytes, 16 instructions]
-; called by: sub_5cd4f, setup_faceoff, sub_63f72, simulate_game_offscreen
+; clear_infractions  [0x63d3c, 45 bytes, 16 instructions]
+; called by: sub_5cd4f, setup_faceoff, start_penalty_shot, simulate_game_offscreen
 ; ====================================================================================================
-sub_63d3c:
+clear_infractions:
     push 0xc                                     ; 063d3c 680c000000
     call __CHK                                   ; 063d41 e8068c0200
     push ebx                                     ; 063d46 53
@@ -1873,10 +1878,11 @@ loc_63d60:
 
 
 ; ====================================================================================================
-; sub_63d69  [0x63d69, 521 bytes, 139 instructions]
+; goal_ends_penalty  [0x63d69, 521 bytes, 139 instructions]
+; a power play goal ends the penalty
 ; called by: score_goal
 ; ====================================================================================================
-sub_63d69:
+goal_ends_penalty:
     push 0x20                                    ; 063d69 6820000000
     call __CHK                                   ; 063d6e e8d98b0200
     push ebx                                     ; 063d73 53
@@ -2046,10 +2052,11 @@ loc_63f6a:
 
 
 ; ====================================================================================================
-; sub_63f72  [0x63f72, 400 bytes, 99 instructions]
+; start_penalty_shot  [0x63f72, 400 bytes, 99 instructions]
+; sets up a penalty shot
 ; called by: ai_puck_faceoff2
 ; ====================================================================================================
-sub_63f72:
+start_penalty_shot:
     push 0x10                                    ; 063f72 6810000000
     call __CHK                                   ; 063f77 e8d0890200
     push ebx                                     ; 063f7c 53
@@ -2071,7 +2078,7 @@ sub_63f72:
     mov edx, 0x18                                ; 063fba ba18000000
     mov eax, puck                                ; 063fbf b81cff0d00
     call set_state                               ; 063fc4 e82be0faff
-    mov ebx, dword ptr [dword_cc0fc]             ; 063fc9 8b1dfcc00c00
+    mov ebx, dword ptr [penalty_shot_slot]       ; 063fc9 8b1dfcc00c00
     shl ebx, 7                                   ; 063fcf c1e307
     add ebx, entities                            ; 063fd2 81c31cf80d00
     and byte ptr [ebx + 0x45], 0xdb              ; 063fd8 806345db
@@ -2100,7 +2107,7 @@ sub_63f72:
     mov edx, 0x2e                                ; 064034 ba2e000000
     mov eax, ebx                                 ; 064039 89d8
     call set_state_reset                         ; 06403b e8d1dffaff
-    cmp dword ptr [dword_cc104], 0               ; 064040 833d04c10c0000
+    cmp dword ptr [penalty_shot_team], 0         ; 064040 833d04c10c0000
     sete al                                      ; 064047 0f94c0
     and eax, 0xff                                ; 06404a 25ff000000
     mov edx, dword ptr [user2_slot]              ; 06404f 8b15c4900c00
@@ -2116,7 +2123,7 @@ sub_63f72:
     call find_switch_target                      ; 064070 e86c5fffff
     mov word ptr [user1_slot], ax                ; 064075 66a3c2900c00
 loc_6407b:
-    cmp dword ptr [dword_cc104], 0               ; 06407b 833d04c10c0000
+    cmp dword ptr [penalty_shot_team], 0         ; 06407b 833d04c10c0000
     sete al                                      ; 064082 0f94c0
     xor edx, edx                                 ; 064085 31d2
     mov dl, al                                   ; 064087 88c2
@@ -2140,13 +2147,13 @@ loc_640b4:
     mov word ptr [ebx + 0x30], ax                ; 0640c5 66894330
     mov edx, dword ptr [p_puck_carrier]          ; 0640c9 8b1594900c00
     add word ptr [word_cc0de], 0x64              ; 0640cf 668305dec00c0064
-    mov al, byte ptr [dword_cc0fc]               ; 0640d7 a0fcc00c00
+    mov al, byte ptr [penalty_shot_slot]         ; 0640d7 a0fcc00c00
     mov byte ptr [edx], al                       ; 0640dc 8802
     mov esi, 1                                   ; 0640de be01000000
-    mov dword ptr [dword_cc128], esi             ; 0640e3 893528c10c00
-    mov dword ptr [dword_cc11c], esi             ; 0640e9 89351cc10c00
+    mov dword ptr [penalty_shot_active], esi     ; 0640e3 893528c10c00
+    mov dword ptr [penalty_shot_setup], esi      ; 0640e9 89351cc10c00
     mov dword ptr [dword_cc120], 0x3e8           ; 0640ef c70520c10c00e803..
-    call sub_63d3c                               ; 0640f9 e83efcffff
+    call clear_infractions                       ; 0640f9 e83efcffff
     pop esi                                      ; 0640fe 5e
     pop edx                                      ; 0640ff 5a
     pop ebx                                      ; 064100 5b
@@ -2156,7 +2163,7 @@ loc_640b4:
 ; ====================================================================================================
 ; count_defenders_ahead  [0x64102, 381 bytes, 122 instructions]
 ; defenders between the carrier and the net (breakaway detection)
-; called by: ai_goalie, sub_54c09, do_shot, sub_6427f, sub_64338
+; called by: ai_goalie, pass_lane_ok, do_shot, sub_6427f, note_breakaway
 ; ====================================================================================================
 count_defenders_ahead:
     push 0x2c                                    ; 064102 682c000000
@@ -2169,7 +2176,7 @@ count_defenders_ahead:
     push ebp                                     ; 064111 55
     sub esp, 8                                   ; 064112 83ec08
     xor edx, edx                                 ; 064115 31d2
-    mov dword ptr [dword_cc124], edx             ; 064117 891524c10c00
+    mov dword ptr [defenders_ahead], edx         ; 064117 891524c10c00
     mov eax, dword ptr [p_puck_carrier]          ; 06411d a194900c00
     mov dl, byte ptr [eax]                       ; 064122 8a10
     test dl, dl                                  ; 064124 84d2
@@ -2196,7 +2203,7 @@ loc_6412f:
     add ebp, 4                                   ; 064158 83c504
     sub edi, 0xe8                                ; 06415b 81efe8000000
     push edi                                     ; 064161 57
-    call sub_b3d94                               ; 064162 e82dfc0400
+    call approx_distance                         ; 064162 e82dfc0400
     add esp, 8                                   ; 064167 83c408
     mov dword ptr [esp + 4], eax                 ; 06416a 89442404
     xor ecx, ecx                                 ; 06416e 31c9
@@ -2229,7 +2236,7 @@ loc_64191:
     push edx                                     ; 0641ae 52
     sub eax, 0xe8                                ; 0641af 2de8000000
     push eax                                     ; 0641b4 50
-    call sub_b3d94                               ; 0641b5 e8dafb0400
+    call approx_distance                         ; 0641b5 e8dafb0400
     add esp, 8                                   ; 0641ba 83c408
     mov edx, dword ptr [esp + 4]                 ; 0641bd 8b542404
     sub edx, dword ptr [esp]                     ; 0641c1 2b1424
@@ -2250,7 +2257,7 @@ loc_641dd:
     sub ebp, 4                                   ; 0641e6 83ed04
     add edi, 0xe8                                ; 0641e9 81c7e8000000
     push edi                                     ; 0641ef 57
-    call sub_b3d94                               ; 0641f0 e89ffb0400
+    call approx_distance                         ; 0641f0 e89ffb0400
     add esp, 8                                   ; 0641f5 83c408
     mov dword ptr [esp + 4], eax                 ; 0641f8 89442404
     xor ebx, ebx                                 ; 0641fc 31db
@@ -2283,7 +2290,7 @@ loc_6421f:
     push edx                                     ; 064240 52
     add eax, 0xe8                                ; 064241 05e8000000
     push eax                                     ; 064246 50
-    call sub_b3d94                               ; 064247 e848fb0400
+    call approx_distance                         ; 064247 e848fb0400
     add esp, 8                                   ; 06424c 83c408
     mov edx, dword ptr [esp + 4]                 ; 06424f 8b542404
     sub edx, dword ptr [esp]                     ; 064253 2b1424
@@ -2297,7 +2304,7 @@ loc_64265:
     jl loc_6421f                                 ; 064268 7cb5
 loc_6426a:
     mov esi, 1                                   ; 06426a be01000000
-    mov dword ptr [dword_cc124], esi             ; 06426f 893524c10c00
+    mov dword ptr [defenders_ahead], esi         ; 06426f 893524c10c00
     mov eax, esi                                 ; 064275 89f0
 loc_64277:
     add esp, 8                                   ; 064277 83c408
@@ -2323,7 +2330,7 @@ sub_6427f:
     movsx ax, byte ptr [eax]                     ; 0642a5 660fbe00
     cmp ax, word ptr [edx + 0x6a]                ; 0642a9 663b426a
     jne loc_642b8                                ; 0642ad 7509
-    cmp dword ptr [dword_cc0f8], 0               ; 0642af 833df8c00c0000
+    cmp dword ptr [breakaway_flag], 0            ; 0642af 833df8c00c0000
     jne loc_642be                                ; 0642b6 7506
 loc_642b8:
     xor eax, eax                                 ; 0642b8 31c0
@@ -2354,8 +2361,8 @@ loc_642dd:
     jge loc_642b8                                ; 0642f2 7dc4
 loc_642f4:
     call count_defenders_ahead                   ; 0642f4 e809feffff
-    mov eax, dword ptr [dword_cc124]             ; 0642f9 a124c10c00
-    mov dword ptr [dword_cc0f8], eax             ; 0642fe a3f8c00c00
+    mov eax, dword ptr [defenders_ahead]         ; 0642f9 a124c10c00
+    mov dword ptr [breakaway_flag], eax          ; 0642fe a3f8c00c00
     test eax, eax                                ; 064303 85c0
     je loc_64334                                 ; 064305 742d
     cmp word ptr [edx + 6], 0                    ; 064307 66837a0600
@@ -2383,20 +2390,21 @@ loc_64334:
 
 
 ; ====================================================================================================
-; sub_64338  [0x64338, 96 bytes, 28 instructions]
+; note_breakaway  [0x64338, 96 bytes, 28 instructions]
+; sets the breakaway flag when the puck crosses the blue line
 ; called by: check_offside
 ; ====================================================================================================
-sub_64338:
+note_breakaway:
     push 8                                       ; 064338 6808000000
     call __CHK                                   ; 06433d e80a860200
     push edx                                     ; 064342 52
     call count_defenders_ahead                   ; 064343 e8bafdffff
-    mov eax, dword ptr [dword_cc124]             ; 064348 a124c10c00
-    mov dword ptr [dword_cc0f8], eax             ; 06434d a3f8c00c00
+    mov eax, dword ptr [defenders_ahead]         ; 064348 a124c10c00
+    mov dword ptr [breakaway_flag], eax          ; 06434d a3f8c00c00
     test eax, eax                                ; 064352 85c0
     je loc_64392                                 ; 064354 743c
     add word ptr [word_cc0de], 0x64              ; 064356 668305dec00c0064
-    cmp dword ptr [dword_cc118], 0               ; 06435e 833d18c10c0000
+    cmp dword ptr [penalty_shot_phase], 0        ; 06435e 833d18c10c0000
     jne loc_64392                                ; 064365 752b
     mov eax, dword ptr [p_puck_carrier]          ; 064367 a194900c00
     cmp byte ptr [eax], 5                        ; 06436c 803805
@@ -2431,12 +2439,12 @@ sub_64398:
     call __CHK                                   ; 06439d e8aa850200
     push ebx                                     ; 0643a2 53
     push esi                                     ; 0643a3 56
-    cmp dword ptr [dword_cc118], 0               ; 0643a4 833d18c10c0000
+    cmp dword ptr [penalty_shot_phase], 0        ; 0643a4 833d18c10c0000
     jne loc_64436                                ; 0643ab 0f8585000000
-    cmp dword ptr [dword_cc0fc], 5               ; 0643b1 833dfcc00c0005
+    cmp dword ptr [penalty_shot_slot], 5         ; 0643b1 833dfcc00c0005
     setg al                                      ; 0643b8 0f9fc0
     and eax, 0xff                                ; 0643bb 25ff000000
-    mov dword ptr [dword_cc104], eax             ; 0643c0 a304c10c00
+    mov dword ptr [penalty_shot_team], eax       ; 0643c0 a304c10c00
     test eax, eax                                ; 0643c5 85c0
     jle loc_643d0                                ; 0643c7 7e07
     mov eax, team_away                           ; 0643c9 b814f70d00
@@ -2449,20 +2457,20 @@ loc_643d5:
     mov ebx, 1                                   ; 0643d9 bb01000000
     mov word ptr [dword_df64a], bx               ; 0643de 66891d4af60d00
     mov word ptr [dword_df74a], bx               ; 0643e5 66891d4af70d00
-    mov eax, dword ptr [dword_cc0fc]             ; 0643ec a1fcc00c00
+    mov eax, dword ptr [penalty_shot_slot]       ; 0643ec a1fcc00c00
     shl eax, 7                                   ; 0643f1 c1e007
     mov eax, dword ptr [eax + unk_df860]         ; 0643f4 8b8060f80d00
     sar eax, 0x18                                ; 0643fa c1f818
     mov dword ptr [dword_cc100], eax             ; 0643fd a300c10c00
-    mov dword ptr [dword_cc118], 1               ; 064402 c70518c10c000100..
+    mov dword ptr [penalty_shot_phase], 1        ; 064402 c70518c10c000100..
     mov eax, dword ptr [dword_c90b0]             ; 06440c a1b0900c00
     sar eax, 0x10                                ; 064411 c1f810
     mov dword ptr [dword_cc110], eax             ; 064414 a310c10c00
-    mov eax, dword ptr [dword_c90b2]             ; 064419 a1b2900c00
+    mov eax, dword ptr [faceoff_spot]            ; 064419 a1b2900c00
     sar eax, 0x10                                ; 06441e c1f810
     mov dword ptr [dword_cc114], eax             ; 064421 a314c10c00
     xor esi, esi                                 ; 064426 31f6
-    mov word ptr [dword_c90b2], si               ; 064428 668935b2900c00
+    mov word ptr [faceoff_spot], si              ; 064428 668935b2900c00
     mov word ptr [word_c90b4], si                ; 06442f 668935b4900c00
 loc_64436:
     pop esi                                      ; 064436 5e
@@ -2472,28 +2480,28 @@ loc_64436:
 
 ; ====================================================================================================
 ; end_penalty_shot  [0x64439, 111 bytes, 25 instructions]
-; called by: puck_update, sub_56f5a, collide_net, bounce_off_boards, collide_corner, score_goal, game_clock_tick
+; called by: puck_update, take_puck, collide_net, bounce_off_boards, collide_corner, score_goal, game_clock_tick
 ; ====================================================================================================
 end_penalty_shot:
     push 0xc                                     ; 064439 680c000000
     call __CHK                                   ; 06443e e809850200
     push ecx                                     ; 064443 51
     push edx                                     ; 064444 52
-    cmp dword ptr [dword_cc128], 0               ; 064445 833d28c10c0000
+    cmp dword ptr [penalty_shot_active], 0       ; 064445 833d28c10c0000
     je loc_644a5                                 ; 06444c 7457
-    cmp dword ptr [dword_cc118], 0               ; 06444e 833d18c10c0000
+    cmp dword ptr [penalty_shot_phase], 0        ; 06444e 833d18c10c0000
     je loc_644a5                                 ; 064455 744e
     xor ecx, ecx                                 ; 064457 31c9
-    mov dword ptr [dword_cc118], ecx             ; 064459 890d18c10c00
-    mov dword ptr [dword_cc128], ecx             ; 06445f 890d28c10c00
-    mov dword ptr [dword_cc0fc], 0xffffffff      ; 064465 c705fcc00c00ffff..
+    mov dword ptr [penalty_shot_phase], ecx      ; 064459 890d18c10c00
+    mov dword ptr [penalty_shot_active], ecx     ; 06445f 890d28c10c00
+    mov dword ptr [penalty_shot_slot], 0xffffffff ; 064465 c705fcc00c00ffff..
     mov edx, 5                                   ; 06446f ba05000000
     mov eax, puck                                ; 064474 b81cff0d00
     call queue_infraction                        ; 064479 e802e9ffff
     mov ax, word ptr [dword_cc110]               ; 06447e 66a110c10c00
-    mov word ptr [word_e9ac6], ax                ; 064484 66a3c69a0e00
+    mov word ptr [last_touch_x], ax              ; 064484 66a3c69a0e00
     mov ax, word ptr [dword_cc114]               ; 06448a 66a114c10c00
-    mov word ptr [word_e9ac4], ax                ; 064490 66a3c49a0e00
+    mov word ptr [last_touch_y], ax              ; 064490 66a3c49a0e00
     mov edx, 0x21                                ; 064496 ba21000000
     mov eax, referee                             ; 06449b b81c000e00
     call set_state                               ; 0644a0 e84fdbfaff
@@ -4129,7 +4137,7 @@ loc_655c3:
 ; ====================================================================================================
 ; pick_player_for_position  [0x655cc, 807 bytes, 245 instructions]
 ; chooses a roster player for a line position (D/G/forward)
-; called by: ai_game_misconduct, sub_55e72, count_dressed_players
+; called by: ai_game_misconduct, injure_player, count_dressed_players
 ; ====================================================================================================
 pick_player_for_position:
     push 0x28                                    ; 0655cc 6828000000
@@ -5035,7 +5043,7 @@ loc_65f64:
     cmp word ptr [stoppage_timer], 0             ; 065f6d 66833dce900c0000
     jl loc_65f85                                 ; 065f75 7c0e
 loc_65f77:
-    cmp word ptr [dword_c90d4], 0                ; 065f77 66833dd4900c0000
+    cmp word ptr [ref_phase], 0                  ; 065f77 66833dd4900c0000
     jle loc_66158                                ; 065f7f 0f8ed3010000
 loc_65f85:
     mov eax, referee                             ; 065f85 b81c000e00
@@ -5143,7 +5151,7 @@ loc_660c6:
     mov esi, dword ptr [eax + 4]                 ; 0660e6 8b7004
     sar esi, 0x10                                ; 0660e9 c1fe10
     mov dword ptr [esp], esi                     ; 0660ec 893424
-    mov esi, dword ptr [dword_c90b2]             ; 0660ef 8b35b2900c00
+    mov esi, dword ptr [faceoff_spot]            ; 0660ef 8b35b2900c00
     sar esi, 0x10                                ; 0660f5 c1fe10
     mov ebp, dword ptr [esp]                     ; 0660f8 8b2c24
     sub ebp, esi                                 ; 0660fb 29f5
@@ -5164,7 +5172,7 @@ loc_66117:
     mov ax, word ptr [word_c90b4]                ; 06612b 66a1b4900c00
     mov word ptr [camera_target_y], ax           ; 066131 66a3ae900c00
     mov word ptr [dword_e03ac], ax               ; 066137 66a3ac030e00
-    mov ax, word ptr [dword_c90b2]               ; 06613d 66a1b2900c00
+    mov ax, word ptr [faceoff_spot]              ; 06613d 66a1b2900c00
     mov word ptr [camera_target_x], ax           ; 066143 66a3ac900c00
     mov word ptr [dword_e03b0], ax               ; 066149 66a3b0030e00
     xor ecx, ecx                                 ; 06614f 31c9
@@ -5420,7 +5428,7 @@ loc_66491:
 ; ====================================================================================================
 ; load_cutscene_clip  [0x66497, 278 bytes, 72 instructions]
 ; loads the %04d frames of a cutscene .PPV (fanom, goal, clap, siren, hook ...)
-; called by: init_match, ref_check_announcements, ai_ref_pickup_puck, sub_62343, record_penalty
+; called by: init_match, ref_check_announcements, ai_ref_pickup_puck, announce_goal, record_penalty
 ;   uses string "%04d"
 ;   uses string ".PPV"
 ; ====================================================================================================
@@ -6148,7 +6156,7 @@ loc_66d9b:
 
 ; ====================================================================================================
 ; sub_66dda  [0x66dda, 44 bytes, 12 instructions]
-; called by: init_match, start_period, ref_check_announcements, ai_ref_pickup_puck, sub_62343, record_penalty, sub_62764
+; called by: init_match, start_period, ref_check_announcements, ai_ref_pickup_puck, announce_goal, record_penalty, announce_injury
 ; ====================================================================================================
 sub_66dda:
     push 8                                       ; 066dda 6808000000
@@ -7010,7 +7018,7 @@ loc_67743:
     mov dl, byte ptr [byte_e9abb]                ; 0677f1 8a15bb9a0e00
     and dl, 0xf                                  ; 0677f7 80e20f
     shl dl, 4                                    ; 0677fa c0e204
-    mov al, byte ptr [word_e9aba]                ; 0677fd a0ba9a0e00
+    mov al, byte ptr [penalized_count]           ; 0677fd a0ba9a0e00
     and al, 0xf                                  ; 067802 240f
     or dl, al                                    ; 067804 08c2
     mov eax, dword ptr [replay_write_ptr]        ; 067806 a19c030e00
@@ -8390,27 +8398,27 @@ loc_688e5:
     call sprintf                                 ; 06890d e8d8810200
     add esp, 0x10                                ; 068912 83c410
     mov esi, eax                                 ; 068915 89c6
-    mov edx, dword ptr [dword_cc0f8]             ; 068917 8b15f8c00c00
+    mov edx, dword ptr [breakaway_flag]          ; 068917 8b15f8c00c00
     push edx                                     ; 06891d 52
-    mov ebx, dword ptr [dword_cc124]             ; 06891e 8b1d24c10c00
+    mov ebx, dword ptr [defenders_ahead]         ; 06891e 8b1d24c10c00
     push ebx                                     ; 068924 53
     mov ecx, dword ptr [dword_cc108]             ; 068925 8b0d08c10c00
     push ecx                                     ; 06892b 51
-    mov edi, dword ptr [dword_cc104]             ; 06892c 8b3d04c10c00
+    mov edi, dword ptr [penalty_shot_team]       ; 06892c 8b3d04c10c00
     push edi                                     ; 068932 57
     mov eax, dword ptr [dword_cc100]             ; 068933 a100c10c00
     push eax                                     ; 068938 50
-    mov edx, dword ptr [dword_cc0fc]             ; 068939 8b15fcc00c00
+    mov edx, dword ptr [penalty_shot_slot]       ; 068939 8b15fcc00c00
     push edx                                     ; 06893f 52
-    mov ebx, dword ptr [dword_cc12c]             ; 068940 8b1d2cc10c00
+    mov ebx, dword ptr [penalty_shot_timer]      ; 068940 8b1d2cc10c00
     push ebx                                     ; 068946 53
     mov ecx, dword ptr [dword_cc120]             ; 068947 8b0d20c10c00
     push ecx                                     ; 06894d 51
-    mov edi, dword ptr [dword_cc11c]             ; 06894e 8b3d1cc10c00
+    mov edi, dword ptr [penalty_shot_setup]      ; 06894e 8b3d1cc10c00
     push edi                                     ; 068954 57
-    mov eax, dword ptr [dword_cc128]             ; 068955 a128c10c00
+    mov eax, dword ptr [penalty_shot_active]     ; 068955 a128c10c00
     push eax                                     ; 06895a 50
-    mov edx, dword ptr [dword_cc118]             ; 06895b 8b1518c10c00
+    mov edx, dword ptr [penalty_shot_phase]      ; 06895b 8b1518c10c00
     push edx                                     ; 068961 52
     push aPsDDDDDFDDDDBDD                        ; 068962 6873230c00        "ps<%d %d %d %d %d> f(%d %d %d %d) b(%d %d)"
     lea eax, [ebp + 0x7e]                        ; 068967 8d457e
@@ -8419,7 +8427,7 @@ loc_688e5:
     call sprintf                                 ; 06896d e878810200
     add esp, 0x34                                ; 068972 83c434
     add esi, eax                                 ; 068975 01c6
-    call sub_51440                               ; 068977 e8c48afeff
+    call all_players_arrived                     ; 068977 e8c48afeff
     push eax                                     ; 06897c 50
     push aLipD                                   ; 06897d 689e230c00        "lip %d "
     call sub_935e0                               ; 068982 e859ac0200
@@ -8427,7 +8435,7 @@ loc_688e5:
     mov eax, dword ptr [camera_target_x]         ; 06898a a1ac900c00
     sar eax, 0x10                                ; 06898f c1f810
     push eax                                     ; 068992 50
-    mov eax, dword ptr [dword_c90aa]             ; 068993 a1aa900c00
+    mov eax, dword ptr [goalie_pass_mode]        ; 068993 a1aa900c00
     sar eax, 0x10                                ; 068998 c1f810
     push eax                                     ; 06899b 50
     mov eax, dword ptr [camera]                  ; 06899c a198900c00
@@ -8491,7 +8499,7 @@ loc_688e5:
     setne al                                     ; 068a4d 0f95c0
     and eax, 0xff                                ; 068a50 25ff000000
     push eax                                     ; 068a55 50
-    mov eax, dword ptr [dword_cbc44]             ; 068a56 a144bc0c00
+    mov eax, dword ptr [penalty_box_mode]        ; 068a56 a144bc0c00
     sar eax, 0x10                                ; 068a5b c1f810
     push eax                                     ; 068a5e 50
     mov eax, dword ptr [period_over]             ; 068a5f a146bc0c00
@@ -9577,14 +9585,14 @@ loc_69655:
     xor edi, edi                                 ; 06969e 31ff
     mov word ptr [whistle_timer], dx             ; 0696a0 668915d2900c00
     mov eax, esi                                 ; 0696a7 89f0
-    mov word ptr [dword_c90d4], si               ; 0696a9 668935d4900c00
+    mov word ptr [ref_phase], si                 ; 0696a9 668935d4900c00
     mov edx, esi                                 ; 0696b0 89f2
     mov word ptr [stoppage_timer], si            ; 0696b2 668935ce900c00
-    mov word ptr [dword_c90d6], bx               ; 0696b9 66891dd6900c00
+    mov word ptr [ref_infraction], bx            ; 0696b9 66891dd6900c00
     mov ecx, esi                                 ; 0696c0 89f1
-    mov word ptr [word_c90d8], si                ; 0696c2 668935d8900c00
+    mov word ptr [penalized_slot], si            ; 0696c2 668935d8900c00
     mov word ptr [word_cbec0], si                ; 0696c9 668935c0be0c00
-    mov word ptr [dword_cbc44], di               ; 0696d0 66893d44bc0c00
+    mov word ptr [penalty_box_mode], di          ; 0696d0 66893d44bc0c00
     mov word ptr [word_cbec8], si                ; 0696d7 668935c8be0c00
     mov word ptr [word_cbece], si                ; 0696de 668935cebe0c00
     mov ebx, esi                                 ; 0696e5 89f3
@@ -9599,7 +9607,7 @@ loc_69655:
     mov word ptr [word_df81a], ax                ; 06970f 66a31af80d00
     mov word ptr [word_df816], ax                ; 069715 66a316f80d00
     call sub_5d7f7                               ; 06971b e8d740ffff
-    call sub_5dd6b                               ; 069720 e84646ffff
+    call sort_draw_order                         ; 069720 e84646ffff
     xor ebx, edx                                 ; 069725 31d3
     mov word ptr [dword_c909a], bx               ; 069727 66891d9a900c00
     xor ecx, ecx                                 ; 06972e 31c9
@@ -9609,13 +9617,13 @@ loc_69655:
     mov word ptr [camera_target_x], cx           ; 069745 66890dac900c00
     add dword ptr [dword_c7444], 0x3e8           ; 06974c 810544740c00e803..
     add dword ptr [dword_c7448], 0x3e8           ; 069756 810548740c00e803..
-    call sub_5df86                               ; 069760 e82148ffff
+    call count_penalized                         ; 069760 e82148ffff
     mov eax, team_home                           ; 069765 b814f60d00
     call sub_5b826                               ; 06976a e8b720ffff
     mov eax, team_home                           ; 06976f b814f60d00
     call apply_line_change                       ; 069774 e87b27ffff
     mov eax, team_home                           ; 069779 b814f60d00
-    call sub_5e0dd                               ; 06977e e85a49ffff
+    call dress_line                              ; 06977e e85a49ffff
     mov word ptr [dword_df648], dx               ; 069783 66891548f60d00
     mov ebx, edx                                 ; 06978a 89d3
     mov word ptr [word_df646], bx                ; 06978c 66891d46f60d00
@@ -9625,11 +9633,11 @@ loc_69655:
     mov eax, team_away                           ; 0697a4 b814f70d00
     call apply_line_change                       ; 0697a9 e84627ffff
     mov eax, team_away                           ; 0697ae b814f70d00
-    call sub_5e0dd                               ; 0697b3 e82549ffff
+    call dress_line                              ; 0697b3 e82549ffff
     mov word ptr [dword_df748], bx               ; 0697b8 66891d48f70d00
     mov word ptr [word_df746], bx                ; 0697bf 66891d46f70d00
     mov word ptr [word_df744], bx                ; 0697c6 66891d44f70d00
-    call sub_5e01a                               ; 0697cd e84848ffff
+    call reset_players_for_faceoff               ; 0697cd e84848ffff
     mov ebx, entities                            ; 0697d2 bb1cf80d00
     xor edi, edi                                 ; 0697d7 31ff
 loc_697d9:
@@ -9740,7 +9748,7 @@ loc_69856:
     call set_state                               ; 069981 e86e86faff
     call sim_tick                                ; 069986 e83928ffff
     call sim_tick                                ; 06998b e83428ffff
-    call sub_5dd7c                               ; 069990 e8e743ffff
+    call sort_draw_order2                        ; 069990 e8e743ffff
     xor edi, edi                                 ; 069995 31ff
     xor edx, edx                                 ; 069997 31d2
     mov dword ptr [dword_d8c78], edi             ; 069999 893d788c0d00
@@ -10148,11 +10156,11 @@ loc_69f33:
     xor edx, edx                                 ; 069fd7 31d2
     mov dword ptr [dword_d8c78], edx             ; 069fd9 8915788c0d00
     mov word ptr [whistle_timer], di             ; 069fdf 66893dd2900c00
-    mov word ptr [dword_c90d4], cx               ; 069fe6 66890dd4900c00
+    mov word ptr [ref_phase], cx                 ; 069fe6 66890dd4900c00
     mov edx, 0x1e                                ; 069fed ba1e000000
     mov eax, referee                             ; 069ff2 b81c000e00
     call set_state                               ; 069ff7 e8f87ffaff
-    call sub_63d3c                               ; 069ffc e83b9dffff
+    call clear_infractions                       ; 069ffc e83b9dffff
     mov word ptr [stoppage_timer], cx            ; 06a001 66890dce900c00
     call flush_key_events                        ; 06a008 e83a5dfeff
     cmp dword ptr [pause_requested], 0           ; 06a00d 833d144e0c0000

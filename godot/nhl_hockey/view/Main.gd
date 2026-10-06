@@ -18,6 +18,8 @@ var frame_textures: Dictionary = {}     # frame id -> ImageTexture
 var frame_centers: Dictionary = {}      # frame id -> Vector2i hotspot
 var palette: PackedColorArray
 var assets_ok := false
+var sfx: Dictionary = {}                # sfx id -> AudioStreamWAV (see Sounds.SFX_FILES)
+var sfx_players: Array[AudioStreamPlayer] = []
 
 func _ready() -> void:
 	world = Node2D.new()
@@ -36,15 +38,33 @@ func _ready() -> void:
 	hud.position = Vector2(4, VIEW_H + 4)
 	hud.add_theme_font_size_override("font_size", 8)
 	add_child(hud)
-	sim.user1_slot = 1   # control the home centre
-	sim.entities[1].flags |= Entity.F_USER
+	# the user plays the home team (user1_team = 1); the centre is selected at the faceoff
 
 func _physics_process(_delta: float) -> void:
 	if Input.is_action_just_pressed("pause"):
 		get_tree().paused = not get_tree().paused
 	var c := controls.step()
 	sim.step(c[0], c[1], c[2], c[3])
+	_play_queued_sfx()
 	_update_view()
+
+## play_sfx of the original queues sample ids; they are played here when the samples were found
+func _play_queued_sfx() -> void:
+	for id in sim.sfx_queue:
+		if sfx.has(id):
+			var p: AudioStreamPlayer = null
+			for cand in sfx_players:
+				if not cand.playing:
+					p = cand
+					break
+			if p == null and sfx_players.size() < 8:
+				p = AudioStreamPlayer.new()
+				add_child(p)
+				sfx_players.append(p)
+			if p != null:
+				p.stream = sfx[id]
+				p.play()
+	sim.sfx_queue.clear()
 
 func _update_view() -> void:
 	var origin := sim.view_origin()
@@ -52,7 +72,9 @@ func _update_view() -> void:
 	for i in sim.entities.size():
 		var e := sim.entities[i]
 		var n := sprites[i]
-		n.visible = e.on_ice() or e.slot == Entity.Slot.PUCK
+		n.visible = (e.on_ice() and e.frame >= 0) or e.slot == Entity.Slot.PUCK or e.slot == Entity.Slot.NET_TOP or e.slot == Entity.Slot.NET_BOTTOM
+		if e.slot == Entity.Slot.PUCK and e.zi < 0:
+			n.visible = false      # in the referee's hand
 		# draw_sprite_world: screen = (x + 192, 320 - y); the height lifts the sprite
 		var sx := e.xi + 192
 		var sy := 320 - e.yi - (e.zi * 3) / 2
@@ -65,8 +87,15 @@ func _update_view() -> void:
 				var c: Vector2i = frame_centers[e.frame]
 				s.offset = Vector2(-c.x, -c.y)
 				s.flip_h = (e.flags4 & Entity.F4_MIRROR) != 0
-	var carrier := "-" if sim.puck_carrier < 0 else str(sim.puck_carrier)
-	hud.text = "puck %d,%d  carrier %s  step %d%s" % [sim.puck.xi, sim.puck.yi, carrier, sim.step_count,
+	var state := ""
+	if sim.game_over:
+		state = "  FINAL"
+	elif sim.faceoff_pending:
+		state = "  faceoff"
+	elif sim.play_stopped:
+		state = "  whistle"
+	hud.text = "HOME %d - %d AWAY   P%d %d:%02d%s%s" % [sim.teams[0].goals, sim.teams[1].goals,
+		sim.period + 1, sim.clock_seconds / 60, sim.clock_seconds % 60, state,
 		"" if assets_ok else "  (no game files: set NHL_GAME_DIR)"]
 
 func _make_entity_node(e: Entity) -> Node2D:
@@ -82,11 +111,15 @@ func _make_entity_node(e: Entity) -> Node2D:
 		Entity.Slot.REFEREE:
 			p.polygon = PackedVector2Array([Vector2(-3, -12), Vector2(3, -12), Vector2(3, 0), Vector2(-3, 0)])
 			p.color = Color.WHITE
+		Entity.Slot.NET_TOP, Entity.Slot.NET_BOTTOM:
+			# the net: 40 wide, 12 deep, drawn as a frame
+			p.polygon = PackedVector2Array([Vector2(-20, -6), Vector2(20, -6), Vector2(20, 6), Vector2(-20, 6)])
+			p.color = Color(0.85, 0.2, 0.2, 0.6)
+		Entity.Slot.SHADOW:
+			p.visible = false
 		_:
 			p.polygon = PackedVector2Array([Vector2(-4, -14), Vector2(4, -14), Vector2(4, 0), Vector2(-4, 0)])
 			p.color = Color(0.9, 0.2, 0.2) if e.team == 0 else Color(0.2, 0.4, 0.9)
-			if e.slot >= 12:
-				p.visible = false
 	return p
 
 # --------------------------------------------------------------------------------------------
@@ -121,6 +154,13 @@ func _load_assets() -> void:
 				frame_textures[fid] = s.to_texture(palette)
 				frame_centers[fid] = Vector2i(s.center_x, s.center_y)
 	assets_ok = not frame_textures.is_empty()
+	# sound effects: the sample file of each id comes from the user's mapping (Sounds.SFX_FILES)
+	for id in Sounds.SFX_FILES:
+		var data := GameFiles.read(Sounds.SFX_FILES[id])
+		if not data.is_empty():
+			var stream := Sounds.load_sample(data)
+			if stream != null:
+				sfx[id] = stream
 
 func _placeholder_rink() -> Texture2D:
 	var img := Image.create(RINK_W, RINK_H, false, Image.FORMAT_RGBA8)

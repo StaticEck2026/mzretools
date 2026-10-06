@@ -61,10 +61,10 @@
 00014825	func	check_disk_space	128	__watcall
 000148a5	func	check_disk_space_for_game	282	__watcall
 000149bf	func	sub_149bf	97	__watcall
-00014a20	func	sub_14a20	222	__watcall
-00014afe	func	sub_14afe	241	__watcall
+00014a20	func	draw_score_digits	222	__watcall
+00014afe	func	draw_line_indicator	241	__watcall
 00014bef	func	sub_14bef	51	__watcall
-00014c22	func	sub_14c22	126	__watcall
+00014c22	func	add_penalty_display	126	__watcall
 00014ca0	func	sub_14ca0	81	__watcall
 00014cf1	func	draw_clock	576	__watcall
 00014f31	func	sub_14f31	405	__watcall
@@ -76,7 +76,7 @@
 000157bd	func	sub_157bd	472	__watcall
 00015995	func	sub_15995	481	__watcall
 00015b76	func	sub_15b76	186	__watcall
-00015c30	func	sub_15c30	177	__watcall
+00015c30	func	game_over_check	177	__watcall
 00015ce1	func	sub_15ce1	138	__watcall
 00015d6b	func	demo_game	673	__watcall
 0001600c	func	sub_1600c	102	__watcall
@@ -500,15 +500,15 @@
 0004d6b4	func	puck_update	531	__watcall
 0004d8c7	func	ai_puck_normal	54	__watcall
 0004d8fd	func	ai_puck_idle	10	__watcall
-0004d907	func	sub_4d907	49	__watcall
+0004d907	func	puck_flat	49	__watcall
 0004d938	func	start_line_change_ui	196	__watcall
 0004d9fc	func	request_line_change_button	59	__watcall
-0004da37	func	sub_4da37	68	__watcall
+0004da37	func	user_line_change_prompt	68	__watcall
 0004da7b	func	faceoff_resolve	610	__watcall
-0004dcdd	func	sub_4dcdd	116	__watcall
-0004dd51	func	sub_4dd51	195	__watcall
+0004dcdd	func	offside_entry_check	116	__watcall
+0004dd51	func	carrier_zone_entry	195	__watcall
 0004de14	func	update_carrier	400	__watcall
-0004dfa4	func	sub_4dfa4	83	__watcall
+0004dfa4	func	puck_spin	83	__watcall
 0004dff7	func	ai_ref_faceoff	198	__watcall
 0004e0bd	func	ai_ref_normal	469	__watcall
 0004e292	func	ref_skate_to_point	1160	__watcall
@@ -519,8 +519,8 @@
 0004f5bf	func	ai_ref_goto_faceoff	529	__watcall
 0004f7d0	func	ai_ref_point_goal	448	__watcall
 0004f990	func	ai_null	11	__watcall
-0004f99b	func	sub_4f99b	84	__watcall
-0004f9ef	func	sub_4f9ef	249	__watcall
+0004f99b	func	breakaway_next_waypoint	84	__watcall
+0004f9ef	func	breakaway_pick_lane	249	__watcall
 0004fae8	func	ai_breakaway	512	__watcall
 0004fce8	func	next_key_event	95	__watcall
 0004fd47	func	flush_key_events	27	__watcall
@@ -534,20 +534,20 @@
 00050434	func	request_line_change	166	__watcall
 000504da	func	control_player	1070	__watcall
 00050908	func	pick_next_line	109	__watcall
-00050975	func	sub_50975	144	__watcall
+00050975	func	cpu_line_change_select	144	__watcall
 00050a05	func	read_control_p1	127	__watcall
 00050a84	func	read_control_p2	90	__watcall
-00050ade	func	sub_50ade	32	__watcall
-00050afe	func	sub_50afe	87	__watcall
-00050b55	func	sub_50b55	775	__watcall
-00050e5c	func	sub_50e5c	227	__watcall
+00050ade	func	center_mouse	32	__watcall
+00050afe	func	pass_completed	87	__watcall
+00050b55	func	one_timer_step	775	__watcall
+00050e5c	func	one_timer_chance	227	__watcall
 00050f3f	func	ai_pass_receiver	362	__watcall
 000510a9	func	sub_510a9	108	__watcall
 00051115	func	sub_51115	159	__watcall
-000511b4	func	sub_511b4	171	__watcall
-0005125f	func	sub_5125f	72	__watcall
+000511b4	func	send_team_to_faceoff	171	__watcall
+0005125f	func	dress_line_if_start	72	__watcall
 000512a7	func	all_goto_positions	409	__watcall
-00051440	func	sub_51440	61	__watcall
+00051440	func	all_players_arrived	61	__watcall
 0005147d	func	ai_bench_wait	612	__watcall
 000516e1	func	ai_puck_faceoff	1274	__watcall
 00051bdb	func	ai_puck_faceoff2	2834	__watcall
@@ -556,55 +556,55 @@
 00052bb6	func	handle_line_change	506	__watcall
 00052db0	func	ai_all_penalty_shot_wait	512	__watcall
 00052fb0	func	ai_ref_penalty_shot	740	__watcall
-00053294	func	sub_53294	14	__watcall
-000532a2	func	sub_532a2	27	__watcall
+00053294	func	to_fixed16	14	__watcall
+000532a2	func	lunge_for_puck	27	__watcall
 000532bd	func	body_check	202	__watcall
 00053387	func	start_poke_check	308	__watcall
-000534bb	func	sub_534bb	124	__watcall
+000534bb	func	try_shot_block	124	__watcall
 00053537	func	ai_try_check	360	__watcall
-0005369f	func	sub_5369f	238	__watcall
+0005369f	func	penalty_odds	238	__watcall
 0005378d	func	sub_5378d	159	__watcall
 0005382c	func	resolve_body_check	1209	__watcall
-00053ce5	func	sub_53ce5	389	__watcall
+00053ce5	func	collide_player_net	389	__watcall
 00053e6a	func	check_injury	290	__watcall
 00053f8c	func	pull_goalie_logic	424	__watcall
 00054134	func	stickhandling_skill	150	__watcall
 000541ca	func	two_line_pass_check	192	__watcall
 0005428a	func	puck_player_interaction	1570	__watcall
 000548ac	func	puck_check_players	228	__watcall
-00054990	func	sub_54990	195	__watcall
-00054a53	func	sub_54a53	166	__watcall
+00054990	func	net_push_off	195	__watcall
+00054a53	func	penalty_time_left	166	__watcall
 00054af9	func	ai_consider_shot	272	__watcall
-00054c09	func	sub_54c09	346	__watcall
+00054c09	func	pass_lane_ok	346	__watcall
 00054d63	func	pass_to_entity	145	__watcall
 00054df4	func	do_pass	858	__watcall
 0005514e	func	pass_button	97	__watcall
 000551af	func	shoot_button	32	__watcall
-000551cf	func	sub_551cf	708	__watcall
+000551cf	func	pass_lead	708	__watcall
 00055493	func	ai_choose_pass_target	881	__watcall
 00055804	func	ai_offense_decision	561	__watcall
 00055a35	func	ai_desperation_shot	106	__watcall
 00055a9f	func	check_offside	464	__watcall
 00055c6f	func	update_offside_flags	185	__watcall
-00055d28	func	sub_55d28	330	__watcall
-00055e72	func	sub_55e72	427	__watcall
-0005601d	func	sub_5601d	702	__watcall
+00055d28	func	shot_landed	330	__watcall
+00055e72	func	injure_player	427	__watcall
+0005601d	func	knockdown_position	702	__watcall
 000562db	func	knock_down	1913	__watcall
 00056a54	func	resolve_hook_hit	293	__watcall
 00056b79	func	resolve_poke_hit	397	__watcall
 00056d06	func	attach_puck_to_stick	332	__watcall
 00056e52	func	check_icing	125	__watcall
 00056ecf	func	ai_puck_shadow	139	__watcall
-00056f5a	func	sub_56f5a	316	__watcall
+00056f5a	func	take_puck	316	__watcall
 00057096	func	puck_hits_player	1005	__watcall
 00057483	func	goalie_save	1003	__watcall
 0005786e	func	start_shot	140	__watcall
 000578fa	func	shot_control	261	__watcall
 000579ff	func	shot_is_backhand	63	__watcall
-00057a3e	func	sub_57a3e	90	__watcall
+00057a3e	func	release_puck_random	90	__watcall
 00057a98	func	shot_setup	371	__watcall
 00057c0b	func	do_shot	1145	__watcall
-00058084	func	sub_58084	113	__watcall
+00058084	func	crowd_reaction_sfx	113	__watcall
 000580f5	func	move_entity	468	__watcall
 000582c9	func	collide_boards	481	__watcall
 000584aa	func	collide_net	809	__watcall
@@ -614,8 +614,8 @@
 00058dc7	func	collide_pair	1024	__watcall
 000591c7	func	maybe_pull_goalie	158	__watcall
 00059265	func	cpu_line_change	237	__watcall
-00059352	func	sub_59352	163	__watcall
-000593f5	func	sub_593f5	158	__watcall
+00059352	func	cpu_pull_goalie_check	163	__watcall
+000593f5	func	late_game_pull_goalie	158	__watcall
 00059493	func	sub_59493	31	__watcall
 000594b2	func	sub_594b2	27	__watcall
 000594cd	func	update_ambient_audio	635	__watcall
@@ -649,11 +649,11 @@
 00059dbb	func	draw_rink_marks	174	__watcall
 00059e69	func	switch_to_nearest	376	__watcall
 00059fe1	func	find_switch_target	90	__watcall
-0005a03b	func	sub_5a03b	104	__watcall
+0005a03b	func	team_avg_energy	104	__watcall
 0005a0a3	func	choose_line	485	__watcall
 0005a288	func	sub_5a288	102	__watcall
 0005a2ee	func	sub_5a2ee	30	__watcall
-0005a30c	func	sub_5a30c	53	__watcall
+0005a30c	func	line_avg_energy	53	__watcall
 0005a341	func	predict_puck_goal_line	228	__watcall
 0005a425	func	frame_offsets_lookup	136	__watcall
 0005a4ad	func	stick_offsets_lookup	135	__watcall
@@ -663,7 +663,7 @@
 0005a77c	func	time_announcements	818	__watcall
 0005aaae	func	goal_disallowed_check	136	__watcall
 0005ab36	func	score_goal	1688	__watcall
-0005b1ce	func	sub_5b1ce	202	__watcall
+0005b1ce	func	follow_puck_user_switch	202	__watcall
 0005b298	func	set_default_state	45	__watcall
 0005b2c5	func	put_player_on_ice	1377	__watcall
 0005b826	func	sub_5b826	91	__watcall
@@ -673,7 +673,7 @@
 0005ba07	func	sub_5ba07	71	__watcall
 0005ba4e	func	sub_5ba4e	59	__watcall
 0005ba89	func	sub_5ba89	277	__watcall
-0005bb9e	func	sub_5bb9e	92	__watcall
+0005bb9e	func	player_available	92	__watcall
 0005bbfa	func	assign_line_positions	762	__watcall
 0005bef4	func	apply_line_change	284	__watcall
 0005c010	func	period_init	436	__watcall
@@ -683,32 +683,32 @@
 0005c302	func	sim_game_state	269	__watcall
 0005c40f	func	sim_update_players	1760	__watcall
 0005caef	func	advance_animation	566	__watcall
-0005cd25	func	sub_5cd25	42	__watcall
+0005cd25	func	hold_camera	42	__watcall
 0005cd4f	func	sub_5cd4f	195	__watcall
 0005ce12	func	draw_sprites	2533	__watcall
 0005d7f7	func	sub_5d7f7	91	__watcall
 0005d852	func	setup_faceoff	958	__watcall
 0005dc10	func	game_clock_tick	347	__watcall
-0005dd6b	func	sub_5dd6b	17	__watcall
-0005dd7c	func	sub_5dd7c	34	__watcall
+0005dd6b	func	sort_draw_order	17	__watcall
+0005dd7c	func	sort_draw_order2	34	__watcall
 0005dd9e	func	sub_5dd9e	30	__watcall
-0005ddbc	func	sub_5ddbc	30	__watcall
+0005ddbc	func	end_period_flag	30	__watcall
 0005ddda	func	sub_5ddda	104	__watcall
 0005de42	func	sub_5de42	46	__watcall
 0005de70	func	period_cleanup	54	__watcall
 0005dea6	func	end_of_period	224	__watcall
-0005df86	func	sub_5df86	148	__watcall
-0005e01a	func	sub_5e01a	108	__watcall
+0005df86	func	count_penalized	148	__watcall
+0005e01a	func	reset_players_for_faceoff	108	__watcall
 0005e086	func	sub_5e086	42	__watcall
 0005e0b0	func	sub_5e0b0	45	__watcall
-0005e0dd	func	sub_5e0dd	144	__watcall
+0005e0dd	func	dress_line	144	__watcall
 0005e16d	func	apply_skating	855	__watcall
 0005e4c4	func	ai_ref_positioning	826	__watcall
 0005e7fe	func	ai_near_carrier_check	317	__watcall
 0005e93b	func	ai_skate_towards	476	__watcall
 0005eb17	func	ai_chase_puck	662	__watcall
 0005edad	func	skating_accelerate	673	__watcall
-0005f04e	func	sub_5f04e	205	__watcall
+0005f04e	func	net_zone_flags	205	__watcall
 0005f151	func	ai_choose_direction	1524	__watcall
 0005f745	func	stop_skating	229	__watcall
 0005f82a	func	brake	136	__watcall
@@ -716,8 +716,8 @@
 0005f98a	func	skating_turn	377	__watcall
 0005fb03	func	save_game	2831	__watcall
 00060612	func	savegame_io	3760	__watcall
-000614c2	func	sub_614c2	180	__watcall
-00061576	func	sub_61576	44	__watcall
+000614c2	func	start_crowd_sound	180	__watcall
+00061576	func	play_crowd_chant	44	__watcall
 000615a2	func	update_effects	704	__watcall
 00061862	func	draw_nets_and_effects	358	__watcall
 000619c8	func	sub_619c8	95	__watcall
@@ -729,34 +729,34 @@
 00061c86	func	sub_61c86	194	__watcall
 00061d48	func	format_player_name	337	__watcall
 00061e99	func	show_penalty	1194	__watcall
-00062343	func	sub_62343	374	__watcall
+00062343	func	announce_goal	374	__watcall
 000624b9	func	record_penalty	683	__watcall
-00062764	func	sub_62764	148	__watcall
+00062764	func	announce_injury	148	__watcall
 000627f8	func	sub_627f8	15	__watcall
 00062807	func	sub_62807	1072	__watcall
 00062c37	func	sub_62c37	160	__watcall
 00062cd7	func	sub_62cd7	34	__watcall
 00062cf9	func	maybe_queue_infraction	135	__watcall
 00062d80	func	queue_infraction	290	__watcall
-00062ea2	func	sub_62ea2	71	__watcall
+00062ea2	func	ref_announce	71	__watcall
 00062ee9	func	penalty_box_update	1420	__watcall
 00063475	func	sub_63475	206	__watcall
 00063543	func	start_stoppage	626	__watcall
 000637b5	func	process_infractions	373	__watcall
 0006392a	func	sub_6392a	122	__watcall
-000639a4	func	sub_639a4	85	__watcall
-000639f9	func	sub_639f9	62	__watcall
-00063a37	func	sub_63a37	288	__watcall
-00063b57	func	sub_63b57	46	__watcall
+000639a4	func	zone_time_stats	85	__watcall
+000639f9	func	penalty_expired	62	__watcall
+00063a37	func	penalty_timers	288	__watcall
+00063b57	func	lead_time_stats	46	__watcall
 00063b85	func	update_line_timers	115	__watcall
 00063bf8	func	update_stoppage	123	__watcall
 00063c73	func	update_lead_change	201	__watcall
-00063d3c	func	sub_63d3c	45	__watcall
-00063d69	func	sub_63d69	521	__watcall
-00063f72	func	sub_63f72	400	__watcall
+00063d3c	func	clear_infractions	45	__watcall
+00063d69	func	goal_ends_penalty	521	__watcall
+00063f72	func	start_penalty_shot	400	__watcall
 00064102	func	count_defenders_ahead	381	__watcall
 0006427f	func	sub_6427f	185	__watcall
-00064338	func	sub_64338	96	__watcall
+00064338	func	note_breakaway	96	__watcall
 00064398	func	sub_64398	161	__watcall
 00064439	func	end_penalty_shot	111	__watcall
 000644a8	func	sub_644a8	183	__watcall
@@ -1506,7 +1506,7 @@
 0009333c	func	sub_9333c	21	__watcall
 00093354	func	sub_93354	21	__watcall
 0009336c	func	savefileblocka	131	__cdecl
-000933f0	func	sub_933f0	11	__cdecl
+000933f0	func	imul32	11	__cdecl
 000933fb	func	sub_933fb	11	__cdecl
 00093406	func	sub_93406	12	__cdecl
 00093412	func	sub_93412	13	__cdecl
@@ -1515,7 +1515,7 @@
 0009343b	func	sub_9343b	17	__cdecl
 0009344c	func	sub_9344c	15	__cdecl
 0009345b	func	sub_9345b	19	__cdecl
-00093470	func	sub_93470	194	__cdecl
+00093470	func	isqrt32	194	__cdecl
 00093540	func	sub_93540	150	__cdecl
 000935e0	func	sub_935e0	73	__cdecl
 0009362c	func	sub_9362c	128	__cdecl
@@ -2460,7 +2460,7 @@
 000b3d56	func	sub_b3d56	14	__watcall
 000b3d64	func	timeout2_expired	16	__watcall
 000b3d74	func	sub_b3d74	29	__cdecl
-000b3d94	func	sub_b3d94	102	__cdecl
+000b3d94	func	approx_distance	102	__cdecl
 000b3dfc	func	sub_b3dfc	78	__watcall
 000b3e4a	func	fatal_dumpregs	78	__watcall
 000b3e98	func	sub_b3e98	64	__watcall
@@ -5476,22 +5476,22 @@
 000c9096	data	dword_c9096	4	
 000c9098	data	camera	4	
 000c909a	data	dword_c909a	4	
-000c909c	data	dword_c909c	4	
-000c909e	data	dword_c909e	4	
-000c90a0	data	word_c90a0	2	
-000c90a2	data	dword_c90a2	4	
+000c909c	data	coll_half_w	4	
+000c909e	data	coll_half_h	4	
+000c90a0	data	last_shooter	2	
+000c90a2	data	last_passer	4	
 000c90a4	data	pending_dir	4	
 000c90a6	data	shot_power	4	
 000c90a8	data	word_c90a8	2	
-000c90aa	data	dword_c90aa	4	
+000c90aa	data	goalie_pass_mode	4	
 000c90ac	data	camera_target_x	4	
 000c90ae	data	camera_target_y	4	
 000c90b0	data	dword_c90b0	4	
-000c90b2	data	dword_c90b2	4	
+000c90b2	data	faceoff_spot	4	
 000c90b4	data	word_c90b4	2	
-000c90b6	data	word_c90b6	2	
-000c90b8	data	word_c90b8	2	
-000c90ba	data	byte_c90ba	1	
+000c90b6	data	faceoff_dir_home	2	
+000c90b8	data	faceoff_dir_away	2	
+000c90ba	data	puck_in_net	1	
 000c90bb	data	game_flags	1	
 000c90bc	data	action_flags	2	
 000c90be	data	stop_flags	2	
@@ -5507,10 +5507,10 @@
 000c90ce	data	stoppage_timer	2	
 000c90d0	data	dword_c90d0	4	
 000c90d2	data	whistle_timer	4	
-000c90d4	data	dword_c90d4	4	
+000c90d4	data	ref_phase	4	
 000c90d5	data	byte_c90d5	1	
-000c90d6	data	dword_c90d6	4	
-000c90d8	data	word_c90d8	2	
+000c90d6	data	ref_infraction	4	
+000c90d8	data	penalized_slot	2	
 000c90da	data	period_idx	4	
 000c90dc	data	clock_seconds	4	
 000c90de	data	clock_sub	2	
@@ -5518,11 +5518,11 @@
 000c90e2	data	unk_c90e2	0	
 000c9100	data	dword_c9100	4	
 000c9102	data	word_c9102	2	
-000c9104	data	unk_c9104	0	
+000c9104	data	stoppage_duration	0	
 000c9111	data	byte_c9111	1	
 000c9120	data	unk_c9120	0	
 000c9123	data	infraction_is_penalty	0	
-000c9142	data	unk_c9142	0	
+000c9142	data	announce_delay	0	
 000c9146	data	byte_c9146	1	
 000c9161	data	ai_state_handlers	4	code_ptr
 000c921d	data	anim_sequences	0	
@@ -5530,7 +5530,7 @@
 000cbc37	data	unk_cbc37	0	
 000cbc3e	data	show_names	4	
 000cbc42	data	word_cbc42	2	
-000cbc44	data	dword_cbc44	4	
+000cbc44	data	penalty_box_mode	4	
 000cbc46	data	period_over	4	
 000cbc48	data	game_over	2	
 000cbc4a	data	word_cbc4a	2	
@@ -5560,12 +5560,12 @@
 000cbd0e	data	unk_cbd0e	0	
 000cbd1e	data	unk_cbd1e	0	
 000cbd2e	data	off_cbd2e	4	ptr
-000cbd5a	data	unk_cbd5a	0	
+000cbd5a	data	entity_init	0	
 000cbd64	data	unk_cbd64	0	
 000cbd66	data	unk_cbd66	0	
-000cbe8c	data	unk_cbe8c	0	
+000cbe8c	data	faceoff_spots	0	
 000cbe8e	data	unk_cbe8e	0	
-000cbea8	data	unk_cbea8	0	
+000cbea8	data	faceoff_lineup	0	
 000cbebe	data	dword_cbebe	4	
 000cbec0	data	word_cbec0	2	
 000cbec2	data	word_cbec2	2	
@@ -5601,32 +5601,32 @@
 000cc0de	data	word_cc0de	2	
 000cc0e0	data	dword_cc0e0	4	
 000cc0ec	data	dword_cc0ec	4	
-000cc0f0	data	dword_cc0f0	4	
-000cc0f4	data	dword_cc0f4	4	
-000cc0f8	data	dword_cc0f8	4	
+000cc0f0	data	skip_faceoff_wait	4	
+000cc0f4	data	one_timer_pending	4	
+000cc0f8	data	breakaway_flag	4	
 000cc0fa	data	dword_cc0fa	4	
-000cc0fc	data	dword_cc0fc	4	
+000cc0fc	data	penalty_shot_slot	4	
 000cc100	data	dword_cc100	4	
-000cc104	data	dword_cc104	4	
+000cc104	data	penalty_shot_team	4	
 000cc108	data	dword_cc108	4	
 000cc10c	data	dword_cc10c	4	
 000cc110	data	dword_cc110	4	
 000cc114	data	dword_cc114	4	
-000cc118	data	dword_cc118	4	
-000cc11c	data	dword_cc11c	4	
+000cc118	data	penalty_shot_phase	4	
+000cc11c	data	penalty_shot_setup	4	
 000cc120	data	dword_cc120	4	
-000cc124	data	dword_cc124	4	
-000cc128	data	dword_cc128	4	
-000cc12c	data	dword_cc12c	4	
-000cc130	data	dword_cc130	4	
-000cc134	data	dword_cc134	4	
-000cc138	data	dword_cc138	4	
-000cc13c	data	dword_cc13c	4	
-000cc140	data	dword_cc140	4	
-000cc144	data	dword_cc144	4	
+000cc124	data	defenders_ahead	4	
+000cc128	data	penalty_shot_active	4	
+000cc12c	data	penalty_shot_timer	4	
+000cc130	data	breakaway_lane_x	4	
+000cc134	data	breakaway_target_y	4	
+000cc138	data	breakaway_trigger_y	4	
+000cc13c	data	breakaway_waypoint	4	
+000cc140	data	breakaway_lane_side	4	
+000cc144	data	breakaway_heading	4	
 000cc148	data	frame_offsets	0	
 000cc149	data	unk_cc149	0	
-000cc7a4	data	unk_cc7a4	0	
+000cc7a4	data	stick_offsets	0	
 000cc7a5	data	unk_cc7a5	0	
 000cc9ad	data	unk_cc9ad	0	
 000cc9b0	data	unk_cc9b0	0	
@@ -5637,27 +5637,27 @@
 000cc9ea	data	unk_cc9ea	0	
 000cc9ec	data	unk_cc9ec	0	
 000cca0a	data	star_names	4	ptr
-000cca18	data	unk_cca18	0	
+000cca18	data	wing_zones	0	
 000cca1a	data	unk_cca1a	0	
 000cca1c	data	unk_cca1c	0	
 000cca1e	data	unk_cca1e	0	
-000cca38	data	unk_cca38	0	
+000cca38	data	center_zones	0	
 000cca3a	data	unk_cca3a	0	
 000cca3c	data	unk_cca3c	0	
 000cca3e	data	unk_cca3e	0	
 000cca58	data	dword_cca58	4	
-000cca5a	data	unk_cca5a	0	
-000cca6e	data	unk_cca6e	0	
+000cca5a	data	goalie_save_anims	0	
+000cca6e	data	carrier_targets	0	
 000cca70	data	unk_cca70	0	
-000cca95	data	unk_cca95	0	
-000cca9c	data	unk_cca9c	0	
-000ccad8	data	unk_ccad8	0	
-000ccb18	data	unk_ccb18	0	
+000cca95	data	faceoff_bonus	0	
+000cca9c	data	ref_signal_dir	0	
+000ccad8	data	ref_signal_anim	0	
+000ccb18	data	breakaway_waypoints	0	
 000ccb1c	data	unk_ccb1c	0	
 000ccb20	data	unk_ccb20	0	
 000ccb4a	data	unk_ccb4a	0	
 000ccb5a	data	unk_ccb5a	0	
-000ccbba	data	unk_ccbba	0	
+000ccbba	data	onetimer_offsets	0	
 000ccbbb	data	unk_ccbbb	0	
 000ccbcc	data	unk_ccbcc	0	
 000ccbdc	data	unk_ccbdc	0	
@@ -5665,19 +5665,19 @@
 000ccbfc	data	unk_ccbfc	0	
 000ccc0c	data	unk_ccc0c	0	
 000ccc1c	data	unk_ccc1c	0	
-000ccc2c	data	dword_ccc2c	4	
-000ccc30	data	unk_ccc30	0	
+000ccc2c	data	bounced_this_step	4	
+000ccc30	data	poke_vectors	0	
 000ccc32	data	unk_ccc32	0	
 000ccc4e	data	unk_ccc4e	0	
 000ccc60	data	shot_targets	0	
 000ccc62	data	unk_ccc62	0	
-000ccc84	data	dword_ccc84	4	
+000ccc84	data	crowd_loop_channel	4	
 000ccc88	data	dword_ccc88	4	
 000ccc8c	data	dword_ccc8c	4	
 000ccc90	data	dword_ccc90	4	
 000ccc94	data	dword_ccc94	4	
 000ccc98	data	dword_ccc98	4	
-000ccc9c	data	dword_ccc9c	4	
+000ccc9c	data	controls_blocked	4	
 000ccc9d	data	dword_ccc9d	4	
 000ccc9e	data	position_default_state	0	
 000ccca0	data	byte_ccca0	1	
@@ -7843,7 +7843,7 @@
 000df806	data	dword_df806	4	
 000df80a	data	dword_df80a	4	
 000df80e	data	word_df80e	2	
-000df812	data	unk_df812	0	
+000df812	data	goal_prediction	0	
 000df814	data	unk_df814	0	
 000df816	data	word_df816	2	
 000df817	data	byte_df817	1	
@@ -7879,7 +7879,7 @@
 000dff2e	data	word_dff2e	2	
 000dff36	data	dword_dff36	4	
 000dff3a	data	unk_dff3a	0	
-000dff42	data	word_dff42	2	
+000dff42	data	faceoff_timer	2	
 000dff44	data	word_dff44	2	
 000dff5a	data	word_dff5a	2	
 000dff5e	data	unk_dff5e	0	
@@ -7935,14 +7935,14 @@
 000e0382	data	word_e0382	2	
 000e0384	data	unk_e0384	0	
 000e038a	data	unk_e038a	0	
-000e038e	data	dword_e038e	4	
+000e038e	data	faceoff_ready_home	4	
 000e0390	data	word_e0390	2	
-000e0392	data	dword_e0392	4	
+000e0392	data	faceoff_side_home	4	
 000e0393	data	byte_e0393	1	
-000e0394	data	word_e0394	2	
-000e0396	data	word_e0396	2	
+000e0394	data	faceoff_ready_away	2	
+000e0396	data	faceoff_side_away	2	
 000e0397	data	byte_e0397	1	
-000e0398	data	word_e0398	2	
+000e0398	data	faceoff_countdown_digit	2	
 000e039a	data	word_e039a	2	
 000e039c	data	replay_write_ptr	4	
 000e03a0	data	dword_e03a0	4	
@@ -8001,15 +8001,15 @@
 000e9ab6	data	dword_e9ab6	4	
 000e9ab7	data	dword_e9ab7	4	
 000e9ab8	data	dword_e9ab8	4	
-000e9aba	data	word_e9aba	2	
+000e9aba	data	penalized_count	2	
 000e9abb	data	byte_e9abb	1	
 000e9abc	data	word_e9abc	2	
-000e9abe	data	dword_e9abe	4	
+000e9abe	data	icing_state	4	
 000e9ac0	data	dword_e9ac0	4	
 000e9ac1	data	byte_e9ac1	1	
-000e9ac2	data	dword_e9ac2	4	
-000e9ac4	data	word_e9ac4	2	
-000e9ac6	data	word_e9ac6	2	
+000e9ac2	data	last_touch_slot	4	
+000e9ac4	data	last_touch_y	2	
+000e9ac6	data	last_touch_x	2	
 000e9ac8	data	dword_e9ac8	4	
 000e9ac9	data	byte_e9ac9	1	
 000e9aca	data	byte_e9aca	1	

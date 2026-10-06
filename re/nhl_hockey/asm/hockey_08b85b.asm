@@ -904,7 +904,7 @@ sub_8c1b7:
 
 ; ====================================================================================================
 ; select_game_surface  [0x8c1c2, 32 bytes, 13 instructions]
-; called by: game_loop, sub_14a20, sub_14afe, draw_clock, show_scoreboard, init_match, instant_replay, replay_control_loop, replay_menu
+; called by: game_loop, draw_score_digits, draw_line_indicator, draw_clock, show_scoreboard, init_match, instant_replay, replay_control_loop, replay_menu
 ; ====================================================================================================
 select_game_surface:
     push 0x14                                    ; 08c1c2 6814000000
@@ -925,7 +925,7 @@ loc_8c1d5:
 
 ; ====================================================================================================
 ; sub_8c1e2  [0x8c1e2, 21 bytes, 7 instructions]
-; called by: sub_14a20, sub_14afe, instant_replay
+; called by: draw_score_digits, draw_line_indicator, instant_replay
 ; ====================================================================================================
 sub_8c1e2:
     push 0x14                                    ; 08c1e2 6814000000
@@ -14845,10 +14845,11 @@ loc_933e8:
     db 0x00 ; 0933ef |.| (padding)
 
 ; ====================================================================================================
-; sub_933f0  [0x933f0, 11 bytes, 4 instructions]
+; imul32  [0x933f0, 11 bytes, 4 instructions]
+; 32x32 -> 64 bit multiply (Watcom helper)
 ; called by: ai_goalie, goalie_save, do_shot, ai_chase_puck
 ; ====================================================================================================
-sub_933f0:
+imul32:
     mov eax, dword ptr [esp + 4]                 ; 0933f0 8b442404
     mov edx, dword ptr [esp + 8]                 ; 0933f4 8b542408
     imul edx                                     ; 0933f8 f7ea
@@ -14955,10 +14956,11 @@ sub_9345b:
     times 2 db 0 ; 09346e (padding)
 
 ; ====================================================================================================
-; sub_93470  [0x93470, 194 bytes, 83 instructions]
-; called by: sub_551cf
+; isqrt32  [0x93470, 194 bytes, 83 instructions]
+; integer square root (Watcom helper)
+; called by: pass_lead
 ; ====================================================================================================
-sub_93470:
+isqrt32:
     mov eax, dword ptr [esp + 4]                 ; 093470 8b442404
     cmp eax, 0x10000                             ; 093474 3d00000100
     jae loc_934f2                                ; 093479 7377

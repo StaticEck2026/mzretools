@@ -37,13 +37,44 @@ def main():
     t['anim_sequences'] = shorts(le, 0xc921d, 10777 // 2)
     t['dir8_vectors'] = [shorts(le, 0xc90e0 + i * 4, 2) for i in range(8)]
     t['frame_offsets'] = [list(struct.unpack('<2b', le.read(0xcc148 + i * 2, 2))) for i in range(0x2db)]
+    # do_shot: aim point per pending_dir as (x, z) pairs; the y is the goal line (+-0xe8)
     t['shot_targets'] = shorts(le, 0xccc60, 16)
-    t['position_default_state'] = list(le.read(0xccc9e, 8))
+    # set_default_state: AI state per line_slot (0 goalie .. 6)
+    t['position_default_state'] = list(le.read(0xccca1, 7))
     t['dir8_lut'] = list(le.read(0xd2c74, 16))
     t['infraction_priority'] = list(struct.unpack('<31i', le.read(0xcd39c, 124)))
-    t['infraction_is_penalty'] = list(le.read(0xc9123, 31))
-    t['stoppage_duration'] = list(le.read(0xc9104, 13))
+    t['infraction_is_penalty'] = list(struct.unpack('<31b', le.read(0xc9123, 31)))
+    # process_infractions: stoppage length (<< 5 steps) and announcement delay per infraction
+    t['stoppage_duration'] = list(le.read(0xc9104, 31))
+    t['announce_delay'] = list(le.read(0xc9142, 31))
     t['net_y'] = shorts(le, 0xcd2f8, 6)
+    # entity init table (17 records): x, y, vx, frame, side, half_w, half_h, state, flags
+    t['entity_init'] = [shorts(le, 0xcbd5a + i * 18, 7) + [le.read(0xcbd5a + i * 18 + 14, 1)[0], le.read(0xcbd5a + i * 18 + 16, 1)[0]] for i in range(17)]
+    # faceoff: positions relative to the faceoff spot (x, y) and the lineup table
+    # lineup[6 - skaters_on_ice][line_slot] -> position index (ai_all_goto_faceoff, ai_puck_faceoff2)
+    t['faceoff_spots'] = [shorts(le, 0xcbe8c + i * 4, 2) for i in range(7)]
+    t['faceoff_lineup'] = [list(struct.unpack('<8b', le.read(0xcbea8 + i * 8, 8))) for i in range(3)]
+    # faceoff_resolve: bonus per centre readiness (ai_faceoff writes 1..6 into word_e038e/e0394)
+    t['faceoff_bonus'] = list(struct.unpack('<7b', le.read(0xcca95, 7)))
+    # stick position per frame (stick_offsets_lookup): frames 0x196..0x219 (and 0x3ce..0x44f - 0x1b4)
+    t['stick_offsets'] = [list(struct.unpack('<2b', le.read(0xcc7a4 + i * 2, 2))) for i in range(0x219 - 0x196 + 1)]
+    # one timer stick position per facing (sub_50b55)
+    t['onetimer_offsets'] = [list(struct.unpack('<2b', le.read(0xccbba + i * 2, 2))) for i in range(8)]
+    # ai_puck_carrier: skating targets (x, y) for the attacking team, index want_dir + 6 (0..9) or
+    # line_slot - 1 with the goalie pulled
+    t['carrier_targets'] = [shorts(le, 0xcca6e + i * 4, 2) for i in range(10)]
+    # ai_wing_offense / ai_center_offense: zones [x, dx, y, dy] per phase (0, 4, 8, 12)
+    t['wing_zones'] = [shorts(le, 0xcca18 + i * 8, 4) for i in range(4)]
+    t['center_zones'] = [shorts(le, 0xcca38 + i * 8, 4) for i in range(4)]
+    # ai_goalie: save animation per direction class (dword_cca58 + 2)
+    t['goalie_save_anims'] = shorts(le, 0xcca5a, 10)
+    # start_poke_check: velocity vectors per facing
+    t['poke_vectors'] = [shorts(le, 0xccc30 + i * 4, 2) for i in range(8)]
+    # ai_breakaway: waypoints (x, y, trigger y)
+    t['breakaway_waypoints'] = [list(struct.unpack('<3i', le.read(0xccb18 + i * 12, 12))) for i in range(4)]
+    # referee: signal direction and animation per infraction (ai_ref_call_penalty)
+    t['ref_signal_dir'] = shorts(le, 0xcca9c, 32)
+    t['ref_signal_anim'] = shorts(le, 0xccad8, 32)
     # apply_skating: heading change per step for (dir - facing) & 7; skating_accelerate: squared speed
     # limit per energy level
     t['turn_table'] = list(struct.unpack('<8i', le.read(0xccd78, 32)))

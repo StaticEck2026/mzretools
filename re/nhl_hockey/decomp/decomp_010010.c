@@ -824,7 +824,7 @@ sub_10f6d(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined
 
 {
   __CHK(0x1c);
-  if (_dword_cbc44 >> 0x10 != -1) {
+  if (_penalty_box_mode >> 0x10 != -1) {
     getpalette(0,0x100,&palette_save,unaff_EDX,unaff_ECX,unaff_EBX);
     fade_palette_to(1,&palette_save,0x10);
     set_video_mode(0x280,0x1e0);
@@ -1114,7 +1114,7 @@ void __watcall run_sim_steps(int param_1)
       control_steps_left = 3;
     }
     if ((game_flags & 1) == 0) {
-      if (dword_cc128 == 0) {
+      if (penalty_shot_active == 0) {
         dword_d8c78 = dword_d8c78 + 100;
       }
       *(undefined4 *)(puVar3 + -4) = 0x11510;
@@ -1283,7 +1283,7 @@ LAB_000113e9:
         _input_enabled = dword_e9a9e >> 0x10;
       }
       iVar1 = update_ambient_audio((int)(short)iVar1);
-      if (dword_cc128 == 0) {
+      if (penalty_shot_active == 0) {
         dword_dc28c = dword_d8c78 / 0x18;
         iVar1 = dword_d8c78 / 0x18;
         dword_d8c78 = dword_d8c78 % 0x18;
@@ -1464,7 +1464,7 @@ void __watcall play_game(int *param_1)
     sub_1c807();
     sound_resume_all();
     sub_1c852();
-    if (_dword_cbc44 >> 0x10 != -1) {
+    if (_penalty_box_mode >> 0x10 != -1) {
       wait_sprite_fade();
       dword_c53f7 = 0;
       pause_menu(0);
@@ -1497,7 +1497,7 @@ void __watcall play_game(int *param_1)
       preload_speech_wrapper((&team_abbrev)[user2_team._2_2_],(&team_abbrev)[_away_team_id]);
     }
   }
-  dword_cc0f0 = 0;
+  skip_faceoff_wait = 0;
   dword_c53f7 = 0;
   flush_key_events();
   game_loop();
@@ -2688,8 +2688,8 @@ void __watcall sub_13c79(void)
     puVar6 = &uStackY_10;
     uStackY_10 = 0x13c98;
     sub_5e0b0();
-    dword_c90b2._2_2_ = 0;
-    dword_c90b2._0_2_ = 0;
+    faceoff_spot._2_2_ = 0;
+    faceoff_spot._0_2_ = 0;
     *p_puck_y = 0;
     *p_puck_x = 0;
     puVar5 = &entities;
@@ -2705,9 +2705,9 @@ void __watcall sub_13c79(void)
         if ((*(byte *)(puVar5 + 0x11) & 0x40) != 0) {
           sVar1 = dword_df748._2_2_;
         }
-        sVar1 = (char)(&unk_cbea8)[(dword_e03be >> 0x10) + (int)(short)((6 - sVar1) * 8)] * 2;
+        sVar1 = (char)(&faceoff_lineup)[(dword_e03be >> 0x10) + (int)(short)((6 - sVar1) * 8)] * 2;
         dword_e03b2 = CONCAT22(sVar1,(short)dword_e03b2);
-        dword_e03ba._2_2_ = *(short *)(&unk_cbe8c + sVar1 * 2);
+        dword_e03ba._2_2_ = *(short *)(&faceoff_spots + sVar1 * 2);
         dword_e03be._2_2_ = *(short *)(&unk_cbe8e + sVar1 * 2);
         if ((*(byte *)(puVar5 + 0x11) & 0x80) == 0) {
           dword_e03ba._2_2_ = -dword_e03ba._2_2_;
@@ -2775,7 +2775,7 @@ longlong __watcall sub_13e8f(undefined4 param_1,uint unaff_EDX)
   period_idx = 0xffff;
   crowd_noise._2_2_ = 0;
   sound_resume_all();
-  dword_cc0f0 = 0;
+  skip_faceoff_wait = 0;
   sub_14056();
   show_scoreboard((int)user2_team._2_2_,(int)_away_team_id);
   crowd_noise._2_2_ = 0;
@@ -2784,20 +2784,20 @@ longlong __watcall sub_13e8f(undefined4 param_1,uint unaff_EDX)
   if (iVar1 < 0) {
     return CONCAT44(unaff_EDX,0xffffffff);
   }
-  if (dword_cc0f0 != 0) {
+  if (skip_faceoff_wait != 0) {
     word_cbec4 = 1;
   }
   period_idx = 0;
   sub_14056();
-  dword_cc0f0 = extraout_EDX;
+  skip_faceoff_wait = extraout_EDX;
   if (extraout_EDX != 0) {
     getpalette(0,0x100,&palette_save);
     fade_palette_to(1,&palette_save,0x10);
   }
-  if ((((byte)option_flags & 4) != 0) || (dword_cc0f0 == 0)) {
+  if ((((byte)option_flags & 4) != 0) || (skip_faceoff_wait == 0)) {
     sub_13c79();
   }
-  if ((dword_cc0ec == 0) && (dword_cc0f0 == 0)) {
+  if ((dword_cc0ec == 0) && (skip_faceoff_wait == 0)) {
     word_cbec4 = 0;
   }
   return (ulonglong)unaff_EDX << 0x20;
@@ -2822,7 +2822,7 @@ longlong __watcall sub_13fa7(undefined4 param_1,uint unaff_EDX)
   period_idx = 0xffff;
   crowd_noise._2_2_ = 0;
   sound_resume_all();
-  dword_cc0f0 = 0;
+  skip_faceoff_wait = 0;
   sub_14056();
   crowd_noise._2_2_ = 0;
   dword_ccc88 = extraout_EDX;
@@ -2830,12 +2830,12 @@ longlong __watcall sub_13fa7(undefined4 param_1,uint unaff_EDX)
   if (iVar1 < 0) {
     return CONCAT44(unaff_EDX,0xffffffff);
   }
-  if (dword_cc0f0 != 0) {
+  if (skip_faceoff_wait != 0) {
     word_cbec4 = 1;
   }
   period_idx = 0;
   sub_14056();
-  dword_cc0f0 = extraout_EDX_00;
+  skip_faceoff_wait = extraout_EDX_00;
   if ((dword_cc0ec == 0) && (extraout_EDX_00 == 0)) {
     word_cbec4 = 0;
   }
@@ -2865,18 +2865,18 @@ void __watcall sub_14056(void)
   word_e024c._1_1_ = 0;
   word_e024c._0_1_ = 0;
   dword_cbebe._2_2_ = 0xffff;
-  _word_c90d8 = 0xffff;
-  dword_c90d4 = 0xffff;
+  _penalized_slot = 0xffff;
+  ref_phase = 0xffff;
   stoppage_timer = 0xffff;
   word_cc0b0 = 0xffff;
-  dword_c90aa = 0;
+  goalie_pass_mode = 0;
   shot_power._2_2_ = 0;
   shot_power._0_2_ = 0;
   pending_dir = 0;
-  dword_c90a2 = 0;
-  _word_c90a0 = 0;
-  dword_cbc44 = 0;
-  dword_c90d6 = 0;
+  last_passer = 0;
+  _last_shooter = 0;
+  penalty_box_mode = 0;
+  ref_infraction = 0;
   whistle_timer = 0;
   dword_c90d0 = 0;
   word_cbc5c = 0;
@@ -2910,12 +2910,12 @@ void __watcall sub_14056(void)
   byte_e028c = 0;
   byte_e0250 = 0;
   byte_e02c8 = 0;
-  dword_cc118 = 0;
-  dword_cc128 = 0;
-  dword_cc11c = 0;
-  dword_cc124 = 0;
-  dword_cc0f8 = 0;
-  dword_cc0fc = 0xffffffff;
+  penalty_shot_phase = 0;
+  penalty_shot_active = 0;
+  penalty_shot_setup = 0;
+  defenders_ahead = 0;
+  breakaway_flag = 0;
+  penalty_shot_slot = 0xffffffff;
   excitement._2_2_ = 0;
   iVar2 = 0;
   do {
@@ -3435,10 +3435,10 @@ undefined4 __watcall sub_149bf(undefined4 param_1,int unaff_EDX,undefined4 unaff
 
 
 // ================================================================================================
-// sub_14a20 @ 0x14a20 [__watcall]
+// draw_score_digits @ 0x14a20 [__watcall]
 // ================================================================================================
 
-void __watcall sub_14a20(uint param_1,short unaff_DX)
+void __watcall draw_score_digits(uint param_1,short unaff_DX)
 
 {
   uint uVar1;
@@ -3482,10 +3482,10 @@ void __watcall sub_14a20(uint param_1,short unaff_DX)
 
 
 // ================================================================================================
-// sub_14afe @ 0x14afe [__watcall]
+// draw_line_indicator @ 0x14afe [__watcall]
 // ================================================================================================
 
-void __watcall sub_14afe(short param_1)
+void __watcall draw_line_indicator(short param_1)
 
 {
   short extraout_DX;
@@ -3544,10 +3544,10 @@ void __watcall sub_14bef(short param_1,int unaff_EDX)
 
 
 // ================================================================================================
-// sub_14c22 @ 0x14c22 [__watcall]
+// add_penalty_display @ 0x14c22 [__watcall]
 // ================================================================================================
 
-void __watcall sub_14c22(short param_1,short unaff_DX,short unaff_BX)
+void __watcall add_penalty_display(short param_1,short unaff_DX,short unaff_BX)
 
 {
   short *psVar1;
@@ -3768,8 +3768,8 @@ void __watcall show_scoreboard(int param_1,int unaff_EDX,int unaff_EBX,int unaff
   uStack_10 = uVar3;
   uVar4 = locateshape(uVar3,&aSrb3);
   sub_b4cf2(uVar4);
-  sub_14a20(0,dword_df622 >> 0x10);
-  sub_14a20(1,dword_df722 >> 0x10);
+  draw_score_digits(0,dword_df622 >> 0x10);
+  draw_score_digits(1,dword_df722 >> 0x10);
   select_game_surface();
   sub_14f31();
   if (unaff_EBX == 0) {
@@ -4173,10 +4173,10 @@ void __watcall sub_15b76(void)
 
 
 // ================================================================================================
-// sub_15c30 @ 0x15c30 [__watcall]
+// game_over_check @ 0x15c30 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_15c30(undefined param_1,undefined unaff_DL)
+undefined4 __watcall game_over_check(undefined param_1,undefined unaff_DL)
 
 {
   int iVar1;
@@ -4339,7 +4339,7 @@ undefined8 __watcall demo_game(undefined4 param_1,undefined4 unaff_EDX)
   dword_cc0ec = 1;
   sub_13fa7();
   dword_cc0ec = 0;
-  dword_cc0f0 = 0;
+  skip_faceoff_wait = 0;
   dword_c53f7 = 0;
   set_video_mode(0x140,200);
   load_team_palettes((int)user2_team._2_2_,(int)_away_team_id,&unk_df314);

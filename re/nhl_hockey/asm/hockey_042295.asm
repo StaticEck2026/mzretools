@@ -6989,7 +6989,7 @@ init_match:
     mov dword ptr [period_num], 0xffffffff       ; 047d50 c705848c0d00ffff..
     mov word ptr [word_c90b4], bx                ; 047d5a 66891db4900c00
     xor ecx, ecx                                 ; 047d61 31c9
-    mov word ptr [dword_c90b2], cx               ; 047d63 66890db2900c00
+    mov word ptr [faceoff_spot], cx              ; 047d63 66890db2900c00
     mov edx, dword ptr [user2_team]              ; 047d6a 8b15c8900c00
     sar edx, 0x10                                ; 047d70 c1fa10
     shl edx, 0x10                                ; 047d73 c1e210
@@ -7010,14 +7010,14 @@ init_match:
     mov eax, team_home                           ; 047dbc b814f60d00
     call apply_line_change                       ; 047dc1 e82e410100
     mov eax, team_home                           ; 047dc6 b814f60d00
-    call sub_5e0dd                               ; 047dcb e80d630100
+    call dress_line                              ; 047dcb e80d630100
     mov eax, team_away                           ; 047dd0 b814f70d00
     call sub_5b826                               ; 047dd5 e84c3a0100
     mov eax, team_away                           ; 047dda b814f70d00
     call apply_line_change                       ; 047ddf e810410100
     mov eax, team_away                           ; 047de4 b814f70d00
-    call sub_5e0dd                               ; 047de9 e8ef620100
-    call sub_5e01a                               ; 047dee e827620100
+    call dress_line                              ; 047de9 e8ef620100
+    call reset_players_for_faceoff               ; 047dee e827620100
     mov ebx, unk_dfd9c                           ; 047df3 bb9cfd0d00
     mov dword ptr [esp + 0xc], esi               ; 047df8 8974240c
     jmp loc_47f56                                ; 047dfc e955010000
@@ -7172,11 +7172,11 @@ loc_47f56:
     mov edx, 0x26                                ; 04800b ba26000000
     mov eax, referee                             ; 048010 b81c000e00
     call set_state                               ; 048015 e8da9ffcff
-    mov word ptr [dword_c90d4], si               ; 04801a 668935d4900c00
+    mov word ptr [ref_phase], si                 ; 04801a 668935d4900c00
     or byte ptr [action_flags], 0x40             ; 048021 800dbc900c0040
     call sim_tick                                ; 048028 e897410100
     call sim_tick                                ; 04802d e892410100
-    call sub_5dd7c                               ; 048032 e8455d0100
+    call sort_draw_order2                        ; 048032 e8455d0100
     xor edi, edi                                 ; 048037 31ff
     mov dword ptr [dword_d8c6c], edi             ; 048039 893d6c8c0d00
     mov dword ptr [control_steps_left], edi      ; 04803f 893d104e0c00
@@ -7301,7 +7301,7 @@ loc_481f4:
     test ah, 0x20                                ; 048215 f6c420
     je loc_4822f                                 ; 048218 7415
 loc_4821a:
-    mov dword ptr [dword_cc0f0], 1               ; 04821a c705f0c00c000100..
+    mov dword ptr [skip_faceoff_wait], 1         ; 04821a c705f0c00c000100..
     mov word ptr [word_cbec4], 1                 ; 048224 66c705c4be0c0001..
     jmp loc_4824e                                ; 04822d eb1f
 
@@ -7349,7 +7349,7 @@ loc_4827b:
     jmp loc_48307                                ; 0482c9 eb3c
 
 loc_482cb:
-    cmp dword ptr [dword_cc0f0], 0               ; 0482cb 833df0c00c0000
+    cmp dword ptr [skip_faceoff_wait], 0         ; 0482cb 833df0c00c0000
     je loc_482fb                                 ; 0482d2 7427
     push palette_save                            ; 0482d4 6814f00d00
     push 0x100                                   ; 0482d9 6800010000
@@ -7643,7 +7643,7 @@ loc_485c5:
     call set_animation                           ; 048604 e891170100
     xor edi, edi                                 ; 048609 31ff
     mov word ptr [camera_target_y], di           ; 04860b 66893dae900c00
-    mov word ptr [dword_c90d4], 1                ; 048612 66c705d4900c0001..
+    mov word ptr [ref_phase], 1                  ; 048612 66c705d4900c0001..
     mov word ptr [word_cc0de], 0x320             ; 04861b 66c705dec00c0020..
 loc_48624:
     mov edx, dword ptr [ebx]                     ; 048624 8b13
@@ -8182,7 +8182,7 @@ loc_48afd:
     setg al                                      ; 048b34 0f9fc0
     xor ch, ch                                   ; 048b37 30ed
     mov cl, al                                   ; 048b39 88c1
-    cmp word ptr [dword_e9ac2], 6                ; 048b3b 66833dc29a0e0006
+    cmp word ptr [last_touch_slot], 6            ; 048b3b 66833dc29a0e0006
     setl al                                      ; 048b43 0f9cc0
     and eax, 0xff                                ; 048b46 25ff000000
     movsx esi, cx                                ; 048b4b 0fbff1
@@ -8198,7 +8198,7 @@ loc_48afd:
     sar edx, 0x10                                ; 048b71 c1fa10
     mov eax, dword ptr [dword_df622]             ; 048b74 a122f60d00
     sar eax, 0x10                                ; 048b79 c1f810
-    call sub_15c30                               ; 048b7c e8afd0fcff
+    call game_over_check                         ; 048b7c e8afd0fcff
     test eax, eax                                ; 048b81 85c0
     je loc_48b9a                                 ; 048b83 7415
     mov ebx, dword ptr [dword_e9af2]             ; 048b85 8b1df29a0e00
@@ -8526,8 +8526,8 @@ start_period:
     call compute_three_stars                     ; 048f69 e85afbffff
     mov byte ptr [dword_e9ac8], 0xff             ; 048f6e c605c89a0e00ff
     xor ebx, ebx                                 ; 048f75 31db
-    mov word ptr [dword_cbc44], bx               ; 048f77 66891d44bc0c00
-    mov word ptr [dword_c90d6], bx               ; 048f7e 66891dd6900c00
+    mov word ptr [penalty_box_mode], bx          ; 048f77 66891d44bc0c00
+    mov word ptr [ref_infraction], bx            ; 048f7e 66891dd6900c00
     mov word ptr [whistle_timer], bx             ; 048f85 66891dd2900c00
     mov word ptr [dword_c90d0], bx               ; 048f8c 66891dd0900c00
     mov word ptr [dword_cbeca], bx               ; 048f93 66891dcabe0c00
@@ -8576,7 +8576,7 @@ loc_48ff5:
     xor ah, ah                                   ; 04907e 30e4
     mov byte ptr [byte_e9abb], ah                ; 049080 8825bb9a0e00
     xor dl, dl                                   ; 049086 30d2
-    mov byte ptr [word_e9aba], dl                ; 049088 8815ba9a0e00
+    mov byte ptr [penalized_count], dl           ; 049088 8815ba9a0e00
     mov ebx, entities                            ; 04908e bb1cf80d00
     xor ecx, ecx                                 ; 049093 31c9
 loc_49095:
@@ -8643,11 +8643,11 @@ loc_49095:
     mov edx, 0x15                                ; 0491b9 ba15000000
     mov eax, referee                             ; 0491be b81c000e00
     call set_state                               ; 0491c3 e82c8efcff
-    mov word ptr [dword_c90d4], cx               ; 0491c8 66890dd4900c00
+    mov word ptr [ref_phase], cx                 ; 0491c8 66890dd4900c00
     or byte ptr [action_flags], 0x40             ; 0491cf 800dbc900c0040
     call sim_tick                                ; 0491d6 e8e92f0100
     call sim_tick                                ; 0491db e8e42f0100
-    call sub_5dd7c                               ; 0491e0 e8974b0100
+    call sort_draw_order2                        ; 0491e0 e8974b0100
     xor eax, eax                                 ; 0491e5 31c0
     mov dword ptr [dword_d8c6c], eax             ; 0491e7 a36c8c0d00
     mov dword ptr [control_steps_left], eax      ; 0491ec a3104e0c00
@@ -9376,7 +9376,7 @@ loc_49a29:
     test byte ptr [ebx + 0x44], 0x40             ; 049aa5 f6434440
     setne al                                     ; 049aa9 0f95c0
     and eax, 0xff                                ; 049aac 25ff000000
-    call sub_61576                               ; 049ab1 e8c07a0100
+    call play_crowd_chant                        ; 049ab1 e8c07a0100
     pop esi                                      ; 049ab6 5e
     pop edx                                      ; 049ab7 5a
     pop ecx                                      ; 049ab8 59

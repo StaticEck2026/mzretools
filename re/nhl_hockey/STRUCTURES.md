@@ -37,26 +37,31 @@ Entity record (`struct Entity`, size 0x80):
 | 0x26 | short | `timer_a` | general purpose timers used by the state handlers |
 | 0x27 | char | `react_timer` | reloaded from `reaction` when it expires (AI thinks every N steps) |
 | 0x28 | byte | `want_dir` | wanted skating direction (0-7, 8 = none) |
-| 0x2a | short | `target_line` | |
+| 0x2a | short | `target_x` | AI target position (also used as a countdown by some states) |
+| 0x2c | short | `target_y` | AI target position (timer_b at 0x2e == -100 marks "arrived at the faceoff spot") |
 | 0x2e | short | `timer_b` | |
-| 0x30 | short | `push_x` | collision push accumulated this step |
-| 0x32 | short | `push_y` | |
+| 0x30 | short | `push_x` | board normal `a` after a bounce this step (no acceleration into the boards) |
+| 0x32 | short | `push_y` | board normal `b` |
 | 0x34 | short | `heading` | movement direction index (0-7, see `dir8_vectors`) |
 | 0x36 | short | `facing` | sprite facing direction 0-7 (0 = up, clockwise) |
 | 0x38 | short | `anim` | animation sequence id (index into `anim_sequences`) |
 | 0x3a | short | `anim_pos` | position within the sequence |
 | 0x3c | short | `anim_hold` | frames left before advancing |
-| 0x3e | short | `timer_c` | |
-| 0x40 | short | `timer_d` | |
-| 0x44 | byte | `flags` | 0x01 ?, 0x02 state just entered (handlers run their init part and clear it), 0x08 user controlled, 0x10 ?, 0x20 busy (locked in an action animation), 0x40 controlled by player 2, 0x80 attacks downwards (team side) |
-| 0x45 | byte | `flags2` | 0x02, 0x04 not selectable (penalty box/injured), 0x08 changing lines, 0x10 infraction recorded, 0x20 no collisions, 0x80 offside position |
-| 0x46 | byte | `stride_sfx_timer` | skate sound cadence |
+| 0x3e | short | `timer_c` | no-pickup time after releasing the puck |
+| 0x40 | short | `timer_d` | hooked / slowed timer |
+| 0x42 | byte | `next_line_slot` | line change: position to take (-1 none) |
+| 0x43 | byte | `next_roster` | line change: replacement roster index |
+| 0x44 | byte | `flags` | 0x01 committed (pass receiver / bench), 0x02 state just entered (handlers run their init part and clear it), 0x04 arrived at the bench door / puck out of play, 0x08 user controlled, 0x10 skating backwards, 0x20 busy (locked in an action animation), 0x40 away team (player 2 side), 0x80 shoots at the net at +y (the home team in the 1st period); every AI table is stored in the +y frame and negated when the bit is clear |
+| 0x45 | byte | `flags2` | 0x01 knocked down, 0x02 turning / action started, 0x04 not selectable (penalty box/injured), 0x08 changing lines, 0x10 penalty recorded, 0x20 no collisions, 0x40 hooked (speed limit >> 3), 0x80 offside position |
+| 0x46 | byte | `pass_target` | chosen pass receiver slot (AI) |
 | 0x47 | byte | `roster_idx` | index into the team roster (0..24 skaters, 25,26 goalies) |
 | 0x48 | byte | `flags3` | goalie: 0x02/0x04 may leave the crease |
-| 0x4a | short | `timer_e` | |
+| 0x4a | short | `timer_e` | goalie save cooldown / poke check direction |
+| 0x4c | short | `timer_f` | shoot state cooldown |
 | 0x4e | short | `puck_dist` | distance to the puck (`approx_distance`) |
 | 0x50 | short | `puck_dist_sq` | (dx/4)² + (dy/4)² |
 | 0x52 | byte | `puck_dir` | direction 0-7 towards the puck |
+| 0x53 | byte | `pass_ok` | result of the pass lane check (`pass_lane_ok`) |
 | 0x55 | byte | `flags4` | 0x08 left handed / sprite mirrored |
 | 0x56 | byte | `weight` | used by `skating_accelerate` |
 | 0x57 | byte | `speed_skill` | |
@@ -148,8 +153,8 @@ direction (`arrow_to_dir8` 0xc4d1f), Alt or Ins = A, Space or Enter = B, Alt+Spa
 
 | | puck carrier | not carrying |
 |---|---|---|
-| A (0x10) | `pass_button` → `do_pass` in the pushed direction, receiver chosen among team mates within ±1 direction | `switch_to_nearest` (control the team mate closest to the puck) |
-| B (0x20) | `shoot_button`: `do_shot`, power from `shot_skill` and energy, forehand/backhand (`shot_is_backhand`) | `body_check` (velocity burst, costs 0xcc energy, animation 0x621) |
+| A (0x10) | `pass_request` → `pass_button` → `do_pass` when A is released, in the pushed direction; receiver chosen among team mates within ±1 direction (`pass_lead`), a CPU pass uses `pass_to_entity` | `switch_to_nearest` (control the team mate closest to the puck); with a pass on the way: one timer set up |
+| B (0x20) | `start_shot` → `shot_control` every step of the wind up (power grows while held, A/C fake) → `do_shot`: power from `shot_skill` and energy, aim from `shot_targets[pending_dir]`, forehand/backhand (`shot_is_backhand`) | `body_check` (velocity burst, costs 0xcc energy, animation 0x621) |
 | C (0x40) | `request_line_change` | `hook_button`: `try_block_shot`, `start_hook` (0x639/0x873) or `start_poke_check` |
 
 Skating itself is `apply_skating(entity, dir)` (`skating_accelerate` adds `dir8_vectors[heading] * speed` scaled
@@ -160,9 +165,17 @@ by `speed_skill`/`weight`, `stop_skating` brakes, `goalie_move` for goalies).
 | Address | Name | Meaning |
 |---|---|---|
 | 0xc9098 | `camera` | current camera position (x low word, y high word), `camera_target` (0xc90ac/0xc90ae) |
-| 0xc90bb | `game_flags` | 0x01 play stopped (whistle), 0x02 teams switched ends, 0x04 delayed penalty, 0x08 goal/celebration, 0x10 replay playback, 0x40 overtime, 0x80 intermission camera |
+| 0xc90bb | `game_flags` | 0x01 play stopped (whistle), 0x02 teams switched ends, 0x04 stoppage countdown running (`stoppage_timer`), 0x08 delayed penalty call pending, 0x10 practice / no statistics, 0x40 overtime, 0x80 game over (intermission camera) |
 | 0xc90bc | `action_flags` | 0x04 pass pending, 0x08 shot pending, 0x10 replay buffer wrapped, 0x40 camera hold, 0x80 controls mirrored |
-| 0xc90be | `stop_flags` | 0x01 faceoff pending, 0x04 clock stopped, 0x10 shot on goal registered, 0x20/0x40 lead latch |
+| 0xc90be | `stop_flags` | 0x01 faceoff set up (waiting for the drop), 0x04 whistle / announcement done, 0x10 a shot is in flight (`goalie_save` bookkeeping), 0x20 a team leads (0x40 = away), 0x80 goalie pulled |
+| 0xc90b2 | `faceoff_spot` | dot of the next faceoff (x low word, y high word), chosen by `start_stoppage` |
+| 0xc909c | `coll_half_w`/`coll_half_h` | half size of the entity being moved (`collide_boards`, `collide_net`) |
+| 0xc90d4 | `ref_phase` | 0 referee called, 1 collecting the puck, -1 ready for the faceoff; `ref_infraction` 0xc90d6 |
+| 0xcc0f4 | `one_timer_pending` | `breakaway_flag` 0xcc0f8, `defenders_ahead` 0xcc124, `controls_blocked` 0xccc9c |
+| 0xcc128 | `penalty_shot_active` | `penalty_shot_phase` 0xcc118, `penalty_shot_slot` 0xcc0fc, `penalty_shot_team` 0xcc104 |
+| 0xe9abe | `icing_state` | byte 2: 1 icing called, 2 direction, 4 shot from the own half; byte 3 shooter slot |
+| 0xe9ac2 | `last_touch_slot` | last player to touch the puck; `last_touch_y` 0xe9ac4, `last_touch_x` 0xe9ac6 (faceoff spot after a frozen puck) |
+| 0xdf812 | `goal_prediction` | 2 x (x, steps) where the puck will cross each goal line (`predict_puck_goal_line`, every 5 steps) |
 | 0xc90a4 | `pending_dir` | direction of the pending pass/shot |
 | 0xc90a6 | `shot_power` (lo) / `pass_target` (hi) | |
 | 0xc90c2 | `user1_slot` | entity controlled by player 1 (-1 none), `user2_slot` 0xc90c4 |
@@ -221,6 +234,50 @@ bounces off the boards (`bounce_off_boards`, sfx 0xb1) and the nets (`collide_ne
 the goal line between the posts), lets players pick it up (`puck_check_players` → `puck_player_interaction`), and
 checks icing (`check_icing`) and offside (`check_offside`, blue lines at y = ±74).
 
-Physics constants found so far: friction `v -= v >> 6` per step on the ice (`>> 9` with flag 0x02 set), max skater
-speed 16000 (16.16 px/step * 16), gravity 96 per step, boards at x = ±160, y = ±264 with 64 px rounded corners
-(`collide_boards`), goal line y = ±240, shot aiming table `shot_targets` (0xccc60).
+Physics constants found so far: friction `v -= v >> 6` per step on the ice (`>> 9` with flag 0x01 set, which
+the puck has: it glides much further than a player), max skater speed 16000 (16.16 px/step * 16), gravity 96 per
+step, boards at x = ±160, y = ±264 minus the entity half size with 64 px rounded corners (`collide_boards`), nets
+at y = ±236 (half size 20 x 6, `entity_init`), goal line y = ±232 (0xe8), blue lines y = ±78 (0x4e), shot aiming
+table `shot_targets` (0xccc60, (x, z) pairs per `pending_dir`). A puck higher than 0x1d (or 0x12 away from the end
+boards) at the boards is out of play (`collide_corner`); higher than 0xd it flies over the net (`collide_net`);
+higher than 0x10 nobody can play it (`puck_check_players`). The decompiler shows the puck height as
+`*(short *)(param_1 + 10)` when `param_1` is an `int` (offset 0xa) - with an `int *` the same expression is the
+stuck timer at 0x28.
+
+## Stoppages and infractions (`queue_infraction`, `process_infractions`, `start_stoppage`, `penalty_box_update`)
+
+`infraction_queue` (0xe9a16, 32 x (type byte, slot byte)) collects rule events. Types: 1 period start, 2 period
+end, 3 puck frozen / held / out of play, 4 goalie holding the puck, 5 penalty shot end, 6 icing, 7 goal, 8 offside,
+9..21 two minute minors (9 hooking, 13 charging, 14 high sticking, 19 elbowing, ...), 22 misconduct, 23..25
+majors (`infraction_is_penalty` 0xc9123: 0, 2, 5, -1), 27 goal disallowed, 29 two line pass, 30 player pinned at
+the net. Per type `stoppage_duration` (0xc9104, << 5 steps) and `announce_delay` (0xc9142, * 0x20 steps) time
+the stoppage, `infraction_priority` (0xcd39c) picks the announcement.
+
+Flow: the first non penalty event stops the play (`start_stoppage`: `game_flags |= 1 | 4`, whistle sfx 0xa4,
+faceoff spot from the event - centre after a goal, the last touch position after a frozen puck or a two line pass,
+otherwise the puck position snapped to the nearest dot: end zone dots (±96, ±184), neutral zone dots (±100, ±61),
+the blue line for offsides, the offending team's end for icing). A penalty against the team without the puck is
+delayed (`game_flags |= 8`) until it touches the puck. The referee announces the call (`ref_announce`: state
+`rpointgoal` after a goal, `rcallpen` otherwise, with `ref_signal_dir`/`ref_signal_anim` per type), sends
+everybody to the faceoff (`all_goto_positions` → state `agotofo`, `faceoff_spots`/`faceoff_lineup` give the
+position per line slot relative to the dot), collects the puck (`rpickup` → `rgotofo`, the puck is carried at
+height -100) and when `ref_phase` is -1 `penalty_box_update` serves the penalties and puts the puck into state
+`pface` → `pface2`: everybody is snapped into place, a countdown of 0xb4 + random(0x78) steps runs
+(`faceoff_timer`, the referee's drop animation 0xc43 at 0x11) and `faceoff_resolve` gives the puck to the centre
+with the better readiness (`faceoff_ready_*` 1..6 from `ai_faceoff`, `faceoff_bonus`) and skill; the users can
+steer the won draw with the direction held at the drop (`faceoff_dir_*`).
+
+## AI tables used by the handlers
+
+| Address | Name | Used by |
+|---|---|---|
+| 0xccca1 | `position_default_state` | `set_default_state`: state per line slot (goalie 14, D 2, LW/RW 3, C 5) |
+| 0xcbe8c / 0xcbea8 | `faceoff_spots` / `faceoff_lineup` | faceoff positions (7 spots, lineup rows for 6/5/4 skaters) |
+| 0xcca6e | `carrier_targets` | `ai_puck_carrier`: 10 skating targets, index = lane + 6 (or line slot - 1 with the goalie pulled) |
+| 0xcca18 / 0xcca38 | `wing_zones` / `center_zones` | `ai_wing_offense` / `ai_center_offense`: [x, dx, y, dy] per zone phase |
+| 0xcc7a4 | `stick_offsets` | stick blade position per frame (puck pick up reach) |
+| 0xccbba | `onetimer_offsets` | one timer blade position per facing |
+| 0xccc30 | `poke_vectors` | `start_poke_check` velocities |
+| 0xccb18 | `breakaway_waypoints` | `ai_breakaway` lanes (x, y, trigger y) |
+| 0xcca5a | `goalie_save_anims` | `ai_goalie` save animation per direction class |
+| 0xcbd5a | `entity_init` | initial entity records (positions on the bench, nets at ±236, puck 5x5, referee) |

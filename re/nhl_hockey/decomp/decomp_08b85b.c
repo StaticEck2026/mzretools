@@ -10338,10 +10338,10 @@ undefined4 savefileblocka(undefined4 param_1,undefined4 param_2,int param_3)
 
 
 // ================================================================================================
-// sub_933f0 @ 0x933f0 [__cdecl]
+// imul32 @ 0x933f0 [__cdecl]
 // ================================================================================================
 
-longlong sub_933f0(int param_1,int param_2)
+longlong imul32(int param_1,int param_2)
 
 {
   return (longlong)param_1 * (longlong)param_2;
@@ -10437,10 +10437,10 @@ undefined4 sub_9345b(int param_1)
 
 
 // ================================================================================================
-// sub_93470 @ 0x93470 [__cdecl]
+// isqrt32 @ 0x93470 [__cdecl]
 // ================================================================================================
 
-uint sub_93470(uint param_1)
+uint isqrt32(uint param_1)
 
 {
   byte bVar1;

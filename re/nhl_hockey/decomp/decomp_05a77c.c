@@ -153,7 +153,7 @@ longlong __watcall goal_disallowed_check(undefined4 param_1,uint unaff_EDX)
   __CHK(8);
   if (((game_flags & 8) != 0) &&
      (bVar1 = ((game_flags & 2) != 0) != *p_puck_y < 0, uVar2 = (uint)bVar1,
-     dword_e9ac2 < 6 != bVar1)) {
+     last_touch_slot < 6 != bVar1)) {
     if (uVar2 != 0) {
       uVar2 = 6;
     }
@@ -206,15 +206,16 @@ void __watcall score_goal(undefined4 *param_1)
   }
   if ((((game_flags & 1) == 0) && (iVar3 = goal_disallowed_check(), iVar3 == 0)) &&
      ((*(byte *)(iVar11 + 0x44) & 0x10) == 0)) {
-    if ((dword_cc128 == 0) || ((int)(uint)CONCAT12(bVar7,uStackY_1e) >> 0x10 == dword_cc104)) {
+    if ((penalty_shot_active == 0) ||
+       ((int)(uint)CONCAT12(bVar7,uStackY_1e) >> 0x10 == penalty_shot_team)) {
       *(short *)(iVar11 + 0x10) = *(short *)(iVar11 + 0x10) + 1;
-      if ((int)(uint)CONCAT12(bVar7,uStackY_1e) >> 0x10 != (uint)(dword_e9ac2 < 6)) {
+      if ((int)(uint)CONCAT12(bVar7,uStackY_1e) >> 0x10 != (uint)(last_touch_slot < 6)) {
         stop_flags._0_1_ = (byte)stop_flags | 0x10;
-        _word_c90a0 = dword_e9ac2;
+        _last_shooter = last_touch_slot;
       }
-      sub_55d28();
+      shot_landed();
       play_sfx(0x9c);
-      sub_5cd25();
+      hold_camera();
       if (bVar7) {
         if (crowd_noise._2_2_ < 800) {
           crowd_noise._2_2_ = 800;
@@ -229,7 +230,7 @@ void __watcall score_goal(undefined4 *param_1)
           crowd_noise._2_2_ = 0x708;
         }
       }
-      sub_61576((int)(uint)CONCAT12(bVar7,uStackY_1e) >> 0x10);
+      play_crowd_chant((int)(uint)CONCAT12(bVar7,uStackY_1e) >> 0x10);
       if (!bVar7) {
         if (((option_flags._1_1_ & 1) == 0) || (sound_enabled == '\0')) {
           bVar2 = true;
@@ -277,15 +278,15 @@ void __watcall score_goal(undefined4 *param_1)
           psVar1 = (short *)(*(int *)(iVar11 + 0xe6) + 0xc + (short)uVar5 * 0x10);
           *psVar1 = *psVar1 + 1;
         }
-        if (dword_cc118 == 0) {
-          if (dword_cc0f8 != 0) {
+        if (penalty_shot_phase == 0) {
+          if (breakaway_flag != 0) {
             *(short *)(iVar11 + 0x1e) = *(short *)(iVar11 + 0x1e) + 1;
           }
         }
         else {
           *(short *)(iVar11 + 0x22) = *(short *)(iVar11 + 0x22) + 1;
         }
-        if ((dword_cc0f4 & 1 << bVar7) != 0) {
+        if ((one_timer_pending & 1 << bVar7) != 0) {
           *(short *)(iVar11 + 0x1a) = *(short *)(iVar11 + 0x1a) + 1;
         }
         sVar6 = *(short *)(iVar11 + 0x32);
@@ -306,7 +307,7 @@ void __watcall score_goal(undefined4 *param_1)
           psVar1 = (short *)(*(int *)(iVar10 + 0xea) + 4 + sVar6 * 6);
           *psVar1 = *psVar1 + 1;
         }
-        if (dword_cc128 == 0) {
+        if (penalty_shot_active == 0) {
           if (*(short *)(iVar11 + 0x36) <= *(short *)(iVar10 + 0x36)) {
             iVar3 = *(int *)(iVar11 + 0xf6);
             iVar4 = *(int *)(iVar10 + 0xf6);
@@ -326,19 +327,20 @@ void __watcall score_goal(undefined4 *param_1)
             }
           }
           uStackY_1e = (ushort)((uint)iVar9 >> 0x10);
-          sub_63d69((int)(uint)CONCAT12(bVar7,uStackY_1e) >> 0x10);
+          goal_ends_penalty((int)(uint)CONCAT12(bVar7,uStackY_1e) >> 0x10);
         }
         else {
-          word_e9ac4 = 0;
-          word_e9ac6 = 0;
-          dword_c90b2._2_2_ = 0;
-          dword_c90b2._0_2_ = 0;
+          last_touch_y = 0;
+          last_touch_x = 0;
+          faceoff_spot._2_2_ = 0;
+          faceoff_spot._0_2_ = 0;
         }
         uStackY_1e = (ushort)((uint)iVar9 >> 0x10);
-        dword_cc0f8 = 0;
-        dword_cc0f4 = 0;
+        breakaway_flag = 0;
+        one_timer_pending = 0;
       }
-      sub_14a20((int)(uint)CONCAT12(bVar7,uStackY_1e) >> 0x10,*(int *)(iVar11 + 0xe) >> 0x10);
+      draw_score_digits((int)(uint)CONCAT12(bVar7,uStackY_1e) >> 0x10,*(int *)(iVar11 + 0xe) >> 0x10
+                       );
       iVar9 = *(int *)(iVar11 + 0xf6);
       sVar6 = 6;
       do {
@@ -358,7 +360,7 @@ void __watcall score_goal(undefined4 *param_1)
         iVar9 = iVar9 + 0x80;
         sVar6 = sVar6 + -1;
       } while (sVar6 != 0);
-      byte_c90ba = 0;
+      puck_in_net = 0;
       if (puck._2_2_ < 0) {
         puck._2_2_ = -6;
       }
@@ -417,7 +419,7 @@ void __watcall score_goal(undefined4 *param_1)
     }
   }
   else {
-    byte_c90ba = 0;
+    puck_in_net = 0;
     word_dff28 = 0;
     if (puck._2_2_ < *(short *)((int)param_1 + 2)) {
       sVar6 = -6;
@@ -452,12 +454,12 @@ void __watcall score_goal(undefined4 *param_1)
 
 
 // ================================================================================================
-// sub_5b1ce @ 0x5b1ce [__watcall]
+// follow_puck_user_switch @ 0x5b1ce [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __watcall sub_5b1ce(short param_1)
+void __watcall follow_puck_user_switch(short param_1)
 
 {
   __CHK(0x14);
@@ -468,7 +470,7 @@ void __watcall sub_5b1ce(short param_1)
     return;
   }
   dword_e03be._2_2_ = (5 < param_1) + 1;
-  if (user2_slot == dword_c90a2) {
+  if (user2_slot == last_passer) {
     if ((short)user2_team == dword_e03be._2_2_) goto LAB_0005b23a;
     if (dword_e03be._2_2_ != user1_team) {
       return;
@@ -505,8 +507,8 @@ set_default_state(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefine
   __CHK(8);
   sVar1 = *(short *)(param_1 + 0x1a);
   if ((-1 < sVar1) && (sVar1 < 7)) {
-    set_state(param_1,*(int *)((int)&dword_ccc9c + sVar1 + 2) >> 0x18,unaff_EBX,unaff_ECX,unaff_EDX)
-    ;
+    set_state(param_1,*(int *)((int)&controls_blocked + sVar1 + 2) >> 0x18,unaff_EBX,unaff_ECX,
+              unaff_EDX);
   }
   return;
 }
@@ -938,7 +940,7 @@ void __watcall sub_5ba89(void)
   
   __CHK(0x18);
   sub_5ba4e();
-  puVar4 = &unk_cbd5a;
+  puVar4 = &entity_init;
   puVar2 = &entities;
   puVar6 = &unk_e9ade;
   psVar7 = &draw_order_pos;
@@ -986,17 +988,17 @@ void __watcall sub_5ba89(void)
   byte_e0072 = 7;
   byte_e0073 = 0xf;
   byte_e0074 = 0xf;
-  dword_c90d4 = 0xffff;
-  sub_5dd7c();
+  ref_phase = 0xffff;
+  sort_draw_order2();
   return;
 }
 
 
 // ================================================================================================
-// sub_5bb9e @ 0x5bb9e [__watcall]
+// player_available @ 0x5bb9e [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_5bb9e(int param_1,short unaff_DX,short unaff_BX)
+undefined4 __watcall player_available(int param_1,short unaff_DX,short unaff_BX)
 
 {
   short sVar1;
@@ -1056,7 +1058,7 @@ void __watcall assign_line_positions(int param_1)
   for (sVar5 = 0; sVar5 < 6; sVar5 = sVar5 + 1) {
     (&unk_e0384)[sVar5] = 0xff;
   }
-  if (((dword_cc118 == 0) || ((param_1 == 0xdf714) == dword_cc104)) &&
+  if (((penalty_shot_phase == 0) || ((param_1 == 0xdf714) == penalty_shot_team)) &&
      (*(short *)(param_1 + 0x38) < 0)) {
     local_28 = 1;
   }
@@ -1079,7 +1081,7 @@ void __watcall assign_line_positions(int param_1)
           iVar11 = iVar9 * 2 + param_1;
           if (((*(int *)(iVar11 + 0x7c) >> 0x10 < -2) || (0 < *(short *)(iVar11 + 0x7e))) ||
              (((*(int *)(param_1 + 0x34) >> 0x10) + -2 <= iVar13 &&
-              (sVar7 = sub_5bb9e(param_1,iVar9), sVar7 == 0)))) {
+              (sVar7 = player_available(param_1,iVar9), sVar7 == 0)))) {
             pcVar10 = &unk_cccc8 + (*(int *)(&unk_cccb8 + sVar6 * 2) >> 0x10);
 LAB_0005bdac:
             cVar1 = *pcVar10;
@@ -1110,10 +1112,10 @@ LAB_0005bdac:
                   cStackY_1c = (char)sVar7;
                   sVar7 = sVar7 + -1;
                   if (sVar7 < 0) goto LAB_0005becb;
-                  sVar8 = sub_5bb9e(param_1,(int)cStackY_1c,(int)sVar5);
+                  sVar8 = player_available(param_1,(int)cStackY_1c,(int)sVar5);
                 } while (sVar8 == 0);
               }
-              sVar8 = sub_5bb9e(param_1,(int)cStackY_1c,(int)sVar5);
+              sVar8 = player_available(param_1,(int)cStackY_1c,(int)sVar5);
             } while (sVar8 == 0);
           }
 LAB_0005becb:
@@ -1151,7 +1153,7 @@ LAB_0005bccc:
     (&unk_e0384)[sVar5] = uVar4;
   } while( true );
 LAB_0005bea3:
-  sVar7 = sub_5bb9e(param_1,(int)*(char *)(cVar1 + iVar3),(int)sVar5);
+  sVar7 = player_available(param_1,(int)*(char *)(cVar1 + iVar3),(int)sVar5);
   if (sVar7 != 0) goto LAB_0005becb;
   goto LAB_0005bdac;
 }
@@ -1271,14 +1273,14 @@ void __watcall period_init(void)
   _word_cbec8 = 0xffff;
   dword_cbeca._0_2_ = 0;
   dword_cbebe._2_2_ = 0xffff;
-  dword_cc118 = 0;
-  dword_cc128 = 0;
-  dword_cc11c = 0;
-  dword_cc124 = 0;
-  dword_cc0f8 = 0;
-  dword_cc0fc = 0xffffffff;
-  dword_c90b2._0_2_ = 0;
-  dword_c90b2._2_2_ = 0;
+  penalty_shot_phase = 0;
+  penalty_shot_active = 0;
+  penalty_shot_setup = 0;
+  defenders_ahead = 0;
+  breakaway_flag = 0;
+  penalty_shot_slot = 0xffffffff;
+  faceoff_spot._0_2_ = 0;
+  faceoff_spot._2_2_ = 0;
   uStackY_18 = 0x5c11f;
   set_state(&puck,0x1b);
   if (period_idx != 0) {
@@ -1427,11 +1429,11 @@ void __watcall sim_game_state(void)
   update_effects();
   if ((((game_flags & 1) == 0) && (clock_seconds == 0)) && (clock_sub == 0)) {
     play_sfx(0x90);
-    sub_5cd25();
+    hold_camera();
     setup_faceoff();
   }
   cVar1 = word_cc0d8._1_1_;
-  if (dword_cbc44 == 0) {
+  if (penalty_box_mode == 0) {
     cVar1 = word_cc0d8._1_1_ + -1;
     if ((char)(word_cc0d8._1_1_ + -1) < '\0') {
       word_cc0d8._1_1_ = word_cc0d8._1_1_ + '\x17';
@@ -1450,7 +1452,7 @@ void __watcall sim_game_state(void)
           sVar3 = 6;
           do {
             if (((-1 < *(short *)(iVar2 + 0x1a)) && (-1 < *(char *)(iVar2 + 0x43))) &&
-               ((dword_cc118 == 0 && (((byte)word_cc0d8 & 1) != 0)))) {
+               ((penalty_shot_phase == 0 && (((byte)word_cc0d8 & 1) != 0)))) {
               (&word_cbc52)[sVar4] = 1;
               return;
             }
@@ -1495,7 +1497,7 @@ void __watcall sim_update_players(void)
   if ((game_flags & 1) != 0) {
     if ((game_flags & 0x80) != 0) {
 LAB_0005c4ae:
-      dword_ccc9c = 1;
+      controls_blocked = 1;
       goto LAB_0005c4b7;
     }
     if ((((((byte)stop_flags & 1) == 0) && (stoppage_timer < 0)) && (infraction_queue._3_1_ == '\0')
@@ -1511,7 +1513,7 @@ LAB_0005c4ae:
       if (bVar2) goto LAB_0005c4ae;
     }
   }
-  dword_ccc9c = 0;
+  controls_blocked = 0;
 LAB_0005c4b7:
   piVar11 = &entities;
   word_df70e = 0xffff;
@@ -1526,7 +1528,7 @@ LAB_0005c4b7:
     local_20 = (short)iVar9;
     iVar6 = (int)*p_puck_y - (piVar11[1] >> 0x10);
     local_24 = (short)iVar6;
-    uVar4 = sub_b3d94(iVar9,local_24);
+    uVar4 = approx_distance(iVar9,local_24);
     *(undefined2 *)((int)piVar11 + 0x4e) = uVar4;
     uVar3 = direction8((int)local_20,(int)local_24);
     *(undefined *)((int)piVar11 + 0x52) = uVar3;
@@ -1881,12 +1883,12 @@ LAB_0005a41f:
 
 
 // ================================================================================================
-// sub_5cd25 @ 0x5cd25 [__watcall]
+// hold_camera @ 0x5cd25 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __watcall sub_5cd25(void)
+void __watcall hold_camera(void)
 
 {
   __CHK(4);
@@ -1918,12 +1920,12 @@ void __watcall sub_5cd4f(void)
   _camera_target_x = 0;
   camera_target_y._0_2_ = 0;
   camera_target_y._2_2_ = 0;
-  dword_c90b2._0_2_ = 0;
-  dword_c90b2._2_2_ = 0;
-  word_c90b6 = 0;
-  word_c90b8 = 0;
-  byte_c90ba = 0;
-  dword_c90aa = 0;
+  faceoff_spot._0_2_ = 0;
+  faceoff_spot._2_2_ = 0;
+  faceoff_dir_home = 0;
+  faceoff_dir_away = 0;
+  puck_in_net = 0;
+  goalie_pass_mode = 0;
   word_cc0d8 = 0;
   word_cc0da = 0;
   crowd_noise._0_2_ = 0xffff;
@@ -1931,7 +1933,7 @@ void __watcall sub_5cd4f(void)
   _action_flags = 0;
   stop_flags = 0;
   _misc_flags = 0;
-  sub_63d3c();
+  clear_infractions();
   return;
 }
 
@@ -1978,13 +1980,13 @@ void __watcall draw_sprites(int param_1,short unaff_DX)
   local_54 = (short)param_1;
   sStack_28 = _user1_slot;
   sStack_24 = user2_slot;
-  if (dword_ccc9c != 0) {
+  if (controls_blocked != 0) {
     sStack_24 = -1;
     sStack_28 = -1;
   }
   if (-0x10 < (short)camera) {
     if ((camera._2_2_ < 0x50) && (-0x94 < camera._2_2_)) {
-      for (sVar15 = 0; (sVar15 < word_e9aba && (sVar15 < 3)); sVar15 = sVar15 + 1) {
+      for (sVar15 = 0; (sVar15 < penalized_count && (sVar15 < 3)); sVar15 = sVar15 + 1) {
         draw_sprite_world(0x17e,0xb3,(int)(short)((sVar15 + 3) * -0xb),0,0);
       }
     }
@@ -2265,7 +2267,7 @@ LAB_0005d684:
     }
   }
   if ((((controller_type == '\x01') || (byte_c4d1d == '\x01')) && (_period_num != -1)) &&
-     (dword_ccc9c == 0)) {
+     (controls_blocked == 0)) {
     sVar15 = sStack_24;
     if (controller_type == '\x01') {
       sVar15 = sStack_28;
@@ -2358,14 +2360,14 @@ void __watcall setup_faceoff(void)
   }
   else {
     dword_e03ba._2_2_ = 7;
-    iVar5 = sub_15c30(dword_df622 >> 0x10,dword_df722 >> 0x10);
+    iVar5 = game_over_check(dword_df622 >> 0x10,dword_df722 >> 0x10);
     if (iVar5 != 0) {
       dword_e03ba._2_2_ = 8;
     }
     dword_e03be._2_2_ = dword_df622._2_2_ - dword_df722._2_2_;
     if (dword_e03be._2_2_ == 0) {
       if ((period_idx == 3) && ((option_flags._1_1_ & 2) != 0)) {
-        sub_63d3c();
+        clear_infractions();
         if ((crowd_noise._2_2_ < 0x4b1) &&
            (crowd_noise._2_2_ = crowd_noise._2_2_ + 900, 0x4b0 < crowd_noise._2_2_)) {
           crowd_noise._2_2_ = 0x4b0;
@@ -2405,7 +2407,7 @@ void __watcall setup_faceoff(void)
         iVar5 = 0;
       }
       piVar6 = &entities + iVar5 * 0x20;
-      sub_61576(dword_e03be._2_2_ < 0);
+      play_crowd_chant(dword_e03be._2_2_ < 0);
       if (dword_e03ba._2_2_ == 8) {
         byte_ccca0 = 1;
         game_flags = game_flags | 0x80;
@@ -2434,7 +2436,7 @@ void __watcall setup_faceoff(void)
         iVar5 = 0;
       }
       puVar4 = &entities + iVar5 * 0x20;
-      _word_c90a0 = 0xffff;
+      _last_shooter = 0xffff;
       dword_e03be._2_2_ = 0;
       ram0x000e03aa = CONCAT22(6,dword_e03a8._2_2_);
       do {
@@ -2477,7 +2479,7 @@ void __watcall setup_faceoff(void)
         sVar3 = dword_e03ac + -1;
         ram0x000e03aa = CONCAT22(sVar3,dword_e03a8._2_2_);
       } while (sVar3 != 0);
-      sub_63d3c();
+      clear_infractions();
       if (dword_df722._2_2_ < dword_df622._2_2_) {
         if ((crowd_noise._2_2_ < 0x5dd) &&
            (crowd_noise._2_2_ = crowd_noise._2_2_ + 1000, 0x5dc < crowd_noise._2_2_)) {
@@ -2514,7 +2516,7 @@ void __watcall game_clock_tick(void)
   undefined4 uStackY_14;
   
   __CHK(0x14);
-  if (dword_cc128 != 0) {
+  if (penalty_shot_active != 0) {
     dword_cc120 = dword_cc120 + -1;
     if (0 < dword_cc120) {
       return;
@@ -2577,10 +2579,10 @@ void __watcall game_clock_tick(void)
 
 
 // ================================================================================================
-// sub_5dd6b @ 0x5dd6b [__watcall]
+// sort_draw_order @ 0x5dd6b [__watcall]
 // ================================================================================================
 
-void __watcall sub_5dd6b(void)
+void __watcall sort_draw_order(void)
 
 {
   char cVar1;
@@ -2634,10 +2636,10 @@ void __watcall sub_5dd6b(void)
 
 
 // ================================================================================================
-// sub_5dd7c @ 0x5dd7c [__watcall]
+// sort_draw_order2 @ 0x5dd7c [__watcall]
 // ================================================================================================
 
-void __watcall sub_5dd7c(void)
+void __watcall sort_draw_order2(void)
 
 {
   char cVar1;
@@ -2704,10 +2706,10 @@ void __watcall sub_5dd9e(void)
 
 
 // ================================================================================================
-// sub_5ddbc @ 0x5ddbc [__watcall]
+// end_period_flag @ 0x5ddbc [__watcall]
 // ================================================================================================
 
-void __watcall sub_5ddbc(void)
+void __watcall end_period_flag(void)
 
 {
   __CHK(4);
@@ -2731,7 +2733,7 @@ void __watcall sub_5ddda(void)
   int iVar3;
   
   __CHK(0x10);
-  sub_5df86();
+  count_penalized();
   uVar2 = 0xdf614;
   iVar3 = 0xdf714;
   for (sVar1 = 0; sVar1 < 2; sVar1 = sVar1 + 1) {
@@ -2819,7 +2821,7 @@ void __watcall end_of_period(void)
   word_cbc6c = 0;
   word_cbc6a = 0;
   bVar2 = game_flags;
-  if (_dword_cbc44 >> 0x10 != -1) {
+  if (_penalty_box_mode >> 0x10 != -1) {
     bVar2 = game_flags ^ 2;
     sVar3 = period_idx + 1;
     sVar1 = period_idx + -2;
@@ -2851,10 +2853,10 @@ void __watcall end_of_period(void)
 
 
 // ================================================================================================
-// sub_5df86 @ 0x5df86 [__watcall]
+// count_penalized @ 0x5df86 [__watcall]
 // ================================================================================================
 
-void __watcall sub_5df86(void)
+void __watcall count_penalized(void)
 
 {
   int iVar1;
@@ -2865,7 +2867,7 @@ void __watcall sub_5df86(void)
   __CHK(0x18);
   iVar2 = 0xdf614;
   for (sVar4 = 0; sVar4 < 2; sVar4 = sVar4 + 1) {
-    (&word_e9aba)[sVar4] = 0;
+    (&penalized_count)[sVar4] = 0;
     for (sVar3 = 0x1b; -1 < sVar3; sVar3 = sVar3 + -1) {
       iVar1 = sVar3 * 2 + iVar2;
       if ((short)*(ushort *)(iVar1 + 0x7e) < 1) {
@@ -2876,7 +2878,7 @@ void __watcall sub_5df86(void)
       }
       else if (((*(byte *)(iVar1 + 0x7f) & 0x10) == 0) || ((*(ushort *)(iVar1 + 0x7e) & 0x7ff) != 0)
               ) {
-        (&word_e9aba)[sVar4] = (&word_e9aba)[sVar4] + '\x01';
+        (&penalized_count)[sVar4] = (&penalized_count)[sVar4] + '\x01';
       }
     }
     iVar2 = 0xdf714;
@@ -2886,10 +2888,10 @@ void __watcall sub_5df86(void)
 
 
 // ================================================================================================
-// sub_5e01a @ 0x5e01a [__watcall]
+// reset_players_for_faceoff @ 0x5e01a [__watcall]
 // ================================================================================================
 
-void __watcall sub_5e01a(void)
+void __watcall reset_players_for_faceoff(void)
 
 {
   short sVar1;
@@ -2946,7 +2948,7 @@ void __watcall sub_5e0b0(void)
   
   __CHK(4);
   apply_line_change(0xdf614);
-  sub_5e0dd(0xdf614);
+  dress_line(0xdf614);
   apply_line_change(0xdf714);
   __CHK(0x14);
   sVar2 = 6;
@@ -2972,10 +2974,10 @@ void __watcall sub_5e0b0(void)
 
 
 // ================================================================================================
-// sub_5e0dd @ 0x5e0dd [__watcall]
+// dress_line @ 0x5e0dd [__watcall]
 // ================================================================================================
 
-void __watcall sub_5e0dd(int param_1)
+void __watcall dress_line(int param_1)
 
 {
   int iVar1;
@@ -3515,8 +3517,8 @@ LAB_0005ec1e:
         iVar4 = (int)sVar1;
       }
       if (300 < iVar4) goto LAB_0005ec1e;
-      uVar5 = sub_b3d94((int)dword_e03ba._2_2_ - (*param_1 >> 0x10),
-                        (short)((int)dword_e03be._2_2_ - (param_1[1] >> 0x10)));
+      uVar5 = approx_distance((int)dword_e03ba._2_2_ - (*param_1 >> 0x10),
+                              (short)((int)dword_e03be._2_2_ - (param_1[1] >> 0x10)));
       if (0x18 < uVar5) goto LAB_0005ec1e;
       sVar8 = (short)*(char *)((int)param_1 + 0x52);
     }
@@ -3565,15 +3567,15 @@ LAB_0005ed0d:
       uVar5 = CONCAT22((undefined2)dword_e03be,dword_e03ba._2_2_);
       if (sVar8 == *(short *)((int)param_1 + 0x36)) {
         iVar4 = CONCAT13(dword_e03ba._3_1_,CONCAT12(dword_e03ba._2_1_,(undefined2)dword_e03ba));
-        iVar6 = sub_933f0(iVar4 >> 0x10,(short)((uint)iVar4 >> 0x10));
+        iVar6 = imul32(iVar4 >> 0x10,(short)((uint)iVar4 >> 0x10));
         iVar4 = CONCAT13(dword_e03be._3_1_,CONCAT12(dword_e03be._2_1_,(undefined2)dword_e03be));
-        iVar4 = sub_933f0(iVar4 >> 0x10,(short)((uint)iVar4 >> 0x10));
+        iVar4 = imul32(iVar4 >> 0x10,(short)((uint)iVar4 >> 0x10));
         uVar5 = iVar6 + iVar4;
         dword_e03ba._2_1_ = (char)uVar5;
         dword_e03ba._3_1_ = (undefined)(uVar5 >> 8);
         dword_e03be._0_2_ = (undefined2)(uVar5 >> 0x10);
         if ((900 < uVar5) && (uVar5 < 0x5a5)) {
-          sub_532a2(param_1);
+          lunge_for_puck(param_1);
           sVar8 = dword_e03be._2_2_;
           uVar2 = CONCAT11(dword_e03ba._3_1_,dword_e03ba._2_1_);
           goto LAB_0005e7f8;
@@ -3703,11 +3705,11 @@ LAB_0005ef2b:
 
 
 // ================================================================================================
-// sub_5f04e @ 0x5f04e [__watcall]
+// net_zone_flags @ 0x5f04e [__watcall]
 // ================================================================================================
 
 undefined4 __watcall
-sub_5f04e(int *param_1,int unaff_EDX,int unaff_EBX,int unaff_ECX,byte *param_5,byte *param_6)
+net_zone_flags(int *param_1,int unaff_EDX,int unaff_EBX,int unaff_ECX,byte *param_5,byte *param_6)
 
 {
   undefined4 uVar1;
@@ -3850,7 +3852,7 @@ void __watcall ai_choose_direction(int *param_1)
   else {
     iVar6 = 6;
   }
-  iVar4 = sub_5f04e(param_1,0xe8 - iVar6,0xfc,iVar4 + 0x2c,local_48,&local_4c);
+  iVar4 = net_zone_flags(param_1,0xe8 - iVar6,0xfc,iVar4 + 0x2c,local_48,&local_4c);
   if (iVar4 == 0) {
     if (local_2c == 0) {
       iVar4 = 0;
@@ -3864,7 +3866,7 @@ void __watcall ai_choose_direction(int *param_1)
     else {
       iVar6 = 6;
     }
-    iVar4 = sub_5f04e(param_1,0xffffff04,iVar6 + -0xe8,iVar4 + 0x2c,local_48,&local_4c);
+    iVar4 = net_zone_flags(param_1,0xffffff04,iVar6 + -0xe8,iVar4 + 0x2c,local_48,&local_4c);
     if (iVar4 == 0) {
       return;
     }
@@ -4459,36 +4461,36 @@ longlong __watcall save_game(undefined4 param_1,uint unaff_EDX)
   puVar1 = local_9e + 1;
   do {
     puVar4 = puVar1;
-    *puVar4 = *(undefined2 *)((int)&dword_e038e + iVar2 * 2 + 2);
+    *puVar4 = *(undefined2 *)((int)&faceoff_ready_home + iVar2 * 2 + 2);
     iVar2 = iVar2 + 1;
     puVar1 = puVar4 + 1;
   } while (iVar2 < 6);
-  puVar4[1] = _word_c90a0;
-  puVar4[2] = dword_c90a2;
+  puVar4[1] = _last_shooter;
+  puVar4[2] = last_passer;
   puVar4[3] = pending_dir;
   puVar4[4] = (undefined2)shot_power;
   puVar4[5] = shot_power._2_2_;
-  puVar4[6] = dword_c90aa;
+  puVar4[6] = goalie_pass_mode;
   iVar2 = 0;
   puVar1 = puVar4 + 7;
   do {
     puVar4 = puVar1;
-    *puVar4 = *(undefined2 *)((int)&unk_df812 + iVar2 * 2 + 2);
+    *puVar4 = *(undefined2 *)((int)&goal_prediction + iVar2 * 2 + 2);
     iVar2 = iVar2 + 1;
     puVar1 = puVar4 + 1;
   } while (iVar2 < 4);
-  puVar4[1] = (undefined2)dword_e9abe;
+  puVar4[1] = (undefined2)icing_state;
   puVar4[2] = word_e9abc;
-  puVar4[3] = dword_e9ac2;
-  puVar4[4] = word_e9ac6;
-  puVar4[5] = word_e9ac4;
+  puVar4[3] = last_touch_slot;
+  puVar4[4] = last_touch_x;
+  puVar4[5] = last_touch_y;
   puVar4[6] = _camera_target_x;
   puVar4[7] = (undefined2)camera_target_y;
   puVar4[8] = camera_target_y._2_2_;
-  puVar4[9] = (undefined2)dword_c90b2;
-  puVar4[10] = dword_c90b2._2_2_;
-  puVar4[0xb] = word_c90b6;
-  puVar4[0xc] = word_c90b8;
+  puVar4[9] = (undefined2)faceoff_spot;
+  puVar4[10] = faceoff_spot._2_2_;
+  puVar4[0xb] = faceoff_dir_home;
+  puVar4[0xc] = faceoff_dir_away;
   puVar4[0xd] = _action_flags;
   puVar4[0xe] = stop_flags;
   puVar4[0xf] = _misc_flags;
@@ -4499,14 +4501,14 @@ longlong __watcall save_game(undefined4 param_1,uint unaff_EDX)
   puVar4[0x14] = stoppage_timer;
   puVar4[0x15] = dword_c90d0;
   puVar4[0x16] = whistle_timer;
-  puVar4[0x17] = dword_c90d4;
-  puVar4[0x18] = dword_c90d6;
-  puVar4[0x19] = _word_c90d8;
+  puVar4[0x17] = ref_phase;
+  puVar4[0x18] = ref_infraction;
+  puVar4[0x19] = _penalized_slot;
   puVar4[0x1a] = period_idx;
   puVar4[0x1b] = clock_seconds;
   puVar4[0x1c] = clock_sub;
   puVar4[0x1d] = (undefined2)show_names;
-  puVar4[0x1e] = dword_cbc44;
+  puVar4[0x1e] = penalty_box_mode;
   puVar4[0x1f] = period_over;
   puVar4[0x20] = game_over;
   puVar4[0x21] = dword_cbebe._2_2_;
@@ -4518,8 +4520,8 @@ longlong __watcall save_game(undefined4 param_1,uint unaff_EDX)
   puVar4[0x27] = _word_cbec8;
   puVar4[0x28] = (undefined2)dword_cbeca;
   *(undefined4 *)(puVar4 + 0x29) = _dword_c9100;
-  puVar4[0x2b] = _word_e9aba;
-  puVar4[0x2c] = dword_e9abe._2_2_;
+  puVar4[0x2b] = _penalized_count;
+  puVar4[0x2c] = icing_state._2_2_;
   iVar2 = file_write(param_1,&local_a4,0xffffffff,0x80);
   if (iVar2 != 0) {
     fatalerror(aErrorSavingGame);
@@ -4534,7 +4536,7 @@ longlong __watcall save_game(undefined4 param_1,uint unaff_EDX)
   } while (iVar2 < 6);
   *(undefined *)((int)puVar6 + 2) = controller_type;
   *(undefined *)((int)puVar6 + 3) = byte_c4d1d;
-  *(undefined *)(puVar6 + 1) = byte_c90ba;
+  *(undefined *)(puVar6 + 1) = puck_in_net;
   *(undefined *)((int)puVar6 + 5) = game_flags;
   *(undefined2 *)((int)puVar6 + 6) = word_cbc52;
   *(undefined2 *)(puVar6 + 2) = word_cbc54;
@@ -4593,7 +4595,7 @@ longlong __watcall save_game(undefined4 param_1,uint unaff_EDX)
   *(undefined *)(puVar6 + 0x1c) = byte_dc264;
   *(undefined *)((int)puVar6 + 0x71) = byte_dc265;
   *(undefined *)((int)puVar6 + 0x72) = byte_dc266;
-  *(undefined *)((int)puVar6 + 0x73) = (undefined)dword_cc0f4;
+  *(undefined *)((int)puVar6 + 0x73) = (undefined)one_timer_pending;
   iVar2 = file_write(param_1,&local_a4,0xffffffff,0x80);
   if (iVar2 != 0) {
     fatalerror(aErrorSavingGame);
@@ -4611,26 +4613,26 @@ longlong __watcall save_game(undefined4 param_1,uint unaff_EDX)
   *(undefined2 *)((int)puVar6 + 6) = word_cbece;
   *(undefined2 *)(puVar6 + 2) = (undefined2)dword_e9ab2;
   *(undefined2 *)((int)puVar6 + 10) = dword_e9ab2._2_2_;
-  *(undefined2 *)(puVar6 + 3) = (undefined2)dword_cc0f8;
-  *(undefined2 *)((int)puVar6 + 0xe) = (undefined2)dword_cc0fc;
+  *(undefined2 *)(puVar6 + 3) = (undefined2)breakaway_flag;
+  *(undefined2 *)((int)puVar6 + 0xe) = (undefined2)penalty_shot_slot;
   *(undefined2 *)(puVar6 + 4) = (undefined2)dword_cc100;
-  *(undefined2 *)((int)puVar6 + 0x12) = (undefined2)dword_cc104;
+  *(undefined2 *)((int)puVar6 + 0x12) = (undefined2)penalty_shot_team;
   *(undefined2 *)(puVar6 + 5) = dword_cc108;
   *(undefined2 *)((int)puVar6 + 0x16) = dword_cc10c;
   *(undefined2 *)(puVar6 + 6) = dword_cc110;
   *(undefined2 *)((int)puVar6 + 0x1a) = dword_cc114;
-  *(undefined2 *)(puVar6 + 7) = (undefined2)dword_cc118;
-  *(undefined2 *)((int)puVar6 + 0x1e) = (undefined2)dword_cc11c;
+  *(undefined2 *)(puVar6 + 7) = (undefined2)penalty_shot_phase;
+  *(undefined2 *)((int)puVar6 + 0x1e) = (undefined2)penalty_shot_setup;
   *(undefined2 *)(puVar6 + 8) = (undefined2)dword_cc120;
-  *(undefined2 *)((int)puVar6 + 0x22) = (undefined2)dword_cc124;
-  *(undefined2 *)(puVar6 + 9) = (undefined2)dword_cc128;
-  *(undefined2 *)((int)puVar6 + 0x26) = (undefined2)dword_cc12c;
-  *(undefined2 *)(puVar6 + 10) = dword_cc130;
-  *(undefined2 *)((int)puVar6 + 0x2a) = dword_cc134;
-  *(undefined2 *)(puVar6 + 0xb) = dword_cc138;
-  *(undefined2 *)((int)puVar6 + 0x2e) = dword_cc13c;
-  *(undefined2 *)(puVar6 + 0xc) = dword_cc140;
-  *(undefined2 *)((int)puVar6 + 0x32) = dword_cc144;
+  *(undefined2 *)((int)puVar6 + 0x22) = (undefined2)defenders_ahead;
+  *(undefined2 *)(puVar6 + 9) = (undefined2)penalty_shot_active;
+  *(undefined2 *)((int)puVar6 + 0x26) = (undefined2)penalty_shot_timer;
+  *(undefined2 *)(puVar6 + 10) = breakaway_lane_x;
+  *(undefined2 *)((int)puVar6 + 0x2a) = breakaway_target_y;
+  *(undefined2 *)(puVar6 + 0xb) = breakaway_trigger_y;
+  *(undefined2 *)((int)puVar6 + 0x2e) = breakaway_waypoint;
+  *(undefined2 *)(puVar6 + 0xc) = breakaway_lane_side;
+  *(undefined2 *)((int)puVar6 + 0x32) = breakaway_heading;
   iVar2 = file_write(param_1,&local_a4,0xffffffff,0x80);
   if (iVar2 != 0) {
     fatalerror(aErrorSavingGame);
@@ -4788,36 +4790,36 @@ longlong __watcall savegame_io(undefined4 param_1,uint unaff_EDX)
   psVar3 = local_122 + 1;
   do {
     psVar7 = psVar3;
-    *(short *)((int)&dword_e038e + iStack_1c * 2 + 2) = *psVar7;
+    *(short *)((int)&faceoff_ready_home + iStack_1c * 2 + 2) = *psVar7;
     iStack_1c = iStack_1c + 1;
     psVar3 = psVar7 + 1;
   } while (iStack_1c < 6);
-  _word_c90a0 = psVar7[1];
-  dword_c90a2 = psVar7[2];
+  _last_shooter = psVar7[1];
+  last_passer = psVar7[2];
   pending_dir = psVar7[3];
   shot_power._0_2_ = psVar7[4];
   shot_power._2_2_ = psVar7[5];
-  dword_c90aa = psVar7[6];
+  goalie_pass_mode = psVar7[6];
   iStack_1c = 0;
   psVar3 = psVar7 + 7;
   do {
     psVar7 = psVar3;
-    *(short *)((int)&unk_df812 + iStack_1c * 2 + 2) = *psVar7;
+    *(short *)((int)&goal_prediction + iStack_1c * 2 + 2) = *psVar7;
     iStack_1c = iStack_1c + 1;
     psVar3 = psVar7 + 1;
   } while (iStack_1c < 4);
-  dword_e9abe._0_2_ = psVar7[1];
+  icing_state._0_2_ = psVar7[1];
   word_e9abc = psVar7[2];
-  dword_e9ac2 = psVar7[3];
-  word_e9ac6 = psVar7[4];
-  word_e9ac4 = psVar7[5];
+  last_touch_slot = psVar7[3];
+  last_touch_x = psVar7[4];
+  last_touch_y = psVar7[5];
   _camera_target_x = psVar7[6];
   camera_target_y._0_2_ = psVar7[7];
   camera_target_y._2_2_ = psVar7[8];
-  dword_c90b2._0_2_ = psVar7[9];
-  dword_c90b2._2_2_ = psVar7[10];
-  word_c90b6 = psVar7[0xb];
-  word_c90b8 = psVar7[0xc];
+  faceoff_spot._0_2_ = psVar7[9];
+  faceoff_spot._2_2_ = psVar7[10];
+  faceoff_dir_home = psVar7[0xb];
+  faceoff_dir_away = psVar7[0xc];
   _action_flags = psVar7[0xd];
   stop_flags = psVar7[0xe];
   _misc_flags = psVar7[0xf];
@@ -4828,14 +4830,14 @@ longlong __watcall savegame_io(undefined4 param_1,uint unaff_EDX)
   stoppage_timer = psVar7[0x14];
   dword_c90d0 = psVar7[0x15];
   whistle_timer = psVar7[0x16];
-  dword_c90d4 = psVar7[0x17];
-  dword_c90d6 = psVar7[0x18];
-  _word_c90d8 = psVar7[0x19];
+  ref_phase = psVar7[0x17];
+  ref_infraction = psVar7[0x18];
+  _penalized_slot = psVar7[0x19];
   period_idx = psVar7[0x1a];
   clock_seconds = psVar7[0x1b];
   clock_sub = psVar7[0x1c];
   show_names = (int)psVar7[0x1d];
-  dword_cbc44 = psVar7[0x1e];
+  penalty_box_mode = psVar7[0x1e];
   period_over = psVar7[0x1f];
   game_over = psVar7[0x20];
   dword_cbebe._2_2_ = psVar7[0x21];
@@ -4847,8 +4849,8 @@ longlong __watcall savegame_io(undefined4 param_1,uint unaff_EDX)
   _word_cbec8 = psVar7[0x27];
   dword_cbeca._0_2_ = psVar7[0x28];
   _dword_c9100 = *(undefined4 *)(psVar7 + 0x29);
-  _word_e9aba = psVar7[0x2b];
-  dword_e9abe._2_2_ = psVar7[0x2c];
+  _penalized_count = psVar7[0x2b];
+  icing_state._2_2_ = psVar7[0x2c];
   iVar4 = file_read(param_1,&local_128,0xffffffff);
   if (iVar4 != 0) {
     fatalerror(aErrorLoadingGame);
@@ -4863,7 +4865,7 @@ longlong __watcall savegame_io(undefined4 param_1,uint unaff_EDX)
   } while (iStack_1c < 6);
   controller_type = pcVar6[2];
   byte_c4d1d = pcVar6[3];
-  byte_c90ba = pcVar6[4];
+  puck_in_net = pcVar6[4];
   game_flags = pcVar6[5];
   word_cbc52 = *(undefined2 *)(pcVar6 + 6);
   word_cbc54 = *(undefined2 *)(pcVar6 + 8);
@@ -4922,7 +4924,7 @@ longlong __watcall savegame_io(undefined4 param_1,uint unaff_EDX)
   byte_dc264 = pcVar6[0x70];
   byte_dc265 = pcVar6[0x71];
   byte_dc266 = pcVar6[0x72];
-  dword_cc0f4 = (int)pcVar6[0x73];
+  one_timer_pending = (int)pcVar6[0x73];
   iVar4 = file_read(param_1,&local_128,0xffffffff,0x80);
   if (iVar4 != 0) {
     fatalerror(aErrorLoadingGame);
@@ -4960,26 +4962,26 @@ longlong __watcall savegame_io(undefined4 param_1,uint unaff_EDX)
   word_cbece = psVar7[3];
   dword_e9ab2._0_2_ = psVar7[4];
   dword_e9ab2._2_2_ = psVar7[5];
-  dword_cc0f8 = (int)psVar7[6];
-  dword_cc0fc = (int)psVar7[7];
+  breakaway_flag = (int)psVar7[6];
+  penalty_shot_slot = (int)psVar7[7];
   dword_cc100 = (int)psVar7[8];
-  dword_cc104 = (int)psVar7[9];
+  penalty_shot_team = (int)psVar7[9];
   _dword_cc108 = (int)psVar7[10];
   _dword_cc10c = (int)psVar7[0xb];
   _dword_cc110 = (int)psVar7[0xc];
   _dword_cc114 = (int)psVar7[0xd];
-  dword_cc118 = (int)psVar7[0xe];
-  dword_cc11c = (int)psVar7[0xf];
+  penalty_shot_phase = (int)psVar7[0xe];
+  penalty_shot_setup = (int)psVar7[0xf];
   dword_cc120 = (int)psVar7[0x10];
-  dword_cc124 = (int)psVar7[0x11];
-  dword_cc128 = (int)psVar7[0x12];
-  dword_cc12c = (int)psVar7[0x13];
-  _dword_cc130 = (int)psVar7[0x14];
-  _dword_cc134 = (int)psVar7[0x15];
-  _dword_cc138 = (int)psVar7[0x16];
-  _dword_cc13c = (int)psVar7[0x17];
-  _dword_cc140 = (int)psVar7[0x18];
-  _dword_cc144 = (int)psVar7[0x19];
+  defenders_ahead = (int)psVar7[0x11];
+  penalty_shot_active = (int)psVar7[0x12];
+  penalty_shot_timer = (int)psVar7[0x13];
+  _breakaway_lane_x = (int)psVar7[0x14];
+  _breakaway_target_y = (int)psVar7[0x15];
+  _breakaway_trigger_y = (int)psVar7[0x16];
+  _breakaway_waypoint = (int)psVar7[0x17];
+  _breakaway_lane_side = (int)psVar7[0x18];
+  _breakaway_heading = (int)psVar7[0x19];
   iVar4 = file_read(param_1,0xe9a16,0xffffffff,0x42);
   if (iVar4 != 0) {
     fatalerror(aErrorLoadingGame);
@@ -5129,7 +5131,7 @@ LAB_00061249:
     iStack_1c = iStack_1c + 1;
     puVar8 = puVar8 + 0x20;
   } while (iStack_1c < 0x11);
-  sub_5dd7c();
+  sort_draw_order2();
   iStack_1c = 0;
   do {
     *(undefined4 *)(&word_c571c + iStack_1c * 4) = auStack_68[iStack_1c * 2];
@@ -5145,10 +5147,10 @@ LAB_00061249:
 
 
 // ================================================================================================
-// sub_614c2 @ 0x614c2 [__watcall]
+// start_crowd_sound @ 0x614c2 [__watcall]
 // ================================================================================================
 
-void __watcall sub_614c2(int param_1,int unaff_EDX)
+void __watcall start_crowd_sound(int param_1,int unaff_EDX)
 
 {
   int iVar1;
@@ -5176,10 +5178,11 @@ void __watcall sub_614c2(int param_1,int unaff_EDX)
 
 
 // ================================================================================================
-// sub_61576 @ 0x61576 [__watcall]
+// play_crowd_chant @ 0x61576 [__watcall]
 // ================================================================================================
 
-void __watcall sub_61576(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+void __watcall
+play_crowd_chant(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   undefined4 uVar1;
@@ -5194,7 +5197,7 @@ void __watcall sub_61576(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,u
     uVar2 = 0x88;
     uVar1 = 0x13;
   }
-  sub_614c2(uVar1,uVar2,unaff_EBX,unaff_ECX,unaff_EDX);
+  start_crowd_sound(uVar1,uVar2,unaff_EBX,unaff_ECX,unaff_EDX);
   return;
 }
 
@@ -5280,7 +5283,7 @@ void __watcall update_effects(void)
           }
         }
 LAB_0006170e:
-        sub_614c2((int)sStackY_18,(int)sVar10);
+        start_crowd_sound((int)sStackY_18,(int)sVar10);
       }
     }
     else {
@@ -5782,7 +5785,7 @@ void __watcall show_penalty(void)
       return;
     }
     sprintf(&byte_e02c8,a02d02dS,(uint)byte_e9acc._2_1_,(uint)byte_e9acc._3_1_,
-            &team_names + dword_cc104 * 0xba);
+            &team_names + penalty_shot_team * 0xba);
     byte_e0250 = aPenaltyShot_c1ccd[0];
     byte_e0250_1._0_1_ = aPenaltyShot_c1ccd[1];
     byte_e0250_1._1_1_ = aPenaltyShot_c1ccd[2];
@@ -5806,8 +5809,8 @@ void __watcall show_penalty(void)
          *(undefined2 *)(pcVar8 + ((uint)bVar10 * -2 + 1) * 4);
     *(char *)((int)(puVar3 + (uint)bVar10 * -2 + 1) + (uint)bVar10 * -4 + 2) =
          (pcVar8 + ((uint)bVar10 * -2 + 1) * 4)[(uint)bVar10 * -4 + 2];
-    puVar1 = &rosters + dword_cc100 * 0x27 + dword_cc104 * 0x444;
-    uVar2 = (&unk_db3ad)[dword_cc100 * 0x27 + dword_cc104 * 0x444];
+    puVar1 = &rosters + dword_cc100 * 0x27 + penalty_shot_team * 0x444;
+    uVar2 = (&unk_db3ad)[dword_cc100 * 0x27 + penalty_shot_team * 0x444];
     puVar6 = &byte_e0308;
   }
   format_player_name(puVar6,&unk_c1b49,uVar2,puVar1 + 7,puVar1 + 0x17,&unk_c1b49);
@@ -5816,14 +5819,14 @@ void __watcall show_penalty(void)
 
 
 // ================================================================================================
-// sub_62343 @ 0x62343 [__watcall]
+// announce_goal @ 0x62343 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
 void __watcall
-sub_62343(int param_1,undefined param_2,undefined unaff_BL,undefined unaff_CL,undefined param_5,
-         undefined param_6,undefined param_7)
+announce_goal(int param_1,undefined param_2,undefined unaff_BL,undefined unaff_CL,undefined param_5,
+             undefined param_6,undefined param_7)
 
 {
   int iVar1;
@@ -5952,12 +5955,12 @@ LAB_000625df:
   }
   if (unaff_EBX == 0x11) {
     sVar1 = user2_team._2_2_;
-    if (dword_cc104 != 0) {
+    if (penalty_shot_team != 0) {
       sVar1 = _away_team_id;
     }
     say_penalty_shot_wrapper
-              ((&team_abbrev)[sVar1],(&unk_db3ad)[dword_cc100 * 0x27 + dword_cc104 * 0x444],param_5,
-               param_6);
+              ((&team_abbrev)[sVar1],(&unk_db3ad)[dword_cc100 * 0x27 + penalty_shot_team * 0x444],
+               param_5,param_6);
   }
   else {
     if (_dword_e9aac >> 0x10 == param_1) {
@@ -5985,12 +5988,12 @@ LAB_000625df:
 
 
 // ================================================================================================
-// sub_62764 @ 0x62764 [__watcall]
+// announce_injury @ 0x62764 [__watcall]
 // ================================================================================================
 
 undefined4 __watcall
-sub_62764(undefined param_1,undefined unaff_DL,undefined unaff_BL,undefined unaff_CL,
-         undefined param_5)
+announce_injury(undefined param_1,undefined unaff_DL,undefined unaff_BL,undefined unaff_CL,
+               undefined param_5)
 
 {
   int iVar1;

@@ -696,10 +696,11 @@ loc_b3d85:
     times 3 db 0 ; 0b3d91 (padding)
 
 ; ====================================================================================================
-; sub_b3d94  [0xb3d94, 102 bytes, 41 instructions]
-; called by: ai_goalie, try_block_shot, sub_53ce5, sub_5601d, shot_setup, do_shot, collide_boards, sim_update_players, ai_chase_puck, count_defenders_ahead
+; approx_distance  [0xb3d94, 102 bytes, 41 instructions]
+; distance approximation from dx, dy (EA library)
+; called by: ai_goalie, try_block_shot, collide_player_net, knockdown_position, shot_setup, do_shot, collide_boards, sim_update_players, ai_chase_puck, count_defenders_ahead
 ; ====================================================================================================
-sub_b3d94:
+approx_distance:
     push ebp                                     ; 0b3d94 55
     mov ebp, esp                                 ; 0b3d95 8bec
     push dword ptr [ebp + 8]                     ; 0b3d97 ff7508
@@ -1999,7 +2000,7 @@ loc_b49ba:
 
 ; ====================================================================================================
 ; sub_b49c0  [0xb49c0, 160 bytes, 50 instructions]
-; called by: sub_b3d94
+; called by: approx_distance
 ; ====================================================================================================
 sub_b49c0:
     push ebp                                     ; 0b49c0 55
@@ -2087,7 +2088,7 @@ loc_b4a57:
 
 ; ====================================================================================================
 ; sub_b4a60  [0xb4a60, 6 bytes, 2 instructions]
-; called by: sub_9e5c9, sub_b3d94
+; called by: sub_9e5c9, approx_distance
 ; ====================================================================================================
 sub_b4a60:
     mov eax, dword ptr [esp + 4]                 ; 0b4a60 8b442404
@@ -2096,7 +2097,7 @@ sub_b4a60:
 
 ; ====================================================================================================
 ; sub_b4a66  [0xb4a66, 60 bytes, 20 instructions]
-; called by: sub_b3d94
+; called by: approx_distance
 ; ====================================================================================================
 sub_b4a66:
     mov eax, dword ptr [esp + 4]                 ; 0b4a66 8b442404
@@ -2451,7 +2452,7 @@ sub_b4cb4:
 
 ; ====================================================================================================
 ; sub_b4cd8  [0xb4cd8, 26 bytes, 12 instructions]
-; called by: sub_14a20, sub_14afe, sub_14f31, show_scoreboard, sub_1540a, sub_15995, blit_sprite, instant_replay, replay_control_loop
+; called by: draw_score_digits, draw_line_indicator, sub_14f31, show_scoreboard, sub_1540a, sub_15995, blit_sprite, instant_replay, replay_control_loop
 ; ====================================================================================================
 sub_b4cd8:
     push ebp                                     ; 0b4cd8 55

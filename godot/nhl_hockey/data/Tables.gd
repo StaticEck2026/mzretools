@@ -15,6 +15,24 @@ static var team_strings: PackedStringArray
 static var message_strings: PackedStringArray
 static var turn_table: PackedInt32Array           # heading change per step by (dir - facing) & 7
 static var max_speed_sq: PackedInt32Array         # squared speed limit per energy level
+static var infraction_priority: PackedInt32Array
+static var infraction_is_penalty: PackedInt32Array
+static var stoppage_duration: PackedInt32Array    # << 5 steps per infraction type
+static var announce_delay: PackedInt32Array
+static var entity_init: Array = []                # 17 x [x, y, vx, frame, side, half_w, half_h, state, flags]
+static var faceoff_spots: Array = []              # 7 x [x, y] relative to the faceoff dot
+static var faceoff_lineup: Array = []             # [6 - skaters_on_ice][line_slot] -> spot index
+static var faceoff_bonus: PackedInt32Array
+static var stick_offsets: Array = []              # [dx, dy] for frames 0x196..0x219
+static var onetimer_offsets: Array = []           # [dx, dy] per facing
+static var carrier_targets: Array = []            # 10 x [x, y]
+static var wing_zones: Array = []                 # 4 x [x, dx, y, dy]
+static var center_zones: Array = []
+static var goalie_save_anims: PackedInt32Array
+static var poke_vectors: Array = []               # 8 x [vx, vy]
+static var breakaway_waypoints: Array = []        # 4 x [x, y, trigger]
+static var ref_signal_dir: PackedInt32Array
+static var ref_signal_anim: PackedInt32Array
 static var loaded := false
 
 static func _static_init() -> void:
@@ -27,8 +45,8 @@ static func load_tables() -> void:
 		return
 	var t: Dictionary = JSON.parse_string(f.get_as_text())
 	anim_sequences = PackedInt32Array(t["anim_sequences"])
-	dir8_vectors = t["dir8_vectors"]
-	frame_offsets = t["frame_offsets"]
+	dir8_vectors = _ints(t["dir8_vectors"])
+	frame_offsets = _ints(t["frame_offsets"])
 	shot_targets = PackedInt32Array(t["shot_targets"])
 	position_default_state = PackedByteArray(t["position_default_state"])
 	dir8_lut = PackedByteArray(t["dir8_lut"])
@@ -38,7 +56,35 @@ static func load_tables() -> void:
 	message_strings = PackedStringArray(t["message_strings"])
 	turn_table = PackedInt32Array(t["turn_table"])
 	max_speed_sq = PackedInt32Array(t["max_speed_sq"])
+	infraction_priority = PackedInt32Array(t["infraction_priority"])
+	infraction_is_penalty = PackedInt32Array(t["infraction_is_penalty"])
+	stoppage_duration = PackedInt32Array(t["stoppage_duration"])
+	announce_delay = PackedInt32Array(t["announce_delay"])
+	entity_init = _ints(t["entity_init"])
+	faceoff_spots = _ints(t["faceoff_spots"])
+	faceoff_lineup = _ints(t["faceoff_lineup"])
+	faceoff_bonus = PackedInt32Array(t["faceoff_bonus"])
+	stick_offsets = _ints(t["stick_offsets"])
+	onetimer_offsets = _ints(t["onetimer_offsets"])
+	carrier_targets = _ints(t["carrier_targets"])
+	wing_zones = _ints(t["wing_zones"])
+	center_zones = _ints(t["center_zones"])
+	goalie_save_anims = PackedInt32Array(t["goalie_save_anims"])
+	poke_vectors = _ints(t["poke_vectors"])
+	breakaway_waypoints = _ints(t["breakaway_waypoints"])
+	ref_signal_dir = PackedInt32Array(t["ref_signal_dir"])
+	ref_signal_anim = PackedInt32Array(t["ref_signal_anim"])
 	loaded = true
+
+## JSON numbers come back as floats: convert nested arrays of numbers to ints
+static func _ints(a: Array) -> Array:
+	var out := []
+	for v in a:
+		if v is Array:
+			out.append(_ints(v))
+		else:
+			out.append(int(v))
+	return out
 
 ## anim_sequences entries are unsigned 16 bit words stored as signed JSON numbers
 static func anim_word(index: int) -> int:
@@ -50,6 +96,36 @@ static func anim_word(index: int) -> int:
 static func anim_sword(index: int) -> int:
 	var v := anim_word(index)
 	return v - 0x10000 if v >= 0x8000 else v
+
+## frame_offsets_lookup (0x5f0ae): displacement of the stick/feet for a frame, mirrored for F4_MIRROR
+static func frame_offset(frame: int, mirrored: bool) -> Vector2i:
+	if frame < 0 or frame >= 0x468:
+		return Vector2i.ZERO
+	var f := frame
+	if f >= 0x378:
+		f -= 0xf4
+	elif f > 0x283:
+		return Vector2i.ZERO
+	if f >= 0x2da:
+		f -= 0x46
+	elif f > 0x293:
+		return Vector2i.ZERO
+	if f >= frame_offsets.size():
+		return Vector2i.ZERO
+	var o: Array = frame_offsets[f]
+	return Vector2i(-o[0] if mirrored else o[0], o[1])
+
+## stick_offsets_lookup (0x5f110): stick blade position for the carrying/skating frames
+static func stick_offset(frame: int, mirrored: bool) -> Vector2i:
+	if frame < 0:
+		return Vector2i.ZERO
+	var f := frame
+	if f > 0x3cd and f < 0x450:
+		f -= 0x1b4
+	if f <= 0x195 or f > 0x219:
+		return Vector2i.ZERO
+	var o: Array = stick_offsets[f - 0x196]
+	return Vector2i(-o[0] if mirrored else o[0], o[1])
 
 ## direction8(dx, dy): 0-7 like the original (direction8 @0x8c8e8), 8 when both are zero
 static func direction8(dx: int, dy: int) -> int:

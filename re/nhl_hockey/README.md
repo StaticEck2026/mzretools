@@ -157,7 +157,7 @@ like `defo defd wingo wingd cento centd goalie puckc nearest shoot passrec`.
 
 ## Named routines
 
-673 routines and 94 variables are named so far (the rest keep `sub_<address>` / `dword_<address>` names).
+737 routines and 154 variables are named so far (the rest keep `sub_<address>` / `dword_<address>` names).
 Library names in lower case without prefix (`reservemem`, `locateshape`, `initgraphics`, `addtimer`,
 `unpack`, ...) are EA's own names recovered from their error messages; C runtime functions carry their
 standard names; game routines use `snake_case` names describing what was understood of them, with the 47 AI
