@@ -2684,7 +2684,7 @@ loc_33845:
     shl esi, 2                                   ; 0338a4 c1e602
     sub esi, edi                                 ; 0338a7 29fe
     shl esi, 2                                   ; 0338a9 c1e602
-    mov ebx, aBOS_c7298                          ; 0338ac bb98720c00        "BOS"
+    mov ebx, rink_logo_table                     ; 0338ac bb98720c00        "BOS"
     add ebx, esi                                 ; 0338b1 01f3
     mov eax, dword ptr [edi*4 + unk_c73d8]       ; 0338b3 8b04bdd8730c00
     cmp byte ptr [eax + unk_ed7cd], 1            ; 0338ba 80b8cdd70e0001
@@ -2743,7 +2743,7 @@ loc_33949:
     shl esi, 2                                   ; 033950 c1e602
     sub esi, edi                                 ; 033953 29fe
     shl esi, 2                                   ; 033955 c1e602
-    mov ebx, aBOS_c7298                          ; 033958 bb98720c00        "BOS"
+    mov ebx, rink_logo_table                     ; 033958 bb98720c00        "BOS"
     add ebx, esi                                 ; 03395d 01f3
     mov eax, dword ptr [edi*4 + unk_c73d8]       ; 03395f 8b04bdd8730c00
     cmp byte ptr [eax + file_on_disk], 1         ; 033966 80b8ccd70e0001

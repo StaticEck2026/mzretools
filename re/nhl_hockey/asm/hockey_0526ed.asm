@@ -9475,7 +9475,7 @@ loc_59485:
 
 ; ====================================================================================================
 ; sub_59493  [0x59493, 31 bytes, 12 instructions]
-; called by: sub_8ee2f, sub_8ee4f, sub_8f13b
+; called by: sub_8ee2f, sub_8ee4f, music_load_kms
 ; ====================================================================================================
 sub_59493:
     push 0x14                                    ; 059493 6814000000
@@ -9901,13 +9901,13 @@ loc_5991c:
     jne loc_59937                                ; 05992b 750a
     xor eax, eax                                 ; 05992d 31c0
     mov ax, dx                                   ; 05992f 6689d0
-    call sub_8f61d                               ; 059932 e8e65c0300
+    call snd_play_sfx                            ; 059932 e8e65c0300
 loc_59937:
     inc edx                                      ; 059937 42
 loc_59938:
     xor eax, eax                                 ; 059938 31c0
     mov ax, dx                                   ; 05993a 6689d0
-    call sub_8f61d                               ; 05993d e8db5c0300
+    call snd_play_sfx                            ; 05993d e8db5c0300
 loc_59942:
     pop edx                                      ; 059942 5a
     pop ecx                                      ; 059943 59
@@ -10960,10 +10960,11 @@ loc_5a2d7:
 
 
 ; ====================================================================================================
-; sub_5a2ee  [0x5a2ee, 30 bytes, 8 instructions]
-; called by: sub_14bef
+; line_energy  [0x5a2ee, 30 bytes, 8 instructions]
+; average energy of the players of a line (4 forward lines x 3, 2 PP units x 5, 2 PK units x 4)
+; called by: get_line_energies
 ; ====================================================================================================
-sub_5a2ee:
+line_energy:
     push 4                                       ; 05a2ee 6804000000
     call __CHK                                   ; 05a2f3 e854260300
     test ax, ax                                  ; 05a2f8 6685c0

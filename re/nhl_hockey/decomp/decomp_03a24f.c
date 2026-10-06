@@ -2504,7 +2504,7 @@ void __watcall sub_3e835(int param_1,int unaff_EDX,int unaff_EBX)
   } while (iVar2 < 0xc0);
   iVar2 = 0;
   do {
-    (&unk_dc9d8)[iVar2] = *(undefined *)(iVar3 + 0xc0 + iVar2);
+    (&remap_home)[iVar2] = *(undefined *)(iVar3 + 0xc0 + iVar2);
     iVar2 = iVar2 + 1;
   } while (iVar2 < 0x100);
   freemem(iVar1);
@@ -2523,12 +2523,12 @@ void __watcall sub_3e835(int param_1,int unaff_EDX,int unaff_EBX)
   iVar2 = 0;
   iVar3 = iVar3 + 0xc0;
   do {
-    (&unk_dc8d8)[iVar2] = *(undefined *)(iVar3 + iVar2);
+    (&remap_away)[iVar2] = *(undefined *)(iVar3 + iVar2);
     iVar2 = iVar2 + 1;
   } while (iVar2 < 0x90);
   iVar2 = 0x90;
   do {
-    (&unk_dc8d8)[iVar2] = *(char *)(iVar3 + iVar2) + '@';
+    (&remap_away)[iVar2] = *(char *)(iVar3 + iVar2) + '@';
     iVar2 = iVar2 + 1;
   } while (iVar2 < 0x100);
   freemem(iVar1);
@@ -2595,8 +2595,8 @@ team_roster_screen(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,un
   memcpy(__dest,(void *)(dword_dd100 + 0x10),0x300);
   freemem(dword_dd104);
   sub_3e835(*param_7,param_7[1],__dest);
-  dword_ddd7c = &unk_dc9d8;
-  dword_ddd80 = &unk_dc8d8;
+  dword_ddd7c = &remap_home;
+  dword_ddd80 = &remap_away;
   iVar5 = 0;
   do {
     memcpy(&unk_d12c8,(void *)((int)(&dword_ddd7c)[iVar5 >> 1] + 0x90),0x30);
@@ -3866,7 +3866,7 @@ void __watcall sub_40792(int param_1,int unaff_EDX)
   } while (iVar2 < 0xc0);
   iVar2 = 0;
   do {
-    (&unk_dc9d8)[iVar2] = *(undefined *)(iVar4 + 0xc0 + iVar2);
+    (&remap_home)[iVar2] = *(undefined *)(iVar4 + 0xc0 + iVar2);
     iVar2 = iVar2 + 1;
   } while (iVar2 < 0x100);
   iVar2 = iVar1 + unaff_EDX * 0x1c0;
@@ -3878,12 +3878,12 @@ void __watcall sub_40792(int param_1,int unaff_EDX)
   iVar4 = 0;
   iVar2 = iVar2 + 0xc0;
   do {
-    (&unk_dc8d8)[iVar4] = *(undefined *)(iVar2 + iVar4);
+    (&remap_away)[iVar4] = *(undefined *)(iVar2 + iVar4);
     iVar4 = iVar4 + 1;
   } while (iVar4 < 0x90);
   iVar4 = 0x90;
   do {
-    (&unk_dc8d8)[iVar4] = *(char *)(iVar2 + iVar4) + '@';
+    (&remap_away)[iVar4] = *(char *)(iVar2 + iVar4) + '@';
     iVar4 = iVar4 + 1;
   } while (iVar4 < 0x100);
   freemem(iVar1);

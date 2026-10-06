@@ -2451,10 +2451,11 @@ sub_b4cb4:
 
 
 ; ====================================================================================================
-; sub_b4cd8  [0xb4cd8, 26 bytes, 12 instructions]
+; blit_rle_frame  [0xb4cd8, 26 bytes, 12 instructions]
+; draws a run length coded sprite frame at x, y: count byte c > 0 repeats the next byte (0xff run = transparent skip), c < 0 copies -c literals, 0 ends the frame
 ; called by: draw_score_digits, draw_line_indicator, draw_clock_full, show_scoreboard, draw_clock_update, draw_penalty_clocks, blit_sprite, instant_replay, replay_control_loop
 ; ====================================================================================================
-sub_b4cd8:
+blit_rle_frame:
     push ebp                                     ; 0b4cd8 55
     mov ebp, esp                                 ; 0b4cd9 8bec
     add esp, -0x20                               ; 0b4cdb 83c4e0
@@ -2470,10 +2471,11 @@ sub_b4cd8:
 
 
 ; ====================================================================================================
-; sub_b4cf2  [0xb4cf2, 225 bytes, 89 instructions]
+; blit_rle_frame_home  [0xb4cf2, 225 bytes, 89 instructions]
+; blit_rle_frame at the position stored in the frame header (+0xc, +0xe)
 ; called by: draw_clock, show_scoreboard, draw_line_box
 ; ====================================================================================================
-sub_b4cf2:
+blit_rle_frame_home:
     push ebp                                     ; 0b4cf2 55
     mov ebp, esp                                 ; 0b4cf3 8bec
     add esp, -0x20                               ; 0b4cf5 83c4e0

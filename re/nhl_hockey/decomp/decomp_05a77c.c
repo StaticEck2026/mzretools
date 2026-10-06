@@ -2028,7 +2028,7 @@ void __watcall draw_sprites(int param_1,short unaff_DX)
       cVar1 = *(char *)CONCAT22(p_puck_carrier._2_2_,(undefined2)p_puck_carrier);
       if (-1 < cVar1) {
         uVar12 = 0;
-        iVar8 = dword_cc0b4 >> 0x10;
+        iVar8 = arrow_frames >> 0x10;
         uVar10 = 0;
         iVar6 = (int)(&entities)[cVar1 * 0x20] >> 0x10;
         iVar7 = (int)(&unk_df820)[cVar1 * 0x20] >> 0x10;
@@ -2095,7 +2095,7 @@ LAB_0005d1c9:
             uVar12 = 0;
             iVar7 = (int)sVar11;
             iVar6 = (int)sVar5;
-            iVar8 = *(int *)(&word_cc0b0 + sVar15) >> 0x10;
+            iVar8 = *(int *)(&marker_frames + sVar15) >> 0x10;
             uVar10 = 0;
           }
           else {
@@ -2104,7 +2104,7 @@ LAB_0005d1c9:
             local_38 = (int)sVar11;
             local_34 = (int)sVar5;
             iVar6 = sub_b340b(uVar13,0);
-            iVar8 = *(int *)((int)&dword_cc0b4 + sVar15 * 0x10 + iVar6 * 2) >> 0x10;
+            iVar8 = *(int *)((int)&arrow_frames + sVar15 * 0x10 + iVar6 * 2) >> 0x10;
             iVar6 = local_34;
             iVar7 = local_38;
           }
@@ -4583,7 +4583,7 @@ longlong __watcall save_game(undefined4 param_1,uint unaff_EDX)
   *(undefined2 *)((int)puVar6 + 0x5a) = (undefined2)hud_clock_min;
   *(undefined2 *)(puVar6 + 0x17) = (undefined2)hud_clock_sec;
   *(undefined2 *)((int)puVar6 + 0x5e) = (undefined2)hud_clock_tenths;
-  *(undefined2 *)(puVar6 + 0x18) = word_cc0b0;
+  *(undefined2 *)(puVar6 + 0x18) = marker_frames;
   *(undefined2 *)((int)puVar6 + 0x62) = (undefined2)dword_d8c78;
   *(undefined2 *)(puVar6 + 0x19) = (undefined2)dword_d8c6c;
   *(undefined2 *)((int)puVar6 + 0x66) = (undefined2)dword_cc0ac;
@@ -4912,7 +4912,7 @@ longlong __watcall savegame_io(undefined4 param_1,uint unaff_EDX)
   hud_clock_min = (int)*(short *)(pcVar6 + 0x5a);
   hud_clock_sec = (int)*(short *)(pcVar6 + 0x5c);
   hud_clock_tenths = (int)*(short *)(pcVar6 + 0x5e);
-  word_cc0b0 = *(undefined2 *)(pcVar6 + 0x60);
+  marker_frames = *(undefined2 *)(pcVar6 + 0x60);
   dword_d8c78 = (int)*(short *)(pcVar6 + 0x62);
   dword_d8c6c = (int)*(short *)(pcVar6 + 100);
   dword_cc0ac = (int)*(short *)(pcVar6 + 0x66);
@@ -5075,10 +5075,10 @@ LAB_00061249:
   dword_dc28c = 0;
   load_music_banks();
   _memset_dwords(&sprite_banks,0xffffffff,&unk_df314,0x17);
-  dword_cc0e0 = 0xffffffff;
+  effect_bank = 0xffffffff;
   load_player_graphics();
   _memset_dwords(&sprite_banks,0);
-  dword_cc0e0 = 0;
+  effect_bank = 0;
   if ((dword_cbeca._2_2_ != -1) && (word_cbece != -1)) {
     dword_e0248 = (&off_cc01d)[dword_cbeca._2_2_];
   }

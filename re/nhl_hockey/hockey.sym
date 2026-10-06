@@ -63,7 +63,7 @@
 000149bf	func	sub_149bf	97	__watcall
 00014a20	func	draw_score_digits	222	__watcall
 00014afe	func	draw_line_indicator	241	__watcall
-00014bef	func	sub_14bef	51	__watcall
+00014bef	func	get_line_energies	51	__watcall
 00014c22	func	add_penalty_display	126	__watcall
 00014ca0	func	sub_14ca0	81	__watcall
 00014cf1	func	draw_clock	576	__watcall
@@ -72,7 +72,7 @@
 00015374	func	sub_15374	150	__watcall
 0001540a	func	draw_clock_update	587	__watcall
 00015655	func	sub_15655	178	__watcall
-00015707	func	sub_15707	182	__watcall
+00015707	func	draw_energy_bar	182	__watcall
 000157bd	func	draw_line_box	472	__watcall
 00015995	func	draw_penalty_clocks	481	__watcall
 00015b76	func	sub_15b76	186	__watcall
@@ -181,9 +181,9 @@
 0001baf3	func	sub_1baf3	217	__watcall
 0001bbcc	func	sub_1bbcc	817	__watcall
 0001befd	func	sub_1befd	434	__watcall
-0001c0af	func	sub_1c0af	445	__watcall
-0001c26c	func	sub_1c26c	394	__watcall
-0001c3f6	func	sub_1c3f6	1041	__watcall
+0001c0af	func	db_read_player	445	__watcall
+0001c26c	func	db_open_files	394	__watcall
+0001c3f6	func	db_load_team_roster	1041	__watcall
 0001c807	func	sub_1c807	75	__watcall
 0001c852	func	sub_1c852	813	__watcall
 0001cb7f	func	sub_1cb7f	89	__watcall
@@ -652,7 +652,7 @@
 0005a03b	func	team_avg_energy	104	__watcall
 0005a0a3	func	choose_line	485	__watcall
 0005a288	func	sub_5a288	102	__watcall
-0005a2ee	func	sub_5a2ee	30	__watcall
+0005a2ee	func	line_energy	30	__watcall
 0005a30c	func	line_avg_energy	53	__watcall
 0005a341	func	predict_puck_goal_line	228	__watcall
 0005a425	func	frame_offsets_lookup	136	__watcall
@@ -1325,9 +1325,9 @@
 0008ef76	func	sub_8ef76	27	__watcall
 0008ef91	func	sub_8ef91	42	__watcall
 0008efbb	func	sub_8efbb	284	__watcall
-0008f0d7	func	sub_8f0d7	61	__cdecl
+0008f0d7	func	snd_patch_record	61	__cdecl
 0008f114	func	sub_8f114	39	__watcall
-0008f13b	func	sub_8f13b	195	__watcall
+0008f13b	func	music_load_kms	195	__watcall
 0008f1fe	func	sub_8f1fe	73	__watcall
 0008f247	func	sub_8f247	41	__watcall
 0008f270	func	sub_8f270	10	__watcall
@@ -1336,8 +1336,8 @@
 0008f451	func	sub_8f451	62	__watcall
 0008f48f	func	sub_8f48f	19	__watcall
 0008f4a7	func	sub_8f4a7	29	__watcall
-0008f4c4	func	sub_8f4c4	345	__watcall
-0008f61d	func	sub_8f61d	22	__watcall
+0008f4c4	func	snd_play_patch	345	__watcall
+0008f61d	func	snd_play_sfx	22	__watcall
 0008f633	func	sound_stopall	74	__watcall
 0008f67d	func	sub_8f67d	305	__watcall
 0008f7ae	func	sub_8f7ae	96	__watcall
@@ -1405,7 +1405,7 @@
 00090aea	func	sprintf	48	__cdecl
 00090b20	func	memcpy	37	__watcall
 00090b50	func	sub_90b50	47	__watcall
-00090b80	func	sub_90b80	47	__cdecl
+00090b80	func	locateshapes	47	__cdecl
 00090bb0	func	_dos_findfirst	29	__watcall
 00090bcd	func	_dos_findnext	28	__watcall
 00090be9	func	sub_90be9	3	__watcall
@@ -2406,7 +2406,7 @@
 000b3036	func	sub_b3036	85	__cdecl
 000b308b	func	sub_b308b	39	__watcall
 000b30b4	func	locateshape	7	__cdecl
-000b30bb	func	sub_b30bb	57	__cdecl
+000b30bb	func	locateshape_fast	57	__cdecl
 000b30f4	func	joy_detect	113	__watcall
 000b3168	func	sub_b3168	627	__watcall
 000b33db	func	joy_init	48	__cdecl
@@ -2491,8 +2491,8 @@
 000b4c84	func	waitvbl_end	35	__watcall
 000b4ca7	func	sub_b4ca7	10	__watcall
 000b4cb4	func	sub_b4cb4	36	__watcall
-000b4cd8	func	sub_b4cd8	26	__cdecl
-000b4cf2	func	sub_b4cf2	225	__cdecl
+000b4cd8	func	blit_rle_frame	26	__cdecl
+000b4cf2	func	blit_rle_frame_home	225	__cdecl
 000b4dd4	func	setremaptable	24	__cdecl
 000b4dec	func	sub_b4dec	24	__watcall
 000b4e04	func	sub_b4e04	40	__watcall
@@ -4941,7 +4941,7 @@
 000c66ac	data	dword_c66ac	4	
 000c66b0	data	dword_c66b0	4	
 000c66b4	data	unk_c66b4	0	
-000c66c4	data	dword_c66c4	4	
+000c66c4	data	hud_window	4	
 000c66c8	data	unk_c66c8	0	
 000c66d0	data	dword_c66d0	4	
 000c66d4	data	dword_c66d4	4	
@@ -5126,7 +5126,7 @@
 000c7265	data	a1KbytesOfFreeDiskSpace	29	string
 000c7282	data	off_c7282	4	ptr
 000c7290	data	dword_c7290	4	
-000c7298	data	aBOS_c7298	4	string
+000c7298	data	rink_logo_table	4	string
 000c729a	data	unk_c729a	0	
 000c729c	data	unk_c729c	0	
 000c729e	data	unk_c729e	0	
@@ -5592,14 +5592,14 @@
 000cc054	data	unk_cc054	0	
 000cc080	data	unk_cc080	0	
 000cc0ac	data	dword_cc0ac	4	
-000cc0b0	data	word_cc0b0	2	
-000cc0b4	data	dword_cc0b4	4	
+000cc0b0	data	marker_frames	2	
+000cc0b4	data	arrow_frames	4	
 000cc0d8	data	word_cc0d8	2	
 000cc0d9	data	byte_cc0d9	1	
 000cc0da	data	word_cc0da	2	
 000cc0dc	data	crowd_noise	4	
 000cc0de	data	word_cc0de	2	
-000cc0e0	data	dword_cc0e0	4	
+000cc0e0	data	effect_bank	4	
 000cc0ec	data	dword_cc0ec	4	
 000cc0f0	data	skip_faceoff_wait	4	
 000cc0f4	data	one_timer_pending	4	
@@ -7449,15 +7449,15 @@
 000d8c18	data	digit_shapes	0	
 000d8c40	data	dword_d8c40	4	
 000d8c4c	data	position_letter_shapes	0	
-000d8c68	data	dword_d8c68	4	
+000d8c68	data	rinkend_bank	4	
 000d8c6c	data	dword_d8c6c	4	
-000d8c70	data	dword_d8c70	4	
+000d8c70	data	rinkend_shape	4	
 000d8c72	data	dword_d8c72	4	
 000d8c74	data	dword_d8c74	4	
 000d8c78	data	dword_d8c78	4	
 000d8c7a	data	dword_d8c7a	4	
 000d8c7c	data	dword_d8c7c	4	
-000d8c80	data	dword_d8c80	4	
+000d8c80	data	numshp_bank	4	
 000d8c84	data	period_num	4	
 000d8c88	data	unk_d8c88	0	
 000d8f88	data	unk_d8f88	0	
@@ -7540,16 +7540,16 @@
 000dc266	data	byte_dc266	1	
 000dc267	data	byte_dc267	1	
 000dc268	data	byte_dc268	1	
-000dc26c	data	unk_dc26c	0	
+000dc26c	data	shapes_lines	0	
 000dc28c	data	dword_dc28c	4	
 000dc290	data	small_digit_shapes	0	
 000dc2b8	data	small_blank_digit	4	
-000dc2bc	data	dword_dc2bc	4	
-000dc2c0	data	dword_dc2c0	4	
+000dc2bc	data	shape_homp	4	
+000dc2c0	data	shape_visp	4	
 000dc2c4	data	score_digit_shapes	0	
-000dc2f0	data	dword_dc2f0	4	
-000dc2f4	data	unk_dc2f4	0	
-000dc300	data	unk_dc300	0	
+000dc2f0	data	scoreboard_bank	4	
+000dc2f4	data	shapes_hlin	0	
+000dc300	data	shapes_vlin	0	
 000dc30c	data	hud_digit_shapes	0	
 000dc334	data	hud_blank_digit	4	
 000dc338	data	dword_dc338	4	
@@ -7584,11 +7584,11 @@
 000dc8a0	data	dword_dc8a0	4	
 000dc8c8	data	dword_dc8c8	4	
 000dc8d0	data	unk_dc8d0	0	
-000dc8d8	data	unk_dc8d8	0	
+000dc8d8	data	remap_away	0	
 000dc91b	data	byte_dc91b	1	
 000dc998	data	unk_dc998	0	
 000dc9d7	data	byte_dc9d7	1	
-000dc9d8	data	unk_dc9d8	0	
+000dc9d8	data	remap_home	0	
 000dc9dd	data	byte_dc9dd	1	
 000dc9df	data	byte_dc9df	1	
 000dc9e8	data	byte_dc9e8	1	
@@ -8396,7 +8396,7 @@
 000edd00	data	unk_edd00	0	
 000edd04	data	unk_edd04	0	
 000ede34	data	unk_ede34	0	
-000ede5c	data	dword_ede5c	4	
+000ede5c	data	snd_patch_bank	4	
 000ede60	data	dword_ede60	4	
 000ede64	data	dword_ede64	4	
 000ede68	data	dword_ede68	4	

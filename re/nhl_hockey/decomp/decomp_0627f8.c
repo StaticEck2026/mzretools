@@ -550,7 +550,7 @@ void __watcall sub_63475(void)
       }
     } while ((&infraction_is_penalty)[*(int *)(&unk_e9a11 + sVar1 * 2) >> 0x18] == '\0');
     stop_flags._0_1_ = (byte)stop_flags | 4;
-    word_cc0b0 = 0xffff;
+    marker_frames = 0xffff;
     penalty_box_mode = 1;
     *p_puck_carrier = 0xff;
     set_state_reset(&puck,0x1a);
@@ -739,8 +739,8 @@ LAB_00063879:
             stoppage_timer = (short)byte_c9111 << 5;
             cVar1 = byte_c9146;
           }
-          if (word_cc0b0 < (short)(cVar1 * 0x20)) {
-            word_cc0b0 = cVar1 * 0x20;
+          if (marker_frames < (short)(cVar1 * 0x20)) {
+            marker_frames = cVar1 * 0x20;
           }
         }
       }
@@ -967,7 +967,7 @@ void __watcall update_stoppage(void)
   __CHK(0x14);
   if ((game_flags & 1) != 0) {
     update_announcer();
-    if ((-1 < word_cc0b0) && (word_cc0b0 = word_cc0b0 + -1, word_cc0b0 < 0)) {
+    if ((-1 < marker_frames) && (marker_frames = marker_frames + -1, marker_frames < 0)) {
       stop_flags._0_1_ = (byte)stop_flags | 4;
     }
     if ((game_flags & 4) != 0) {
@@ -993,7 +993,7 @@ void __watcall update_stoppage(void)
           }
         } while ((&infraction_is_penalty)[*(int *)(&unk_e9a11 + sVar1 * 2) >> 0x18] == '\0');
         stop_flags._0_1_ = (byte)stop_flags | 4;
-        word_cc0b0 = -1;
+        marker_frames = -1;
         penalty_box_mode = 1;
         *p_puck_carrier = 0xff;
         set_state_reset(&puck,0x1a);
@@ -3160,7 +3160,7 @@ void __watcall load_team_palettes(int param_1,int unaff_EDX,int unaff_EBX)
   } while (iVar2 < 0xc0);
   iVar2 = 0;
   do {
-    (&unk_dc9d8)[iVar2] = *(undefined *)(iVar4 + 0xc0 + iVar2);
+    (&remap_home)[iVar2] = *(undefined *)(iVar4 + 0xc0 + iVar2);
     iVar2 = iVar2 + 1;
   } while (iVar2 < 0x100);
   freemem(iVar1);
@@ -3179,12 +3179,12 @@ void __watcall load_team_palettes(int param_1,int unaff_EDX,int unaff_EBX)
   iVar2 = 0;
   iVar4 = iVar4 + 0xc0;
   do {
-    (&unk_dc8d8)[iVar2] = *(undefined *)(iVar4 + iVar2);
+    (&remap_away)[iVar2] = *(undefined *)(iVar4 + iVar2);
     iVar2 = iVar2 + 1;
   } while (iVar2 < 0x90);
   iVar2 = 0x90;
   do {
-    (&unk_dc8d8)[iVar2] = *(char *)(iVar4 + iVar2) + '@';
+    (&remap_away)[iVar2] = *(char *)(iVar4 + iVar2) + '@';
     iVar2 = iVar2 + 1;
   } while (iVar2 < 0x100);
   freemem(iVar1);
@@ -3687,7 +3687,7 @@ void __watcall replay_draw_frame(short param_1,short unaff_DX)
       if (iVar4 != -1) {
         uVar1 = 0;
         iVar3 = *(int *)((int)&word_e9f14 + iVar4 * 2 + 2) >> 0x10;
-        iVar5 = dword_cc0b4 >> 0x10;
+        iVar5 = arrow_frames >> 0x10;
         iVar6 = 0;
         iVar4 = *(int *)((int)&word_e9f36 + iVar4 * 2 + 2) >> 0x10;
 LAB_0006833f:
@@ -3742,7 +3742,7 @@ LAB_0006833f:
         if (bStack_1c == 0) {
           uVar1 = 0;
           iVar4 = (int)sStack_18;
-          iVar5 = *(int *)(&word_cc0b0 + sVar2) >> 0x10;
+          iVar5 = *(int *)(&marker_frames + sVar2) >> 0x10;
           iVar6 = 0;
         }
         else {
@@ -3752,7 +3752,7 @@ LAB_0006833f:
           sStack_28 = (short)((uint)local_22 >> 0x10);
           local_26 = sStack_28 >> 0xf;
           iVar3 = sub_b340b((int)(uint)CONCAT12(bStack_1c,local_1e) >> 0x10,0);
-          iVar5 = *(int *)((int)&dword_cc0b4 + iVar3 * 2 + sVar2 * 0x10) >> 0x10;
+          iVar5 = *(int *)((int)&arrow_frames + iVar3 * 2 + sVar2 * 0x10) >> 0x10;
           iVar3 = CONCAT22(local_26,sStack_28);
           iVar6 = local_30;
           iVar4 = iStack_2c;

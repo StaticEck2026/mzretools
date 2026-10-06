@@ -3231,7 +3231,7 @@ LAB_0002d781:
       }
       make_path(acStack_22c,puVar5,pcVar10,0);
       dword_ccc94 = 0x20;
-      local_b0[7] = (undefined1 *)sub_8f13b(acStack_22c);
+      local_b0[7] = (undefined1 *)music_load_kms(acStack_22c);
       dword_ccc94 = 0;
       play_sample_by_ptr();
     }
@@ -4639,7 +4639,7 @@ void __watcall team_select_screen2(void)
     }
     make_path(acStack_4c,puVar4,pcVar5);
     dword_ccc94 = 0x20;
-    local_38[3] = sub_8f13b(acStack_4c);
+    local_38[3] = music_load_kms(acStack_4c);
     dword_ccc94 = 0;
     play_sample_by_ptr();
   }

@@ -7984,12 +7984,12 @@ int locateshape(int param_1,int *param_2)
 
 
 // ================================================================================================
-// sub_b30bb @ 0xb30bb [__cdecl]
+// locateshape_fast @ 0xb30bb [__cdecl]
 // ================================================================================================
 
 /* WARNING: Removing unreachable block (ram,0x000b30e7) */
 
-int sub_b30bb(int param_1,int *param_2)
+int locateshape_fast(int param_1,int *param_2)
 
 {
   int *piVar1;

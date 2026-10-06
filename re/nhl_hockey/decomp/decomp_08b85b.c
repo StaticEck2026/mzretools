@@ -527,7 +527,7 @@ select_game_surface(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX
 
 {
   __CHK(0x14);
-  setscreen(dword_c66c4,unaff_EDX,unaff_ECX,unaff_EBX);
+  setscreen(hud_window,unaff_EDX,unaff_ECX,unaff_EBX);
   return;
 }
 
@@ -4381,7 +4381,7 @@ void __watcall sub_8ebe2(void)
   for (sVar1 = 0; sVar1 < 4; sVar1 = sVar1 + 1) {
     (&unk_f22fc)[sVar1 * 5] = 0;
   }
-  dword_ede5c = 0;
+  snd_patch_bank = 0;
   dword_d4f64 = 0;
   dword_d4f96 = 0xffffffff;
   return;
@@ -4472,7 +4472,7 @@ void __watcall
 sub_8ee2f(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
-  dword_ede5c = sub_59493(2,param_1,unaff_EBX,unaff_ECX,unaff_EDX);
+  snd_patch_bank = sub_59493(2,param_1,unaff_EBX,unaff_ECX,unaff_EDX);
   return;
 }
 
@@ -4628,13 +4628,13 @@ void __watcall sub_8efbb(void)
   undefined local_14 [3];
   undefined uStack_11;
   
-  if (dword_ede5c == 0) {
+  if (snd_patch_bank == 0) {
     return;
   }
   local_18 = 0;
   word_d4f88 = word_d4f88 + 1;
 LAB_0008efdb:
-  puVar1 = (undefined *)sub_8f0d7(local_18 & 0xff);
+  puVar1 = (undefined *)snd_patch_record(local_18 & 0xff);
   if ((puVar1 != (undefined *)0x0) && ((puVar1[0xf] & 0x80) == 0)) {
     if (puVar1[0xf] == 3) {
       for (iVar2 = 0; iVar2 < dword_d4f64; iVar2 = iVar2 + 1) {
@@ -4682,15 +4682,15 @@ LAB_0008f0b5:
 
 
 // ================================================================================================
-// sub_8f0d7 @ 0x8f0d7 [__cdecl]
+// snd_patch_record @ 0x8f0d7 [__cdecl]
 // ================================================================================================
 
-int sub_8f0d7(byte param_1)
+int snd_patch_record(byte param_1)
 
 {
   sub_902a0();
-  if ((dword_ede5c != 0) && (*(char *)((uint)param_1 + dword_ede5c + 2) != '\0')) {
-    return (uint)*(byte *)((uint)param_1 + dword_ede5c + 2) * 0x14 + dword_ede5c + 0x102;
+  if ((snd_patch_bank != 0) && (*(char *)((uint)param_1 + snd_patch_bank + 2) != '\0')) {
+    return (uint)*(byte *)((uint)param_1 + snd_patch_bank + 2) * 0x14 + snd_patch_bank + 0x102;
   }
   return 0;
 }
@@ -4707,19 +4707,19 @@ undefined4 __watcall sub_8f114(void)
   undefined in_stack_00000004;
   
   sub_902a0();
-  if (dword_ede5c == 0) {
+  if (snd_patch_bank == 0) {
     return 0;
   }
-  iVar1 = sub_8f0d7(in_stack_00000004);
+  iVar1 = snd_patch_record(in_stack_00000004);
   return *(undefined4 *)(iVar1 + 0x10);
 }
 
 
 // ================================================================================================
-// sub_8f13b @ 0x8f13b [__watcall]
+// music_load_kms @ 0x8f13b [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_8f13b(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall music_load_kms(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
@@ -4965,7 +4965,7 @@ sub_8f48f(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 
 {
   undefined8 uVar1;
   
-  uVar1 = sub_8f13b();
+  uVar1 = music_load_kms();
   if ((int)uVar1 != 0) {
     sub_8f4a7((int)uVar1,(int)((ulonglong)uVar1 >> 0x20),0,unaff_ECX,unaff_EBX);
   }
@@ -5074,10 +5074,10 @@ LAB_0008f420:
 
 
 // ================================================================================================
-// sub_8f4c4 @ 0x8f4c4 [__watcall]
+// snd_play_patch @ 0x8f4c4 [__watcall]
 // ================================================================================================
 
-int __watcall sub_8f4c4(ushort param_1,int unaff_EDX,undefined unaff_BL)
+int __watcall snd_play_patch(ushort param_1,int unaff_EDX,undefined unaff_BL)
 
 {
   byte bVar1;
@@ -5095,7 +5095,7 @@ int __watcall sub_8f4c4(ushort param_1,int unaff_EDX,undefined unaff_BL)
       return 0;
     }
     local_18 = (undefined)param_1;
-    iVar5 = sub_8f0d7(param_1 & 0xff);
+    iVar5 = snd_patch_record(param_1 & 0xff);
     iVar2 = dword_d4f9a;
     if (iVar5 != 0) {
       bVar1 = *(byte *)(iVar5 + 0xf);
@@ -5141,14 +5141,14 @@ int __watcall sub_8f4c4(ushort param_1,int unaff_EDX,undefined unaff_BL)
 
 
 // ================================================================================================
-// sub_8f61d @ 0x8f61d [__watcall]
+// snd_play_sfx @ 0x8f61d [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_8f61d(undefined2 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+snd_play_sfx(undefined2 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
-  sub_8f4c4(param_1,0,0x7f,unaff_ECX,unaff_EDX,unaff_EBX);
+  snd_play_patch(param_1,0,0x7f,unaff_ECX,unaff_EDX,unaff_EBX);
   return;
 }
 
@@ -7104,7 +7104,7 @@ void __watcall sub_90b50(void)
   
   cVar1 = *in_stack_00000008;
   while (cVar1 != '\0') {
-    uVar2 = sub_b30bb(in_stack_00000004,in_stack_00000008);
+    uVar2 = locateshape_fast(in_stack_00000004,in_stack_00000008);
     *in_stack_0000000c = uVar2;
     in_stack_0000000c = in_stack_0000000c + 1;
     in_stack_00000008 = in_stack_00000008 + 4;
@@ -7115,10 +7115,10 @@ void __watcall sub_90b50(void)
 
 
 // ================================================================================================
-// sub_90b80 @ 0x90b80 [__cdecl]
+// locateshapes @ 0x90b80 [__cdecl]
 // ================================================================================================
 
-void sub_90b80(undefined4 param_1,char *param_2,undefined4 *param_3)
+void locateshapes(undefined4 param_1,char *param_2,undefined4 *param_3)
 
 {
   char cVar1;

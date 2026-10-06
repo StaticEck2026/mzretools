@@ -30,6 +30,8 @@ static func parse(d: PackedByteArray) -> Vfn:
 	f.xoff_tab = d.decode_u16(0x18)
 	f.yoff_tab = d.decode_u16(0x1a)
 	f.glyph_base = d.decode_u32(0x1c)
+	if f.glyph_base >= d.size():
+		f.glyph_base = 0      # +0x1c holds a tag ('FNTX', 'FNED'): the glyph offsets at +0x20 are absolute
 	return f
 
 func glyph_width(c: int) -> int:
@@ -47,6 +49,13 @@ func text_width(s: String) -> int:
 		if c >= first and c <= last:
 			w += advance(c)
 	return w
+
+## Renders `s` into a new transparent image
+func render(s: String, color: Color) -> Image:
+	var w := maxi(text_width(s), 1)
+	var img := Image.create(w, height, false, Image.FORMAT_RGBA8)
+	draw(img, s, 0, 0, color)
+	return img
 
 ## Draws `s` into `img` at (x, y) with `color`
 func draw(img: Image, s: String, x: int, y: int, color: Color) -> void:

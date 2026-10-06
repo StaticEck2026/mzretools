@@ -5654,7 +5654,7 @@ loc_2dbaa:
     call make_path                               ; 02dbb1 e86867feff
     mov dword ptr [dword_ccc94], 0x20            ; 02dbb6 c70594cc0c002000..
     lea eax, [esp + 0x5d4]                       ; 02dbc0 8d8424d4050000
-    call sub_8f13b                               ; 02dbc7 e86f150600
+    call music_load_kms                          ; 02dbc7 e86f150600
     mov dword ptr [esp + 0x76c], eax             ; 02dbcc 8984246c070000
     xor edx, edx                                 ; 02dbd3 31d2
     mov dword ptr [dword_ccc94], edx             ; 02dbd5 891594cc0c00
@@ -8093,7 +8093,7 @@ loc_2fce3:
     call make_path                               ; 02fce6 e83346feff
     mov dword ptr [dword_ccc94], 0x20            ; 02fceb c70594cc0c002000..
     lea eax, [ebp - 0x34]                        ; 02fcf5 8d45cc
-    call sub_8f13b                               ; 02fcf8 e83ef40500
+    call music_load_kms                          ; 02fcf8 e83ef40500
     mov dword ptr [ebp - 0x14], eax              ; 02fcfd 8945ec
     xor ecx, ecx                                 ; 02fd00 31c9
     mov dword ptr [dword_ccc94], ecx             ; 02fd02 890d94cc0c00

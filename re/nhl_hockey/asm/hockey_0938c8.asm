@@ -9922,7 +9922,7 @@ loc_993f3:
     xor eax, eax                                 ; 099400 31c0
     mov al, dl                                   ; 099402 88d0
     push eax                                     ; 099404 50
-    call sub_8f0d7                               ; 099405 e8cd5cffff
+    call snd_patch_record                        ; 099405 e8cd5cffff
     add esp, 4                                   ; 09940a 83c404
     mov edx, eax                                 ; 09940d 89c2
     test eax, eax                                ; 09940f 85c0
@@ -9977,7 +9977,7 @@ loc_9947a:
     add al, 0x5c                                 ; 099494 045c
     and eax, 0xff                                ; 099496 25ff000000
     push eax                                     ; 09949b 50
-    call sub_8f0d7                               ; 09949c e8365cffff
+    call snd_patch_record                        ; 09949c e8365cffff
     add esp, 4                                   ; 0994a1 83c404
     test eax, eax                                ; 0994a4 85c0
     je loc_994b0                                 ; 0994a6 7408
@@ -10237,7 +10237,7 @@ sub_996b0:
 
 ; ====================================================================================================
 ; sub_99700  [0x99700, 183 bytes, 57 instructions]
-; called by: sub_8f4c4, sub_990cb
+; called by: snd_play_patch, sub_990cb
 ; ====================================================================================================
 sub_99700:
     push esi                                     ; 099700 56
@@ -10310,7 +10310,7 @@ loc_997a6:
 
 ; ====================================================================================================
 ; sub_997b7  [0x997b7, 107 bytes, 31 instructions]
-; called by: sub_8f4c4, sub_8f67d, sub_8f8b7, sub_8fd84, sub_8fdb2, sub_8fde5, sub_8fe1c, sub_8fe4f, sub_990cb, sub_99700
+; called by: snd_play_patch, sub_8f67d, sub_8f8b7, sub_8fd84, sub_8fdb2, sub_8fde5, sub_8fe1c, sub_8fe4f, sub_990cb, sub_99700
 ; ====================================================================================================
 sub_997b7:
     push ecx                                     ; 0997b7 51

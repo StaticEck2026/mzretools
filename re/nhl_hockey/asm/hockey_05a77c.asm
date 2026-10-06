@@ -3413,7 +3413,7 @@ loc_5cfd3:
     sar ebx, 0x10                                ; 05d004 c1fb10
     mov edx, dword ptr [esi + eax]               ; 05d007 8b1406
     sar edx, 0x10                                ; 05d00a c1fa10
-    mov eax, dword ptr [dword_cc0b4]             ; 05d00d a1b4c00c00
+    mov eax, dword ptr [arrow_frames]            ; 05d00d a1b4c00c00
     sar eax, 0x10                                ; 05d012 c1f810
     xor ecx, ecx                                 ; 05d015 31c9
     jmp loc_5d1c9                                ; 05d017 e9ad010000
@@ -3558,7 +3558,7 @@ loc_5d16e:
     lea edx, [eax + eax]                         ; 05d195 8d1400
     movsx eax, di                                ; 05d198 0fbfc7
     shl eax, 4                                   ; 05d19b c1e004
-    mov eax, dword ptr [edx + eax + dword_cc0b4] ; 05d19e 8b8402b4c00c00
+    mov eax, dword ptr [edx + eax + arrow_frames] ; 05d19e 8b8402b4c00c00
     sar eax, 0x10                                ; 05d1a5 c1f810
     mov ecx, esi                                 ; 05d1a8 89f1
     mov ebx, dword ptr [ebp - 0x24]              ; 05d1aa 8b5ddc
@@ -3570,7 +3570,7 @@ loc_5d1b2:
     movsx ebx, ax                                ; 05d1b4 0fbfd8
     movsx edx, cx                                ; 05d1b7 0fbfd1
     movsx eax, di                                ; 05d1ba 0fbfc7
-    mov eax, dword ptr [eax*2 + word_cc0b0]      ; 05d1bd 8b0445b0c00c00
+    mov eax, dword ptr [eax*2 + marker_frames]   ; 05d1bd 8b0445b0c00c00
     sar eax, 0x10                                ; 05d1c4 c1f810
     xor ecx, ecx                                 ; 05d1c7 31c9
 loc_5d1c9:
@@ -7729,7 +7729,7 @@ loc_5ff05:
     mov dx, word ptr [hud_clock_tenths]          ; 06017d 668b150c570c00
     mov word ptr [eax], dx                       ; 060184 668910
     add eax, 2                                   ; 060187 83c002
-    mov dx, word ptr [word_cc0b0]                ; 06018a 668b15b0c00c00
+    mov dx, word ptr [marker_frames]             ; 06018a 668b15b0c00c00
     mov word ptr [eax], dx                       ; 060191 668910
     add eax, 2                                   ; 060194 83c002
     mov dx, word ptr [dword_d8c78]               ; 060197 668b15788c0d00
@@ -8522,7 +8522,7 @@ loc_60a5d:
     mov dword ptr [hud_clock_tenths], eax        ; 060cb9 a30c570c00
     add ebx, 2                                   ; 060cbe 83c302
     mov ax, word ptr [ebx]                       ; 060cc1 668b03
-    mov word ptr [word_cc0b0], ax                ; 060cc4 66a3b0c00c00
+    mov word ptr [marker_frames], ax             ; 060cc4 66a3b0c00c00
     add ebx, 2                                   ; 060cca 83c302
     movsx eax, word ptr [ebx]                    ; 060ccd 0fbf03
     mov dword ptr [dword_d8c78], eax             ; 060cd0 a3788c0d00
@@ -8935,14 +8935,14 @@ loc_61249:
     mov eax, sprite_banks                        ; 0612a1 b880990d00
     call _memset_dwords                          ; 0612a6 e83cf00200
     mov ebx, 0xffffffff                          ; 0612ab bbffffffff
-    mov dword ptr [dword_cc0e0], ebx             ; 0612b0 891de0c00c00
+    mov dword ptr [effect_bank], ebx             ; 0612b0 891de0c00c00
     call load_player_graphics                    ; 0612b6 e8d627fbff
     mov ecx, 0x17                                ; 0612bb b917000000
     xor edx, edx                                 ; 0612c0 31d2
     mov eax, sprite_banks                        ; 0612c2 b880990d00
     call _memset_dwords                          ; 0612c7 e81bf00200
     xor ecx, ecx                                 ; 0612cc 31c9
-    mov dword ptr [dword_cc0e0], ecx             ; 0612ce 890de0c00c00
+    mov dword ptr [effect_bank], ecx             ; 0612ce 890de0c00c00
     mov eax, dword ptr [dword_cbeca]             ; 0612d4 a1cabe0c00
     sar eax, 0x10                                ; 0612d9 c1f810
     cmp eax, ebx                                 ; 0612dc 39d8

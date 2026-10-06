@@ -11,6 +11,9 @@
 #   nhltool.py rink RINK.TIL RINK.MAP OUT.png [--pal PALFILE]
 #   nhltool.py viv FILE [OUTDIR]           list or extract an announcer speech bank
 #   nhltool.py sprites GAMEDIR OUTDIR      export the 1134 player sprite frames (banks 000_049.PPV ...)
+#                                          --home/--away team indices, --team 0|1 jersey colours, --mirrored
+#   nhltool.py rinkfull GAMEDIR OUT.png    the rink surface with the home team's centre ice logo
+#   nhltool.py dig GAMEDIR OUTDIR          the digital sound effects (PCFF001.DIG) as WAV files
 #
 import argparse
 import json
@@ -19,7 +22,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from formats import (ShapeBank, Font, load_sample, write_wav, read_viv_index, render_tile_map,  # noqa: E402
-                     write_png, unpack, pack_code, PackError)
+                     write_png, unpack, pack_code, PackError, game_palette, mirrored_remap, SoundBank,
+                     write_wav_pcm8, place_tile_map)
 
 def read(path):
     with open(path, 'rb') as f:
@@ -38,7 +42,7 @@ def load_palette(spec):
 
 GRAY = [(i, i, i) for i in range(256)]
 
-def export_bank(bank, outdir, palette=None, prefix=''):
+def export_bank(bank, outdir, palette=None, prefix='', remap=None):
     os.makedirs(outdir, exist_ok=True)
     pal = palette or bank.palette() or GRAY
     meta = []
@@ -47,7 +51,10 @@ def export_bank(bank, outdir, palette=None, prefix=''):
                  'center': [s.center_x, s.center_y], 'pos': [s.x, s.y], 'flags': s.flags}
         if s.pixels is not None and s.width and s.height:
             fn = f"{prefix}{s.name.strip().replace('/', '_') or 'shape'}.png"
-            write_png(os.path.join(outdir, fn), s.width, s.height, s.pixels, pal, transparent=0)
+            px = s.pixels
+            if remap:
+                px = bytes(p if p == s.transparent else remap[p] for p in px)
+            write_png(os.path.join(outdir, fn), s.width, s.height, px, pal, transparent=s.transparent)
             entry['file'] = fn
         elif s.palette:
             entry['palette'] = s.palette
@@ -82,7 +89,10 @@ def cmd_info(args):
 
 def cmd_shapes(args):
     bank = ShapeBank(read(args.bank))
-    meta = export_bank(bank, args.outdir, load_palette(args.pal))
+    pal, remap = load_palette(args.pal), None
+    if args.home >= 0:
+        pal, remap = team_palette(args)
+    meta = export_bank(bank, args.outdir, pal, remap=remap)
     print(f"exported {sum(1 for m in meta if 'file' in m)} images to {args.outdir}")
 
 def cmd_unpack(args):
@@ -129,16 +139,26 @@ def cmd_viv(args):
                 f.write(data[off:off + size])
         print(f"extracted {len(entries)} clips to {args.outdir}")
 
+def team_palette(args):
+    '''--gamedir/--home/--away: the match palette with the jersey colours of the two teams'''
+    gamedir = getattr(args, 'gamedir', None) or os.path.dirname(os.path.abspath(args.bank if hasattr(args, 'bank') else args.file))
+    pal, rh, ra = game_palette(gamedir, args.home, args.away)
+    return pal, (ra if getattr(args, 'team', 0) == 1 else rh)
+
 def cmd_sprites(args):
     '''The player sprite frames 0..1133 live in 23 banks of 50 frames named like the frame range
-    they hold (load_player_graphics/sub_1395f: "%d00_%d49" / "%d50_%d99" + .PPV); entries are
-    named "%04d" after the frame number.'''
+    they hold (load_player_graphics/load_sprite_banks: "%d00_%d49" / "%d50_%d99" + .PPV, without
+    the underscore from bank 20 on); entries are named "%04d" after the frame number. Frames are
+    drawn through the colour remap table of the team (--team 0 home, 1 away).'''
     os.makedirs(args.outdir, exist_ok=True)
-    pal = load_palette(args.pal)
+    pal, remap = (load_palette(args.pal), None) if args.pal else team_palette(args)
+    if args.mirrored and remap:
+        remap = mirrored_remap(remap)
     frames = {}
     for i in range(23):
         half = i // 2
-        name = (f"{half}00_{half}49" if i % 2 == 0 else f"{half}50_{half}99") + ".PPV"
+        fmt = ("{0}00_{0}49" if i % 2 == 0 else "{0}50_{0}99") if i < 20 else ("{0}00{0}49" if i % 2 == 0 else "{0}50{0}99")
+        name = fmt.format(half) + ".PPV"
         path = os.path.join(args.gamedir, name)
         if not os.path.exists(path):
             path = os.path.join(args.gamedir, name.lower())
@@ -151,23 +171,71 @@ def cmd_sprites(args):
                 continue
             fid = int(s.name)
             fn = f"frame_{fid:04d}.png"
-            write_png(os.path.join(args.outdir, fn), s.width, s.height, s.pixels, pal or bank.palette() or GRAY, transparent=0)
+            px = bytes(p if p == s.transparent else remap[p] for p in s.pixels) if remap else s.pixels
+            write_png(os.path.join(args.outdir, fn), s.width, s.height, px, pal or GRAY, transparent=s.transparent)
             frames[fid] = {'file': fn, 'width': s.width, 'height': s.height, 'center': [s.center_x, s.center_y]}
     with open(os.path.join(args.outdir, 'frames.json'), 'w') as f:
         json.dump(frames, f, indent=1)
     print(f"exported {len(frames)} frames")
 
+RINK_TILE_NAMES = ['BOS', 'BUF', 'CGY', 'CHI', 'DET', 'EDM', 'HFD', 'LA', 'MIN', 'MTL', 'NJ', 'NYI', 'NYR',
+                   'OTT', 'PHI', 'PIT', 'QUE', 'STL', 'SJ', 'TB', 'TOR', 'VAN', 'WSH', 'WPG', 'ANH', 'FLO']
+# load_rink: tile column/row of the centre ice logo and of the mirrored second half (-1 = none)
+RINK_LOGO = [(21, 38, -1, -1), (22, 36, -1, -1), (22, 37, -1, -1), (22, 37, -1, -1), (21, 37, -1, -1),
+             (22, 44, 25, 35), (22, 37, -1, -1), (32, 45, 15, 34), (21, 37, -1, -1), (22, 37, -1, -1),
+             (30, 45, 17, 34), (22, 38, -1, -1), (22, 36, -1, -1), (21, 38, -1, -1), (22, 37, -1, -1),
+             (13, 31, 34, 48), (22, 36, -1, -1), (21, 36, -1, -1), (21, 38, -1, -1), (22, 38, -1, -1),
+             (22, 38, -1, -1), (21, 36, -1, -1), (22, 37, -1, -1), (21, 38, -1, -1), (21, 37, -1, -1),
+             (21, 37, -1, -1)]
+
+def cmd_rinkfull(args):
+    '''load_rink(): the 384x592 rink surface (RINK.QFS 'rink') with the centre ice logo of the home
+    team (TEAM.TIL/.MAP) drawn with the match palette'''
+    pal, _, _ = game_palette(args.gamedir, args.home, args.away)
+    rink = ShapeBank(read(os.path.join(args.gamedir, 'RINK.QFS'))).find('rink')
+    px = bytearray(rink.pixels)
+    name = RINK_TILE_NAMES[args.home]
+    til = read(os.path.join(args.gamedir, name + '.TIL'))
+    mp = read(os.path.join(args.gamedir, name + '.MAP'))
+    col, row, col2, row2 = RINK_LOGO[args.home]
+    place_tile_map(px, rink.width, til, mp, col, row)
+    if col2 >= 0:
+        place_tile_map(px, rink.width, til, mp, col2, row2, mirrored=True)
+    write_png(args.out, rink.width, rink.height, bytes(px), pal)
+    print(f"wrote {args.out} ({rink.width}x{rink.height})")
+
+def cmd_dig(args):
+    '''Exports the digital sound effects as WAV files named after the sound id of play_sfx()'''
+    bank = SoundBank(read(os.path.join(args.gamedir, 'PCFF001.PAT')), read(os.path.join(args.gamedir, 'PCFF001.TIM')),
+                     read(os.path.join(args.gamedir, 'PCFF001.DIG')))
+    os.makedirs(args.outdir, exist_ok=True)
+    n = 0
+    for sid in bank.effect_ids():
+        e = bank.effect(sid)
+        write_wav_pcm8(os.path.join(args.outdir, f"sfx_{sid:02x}.wav"), e['pcm'], e['rate'])
+        print(f"id 0x{sid:02x}: timbre {e['timbre']} sample {e['sample']} {len(e['pcm'])} bytes {e['rate']} Hz"
+              + (f" loop {e['loop']}" if e['loop'] else ''))
+        n += 1
+    print(f"exported {n} sound effects to {args.outdir}")
+
 def main():
     ap = argparse.ArgumentParser(description='NHL Hockey (DOS) asset tool')
     sub = ap.add_subparsers(dest='cmd', required=True)
     p = sub.add_parser('info'); p.add_argument('files', nargs='+'); p.set_defaults(fn=cmd_info)
-    p = sub.add_parser('shapes'); p.add_argument('bank'); p.add_argument('outdir'); p.add_argument('--pal'); p.set_defaults(fn=cmd_shapes)
+    p = sub.add_parser('shapes'); p.add_argument('bank'); p.add_argument('outdir'); p.add_argument('--pal')
+    p.add_argument('--gamedir'); p.add_argument('--home', type=int, default=-1); p.add_argument('--away', type=int, default=4)
+    p.add_argument('--team', type=int, default=0); p.set_defaults(fn=cmd_shapes)
     p = sub.add_parser('unpack'); p.add_argument('file'); p.add_argument('out'); p.set_defaults(fn=cmd_unpack)
     p = sub.add_parser('wav'); p.add_argument('file'); p.add_argument('out'); p.set_defaults(fn=cmd_wav)
     p = sub.add_parser('font'); p.add_argument('file'); p.add_argument('out'); p.set_defaults(fn=cmd_font)
     p = sub.add_parser('rink'); p.add_argument('til'); p.add_argument('map'); p.add_argument('out'); p.add_argument('--pal'); p.set_defaults(fn=cmd_rink)
     p = sub.add_parser('viv'); p.add_argument('file'); p.add_argument('outdir', nargs='?'); p.set_defaults(fn=cmd_viv)
-    p = sub.add_parser('sprites'); p.add_argument('gamedir'); p.add_argument('outdir'); p.add_argument('--pal'); p.set_defaults(fn=cmd_sprites)
+    p = sub.add_parser('sprites'); p.add_argument('gamedir'); p.add_argument('outdir'); p.add_argument('--pal')
+    p.add_argument('--home', type=int, default=0); p.add_argument('--away', type=int, default=4)
+    p.add_argument('--team', type=int, default=0); p.add_argument('--mirrored', action='store_true'); p.set_defaults(fn=cmd_sprites)
+    p = sub.add_parser('rinkfull'); p.add_argument('gamedir'); p.add_argument('out'); p.add_argument('--home', type=int, default=0)
+    p.add_argument('--away', type=int, default=4); p.set_defaults(fn=cmd_rinkfull)
+    p = sub.add_parser('dig'); p.add_argument('gamedir'); p.add_argument('outdir'); p.set_defaults(fn=cmd_dig)
     args = ap.parse_args()
     args.fn(args)
 

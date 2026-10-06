@@ -202,5 +202,123 @@ func run_tests() -> void:
 			stoppages += 1
 		was_stopped = sim.play_stopped
 	print("6000 steps: %d stoppages, score %d-%d, clock %d:%02d, period %d" % [stoppages, sim.teams[0].goals, sim.teams[1].goals, sim.clock_seconds / 60, sim.clock_seconds % 60, sim.period])
+	asset_tests()
 	print("tests finished, failures: ", failures)
 	quit(1 if failures else 0)
+
+## Tests against the original game files (re/nhl_hockey of the repository or NHL_GAME_DIR)
+func asset_tests() -> void:
+	# the autoload is not a global identifier in --script mode: instantiate the script directly
+	var GF := load("res://autoload/GameFiles.gd")
+	var gf: Node = GF.new()
+	var dir := OS.get_environment("NHL_GAME_DIR")
+	if dir == "" or not DirAccess.dir_exists_absolute(dir):
+		dir = GF.repository_game_dir()
+	if dir != "":
+		gf.set_game_dir(dir, false)
+	if not gf.available():
+		fail("game files not found (re/nhl_hockey or NHL_GAME_DIR)")
+		return
+	print("game files: ", gf.game_dir)
+	# sprite banks: 1134 run length coded frames; frame 0 is 16x32 with the hotspot (8, 25)
+	var frames := {}
+	for i in 23:
+		var data: PackedByteArray = gf.read_bank(GF.sprite_bank_name(i))
+		var bank := Shpi.parse(data)
+		if bank == null:
+			fail("sprite bank %s missing or unreadable" % GF.sprite_bank_name(i))
+			continue
+		for s in bank.shapes:
+			if s.is_image() and s.name.is_valid_int():
+				frames[int(s.name)] = s
+	if frames.size() != 1134:
+		fail("expected 1134 sprite frames, got %d" % frames.size())
+	else:
+		var f0: Shpi.Shape = frames[0]
+		if f0.width != 16 or f0.height != 32 or f0.center_x != 8 or f0.center_y != 25 or f0.transparent != 0xff:
+			fail("frame 0: %dx%d hotspot %d,%d" % [f0.width, f0.height, f0.center_x, f0.center_y])
+		var opaque := 0
+		for p in f0.pixels:
+			if p != 0xff:
+				opaque += 1
+		if opaque < 100 or opaque > 400:
+			fail("frame 0 has %d opaque pixels" % opaque)
+		var net: Shpi.Shape = frames[404]
+		if net.width != 50 or net.height != 36:
+			fail("net frame 404 is %dx%d" % [net.width, net.height])
+	# palette: RINKPAL plus the jersey blocks, remap tables of blit_sprite
+	var pal := GamePalette.build(gf.read_raw("rinkpal.qfs"), gf.read_raw("homepals.bin"), gf.read_raw("awaypals.bin"), 0, 4)
+	if pal == null or pal.colors.size() != 256:
+		fail("palette not built")
+	else:
+		# the jersey indices 0x85..0xc4 of the frames go to the home block 0x80..0xbf / away block 0xc0..0xff
+		if pal.colors[0] != Color.BLACK or pal.remap[0][0x90] < 0x80 or pal.remap[0][0x90] > 0xbf or pal.remap[1][0x90] < 0xc0:
+			fail("palette/remap values: %s %d %d" % [pal.colors[0], pal.remap[0][0x90], pal.remap[1][0x90]])
+		if pal.remap_mirrored[0][0xc0] != pal.remap[0][0xc4]:
+			fail("mirrored remap swap")
+	# rink surface with the Boston logo at the centre
+	var rink_bank := Shpi.parse(gf.read_bank("rink"))
+	var rink_shape := rink_bank.find("rink") if rink_bank != null else null
+	if rink_shape == null or rink_shape.width != 384 or rink_shape.height != 592 or rink_shape.code != 0x7b:
+		fail("rink shape missing")
+	elif pal != null:
+		var img := RinkTiles.compose(rink_shape, gf.read_raw("bos.til"), gf.read_raw("bos.map"), 0, pal.colors)
+		if img == null or img.get_width() != 384:
+			fail("rink composition")
+		else:
+			var centre := img.get_pixel(192, 320)
+			var ice := img.get_pixel(192, 200)
+			if centre == ice:
+				fail("centre ice logo not drawn (centre %s ice %s)" % [centre, ice])
+	# HUD shapes and fonts
+	var scrbrd := Shpi.parse(gf.read_bank("scrbrd1"))
+	if scrbrd == null or scrbrd.find("0000") == null or scrbrd.find("hlin") == null or scrbrd.find("1009") == null:
+		fail("scoreboard shapes")
+	var font := Vfn.parse(gf.read("hilight.vfn"))
+	if font == null or font.text_width("A") != 10 or font.render("A", Color.WHITE).get_pixel(4, 0).a < 0.5:
+		fail("HILIGHT font glyphs")
+	# databases: Boston's roster, lines and ratings
+	var db := Database.open(gf.read_raw("teams.db"), gf.read_raw("key.db"), gf.read_raw("att.db"))
+	if db == null or db.team_count() != 28:
+		fail("databases")
+	else:
+		var bos := db.load_team(0)
+		var det := db.load_team(4)
+		if bos.abbrev != "BOS" or bos.city != "Boston Bruins" or bos.name != "Boston" or det.abbrev != "DET":
+			fail("team names: %s / %s / %s" % [bos.abbrev, bos.city, bos.name])
+		var bourque: Database.Player = bos.skaters[10]
+		if bourque == null or bourque.full_name() != "Ray Bourque" or bourque.number != 77 or bourque.position != "D" or bourque.ratings.size() != 0x14 or bourque.ratings[0] != 1:
+			fail("Ray Bourque not found in the Boston roster")
+		var casey: Database.Player = bos.goalies[0]
+		if casey == null or casey.last != "Casey" or casey.number != 30 or not casey.goalie or casey.ratings.size() != 0x10:
+			fail("Jon Casey not found")
+		if bos.forwards[0] != [18, 7, 16] or bos.defense[0] != [4, 10] or bos.goalie_order[0] != 25:
+			fail("Boston lines: %s %s %s" % [bos.forwards[0], bos.defense[0], bos.goalie_order])
+		# a game between the two teams: the first lines are dressed with their ratings
+		var sim := Sim.new()
+		sim.set_teams(bos, det)
+		var centre := sim.entities[4]
+		if centre.number != 12 or centre.roster_idx != 7 or centre.left_handed != 0 or (centre.flags4 & Entity.F4_MIRROR) == 0:
+			fail("Adam Oates should centre the first line: number %d roster %d" % [centre.number, centre.roster_idx])
+		var bourque_e := sim.entities[2]
+		if bourque_e.number != 77 or bourque_e.speed_skill != 10 or bourque_e.weight != 10 or bourque_e.shot_skill != 13 or bourque_e.reaction != 8:
+			fail("Bourque ratings: speed %d weight %d shot %d reaction %d" % [bourque_e.speed_skill, bourque_e.weight, bourque_e.shot_skill, bourque_e.reaction])
+		if sim.entities[0].number != 30 or sim.entities[6].line_slot != 0:
+			fail("goalies not dressed")
+		run_until_play(sim, 1200)
+		for i in 3000:
+			sim.step(8, 8, 0, 0)
+		print("BOS - DET after 3000 steps: %d-%d, clock %d:%02d" % [sim.teams[0].goals, sim.teams[1].goals, sim.clock_seconds / 60, sim.clock_seconds % 60])
+	# sound effects: 30 digital samples, the goal horn (0x9c) is the 7 second sample
+	var snd := Sounds.load_bank(gf.read_raw("pcff001.pat"), gf.read_raw("pcff001.tim"), gf.read_raw("pcff001.dig"))
+	if snd == null or snd.sample_count != 30 or snd.timbre_count != 30:
+		fail("sound bank")
+	else:
+		var horn := snd.stream(0x9c)
+		if horn == null or horn.data.size() != 77078 or horn.mix_rate != 11025:
+			fail("goal horn sample")
+		var crowd := snd.stream(0x7d)
+		if crowd == null or crowd.loop_mode != AudioStreamWAV.LOOP_FORWARD or crowd.loop_end != 9971:
+			fail("crowd loop")
+		if not snd.has(0x90) or not snd.has(0xa4) or snd.effects.size() < 30:
+			fail("effect ids: %d" % snd.effects.size())

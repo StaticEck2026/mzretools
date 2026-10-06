@@ -206,7 +206,7 @@ loc_83014:
     mov eax, esp                                 ; 083014 89e0
     call make_path                               ; 083016 e80313f9ff
     mov eax, esp                                 ; 08301b 89e0
-    call sub_8f13b                               ; 08301d e819c10000
+    call music_load_kms                          ; 08301d e819c10000
     mov dword ptr [dword_ed7a4], eax             ; 083022 a3a4d70e00
 loc_83027:
     cmp esi, 8                                   ; 083027 83fe08
@@ -239,7 +239,7 @@ loc_8307b:
     mov eax, esp                                 ; 08307b 89e0
     call make_path                               ; 08307d e89c12f9ff
     mov eax, esp                                 ; 083082 89e0
-    call sub_8f13b                               ; 083084 e8b2c00000
+    call music_load_kms                          ; 083084 e8b2c00000
     mov edx, eax                                 ; 083089 89c2
     mov dword ptr [dword_d2350], 0xffffffff      ; 08308b c70550230d00ffff..
     mov dword ptr [dword_c541f], 8               ; 083095 c7051f540c000800..

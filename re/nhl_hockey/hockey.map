@@ -115,7 +115,8 @@ sub_149bf: code1 NEAR 49bf-4a1f R49bf-4a1f
 draw_score_digits: code1 NEAR 4a20-4afd R4a20-4afd
 #@ HUD: current line of a team
 draw_line_indicator: code1 NEAR 4afe-4bee R4afe-4bee
-sub_14bef: code1 NEAR 4bef-4c21 R4bef-4c21
+#@ HUD: average energy of the 8 lines of a team (line_energy - 0x60)
+get_line_energies: code1 NEAR 4bef-4c21 R4bef-4c21
 #@ HUD: penalty clock entry
 add_penalty_display: code1 NEAR 4c22-4c9f R4c22-4c9f
 sub_14ca0: code1 NEAR 4ca0-4cf0 R4ca0-4cf0
@@ -128,7 +129,8 @@ sub_15374: code1 NEAR 5374-5409 R5374-5409
 #@ redraws only the clock digits that changed since the last frame
 draw_clock_update: code1 NEAR 540a-5654 R540a-5654
 sub_15655: code1 NEAR 5655-5706 R5655-5706
-sub_15707: code1 NEAR 5707-57bc R5707-57bc
+#@ HUD: energy of the current line as two small bars left and right of the score
+draw_energy_bar: code1 NEAR 5707-57bc R5707-57bc
 #@ line change indicator: current / selected line of a team
 draw_line_box: code1 NEAR 57bd-5994 R57bd-5994
 #@ four penalty timers as mm:ss (4 x 8 byte entries)
@@ -250,9 +252,12 @@ sub_1bab1: code1 NEAR bab1-baf2 Rbab1-baf2
 sub_1baf3: code1 NEAR baf3-bbcb Rbaf3-bbcb
 sub_1bbcc: code1 NEAR bbcc-befc Rbbcc-befc
 sub_1befd: code1 NEAR befd-c0ae Rbefd-c0ae
-sub_1c0af: code1 NEAR c0af-c26b Rc0af-c26b
-sub_1c26c: code1 NEAR c26c-c3f5 Rc26c-c3f5
-sub_1c3f6: code1 NEAR c3f6-c806 Rc3f6-c806
+#@ reads a 0x34 byte KEY.DB record and the ATT.DB / SEASON.DB / CAREER.DB records it points to (+0x24, +0x2c, +0x28)
+db_read_player: code1 NEAR c0af-c26b Rc0af-c26b
+#@ opens key.db, att.db, season.db and (outside season mode) career.db
+db_open_files: code1 NEAR c26c-c3f5 Rc26c-c3f5
+#@ fills rosters / player_ratings of a team from the databases: 25 skaters (0x14 rating bytes) and 3 goalies (0x10 bytes)
+db_load_team_roster: code1 NEAR c3f6-c806 Rc3f6-c806
 sub_1c807: code1 NEAR c807-c851 Rc807-c851
 sub_1c852: code1 NEAR c852-cb7e Rc852-cb7e
 sub_1cb7f: code1 NEAR cb7f-cbd7 Rcb7f-cbd7
@@ -931,7 +936,8 @@ find_switch_target: code1 NEAR 49fe1-4a03a R49fe1-4a03a
 team_avg_energy: code1 NEAR 4a03b-4a0a2 R4a03b-4a0a2
 choose_line: code1 NEAR 4a0a3-4a287 R4a0a3-4a287
 sub_5a288: code1 NEAR 4a288-4a2ed R4a288-4a2ed
-sub_5a2ee: code1 NEAR 4a2ee-4a30b R4a2ee-4a30b
+#@ average energy of the players of a line (4 forward lines x 3, 2 PP units x 5, 2 PK units x 4)
+line_energy: code1 NEAR 4a2ee-4a30b R4a2ee-4a30b
 #@ average energy of a line
 line_avg_energy: code1 NEAR 4a30c-4a340 R4a30c-4a340
 #@ where and when the puck crosses each goal line
@@ -1784,9 +1790,11 @@ sub_8ef50: code1 NEAR 7ef50-7ef75 R7ef50-7ef75
 sub_8ef76: code1 NEAR 7ef76-7ef90 R7ef76-7ef90
 sub_8ef91: code1 NEAR 7ef91-7efba R7ef91-7efba
 sub_8efbb: code1 NEAR 7efbb-7f0d6 R7efbb-7f0d6
-sub_8f0d7: code1 NEAR 7f0d7-7f113 R7f0d7-7f113
+#@ record of a sound id in the loaded .PAT bank (256 byte id map at +2, 0x14 byte records from +0x102)
+snd_patch_record: code1 NEAR 7f0d7-7f113 R7f0d7-7f113
 sub_8f114: code1 NEAR 7f114-7f13a R7f114-7f13a
-sub_8f13b: code1 NEAR 7f13b-7f1fd R7f13b-7f1fd
+#@ loads a .KMS music sequence and its .CFG into a free music slot
+music_load_kms: code1 NEAR 7f13b-7f1fd R7f13b-7f1fd
 sub_8f1fe: code1 NEAR 7f1fe-7f246 R7f1fe-7f246
 sub_8f247: code1 NEAR 7f247-7f26f R7f247-7f26f
 sub_8f270: code1 NEAR 7f270-7f279 R7f270-7f279
@@ -1795,8 +1803,10 @@ sub_8f433: code1 NEAR 7f433-7f450 R7f433-7f450
 sub_8f451: code1 NEAR 7f451-7f48e R7f451-7f48e
 sub_8f48f: code1 NEAR 7f48f-7f4a1 R7f48f-7f4a1 unreferenced
 sub_8f4a7: code1 NEAR 7f4a7-7f4c3 R7f4a7-7f4c3
-sub_8f4c4: code1 NEAR 7f4c4-7f61c R7f4c4-7f61c
-sub_8f61d: code1 NEAR 7f61d-7f632 R7f61d-7f632
+#@ sound driver: plays a sound id as a MIDI note; ids >= 0x80 are percussion notes (channel 9, note id - 0x74), ids < 0x80 program changes on channels 12..15
+snd_play_patch: code1 NEAR 7f4c4-7f61c R7f4c4-7f61c
+#@ plays a sound effect id at full volume (play_sfx -> snd_play_patch(id, 0, 0x7f))
+snd_play_sfx: code1 NEAR 7f61d-7f632 R7f61d-7f632
 sound_stopall: code1 NEAR 7f633-7f67c R7f633-7f67c external
 sub_8f67d: code1 NEAR 7f67d-7f7ad R7f67d-7f7ad
 sub_8f7ae: code1 NEAR 7f7ae-7f80d R7f7ae-7f80d
@@ -1875,7 +1885,8 @@ sub_90ad7: code1 NEAR 80ad7-80ae9 R80ad7-80ae9
 sprintf: code1 NEAR 80aea-80b19 R80aea-80b19 external
 memcpy: code1 NEAR 80b20-80b44 R80b20-80b44 external
 sub_90b50: code1 NEAR 80b50-80b7e R80b50-80b7e unreferenced
-sub_90b80: code1 NEAR 80b80-80bae R80b80-80bae
+#@ fills an array with locateshape() of a list of 4 character tags
+locateshapes: code1 NEAR 80b80-80bae R80b80-80bae
 _dos_findfirst: code1 NEAR 80bb0-80bcc R80bb0-80bcc external
 _dos_findnext: code1 NEAR 80bcd-80be8 R80bcd-80be8 external
 sub_90be9: code1 NEAR 80be9-80beb R80be9-80beb unreferenced
@@ -2909,7 +2920,8 @@ sub_b3036: code1 NEAR a3036-a308a Ra3036-a308a
 sub_b308b: code1 NEAR a308b-a30b1 Ra308b-a30b1
 #@ locateshape(bank, "NAME"): finds a shape by its 4 character tag in an SHPI bank
 locateshape: code1 NEAR a30b4-a30ba Ra30b4-a30ba external
-sub_b30bb: code1 NEAR a30bb-a30f3 Ra30bb-a30f3
+#@ locateshape() comparing the tag as one 32 bit word
+locateshape_fast: code1 NEAR a30bb-a30f3 Ra30bb-a30f3
 #@ probes the game port (201h) for joysticks
 joy_detect: code1 NEAR a30f4-a3164 Ra30f4-a3164 external
 sub_b3168: code1 NEAR a3168-a33da Ra3168-a33da
@@ -3006,8 +3018,10 @@ waitvbl_start: code1 NEAR a4c61-a4c83 Ra4c61-a4c83 external
 waitvbl_end: code1 NEAR a4c84-a4ca6 Ra4c84-a4ca6 external
 sub_b4ca7: code1 NEAR a4ca7-a4cb0 Ra4ca7-a4cb0 unreferenced
 sub_b4cb4: code1 NEAR a4cb4-a4cd7 Ra4cb4-a4cd7 unreferenced
-sub_b4cd8: code1 NEAR a4cd8-a4cf1 Ra4cd8-a4cf1
-sub_b4cf2: code1 NEAR a4cf2-a4dd2 Ra4cf2-a4dd2
+#@ draws a run length coded sprite frame at x, y: count byte c > 0 repeats the next byte (0xff run = transparent skip), c < 0 copies -c literals, 0 ends the frame
+blit_rle_frame: code1 NEAR a4cd8-a4cf1 Ra4cd8-a4cf1
+#@ blit_rle_frame at the position stored in the frame header (+0xc, +0xe)
+blit_rle_frame_home: code1 NEAR a4cf2-a4dd2 Ra4cf2-a4dd2
 #@ installs a 256 byte color remap table
 setremaptable: code1 NEAR a4dd4-a4deb Ra4dd4-a4deb external
 sub_b4dec: code1 NEAR a4dec-a4e03 Ra4dec-a4e03 unreferenced
@@ -5473,7 +5487,8 @@ dword_c66a4: data2 VAR 66a4
 dword_c66ac: data2 VAR 66ac
 dword_c66b0: data2 VAR 66b0
 unk_c66b4: data2 VAR 66b4
-dword_c66c4: data2 VAR 66c4
+#@ the 320x32 scoreboard window below the ice view (subwindowdefadr at y 0xa8)
+hud_window: data2 VAR 66c4
 unk_c66c8: data2 VAR 66c8
 dword_c66d0: data2 VAR 66d0
 dword_c66d4: data2 VAR 66d4
@@ -5658,7 +5673,8 @@ aToSaveTheSettingsYouRequ: data2 VAR 7243
 a1KbytesOfFreeDiskSpace: data2 VAR 7265
 off_c7282: data2 VAR 7282
 dword_c7290: data2 VAR 7290
-aBOS_c7298: data2 VAR 7298
+#@ 26 x 12 bytes: TIL/MAP base name, tile column/row of the centre ice logo and of its mirrored second half
+rink_logo_table: data2 VAR 7298
 unk_c729a: data2 VAR 729a
 unk_c729c: data2 VAR 729c
 unk_c729e: data2 VAR 729e
@@ -6159,15 +6175,18 @@ unk_cc049: data2 VAR c049
 unk_cc054: data2 VAR c054
 unk_cc080: data2 VAR c080
 dword_cc0ac: data2 VAR c0ac
-word_cc0b0: data2 VAR c0b0
-dword_cc0b4: data2 VAR c0b4
+#@ -1, then the frames drawn under user 1 (0x185), user 2 (0x186) and the puck carrier (0x187)
+marker_frames: data2 VAR c0b0
+#@ from +4: off screen arrow frames per clip direction, 8 per user
+arrow_frames: data2 VAR c0b4
 word_cc0d8: data2 VAR c0d8
 byte_cc0d9: data2 VAR c0d9
 word_cc0da: data2 VAR c0da
 #@ high word crowd noise 0..2000, low word pending replay sound event
 crowd_noise: data2 VAR c0dc
 word_cc0de: data2 VAR c0de
-dword_cc0e0: data2 VAR c0e0
+#@ F000149.PPV (effect_frames)
+effect_bank: data2 VAR c0e0
 dword_cc0ec: data2 VAR c0ec
 #@ a user pressed a button before the faceoff
 skip_faceoff_wait: data2 VAR c0f0
@@ -8041,15 +8060,18 @@ digit_shapes: data2 VAR 18c18
 dword_d8c40: data2 VAR 18c40
 #@ G D D L C R X
 position_letter_shapes: data2 VAR 18c4c
-dword_d8c68: data2 VAR 18c68
+#@ trinknd.PPV
+rinkend_bank: data2 VAR 18c68
 dword_d8c6c: data2 VAR 18c6c
-dword_d8c70: data2 VAR 18c70
+#@ trinknd '0000'
+rinkend_shape: data2 VAR 18c70
 dword_d8c72: data2 VAR 18c72
 dword_d8c74: data2 VAR 18c74
 dword_d8c78: data2 VAR 18c78
 dword_d8c7a: data2 VAR 18c7a
 dword_d8c7c: data2 VAR 18c7c
-dword_d8c80: data2 VAR 18c80
+#@ numshp.PPV: digits and position letters drawn under the players
+numshp_bank: data2 VAR 18c80
 #@ 1-based period shown on the scoreboard
 period_num: data2 VAR 18c84
 unk_d8c88: data2 VAR 18c88
@@ -8139,18 +8161,24 @@ byte_dc265: data2 VAR 1c265
 byte_dc266: data2 VAR 1c266
 byte_dc267: data2 VAR 1c267
 byte_dc268: data2 VAR 1c268
-unk_dc26c: data2 VAR 1c26c
+#@ 'lin1'..'lin4' 'PP1' 'PP2' 'PK1' 'PK2' labels
+shapes_lines: data2 VAR 1c26c
 dword_dc28c: data2 VAR 1c28c
 #@ penalty clock digits 0..9
 small_digit_shapes: data2 VAR 1c290
 small_blank_digit: data2 VAR 1c2b8
-dword_dc2bc: data2 VAR 1c2bc
-dword_dc2c0: data2 VAR 1c2c0
+#@ 'homp' panel (home penalties)
+shape_homp: data2 VAR 1c2bc
+#@ 'visp' panel (visitor penalties)
+shape_visp: data2 VAR 1c2c0
 #@ scoreboard digits (draw_score_digits)
 score_digit_shapes: data2 VAR 1c2c4
-dword_dc2f0: data2 VAR 1c2f0
-unk_dc2f4: data2 VAR 1c2f4
-unk_dc300: data2 VAR 1c300
+#@ scrbrd1.PPV
+scoreboard_bank: data2 VAR 1c2f0
+#@ 'hlin' 'hpp' 'hpk' home line panels
+shapes_hlin: data2 VAR 1c2f4
+#@ 'vlin' 'vpp' 'vpk' visitor line panels
+shapes_vlin: data2 VAR 1c300
 #@ clock digit shapes 0..9
 hud_digit_shapes: data2 VAR 1c30c
 #@ blank clock digit shape
@@ -8187,11 +8215,13 @@ unk_dc890: data2 VAR 1c890
 dword_dc8a0: data2 VAR 1c8a0
 dword_dc8c8: data2 VAR 1c8c8
 unk_dc8d0: data2 VAR 1c8d0
-unk_dc8d8: data2 VAR 1c8d8
+#@ colour remap table of the away team (AWAYPALS.BIN + 0xc0, entries 0x90.. + 0x40)
+remap_away: data2 VAR 1c8d8
 byte_dc91b: data2 VAR 1c91b
 unk_dc998: data2 VAR 1c998
 byte_dc9d7: data2 VAR 1c9d7
-unk_dc9d8: data2 VAR 1c9d8
+#@ 256 byte colour remap table of the home team (HOMEPALS.BIN + 0xc0), installed by blit_sprite
+remap_home: data2 VAR 1c9d8
 byte_dc9dd: data2 VAR 1c9dd
 byte_dc9df: data2 VAR 1c9df
 byte_dc9e8: data2 VAR 1c9e8
@@ -9014,7 +9044,8 @@ unk_edcfc: data2 VAR 2dcfc
 unk_edd00: data2 VAR 2dd00
 unk_edd04: data2 VAR 2dd04
 unk_ede34: data2 VAR 2de34
-dword_ede5c: data2 VAR 2de5c
+#@ the loaded .PAT sound bank (snd_patch_record)
+snd_patch_bank: data2 VAR 2de5c
 dword_ede60: data2 VAR 2de60
 dword_ede64: data2 VAR 2de64
 dword_ede68: data2 VAR 2de68

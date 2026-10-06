@@ -2384,17 +2384,17 @@ void __watcall sub_1b982(void)
     dword_e0244 = 0;
   }
   sub_1bab1();
-  if (dword_d8c68 != 0) {
-    freemem(dword_d8c68);
-    dword_d8c68 = 0;
+  if (rinkend_bank != 0) {
+    freemem(rinkend_bank);
+    rinkend_bank = 0;
   }
-  if (dword_d8c80 != 0) {
-    freemem(dword_d8c80);
-    dword_d8c80 = 0;
+  if (numshp_bank != 0) {
+    freemem(numshp_bank);
+    numshp_bank = 0;
   }
-  if (dword_dc2f0 != 0) {
-    freemem(dword_dc2f0);
-    dword_dc2f0 = 0;
+  if (scoreboard_bank != 0) {
+    freemem(scoreboard_bank);
+    scoreboard_bank = 0;
   }
   if (dword_ed700 != 0) {
     freemem(dword_ed700);
@@ -2423,10 +2423,10 @@ sub_1ba85(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined
 
 {
   __CHK(0x14);
-  if (dword_cc0e0 != 0) {
-    freemem(dword_cc0e0,unaff_EDX,unaff_ECX,unaff_EBX);
+  if (effect_bank != 0) {
+    freemem(effect_bank,unaff_EDX,unaff_ECX,unaff_EBX);
   }
-  dword_cc0e0 = 0;
+  effect_bank = 0;
   return;
 }
 
@@ -2573,16 +2573,16 @@ void __watcall sub_1bbcc(uint param_1)
     fatalerror(&a8);
   }
   file_close(&iStack_18);
-  sub_1c26c(param_1,&iStack_18,&local_1c,&local_20,&local_24,&byte_dd750,&local_28);
-  sub_1c3f6(param_1,iStack_18,local_1c,local_20,local_24,local_28,0);
+  db_open_files(param_1,&iStack_18,&local_1c,&local_20,&local_24,&byte_dd750,&local_28);
+  db_load_team_roster(param_1,iStack_18,local_1c,local_20,local_24,local_28,0);
   file_close(&iStack_18);
   file_close(&local_1c);
   file_close(&local_20);
   if ((param_1 & 6) == 0) {
     file_close(&local_24);
   }
-  sub_1c26c(param_1,&iStack_18,&local_1c,&local_20,&local_24,&byte_dd710,&local_28);
-  sub_1c3f6(param_1,iStack_18,local_1c,local_20,local_24,local_28,1);
+  db_open_files(param_1,&iStack_18,&local_1c,&local_20,&local_24,&byte_dd710,&local_28);
+  db_load_team_roster(param_1,iStack_18,local_1c,local_20,local_24,local_28,1);
   file_close(&iStack_18);
   file_close(&local_1c);
   file_close(&local_20);
@@ -2707,13 +2707,13 @@ void __watcall sub_1befd(undefined param_1,undefined unaff_DL)
 
 
 // ================================================================================================
-// sub_1c0af @ 0x1c0af [__watcall]
+// db_read_player @ 0x1c0af [__watcall]
 // ================================================================================================
 
 int __watcall
-sub_1c0af(int param_1,int param_2,int param_3,int param_4,__off_t param_5,int param_6,
-         undefined4 param_7,undefined4 param_8,undefined4 param_9,undefined4 param_10,
-         undefined4 param_11,int param_12)
+db_read_player(int param_1,int param_2,int param_3,int param_4,__off_t param_5,int param_6,
+              undefined4 param_7,undefined4 param_8,undefined4 param_9,undefined4 param_10,
+              undefined4 param_11,int param_12)
 
 {
   __off_t _Var1;
@@ -2779,12 +2779,12 @@ sub_1c0af(int param_1,int param_2,int param_3,int param_4,__off_t param_5,int pa
 
 
 // ================================================================================================
-// sub_1c26c @ 0x1c26c [__watcall]
+// db_open_files @ 0x1c26c [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_1c26c(uint param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_ECX,
-         undefined4 param_5,char *param_6,undefined4 *param_7)
+db_open_files(uint param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_ECX,
+             undefined4 param_5,char *param_6,undefined4 *param_7)
 
 {
   int iVar1;
@@ -2839,12 +2839,12 @@ sub_1c26c(uint param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_
 
 
 // ================================================================================================
-// sub_1c3f6 @ 0x1c3f6 [__watcall]
+// db_load_team_roster @ 0x1c3f6 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_1c3f6(uint param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_ECX,
-         undefined4 param_5,undefined4 param_6,int param_7)
+db_load_team_roster(uint param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_ECX,
+                   undefined4 param_5,undefined4 param_6,int param_7)
 
 {
   undefined4 *puVar1;
@@ -2893,9 +2893,9 @@ sub_1c3f6(uint param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_
       (&rosters)[iVar7] = 0;
     }
     else {
-      sub_1c0af(param_2,unaff_EBX,unaff_ECX,param_5,
-                *(int *)(&unk_dbc7c + iVar6 * 4 + param_7 * 0x2e8),&uStack_c4,&local_38,0x14,
-                auStack_90,0x2f,local_60,param_6);
+      db_read_player(param_2,unaff_EBX,unaff_ECX,param_5,
+                     *(int *)(&unk_dbc7c + iVar6 * 4 + param_7 * 0x2e8),&uStack_c4,&local_38,0x14,
+                     auStack_90,0x2f,local_60,param_6);
       (&unk_db3ad)[iVar7] = uStack_c3;
       (&unk_db3ae)[iVar7] = uStack_c2;
       iVar3 = iStack_10 + param_7 * 0x444;
@@ -2954,8 +2954,8 @@ sub_1c3f6(uint param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_
       (&rosters)[iVar7] = 0;
     }
     else {
-      sub_1c0af(param_2,unaff_EBX,unaff_ECX,0,*(undefined4 *)(&unk_dbce0 + iVar5),&uStack_c4,
-                &uStack_24,0x10,auStack_fc,0x36,0,0);
+      db_read_player(param_2,unaff_EBX,unaff_ECX,0,*(undefined4 *)(&unk_dbce0 + iVar5),&uStack_c4,
+                     &uStack_24,0x10,auStack_fc,0x36,0,0);
       (&unk_db3ad)[iVar7] = uStack_c3;
       (&unk_db3ae)[iVar7] = uStack_c2;
       iVar3 = iVar3 + local_14;
@@ -3173,15 +3173,15 @@ void __watcall load_scoreboard_shapes(void)
     puVar1 = (undefined *)0x0;
   }
   make_path(auStack_28,puVar1,aScrbrd1,&aPPV);
-  dword_dc2f0 = loadfile(auStack_28,0x20);
-  sub_90b80(dword_dc2f0,a000000010002000300040005,&score_digit_shapes);
-  sub_90b80(dword_dc2f0,a100010011002100310041005,&hud_digit_shapes);
-  sub_90b80(dword_dc2f0,a200020012002200320042005,&small_digit_shapes);
-  sub_90b80(dword_dc2f0,aVlinvppVpk,&unk_dc300);
-  sub_90b80(dword_dc2f0,aHlinhppHpk,&unk_dc2f4);
-  dword_dc2c0 = locateshape(dword_dc2f0,&aVisp);
-  dword_dc2bc = locateshape(dword_dc2f0,&aHomp);
-  sub_90b80(dword_dc2f0,aLin1lin2lin3lin4PP1PP2PK,&unk_dc26c);
+  scoreboard_bank = loadfile(auStack_28,0x20);
+  locateshapes(scoreboard_bank,a000000010002000300040005,&score_digit_shapes);
+  locateshapes(scoreboard_bank,a100010011002100310041005,&hud_digit_shapes);
+  locateshapes(scoreboard_bank,a200020012002200320042005,&small_digit_shapes);
+  locateshapes(scoreboard_bank,aVlinvppVpk,&shapes_vlin);
+  locateshapes(scoreboard_bank,aHlinhppHpk,&shapes_hlin);
+  shape_visp = locateshape(scoreboard_bank,&aVisp);
+  shape_homp = locateshape(scoreboard_bank,&aHomp);
+  locateshapes(scoreboard_bank,aLin1lin2lin3lin4PP1PP2PK,&shapes_lines);
   return;
 }
 
@@ -3247,10 +3247,10 @@ blit_sprite(undefined4 *param_1,short unaff_DX,short unaff_BX,short unaff_CX,sho
           } while (iVar5 < 0x40);
         }
         if (param_5 == 0) {
-          puVar6 = &unk_dc9d8;
+          puVar6 = &remap_home;
         }
         else {
-          puVar6 = &unk_dc8d8;
+          puVar6 = &remap_away;
         }
         setremaptable(puVar6);
         dword_c6718 = iVar3;
@@ -3285,7 +3285,7 @@ blit_sprite(undefined4 *param_1,short unaff_DX,short unaff_BX,short unaff_CX,sho
               ((int)param_1[1] >> 0x10) + iVar4);
     switch(local_1c) {
     case 8:
-      sub_b4cd8(param_1,iVar5,iVar4);
+      blit_rle_frame(param_1,iVar5,iVar4);
       break;
     case 9:
       sub_b500c(param_1,iVar5,iVar4);

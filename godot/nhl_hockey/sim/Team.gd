@@ -28,6 +28,7 @@ var goalie_slot: int = -1            # +0xfa
 var penalties: Array = []            # +0xb6 list: [roster_idx, seconds left, entity slot, minor]
 var first_slot: int = 0              # index of players[0] in Sim.entities
 var attacks_up: bool = false         # the goal this team shoots at is at +y (flags & 0x80 of its players)
+var info: Database.TeamInfo = null   # roster from the databases (null: placeholder players)
 
 func _init(idx: int = 0) -> void:
 	index = idx
@@ -41,3 +42,8 @@ func _init(idx: int = 0) -> void:
 func reset_nearest() -> void:
 	nearest_dist = 0xffff
 	nearest_slot = -1
+
+func abbrev() -> String:
+	if info != null:
+		return info.abbrev
+	return "HOME" if index == 0 else "AWAY"

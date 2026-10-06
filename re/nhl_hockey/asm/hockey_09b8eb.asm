@@ -4372,7 +4372,7 @@ sub_9e026:
     xor eax, eax                                 ; 09e02e 31c0
     mov al, byte ptr [esi + 0x1b]                ; 09e030 8a461b
     push eax                                     ; 09e033 50
-    call sub_8f0d7                               ; 09e034 e89e10ffff
+    call snd_patch_record                        ; 09e034 e89e10ffff
     add esp, 4                                   ; 09e039 83c404
     test eax, eax                                ; 09e03c 85c0
     je loc_9e082                                 ; 09e03e 7442
@@ -7307,7 +7307,7 @@ sub_9fc24:
     xor eax, eax                                 ; 09fc41 31c0
     mov al, byte ptr [esp]                       ; 09fc43 8a0424
     push eax                                     ; 09fc46 50
-    call sub_8f0d7                               ; 09fc47 e88bf4feff
+    call snd_patch_record                        ; 09fc47 e88bf4feff
     add esp, 4                                   ; 09fc4c 83c404
     mov dword ptr [esi + 0xe], eax               ; 09fc4f 89460e
     test eax, eax                                ; 09fc52 85c0
@@ -8706,7 +8706,7 @@ sub_a08d7:
     xor eax, eax                                 ; 0a0907 31c0
     mov al, byte ptr [ebp - 4]                   ; 0a0909 8a45fc
     push eax                                     ; 0a090c 50
-    call sub_8f0d7                               ; 0a090d e8c5e7feff
+    call snd_patch_record                        ; 0a090d e8c5e7feff
     mov edx, eax                                 ; 0a0912 89c2
     add esp, 4                                   ; 0a0914 83c404
     mov eax, dword ptr [ebp - 0xc]               ; 0a0917 8b45f4

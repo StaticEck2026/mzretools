@@ -2979,7 +2979,7 @@ void __watcall sub_9e026(int param_1,int unaff_EDX)
   int iVar2;
   short sVar3;
   
-  iVar2 = sub_8f0d7(*(undefined *)(param_1 + 0x1b));
+  iVar2 = snd_patch_record(*(undefined *)(param_1 + 0x1b));
   if (iVar2 != 0) {
     uVar1 = *(undefined4 *)(iVar2 + 0x10);
     *(undefined *)(unaff_EDX + 0x4e) = *(undefined *)(param_1 + 0x1b);
@@ -4484,7 +4484,7 @@ void __watcall sub_9fc24(short param_1,ushort unaff_DX)
   int iVar2;
   
   iVar1 = param_1 * 0x1e;
-  iVar2 = sub_8f0d7(unaff_DX & 0xff);
+  iVar2 = snd_patch_record(unaff_DX & 0xff);
   *(int *)(&DAT_000f3542 + iVar1) = iVar2;
   if (iVar2 != 0) {
     *(undefined4 *)(&DAT_000f353e + iVar1) = *(undefined4 *)(iVar2 + 0x10);
@@ -5287,7 +5287,7 @@ void __watcall sub_a08d7(short param_1,ushort unaff_DX)
   
   __CHK(0x28);
   iVar2 = param_1 * 0x1e;
-  uVar1 = sub_8f0d7(unaff_DX & 0xff);
+  uVar1 = snd_patch_record(unaff_DX & 0xff);
   *(undefined4 *)(&DAT_000f53ba + iVar2) = uVar1;
   if (*(int *)(&DAT_000f53ba + iVar2) != 0) {
     *(undefined4 *)(&DAT_000f53b6 + iVar2) = *(undefined4 *)(*(int *)(&DAT_000f53ba + iVar2) + 0x10)

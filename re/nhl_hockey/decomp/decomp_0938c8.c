@@ -5933,7 +5933,8 @@ void __watcall sub_990cb(char *param_1)
             }
             if (dword_d4f92 != 0) {
               local_1c = param_1[0x51];
-              if ((param_1[0x50] == '\t') && (iVar5 = sub_8f0d7(byte_f188c + 0x5c), iVar5 != 0)) {
+              if ((param_1[0x50] == '\t') &&
+                 (iVar5 = snd_patch_record(byte_f188c + 0x5c), iVar5 != 0)) {
                 local_1c = *(byte *)(iVar5 + 0xf) & 0x7f;
               }
               sub_99700(byte_f188c,byte_f188d,dword_f1888,param_1[0x50],local_1c,*param_1,
@@ -5974,7 +5975,7 @@ LAB_00099329:
               param_1[0x4f] = byte_f188d;
               *pbVar9 = param_1[0x50] | 0xc0;
               (&DAT_000f21fd)[iVar2] = cVar1;
-              iVar5 = sub_8f0d7(cVar1);
+              iVar5 = snd_patch_record(cVar1);
               if (iVar5 != 0) {
                 if ((*(byte *)(iVar5 + 0xf) & 0x80) == 0) {
                   param_1[0x51] = '\x7f';

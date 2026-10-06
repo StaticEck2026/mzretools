@@ -33,6 +33,10 @@ static var poke_vectors: Array = []               # 8 x [vx, vy]
 static var breakaway_waypoints: Array = []        # 4 x [x, y, trigger]
 static var ref_signal_dir: PackedInt32Array
 static var ref_signal_anim: PackedInt32Array
+static var rink_tile_names: PackedStringArray     # load_rink: TEAM.TIL / TEAM.MAP base name per team
+static var rink_logo: Array = []                  # 26 x [col, row, col2, row2] tile position of the centre ice logo
+static var marker_frames: PackedInt32Array        # draw_sprites: frames under user 1, user 2 and the puck carrier
+static var arrow_frames: Array = []               # 2 x 8 off screen arrows per clip direction
 static var loaded := false
 
 static func _static_init() -> void:
@@ -74,6 +78,10 @@ static func load_tables() -> void:
 	breakaway_waypoints = _ints(t["breakaway_waypoints"])
 	ref_signal_dir = PackedInt32Array(t["ref_signal_dir"])
 	ref_signal_anim = PackedInt32Array(t["ref_signal_anim"])
+	rink_tile_names = PackedStringArray(t["rink_tile_names"])
+	rink_logo = _ints(t["rink_logo"])
+	marker_frames = PackedInt32Array(t["marker_frames"])
+	arrow_frames = _ints(t["arrow_frames"])
 	loaded = true
 
 ## JSON numbers come back as floats: convert nested arrays of numbers to ints

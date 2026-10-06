@@ -79,7 +79,11 @@ static func decompress(data: PackedByteArray) -> PackedByteArray:
 				o += 1
 		if b >= 0xfc:
 			break
-	if o != out.size():
+	# a few banks carry up to three padding bytes behind the stop code; the game's unpack() only
+	# ever writes `size` bytes
+	if size > 0 and o > size:
+		out.resize(size)
+	elif o != out.size():
 		out.resize(o)
 	return out
 

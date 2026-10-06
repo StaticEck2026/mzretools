@@ -5693,7 +5693,7 @@ loc_3e891:
     add edx, 0xc0                                ; 03e8a5 81c2c0000000
 loc_3e8ab:
     mov bl, byte ptr [edx + eax]                 ; 03e8ab 8a1c02
-    mov byte ptr [eax + unk_dc9d8], bl           ; 03e8ae 8898d8c90d00
+    mov byte ptr [eax + remap_home], bl          ; 03e8ae 8898d8c90d00
     inc eax                                      ; 03e8b4 40
     cmp eax, 0x100                               ; 03e8b5 3d00010000
     jl loc_3e8ab                                 ; 03e8ba 7cef
@@ -5735,7 +5735,7 @@ loc_3e90a:
     add edx, 0xc0                                ; 03e91e 81c2c0000000
 loc_3e924:
     mov bl, byte ptr [edx + eax]                 ; 03e924 8a1c02
-    mov byte ptr [eax + unk_dc8d8], bl           ; 03e927 8898d8c80d00
+    mov byte ptr [eax + remap_away], bl          ; 03e927 8898d8c80d00
     inc eax                                      ; 03e92d 40
     cmp eax, 0x90                                ; 03e92e 3d90000000
     jl loc_3e924                                 ; 03e933 7cef
@@ -5743,7 +5743,7 @@ loc_3e924:
 loc_3e93a:
     mov bl, byte ptr [edx + eax]                 ; 03e93a 8a1c02
     add bl, 0x40                                 ; 03e93d 80c340
-    mov byte ptr [eax + unk_dc8d8], bl           ; 03e940 8898d8c80d00
+    mov byte ptr [eax + remap_away], bl          ; 03e940 8898d8c80d00
     inc eax                                      ; 03e946 40
     cmp eax, 0x100                               ; 03e947 3d00010000
     jl loc_3e93a                                 ; 03e94c 7cec
@@ -5883,8 +5883,8 @@ loc_3ea10:
     mov eax, dword ptr [edi]                     ; 03eb09 8b07
     mov ebx, esi                                 ; 03eb0b 89f3
     call sub_3e835                               ; 03eb0d e823fdffff
-    mov dword ptr [dword_ddd7c], unk_dc9d8       ; 03eb12 c7057cdd0d00d8c9..
-    mov dword ptr [dword_ddd80], unk_dc8d8       ; 03eb1c c70580dd0d00d8c8..
+    mov dword ptr [dword_ddd7c], remap_home      ; 03eb12 c7057cdd0d00d8c9..
+    mov dword ptr [dword_ddd80], remap_away      ; 03eb1c c70580dd0d00d8c8..
     xor esi, esi                                 ; 03eb26 31f6
 loc_3eb28:
     mov ecx, esi                                 ; 03eb28 89f1
@@ -8268,7 +8268,7 @@ loc_407f7:
     add edx, 0xc0                                ; 040807 81c2c0000000
 loc_4080d:
     mov bl, byte ptr [edx + eax]                 ; 04080d 8a1c02
-    mov byte ptr [eax + unk_dc9d8], bl           ; 040810 8898d8c90d00
+    mov byte ptr [eax + remap_home], bl          ; 040810 8898d8c90d00
     inc eax                                      ; 040816 40
     cmp eax, 0x100                               ; 040817 3d00010000
     jl loc_4080d                                 ; 04081c 7cef
@@ -8288,7 +8288,7 @@ loc_4082d:
     add edx, 0xc0                                ; 040841 81c2c0000000
 loc_40847:
     mov bl, byte ptr [edx + eax]                 ; 040847 8a1c02
-    mov byte ptr [eax + unk_dc8d8], bl           ; 04084a 8898d8c80d00
+    mov byte ptr [eax + remap_away], bl          ; 04084a 8898d8c80d00
     inc eax                                      ; 040850 40
     cmp eax, 0x90                                ; 040851 3d90000000
     jl loc_40847                                 ; 040856 7cef
@@ -8296,7 +8296,7 @@ loc_40847:
 loc_4085d:
     mov bl, byte ptr [edx + eax]                 ; 04085d 8a1c02
     add bl, 0x40                                 ; 040860 80c340
-    mov byte ptr [eax + unk_dc8d8], bl           ; 040863 8898d8c80d00
+    mov byte ptr [eax + remap_away], bl          ; 040863 8898d8c80d00
     inc eax                                      ; 040869 40
     cmp eax, 0x100                               ; 04086a 3d00010000
     jl loc_4085d                                 ; 04086f 7cec

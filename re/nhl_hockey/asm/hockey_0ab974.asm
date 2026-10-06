@@ -11978,7 +11978,7 @@ sub_b2ccd:
 ; fatalerror  [0xb2cd8, 80 bytes, 19 instructions]
 ; restores the video mode, prints the message and exits
 ; annotations: external
-; called by: main, sub_106c8, check_disk_space, check_disk_space_for_game, sub_1b201, iff_parse, sub_1bbcc, sub_1befd, sub_1c0af, sub_1c26c, league_select_screen, league_name_prompt (+41 more)
+; called by: main, sub_106c8, check_disk_space, check_disk_space_for_game, sub_1b201, iff_parse, sub_1bbcc, sub_1befd, db_read_player, db_open_files, league_select_screen, league_name_prompt (+41 more)
 ; ====================================================================================================
 fatalerror:
     pop eax                                      ; 0b2cd8 58
@@ -12419,10 +12419,11 @@ locateshape:
 
 
 ; ====================================================================================================
-; sub_b30bb  [0xb30bb, 57 bytes, 22 instructions]
+; locateshape_fast  [0xb30bb, 57 bytes, 22 instructions]
+; locateshape() comparing the tag as one 32 bit word
 ; called by: fill_sprite_frames, player_card_screen, goalie_card_screen, sub_90b50
 ; ====================================================================================================
-sub_b30bb:
+locateshape_fast:
     xor ebx, ebx                                 ; 0b30bb 33db
 loc_b30bd:
     mov edx, dword ptr [esp + 4]                 ; 0b30bd 8b542404

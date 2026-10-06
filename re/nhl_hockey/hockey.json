@@ -204,7 +204,7 @@
     "dword_c5301",
     "dword_c5305",
     "dword_c5309",
-    "dword_c66c4",
+    "hud_window",
     "dword_c721d",
     "aVFN",
     "dword_d242c",
@@ -779,7 +779,7 @@
    ],
    "strings": [],
    "vars": [
-    "dword_d8c70"
+    "rinkend_shape"
    ],
    "interrupts": [],
    "ports": [],
@@ -1746,7 +1746,7 @@
     "getfontstate",
     "setfontstate",
     "setfont",
-    "sub_8f13b",
+    "music_load_kms",
     "sub_8f1fe",
     "loadsound",
     "playsample",
@@ -1834,7 +1834,7 @@
    "callees": [
     "__CHK",
     "sprintf",
-    "sub_b30bb"
+    "locateshape_fast"
    ],
    "strings": [
     "%04d"
@@ -1887,7 +1887,7 @@
     "a04d",
     "aF000149",
     "aPPV",
-    "dword_cc0e0",
+    "effect_bank",
     "install_path",
     "effect_frames",
     "byte_ed85c"
@@ -1990,8 +1990,8 @@
     "a0000",
     "aPPV",
     "install_path",
-    "dword_d8c68",
-    "dword_d8c70",
+    "rinkend_bank",
+    "rinkend_shape",
     "byte_ed976"
    ],
    "interrupts": [],
@@ -2033,7 +2033,7 @@
     "loadfile",
     "settextpos",
     "sprintf",
-    "sub_90b80",
+    "locateshapes",
     "locateshape",
     "setdefaultscreen"
    ],
@@ -2059,7 +2059,7 @@
     "install_path",
     "digit_shapes",
     "position_letter_shapes",
-    "dword_d8c80",
+    "numshp_bank",
     "dword_ed700",
     "byte_ed86c",
     "byte_ed8d7"
@@ -2114,7 +2114,7 @@
     "aVFN",
     "install_path",
     "digit_shapes",
-    "dword_d8c80",
+    "numshp_bank",
     "dword_ed700",
     "byte_ed86c",
     "byte_ed8d7"
@@ -2342,7 +2342,7 @@
     "dword_cbecc",
     "word_cbece",
     "dword_cc0ac",
-    "word_cc0b0",
+    "marker_frames",
     "breakaway_flag",
     "penalty_shot_slot",
     "penalty_shot_phase",
@@ -2724,7 +2724,7 @@
     "sub_142e7",
     "sub_1466b",
     "sub_1bbcc",
-    "sub_1c26c",
+    "db_open_files",
     "sub_1fdfe",
     "playoff_series_status",
     "team_select_screen",
@@ -3013,7 +3013,7 @@
     "db_read_record2",
     "db_read_record",
     "sub_1bbcc",
-    "sub_1c0af",
+    "db_read_player",
     "sub_1fdfe",
     "league_select_screen",
     "load_league_settings",
@@ -3539,7 +3539,7 @@
     "select_game_surface",
     "sub_8c1e2",
     "__CHK",
-    "sub_b4cd8"
+    "blit_rle_frame"
    ],
    "strings": [],
    "vars": [
@@ -3579,7 +3579,7 @@
     "select_game_surface",
     "sub_8c1e2",
     "__CHK",
-    "sub_b4cd8"
+    "blit_rle_frame"
    ],
    "strings": [],
    "vars": [
@@ -3587,7 +3587,7 @@
     "dword_c5850",
     "dword_c585c",
     "dword_c5860",
-    "unk_dc26c"
+    "shapes_lines"
    ],
    "interrupts": [],
    "ports": [],
@@ -3603,7 +3603,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_14bef",
+   "name": "get_line_energies",
    "addr": 84975,
    "size": 51,
    "blocks": [
@@ -3617,7 +3617,7 @@
     "draw_clock"
    ],
    "callees": [
-    "sub_5a2ee",
+    "line_energy",
     "__CHK"
    ],
    "strings": [],
@@ -3626,7 +3626,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "HUD: average energy of the 8 lines of a team (line_energy - 0x60)"
+   ],
    "reasons": [
     "call"
    ],
@@ -3722,16 +3724,16 @@
     "simulate_game_offscreen"
    ],
    "callees": [
-    "sub_14bef",
+    "get_line_energies",
     "sub_15374",
     "draw_clock_update",
     "sub_15655",
-    "sub_15707",
+    "draw_energy_bar",
     "draw_line_box",
     "draw_penalty_clocks",
     "select_game_surface",
     "__CHK",
-    "sub_b4cf2"
+    "blit_rle_frame_home"
    ],
    "strings": [],
    "vars": [
@@ -3753,10 +3755,10 @@
     "word_cbc6a",
     "word_cbc6c",
     "dword_dc28c",
-    "dword_dc2bc",
-    "dword_dc2c0",
-    "unk_dc2f4",
-    "unk_dc300"
+    "shape_homp",
+    "shape_visp",
+    "shapes_hlin",
+    "shapes_vlin"
    ],
    "interrupts": [],
    "ports": [],
@@ -3787,7 +3789,7 @@
    ],
    "callees": [
     "__CHK",
-    "sub_b4cd8"
+    "blit_rle_frame"
    ],
    "strings": [],
    "vars": [
@@ -3842,8 +3844,8 @@
     "freemem",
     "loadfile",
     "locateshape",
-    "sub_b4cd8",
-    "sub_b4cf2",
+    "blit_rle_frame",
+    "blit_rle_frame_home",
     "setremaptable",
     "sub_b4e50"
    ],
@@ -3874,11 +3876,11 @@
     "dword_c5860",
     "aPPV",
     "install_path",
-    "unk_dc26c",
-    "unk_dc8d8",
+    "shapes_lines",
+    "remap_away",
     "byte_dc91b",
     "byte_dc9d7",
-    "unk_dc9d8",
+    "remap_home",
     "byte_dca1b",
     "byte_dcad7",
     "dword_df622",
@@ -3952,7 +3954,7 @@
    ],
    "callees": [
     "__CHK",
-    "sub_b4cd8"
+    "blit_rle_frame"
    ],
    "strings": [],
    "vars": [
@@ -4009,7 +4011,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_15707",
+   "name": "draw_energy_bar",
    "addr": 87815,
    "size": 182,
    "blocks": [
@@ -4034,7 +4036,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "HUD: energy of the current line as two small bars left and right of the score"
+   ],
    "reasons": [
     "call"
    ],
@@ -4058,7 +4062,7 @@
    "callees": [
     "__CHK",
     "fillrect",
-    "sub_b4cf2"
+    "blit_rle_frame_home"
    ],
    "strings": [],
    "vars": [
@@ -4095,7 +4099,7 @@
    ],
    "callees": [
     "__CHK",
-    "sub_b4cd8"
+    "blit_rle_frame"
    ],
    "strings": [],
    "vars": [
@@ -4418,7 +4422,7 @@
     "freemem",
     "releasememblock",
     "loadshapes",
-    "sub_8f13b",
+    "music_load_kms",
     "sub_8f1fe",
     "loadsound",
     "playsample",
@@ -4643,7 +4647,7 @@
     "setfontstate",
     "setfont",
     "rand",
-    "sub_8f13b",
+    "music_load_kms",
     "sub_8f1fe",
     "loadsound",
     "playsample",
@@ -8416,10 +8420,10 @@
     "input_enabled",
     "dword_c7290",
     "dword_cbeca",
-    "dword_d8c68",
-    "dword_d8c80",
+    "rinkend_bank",
+    "numshp_bank",
     "font_current_default",
-    "dword_dc2f0",
+    "scoreboard_bank",
     "dword_dc338",
     "dword_e0244",
     "dword_ed700"
@@ -8456,7 +8460,7 @@
    ],
    "strings": [],
    "vars": [
-    "dword_cc0e0"
+    "effect_bank"
    ],
    "interrupts": [],
    "ports": [],
@@ -8568,8 +8572,8 @@
     "file_open_read",
     "file_close",
     "file_read",
-    "sub_1c26c",
-    "sub_1c3f6",
+    "db_open_files",
+    "db_load_team_roster",
     "__CHK",
     "sprintf",
     "_dos_findfirst",
@@ -8699,7 +8703,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_1c0af",
+   "name": "db_read_player",
    "addr": 114863,
    "size": 445,
    "blocks": [
@@ -8710,7 +8714,7 @@
    ],
    "instructions": 135,
    "callers": [
-    "sub_1c3f6"
+    "db_load_team_roster"
    ],
    "callees": [
     "file_read",
@@ -8750,7 +8754,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "reads a 0x34 byte KEY.DB record and the ATT.DB / SEASON.DB / CAREER.DB records it points to (+0x24, +0x2c, +0x28)"
+   ],
    "reasons": [
     "call"
    ],
@@ -8758,7 +8764,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_1c26c",
+   "name": "db_open_files",
    "addr": 115308,
    "size": 394,
    "blocks": [
@@ -8810,7 +8816,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "opens key.db, att.db, season.db and (outside season mode) career.db"
+   ],
    "reasons": [
     "call"
    ],
@@ -8818,7 +8826,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_1c3f6",
+   "name": "db_load_team_roster",
    "addr": 115702,
    "size": 1041,
    "blocks": [
@@ -8832,7 +8840,7 @@
     "sub_1bbcc"
    ],
    "callees": [
-    "sub_1c0af",
+    "db_read_player",
     "__CHK",
     "strcpy"
    ],
@@ -8860,7 +8868,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "fills rosters / player_ratings of a team from the databases: 25 skaters (0x14 rating bytes) and 3 goalies (0x10 bytes)"
+   ],
    "reasons": [
     "call"
    ],
@@ -9052,7 +9062,7 @@
     "make_path",
     "__CHK",
     "loadfile",
-    "sub_90b80",
+    "locateshapes",
     "locateshape"
    ],
    "strings": [
@@ -9079,14 +9089,14 @@
     "aLin1lin2lin3lin4PP1PP2PK",
     "aPPV",
     "install_path",
-    "unk_dc26c",
+    "shapes_lines",
     "small_digit_shapes",
-    "dword_dc2bc",
-    "dword_dc2c0",
+    "shape_homp",
+    "shape_visp",
     "score_digit_shapes",
-    "dword_dc2f0",
-    "unk_dc2f4",
-    "unk_dc300",
+    "scoreboard_bank",
+    "shapes_hlin",
+    "shapes_vlin",
     "hud_digit_shapes",
     "byte_ed938"
    ],
@@ -9124,7 +9134,7 @@
    "callees": [
     "sub_6ab7c",
     "__CHK",
-    "sub_b4cd8",
+    "blit_rle_frame",
     "setremaptable",
     "sub_b4e50",
     "sub_b500c",
@@ -9142,9 +9152,9 @@
     "dword_d30b4",
     "dword_d30b8",
     "dword_d8c40",
-    "unk_dc8d8",
+    "remap_away",
     "unk_dc998",
-    "unk_dc9d8",
+    "remap_home",
     "unk_dca98"
    ],
    "interrupts": [],
@@ -11125,7 +11135,7 @@
     "read",
     "sub_923c9",
     "locateshape",
-    "sub_b30bb",
+    "locateshape_fast",
     "setdefaultscreen",
     "setclip"
    ],
@@ -11273,7 +11283,7 @@
     "read",
     "sub_923c9",
     "locateshape",
-    "sub_b30bb",
+    "locateshape_fast",
     "setdefaultscreen",
     "setclip"
    ],
@@ -14218,7 +14228,7 @@
     "getfontstate",
     "setfontstate",
     "setfont",
-    "sub_8f13b",
+    "music_load_kms",
     "sub_8f1fe",
     "loadsound",
     "playsample",
@@ -14549,7 +14559,7 @@
     "getfontstate",
     "setfontstate",
     "setfont",
-    "sub_8f13b",
+    "music_load_kms",
     "sub_8f1fe",
     "loadsound",
     "playsample",
@@ -16963,7 +16973,7 @@
     "aTILES",
     "aErrorLoadingFileS",
     "aMap",
-    "aBOS_c7298",
+    "rink_logo_table",
     "unk_c729a",
     "unk_c729c",
     "unk_c729e",
@@ -20496,8 +20506,8 @@
     "byte_d1335",
     "byte_d1336",
     "install_path",
-    "unk_dc8d8",
-    "unk_dc9d8",
+    "remap_away",
+    "remap_home",
     "byte_ed7f7",
     "byte_ed86d"
    ],
@@ -20572,8 +20582,8 @@
     "byte_d12de",
     "install_path",
     "byte_d42c3",
-    "unk_dc8d8",
-    "unk_dc9d8",
+    "remap_away",
+    "remap_home",
     "dword_dd100",
     "dword_dd104",
     "dword_ddd7c",
@@ -21043,8 +21053,8 @@
     "aHOMEPALS_c1a3c",
     "aBIN",
     "install_path",
-    "unk_dc8d8",
-    "unk_dc9d8",
+    "remap_away",
+    "remap_home",
     "byte_ed86d"
    ],
    "interrupts": [],
@@ -30349,7 +30359,7 @@
    "callers": [
     "sub_8ee2f",
     "sub_8ee4f",
-    "sub_8f13b"
+    "music_load_kms"
    ],
    "callees": [
     "__CHK",
@@ -30623,7 +30633,7 @@
     "speech_busy",
     "__CHK",
     "sub_8f270",
-    "sub_8f61d"
+    "snd_play_sfx"
    ],
    "strings": [],
    "vars": [
@@ -31763,7 +31773,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_5a2ee",
+   "name": "line_energy",
    "addr": 369390,
    "size": 30,
    "blocks": [
@@ -31774,7 +31784,7 @@
    ],
    "instructions": 8,
    "callers": [
-    "sub_14bef"
+    "get_line_energies"
    ],
    "callees": [
     "__CHK"
@@ -31788,7 +31798,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "average energy of the players of a line (4 forward lines x 3, 2 PP units x 5, 2 PK units x 4)"
+   ],
    "reasons": [
     "call"
    ],
@@ -33294,8 +33306,8 @@
     "dword_cbec6",
     "word_cbec8",
     "dword_cbeca",
-    "word_cc0b0",
-    "dword_cc0b4",
+    "marker_frames",
+    "arrow_frames",
     "controls_blocked",
     "unk_ccd4f",
     "dword_d302c",
@@ -34597,7 +34609,7 @@
     "dword_cbecc",
     "word_cbece",
     "dword_cc0ac",
-    "word_cc0b0",
+    "marker_frames",
     "word_cc0d8",
     "word_cc0da",
     "crowd_noise",
@@ -34814,12 +34826,12 @@
     "word_cbece",
     "off_cc01d",
     "dword_cc0ac",
-    "word_cc0b0",
+    "marker_frames",
     "word_cc0d8",
     "word_cc0da",
     "crowd_noise",
     "word_cc0de",
-    "dword_cc0e0",
+    "effect_bank",
     "one_timer_pending",
     "breakaway_flag",
     "penalty_shot_slot",
@@ -36117,7 +36129,7 @@
     "penalty_box_mode",
     "word_cbec8",
     "dword_cbeca",
-    "word_cc0b0",
+    "marker_frames",
     "puck",
     "faceoff_timer",
     "unk_e9a11",
@@ -36220,7 +36232,7 @@
     "penalty_box_mode",
     "dword_cbec6",
     "dword_cbeca",
-    "word_cc0b0",
+    "marker_frames",
     "penalty_shot_setup",
     "byte_e9a16",
     "unk_e9a17"
@@ -36489,7 +36501,7 @@
     "game_flags",
     "stop_flags",
     "stoppage_timer",
-    "word_cc0b0"
+    "marker_frames"
    ],
    "interrupts": [],
    "ports": [],
@@ -37912,8 +37924,8 @@
     "aPal_c1dd6",
     "aBIN",
     "install_path",
-    "unk_dc8d8",
-    "unk_dc9d8",
+    "remap_away",
+    "remap_home",
     "byte_ed7f7",
     "byte_ed86d",
     "byte_ed92b"
@@ -38191,8 +38203,8 @@
     "camera",
     "dword_c909a",
     "show_names",
-    "word_cc0b0",
-    "dword_cc0b4",
+    "marker_frames",
+    "arrow_frames",
     "unk_cce00",
     "aGgG",
     "unk_ccef8",
@@ -49725,7 +49737,7 @@
     "make_path",
     "__CHK",
     "rand",
-    "sub_8f13b"
+    "music_load_kms"
    ],
    "strings": [
     "MTROCKU",
@@ -49989,7 +50001,7 @@
     "ticks_elapsed",
     "setdefaultscreen",
     "setclip",
-    "sub_b4cd8"
+    "blit_rle_frame"
    ],
    "strings": [
     "gadget6",
@@ -50161,7 +50173,7 @@
     "drawshape_remap",
     "setmousepos",
     "setclip",
-    "sub_b4cd8",
+    "blit_rle_frame",
     "sub_b500c"
    ],
    "strings": [],
@@ -50717,15 +50729,15 @@
     "dword_d242c",
     "sound_enabled",
     "dword_d2431",
-    "dword_d8c68",
-    "dword_d8c80",
+    "rinkend_bank",
+    "numshp_bank",
     "period_num",
     "unk_db3ad",
     "unk_db7f1",
     "font_current_default",
     "byte_dc267",
     "byte_dc268",
-    "dword_dc2f0",
+    "scoreboard_bank",
     "unk_df314",
     "replay_write_ptr",
     "byte_e03c4",
@@ -51157,7 +51169,7 @@
     "install_path",
     "font_kaufm",
     "font_main",
-    "unk_dc9d8",
+    "remap_home",
     "byte_dc9dd",
     "byte_dc9df",
     "byte_dc9e8",
@@ -51801,7 +51813,7 @@
     "sub_8eb5b",
     "sub_8eb93",
     "loadpatches",
-    "sub_8f13b",
+    "music_load_kms",
     "sub_8f1fe",
     "strcpy",
     "fopen",
@@ -56757,7 +56769,7 @@
    ],
    "strings": [],
    "vars": [
-    "dword_c66c4"
+    "hud_window"
    ],
    "interrupts": [],
    "ports": [],
@@ -57587,7 +57599,7 @@
     "sub_149bf",
     "draw_score_digits",
     "draw_line_indicator",
-    "sub_14bef",
+    "get_line_energies",
     "add_penalty_display",
     "sub_14ca0",
     "draw_clock",
@@ -57596,7 +57608,7 @@
     "sub_15374",
     "draw_clock_update",
     "sub_15655",
-    "sub_15707",
+    "draw_energy_bar",
     "draw_line_box",
     "draw_penalty_clocks",
     "sub_15b76",
@@ -57703,9 +57715,9 @@
     "sub_1baf3",
     "sub_1bbcc",
     "sub_1befd",
-    "sub_1c0af",
-    "sub_1c26c",
-    "sub_1c3f6",
+    "db_read_player",
+    "db_open_files",
+    "db_load_team_roster",
     "sub_1c807",
     "sub_1c852",
     "sub_1cb7f",
@@ -58171,7 +58183,7 @@
     "find_switch_target",
     "team_avg_energy",
     "choose_line",
-    "sub_5a2ee",
+    "line_energy",
     "line_avg_energy",
     "predict_puck_goal_line",
     "frame_offsets_lookup",
@@ -63564,7 +63576,7 @@
     "unk_edd00",
     "unk_edd04",
     "unk_ede34",
-    "dword_ede5c",
+    "snd_patch_bank",
     "unk_f189c",
     "unk_f1a1c",
     "unk_f1a1d",
@@ -63699,7 +63711,7 @@
    ],
    "strings": [],
    "vars": [
-    "dword_ede5c"
+    "snd_patch_bank"
    ],
    "interrupts": [],
    "ports": [],
@@ -63886,7 +63898,7 @@
     "loadpatches"
    ],
    "callees": [
-    "sub_8f0d7",
+    "snd_patch_record",
     "sub_8fe89"
    ],
    "strings": [],
@@ -63895,7 +63907,7 @@
     "dword_d4f64",
     "word_d4f88",
     "unk_ede34",
-    "dword_ede5c",
+    "snd_patch_bank",
     "unk_f243e"
    ],
    "interrupts": [],
@@ -63910,7 +63922,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8f0d7",
+   "name": "snd_patch_record",
    "addr": 585943,
    "size": 61,
    "blocks": [
@@ -63923,7 +63935,7 @@
    "callers": [
     "sub_8efbb",
     "sub_8f114",
-    "sub_8f4c4",
+    "snd_play_patch",
     "sub_990cb",
     "sub_9e026",
     "sub_9fc24",
@@ -63934,13 +63946,15 @@
    ],
    "strings": [],
    "vars": [
-    "dword_ede5c"
+    "snd_patch_bank"
    ],
    "interrupts": [],
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "record of a sound id in the loaded .PAT bank (256 byte id map at +2, 0x14 byte records from +0x102)"
+   ],
    "reasons": [
     "call"
    ],
@@ -63963,12 +63977,12 @@
     "sub_9d858"
    ],
    "callees": [
-    "sub_8f0d7",
+    "snd_patch_record",
     "sub_902a0"
    ],
    "strings": [],
    "vars": [
-    "dword_ede5c"
+    "snd_patch_bank"
    ],
    "interrupts": [],
    "ports": [],
@@ -63982,7 +63996,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8f13b",
+   "name": "music_load_kms",
    "addr": 586043,
    "size": 195,
    "blocks": [
@@ -64023,7 +64037,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "loads a .KMS music sequence and its .CFG into a free music slot"
+   ],
    "reasons": [
     "call"
    ],
@@ -64083,7 +64099,7 @@
    ],
    "instructions": 20,
    "callers": [
-    "sub_8f13b",
+    "music_load_kms",
     "sub_8f1fe",
     "sub_8f4a7"
    ],
@@ -64246,7 +64262,7 @@
    "instructions": 8,
    "callers": [],
    "callees": [
-    "sub_8f13b",
+    "music_load_kms",
     "sub_8f4a7"
    ],
    "strings": [],
@@ -64296,7 +64312,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8f4c4",
+   "name": "snd_play_patch",
    "addr": 586948,
    "size": 345,
    "blocks": [
@@ -64307,10 +64323,10 @@
    ],
    "instructions": 109,
    "callers": [
-    "sub_8f61d"
+    "snd_play_sfx"
    ],
    "callees": [
-    "sub_8f0d7",
+    "snd_patch_record",
     "sub_99700",
     "sub_997b7"
    ],
@@ -64325,7 +64341,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "sound driver: plays a sound id as a MIDI note; ids >= 0x80 are percussion notes (channel 9, note id - 0x74), ids < 0x80 program changes on channels 12..15"
+   ],
    "reasons": [
     "call"
    ],
@@ -64333,7 +64351,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_8f61d",
+   "name": "snd_play_sfx",
    "addr": 587293,
    "size": 22,
    "blocks": [
@@ -64347,7 +64365,7 @@
     "play_sfx"
    ],
    "callees": [
-    "sub_8f4c4"
+    "snd_play_patch"
    ],
    "strings": [],
    "vars": [],
@@ -64355,7 +64373,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "plays a sound effect id at full volume (play_sfx -> snd_play_patch(id, 0, 0x7f))"
+   ],
    "reasons": [
     "call"
    ],
@@ -65461,7 +65481,7 @@
    "instructions": 23,
    "callers": [
     "loadpatches",
-    "sub_8f13b"
+    "music_load_kms"
    ],
    "callees": [
     "sub_99a45",
@@ -65496,7 +65516,7 @@
    "callers": [
     "sub_8ee43",
     "sub_8ef76",
-    "sub_8f13b",
+    "music_load_kms",
     "sub_8f1fe"
    ],
    "callees": [
@@ -65908,7 +65928,7 @@
    "instructions": 2,
    "callers": [
     "sub_8e45c",
-    "sub_8f0d7",
+    "snd_patch_record",
     "sub_8f114",
     "sub_972ab",
     "sub_972b8",
@@ -66184,7 +66204,7 @@
     "sub_14368",
     "sub_14442",
     "export_stats_dialog",
-    "sub_1c3f6",
+    "db_load_team_roster",
     "sub_1c807",
     "sub_1c852",
     "sub_1cb7f",
@@ -67084,7 +67104,7 @@
     "export_stats_dialog",
     "pause_menu",
     "sub_1bbcc",
-    "sub_1c26c",
+    "db_open_files",
     "sub_1fb1c",
     "sub_1fb49",
     "player_card_screen",
@@ -67259,7 +67279,7 @@
    "instructions": 21,
    "callers": [],
    "callees": [
-    "sub_b30bb"
+    "locateshape_fast"
    ],
    "strings": [],
    "vars": [],
@@ -67277,7 +67297,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_90b80",
+   "name": "locateshapes",
    "addr": 592768,
    "size": 47,
    "blocks": [
@@ -67300,7 +67320,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "fills an array with locateshape() of a list of 4 character tags"
+   ],
    "reasons": [
     "call"
    ],
@@ -67324,7 +67346,7 @@
     "check_disk_space_for_game",
     "sub_149bf",
     "sub_1bbcc",
-    "sub_1c26c",
+    "db_open_files",
     "scan_league_dirs",
     "league_name_prompt",
     "sub_3c3af",
@@ -67778,7 +67800,7 @@
     "file_read",
     "file_write",
     "sub_1bbcc",
-    "sub_1c0af",
+    "db_read_player",
     "player_card_screen",
     "goalie_card_screen",
     "team_stats_screen",
@@ -67914,7 +67936,7 @@
    ],
    "instructions": 131,
    "callers": [
-    "sub_15707",
+    "draw_energy_bar",
     "draw_line_box",
     "sub_29d00",
     "team_select_screen",
@@ -77110,7 +77132,7 @@
     "sub_98f46"
    ],
    "callees": [
-    "sub_8f0d7",
+    "snd_patch_record",
     "sub_9722e",
     "sub_99522",
     "sub_99620",
@@ -77295,7 +77317,7 @@
    ],
    "instructions": 57,
    "callers": [
-    "sub_8f4c4",
+    "snd_play_patch",
     "sub_990cb"
    ],
    "callees": [
@@ -77331,7 +77353,7 @@
    ],
    "instructions": 31,
    "callers": [
-    "sub_8f4c4",
+    "snd_play_patch",
     "sub_8f67d",
     "sub_8f8b7",
     "sub_8fd84",
@@ -82691,7 +82713,7 @@
     "sub_9ece8"
    ],
    "callees": [
-    "sub_8f0d7"
+    "snd_patch_record"
    ],
    "strings": [],
    "vars": [],
@@ -83915,7 +83937,7 @@
     "sub_9f725"
    ],
    "callees": [
-    "sub_8f0d7"
+    "snd_patch_record"
    ],
    "strings": [],
    "vars": [
@@ -84968,7 +84990,7 @@
    ],
    "callees": [
     "__CHK",
-    "sub_8f0d7"
+    "snd_patch_record"
    ],
    "strings": [],
    "vars": [
@@ -101683,8 +101705,8 @@
     "iff_parse",
     "sub_1bbcc",
     "sub_1befd",
-    "sub_1c0af",
-    "sub_1c26c",
+    "db_read_player",
+    "db_open_files",
     "league_select_screen",
     "league_name_prompt",
     "load_league_settings",
@@ -101726,7 +101748,7 @@
     "unpack",
     "removewindow",
     "windowdef",
-    "sub_b30bb",
+    "locateshape_fast",
     "sub_b3b5a"
    ],
    "callees": [
@@ -102622,7 +102644,7 @@
     "playoff_tree_menu",
     "playoff_bracket_screen",
     "coach_clip_player",
-    "sub_90b80",
+    "locateshapes",
     "sub_95148",
     "sub_9d090"
    ],
@@ -102649,7 +102671,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_b30bb",
+   "name": "locateshape_fast",
    "addr": 733371,
    "size": 57,
    "blocks": [
@@ -102674,7 +102696,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "locateshape() comparing the tag as one 32 bit word"
+   ],
    "reasons": [
     "call"
    ],
@@ -105917,7 +105941,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_b4cd8",
+   "name": "blit_rle_frame",
    "addr": 740568,
    "size": 26,
    "blocks": [
@@ -105945,7 +105969,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "draws a run length coded sprite frame at x, y: count byte c > 0 repeats the next byte (0xff run = transparent skip), c < 0 copies -c literals, 0 ends the frame"
+   ],
    "reasons": [
     "call",
     "fptr"
@@ -105954,7 +105980,7 @@
    "noreturn": false
   },
   {
-   "name": "sub_b4cf2",
+   "name": "blit_rle_frame_home",
    "addr": 740594,
    "size": 225,
    "blocks": [
@@ -105979,7 +106005,9 @@
    "ports": [],
    "tags": [],
    "annotations": [],
-   "comments": [],
+   "comments": [
+    "blit_rle_frame at the position stored in the frame header (+0xc, +0xe)"
+   ],
    "reasons": [
     "call"
    ],
@@ -112557,7 +112585,7 @@
    "size": 2,
    "kind": "string",
    "xrefs": [
-    "sub_1c0af"
+    "db_read_player"
    ],
    "text": "D"
   },
@@ -112567,7 +112595,7 @@
    "size": 2,
    "kind": "string",
    "xrefs": [
-    "sub_1c0af"
+    "db_read_player"
    ],
    "text": "E"
   },
@@ -112577,7 +112605,7 @@
    "size": 2,
    "kind": "string",
    "xrefs": [
-    "sub_1c0af"
+    "db_read_player"
    ],
    "text": "F"
   },
@@ -112587,7 +112615,7 @@
    "size": 2,
    "kind": "string",
    "xrefs": [
-    "sub_1c0af"
+    "db_read_player"
    ],
    "text": "G"
   },
@@ -112597,7 +112625,7 @@
    "size": 2,
    "kind": "string",
    "xrefs": [
-    "sub_1c0af"
+    "db_read_player"
    ],
    "text": "H"
   },
@@ -112607,7 +112635,7 @@
    "size": 2,
    "kind": "string",
    "xrefs": [
-    "sub_1c0af"
+    "db_read_player"
    ],
    "text": "I"
   },
@@ -112617,8 +112645,8 @@
    "size": 2,
    "kind": "string",
    "xrefs": [
-    "sub_1c0af",
-    "sub_1c26c"
+    "db_read_player",
+    "db_open_files"
    ],
    "text": "L"
   },
@@ -112628,8 +112656,8 @@
    "size": 2,
    "kind": "string",
    "xrefs": [
-    "sub_1c0af",
-    "sub_1c26c"
+    "db_read_player",
+    "db_open_files"
    ],
    "text": "M"
   },
@@ -112639,7 +112667,7 @@
    "size": 2,
    "kind": "string",
    "xrefs": [
-    "sub_1c0af"
+    "db_read_player"
    ],
    "text": "N"
   },
@@ -112649,7 +112677,7 @@
    "size": 2,
    "kind": "string",
    "xrefs": [
-    "sub_1c0af"
+    "db_read_player"
    ],
    "text": "O"
   },
@@ -112659,7 +112687,7 @@
    "size": 2,
    "kind": "string",
    "xrefs": [
-    "sub_1c0af"
+    "db_read_player"
    ],
    "text": "P"
   },
@@ -112669,7 +112697,7 @@
    "size": 2,
    "kind": "string",
    "xrefs": [
-    "sub_1c0af"
+    "db_read_player"
    ],
    "text": "Q"
   },
@@ -112679,7 +112707,7 @@
    "size": 4,
    "kind": "string",
    "xrefs": [
-    "sub_1c26c"
+    "db_open_files"
    ],
    "text": "key"
   },
@@ -112689,7 +112717,7 @@
    "size": 2,
    "kind": "string",
    "xrefs": [
-    "sub_1c26c"
+    "db_open_files"
    ],
    "text": "9"
   },
@@ -112699,7 +112727,7 @@
    "size": 2,
    "kind": "string",
    "xrefs": [
-    "sub_1c26c"
+    "db_open_files"
    ],
    "text": "A"
   },
@@ -112709,7 +112737,7 @@
    "size": 4,
    "kind": "string",
    "xrefs": [
-    "sub_1c26c"
+    "db_open_files"
    ],
    "text": "att"
   },
@@ -112719,7 +112747,7 @@
    "size": 2,
    "kind": "string",
    "xrefs": [
-    "sub_1c26c"
+    "db_open_files"
    ],
    "text": "B"
   },
@@ -112729,7 +112757,7 @@
    "size": 2,
    "kind": "string",
    "xrefs": [
-    "sub_1c26c"
+    "db_open_files"
    ],
    "text": "C"
   },
@@ -112739,7 +112767,7 @@
    "size": 7,
    "kind": "string",
    "xrefs": [
-    "sub_1c26c"
+    "db_open_files"
    ],
    "text": "season"
   },
@@ -112749,7 +112777,7 @@
    "size": 2,
    "kind": "string",
    "xrefs": [
-    "sub_1c26c"
+    "db_open_files"
    ],
    "text": "J"
   },
@@ -112759,7 +112787,7 @@
    "size": 2,
    "kind": "string",
    "xrefs": [
-    "sub_1c26c"
+    "db_open_files"
    ],
    "text": "K"
   },
@@ -112769,7 +112797,7 @@
    "size": 7,
    "kind": "string",
    "xrefs": [
-    "sub_1c26c"
+    "db_open_files"
    ],
    "text": "career"
   },
@@ -126444,7 +126472,7 @@
    "size": 4,
    "kind": "string",
    "xrefs": [
-    "sub_8f13b"
+    "music_load_kms"
    ],
    "text": "KMS"
   },
@@ -126454,7 +126482,7 @@
    "size": 4,
    "kind": "string",
    "xrefs": [
-    "sub_8f13b"
+    "music_load_kms"
    ],
    "text": "CFG"
   },
@@ -129375,7 +129403,7 @@
     "demo_game",
     "pause_menu",
     "sub_1befd",
-    "sub_1c3f6",
+    "db_load_team_roster",
     "team_select_screen",
     "boxscore_screen",
     "exhibition_mode",
@@ -131827,17 +131855,20 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_1c3f6"
+    "db_load_team_roster"
    ]
   },
   {
-   "name": "dword_c66c4",
+   "name": "hud_window",
    "addr": 812740,
    "size": 4,
    "kind": null,
    "xrefs": [
     "main",
     "select_game_surface"
+   ],
+   "comments": [
+    "the 320x32 scoreboard window below the ice view (subwindowdefadr at y 0xa8)"
    ]
   },
   {
@@ -133835,14 +133866,17 @@
    ]
   },
   {
-   "name": "aBOS_c7298",
+   "name": "rink_logo_table",
    "addr": 815768,
    "size": 4,
    "kind": "string",
    "xrefs": [
     "load_rink"
    ],
-   "text": "BOS"
+   "text": "BOS",
+   "comments": [
+    "26 x 12 bytes: TIL/MAP base name, tile column/row of the centre ice logo and of its mirrored second half"
+   ]
   },
   {
    "name": "unk_c729a",
@@ -138898,7 +138932,7 @@
    "kind": null,
    "xrefs": [
     "reset_game_state",
-    "sub_15707",
+    "draw_energy_bar",
     "init_match",
     "start_period",
     "ai_puck_faceoff",
@@ -139588,7 +139622,7 @@
    ]
   },
   {
-   "name": "word_cc0b0",
+   "name": "marker_frames",
    "addr": 835760,
    "size": 2,
    "kind": null,
@@ -139601,16 +139635,22 @@
     "process_infractions",
     "update_stoppage",
     "replay_draw_frame"
+   ],
+   "comments": [
+    "-1, then the frames drawn under user 1 (0x185), user 2 (0x186) and the puck carrier (0x187)"
    ]
   },
   {
-   "name": "dword_cc0b4",
+   "name": "arrow_frames",
    "addr": 835764,
    "size": 4,
    "kind": null,
    "xrefs": [
     "draw_sprites",
     "replay_draw_frame"
+   ],
+   "comments": [
+    "from +4: off screen arrow frames per clip direction, 8 per user"
    ]
   },
   {
@@ -139712,7 +139752,7 @@
    ]
   },
   {
-   "name": "dword_cc0e0",
+   "name": "effect_bank",
    "addr": 835808,
    "size": 4,
    "kind": null,
@@ -139720,6 +139760,9 @@
     "load_effect_frames",
     "sub_1ba85",
     "savegame_io"
+   ],
+   "comments": [
+    "F000149.PPV (effect_frames)"
    ]
   },
   {
@@ -149611,7 +149654,7 @@
    "xrefs": [
     "sub_a2000",
     "sub_afae0",
-    "sub_b4cf2",
+    "blit_rle_frame_home",
     "sub_b4e6a",
     "sub_b5026",
     "sub_b52ce",
@@ -149653,7 +149696,7 @@
     "grabshape",
     "sub_96440",
     "sub_96620",
-    "sub_b4cf2",
+    "blit_rle_frame_home",
     "sub_b4e6a",
     "sub_b5026",
     "sub_b52ce",
@@ -150114,7 +150157,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_8f13b"
+    "music_load_kms"
    ]
   },
   {
@@ -150123,7 +150166,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_8f13b"
+    "music_load_kms"
    ]
   },
   {
@@ -150132,7 +150175,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_8f4c4"
+    "snd_play_patch"
    ]
   },
   {
@@ -151829,7 +151872,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_8f4c4",
+    "snd_play_patch",
     "sound_stopall",
     "sub_8f67d",
     "sfx_enable",
@@ -151864,7 +151907,7 @@
    "size": 4,
    "kind": null,
    "xrefs": [
-    "sub_8f4c4",
+    "snd_play_patch",
     "sub_8f67d",
     "sub_8f8b7",
     "sub_990cb",
@@ -158339,7 +158382,7 @@
    ]
   },
   {
-   "name": "dword_d8c68",
+   "name": "rinkend_bank",
    "addr": 887912,
    "size": 4,
    "kind": null,
@@ -158347,6 +158390,9 @@
     "load_rink_end_shapes",
     "sub_1b982",
     "highlights_play"
+   ],
+   "comments": [
+    "trinknd.PPV"
    ]
   },
   {
@@ -158366,13 +158412,16 @@
    ]
   },
   {
-   "name": "dword_d8c70",
+   "name": "rinkend_shape",
    "addr": 887920,
    "size": 4,
    "kind": null,
    "xrefs": [
     "sub_11136",
     "load_rink_end_shapes"
+   ],
+   "comments": [
+    "trinknd '0000'"
    ]
   },
   {
@@ -158443,7 +158492,7 @@
    ]
   },
   {
-   "name": "dword_d8c80",
+   "name": "numshp_bank",
    "addr": 887936,
    "size": 4,
    "kind": null,
@@ -158452,6 +158501,9 @@
     "sub_13bb4",
     "sub_1b982",
     "highlights_play"
+   ],
+   "comments": [
+    "numshp.PPV: digits and position letters drawn under the players"
    ]
   },
   {
@@ -158819,7 +158871,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_1c3f6",
+    "db_load_team_roster",
     "sub_5b881",
     "savegame_io"
    ]
@@ -158840,7 +158892,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_1c3f6",
+    "db_load_team_roster",
     "compare_player_stats",
     "sub_5b881",
     "savegame_io",
@@ -158991,7 +159043,7 @@
    "kind": null,
    "xrefs": [
     "sub_1bbcc",
-    "sub_1c3f6",
+    "db_load_team_roster",
     "sub_1c852",
     "draw_team_logos",
     "boxscore_screen",
@@ -159030,7 +159082,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_1c3f6",
+    "db_load_team_roster",
     "ai_ref_three_stars",
     "ai_ref_pickup_puck",
     "show_penalty",
@@ -159051,7 +159103,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_1c3f6",
+    "db_load_team_roster",
     "sub_644a8",
     "sub_6455f",
     "lineup_player_ok",
@@ -159120,7 +159172,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_1c3f6",
+    "db_load_team_roster",
     "draw_team_logos",
     "boxscore_screen",
     "edit_lines_keys"
@@ -159132,7 +159184,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_1c3f6",
+    "db_load_team_roster",
     "edit_lines_keys"
    ]
   },
@@ -159443,7 +159495,7 @@
    "kind": null,
    "xrefs": [
     "sub_1befd",
-    "sub_1c3f6",
+    "db_load_team_roster",
     "league_calendar_flow",
     "save_game",
     "savegame_io",
@@ -159458,7 +159510,7 @@
    "kind": null,
    "xrefs": [
     "sub_1befd",
-    "sub_1c3f6",
+    "db_load_team_roster",
     "league_calendar_flow",
     "save_game",
     "savegame_io",
@@ -159467,7 +159519,7 @@
    ]
   },
   {
-   "name": "unk_dc26c",
+   "name": "shapes_lines",
    "addr": 901740,
    "size": 0,
    "kind": null,
@@ -159475,6 +159527,9 @@
     "draw_line_indicator",
     "show_scoreboard",
     "load_scoreboard_shapes"
+   ],
+   "comments": [
+    "'lin1'..'lin4' 'PP1' 'PP2' 'PK1' 'PK2' labels"
    ]
   },
   {
@@ -159512,23 +159567,29 @@
    ]
   },
   {
-   "name": "dword_dc2bc",
+   "name": "shape_homp",
    "addr": 901820,
    "size": 4,
    "kind": null,
    "xrefs": [
     "draw_clock",
     "load_scoreboard_shapes"
+   ],
+   "comments": [
+    "'homp' panel (home penalties)"
    ]
   },
   {
-   "name": "dword_dc2c0",
+   "name": "shape_visp",
    "addr": 901824,
    "size": 4,
    "kind": null,
    "xrefs": [
     "draw_clock",
     "load_scoreboard_shapes"
+   ],
+   "comments": [
+    "'visp' panel (visitor penalties)"
    ]
   },
   {
@@ -159545,7 +159606,7 @@
    ]
   },
   {
-   "name": "dword_dc2f0",
+   "name": "scoreboard_bank",
    "addr": 901872,
    "size": 4,
    "kind": null,
@@ -159553,26 +159614,35 @@
     "sub_1b982",
     "load_scoreboard_shapes",
     "highlights_play"
+   ],
+   "comments": [
+    "scrbrd1.PPV"
    ]
   },
   {
-   "name": "unk_dc2f4",
+   "name": "shapes_hlin",
    "addr": 901876,
    "size": 0,
    "kind": null,
    "xrefs": [
     "draw_clock",
     "load_scoreboard_shapes"
+   ],
+   "comments": [
+    "'hlin' 'hpp' 'hpk' home line panels"
    ]
   },
   {
-   "name": "unk_dc300",
+   "name": "shapes_vlin",
    "addr": 901888,
    "size": 0,
    "kind": null,
    "xrefs": [
     "draw_clock",
     "load_scoreboard_shapes"
+   ],
+   "comments": [
+    "'vlin' 'vpp' 'vpk' visitor line panels"
    ]
   },
   {
@@ -160036,7 +160106,7 @@
    ]
   },
   {
-   "name": "unk_dc8d8",
+   "name": "remap_away",
    "addr": 903384,
    "size": 0,
    "kind": null,
@@ -160047,6 +160117,9 @@
     "team_roster_screen",
     "sub_40792",
     "load_team_palettes"
+   ],
+   "comments": [
+    "colour remap table of the away team (AWAYPALS.BIN + 0xc0, entries 0x90.. + 0x40)"
    ]
   },
   {
@@ -160077,7 +160150,7 @@
    ]
   },
   {
-   "name": "unk_dc9d8",
+   "name": "remap_home",
    "addr": 903640,
    "size": 0,
    "kind": null,
@@ -160089,6 +160162,9 @@
     "sub_40792",
     "load_team_palettes",
     "locker_room_screen"
+   ],
+   "comments": [
+    "256 byte colour remap table of the home team (HOMEPALS.BIN + 0xc0), installed by blit_sprite"
    ]
   },
   {
@@ -161934,7 +162010,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_1c3f6",
+    "db_load_team_roster",
     "goal_milestone_check"
    ]
   },
@@ -161944,7 +162020,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_1c3f6",
+    "db_load_team_roster",
     "goal_milestone_check"
    ]
   },
@@ -161954,7 +162030,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_1c3f6",
+    "db_load_team_roster",
     "show_penalty",
     "goal_milestone_check"
    ]
@@ -161965,7 +162041,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_1c3f6",
+    "db_load_team_roster",
     "goal_milestone_check"
    ]
   },
@@ -162156,7 +162232,7 @@
     "cpu_line_change",
     "cpu_pull_goalie_check",
     "late_game_pull_goalie",
-    "sub_5a2ee",
+    "line_energy",
     "score_goal",
     "put_player_on_ice",
     "sub_5b881",
@@ -162503,7 +162579,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_1c3f6",
+    "db_load_team_roster",
     "sub_487d9",
     "dump_stats_log"
    ]
@@ -162523,7 +162599,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_1c3f6"
+    "db_load_team_roster"
    ]
   },
   {
@@ -162712,7 +162788,7 @@
     "cpu_line_change",
     "cpu_pull_goalie_check",
     "choose_line",
-    "sub_5a2ee",
+    "line_energy",
     "score_goal",
     "put_player_on_ice",
     "sub_5b97a",
@@ -169609,7 +169685,7 @@
    "xrefs": [
     "sub_8eb93",
     "sub_8ebe2",
-    "sub_8f13b",
+    "music_load_kms",
     "sub_8f1fe",
     "sub_8f247",
     "sub_8f27a"
@@ -169646,7 +169722,7 @@
    ]
   },
   {
-   "name": "dword_ede5c",
+   "name": "snd_patch_bank",
    "addr": 974428,
    "size": 4,
    "kind": null,
@@ -169654,8 +169730,11 @@
     "sub_8ebe2",
     "sub_8ee2f",
     "sub_8efbb",
-    "sub_8f0d7",
+    "snd_patch_record",
     "sub_8f114"
+   ],
+   "comments": [
+    "the loaded .PAT sound bank (snd_patch_record)"
    ]
   },
   {
@@ -170134,7 +170213,7 @@
    "size": 0,
    "kind": null,
    "xrefs": [
-    "sub_8f4c4",
+    "snd_play_patch",
     "sub_8f67d",
     "sub_8f8b7",
     "sub_990cb",

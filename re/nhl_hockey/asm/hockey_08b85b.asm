@@ -912,7 +912,7 @@ select_game_surface:
     push ebx                                     ; 08c1cc 53
     push ecx                                     ; 08c1cd 51
     push edx                                     ; 08c1ce 52
-    mov edx, dword ptr [dword_c66c4]             ; 08c1cf 8b15c4660c00
+    mov edx, dword ptr [hud_window]              ; 08c1cf 8b15c4660c00
 loc_8c1d5:
     push edx                                     ; 08c1d5 52
     call setscreen                               ; 08c1d6 e8958d0200
@@ -6175,7 +6175,7 @@ loc_8ec9d:
     cmp ax, 4                                    ; 08ec9d 663d0400
     jl loc_8ec89                                 ; 08eca1 7ce6
     xor esi, esi                                 ; 08eca3 31f6
-    mov dword ptr [dword_ede5c], esi             ; 08eca5 89355cde0e00
+    mov dword ptr [snd_patch_bank], esi          ; 08eca5 89355cde0e00
     mov dword ptr [dword_d4f64], esi             ; 08ecab 8935644f0d00
     mov dword ptr [dword_d4f96], 0xffffffff      ; 08ecb1 c705964f0d00ffff..
     jmp loc_8f1f8                                ; 08ecbb e938050000
@@ -6342,7 +6342,7 @@ sub_8ee2f:
     mov edx, eax                                 ; 08ee30 89c2
     mov eax, 2                                   ; 08ee32 b802000000
     call sub_59493                               ; 08ee37 e857a6fcff
-    mov dword ptr [dword_ede5c], eax             ; 08ee3c a35cde0e00
+    mov dword ptr [snd_patch_bank], eax          ; 08ee3c a35cde0e00
     pop edx                                      ; 08ee41 5a
     ret                                          ; 08ee42 c3
 
@@ -6545,7 +6545,7 @@ sub_8efbb:
     push edx                                     ; 08efbd 52
     push ebp                                     ; 08efbe 55
     sub esp, 8                                   ; 08efbf 83ec08
-    cmp dword ptr [dword_ede5c], 0               ; 08efc2 833d5cde0e0000
+    cmp dword ptr [snd_patch_bank], 0            ; 08efc2 833d5cde0e0000
     je loc_8f0cf                                 ; 08efc9 0f8400010000
     xor ebx, ebx                                 ; 08efcf 31db
     mov dword ptr [esp], ebx                     ; 08efd1 891c24
@@ -6554,7 +6554,7 @@ loc_8efdb:
     xor eax, eax                                 ; 08efdb 31c0
     mov al, byte ptr [esp]                       ; 08efdd 8a0424
     push eax                                     ; 08efe0 50
-    call sub_8f0d7                               ; 08efe1 e8f1000000
+    call snd_patch_record                        ; 08efe1 e8f1000000
     add esp, 4                                   ; 08efe6 83c404
     mov ebx, eax                                 ; 08efe9 89c3
     test eax, eax                                ; 08efeb 85c0
@@ -6648,13 +6648,14 @@ loc_8f0cf:
 
 
 ; ====================================================================================================
-; sub_8f0d7  [0x8f0d7, 61 bytes, 24 instructions]
-; called by: sub_8efbb, sub_8f114, sub_8f4c4, sub_990cb, sub_9e026, sub_9fc24, sub_a08d7
+; snd_patch_record  [0x8f0d7, 61 bytes, 24 instructions]
+; record of a sound id in the loaded .PAT bank (256 byte id map at +2, 0x14 byte records from +0x102)
+; called by: sub_8efbb, sub_8f114, snd_play_patch, sub_990cb, sub_9e026, sub_9fc24, sub_a08d7
 ; ====================================================================================================
-sub_8f0d7:
+snd_patch_record:
     push ds                                      ; 08f0d7 1e
     call sub_902a0                               ; 08f0d8 e8c3110000
-    mov edx, dword ptr [dword_ede5c]             ; 08f0dd 8b155cde0e00
+    mov edx, dword ptr [snd_patch_bank]          ; 08f0dd 8b155cde0e00
     test edx, edx                                ; 08f0e3 85d2
     jne loc_8f0eb                                ; 08f0e5 7504
 loc_8f0e7:
@@ -6688,7 +6689,7 @@ loc_8f0eb:
 sub_8f114:
     push ds                                      ; 08f114 1e
     call sub_902a0                               ; 08f115 e886110000
-    cmp dword ptr [dword_ede5c], 0               ; 08f11a 833d5cde0e0000
+    cmp dword ptr [snd_patch_bank], 0            ; 08f11a 833d5cde0e0000
     jne loc_8f127                                ; 08f121 7504
     xor eax, eax                                 ; 08f123 31c0
     pop ds                                       ; 08f125 1f
@@ -6698,7 +6699,7 @@ loc_8f127:
     xor eax, eax                                 ; 08f127 31c0
     mov al, byte ptr [esp + 8]                   ; 08f129 8a442408
     push eax                                     ; 08f12d 50
-    call sub_8f0d7                               ; 08f12e e8a4ffffff
+    call snd_patch_record                        ; 08f12e e8a4ffffff
     add esp, 4                                   ; 08f133 83c404
     mov eax, dword ptr [eax + 0x10]              ; 08f136 8b4010
     pop ds                                       ; 08f139 1f
@@ -6706,12 +6707,13 @@ loc_8f127:
 
 
 ; ====================================================================================================
-; sub_8f13b  [0x8f13b, 195 bytes, 65 instructions]
+; music_load_kms  [0x8f13b, 195 bytes, 65 instructions]
+; loads a .KMS music sequence and its .CFG into a free music slot
 ; called by: awards_screen, ea_sports_intro, credits_screen, boxscore_screen, team_select_screen2, load_music_banks, load_sound_config, sub_8f48f
 ;   uses string "KMS"
 ;   uses string "CFG"
 ; ====================================================================================================
-sub_8f13b:
+music_load_kms:
     push ebx                                     ; 08f13b 53
     push ecx                                     ; 08f13c 51
     push edx                                     ; 08f13d 52
@@ -6824,7 +6826,7 @@ loc_8f244:
 
 ; ====================================================================================================
 ; sub_8f247  [0x8f247, 41 bytes, 20 instructions]
-; called by: sub_8f13b, sub_8f1fe, sub_8f4a7
+; called by: music_load_kms, sub_8f1fe, sub_8f4a7
 ; ====================================================================================================
 sub_8f247:
     push ecx                                     ; 08f247 51
@@ -7081,7 +7083,7 @@ loc_8f48a:
 ; ====================================================================================================
 sub_8f48f:
     push ebx                                     ; 08f48f 53
-    call sub_8f13b                               ; 08f490 e8a6fcffff
+    call music_load_kms                          ; 08f490 e8a6fcffff
     test eax, eax                                ; 08f495 85c0
     je loc_8f4a0                                 ; 08f497 7407
     xor ebx, ebx                                 ; 08f499 31db
@@ -7113,10 +7115,11 @@ loc_8f4bd:
 
 
 ; ====================================================================================================
-; sub_8f4c4  [0x8f4c4, 345 bytes, 109 instructions]
-; called by: sub_8f61d
+; snd_play_patch  [0x8f4c4, 345 bytes, 109 instructions]
+; sound driver: plays a sound id as a MIDI note; ids >= 0x80 are percussion notes (channel 9, note id - 0x74), ids < 0x80 program changes on channels 12..15
+; called by: snd_play_sfx
 ; ====================================================================================================
-sub_8f4c4:
+snd_play_patch:
     push ecx                                     ; 08f4c4 51
     push esi                                     ; 08f4c5 56
     push edi                                     ; 08f4c6 57
@@ -7140,7 +7143,7 @@ loc_8f4f1:
     xor eax, eax                                 ; 08f4f1 31c0
     mov al, byte ptr [esp]                       ; 08f4f3 8a0424
     push eax                                     ; 08f4f6 50
-    call sub_8f0d7                               ; 08f4f7 e8dbfbffff
+    call snd_patch_record                        ; 08f4f7 e8dbfbffff
     add esp, 4                                   ; 08f4fc 83c404
     test eax, eax                                ; 08f4ff 85c0
     je loc_8f4d7                                 ; 08f501 74d4
@@ -7241,16 +7244,17 @@ loc_8f616:
 
 
 ; ====================================================================================================
-; sub_8f61d  [0x8f61d, 22 bytes, 9 instructions]
+; snd_play_sfx  [0x8f61d, 22 bytes, 9 instructions]
+; plays a sound effect id at full volume (play_sfx -> snd_play_patch(id, 0, 0x7f))
 ; called by: play_sfx
 ; ====================================================================================================
-sub_8f61d:
+snd_play_sfx:
     push ebx                                     ; 08f61d 53
     push edx                                     ; 08f61e 52
     and eax, 0xffff                              ; 08f61f 25ffff0000
     mov ebx, 0x7f                                ; 08f624 bb7f000000
     xor edx, edx                                 ; 08f629 31d2
-    call sub_8f4c4                               ; 08f62b e894feffff
+    call snd_play_patch                          ; 08f62b e894feffff
     pop edx                                      ; 08f630 5a
     pop ebx                                      ; 08f631 5b
     ret                                          ; 08f632 c3
@@ -8361,7 +8365,7 @@ loc_8fec2:
 
 ; ====================================================================================================
 ; sub_8fed2  [0x8fed2, 76 bytes, 23 instructions]
-; called by: loadpatches, sub_8f13b
+; called by: loadpatches, music_load_kms
 ; ====================================================================================================
 sub_8fed2:
     push ecx                                     ; 08fed2 51
@@ -8391,7 +8395,7 @@ sub_8fed2:
 
 ; ====================================================================================================
 ; sub_8ff1e  [0x8ff1e, 32 bytes, 17 instructions]
-; called by: sub_8ee43, sub_8ef76, sub_8f13b, sub_8f1fe
+; called by: sub_8ee43, sub_8ef76, music_load_kms, sub_8f1fe
 ; ====================================================================================================
 sub_8ff1e:
     push ebx                                     ; 08ff1e 53
@@ -8762,7 +8766,7 @@ loc_9028a:
 
 ; ====================================================================================================
 ; sub_902a0  [0x902a0, 9 bytes, 2 instructions]
-; called by: sub_8e45c, sub_8f0d7, sub_8f114, sub_972ab, sub_972b8, sub_972c0, sub_972c8, sub_972d5, sub_972dd, sub_972e5, sub_9d698, sub_9d6e6 (+38 more)
+; called by: sub_8e45c, snd_patch_record, sub_8f114, sub_972ab, sub_972b8, sub_972c0, sub_972c8, sub_972d5, sub_972dd, sub_972e5, sub_9d698, sub_9d6e6 (+38 more)
 ; ====================================================================================================
 sub_902a0:
     mov ds, word ptr cs:[word_90048]             ; 0902a0 662e8e1d48000900
@@ -8928,7 +8932,7 @@ loc_9038d:
 ; ====================================================================================================
 ; strcpy  [0x90392, 31 bytes, 15 instructions]
 ; annotations: external
-; called by: play_game, league_leaders_screen, team_abbrev_lookup, make_path, sub_14368, sub_14442, export_stats_dialog, sub_1c3f6, sub_1c807, sub_1c852, sub_1cb7f, sub_1d518 (+60 more)
+; called by: play_game, league_leaders_screen, team_abbrev_lookup, make_path, sub_14368, sub_14442, export_stats_dialog, db_load_team_roster, sub_1c807, sub_1c852, sub_1cb7f, sub_1d518 (+60 more)
 ; ====================================================================================================
 strcpy:
     push ecx                                     ; 090392 51
@@ -9889,7 +9893,7 @@ sub_90b50:
 loc_90b64:
     push esi                                     ; 090b64 56
     push ebp                                     ; 090b65 55
-    call sub_b30bb                               ; 090b66 e850250200
+    call locateshape_fast                        ; 090b66 e850250200
     add esp, 8                                   ; 090b6b 83c408
     mov dword ptr [edi], eax                     ; 090b6e 8907
     add edi, 4                                   ; 090b70 83c704
@@ -9905,10 +9909,11 @@ loc_90b7b:
     db 0x90 ; 090b7f |.| (padding)
 
 ; ====================================================================================================
-; sub_90b80  [0x90b80, 47 bytes, 21 instructions]
+; locateshapes  [0x90b80, 47 bytes, 21 instructions]
+; fills an array with locateshape() of a list of 4 character tags
 ; called by: load_player_graphics, load_scoreboard_shapes
 ; ====================================================================================================
-sub_90b80:
+locateshapes:
     push esi                                     ; 090b80 56
     push edi                                     ; 090b81 57
     push ebp                                     ; 090b82 55
@@ -9938,7 +9943,7 @@ loc_90bab:
 ; ====================================================================================================
 ; _dos_findfirst  [0x90bb0, 29 bytes, 15 instructions]  <dos_findfirst dos_set_dta>
 ; annotations: external
-; called by: sub_14368, sub_14442, check_disk_space_for_game, sub_149bf, sub_1bbcc, sub_1c26c, scan_league_dirs, league_name_prompt, sub_3c3af, player_db_sync, load_league_list, new_league_dialog (+11 more)
+; called by: sub_14368, sub_14442, check_disk_space_for_game, sub_149bf, sub_1bbcc, db_open_files, scan_league_dirs, league_name_prompt, sub_3c3af, player_db_sync, load_league_list, new_league_dialog (+11 more)
 ; ====================================================================================================
 _dos_findfirst:
     push ecx                                     ; 090bb0 51
@@ -10152,7 +10157,7 @@ loc_90ca1:
 ; ====================================================================================================
 ; lseek  [0x90ca8, 65 bytes, 26 instructions]  <dos_lseek>
 ; annotations: external
-; called by: file_read, file_write, sub_1bbcc, sub_1c0af, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, sub_61a8a, sub_61c22 (+14 more)
+; called by: file_read, file_write, sub_1bbcc, db_read_player, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, sub_61a8a, sub_61c22 (+14 more)
 ; ====================================================================================================
 lseek:
     push ecx                                     ; 090ca8 51
@@ -10228,7 +10233,7 @@ sub_90d14:
 ; fillrect  [0x90d20, 415 bytes, 131 instructions]
 ; fillrect(x, y, w, h, color)
 ; annotations: external
-; called by: sub_15707, draw_line_box, sub_29d00, team_select_screen, league_dialog_box, sub_2c46b, draw_dialog_frame, sub_302b9, draw_penalty_box_overlay, draw_message_box, draw_box, highlight_menu_item (+20 more)
+; called by: draw_energy_bar, draw_line_box, sub_29d00, team_select_screen, league_dialog_box, sub_2c46b, draw_dialog_frame, sub_302b9, draw_penalty_box_overlay, draw_message_box, draw_box, highlight_menu_item (+20 more)
 ; ====================================================================================================
 fillrect:
     push esi                                     ; 090d20 56

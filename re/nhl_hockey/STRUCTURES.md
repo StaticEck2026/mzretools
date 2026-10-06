@@ -281,3 +281,18 @@ steer the won draw with the direction held at the drop (`faceoff_dir_*`).
 | 0xccb18 | `breakaway_waypoints` | `ai_breakaway` lanes (x, y, trigger y) |
 | 0xcca5a | `goalie_save_anims` | `ai_goalie` save animation per direction class |
 | 0xcbd5a | `entity_init` | initial entity records (positions on the bench, nets at ±236, puck 5x5, referee) |
+
+## Rendering (`game_loop`, `draw_rink`, `draw_sprites`, `draw_clock`)
+
+The screen is 320x200 (`set_video_mode(0x140, 200)`): the ice view on top (320x168, a window onto the 384x592
+rink surface, scrolled by the camera clamped to 0..0x40 / 0..0x1a8) and the scoreboard `hud_window` (320x32 at
+y 0xa8). `draw_sprite_world(frame, x, y, mirror, team)` draws `sprite_frames[frame]` at (x + 0xc0, 0x140 - y)
+of the surface through the remap table of the team (`blit_sprite` -> `setremaptable(remap_home / remap_away)`,
+`blit_rle_frame*` for the run length coded frames). `draw_sprites` first draws the markers under the controlled
+players and the puck carrier (`marker_frames`: 0x185, 0x186, 0x187; `arrow_frames` when the player is off
+screen), the nets and effects (`draw_nets_and_effects`: `effect_frames` records at 0xdee94, 12 bytes each, 18
+ice marks and the two nets), the puck when it lies on the ice, then the entities in `draw_order_list` order
+(sorted by y) with `draw_player_number` (NUMSHP digits 13 pixels below the skates, the position letter for the
+controlled players and the carrier), the puck again when it is in the air, the penalty box overlay and the
+message box. `load_rink` composes the surface once per home team (`rink_logo_table`). Sound effects go through
+`play_sfx` -> `snd_play_sfx` -> `snd_play_patch` (see FORMATS.md).

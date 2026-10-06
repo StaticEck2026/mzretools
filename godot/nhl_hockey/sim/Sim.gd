@@ -29,6 +29,7 @@ var opt_injuries := false           # bit 4
 
 var entities: Array[Entity] = []
 var teams: Array[Team] = []
+var team_info: Array = [null, null]  # Database.TeamInfo of the home and the away team (null: placeholders)
 var puck: Entity
 var shadow: Entity
 var referee: Entity
@@ -147,10 +148,12 @@ func start_period(p: int) -> void:
 		var team := teams[t]
 		var up := (t == 0) != ends_switched     # the home team shoots at +y in the 1st and 3rd period
 		team.attacks_up = up
+		var info: Database.TeamInfo = team_info[t]
+		team.info = info
 		for i in 6:
 			var e := entities[t * 6 + i]
 			e.line_slot = i
-			e.roster_idx = 25 if i == 0 else i - 1
+			e.roster_idx = lineup_roster_index(info, i)
 			e.flags &= ~(Entity.F_ATTACK_UP | Entity.F_USER | Entity.F_BUSY | Entity.F_BACKWARDS)
 			if up:
 				e.flags |= Entity.F_ATTACK_UP
@@ -158,7 +161,11 @@ func start_period(p: int) -> void:
 			e.state_sp = 0
 			e.state_stack[0] = Entity.State.INIT_PERIOD
 			team.entity_of[e.roster_idx] = e.slot
-			_default_skills(e)
+			var player: Database.Player = info.player(e.roster_idx) if info != null else null
+			if player != null:
+				dress_player(e, player)
+			else:
+				_default_skills(e)
 	play_stopped = true
 	faceoff_x = 0
 	faceoff_y = 0
@@ -179,9 +186,76 @@ func start_period(p: int) -> void:
 		user2_slot = (user2_team - 1) * 6 + 4
 		entities[user2_slot].flags |= Entity.F_USER | Entity.F_PLAYER2
 
+## Selects the teams from the databases (Database.load_team); call before the first step
+func set_teams(home: Database.TeamInfo, away: Database.TeamInfo) -> void:
+	team_info = [home, away]
+	start_period(0)
+
+## The roster index dressed in line slot `slot` (0 goalie, 1 LD, 2 RD, 3 LW, 4 C, 5 RW): the first
+## forward line, the first defence pair and the first goalie of the team's line table
+## (apply_line_change with line 0); without a database the placeholder order is used
+func lineup_roster_index(info: Database.TeamInfo, slot: int) -> int:
+	var fallback := 25 if slot == 0 else slot - 1
+	if info == null:
+		return fallback
+	var idx := fallback
+	match slot:
+		0: idx = info.goalie_order[0]
+		1: idx = info.defense[0][0]
+		2: idx = info.defense[0][1]
+		3: idx = info.forwards[0][0]
+		4: idx = info.forwards[0][1]
+		5: idx = info.forwards[0][2]
+	if idx < 0 or idx > 27 or info.player(idx) == null:
+		return fallback
+	return idx
+
+## put_player_on_ice (0x5b2a4): copies the ratings of the player database into the entity.
+## Skaters (0x14 bytes): [0] hand (1 = left; right handed players are drawn mirrored),
+## [1] agility -> +0x58, [2] speed -> +0x57 (both minus 3), [3] weight class, [4] shot power,
+## [5] aggressiveness, [6] defensive awareness -> +0x60, [7] shot accuracy, [9] passing,
+## [10] offensive awareness -> reaction (inverted), [11] -> awareness (inverted), [12] checking,
+## [13] stick handling, [14] -> +0x5f. Goalies (0x10 bytes): [0] hand, [1] -> +0x62, [2] passing,
+## [3] -> +0x5f, [4] stick handling, [5] shooting, [6] agility, [7] speed, [8] weight,
+## [10]/[11] -> reaction / awareness. The strategy and late game bonuses of the original are 0 here.
+func dress_player(e: Entity, p: Database.Player) -> void:
+	var r := p.ratings
+	e.number = p.number
+	e.left_handed = r[0]
+	e.flags4 &= ~Entity.F4_MIRROR
+	if r[0] == 0:
+		e.flags4 |= Entity.F4_MIRROR
+	e.energy = 0x1000
+	if not p.goalie:
+		e.stamina = r[1] - mini(r[1], 3)
+		e.speed_skill = r[2] - mini(r[2], 3)
+		e.weight = r[3]
+		e.shot_skill = r[4]
+		e.aggression = mini(r[5], 15)
+		e.goalie_skill = clampi(r[6], 0, 15)
+		e.shot_accuracy = clampi(r[7], 0, 15)
+		e.pass_skill = clampi(r[9], 0, 15)
+		e.reaction = ((clampi(r[10], 0, 15) ^ 0xf) + 0xf) >> 1
+		e.awareness = ((clampi(r[11], 0, 15) ^ 0xf) + 0xf) >> 1
+		e.check_skill = r[12]
+		e.stick_skill = r[13]
+		e.offense = mini(r[14], 15)
+	else:
+		e.check_skill = r[1]
+		e.pass_skill = r[2]
+		e.offense = r[3]
+		e.stick_skill = r[4]
+		e.shot_skill = r[5]
+		e.stamina = r[6] - mini(r[6], 3)
+		e.speed_skill = r[7] - mini(r[7], 3)
+		e.weight = r[8]
+		e.reaction = ((clampi(r[10], 0, 15) ^ 0xf) + 0xf) >> 1
+		e.awareness = ((clampi(r[11], 0, 15) ^ 0xf) + 0xf) >> 1
+		e.goalie_skill = r[9]
+
 ## default ratings in the 0..15 scale of the player database (put_player_on_ice would read them)
 func _default_skills(e: Entity) -> void:
-	e.weight = 128 + (e.slot % 3) * 10
+	e.weight = 8 + (e.slot % 3)
 	e.speed_skill = 9 if e.line_slot > 0 else 5
 	e.stamina = 8
 	e.reaction = 6

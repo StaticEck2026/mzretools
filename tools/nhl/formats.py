@@ -76,8 +76,12 @@ def refpack_decompress(data):
                 out.append(out[start + i])
         if b >= 0xfc:
             break
-    if size and len(out) != size:
+    if size and len(out) < size:
         raise PackError(f"size mismatch: header {size}, got {len(out)}")
+    if size and len(out) > size:
+        # a few banks (EADESK0, the JER*.QFS jerseys...) carry up to three bytes of padding
+        # behind the last code; the game's unpack() only ever writes `size` bytes
+        del out[size:]
     return bytes(out)
 
 def delta_decompress(data):
@@ -119,6 +123,29 @@ def unpack(data):
 # SHPI shape banks
 # ----------------------------------------------------------------------------------------------
 
+def rle_decode(raw, count):
+    '''Pixel stream of the sprite frames (blit_sprite -> sub_b4cd8): a count byte c followed by
+    c > 0: one colour byte repeated c times (0xff = c transparent pixels, the blitter skips them),
+    c >= 0x80 (negative): -c literal colour bytes, c == 0: end of the frame.'''
+    out = bytearray()
+    i = 0
+    n = len(raw)
+    while i < n and len(out) < count:
+        c = raw[i]
+        i += 1
+        if c == 0:
+            break
+        if c < 0x80:
+            out += bytes([raw[i]]) * c
+            i += 1
+        else:
+            k = 0x100 - c
+            out += raw[i:i + k]
+            i += k
+    if len(out) < count:
+        out += b'\xff' * (count - len(out))
+    return bytes(out[:count])
+
 class Shape:
     '''One entry of an SHPI bank.
     code: EA image code (0x7b = 8 bpp indexed, 0x2d/0x2a/0x24 = palettes, others unsupported)
@@ -134,10 +161,18 @@ class Shape:
         self.x = xpos & 0x0fff
         self.y = ypos & 0x0fff
         self.flags = (xpos >> 12) | ((ypos >> 12) << 4)
+        self.transparent = 0
+        if self.code & 0x80:
+            # sprite frames (.PPV, codes 0xfb/0x80/0x81): run length coded pixels, see rle_decode();
+            # the three bytes after the code are not a block size for these
+            self.block_size = 0
         self.raw = data[offset + 16: offset + 16 + max(self.block_size - 16, 0)] if self.block_size else data[offset + 16:]
         self.pixels = None
         self.palette = None
-        if self.code == 0x7b:
+        if self.code & 0x80:
+            self.pixels = rle_decode(self.raw, self.width * self.height)
+            self.transparent = 0xff
+        elif self.code == 0x7b:
             self.pixels = self.raw[:self.width * self.height]
         elif self.code in (0x2d, 0x2a, 0x24, 0x29, 0x22, 0x2f) or self.name.lower().endswith('pal'):
             self.palette = decode_palette(self.raw, self.code, self.width or 256)
@@ -200,6 +235,117 @@ class ShapeBank:
         return None
 
 # ----------------------------------------------------------------------------------------------
+# Game palette and jersey colours (load_team_palettes, blit_sprite)
+# ----------------------------------------------------------------------------------------------
+
+def game_palette(gamedir, home, away):
+    '''Palette of the match screen as built by load_team_palettes(): RINKPAL.QFS '!pal' gives
+    entries 0..0x7f and 0xfb..0xff, HOMEPALS.BIN[home] the 64 home jersey colours at 0x80..0xbf and
+    AWAYPALS.BIN[away] the away colours at 0xc0..0xff (0x1c0 bytes per team: 0xc0 palette bytes
+    followed by a 256 byte colour remap table). Returns (palette as (r, g, b) tuples, remap_home,
+    remap_away); the away remap adds 0x40 to its entries 0x90..0xff so both tables point into their
+    own block. blit_sprite() pushes every sprite pixel through the remap table of the team.'''
+    import os
+    def rd(name):
+        for n in (name, name.lower()):
+            p = os.path.join(gamedir, n)
+            if os.path.exists(p):
+                with open(p, 'rb') as f:
+                    return f.read()
+        raise FileNotFoundError(name)
+    rp = ShapeBank(rd('RINKPAL.QFS')).find('!pal').raw[:0x300]
+    hp = rd('HOMEPALS.BIN')[home * 0x1c0:(home + 1) * 0x1c0]
+    ap = rd('AWAYPALS.BIN')[away * 0x1c0:(away + 1) * 0x1c0]
+    pal = bytearray(rp)
+    pal[0x180:0x240] = hp[:0xc0]
+    pal[0x240:0x300] = ap[:0xc0]
+    pal[0x2f1:0x300] = rp[0x2f1:0x300]
+    remap_home = bytearray(hp[0xc0:0x1c0])
+    remap_away = bytearray(ap[0xc0:0x1c0])
+    for i in range(0x90, 0x100):
+        remap_away[i] = (remap_away[i] + 0x40) & 0xff
+    colors = [(pal[i * 3] * 255 // 63, pal[i * 3 + 1] * 255 // 63, pal[i * 3 + 2] * 255 // 63) for i in range(256)]
+    return colors, bytes(remap_home), bytes(remap_away)
+
+def mirrored_remap(remap):
+    '''blit_sprite() swaps the entries 0xc0 + 16k + {0, 1, 3, 4} of the remap table ([0] <-> [4],
+    [1] <-> [3]) while a mirrored frame is drawn (the shading of the left/right side of the jersey).'''
+    r = bytearray(remap)
+    for k in range(4):
+        b = 0xc0 + 16 * k
+        r[b], r[b + 4] = r[b + 4], r[b]
+        r[b + 1], r[b + 3] = r[b + 3], r[b + 1]
+    return bytes(r)
+
+# ----------------------------------------------------------------------------------------------
+# Sound effects of the digital driver (PCFF001.PAT / .TIM / .DIG)
+# ----------------------------------------------------------------------------------------------
+
+class SoundBank:
+    '''The sound effects played by play_sfx() -> sub_8f4c4(): the sound id selects a record of the
+    patch file (PCFF001.PAT: +2 a 256 byte id -> record map, records of 0x14 bytes from +0x102).
+    Record: +0 1 = digital sample, 0 = FM instrument; +1 program number (1 based timbre index for
+    digital records); +7 transpose in semitones (signed). The timbre file (PCFF001.TIM: u32 size,
+    u16 count, count x (u16 0x180, u16 program), ".dig", u32 offsets) holds 32 byte timbres at
+    +0x106: +0xa u16 sample rate, +0xc u32 sample length, +0x10 u32 loop start, +0x14 u32 loop end
+    (0 = no loop), +0x19 a 5 byte sample id. The sample bank (PCFF001.DIG: u16 7ff1, u16 4, u16
+    sample count, count x 4 byte sample ids sorted ascending, at +0x82 u32 start offsets of the
+    samples 1..n-1, data from +0xf6) holds signed 8 bit PCM. Timbres are matched to the samples by
+    their length (three pairs share a length; the first match is taken for those).'''
+    PAT_RECORDS = 0x102
+    DIG_DATA = 0xf6
+
+    def __init__(self, pat, tim, dig):
+        self.pat = pat
+        count = struct.unpack_from('<H', tim, 4)[0]
+        self.timbres = []
+        for k in range(count - 1):
+            r = tim[0x106 + k * 32: 0x106 + (k + 1) * 32]
+            if len(r) < 32:
+                break
+            rate, = struct.unpack_from('<H', r, 10)
+            length, loop_start, loop_end = struct.unpack_from('<III', r, 12)
+            self.timbres.append({'rate': rate, 'length': length, 'loop': (loop_start, loop_end), 'id': r[25:30]})
+        n = struct.unpack_from('<H', dig, 4)[0]
+        starts = [0] + [struct.unpack_from('<I', dig, 0x82 + 4 * i)[0] for i in range(n - 1)]
+        ends = starts[1:] + [len(dig) - self.DIG_DATA]
+        self.samples = [dig[self.DIG_DATA + s: self.DIG_DATA + e] for s, e in zip(starts, ends)]
+        bylen = {}
+        for i, smp in enumerate(self.samples):
+            bylen.setdefault(len(smp), []).append(i)
+        self.sample_of_timbre = [bylen.get(t['length'], [None])[0] for t in self.timbres]
+
+    def record(self, sound_id):
+        idx = self.pat[2 + sound_id]
+        if idx == 0 and sound_id != 0:
+            return None
+        return self.pat[self.PAT_RECORDS + idx * 0x14: self.PAT_RECORDS + (idx + 1) * 0x14]
+
+    def effect(self, sound_id):
+        '''Returns dict(pcm (signed 8 bit), rate, loop) for a digital sound id, None for FM only ids'''
+        r = self.record(sound_id)
+        if not r or r[0] != 1 or not (1 <= r[1] <= len(self.timbres)):
+            return None
+        t = self.timbres[r[1] - 1]
+        si = self.sample_of_timbre[r[1] - 1]
+        if si is None:
+            return None
+        transpose = struct.unpack('b', bytes([r[7]]))[0]
+        rate = int(round(t['rate'] * 2 ** (transpose / 12.0)))
+        return {'pcm': self.samples[si], 'rate': rate, 'loop': t['loop'] if t['loop'][1] else None,
+                'timbre': r[1] - 1, 'sample': si, 'transpose': transpose}
+
+    def effect_ids(self):
+        return [i for i in range(256) if self.effect(i)]
+
+def write_wav_pcm8(path, pcm_signed, rate):
+    '''Writes signed 8 bit mono PCM as an (unsigned) 8 bit WAV file'''
+    data = bytes((b + 0x80) & 0xff for b in pcm_signed)
+    with open(path, 'wb') as f:
+        f.write(b'RIFF' + struct.pack('<I', 36 + len(data)) + b'WAVEfmt ' +
+                struct.pack('<IHHIIHH', 16, 1, 1, rate, rate, 1, 8) + b'data' + struct.pack('<I', len(data)) + data)
+
+# ----------------------------------------------------------------------------------------------
 # VFN fonts
 # ----------------------------------------------------------------------------------------------
 
@@ -221,6 +367,8 @@ class Font:
         self.width_tab, = struct.unpack_from('<H', data, 0x12)
         self.height_tab, self.adv_tab, self.xoff_tab, self.yoff_tab = struct.unpack_from('<4H', data, 0x14)
         self.glyph_base, = struct.unpack_from('<I', data, 0x1c)
+        if self.glyph_base >= len(data):    # +0x1c holds a tag ('FNTX', 'FNED'): the offsets are absolute
+            self.glyph_base = 0
         n = self.last - self.first + 1
         self.glyph_offsets = struct.unpack_from(f'<{n}I', data, 0x20)
 
@@ -345,6 +493,25 @@ def render_tile_map(til, mapdata):
 # ----------------------------------------------------------------------------------------------
 # PNG output
 # ----------------------------------------------------------------------------------------------
+
+def place_tile_map(surface, width, til, mapdata, col, row, mirrored=False):
+    '''load_rink_tiles(): draws the 8x8 tiles of a .MAP onto an 8 bit surface at tile (col, row);
+    with mirrored=True the map is placed right to left / bottom to top with every tile flipped
+    (the 0x6000 placement of the second logo half of some teams).'''
+    w, h = struct.unpack_from('<HH', mapdata, 0)
+    for ty in range(h):
+        for tx in range(w):
+            c, = struct.unpack_from('<H', mapdata, 6 + (ty * w + tx) * 2)
+            t = (c & 0x3ff) * 64
+            fx = bool(c & 0x2000) ^ mirrored
+            fy = bool(c & 0x4000) ^ mirrored
+            cx = col - tx if mirrored else col + tx
+            cy = row - ty if mirrored else row + ty
+            for yy in range(8):
+                for xx in range(8):
+                    p = til[t + (7 - yy if fy else yy) * 8 + (7 - xx if fx else xx)]
+                    if p != 0xff:
+                        surface[(cy * 8 + yy) * width + cx * 8 + xx] = p
 
 def write_png(path, width, height, pixels, palette=None, transparent=None):
     '''Writes an 8 bit indexed PNG (palette = list of (r,g,b)) or an RGB PNG when palette is None

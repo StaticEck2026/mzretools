@@ -5598,12 +5598,12 @@ play_sfx(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4
     if (uVar1 == 0x90) {
       iVar2 = 0x90;
       if (dword_c541f == 4) {
-        sub_8f61d(0x90);
+        snd_play_sfx(0x90);
         iVar2 = extraout_EDX;
       }
       uVar1 = iVar2 + 1;
     }
-    sub_8f61d(uVar1 & 0xffff);
+    snd_play_sfx(uVar1 & 0xffff);
   }
   return;
 }
@@ -6310,10 +6310,10 @@ int __watcall sub_5a288(int param_1,short unaff_DX,undefined4 param_3,short unaf
 
 
 // ================================================================================================
-// sub_5a2ee @ 0x5a2ee [__watcall]
+// line_energy @ 0x5a2ee [__watcall]
 // ================================================================================================
 
-int __watcall sub_5a2ee(short param_1,short unaff_DX)
+int __watcall line_energy(short param_1,short unaff_DX)
 
 {
   byte bVar1;

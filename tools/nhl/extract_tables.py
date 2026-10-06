@@ -96,6 +96,14 @@ def main():
         names.append(s)
         a += len(s) + 1
     t['team_strings'] = names
+    # load_rink: per team the .TIL/.MAP file name and the tile column/row of the centre ice logo;
+    # a second (mirrored, 0x6000) copy is placed at [2], [3] when they are >= 0 (12 byte records)
+    t['rink_tile_names'] = [cstr(le, 0xc7298 + i * 12, 4) for i in range(26)]
+    t['rink_logo'] = [shorts(le, 0xc7298 + 4 + i * 12, 4) for i in range(26)]
+    # draw_sprites: marker frames drawn under the user 1 / user 2 / puck carrier player
+    t['marker_frames'] = shorts(le, 0xcc0b2, 3)
+    # draw_sprites: off screen arrows per clip direction for user 1 and user 2
+    t['arrow_frames'] = [shorts(le, 0xcc0b8 + i * 16, 8) for i in range(2)]
     with open(out, 'w') as f:
         json.dump(t, f, indent=1)
     print(f"wrote {out}: {len(t['anim_sequences'])} animation words, {len(t['ai_state_names'])} states")

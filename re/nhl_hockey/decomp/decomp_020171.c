@@ -1016,7 +1016,7 @@ undefined8 __watcall player_card_screen(undefined4 param_1,undefined4 unaff_EDX)
     uVar2 = loadshapes(auStack_6c,0);
     memcpy(local_124,&DAT_000dc864,4);
     local_120 = 0;
-    iVar1 = sub_b30bb(uVar2,local_124);
+    iVar1 = locateshape_fast(uVar2,local_124);
     if (iVar1 == 0) {
       freemem(uVar2);
       puVar5 = install_path;
@@ -1029,7 +1029,7 @@ undefined8 __watcall player_card_screen(undefined4 param_1,undefined4 unaff_EDX)
     }
     else {
       local_124[0] = '!';
-      iVar3 = sub_b30bb(uVar2,local_124);
+      iVar3 = locateshape_fast(uVar2,local_124);
       sub_21c04(iVar3 + 0x10,iVar1,0x21,0x26);
       freemem(uVar2);
       puVar5 = install_path;
@@ -1259,7 +1259,7 @@ void __watcall goalie_card_screen(void)
     uVar3 = loadshapes(auStack_60,0);
     memcpy(local_128,&DAT_000dc864,4);
     local_124 = 0;
-    iVar2 = sub_b30bb(uVar3,local_128);
+    iVar2 = locateshape_fast(uVar3,local_128);
     if (iVar2 == 0) {
       freemem(uVar3);
       puVar5 = install_path;
@@ -1272,7 +1272,7 @@ void __watcall goalie_card_screen(void)
     }
     else {
       local_128[0] = '!';
-      iVar4 = sub_b30bb(uVar3,local_128);
+      iVar4 = locateshape_fast(uVar3,local_128);
       sub_21c04(iVar4 + 0x10,iVar2,0x21,0x26);
       freemem(uVar3);
       puVar5 = install_path;

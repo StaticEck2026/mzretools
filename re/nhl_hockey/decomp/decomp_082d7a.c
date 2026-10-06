@@ -144,7 +144,7 @@ LAB_00082f66:
           puVar3 = (undefined *)0x0;
         }
         make_path(acStack_5c,puVar3,aSlapshot,0);
-        dword_ed7a4 = sub_8f13b(acStack_5c);
+        dword_ed7a4 = music_load_kms(acStack_5c);
       }
       if ((param_1 == 8) && (dword_d2350 == 0)) {
         message_dialog(0xffffffff,0xffffffff,&off_d24d1,2,0,0,local_28,local_2c,0);
@@ -153,7 +153,7 @@ LAB_00082f66:
           puVar3 = (undefined *)0x0;
         }
         make_path(acStack_5c,puVar3,aMT32HOCK,0);
-        uVar1 = sub_8f13b(acStack_5c);
+        uVar1 = music_load_kms(acStack_5c);
         dword_d2350 = -1;
         dword_c541f = 8;
         play_sample_by_ptr(uVar1,uVar1);

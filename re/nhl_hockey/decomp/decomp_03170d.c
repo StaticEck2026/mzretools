@@ -1569,7 +1569,7 @@ void __watcall load_rink(int param_1)
     if ((&unk_ed7cd)[*(int *)(&unk_c73d8 + param_1 * 4)] != '\x01') {
       puVar5 = (undefined *)0x0;
     }
-    make_path(local_38,puVar5,&aBOS_c7298 + param_1 * 3,&aTil);
+    make_path(local_38,puVar5,&rink_logo_table + param_1 * 3,&aTil);
     sStack_1c = filesize(local_38);
     if ((int)sStack_1c % 0x40 != 0) {
       fatalerror(aInvalidFileSSizeD,local_38,(int)sStack_1c);
@@ -1583,7 +1583,7 @@ void __watcall load_rink(int param_1)
     if ((&file_on_disk)[*(int *)(&unk_c73d8 + param_1 * 4)] != '\x01') {
       puVar5 = (undefined *)0x0;
     }
-    make_path(local_38,puVar5,&aBOS_c7298 + param_1 * 3,&aMap);
+    make_path(local_38,puVar5,&rink_logo_table + param_1 * 3,&aMap);
     uVar3 = loadfile(local_38,0);
     iVar2 = param_1 * 0xc;
     sStack_20 = (short)((int)(((int)sStack_1c + ((int)sStack_1c >> 0xf) * -0x40) -
@@ -1591,7 +1591,7 @@ void __watcall load_rink(int param_1)
     sStack_1e = sStack_20 >> 0xf;
     uStack_24 = uVar3;
     load_rink_tiles(uVar3,local_28,(int)sStack_20,*(int *)(&unk_c729c + iVar2) >> 0x10,
-                    *(int *)((int)&aBOS_c7298 + iVar2 + 2) >> 0x10,0);
+                    *(int *)((int)&rink_logo_table + iVar2 + 2) >> 0x10,0);
     if (0 < *(short *)(&unk_c72a0 + iVar2)) {
       load_rink_tiles(uVar3,local_28,CONCAT22(sStack_1e,sStack_20),
                       *(int *)(&unk_c72a0 + iVar2) >> 0x10,*(int *)(&unk_c729e + iVar2) >> 0x10,

@@ -2295,7 +2295,7 @@ loc_21f61:
     mov eax, esp                                 ; 021f96 89e0
     push eax                                     ; 021f98 50
     push esi                                     ; 021f99 56
-    call sub_b30bb                               ; 021f9a e81c110900
+    call locateshape_fast                        ; 021f9a e81c110900
     mov edi, eax                                 ; 021f9f 89c7
     add esp, 8                                   ; 021fa1 83c408
     test eax, eax                                ; 021fa4 85c0
@@ -2304,7 +2304,7 @@ loc_21f61:
     mov eax, esp                                 ; 021fac 89e0
     push eax                                     ; 021fae 50
     push esi                                     ; 021faf 56
-    call sub_b30bb                               ; 021fb0 e806110900
+    call locateshape_fast                        ; 021fb0 e806110900
     add esp, 8                                   ; 021fb5 83c408
     add eax, 0x10                                ; 021fb8 83c010
     mov ecx, 0x26                                ; 021fbb b926000000
@@ -2932,7 +2932,7 @@ loc_227fa:
     mov eax, esp                                 ; 02282f 89e0
     push eax                                     ; 022831 50
     push esi                                     ; 022832 56
-    call sub_b30bb                               ; 022833 e883080900
+    call locateshape_fast                        ; 022833 e883080900
     mov edi, eax                                 ; 022838 89c7
     add esp, 8                                   ; 02283a 83c408
     test eax, eax                                ; 02283d 85c0
@@ -2941,7 +2941,7 @@ loc_227fa:
     mov eax, esp                                 ; 022845 89e0
     push eax                                     ; 022847 50
     push esi                                     ; 022848 56
-    call sub_b30bb                               ; 022849 e86d080900
+    call locateshape_fast                        ; 022849 e86d080900
     add esp, 8                                   ; 02284e 83c408
     add eax, 0x10                                ; 022851 83c010
     mov ecx, 0x26                                ; 022854 b926000000

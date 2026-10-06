@@ -4648,7 +4648,7 @@ loc_7dcfe:
     mov eax, esp                                 ; 07dcfe 89e0
     call make_path                               ; 07dd00 e81966f9ff
     mov eax, esp                                 ; 07dd05 89e0
-    call sub_8f13b                               ; 07dd07 e82f140100
+    call music_load_kms                          ; 07dd07 e82f140100
     mov dword ptr [edi*4 + unk_ed368], eax       ; 07dd0c 8904bd68d30e00
     jmp loc_7dd1e                                ; 07dd13 eb09
 
@@ -4725,7 +4725,7 @@ loc_7ddc2:
     mov eax, esp                                 ; 07ddc2 89e0
     call make_path                               ; 07ddc4 e85565f9ff
     mov eax, esp                                 ; 07ddc9 89e0
-    call sub_8f13b                               ; 07ddcb e86b130100
+    call music_load_kms                          ; 07ddcb e86b130100
     mov dword ptr [edi*4 + unk_ed38c], eax       ; 07ddd0 8904bd8cd30e00
     inc edi                                      ; 07ddd7 47
     cmp edi, 3                                   ; 07ddd8 83ff03
@@ -4763,7 +4763,7 @@ loc_7de31:
     mov eax, esp                                 ; 07de31 89e0
     call make_path                               ; 07de33 e8e664f9ff
     mov eax, esp                                 ; 07de38 89e0
-    call sub_8f13b                               ; 07de3a e8fc120100
+    call music_load_kms                          ; 07de3a e8fc120100
     mov dword ptr [dword_ed380], eax             ; 07de3f a380d30e00
     mov eax, dword ptr [user2_team]              ; 07de44 a1c8900c00
     sar eax, 0x10                                ; 07de49 c1f810
@@ -4783,7 +4783,7 @@ loc_7de78:
     mov eax, esp                                 ; 07de78 89e0
     call make_path                               ; 07de7a e89f64f9ff
     mov eax, esp                                 ; 07de7f 89e0
-    call sub_8f13b                               ; 07de81 e8b5120100
+    call music_load_kms                          ; 07de81 e8b5120100
     mov dword ptr [dword_ed384], eax             ; 07de86 a384d30e00
     xor ecx, ecx                                 ; 07de8b 31c9
     mov ebx, aROCKDITI                           ; 07de8d bbec330c00        "ROCKDITI"
@@ -4798,7 +4798,7 @@ loc_7dea5:
     mov eax, esp                                 ; 07dea5 89e0
     call make_path                               ; 07dea7 e87264f9ff
     mov eax, esp                                 ; 07deac 89e0
-    call sub_8f13b                               ; 07deae e888120100
+    call music_load_kms                          ; 07deae e888120100
     mov dword ptr [dword_ed388], eax             ; 07deb3 a388d30e00
     xor eax, eax                                 ; 07deb8 31c0
     mov dword ptr [dword_ccc94], eax             ; 07deba a394cc0c00
@@ -5172,7 +5172,7 @@ loc_7e1ee:
     push 0                                       ; 07e21e 6a00
     push 0                                       ; 07e220 6a00
     push eax                                     ; 07e222 50
-    call sub_b4cd8                               ; 07e223 e8b06a0300
+    call blit_rle_frame                          ; 07e223 e8b06a0300
     add esp, 0xc                                 ; 07e228 83c40c
     mov eax, 6                                   ; 07e22b b806000000
     call sub_7e067                               ; 07e230 e832feffff
@@ -6208,7 +6208,7 @@ loc_7f009:
     push ebp                                     ; 07f053 55
     mov edx, dword ptr [dword_ed6e4]             ; 07f054 8b15e4d60e00
     push edx                                     ; 07f05a 52
-    call sub_b4cd8                               ; 07f05b e8785c0300
+    call blit_rle_frame                          ; 07f05b e8785c0300
     add esp, 0xc                                 ; 07f060 83c40c
     mov eax, 2                                   ; 07f063 b802000000
     call sub_7e067                               ; 07f068 e8faefffff
@@ -7764,15 +7764,15 @@ loc_802b1:
     call setfont                                 ; 0802e7 e82ce70000
     add esp, 4                                   ; 0802ec 83c404
     call sub_1bab1                               ; 0802ef e8bdb7f9ff
-    mov eax, dword ptr [dword_d8c68]             ; 0802f4 a1688c0d00
+    mov eax, dword ptr [rinkend_bank]            ; 0802f4 a1688c0d00
     push eax                                     ; 0802f9 50
     call freemem                                 ; 0802fa e8d9cf0000
     add esp, 4                                   ; 0802ff 83c404
-    mov edx, dword ptr [dword_dc2f0]             ; 080302 8b15f0c20d00
+    mov edx, dword ptr [scoreboard_bank]         ; 080302 8b15f0c20d00
     push edx                                     ; 080308 52
     call freemem                                 ; 080309 e8cacf0000
     add esp, 4                                   ; 08030e 83c404
-    mov ebx, dword ptr [dword_d8c80]             ; 080311 8b1d808c0d00
+    mov ebx, dword ptr [numshp_bank]             ; 080311 8b1d808c0d00
     push ebx                                     ; 080317 53
     call freemem                                 ; 080318 e8bbcf0000
     add esp, 4                                   ; 08031d 83c404
@@ -9181,7 +9181,7 @@ loc_81462:
 loc_81479:
     mov eax, dword ptr [esp + 0x350]             ; 081479 8b842450030000
     mov dl, byte ptr [esp + 0x350]               ; 081480 8a942450030000
-    mov byte ptr [eax + unk_dc9d8], dl           ; 081487 8890d8c90d00
+    mov byte ptr [eax + remap_home], dl          ; 081487 8890d8c90d00
     lea ecx, [eax + 1]                           ; 08148d 8d4801
     mov dword ptr [esp + 0x350], ecx             ; 081490 898c2450030000
     cmp ecx, 0x100                               ; 081497 81f900010000
@@ -9202,7 +9202,7 @@ loc_81479:
     mov byte ptr [byte_dcad4], 0x7d              ; 0814f4 c605d4ca0d007d
     mov byte ptr [byte_dcad5], 0x7e              ; 0814fb c605d5ca0d007e
     mov byte ptr [byte_dcad6], bh                ; 081502 883dd6ca0d00
-    push unk_dc9d8                               ; 081508 68d8c90d00
+    push remap_home                              ; 081508 68d8c90d00
     call setremaptable                           ; 08150d e8c2380300
     add esp, 4                                   ; 081512 83c404
     add esp, 0x354                               ; 081515 81c454030000
