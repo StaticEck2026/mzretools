@@ -3,10 +3,10 @@
 #include "prototypes.h"
 
 // ================================================================================================
-// sub_ab974 @ 0xab974 [__watcall]
+// gus_midi_timer_tick @ 0xab974 [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_ab974(undefined4 param_1,uint unaff_EDX)
+longlong __watcall gus_midi_timer_tick(undefined4 param_1,uint unaff_EDX)
 
 {
   byte bVar1;
@@ -37,9 +37,9 @@ longlong __watcall sub_ab974(undefined4 param_1,uint unaff_EDX)
         *(byte *)(piVar4 + 6) = bVar1 - 1;
         uVar2 = (int)(uVar2 * ((uint)bVar3 - (uint)bVar1)) / (int)(uint)*(byte *)(*piVar4 + 0x45);
       }
-      sub_aa200(word_d8770,uVar5);
-      sub_aa200(word_d8772,1);
-      sub_b19c7(word_d8774,(*(ushort *)((int)piVar4 + 10) + uVar2) * 2);
+      outp(word_d8770,uVar5);
+      outp(word_d8772,1);
+      outpw(word_d8774,(*(ushort *)((int)piVar4 + 10) + uVar2) * 2);
       bVar3 = *(char *)((int)piVar4 + 0x17) + 1;
       *(byte *)((int)piVar4 + 0x17) = bVar3;
       if (*(byte *)((int)piVar4 + 0x1a) <= bVar3) {
@@ -54,35 +54,35 @@ longlong __watcall sub_ab974(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_abab0 @ 0xabab0 [__watcall]
+// gus_midi_start_timer @ 0xabab0 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_abab0(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+gus_midi_start_timer(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
-  sub_b1a04(sub_ab974,0xbb,unaff_EBX,unaff_ECX,unaff_EDX);
+  gus_start_timer2(gus_midi_timer_tick,0xbb,unaff_EBX,unaff_ECX,unaff_EDX);
   return;
 }
 
 
 // ================================================================================================
-// sub_abacc @ 0xabacc [__watcall]
+// gus_midi_stop_timer @ 0xabacc [__watcall]
 // ================================================================================================
 
-void __watcall sub_abacc(void)
+void __watcall gus_midi_stop_timer(void)
 
 {
-  sub_b1bf8();
+  gus_stop_timer2();
   return;
 }
 
 
 // ================================================================================================
-// sub_abad8 @ 0xabad8 [__watcall]
+// gus_midi_voice_volume @ 0xabad8 [__watcall]
 // ================================================================================================
 
-void __watcall sub_abad8(int param_1,int unaff_EDX,int unaff_EBX)
+void __watcall gus_midi_voice_volume(int param_1,int unaff_EDX,int unaff_EBX)
 
 {
   uint uVar1;
@@ -132,10 +132,10 @@ void __watcall sub_abad8(int param_1,int unaff_EDX,int unaff_EBX)
 
 
 // ================================================================================================
-// sub_abc38 @ 0xabc38 [__watcall]
+// gus_midi_voice_pan @ 0xabc38 [__watcall]
 // ================================================================================================
 
-void __watcall sub_abc38(int param_1,int unaff_EDX)
+void __watcall gus_midi_voice_pan(int param_1,int unaff_EDX)
 
 {
   int iVar1;
@@ -193,10 +193,10 @@ void __watcall sub_abc38(int param_1,int unaff_EDX)
 
 
 // ================================================================================================
-// sub_abd60 @ 0xabd60 [__watcall]
+// gus_midi_frequency @ 0xabd60 [__watcall]
 // ================================================================================================
 
-uint __watcall sub_abd60(uint param_1,uint unaff_EDX,int unaff_EBX)
+uint __watcall gus_midi_frequency(uint param_1,uint unaff_EDX,int unaff_EBX)
 
 {
   uint uVar1;
@@ -216,19 +216,19 @@ uint __watcall sub_abd60(uint param_1,uint unaff_EDX,int unaff_EBX)
   uVar3 = (ushort)(in_NT & 1) * 0x4000 | (ushort)(in_OF & 1) * 0x800 | (ushort)(in_IF & 1) * 0x200 |
           (ushort)(in_TF & 1) * 0x100 | (ushort)(in_SF & 1) * 0x80 | (ushort)(in_ZF & 1) * 0x40 |
           (ushort)(in_AF & 1) * 0x10 | (ushort)(in_PF & 1) * 4 | (ushort)(in_CF & 1);
-  sub_b122f();
+  gus_irq_lock();
   uVar1 = (param_1 >> 1) + ((uint)((extraout_EDX >> 1) + unaff_EBX * 0x200) / unaff_EDX) * 0x200;
   uVar2 = uVar1 / param_1;
-  sub_b1256(uVar2,uVar1 % param_1,uVar2,unaff_EDX,uVar3);
+  gus_irq_unlock(uVar2,uVar1 % param_1,uVar2,unaff_EDX,uVar3);
   return uVar2;
 }
 
 
 // ================================================================================================
-// sub_abda0 @ 0xabda0 [__watcall]
+// gus_env_rate @ 0xabda0 [__watcall]
 // ================================================================================================
 
-int __watcall sub_abda0(int param_1,int unaff_EDX)
+int __watcall gus_env_rate(int param_1,int unaff_EDX)
 
 {
   int iVar1;
@@ -254,11 +254,11 @@ int __watcall sub_abda0(int param_1,int unaff_EDX)
 
 
 // ================================================================================================
-// sub_abe18 @ 0xabe18 [__watcall]
+// gus_voice_stop_hw @ 0xabe18 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_abe18(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_ECX)
+gus_voice_stop_hw(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   byte bVar1;
@@ -276,7 +276,7 @@ sub_abe18(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 
   byte in_OF;
   byte in_NT;
   
-  sub_b122f(param_1,param_1,unaff_EBX,unaff_ECX,
+  gus_irq_lock(param_1,param_1,unaff_EBX,unaff_ECX,
             (ushort)(in_NT & 1) * 0x4000 | (ushort)(in_OF & 1) * 0x800 | (ushort)(in_IF & 1) * 0x200
             | (ushort)(in_TF & 1) * 0x100 | (ushort)(in_SF & 1) * 0x80 | (ushort)(in_ZF & 1) * 0x40
             | (ushort)(in_AF & 1) * 0x10 | (ushort)(in_PF & 1) * 4 | (ushort)(in_CF & 1));
@@ -286,36 +286,36 @@ sub_abe18(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 
     (&unk_f5c0b)[iVar2] = bVar1 & 0xf1;
     uVar3 = word_d8770;
     (&unk_f5c0b)[iVar2] = bVar1 & 0xf1 | 0xc;
-    sub_aa200(uVar3);
-    sub_aa200(word_d8772,0xd);
-    sub_aa200(word_d8776,3);
-    sub_b13a1();
-    sub_aa200(word_d8776,3);
-    sub_aa200(word_d8772,0x89);
-    uVar4 = sub_b1951(word_d8774);
+    outp(uVar3);
+    outp(word_d8772,0xd);
+    outp(word_d8776,3);
+    gus_delay();
+    outp(word_d8776,3);
+    outp(word_d8772,0x89);
+    uVar4 = inpw(word_d8774);
     uVar3 = word_d8772;
     if (5 < uVar4 >> 8) {
       (&DAT_000f5c0d)[iVar2] = 0x40;
-      sub_aa200(uVar3,7);
-      sub_aa200(word_d8776,5);
-      sub_aa200(word_d8772,6);
-      sub_aa200(word_d8776,0x3f);
-      sub_aa200(word_d8772,0xd);
-      sub_aa200(word_d8776,(&DAT_000f5c0d)[iVar2]);
-      sub_b13a1();
-      sub_aa200(word_d8776,(&DAT_000f5c0d)[iVar2]);
+      outp(uVar3,7);
+      outp(word_d8776,5);
+      outp(word_d8772,6);
+      outp(word_d8776,0x3f);
+      outp(word_d8772,0xd);
+      outp(word_d8776,(&DAT_000f5c0d)[iVar2]);
+      gus_delay();
+      outp(word_d8776,(&DAT_000f5c0d)[iVar2]);
     }
   }
-  sub_b1256();
+  gus_irq_unlock();
   return;
 }
 
 
 // ================================================================================================
-// sub_abf5c @ 0xabf5c [__watcall]
+// gus_voice_release @ 0xabf5c [__watcall]
 // ================================================================================================
 
-void __watcall sub_abf5c(int param_1)
+void __watcall gus_voice_release(int param_1)
 
 {
   int iVar1;
@@ -337,42 +337,42 @@ void __watcall sub_abf5c(int param_1)
   uVar4 = (ushort)(in_NT & 1) * 0x4000 | (ushort)(in_OF & 1) * 0x800 | (ushort)(in_IF & 1) * 0x200 |
           (ushort)(in_TF & 1) * 0x100 | (ushort)(in_SF & 1) * 0x80 | (ushort)(in_ZF & 1) * 0x40 |
           (ushort)(in_AF & 1) * 0x10 | (ushort)(in_PF & 1) * 4 | (ushort)(in_CF & 1);
-  sub_b122f();
+  gus_irq_lock();
   iVar1 = param_1 * 0x21;
   piVar3 = (int *)((int)&unk_f5bf8 + iVar1);
   if (((&unk_f5c0b)[iVar1] & 1) != 0) {
-    sub_aa200(word_d8770,param_1,param_1,piVar3,uVar4);
+    outp(word_d8770,param_1,param_1,piVar3,uVar4);
     do {
-      sub_aa200(word_d8772,0x8d,param_1,piVar3,uVar4);
-      uVar2 = sub_b128c(word_d8776);
+      outp(word_d8772,0x8d,param_1,piVar3,uVar4);
+      uVar2 = inp(word_d8776);
     } while ((uVar2 & 3) == 0);
-    sub_aa200(word_d8772,0);
-    sub_aa200(word_d8776,3);
-    sub_b13a1();
-    sub_aa200(word_d8776,3);
+    outp(word_d8772,0);
+    outp(word_d8776,3);
+    gus_delay();
+    outp(word_d8776,3);
     (&unk_f5c0b)[iVar1] = 0;
     (&DAT_000f5c0e)[iVar1] = 0;
-    sub_b1e2c(param_1,extraout_EDX & 0xffffff00);
+    gus_voice_free(param_1,extraout_EDX & 0xffffff00);
     (&unk_f5978)[param_1 * 4] = extraout_DL;
     (&unk_f5979)[param_1 * 4] = extraout_DL;
     if ((*(char *)(*piVar3 + 0x47) != '\0') ||
        ((&unk_f5a01)[(uint)(byte)(&DAT_000f5c15)[iVar1] * 0x10] != '\0')) {
       word_f611a = word_f611a + -1;
       if (word_f611a == 0) {
-        sub_abacc();
+        gus_midi_stop_timer();
       }
     }
   }
-  sub_b1256();
+  gus_irq_unlock();
   return;
 }
 
 
 // ================================================================================================
-// sub_ac050 @ 0xac050 [__watcall]
+// gus_midi_channel_stop @ 0xac050 [__watcall]
 // ================================================================================================
 
-void __watcall sub_ac050(int param_1)
+void __watcall gus_midi_channel_stop(int param_1)
 
 {
   int iVar1;
@@ -380,11 +380,11 @@ void __watcall sub_ac050(int param_1)
   int extraout_EDX_00;
   int iVar2;
   
-  sub_b122f();
+  gus_irq_lock();
   iVar1 = 0;
   do {
     if (*(int *)(&unk_f6016 + param_1 * 8 + iVar1 * 2) >> 0x10 != -1) {
-      sub_abe18();
+      gus_voice_stop_hw();
       iVar1 = extraout_EDX;
     }
     iVar1 = iVar1 + 1;
@@ -393,21 +393,21 @@ void __watcall sub_ac050(int param_1)
   do {
     iVar2 = *(int *)(&unk_f6016 + param_1 * 8 + iVar1 * 2) >> 0x10;
     if ((iVar2 != -1) && (((&unk_f5c0b)[iVar2 * 0x21] & 1) != 0)) {
-      sub_abf5c(iVar2);
+      gus_voice_release(iVar2);
       iVar1 = extraout_EDX_00;
     }
     iVar1 = iVar1 + 1;
   } while (iVar1 < 4);
-  sub_b1256();
+  gus_irq_unlock();
   return;
 }
 
 
 // ================================================================================================
-// sub_ac0cc @ 0xac0cc [__watcall]
+// gus_midi_note_on @ 0xac0cc [__watcall]
 // ================================================================================================
 
-void __watcall sub_ac0cc(uint param_1,undefined4 unaff_EDX,int unaff_EBX,int unaff_ECX,uint param_5)
+void __watcall gus_midi_note_on(uint param_1,undefined4 unaff_EDX,int unaff_EBX,int unaff_ECX,uint param_5)
 
 {
   undefined uVar1;
@@ -434,7 +434,7 @@ void __watcall sub_ac0cc(uint param_1,undefined4 unaff_EDX,int unaff_EBX,int una
   int local_1c;
   
   if (unaff_ECX == 0) {
-    sub_ac6e8(unaff_EBX,param_5);
+    gus_midi_voice_start(unaff_EBX,param_5);
   }
   else {
     iVar4 = param_5 * 0x10;
@@ -446,7 +446,7 @@ void __watcall sub_ac0cc(uint param_1,undefined4 unaff_EDX,int unaff_EBX,int una
                (ushort)(in_TF & 1) * 0x100 | (ushort)((int)param_1 < 0) * 0x80 |
                (ushort)(param_1 == 0) * 0x40 | (ushort)(in_AF & 1) * 0x10 |
                (ushort)((POPCOUNT(param_1 & 0xff) & 1U) == 0) * 4;
-      sub_b122f();
+      gus_irq_lock();
       uVar10 = 0xffffffff;
       piVar6 = (int *)0x0;
       iVar5 = *(int *)(param_1 - 2) >> 0x10;
@@ -463,7 +463,7 @@ void __watcall sub_ac0cc(uint param_1,undefined4 unaff_EDX,int unaff_EBX,int una
             uVar10 = (&unk_d87dc)[unaff_EBX];
           }
           else {
-            uVar10 = sub_abda0(piVar13,unaff_EBX,uVar10,piVar6,uVar15);
+            uVar10 = gus_env_rate(piVar13,unaff_EBX,uVar10,piVar6,uVar15);
           }
           if (*(short *)(param_1 + 0x1a) != 0x400) {
             piVar6 = (int *)0x0;
@@ -496,7 +496,7 @@ void __watcall sub_ac0cc(uint param_1,undefined4 unaff_EDX,int unaff_EBX,int una
             iVar8 = iVar8 + 1;
             piVar13 = piVar6;
           }
-          if ((iVar8 != iVar12) && (iVar12 = sub_b1cbc(unaff_EDX,sub_ac050), iVar12 != -1)) {
+          if ((iVar8 != iVar12) && (iVar12 = gus_voice_alloc(unaff_EDX,gus_midi_channel_stop), iVar12 != -1)) {
             local_44[local_1c] = iVar12;
             (&unk_f5979)[iVar12 * 4] = (char)unaff_EBX;
             (&unk_f5978)[iVar12 * 4] = 0;
@@ -523,7 +523,7 @@ void __watcall sub_ac0cc(uint param_1,undefined4 unaff_EDX,int unaff_EBX,int una
             }
             *(short *)((int)&DAT_000f5c09 + iVar8) = (short)(iVar9 / 0xbe41);
             *piVar6 = (int)piVar13;
-            uVar3 = sub_abd60(*(undefined2 *)((int)piVar13 + 0x2e),piVar13[4]);
+            uVar3 = gus_midi_frequency(*(undefined2 *)((int)piVar13 + 0x2e),piVar13[4]);
             *(undefined2 *)((int)&DAT_000f5c00 + iVar8) = uVar3;
             if ((&unk_f59fa)[param_5 * 8] == 0x400) {
               uVar3 = *(undefined2 *)((int)&DAT_000f5c00 + iVar8);
@@ -534,17 +534,17 @@ void __watcall sub_ac0cc(uint param_1,undefined4 unaff_EDX,int unaff_EBX,int una
                        (uint)(ushort)(&unk_f59fa)[param_5 * 8] >> 10);
             }
             *(undefined2 *)((int)&DAT_000f5c02 + iVar8) = uVar3;
-            sub_aa200(word_d8770,iVar12);
-            sub_aa200(word_d8772,1);
-            sub_b19c7(word_d8774,(uint)*(ushort *)((int)&DAT_000f5c02 + iVar8) * 2);
-            sub_aa200(word_d8772,0xc);
+            outp(word_d8770,iVar12);
+            outp(word_d8772,1);
+            outpw(word_d8774,(uint)*(ushort *)((int)&DAT_000f5c02 + iVar8) * 2);
+            outp(word_d8772,0xc);
             if ((&unk_f5a00)[iVar4] == '\x10') {
               uVar1 = *(undefined *)((int)piVar13 + 0x35);
             }
             else {
               uVar1 = (&unk_f5a00)[iVar4];
             }
-            sub_aa200(word_d8776,uVar1);
+            outp(word_d8776,uVar1);
             (&DAT_000f5c0c)[iVar8] = 0;
             (&DAT_000f5c0d)[iVar8] = 0;
             if ((*(byte *)(piVar13 + 0x12) & 4) != 0) {
@@ -558,34 +558,34 @@ void __watcall sub_ac0cc(uint param_1,undefined4 unaff_EDX,int unaff_EBX,int una
             }
             uVar3 = word_d8772;
             if ((*(byte *)(piVar13 + 0x12) & 0x10) == 0) {
-              sub_aa200(word_d8772,0xb);
-              sub_b19c7(word_d8774,*(undefined2 *)((int)piVar13 + 0x1e));
-              sub_aa200(word_d8772,10);
+              outp(word_d8772,0xb);
+              outpw(word_d8774,*(undefined2 *)((int)piVar13 + 0x1e));
+              outp(word_d8772,10);
               uVar3 = *(undefined2 *)(piVar13 + 8);
             }
             else {
               (&DAT_000f5c0c)[iVar8] = (&DAT_000f5c0c)[iVar8] | 0x40;
-              sub_aa200(uVar3,0xb);
-              sub_b19c7(word_d8774,*(undefined2 *)((int)piVar13 + 0x2a));
-              sub_aa200(word_d8772,10);
+              outp(uVar3,0xb);
+              outpw(word_d8774,*(undefined2 *)((int)piVar13 + 0x2a));
+              outp(word_d8772,10);
               uVar3 = *(undefined2 *)(piVar13 + 0xb);
             }
-            sub_b19c7(word_d8774,uVar3);
-            sub_aa200(word_d8772,3);
-            sub_b19c7(word_d8774,*(undefined2 *)((int)piVar13 + 0x22));
-            sub_aa200(word_d8772,2);
-            sub_b19c7(word_d8774,*(undefined2 *)(piVar13 + 9));
-            sub_aa200(word_d8772,5);
-            sub_b19c7(word_d8774,*(undefined2 *)((int)piVar13 + 0x26));
-            sub_aa200(word_d8772,4);
-            sub_b19c7(word_d8774,*(undefined2 *)(piVar13 + 10));
+            outpw(word_d8774,uVar3);
+            outp(word_d8772,3);
+            outpw(word_d8774,*(undefined2 *)((int)piVar13 + 0x22));
+            outp(word_d8772,2);
+            outpw(word_d8774,*(undefined2 *)(piVar13 + 9));
+            outp(word_d8772,5);
+            outpw(word_d8774,*(undefined2 *)((int)piVar13 + 0x26));
+            outp(word_d8772,4);
+            outpw(word_d8774,*(undefined2 *)(piVar13 + 10));
             uVar3 = word_d8772;
             (&DAT_000f5c13)[iVar8] = 0;
-            sub_aa200(uVar3,6);
-            sub_aa200(word_d8776,*(undefined *)((int)piVar13 + 0x36));
-            sub_aa200(word_d8772,7);
-            sub_aa200(word_d8776,5);
-            sub_aa200(word_d8772,8);
+            outp(uVar3,6);
+            outp(word_d8776,*(undefined *)((int)piVar13 + 0x36));
+            outp(word_d8772,7);
+            outp(word_d8776,5);
+            outp(word_d8772,8);
             uVar10 = ((uint)*(ushort *)((int)&DAT_000f5c09 + iVar8) * (uint)*(byte *)(piVar13 + 0xf)
                      ) / 0xff;
             if (uVar10 < 5) {
@@ -595,33 +595,33 @@ void __watcall sub_ac0cc(uint param_1,undefined4 unaff_EDX,int unaff_EBX,int una
             (&DAT_000f5c18)[iVar8] = 0;
             uVar3 = word_d8776;
             (&DAT_000f5c17)[iVar8] = (char)uVar10;
-            sub_aa200(uVar3);
+            outp(uVar3);
             (&DAT_000f5c0d)[iVar8] = (&DAT_000f5c0d)[iVar8] | 0x20;
             if ((*(char *)((int)piVar13 + 0x47) != '\0') ||
                (uVar10 = 0xff, (&unk_f5a01)[iVar4] != '\0')) {
-              sub_abad8(iVar12,1);
+              gus_midi_voice_volume(iVar12,1);
               sVar7 = word_f611a + 1;
               bVar14 = word_f611a == 0;
               uVar10 = param_5;
               word_f611a = sVar7;
               if (bVar14) {
-                sub_abab0();
+                gus_midi_start_timer();
               }
             }
             if ((*(char *)(piVar13 + 0x11) != '\0') || ((&unk_f5a04)[iVar4] != '\0')) {
-              sub_abc38(iVar12,param_5);
+              gus_midi_voice_pan(iVar12,param_5);
             }
             (&unk_f5c0b)[iVar8] = 1;
             uVar3 = word_d8772;
             (&DAT_000f5c0e)[iVar8] = 0;
-            sub_aa200(uVar3,0xd);
-            sub_aa200(word_d8776,(&DAT_000f5c0d)[iVar8]);
-            sub_b13a1();
-            sub_aa200(word_d8776,(&DAT_000f5c0d)[iVar8]);
-            sub_aa200(word_d8772,0);
-            sub_aa200(word_d8776,(&DAT_000f5c0c)[iVar8]);
-            sub_b13a1();
-            sub_aa200(word_d8776,(&DAT_000f5c0c)[iVar8]);
+            outp(uVar3,0xd);
+            outp(word_d8776,(&DAT_000f5c0d)[iVar8]);
+            gus_delay();
+            outp(word_d8776,(&DAT_000f5c0d)[iVar8]);
+            outp(word_d8772,0);
+            outp(word_d8776,(&DAT_000f5c0c)[iVar8]);
+            gus_delay();
+            outp(word_d8776,(&DAT_000f5c0c)[iVar8]);
           }
           local_1c = local_1c + 1;
         } while (local_1c < iVar5);
@@ -638,7 +638,7 @@ void __watcall sub_ac0cc(uint param_1,undefined4 unaff_EDX,int unaff_EBX,int una
           }
         }
       }
-      sub_b1256();
+      gus_irq_unlock();
     }
   }
   return;
@@ -646,10 +646,10 @@ void __watcall sub_ac0cc(uint param_1,undefined4 unaff_EDX,int unaff_EBX,int una
 
 
 // ================================================================================================
-// sub_ac6e8 @ 0xac6e8 [__watcall]
+// gus_midi_voice_start @ 0xac6e8 [__watcall]
 // ================================================================================================
 
-void __watcall sub_ac6e8(undefined4 param_1)
+void __watcall gus_midi_voice_start(undefined4 param_1)
 
 {
   byte bVar1;
@@ -681,7 +681,7 @@ void __watcall sub_ac6e8(undefined4 param_1)
            (ushort)((POPCOUNT((uint)&local_20 & 0xff) & 1U) == 0) * 4 |
            (ushort)(&stack0xffffffec < (undefined *)0xc);
   local_20 = param_1;
-  sub_b122f();
+  gus_irq_lock();
   if (((&unk_f59f8)[extraout_EDX * 0x10] & 1) == 0) {
     iVar7 = 0;
     do {
@@ -696,7 +696,7 @@ void __watcall sub_ac6e8(undefined4 param_1)
         if (iVar8 != -1) {
           iVar2 = iVar8 * 0x21;
           piVar10 = (int *)((int)&unk_f5bf8 + iVar2);
-          sub_b1e64(iVar8,0x20,piVar10,iVar8,uVar12);
+          gus_voice_add_ref(iVar8,0x20,piVar10,iVar8,uVar12);
           if ((((&unk_f5c0b)[iVar2] & 1) != 0) && (((&unk_f5c0b)[iVar2] & 4) == 0)) {
             (&unk_f5979)[iVar8 * 4] = 0;
             (&unk_f5978)[iVar8 * 4] = (&unk_f5978)[iVar8 * 4] & 0xfe;
@@ -704,44 +704,44 @@ void __watcall sub_ac6e8(undefined4 param_1)
             (&unk_f5c0b)[iVar2] = bVar1 & 0xf9;
             (&unk_f5c0b)[iVar2] = bVar1 & 0xf9 | 4;
             if ((*(byte *)(*piVar10 + 0x48) & 0x40) == 0) {
-              sub_aa200(word_d8770,iVar8);
+              outp(word_d8770,iVar8);
               bVar1 = (&DAT_000f5c0c)[iVar2];
               (&DAT_000f5c0c)[iVar2] = bVar1 & 0xd7;
               (&DAT_000f5c0c)[iVar2] = bVar1 & 0xd7 | 0x20;
               if ((*(byte *)(*piVar10 + 0x48) & 0x10) == 0) {
-                sub_aa200(word_d8772,5);
+                outp(word_d8772,5);
                 local_1c = (uint)*(ushort *)(*piVar10 + 0x2a);
-                sub_b19c7(word_d8774,local_1c);
-                sub_aa200(word_d8772,4);
+                outpw(word_d8774,local_1c);
+                outp(word_d8772,4);
                 uVar3 = *(ushort *)(*piVar10 + 0x2c);
               }
               else {
-                sub_aa200(word_d8772,3);
+                outp(word_d8772,3);
                 local_1c = (uint)*(ushort *)(*piVar10 + 0x1e);
-                sub_b19c7(word_d8774,local_1c);
-                sub_aa200(word_d8772,2);
+                outpw(word_d8774,local_1c);
+                outp(word_d8772,2);
                 uVar3 = *(ushort *)(*piVar10 + 0x20);
               }
               local_1c = (uint)uVar3;
-              sub_b19c7(word_d8774,local_1c);
-              sub_aa200(word_d8772,0);
-              sub_aa200(word_d8776,(&DAT_000f5c0c)[iVar2]);
-              sub_b13a1();
-              sub_aa200(word_d8776,(&DAT_000f5c0c)[iVar2]);
+              outpw(word_d8774,local_1c);
+              outp(word_d8772,0);
+              outp(word_d8776,(&DAT_000f5c0c)[iVar2]);
+              gus_delay();
+              outp(word_d8776,(&DAT_000f5c0c)[iVar2]);
             }
             bVar1 = *(byte *)(*piVar10 + 0x48);
             if (((bVar1 & 0x40) == 0) || ((bVar1 & 0x80) != 0)) {
-              sub_aa200(word_d8772,0xd);
-              sub_aa200(word_d8776,3);
-              sub_b13a1();
-              sub_aa200(word_d8776,3);
+              outp(word_d8772,0xd);
+              outp(word_d8776,3);
+              gus_delay();
+              outp(word_d8776,3);
               bVar1 = (&DAT_000f5c0d)[iVar2];
               (&DAT_000f5c13)[iVar2] = 5;
               uVar5 = word_d8772;
               (&DAT_000f5c0d)[iVar2] = bVar1 | 0x60;
               (&DAT_000f5c0d)[iVar2] = bVar1 & 0xe7 | 0x60;
-              sub_aa200(uVar5,0x89);
-              sub_b1951(word_d8774);
+              outp(uVar5,0x89);
+              inpw(word_d8774);
               if ((&DAT_000f5c16)[iVar2] == '\0') {
                 local_1c = (uint)*(ushort *)((int)&DAT_000f5c09 + iVar2);
                 (&DAT_000f5c16)[iVar2] = (char)(((uint)(extraout_var & 0xff) * 0xff) / local_1c);
@@ -751,19 +751,19 @@ void __watcall sub_ac6e8(undefined4 param_1)
               uVar5 = word_d8772;
               (&DAT_000f5c17)[iVar2] = 5;
               local_18 = extraout_var & 0xff;
-              sub_aa200(uVar5,6);
-              sub_aa200(word_d8776,*(undefined *)(*piVar10 + 0x3b));
-              sub_aa200(word_d8772,7);
+              outp(uVar5,6);
+              outp(word_d8776,*(undefined *)(*piVar10 + 0x3b));
+              outp(word_d8772,7);
               uVar9 = 5;
               uVar5 = word_d8776;
             }
             else {
               if ((bVar1 & 0x20) == 0) goto LAB_000acc20;
-              sub_aa200(word_d8770,iVar8);
-              sub_aa200(word_d8772,0xd);
-              sub_aa200(word_d8776,3);
-              sub_b13a1();
-              sub_aa200(word_d8776,3);
+              outp(word_d8770,iVar8);
+              outp(word_d8772,0xd);
+              outp(word_d8776,3);
+              gus_delay();
+              outp(word_d8776,3);
               if ((byte)(&DAT_000f5c13)[iVar2] < 3) {
                 (&DAT_000f5c13)[iVar2] = 3;
               }
@@ -771,10 +771,10 @@ void __watcall sub_ac6e8(undefined4 param_1)
               (&DAT_000f5c0d)[iVar2] = bVar1 | 0x20;
               uVar5 = word_d8772;
               (&DAT_000f5c0d)[iVar2] = bVar1 & 0xe7 | 0x20;
-              sub_aa200(uVar5,6);
-              sub_aa200(word_d8776,*(undefined *)(*piVar10 + 0x39));
-              sub_aa200(word_d8772,0x89);
-              uVar3 = sub_b1951(word_d8774);
+              outp(uVar5,6);
+              outp(word_d8776,*(undefined *)(*piVar10 + 0x39));
+              outp(word_d8772,0x89);
+              uVar3 = inpw(word_d8774);
               uVar4 = uVar3 >> 8;
               if ((&DAT_000f5c16)[iVar2] == '\0') {
                 local_1c = (uint)*(ushort *)((int)&DAT_000f5c09 + iVar2);
@@ -786,9 +786,9 @@ void __watcall sub_ac6e8(undefined4 param_1)
               local_18 = uVar4;
               if ((byte)local_18 < *(byte *)(*piVar10 + 0x3f)) {
                 (&DAT_000f5c0d)[iVar2] = (&DAT_000f5c0d)[iVar2] & 0xbf;
-                sub_aa200(uVar5,7);
-                sub_aa200(word_d8776,local_18);
-                sub_aa200(word_d8772,8);
+                outp(uVar5,7);
+                outp(word_d8776,local_18);
+                outp(word_d8772,8);
                 uVar5 = word_d8776;
                 uVar6 = ((uint)*(byte *)(*piVar10 + 0x3f) *
                         (uint)*(ushort *)((int)&DAT_000f5c09 + iVar2)) / 0xff;
@@ -800,7 +800,7 @@ void __watcall sub_ac6e8(undefined4 param_1)
               }
               else {
                 (&DAT_000f5c0d)[iVar2] = (&DAT_000f5c0d)[iVar2] | 0x40;
-                sub_aa200(uVar5,7);
+                outp(uVar5,7);
                 uVar5 = word_d8776;
                 uVar9 = ((uint)*(ushort *)((int)&DAT_000f5c09 + iVar2) *
                         (uint)*(byte *)(*piVar10 + 0x3f)) / 0xff;
@@ -808,17 +808,17 @@ void __watcall sub_ac6e8(undefined4 param_1)
                   uVar9 = 5;
                 }
                 (&DAT_000f5c17)[iVar2] = (char)uVar9;
-                sub_aa200(uVar5,uVar9 & 0xff);
-                sub_aa200(word_d8772,8);
+                outp(uVar5,uVar9 & 0xff);
+                outp(word_d8772,8);
                 uVar9 = (uint)local_18;
                 uVar5 = word_d8776;
               }
             }
-            sub_aa200(uVar5,uVar9);
-            sub_aa200(word_d8772,0xd);
-            sub_aa200(word_d8776,(&DAT_000f5c0d)[iVar2]);
-            sub_b13a1();
-            sub_aa200(word_d8776,(&DAT_000f5c0d)[iVar2]);
+            outp(uVar5,uVar9);
+            outp(word_d8772,0xd);
+            outp(word_d8776,(&DAT_000f5c0d)[iVar2]);
+            gus_delay();
+            outp(word_d8776,(&DAT_000f5c0d)[iVar2]);
           }
         }
 LAB_000acc20:
@@ -837,16 +837,16 @@ LAB_000acc20:
       iVar7 = iVar7 + 1;
     } while (iVar7 < 0x20);
   }
-  sub_b1256();
+  gus_irq_unlock();
   return;
 }
 
 
 // ================================================================================================
-// sub_acc3c @ 0xacc3c [__watcall]
+// gus_midi_all_notes_off @ 0xacc3c [__watcall]
 // ================================================================================================
 
-void __watcall sub_acc3c(uint param_1)
+void __watcall gus_midi_all_notes_off(uint param_1)
 
 {
   int iVar1;
@@ -866,7 +866,7 @@ void __watcall sub_acc3c(uint param_1)
   uVar3 = (ushort)(in_NT & 1) * 0x4000 | (ushort)(in_OF & 1) * 0x800 | (ushort)(in_IF & 1) * 0x200 |
           (ushort)(in_TF & 1) * 0x100 | (ushort)(in_SF & 1) * 0x80 | (ushort)(in_ZF & 1) * 0x40 |
           (ushort)(in_AF & 1) * 0x10 | (ushort)(in_PF & 1) * 4 | (ushort)(in_CF & 1);
-  sub_b122f();
+  gus_irq_lock();
   iVar1 = param_1 * 0x10;
   if (extraout_EDX == 0) {
     (&unk_f59f8)[iVar1] = (&unk_f59f8)[iVar1] & 0xfe;
@@ -874,23 +874,23 @@ void __watcall sub_acc3c(uint param_1)
       iVar1 = uVar2 * 4;
       if ((((char)param_1 == (&unk_f597a)[iVar1]) && (((&unk_f5978)[iVar1] & 1) != 0)) &&
          ((&unk_f5979)[iVar1] != '\0')) {
-        sub_ac6e8((&unk_f5979)[iVar1],param_1 & 0xff,uVar2,param_1,uVar3);
+        gus_midi_voice_start((&unk_f5979)[iVar1],param_1 & 0xff,uVar2,param_1,uVar3);
       }
     }
   }
   else {
     (&unk_f59f8)[iVar1] = (&unk_f59f8)[iVar1] | 1;
   }
-  sub_b1256();
+  gus_irq_unlock();
   return;
 }
 
 
 // ================================================================================================
-// sub_accc0 @ 0xaccc0 [__watcall]
+// gus_wave_callback @ 0xaccc0 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_accc0(int param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_wave_callback(int param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
@@ -904,14 +904,14 @@ undefined8 __watcall sub_accc0(int param_1,undefined4 unaff_EDX)
   }
   else {
     (&DAT_000f5c0c)[iVar1] = (&DAT_000f5c0c)[iVar1] & 0x5f;
-    sub_aa200(uVar2,param_1);
-    sub_aa200(word_d8772,0);
-    sub_aa200(word_d8776,(&DAT_000f5c0c)[iVar1]);
-    sub_b13a1();
-    sub_aa200(word_d8776,(&DAT_000f5c0c)[iVar1]);
+    outp(uVar2,param_1);
+    outp(word_d8772,0);
+    outp(word_d8776,(&DAT_000f5c0c)[iVar1]);
+    gus_delay();
+    outp(word_d8776,(&DAT_000f5c0c)[iVar1]);
     if ((((&unk_f5c0b)[iVar1] & 8) != 0) && ((&DAT_000f5c13)[iVar1] != '\0')) {
-      sub_abe18(param_1);
-      sub_abf5c(param_1);
+      gus_voice_stop_hw(param_1);
+      gus_voice_release(param_1);
     }
     uVar3 = 1;
   }
@@ -920,10 +920,10 @@ undefined8 __watcall sub_accc0(int param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_acd58 @ 0xacd58 [__watcall]
+// gus_volume_callback @ 0xacd58 [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_acd58(int param_1,uint unaff_EDX)
+longlong __watcall gus_volume_callback(int param_1,uint unaff_EDX)
 
 {
   byte bVar1;
@@ -944,13 +944,13 @@ longlong __watcall sub_acd58(int param_1,uint unaff_EDX)
     return (ulonglong)unaff_EDX << 0x20;
   }
   (&DAT_000f5c0d)[iVar4] = (&DAT_000f5c0d)[iVar4] & 0x5f;
-  sub_aa200(uVar3,param_1);
-  sub_aa200(word_d8772,0xd);
-  sub_aa200(word_d8776,3);
-  sub_b13a1();
-  sub_aa200(word_d8776,3);
-  sub_aa200(word_d8772,0x89);
-  sub_b1951(word_d8774);
+  outp(uVar3,param_1);
+  outp(word_d8772,0xd);
+  outp(word_d8776,3);
+  gus_delay();
+  outp(word_d8776,3);
+  outp(word_d8772,0x89);
+  inpw(word_d8774);
   bVar8 = (&DAT_000f5c0e)[iVar4] == '\0';
   if (bVar8) {
     (&DAT_000f5c13)[iVar4] = (&DAT_000f5c13)[iVar4] + '\x01';
@@ -971,27 +971,27 @@ longlong __watcall sub_acd58(int param_1,uint unaff_EDX)
       (&DAT_000f5c16)[iVar4] = *(undefined *)(*piVar7 + 0x3e);
       if ((*(char *)(*piVar7 + 0x44) != '\0') ||
          ((&unk_f5a04)[(uint)(byte)(&DAT_000f5c15)[iVar4] * 0x10] != '\0')) {
-        sub_aa200(word_d8772,0x89);
-        uVar5 = sub_b1951(word_d8774);
+        outp(word_d8772,0x89);
+        uVar5 = inpw(word_d8774);
         if ((uint)(byte)(&DAT_000f5c06)[iVar4] < (uint)((int)(uVar5 & 0xffff) >> 4)) {
           (&DAT_000f5c0d)[iVar4] = (&DAT_000f5c0d)[iVar4] | 0x40;
         }
         else {
           (&DAT_000f5c0d)[iVar4] = (&DAT_000f5c0d)[iVar4] & 0xbf;
         }
-        sub_aa200(word_d8772,6);
-        sub_aa200(word_d8776,(&DAT_000f5c08)[iVar4]);
-        sub_aa200(word_d8772,7);
-        sub_aa200(word_d8776,(&DAT_000f5c06)[iVar4]);
-        sub_aa200(word_d8772,8);
-        sub_aa200(word_d8776,(&DAT_000f5c07)[iVar4]);
+        outp(word_d8772,6);
+        outp(word_d8776,(&DAT_000f5c08)[iVar4]);
+        outp(word_d8772,7);
+        outp(word_d8776,(&DAT_000f5c06)[iVar4]);
+        outp(word_d8772,8);
+        outp(word_d8776,(&DAT_000f5c07)[iVar4]);
         (&DAT_000f5c0d)[iVar4] = (&DAT_000f5c0d)[iVar4] | 0x18;
       }
       goto LAB_000ad10a;
     }
     (&DAT_000f5c0d)[iVar4] = (&DAT_000f5c0d)[iVar4] | 0x20;
-    sub_aa200(uVar3,6);
-    sub_aa200(word_d8776,*(undefined *)(uVar5 + 0x36 + *piVar7));
+    outp(uVar3,6);
+    outp(word_d8776,*(undefined *)(uVar5 + 0x36 + *piVar7));
     if (bVar8) {
       (&DAT_000f5c18)[iVar4] = (&DAT_000f5c17)[iVar4];
       local_20 = (ushort)((ulonglong)
@@ -1014,7 +1014,7 @@ longlong __watcall sub_acd58(int param_1,uint unaff_EDX)
       uVar6 = 7;
       (&DAT_000f5c0d)[iVar4] = (&DAT_000f5c0d)[iVar4] | 0x40;
     }
-    sub_aa200(uVar3,uVar6);
+    outp(uVar3,uVar6);
   }
   else {
     if (bVar8) {
@@ -1027,39 +1027,39 @@ longlong __watcall sub_acd58(int param_1,uint unaff_EDX)
     (&DAT_000f5c0c)[iVar4] = bVar2 & 0xd7 | 0x20;
     (&unk_f5c0b)[iVar4] = bVar1 & 0xf1 | 0xc;
     if ((*(byte *)(*piVar7 + 0x48) & 0x10) == 0) {
-      sub_aa200(word_d8772,5);
-      sub_b19c7(word_d8774,*(undefined2 *)(*piVar7 + 0x2a));
-      sub_aa200(word_d8772,4);
+      outp(word_d8772,5);
+      outpw(word_d8774,*(undefined2 *)(*piVar7 + 0x2a));
+      outp(word_d8772,4);
       uVar3 = *(undefined2 *)(*piVar7 + 0x2c);
     }
     else {
-      sub_aa200(word_d8772,3);
-      sub_b19c7(word_d8774,*(undefined2 *)(*piVar7 + 0x1e));
-      sub_aa200(word_d8772,2);
+      outp(word_d8772,3);
+      outpw(word_d8774,*(undefined2 *)(*piVar7 + 0x1e));
+      outp(word_d8772,2);
       uVar3 = *(undefined2 *)(*piVar7 + 0x20);
     }
-    sub_b19c7(word_d8774,uVar3);
-    sub_aa200(word_d8772,0);
-    sub_aa200(word_d8776,(&DAT_000f5c0c)[iVar4]);
-    sub_b13a1();
+    outpw(word_d8774,uVar3);
+    outp(word_d8772,0);
+    outp(word_d8776,(&DAT_000f5c0c)[iVar4]);
+    gus_delay();
     local_20._0_1_ = (&DAT_000f5c0c)[iVar4];
   }
-  sub_aa200(word_d8776,(undefined)local_20);
+  outp(word_d8776,(undefined)local_20);
 LAB_000ad10a:
-  sub_aa200(word_d8772,0xd);
-  sub_aa200(word_d8776,(&DAT_000f5c0d)[iVar4]);
-  sub_b13a1();
-  sub_aa200(word_d8776,(&DAT_000f5c0d)[iVar4]);
+  outp(word_d8772,0xd);
+  outp(word_d8776,(&DAT_000f5c0d)[iVar4]);
+  gus_delay();
+  outp(word_d8776,(&DAT_000f5c0d)[iVar4]);
   return CONCAT44(unaff_EDX,1);
 }
 
 
 // ================================================================================================
-// sub_ad160 @ 0xad160 [__watcall]
+// gus_voice_kill @ 0xad160 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_ad160(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 unaff_ECX)
+gus_voice_kill(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 unaff_ECX)
 
 {
   int iVar1;
@@ -1080,7 +1080,7 @@ sub_ad160(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 un
   int *local_20;
   int local_1c;
   
-  sub_b122f(param_1,param_1,&unk_f5bf8,unaff_ECX,
+  gus_irq_lock(param_1,param_1,&unk_f5bf8,unaff_ECX,
             (ushort)(in_NT & 1) * 0x4000 | (ushort)SBORROW4((int)&stack0xffffffe8,0x14) * 0x800 |
             (ushort)(in_IF & 1) * 0x200 | (ushort)(in_TF & 1) * 0x100 |
             (ushort)((int)&local_2c < 0) * 0x80 | (ushort)(&stack0x00000000 == &DAT_0000002c) * 0x40
@@ -1101,7 +1101,7 @@ sub_ad160(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 un
         if (iVar5 != 0) break;
       }
       if (iVar1 != local_2c) {
-        sub_abe18(uVar4);
+        gus_voice_stop_hw(uVar4);
         iVar3 = extraout_EDX_00;
       }
     }
@@ -1111,7 +1111,7 @@ sub_ad160(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 un
   uVar4 = 0;
   do {
     if (word_f79a0 <= uVar4) {
-      sub_b1256();
+      gus_irq_unlock();
       return;
     }
     if ((*(byte *)((int)piVar2 + 0x13) & 1) != 0) {
@@ -1125,7 +1125,7 @@ sub_ad160(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 un
         if (local_1c != 0) break;
       }
       if (iVar1 != local_28) {
-        sub_abf5c(uVar4);
+        gus_voice_release(uVar4);
         iVar3 = extraout_EDX_01;
       }
     }
@@ -1136,12 +1136,12 @@ sub_ad160(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 un
 
 
 // ================================================================================================
-// sub_ad260 @ 0xad260 [__watcall]
+// gus_patch_layer_info @ 0xad260 [__watcall]
 // ================================================================================================
 
 /* WARNING: Removing unreachable block (ram,0x000ad273) */
 
-void __watcall sub_ad260(int param_1)
+void __watcall gus_patch_layer_info(int param_1)
 
 {
   undefined1 *puVar1;
@@ -1161,10 +1161,10 @@ void __watcall sub_ad260(int param_1)
 
 
 // ================================================================================================
-// sub_ad298 @ 0xad298 [__watcall]
+// gus_midi_program @ 0xad298 [__watcall]
 // ================================================================================================
 
-void __watcall sub_ad298(undefined4 param_1,int unaff_EDX)
+void __watcall gus_midi_program(undefined4 param_1,int unaff_EDX)
 
 {
   (&unk_f59fc)[unaff_EDX * 4] = param_1;
@@ -1173,10 +1173,10 @@ void __watcall sub_ad298(undefined4 param_1,int unaff_EDX)
 
 
 // ================================================================================================
-// sub_ad2a8 @ 0xad2a8 [__watcall]
+// gus_midi_pitch_bend @ 0xad2a8 [__watcall]
 // ================================================================================================
 
-void __watcall sub_ad2a8(int param_1,int unaff_EDX)
+void __watcall gus_midi_pitch_bend(int param_1,int unaff_EDX)
 
 {
   uint uVar1;
@@ -1196,27 +1196,27 @@ void __watcall sub_ad2a8(int param_1,int unaff_EDX)
     (&unk_f5a00)[unaff_EDX * 0x10] = (char)param_1;
     uVar3 = (ushort)(in_NT & 1) * 0x4000 | (ushort)(in_IF & 1) * 0x200 | (ushort)(in_TF & 1) * 0x100
             | 0x40 | (ushort)(in_AF & 1) * 0x10 | 4;
-    sub_b122f();
+    gus_irq_lock();
     for (uVar1 = 0; uVar1 < word_f79a0; uVar1 = uVar1 + 1) {
       if (((*(byte *)((int)puVar2 + 0x13) & 1) != 0) &&
          ((char)unaff_EDX == *(char *)((int)puVar2 + 0x1d))) {
-        sub_aa200(word_d8770,uVar1,param_1,uVar1,uVar3);
-        sub_aa200(word_d8772,0xc);
-        sub_aa200(word_d8776,param_1);
+        outp(word_d8770,uVar1,param_1,uVar1,uVar3);
+        outp(word_d8772,0xc);
+        outp(word_d8776,param_1);
       }
       puVar2 = (undefined4 *)((int)puVar2 + 0x21);
     }
-    sub_b1256();
+    gus_irq_unlock();
   }
   return;
 }
 
 
 // ================================================================================================
-// sub_ad344 @ 0xad344 [__watcall]
+// gus_midi_sustain_off @ 0xad344 [__watcall]
 // ================================================================================================
 
-void __watcall sub_ad344(char param_1)
+void __watcall gus_midi_sustain_off(char param_1)
 
 {
   uint uVar1;
@@ -1224,11 +1224,11 @@ void __watcall sub_ad344(char param_1)
   uint extraout_EDX_00;
   undefined4 *puVar2;
   
-  sub_b122f();
+  gus_irq_lock();
   puVar2 = &unk_f5bf8;
   for (uVar1 = 0; uVar1 < word_f79a0; uVar1 = uVar1 + 1) {
     if (((*(byte *)((int)puVar2 + 0x13) & 1) != 0) && (param_1 == *(char *)((int)puVar2 + 0x1d))) {
-      sub_abe18(uVar1);
+      gus_voice_stop_hw(uVar1);
       uVar1 = extraout_EDX;
     }
     puVar2 = (undefined4 *)((int)puVar2 + 0x21);
@@ -1236,21 +1236,21 @@ void __watcall sub_ad344(char param_1)
   puVar2 = &unk_f5bf8;
   for (uVar1 = 0; uVar1 < word_f79a0; uVar1 = uVar1 + 1) {
     if (((*(byte *)((int)puVar2 + 0x13) & 1) != 0) && (param_1 == *(char *)((int)puVar2 + 0x1d))) {
-      sub_abf5c(uVar1);
+      gus_voice_release(uVar1);
       uVar1 = extraout_EDX_00;
     }
     puVar2 = (undefined4 *)((int)puVar2 + 0x21);
   }
-  sub_b1256();
+  gus_irq_unlock();
   return;
 }
 
 
 // ================================================================================================
-// sub_ad3c0 @ 0xad3c0 [__watcall]
+// gus_mem_write_header @ 0xad3c0 [__watcall]
 // ================================================================================================
 
-void __watcall sub_ad3c0(int param_1)
+void __watcall gus_mem_write_header(int param_1)
 
 {
   uint uVar1;
@@ -1270,25 +1270,25 @@ void __watcall sub_ad3c0(int param_1)
   uVar3 = (ushort)(in_NT & 1) * 0x4000 | (ushort)(in_OF & 1) * 0x800 | (ushort)(in_IF & 1) * 0x200 |
           (ushort)(in_TF & 1) * 0x100 | (ushort)(in_SF & 1) * 0x80 | (ushort)(in_ZF & 1) * 0x40 |
           (ushort)(in_AF & 1) * 0x10 | (ushort)(in_PF & 1) * 4 | (ushort)(in_CF & 1);
-  sub_b122f();
+  gus_irq_lock();
   uVar1 = 0;
   puVar2 = extraout_EDX;
   while (uVar1 < 0xf) {
     uVar1 = uVar1 + 1;
-    sub_b1f1c(param_1,*puVar2,param_1 + 1,uVar1,uVar3);
+    gus_poke(param_1,*puVar2,param_1 + 1,uVar1,uVar3);
     param_1 = param_1 + 1;
     puVar2 = puVar2 + 1;
   }
-  sub_b1256();
+  gus_irq_unlock();
   return;
 }
 
 
 // ================================================================================================
-// sub_ad3fc @ 0xad3fc [__watcall]
+// gus_mem_read_header @ 0xad3fc [__watcall]
 // ================================================================================================
 
-void __watcall sub_ad3fc(int param_1)
+void __watcall gus_mem_read_header(int param_1)
 
 {
   undefined uVar1;
@@ -1297,26 +1297,26 @@ void __watcall sub_ad3fc(int param_1)
   uint uVar3;
   int extraout_EDX_00;
   
-  sub_b122f();
+  gus_irq_lock();
   uVar3 = 0;
   puVar2 = extraout_EDX;
   while (uVar3 < 0xf) {
-    uVar1 = sub_b1ea0(param_1);
+    uVar1 = gus_peek(param_1);
     param_1 = param_1 + 1;
     *puVar2 = uVar1;
     puVar2 = puVar2 + 1;
     uVar3 = extraout_EDX_00 + 1;
   }
-  sub_b1256();
+  gus_irq_unlock();
   return;
 }
 
 
 // ================================================================================================
-// sub_ad434 @ 0xad434 [__watcall]
+// gus_mem_init @ 0xad434 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_ad434(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_mem_init(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   char cVar1;
@@ -1333,7 +1333,7 @@ undefined8 __watcall sub_ad434(undefined4 param_1,undefined4 unaff_EDX)
   iVar3 = 0;
   word_f6128 = 0;
   do {
-    cVar1 = sub_b2074(iVar3 << 0x12);
+    cVar1 = gus_dram_size(iVar3 << 0x12);
     if (cVar1 != '\0') {
       local_20 = 0xffffffff;
       local_1c = 0xffffffff;
@@ -1341,7 +1341,7 @@ undefined8 __watcall sub_ad434(undefined4 param_1,undefined4 unaff_EDX)
       local_18 = 0;
       local_24 = 0x40000;
       local_16 = 0;
-      sub_ad3c0(extraout_EDX,&local_24);
+      gus_mem_write_header(extraout_EDX,&local_24);
     }
     iVar3 = iVar3 + 1;
   } while (iVar3 < 4);
@@ -1349,8 +1349,8 @@ undefined8 __watcall sub_ad434(undefined4 param_1,undefined4 unaff_EDX)
     uVar2 = 6;
   }
   else {
-    sub_b1f1c(0x1e,0);
-    sub_b1f1c(0x1f,0);
+    gus_poke(0x1e,0);
+    gus_poke(0x1f,0);
     uVar2 = 0;
   }
   return CONCAT44(unaff_EDX,uVar2);
@@ -1358,10 +1358,10 @@ undefined8 __watcall sub_ad434(undefined4 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_ad4dc @ 0xad4dc [__watcall]
+// gus_mem_alloc @ 0xad4dc [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_ad4dc(int param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_mem_alloc(int param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
@@ -1389,7 +1389,7 @@ undefined8 __watcall sub_ad4dc(int param_1,undefined4 unaff_EDX)
           (ushort)(&stack0x00000000 == (undefined *)0x3c) * 0x40 | (ushort)(in_AF & 1) * 0x10 |
           (ushort)((POPCOUNT((uint)&local_3c & 0xff) & 1U) == 0) * 4 |
           (ushort)(&stack0xffffffe8 < (undefined *)0x24);
-  sub_b122f();
+  gus_irq_lock();
   local_1c = 0;
   uVar4 = (param_1 + 0x1fU & 0xffffe0) + 0x20;
   do {
@@ -1397,7 +1397,7 @@ undefined8 __watcall sub_ad4dc(int param_1,undefined4 unaff_EDX)
       uVar3 = local_1c & 0xff;
       iVar1 = local_1c << 0x12;
       while (iVar2 = iVar1, iVar2 != -1) {
-        sub_ad3fc(iVar2,&local_3c,iVar2,uVar3,uVar5);
+        gus_mem_read_header(iVar2,&local_3c,iVar2,uVar3,uVar5);
         iVar1 = local_38;
         if (((local_2e & 1) == 0) && (uVar3 = local_3c, uVar4 <= local_3c)) {
           local_2e = local_2e | 1;
@@ -1409,19 +1409,19 @@ undefined8 __watcall sub_ad4dc(int param_1,undefined4 unaff_EDX)
             local_1e = 0;
             local_3c = uVar4;
             local_24 = iVar2;
-            sub_ad3c0(iVar2,&local_3c);
-            sub_ad3c0(local_38,&local_2c);
+            gus_mem_write_header(iVar2,&local_3c);
+            gus_mem_write_header(local_38,&local_2c);
             iVar1 = local_28;
             if (local_28 != -1) {
-              sub_ad3fc(local_28,&local_2c);
+              gus_mem_read_header(local_28,&local_2c);
               local_24 = local_38;
-              sub_ad3c0(iVar1,&local_2c);
+              gus_mem_write_header(iVar1,&local_2c);
             }
-            sub_b1256();
+            gus_irq_unlock();
             return CONCAT44(unaff_EDX,iVar2 + 0x20);
           }
-          sub_ad3c0(iVar2,&local_3c);
-          sub_b1256();
+          gus_mem_write_header(iVar2,&local_3c);
+          gus_irq_unlock();
           iVar2 = iVar2 + 0x20;
           goto LAB_000ad603;
         }
@@ -1429,7 +1429,7 @@ undefined8 __watcall sub_ad4dc(int param_1,undefined4 unaff_EDX)
     }
     local_1c = local_1c + 1;
     if (3 < (int)local_1c) {
-      sub_b1256();
+      gus_irq_unlock();
       iVar2 = 0;
 LAB_000ad603:
       return CONCAT44(unaff_EDX,iVar2);
@@ -1439,10 +1439,10 @@ LAB_000ad603:
 
 
 // ================================================================================================
-// sub_ad610 @ 0xad610 [__watcall]
+// gus_mem_free @ 0xad610 [__watcall]
 // ================================================================================================
 
-void __watcall sub_ad610(int param_1,undefined4 param_2,undefined4 param_3,undefined4 unaff_ECX)
+void __watcall gus_mem_free(int param_1,undefined4 param_2,undefined4 param_3,undefined4 unaff_ECX)
 
 {
   int iVar1;
@@ -1463,53 +1463,53 @@ void __watcall sub_ad610(int param_1,undefined4 param_2,undefined4 param_3,undef
   byte local_16;
   
   iVar1 = param_1 + -0x20;
-  sub_b122f(param_1,&local_24,iVar1,unaff_ECX,
+  gus_irq_lock(param_1,&local_24,iVar1,unaff_ECX,
             (ushort)(in_NT & 1) * 0x4000 | (ushort)SBORROW4((int)&stack0xffffffec,0x30) * 0x800 |
             (ushort)(in_IF & 1) * 0x200 | (ushort)(in_TF & 1) * 0x100 |
             (ushort)((int)&local_44 < 0) * 0x80 |
             (ushort)(&stack0x00000000 == (undefined *)0x44) * 0x40 | (ushort)(in_AF & 1) * 0x10 |
             (ushort)((POPCOUNT((uint)&local_44 & 0xff) & 1U) == 0) * 4 |
             (ushort)(&stack0xffffffec < (undefined *)0x30));
-  sub_ad3fc(iVar1);
+  gus_mem_read_header(iVar1);
   if (local_1c != -1) {
-    sub_ad3fc(local_1c,&local_44);
+    gus_mem_read_header(local_1c,&local_44);
     if ((local_36 & 1) == 0) {
       local_44 = local_44 + local_24;
       local_40 = local_20;
       if (local_20 != -1) {
-        sub_ad3fc(local_20,&local_34);
+        gus_mem_read_header(local_20,&local_34);
         local_2c = local_1c;
-        sub_ad3c0(local_40,&local_34);
+        gus_mem_write_header(local_40,&local_34);
       }
-      sub_ad3c0(local_1c,&local_44);
-      sub_ad3fc(local_1c,&local_24);
+      gus_mem_write_header(local_1c,&local_44);
+      gus_mem_read_header(local_1c,&local_24);
       iVar1 = local_1c;
     }
   }
   if (local_20 != -1) {
-    sub_ad3fc(local_20,&local_34);
+    gus_mem_read_header(local_20,&local_34);
     if ((local_26 & 1) == 0) {
       local_24 = local_24 + local_34;
       local_20 = local_30;
       if (local_30 != -1) {
-        sub_ad3fc(local_30,&local_34);
+        gus_mem_read_header(local_30,&local_34);
         local_2c = iVar1;
-        sub_ad3c0(local_20,&local_34);
+        gus_mem_write_header(local_20,&local_34);
       }
     }
   }
   local_16 = local_16 & 0xfe;
-  sub_ad3c0(iVar1,&local_24);
-  sub_b1256();
+  gus_mem_write_header(iVar1,&local_24);
+  gus_irq_unlock();
   return;
 }
 
 
 // ================================================================================================
-// sub_ad6f4 @ 0xad6f4 [__watcall]
+// gus_mem_reset @ 0xad6f4 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_ad6f4(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_mem_reset(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
@@ -1530,14 +1530,14 @@ undefined8 __watcall sub_ad6f4(undefined4 param_1,undefined4 unaff_EDX)
           (ushort)(&stack0x00000000 == (undefined *)0x24) * 0x40 | (ushort)(in_AF & 1) * 0x10 |
           (ushort)((POPCOUNT((uint)&local_24 & 0xff) & 1U) == 0) * 4 |
           (ushort)(&stack0xffffffec < (undefined *)0x10);
-  sub_b122f();
+  gus_irq_lock();
   iVar3 = 0;
   uVar2 = 0;
   do {
     if (((uint)word_f6128 & 1 << ((byte)uVar2 & 0x1f)) != 0) {
       iVar1 = uVar2 << 0x12;
       while (iVar1 != -1) {
-        sub_ad3fc(iVar1,&local_24,uVar2,uVar2 & 0xff,uVar4);
+        gus_mem_read_header(iVar1,&local_24,uVar2,uVar2 & 0xff,uVar4);
         iVar1 = local_20;
         if ((local_16 & 1) == 0) {
           iVar3 = iVar3 + local_24;
@@ -1546,16 +1546,16 @@ undefined8 __watcall sub_ad6f4(undefined4 param_1,undefined4 unaff_EDX)
     }
     uVar2 = uVar2 + 1;
   } while ((int)uVar2 < 4);
-  sub_b1256();
+  gus_irq_unlock();
   return CONCAT44(unaff_EDX,iVar3);
 }
 
 
 // ================================================================================================
-// sub_ad758 @ 0xad758 [__watcall]
+// gus_mem_avail @ 0xad758 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_ad758(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_mem_avail(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
@@ -1576,14 +1576,14 @@ undefined8 __watcall sub_ad758(undefined4 param_1,undefined4 unaff_EDX)
           (ushort)(&stack0x00000000 == (undefined *)0x24) * 0x40 | (ushort)(in_AF & 1) * 0x10 |
           (ushort)((POPCOUNT((uint)&local_24 & 0xff) & 1U) == 0) * 4 |
           (ushort)(&stack0xffffffec < (undefined *)0x10);
-  sub_b122f();
+  gus_irq_lock();
   uVar3 = 0;
   uVar2 = 0;
   do {
     if (((uint)word_f6128 & 1 << ((byte)uVar2 & 0x1f)) != 0) {
       iVar1 = uVar2 << 0x12;
       while (iVar1 != -1) {
-        sub_ad3fc(iVar1,&local_24,uVar2,uVar2 & 0xff,uVar4);
+        gus_mem_read_header(iVar1,&local_24,uVar2,uVar2 & 0xff,uVar4);
         iVar1 = local_20;
         if (((local_16 & 1) == 0) && (uVar3 < local_24)) {
           uVar3 = local_24;
@@ -1592,7 +1592,7 @@ undefined8 __watcall sub_ad758(undefined4 param_1,undefined4 unaff_EDX)
     }
     uVar2 = uVar2 + 1;
   } while ((int)uVar2 < 4);
-  sub_b1256();
+  gus_irq_unlock();
   if (uVar3 < 0x21) {
     iVar1 = 0;
   }
@@ -1604,10 +1604,10 @@ undefined8 __watcall sub_ad758(undefined4 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_ad7cc @ 0xad7cc [__cdecl]
+// gus_stream_convert_a @ 0xad7cc [__cdecl]
 // ================================================================================================
 
-void sub_ad7cc(short *param_1)
+void gus_stream_convert_a(short *param_1)
 
 {
   uint in_EAX;
@@ -1834,10 +1834,10 @@ void sub_ad7cc(short *param_1)
 
 
 // ================================================================================================
-// sub_adc96 @ 0xadc96 [__watcall]
+// gus_stream_convert_b @ 0xadc96 [__watcall]
 // ================================================================================================
 
-void __watcall sub_adc96(undefined4 param_1,undefined4 param_2,undefined4 *unaff_EBX,uint unaff_ECX)
+void __watcall gus_stream_convert_b(undefined4 param_1,undefined4 param_2,undefined4 *unaff_EBX,uint unaff_ECX)
 
 {
   undefined4 *puVar1;
@@ -2005,10 +2005,10 @@ LAB_000adee0:
 
 
 // ================================================================================================
-// sub_adee8 @ 0xadee8 [__watcall]
+// empty_func_adee8 @ 0xadee8 [__watcall]
 // ================================================================================================
 
-void __watcall sub_adee8(void)
+void __watcall empty_func_adee8(void)
 
 {
   return;
@@ -2016,12 +2016,12 @@ void __watcall sub_adee8(void)
 
 
 // ================================================================================================
-// sub_adee9 @ 0xadee9 [__watcall]
+// gus_stream_fill @ 0xadee9 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __watcall sub_adee9(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX)
+void __watcall gus_stream_fill(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX)
 
 {
   ushort uVar1;
@@ -2071,7 +2071,7 @@ void __watcall sub_adee9(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX)
       dword_d7b04 = 2;
     }
   }
-  uVar14 = sub_adc96(dword_d8494,unaff_EDX,dword_d8494,dword_d8484,unaff_EBX);
+  uVar14 = gus_stream_convert_b(dword_d8494,unaff_EDX,dword_d8494,dword_d8484,unaff_EBX);
   puVar5 = dword_d8494;
   pbVar12 = dword_d7b44;
   if ((char)dword_d7b0c != '\0') {
@@ -2081,7 +2081,7 @@ void __watcall sub_adee9(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX)
           (uint)CARRY4(dword_d7b50 << ((byte)dword_d8490 & 0x1f),dword_d7b48) +
           (dword_d7b4c << bVar10 | dword_d7b50 >> 0x20 - bVar10) < dword_d7b34) {
         local_14 = dword_d7b44;
-        uVar14 = sub_ad7cc(dword_d8494);
+        uVar14 = gus_stream_convert_a(dword_d8494);
         uVar7 = extraout_ECX;
 LAB_000adfe7:
         dword_d7b44 = dword_d7b44 + ((int)pbVar12 - (int)local_14);
@@ -2189,7 +2189,7 @@ LAB_000ae1b7:
           (uint)CARRY4(dword_d7da8 << ((byte)dword_d8490 & 0x1f),dword_d7da0) +
           (dword_d7da4 << bVar10 | dword_d7da8 >> 0x20 - bVar10) < dword_d7d8c) {
         local_14 = dword_d7d9c;
-        uVar14 = sub_ad7cc(dword_d8494);
+        uVar14 = gus_stream_convert_a(dword_d8494);
         uVar7 = extraout_ECX_00;
 LAB_000ae22f:
         dword_d7d9c = dword_d7d9c + ((int)pbVar12 - (int)local_14);
@@ -2297,7 +2297,7 @@ LAB_000ae3ff:
           (uint)CARRY4(dword_d8000 << ((byte)dword_d8490 & 0x1f),dword_d7ff8) +
           (dword_d7ffc << bVar10 | dword_d8000 >> 0x20 - bVar10) < dword_d7fe4) {
         local_14 = dword_d7ff4;
-        uVar14 = sub_ad7cc(dword_d8494);
+        uVar14 = gus_stream_convert_a(dword_d8494);
         uVar7 = extraout_ECX_01;
 LAB_000ae477:
         dword_d7ff4 = dword_d7ff4 + ((int)pbVar12 - (int)local_14);
@@ -2405,7 +2405,7 @@ LAB_000ae647:
           (uint)CARRY4(dword_d8258 << ((byte)dword_d8490 & 0x1f),dword_d8250) +
           (dword_d8254 << bVar10 | dword_d8258 >> 0x20 - bVar10) < dword_d823c) {
         local_14 = dword_d824c;
-        uVar14 = sub_ad7cc(dword_d8494);
+        uVar14 = gus_stream_convert_a(dword_d8494);
         uVar7 = extraout_ECX_02;
 LAB_000ae6bf:
         dword_d824c = dword_d824c + ((int)pbVar12 - (int)local_14);
@@ -2504,28 +2504,28 @@ LAB_000ae6bf:
     }
   }
 LAB_000ae88f:
-  sub_adee8((int)uVar14,(int)(uVar14 >> 0x20),dword_d8494,dword_d8484);
+  empty_func_adee8((int)uVar14,(int)(uVar14 >> 0x20),dword_d8494,dword_d8484);
   puVar5 = dword_d8494;
   dword_d84a8 = dword_d8494;
   dword_d84ac = dword_d8494;
   uVar11 = dword_d84b4;
   if (dword_d8494 == dword_d7af4) {
-    sub_b1f1c(dword_d84b8,*dword_d8494);
-    sub_b1f1c(dword_d84b8 + 1,puVar5[1]);
+    gus_poke(dword_d84b8,*dword_d8494);
+    gus_poke(dword_d84b8 + 1,puVar5[1]);
     uVar11 = dword_d84b0;
   }
-  sub_b0d6c(&dword_d84a8,dword_d8480,uVar11,0x41,1);
+  gus_download(&dword_d84a8,dword_d8480,uVar11,0x41,1);
   return;
 }
 
 
 // ================================================================================================
-// sub_ae903 @ 0xae903 [__watcall]
+// gus_stream_wave_callback @ 0xae903 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-int6 __watcall sub_ae903(int param_1,ushort unaff_DX)
+int6 __watcall gus_stream_wave_callback(int param_1,ushort unaff_DX)
 
 {
   undefined2 *puVar1;
@@ -2581,18 +2581,18 @@ LAB_000ae9e8:
 
 
 // ================================================================================================
-// sub_ae9eb @ 0xae9eb [__watcall]
+// gus_stream_tick @ 0xae9eb [__watcall]
 // ================================================================================================
 
-void __watcall sub_ae9eb(void)
+void __watcall gus_stream_tick(void)
 
 {
   if (dword_d7afc != 0) {
-    sub_adee9(0);
+    gus_stream_fill(0);
     dword_d7afc = 0;
   }
   if (dword_d7b08 != 0) {
-    sub_adee9(1);
+    gus_stream_fill(1);
     dword_d7b08 = 0;
   }
   return;
@@ -2600,12 +2600,12 @@ void __watcall sub_ae9eb(void)
 
 
 // ================================================================================================
-// sub_aea23 @ 0xaea23 [__cdecl]
+// gus_stream_open @ 0xaea23 [__cdecl]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-undefined8 sub_aea23(int *param_1,uint param_2,uint param_3)
+undefined8 gus_stream_open(int *param_1,uint param_2,uint param_3)
 
 {
   undefined *puVar1;
@@ -2687,22 +2687,22 @@ undefined8 sub_aea23(int *param_1,uint param_2,uint param_3)
   dword_d7b04 = 1;
   do {
     uStack_18 = 0xaeb4e;
-    sub_b1f1c(param_2,0,puVar1);
+    gus_poke(param_2,0,puVar1);
     param_2 = param_2 + 1;
   } while (param_2 <= dword_d84b8);
   uStack_18 = 0xaeb60;
-  sub_b1f1c(param_2,0,puVar1);
+  gus_poke(param_2,0,puVar1);
   uStack_18 = 0xaeb6a;
-  sub_b14e4(sub_ae903);
+  gus_set_wave_callback(gus_stream_wave_callback);
   uStack_18 = 0xaeb73;
-  _dword_d849c = sub_b1cbc(0,0);
+  _dword_d849c = gus_voice_alloc(0,0);
   bVar11 = 0;
   bVar16 = 0;
   bVar14 = 0;
   bVar13 = 1;
   bVar12 = 1;
   uStack_18 = 0xaeb81;
-  _dword_d84a0 = sub_b1cbc(0);
+  _dword_d84a0 = gus_voice_alloc(0);
   out(word_d8770,dword_d849c);
   out(word_d8772,1);
   uVar6 = (undefined2)((uint)_dword_d84a0 >> 0x10);
@@ -2783,10 +2783,10 @@ undefined8 sub_aea23(int *param_1,uint param_2,uint param_3)
 
 
 // ================================================================================================
-// sub_aedbc @ 0xaedbc [__watcall]
+// gus_stream_close @ 0xaedbc [__watcall]
 // ================================================================================================
 
-undefined2 __watcall sub_aedbc(undefined2 param_1)
+undefined2 __watcall gus_stream_close(undefined2 param_1)
 
 {
   undefined2 *puVar1;
@@ -2838,10 +2838,10 @@ undefined2 __watcall sub_aedbc(undefined2 param_1)
 
 
 // ================================================================================================
-// sub_aee54 @ 0xaee54 [__cdecl]
+// gus_dig_play @ 0xaee54 [__cdecl]
 // ================================================================================================
 
-uint sub_aee54(uint param_1,byte *param_2,undefined4 param_3,uint param_4,undefined4 param_5,
+uint gus_dig_play(uint param_1,byte *param_2,undefined4 param_3,uint param_4,undefined4 param_5,
               int param_6,undefined4 param_7,int param_8)
 
 {
@@ -2880,17 +2880,17 @@ uint sub_aee54(uint param_1,byte *param_2,undefined4 param_3,uint param_4,undefi
     if (param_6 == 0) {
       uStack_18 = param_1;
       uStack_1c = 0xaee7f;
-      sub_aefa2();
+      gus_dig_stop();
       return uStack_18;
     }
     uStack_18 = param_6;
     uStack_1c = param_1;
-    sub_af076();
+    gus_dig_set_freq();
     iVar5 = CONCAT22((short)((uint)&uStack_1c >> 0x10),(short)&uStack_1c + 8);
     *(undefined4 *)(iVar5 + -4) = param_7;
     *(uint *)(iVar5 + -8) = param_1;
     *(undefined4 *)(iVar5 + -0xc) = 0xaeea0;
-    sub_aefea();
+    gus_dig_pan();
     iVar6 = CONCAT22((short)((uint)(iVar5 + -8) >> 0x10),(short)(iVar5 + -8) + 8);
     *(undefined4 *)(iVar6 + -4) = param_5;
     *(uint *)(iVar6 + -8) = param_4;
@@ -2898,7 +2898,7 @@ uint sub_aee54(uint param_1,byte *param_2,undefined4 param_3,uint param_4,undefi
     *(byte **)(iVar6 + -0x10) = param_2;
     *(uint *)(iVar6 + -0x14) = param_1;
     *(undefined4 *)(iVar6 + -0x18) = 0xaeeb8;
-    sub_af0d5();
+    gus_dig_set_sample();
     iVar7 = CONCAT22((short)((uint)(iVar6 + -0x14) >> 0x10),(short)(iVar6 + -0x14) + 0x14);
     puVar2[0x4c] = 0;
     puVar2[0x50] = 0;
@@ -2919,17 +2919,17 @@ uint sub_aee54(uint param_1,byte *param_2,undefined4 param_3,uint param_4,undefi
     *(undefined4 *)(iVar7 + -8) = 0xff;
     *(uint *)(iVar7 + -0xc) = param_1;
     *(undefined4 *)(iVar7 + -0x10) = 0xaef04;
-    in_EAX = sub_aef33();
+    in_EAX = gus_dig_volume();
   }
   return in_EAX;
 }
 
 
 // ================================================================================================
-// sub_aef0e @ 0xaef0e [__cdecl]
+// gus_dig_voice_active @ 0xaef0e [__cdecl]
 // ================================================================================================
 
-undefined4 sub_aef0e(uint param_1)
+undefined4 gus_dig_voice_active(uint param_1)
 
 {
   if ((param_1 < 4) && (*(int *)(&off_d846c)[param_1] != 0)) {
@@ -2940,10 +2940,10 @@ undefined4 sub_aef0e(uint param_1)
 
 
 // ================================================================================================
-// sub_aef33 @ 0xaef33 [__watcall]
+// gus_dig_volume @ 0xaef33 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_aef33(void)
+undefined4 __watcall gus_dig_volume(void)
 
 {
   undefined4 *puVar1;
@@ -2983,10 +2983,10 @@ undefined4 __watcall sub_aef33(void)
 
 
 // ================================================================================================
-// sub_aefa2 @ 0xaefa2 [__watcall]
+// gus_dig_stop @ 0xaefa2 [__watcall]
 // ================================================================================================
 
-void __watcall sub_aefa2(void)
+void __watcall gus_dig_stop(void)
 
 {
   undefined4 *puVar1;
@@ -3002,10 +3002,10 @@ void __watcall sub_aefa2(void)
 
 
 // ================================================================================================
-// sub_aefc9 @ 0xaefc9 [__cdecl]
+// gus_dig_release @ 0xaefc9 [__cdecl]
 // ================================================================================================
 
-void sub_aefc9(uint param_1)
+void gus_dig_release(uint param_1)
 
 {
   if ((param_1 < 4) && (1 < (int)param_1)) {
@@ -3016,10 +3016,10 @@ void sub_aefc9(uint param_1)
 
 
 // ================================================================================================
-// sub_aefea @ 0xaefea [__cdecl]
+// gus_dig_pan @ 0xaefea [__cdecl]
 // ================================================================================================
 
-void sub_aefea(uint param_1,int param_2)
+void gus_dig_pan(uint param_1,int param_2)
 
 {
   undefined *puVar1;
@@ -3053,10 +3053,10 @@ void sub_aefea(uint param_1,int param_2)
 
 
 // ================================================================================================
-// sub_af058 @ 0xaf058 [__watcall]
+// gus_dig_unused @ 0xaf058 [__watcall]
 // ================================================================================================
 
-void __watcall sub_af058(void)
+void __watcall gus_dig_unused(void)
 
 {
   ushort in_stack_00000004;
@@ -3070,10 +3070,10 @@ void __watcall sub_af058(void)
 
 
 // ================================================================================================
-// sub_af076 @ 0xaf076 [__watcall]
+// gus_dig_set_freq @ 0xaf076 [__watcall]
 // ================================================================================================
 
-void __watcall sub_af076(void)
+void __watcall gus_dig_set_freq(void)
 
 {
   undefined *puVar1;
@@ -3104,10 +3104,10 @@ void __watcall sub_af076(void)
 
 
 // ================================================================================================
-// sub_af0d5 @ 0xaf0d5 [__watcall]
+// gus_dig_set_sample @ 0xaf0d5 [__watcall]
 // ================================================================================================
 
-void __watcall sub_af0d5(void)
+void __watcall gus_dig_set_sample(void)
 
 {
   undefined *puVar1;
@@ -3131,10 +3131,10 @@ void __watcall sub_af0d5(void)
 
 
 // ================================================================================================
-// sub_af112 @ 0xaf112 [__cdecl]
+// gus_dig_update @ 0xaf112 [__cdecl]
 // ================================================================================================
 
-uint sub_af112(uint param_1,uint param_2,int param_3,uint param_4,char param_5)
+uint gus_dig_update(uint param_1,uint param_2,int param_3,uint param_4,char param_5)
 
 {
   undefined *puVar1;
@@ -3174,10 +3174,10 @@ uint sub_af112(uint param_1,uint param_2,int param_3,uint param_4,char param_5)
 
 
 // ================================================================================================
-// sub_af198 @ 0xaf198 [__watcall]
+// gus_dig_get_voices @ 0xaf198 [__watcall]
 // ================================================================================================
 
-uint __watcall sub_af198(void)
+uint __watcall gus_dig_get_voices(void)
 
 {
   return dword_d7afc | dword_d7b08;
@@ -3185,10 +3185,10 @@ uint __watcall sub_af198(void)
 
 
 // ================================================================================================
-// sub_af1a4 @ 0xaf1a4 [__cdecl]
+// gus_dig_get_rate @ 0xaf1a4 [__cdecl]
 // ================================================================================================
 
-undefined sub_af1a4(uint param_1)
+undefined gus_dig_get_rate(uint param_1)
 
 {
   if (param_1 < 4) {
@@ -3199,41 +3199,41 @@ undefined sub_af1a4(uint param_1)
 
 
 // ================================================================================================
-// sub_af1d0 @ 0xaf1d0 [__watcall]
+// gus_parse_ultrasnd @ 0xaf1d0 [__watcall]
 // ================================================================================================
 
 undefined8 __watcall
-sub_af1d0(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+gus_parse_ultrasnd(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   undefined uVar1;
   undefined2 uVar2;
   char *pcVar3;
   
-  pcVar3 = (char *)sub_a6b87(off_d84cc);
+  pcVar3 = (char *)getenv(off_d84cc);
   dword_f612c = pcVar3;
   if (pcVar3 != (char *)0x0) {
-    uVar2 = sub_a6d24(pcVar3,&dword_f612c,0x10,param_1,unaff_EDX,unaff_ECX,unaff_EBX);
+    uVar2 = strtoul(pcVar3,&dword_f612c,0x10,param_1,unaff_EDX,unaff_ECX,unaff_EBX);
     *(undefined2 *)(param_1 + 2) = uVar2;
     if (*dword_f612c == ',') {
       dword_f612c = dword_f612c + 1;
     }
-    uVar1 = sub_a6d24(dword_f612c,&dword_f612c,10,param_1,unaff_EDX,unaff_ECX,unaff_EBX);
+    uVar1 = strtoul(dword_f612c,&dword_f612c,10,param_1,unaff_EDX,unaff_ECX,unaff_EBX);
     *(undefined *)(param_1 + 7) = uVar1;
     if (*dword_f612c == ',') {
       dword_f612c = dword_f612c + 1;
     }
-    uVar1 = sub_a6d24(dword_f612c,&dword_f612c,10,param_1,unaff_EDX,unaff_ECX,unaff_EBX);
+    uVar1 = strtoul(dword_f612c,&dword_f612c,10,param_1,unaff_EDX,unaff_ECX,unaff_EBX);
     *(undefined *)(param_1 + 6) = uVar1;
     if (*dword_f612c == ',') {
       dword_f612c = dword_f612c + 1;
     }
-    uVar1 = sub_a6d24(dword_f612c,&dword_f612c,10,param_1,unaff_EDX,unaff_ECX,unaff_EBX);
+    uVar1 = strtoul(dword_f612c,&dword_f612c,10,param_1,unaff_EDX,unaff_ECX,unaff_EBX);
     *(undefined *)(param_1 + 4) = uVar1;
     if (*dword_f612c == ',') {
       dword_f612c = dword_f612c + 1;
     }
-    uVar1 = sub_a6d24(dword_f612c,&dword_f612c,10);
+    uVar1 = strtoul(dword_f612c,&dword_f612c,10);
     *(undefined *)(param_1 + 5) = uVar1;
     if ((((*(short *)(param_1 + 2) == 0) || (*(char *)(param_1 + 6) == '\0')) ||
         (*(char *)(param_1 + 7) == '\0')) ||
@@ -3249,20 +3249,20 @@ sub_af1d0(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff
 
 
 // ================================================================================================
-// sub_af2e0 @ 0xaf2e0 [__watcall]
+// gus_probe_port @ 0xaf2e0 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_af2e0(short param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_probe_port(short param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
   undefined4 uVar2;
   
-  sub_aa200(param_1 + 8,0xaa);
-  iVar1 = sub_b128c(param_1 + 10);
+  outp(param_1 + 8,0xaa);
+  iVar1 = inp(param_1 + 10);
   if (iVar1 == 0xaa) {
-    sub_aa200(param_1 + 8,0x55);
-    iVar1 = sub_b128c(param_1 + 10);
+    outp(param_1 + 8,0x55);
+    iVar1 = inp(param_1 + 10);
     if (iVar1 == 0x55) {
       uVar2 = 1;
       goto LAB_000af337;
@@ -3275,10 +3275,10 @@ LAB_000af337:
 
 
 // ================================================================================================
-// sub_af340 @ 0xaf340 [__watcall]
+// gus_midi_note_off @ 0xaf340 [__watcall]
 // ================================================================================================
 
-void __watcall sub_af340(int param_1,int unaff_EDX,int unaff_EBX)
+void __watcall gus_midi_note_off(int param_1,int unaff_EDX,int unaff_EBX)
 
 {
   int iVar1;
@@ -3304,16 +3304,16 @@ void __watcall sub_af340(int param_1,int unaff_EDX,int unaff_EBX)
       iVar3 = (int)(0x100000 / (longlong)iVar3);
     }
   }
-  sub_ab6d0(param_1,iVar3);
+  gus_midi_voice_off(param_1,iVar3);
   return;
 }
 
 
 // ================================================================================================
-// sub_af428 @ 0xaf428 [__watcall]
+// gus_midi_controller @ 0xaf428 [__watcall]
 // ================================================================================================
 
-void __watcall sub_af428(int param_1,uint unaff_EDX,int unaff_EBX)
+void __watcall gus_midi_controller(int param_1,uint unaff_EDX,int unaff_EBX)
 
 {
   int iVar1;
@@ -3322,7 +3322,7 @@ void __watcall sub_af428(int param_1,uint unaff_EDX,int unaff_EBX)
     if (unaff_EDX < 10) {
       if (unaff_EDX < 6) {
         if (unaff_EDX == 1) {
-          sub_ab80c(param_1,unaff_EBX);
+          gus_midi_set_controller(param_1,unaff_EBX);
           return;
         }
       }
@@ -3332,7 +3332,7 @@ void __watcall sub_af428(int param_1,uint unaff_EDX,int unaff_EBX)
             return;
           }
           *(int *)(&unk_d85d0 + param_1 * 4) = unaff_EBX;
-          sub_ab658(param_1,(*(int *)(&unk_d8610 + param_1 * 4) * unaff_EBX) / 0x7f);
+          gus_midi_set_voices(param_1,(*(int *)(&unk_d8610 + param_1 * 4) * unaff_EBX) / 0x7f);
           return;
         }
         if ((*(int *)(&unk_d8550 + param_1 * 4) == 0) && (*(int *)(&unk_d8590 + param_1 * 4) == 0))
@@ -3347,7 +3347,7 @@ void __watcall sub_af428(int param_1,uint unaff_EDX,int unaff_EBX)
     }
     else {
       if (unaff_EDX < 0xb) {
-        sub_ad2a8(unaff_EBX,param_1);
+        gus_midi_pitch_bend(unaff_EBX,param_1);
         return;
       }
       if (unaff_EDX < 0x26) {
@@ -3355,7 +3355,7 @@ void __watcall sub_af428(int param_1,uint unaff_EDX,int unaff_EBX)
           return;
         }
         *(int *)(&unk_d8610 + param_1 * 4) = unaff_EBX;
-        sub_ab658(param_1,(*(int *)(&unk_d85d0 + param_1 * 4) * unaff_EBX) / 0x7f);
+        gus_midi_set_voices(param_1,(*(int *)(&unk_d85d0 + param_1 * 4) * unaff_EBX) / 0x7f);
         return;
       }
       if (unaff_EDX < 0x27) {
@@ -3377,7 +3377,7 @@ void __watcall sub_af428(int param_1,uint unaff_EDX,int unaff_EBX)
         if (unaff_EDX != 0x40) {
           return;
         }
-        sub_acc3c(param_1,0x17 < unaff_EBX);
+        gus_midi_all_notes_off(param_1,0x17 < unaff_EBX);
         return;
       }
       if (unaff_EDX < 0x61) {
@@ -3410,13 +3410,13 @@ void __watcall sub_af428(int param_1,uint unaff_EDX,int unaff_EBX)
       else {
         if (0x78 < unaff_EDX) {
           if (unaff_EDX < 0x7a) {
-            sub_acc3c(param_1,0);
-            sub_ab80c(param_1,0);
-            sub_ab6d0(param_1,0x400);
+            gus_midi_all_notes_off(param_1,0);
+            gus_midi_set_controller(param_1,0);
+            gus_midi_voice_off(param_1,0x400);
             *(undefined4 *)(&unk_d85d0 + iVar1) = 100;
             *(undefined4 *)(&unk_d8610 + iVar1) = 0x7f;
-            sub_ab658(param_1,100);
-            sub_ad2a8(param_1,0xffffffff);
+            gus_midi_set_voices(param_1,100);
+            gus_midi_pitch_bend(param_1,0xffffffff);
             return;
           }
           if (unaff_EDX < 0x7b) {
@@ -3426,7 +3426,7 @@ void __watcall sub_af428(int param_1,uint unaff_EDX,int unaff_EBX)
             return;
           }
         }
-        sub_ad344(param_1);
+        gus_midi_sustain_off(param_1);
       }
     }
   }
@@ -3435,10 +3435,10 @@ void __watcall sub_af428(int param_1,uint unaff_EDX,int unaff_EBX)
 
 
 // ================================================================================================
-// sub_af6d3 @ 0xaf6d3 [__watcall]
+// __setenvp @ 0xaf6d3 [__watcall]
 // ================================================================================================
 
-void __watcall sub_af6d3(void)
+void __watcall __setenvp(void)
 
 {
   char cVar1;
@@ -3464,11 +3464,11 @@ void __watcall sub_af6d3(void)
     if (iVar2 == 0) {
       iVar2 = 1;
     }
-    pcVar3 = (char *)sub_91984(iVar2);
+    pcVar3 = (char *)malloc(iVar2);
     if (pcVar3 != (char *)0x0) {
-      uVar6 = sub_91984(iVar5 * 5 + 4,pcVar3);
+      uVar6 = malloc(iVar5 * 5 + 4,pcVar3);
       if ((int)uVar6 == 0) {
-        sub_91a67((int)((ulonglong)uVar6 >> 0x20));
+        free((int)((ulonglong)uVar6 >> 0x20));
       }
       else {
         __n = 0;
@@ -3496,10 +3496,10 @@ void __watcall sub_af6d3(void)
 
 
 // ================================================================================================
-// sub_af7a7 @ 0xaf7a7 [__watcall]
+// stpcpy @ 0xaf7a7 [__watcall]
 // ================================================================================================
 
-void __watcall sub_af7a7(char *param_1,char *unaff_EDX)
+void __watcall stpcpy(char *param_1,char *unaff_EDX)
 
 {
   char cVar1;
@@ -3512,11 +3512,11 @@ void __watcall sub_af7a7(char *param_1,char *unaff_EDX)
 
 
 // ================================================================================================
-// sub_af7b6 @ 0xaf7b6 [__watcall]
+// __cenvarg @ 0xaf7b6 [__watcall]
 // ================================================================================================
 
 uint __watcall
-sub_af7b6(int *param_1,int *param_2,undefined4 *param_3,undefined4 *unaff_ECX,undefined4 *param_5,
+__cenvarg(int *param_1,int *param_2,undefined4 *param_3,undefined4 *unaff_ECX,undefined4 *param_5,
          undefined4 *param_6,int param_7)
 
 {
@@ -3547,11 +3547,11 @@ sub_af7b6(int *param_1,int *param_2,undefined4 *param_3,undefined4 *unaff_ECX,un
   uVar1 = dword_d5674;
   uVar7 = iVar6 + 0xf;
   dword_d5674 = 0x10;
-  puVar3 = (undefined *)sub_91984(uVar7);
+  puVar3 = (undefined *)malloc(uVar7);
   if ((puVar3 == (undefined *)0x0) &&
-     (puVar3 = (undefined *)sub_91984(uVar7), puVar3 == (undefined *)0x0)) {
-    sub_9878a(5);
-    sub_987ad(8);
+     (puVar3 = (undefined *)malloc(uVar7), puVar3 == (undefined *)0x0)) {
+    __set_errno(5);
+    __set_doserrno(8);
     dword_d5674 = uVar1;
   }
   else {
@@ -3561,7 +3561,7 @@ sub_af7b6(int *param_1,int *param_2,undefined4 *param_3,undefined4 *unaff_ECX,un
     *unaff_ECX = puVar3;
     if (param_2 != (int *)0x0) {
       for (; *param_2 != 0; param_2 = param_2 + 1) {
-        iVar6 = sub_af7a7(puVar3,*param_2);
+        iVar6 = stpcpy(puVar3,*param_2);
         puVar3 = (undefined *)(iVar6 + 1);
       }
     }
@@ -3583,19 +3583,19 @@ sub_af7b6(int *param_1,int *param_2,undefined4 *param_3,undefined4 *unaff_ECX,un
       *param_6 = 0x90;
       return uVar7 >> 4;
     }
-    sub_9878a(2);
-    sub_987ad(10);
-    sub_91a67(*param_3);
+    __set_errno(2);
+    __set_doserrno(10);
+    free(*param_3);
   }
   return 0xffffffff;
 }
 
 
 // ================================================================================================
-// sub_af8ee @ 0xaf8ee [__watcall]
+// __ccmdline @ 0xaf8ee [__watcall]
 // ================================================================================================
 
-void __watcall sub_af8ee(undefined4 param_1,int *unaff_EDX,char *unaff_EBX,int unaff_ECX)
+void __watcall __ccmdline(undefined4 param_1,int *unaff_EDX,char *unaff_EBX,int unaff_ECX)
 
 {
   char *pcVar1;
@@ -3608,7 +3608,7 @@ void __watcall sub_af8ee(undefined4 param_1,int *unaff_EDX,char *unaff_EBX,int u
   pcVar1 = pcVar2;
   if ((*unaff_EDX != 0) && (unaff_EDX = unaff_EDX + 1, *unaff_EDX != 0)) {
     while( true ) {
-      pcVar1 = (char *)sub_af7a7(pcVar2,*unaff_EDX);
+      pcVar1 = (char *)stpcpy(pcVar2,*unaff_EDX);
       unaff_EDX = unaff_EDX + 1;
       if (*unaff_EDX == 0) break;
       pcVar2 = pcVar1 + 1;
@@ -3626,10 +3626,10 @@ void __watcall sub_af8ee(undefined4 param_1,int *unaff_EDX,char *unaff_EBX,int u
 
 
 // ================================================================================================
-// sub_af943 @ 0xaf943 [__cdecl]
+// __dospawn @ 0xaf943 [__cdecl]
 // ================================================================================================
 
-void sub_af943(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4)
+void __dospawn(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4)
 
 {
   code *pcVar1;
@@ -3670,17 +3670,17 @@ void sub_af943(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefine
     puVar4 = puVar2 + 0x10;
   }
   *(undefined4 *)(puVar4 + -4) = 0xafa08;
-  sub_9a730(uVar3,-(uint)bVar5,&dword_d8690);
+  __set_errno_dos_entry(uVar3,-(uint)bVar5,&dword_d8690);
   return;
 }
 
 
 // ================================================================================================
-// sub_afa11 @ 0xafa11 [__watcall]
+// __fill_path_part @ 0xafa11 [__watcall]
 // ================================================================================================
 
 undefined4 * __watcall
-sub_afa11(undefined4 *param_1,undefined4 *unaff_EDX,undefined4 *unaff_EBX,int unaff_ECX)
+__fill_path_part(undefined4 *param_1,undefined4 *unaff_EDX,undefined4 *unaff_EBX,int unaff_ECX)
 
 {
   uint uVar1;
@@ -3712,11 +3712,11 @@ sub_afa11(undefined4 *param_1,undefined4 *unaff_EDX,undefined4 *unaff_EBX,int un
 
 
 // ================================================================================================
-// sub_afa55 @ 0xafa55 [__watcall]
+// __splitpath_drive @ 0xafa55 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_afa55(char *param_1,char *param_2,undefined4 *unaff_EBX,undefined4 unaff_ECX,undefined4 param_5,
+__splitpath_drive(char *param_1,char *param_2,undefined4 *unaff_EBX,undefined4 unaff_ECX,undefined4 param_5,
          undefined4 param_6)
 
 {
@@ -3751,12 +3751,12 @@ sub_afa55(char *param_1,char *param_2,undefined4 *unaff_EBX,undefined4 unaff_ECX
         pcVar4 = param_1;
         cVar1 = *pcVar4;
         if (cVar1 == '\0') {
-          uVar2 = sub_afa11(unaff_ECX);
+          uVar2 = __fill_path_part(unaff_ECX);
           if (pcVar5 == (char *)0x0) {
             pcVar5 = pcVar4;
           }
-          uVar2 = sub_afa11(param_5,uVar2,pcVar3,pcVar5);
-          sub_afa11(param_6,uVar2,pcVar5,pcVar4);
+          uVar2 = __fill_path_part(param_5,uVar2,pcVar3,pcVar5);
+          __fill_path_part(param_6,uVar2,pcVar5,pcVar4);
           return;
         }
         if (cVar1 != '.') break;
@@ -3770,12 +3770,12 @@ sub_afa55(char *param_1,char *param_2,undefined4 *unaff_EBX,undefined4 unaff_ECX
 
 
 // ================================================================================================
-// sub_afae0 @ 0xafae0 [__watcall]
+// draw_textured_triangle_b @ 0xafae0 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __watcall sub_afae0(void)
+void __watcall draw_textured_triangle_b(void)
 
 {
   int iVar1;
@@ -3818,7 +3818,7 @@ void __watcall sub_afae0(void)
   int local_14;
   
   iVar11 = *(int *)(in_stack_00000004 + 2) >> 0x10;
-  sub_b72d4(in_stack_00000004 + 0x10,&unk_f6138);
+  texture_set(in_stack_00000004 + 0x10,&unk_f6138);
   uVar15 = 0;
   uVar18 = 0;
   iVar17 = in_stack_0000000c[1];
@@ -3944,7 +3944,7 @@ LAB_000afdc5:
           }
         }
         if ((0 < iVar16) && (dword_d30b0 < iVar17)) {
-          sub_b7420(iVar14 + *(int *)(off_d30cc + local_20),
+          texture_span_wide(iVar14 + *(int *)(off_d30cc + local_20),
                     (iVar5 >> 0x10) + iVar11 * (local_18 >> 0x10) + (&unk_f6138)[iVar12],iVar16);
         }
         iVar5 = iVar5 + local_2c;
@@ -4003,7 +4003,7 @@ LAB_000afdc5:
         }
       }
       if ((0 < iVar3) && (dword_d30b0 <= iVar17)) {
-        sub_b7420(iVar4 + *(int *)(off_d30cc + local_28),
+        texture_span_wide(iVar4 + *(int *)(off_d30cc + local_28),
                   (iVar5 >> 0x10) + iVar11 * (local_18 >> 0x10) + (&unk_f6138)[iVar10],iVar3);
       }
       iVar5 = iVar5 + local_2c;
@@ -4018,10 +4018,10 @@ LAB_000afdc5:
 
 
 // ================================================================================================
-// sub_b00e4 @ 0xb00e4 [__watcall]
+// strrchr @ 0xb00e4 [__watcall]
 // ================================================================================================
 
-char * __watcall sub_b00e4(char *param_1,char unaff_DL)
+char * __watcall strrchr(char *param_1,char unaff_DL)
 
 {
   char cVar1;
@@ -4040,10 +4040,10 @@ char * __watcall sub_b00e4(char *param_1,char unaff_DL)
 
 
 // ================================================================================================
-// sub_b0100 @ 0xb0100 [__watcall]
+// read_le_n @ 0xb0100 [__watcall]
 // ================================================================================================
 
-int __watcall sub_b0100(void)
+int __watcall read_le_n(void)
 
 {
   byte bVar1;
@@ -4065,10 +4065,10 @@ int __watcall sub_b0100(void)
 
 
 // ================================================================================================
-// sub_b0128 @ 0xb0128 [__cdecl]
+// read_be_n_b0128 @ 0xb0128 [__cdecl]
 // ================================================================================================
 
-int sub_b0128(byte *param_1,int param_2)
+int read_be_n_b0128(byte *param_1,int param_2)
 
 {
   byte bVar1;
@@ -4085,10 +4085,10 @@ int sub_b0128(byte *param_1,int param_2)
 
 
 // ================================================================================================
-// sub_b0148 @ 0xb0148 [__cdecl]
+// write_le_n @ 0xb0148 [__cdecl]
 // ================================================================================================
 
-void sub_b0148(undefined *param_1,uint param_2,int param_3)
+void write_le_n(undefined *param_1,uint param_2,int param_3)
 
 {
   undefined local_4;
@@ -4107,10 +4107,10 @@ void sub_b0148(undefined *param_1,uint param_2,int param_3)
 
 
 // ================================================================================================
-// sub_b0170 @ 0xb0170 [__watcall]
+// write_be_n @ 0xb0170 [__watcall]
 // ================================================================================================
 
-undefined * __watcall sub_b0170(void)
+undefined * __watcall write_be_n(void)
 
 {
   undefined *in_stack_00000004;
@@ -4133,10 +4133,10 @@ undefined * __watcall sub_b0170(void)
 
 
 // ================================================================================================
-// sub_b01b0 @ 0xb01b0 [__watcall]
+// putpixels_skip_ff @ 0xb01b0 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b01b0(void)
+void __watcall putpixels_skip_ff(void)
 
 {
   byte bVar1;
@@ -4163,53 +4163,53 @@ void __watcall sub_b01b0(void)
 
 
 // ================================================================================================
-// sub_b01e4 @ 0xb01e4 [__cdecl]
+// drawshape2_alt @ 0xb01e4 [__cdecl]
 // ================================================================================================
 
-void sub_b01e4(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshape2_alt(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   if (dword_d30c8 == 0) {
-    sub_b77f4(param_1,param_2,param_3);
+    drawshape2_alt_linear(param_1,param_2,param_3);
     return;
   }
-  funcptr_d43e4 = sub_b01b0;
+  funcptr_d43e4 = putpixels_skip_ff;
   drawshape2(param_1,param_2,param_3);
-  funcptr_d43e4 = sub_b3abc;
+  funcptr_d43e4 = memmove_dwords;
   return;
 }
 
 
 // ================================================================================================
-// sub_b0228 @ 0xb0228 [__cdecl]
+// drawshape2_alt_home @ 0xb0228 [__cdecl]
 // ================================================================================================
 
-void sub_b0228(int param_1)
+void drawshape2_alt_home(int param_1)
 
 {
-  sub_b01e4(param_1,*(int *)(param_1 + 10) >> 0x10,*(int *)(param_1 + 0xc) >> 0x10);
+  drawshape2_alt(param_1,*(int *)(param_1 + 10) >> 0x10,*(int *)(param_1 + 0xc) >> 0x10);
   return;
 }
 
 
 // ================================================================================================
-// sub_b0244 @ 0xb0244 [__cdecl]
+// drawshape2_alt_centered @ 0xb0244 [__cdecl]
 // ================================================================================================
 
-void sub_b0244(int param_1,int param_2,int param_3)
+void drawshape2_alt_centered(int param_1,int param_2,int param_3)
 
 {
-  sub_b01e4(param_1,param_2 - (*(int *)(param_1 + 6) >> 0x10),
+  drawshape2_alt(param_1,param_2 - (*(int *)(param_1 + 6) >> 0x10),
             param_3 - (*(int *)(param_1 + 8) >> 0x10));
   return;
 }
 
 
 // ================================================================================================
-// sub_b026c @ 0xb026c [__cdecl]
+// translate_bytes @ 0xb026c [__cdecl]
 // ================================================================================================
 
-byte sub_b026c(byte *param_1,int param_2,int param_3)
+byte translate_bytes(byte *param_1,int param_2,int param_3)
 
 {
   byte bVar1;
@@ -4228,10 +4228,10 @@ byte sub_b026c(byte *param_1,int param_2,int param_3)
 
 
 // ================================================================================================
-// sub_b0288 @ 0xb0288 [__watcall]
+// set_hook_d86c0 @ 0xb0288 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b0288(undefined4 param_1)
+void __watcall set_hook_d86c0(undefined4 param_1)
 
 {
   dword_d86c0 = param_1;
@@ -4240,10 +4240,10 @@ void __watcall sub_b0288(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_b028e @ 0xb028e [__watcall]
+// __cvt_exponent @ 0xb028e [__watcall]
 // ================================================================================================
 
-int __watcall sub_b028e(char *param_1,int unaff_EDX,int unaff_EBX,int unaff_ECX)
+int __watcall __cvt_exponent(char *param_1,int unaff_EDX,int unaff_EBX,int unaff_ECX)
 
 {
   int iVar1;
@@ -4294,10 +4294,10 @@ int __watcall sub_b028e(char *param_1,int unaff_EDX,int unaff_EBX,int unaff_ECX)
 
 
 // ================================================================================================
-// sub_b0335 @ 0xb0335 [__watcall]
+// __cvt_fixed @ 0xb0335 [__watcall]
 // ================================================================================================
 
-char * __watcall sub_b0335(char *param_1,char *unaff_EDX,int unaff_EBX,int unaff_ECX)
+char * __watcall __cvt_fixed(char *param_1,char *unaff_EDX,int unaff_EBX,int unaff_ECX)
 
 {
   char cVar1;
@@ -4346,10 +4346,10 @@ char * __watcall sub_b0335(char *param_1,char *unaff_EDX,int unaff_EBX,int unaff
 
 
 // ================================================================================================
-// sub_b0398 @ 0xb0398 [__watcall]
+// __cvt_shift_digits @ 0xb0398 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b0398(char *param_1,size_t unaff_EDX,size_t unaff_EBX)
+void __watcall __cvt_shift_digits(char *param_1,size_t unaff_EDX,size_t unaff_EBX)
 
 {
   char cVar1;
@@ -4386,11 +4386,11 @@ void __watcall sub_b0398(char *param_1,size_t unaff_EDX,size_t unaff_EBX)
 
 
 // ================================================================================================
-// sub_b0403 @ 0xb0403 [__watcall]
+// __cvt_float @ 0xb0403 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_b0403(char *param_1,undefined4 param_2,int param_3,char param_4,size_t param_5,int param_6,
+__cvt_float(char *param_1,undefined4 param_2,int param_3,char param_4,size_t param_5,int param_6,
          undefined4 param_7,char param_8,char param_9)
 
 {
@@ -4416,7 +4416,7 @@ sub_b0403(char *param_1,undefined4 param_2,int param_3,char param_4,size_t param
   
   local_18 = param_1;
   local_14 = param_4;
-  uVar8 = sub_b2220();
+  uVar8 = __cvt_special();
   pdVar4 = (double *)((ulonglong)uVar8 >> 0x20);
   if ((int)uVar8 == 0) {
     local_10 = param_9;
@@ -4428,8 +4428,8 @@ sub_b0403(char *param_1,undefined4 param_2,int param_3,char param_4,size_t param
       }
       else {
         local_34 = local_34 * 0.3010299956639812;
-        sub_b22a4();
-        lVar7 = (longdouble)sub_961d0();
+        __cvt_int_frac();
+        lVar7 = (longdouble)fround();
         local_1c = (int)ROUND(lVar7);
         pdVar4 = extraout_EDX;
         if ((local_1c < -4) || (param_3 <= local_1c)) {
@@ -4459,10 +4459,10 @@ sub_b0403(char *param_1,undefined4 param_2,int param_3,char param_4,size_t param
     local_2c = *pdVar4;
     if (((((*(uint *)((int)pdVar4 + 4) & 0x7fffffff) != 0) || (*(int *)pdVar4 != 0)) &&
         (local_10 != 'E')) && (param_6 != 0)) {
-      lVar7 = (longdouble)sub_b2321();
+      lVar7 = (longdouble)__pow10_scale();
       local_2c = (double)lVar7;
     }
-    sub_b2408(&local_20,local_18,local_2c._4_4_,param_3,(int)local_2c,local_2c._4_4_,param_3,
+    __cvt_digits(&local_20,local_18,local_2c._4_4_,param_3,(int)local_2c,local_2c._4_4_,param_3,
               &local_20,&local_24,local_10,local_48);
     pcVar1 = local_18;
     if (local_24 == 0) {
@@ -4477,7 +4477,7 @@ sub_b0403(char *param_1,undefined4 param_2,int param_3,char param_4,size_t param
       puVar5 = extraout_EDX_00 + 1;
     }
     if (local_10 == 'E') {
-      pcVar2 = (char *)sub_b0335(puVar5,local_48,param_6,param_3 - param_6);
+      pcVar2 = (char *)__cvt_fixed(puVar5,local_48,param_6,param_3 - param_6);
       iVar6 = (int)pcVar2 - (int)local_18;
       pcVar1 = pcVar2;
       if ((param_8 != '\0') && (iVar6 < (int)param_5)) {
@@ -4488,14 +4488,14 @@ sub_b0403(char *param_1,undefined4 param_2,int param_3,char param_4,size_t param
       if ((((ulonglong)local_2c & 0x7fffffff00000000) != 0) || ((int)local_2c != 0)) {
         local_20 = local_20 - param_6;
       }
-      iVar3 = sub_b028e(pcVar1,local_20,param_7,param_5 - iVar6);
+      iVar3 = __cvt_exponent(pcVar1,local_20,param_7,param_5 - iVar6);
       iVar6 = iVar6 + iVar3;
     }
     else if ((int)param_5 < (int)(puVar5 + ((local_20 + 1 + param_3) - (int)local_18))) {
       iVar6 = param_5 + 1;
     }
     else {
-      iVar6 = sub_b0335(puVar5,local_48,local_20);
+      iVar6 = __cvt_fixed(puVar5,local_48,local_20);
       iVar6 = iVar6 - (int)pcVar1;
     }
   }
@@ -4509,7 +4509,7 @@ sub_b0403(char *param_1,undefined4 param_2,int param_3,char param_4,size_t param
     }
   }
   if (iVar6 <= (int)param_5) {
-    sub_b0398(local_18,iVar6,param_5);
+    __cvt_shift_digits(local_18,iVar6,param_5);
     return;
   }
 LAB_000b04e0:
@@ -4519,10 +4519,10 @@ LAB_000b04e0:
 
 
 // ================================================================================================
-// sub_b0627 @ 0xb0627 [__watcall]
+// __strtod @ 0xb0627 [__watcall]
 // ================================================================================================
 
-longdouble __watcall sub_b0627(byte *param_1,undefined4 *unaff_EDX)
+longdouble __watcall __strtod(byte *param_1,undefined4 *unaff_EDX)
 
 {
   byte bVar1;
@@ -4619,15 +4619,15 @@ LAB_000b069a:
   }
   else {
     local_38[iVar8] = 0;
-    sub_b267e(local_38,&local_24);
+    __ZBuf2F(local_38,&local_24);
     if (iVar10 < 0x135) {
       if (iVar10 < -0x145) {
-        sub_98796();
+        __set_ERANGE();
         local_24 = 0.0;
       }
       else {
         if (iVar10 != 0) {
-          lVar12 = (longdouble)sub_b2321();
+          lVar12 = (longdouble)__pow10_scale();
           local_24 = (double)lVar12;
         }
         if (bVar5) {
@@ -4636,7 +4636,7 @@ LAB_000b069a:
       }
     }
     else {
-      sub_98796();
+      __set_ERANGE();
       if (bVar5) {
         local_24 = -(double)CONCAT44(dword_c4ca4,qword_c4ca0);
       }
@@ -4653,10 +4653,10 @@ LAB_000b069a:
 
 
 // ================================================================================================
-// sub_b07d0 @ 0xb07d0 [__watcall]
+// gus_dma_setup_channel @ 0xb07d0 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b07d0(int param_1,uint unaff_EDX)
+void __watcall gus_dma_setup_channel(int param_1,uint unaff_EDX)
 
 {
   ushort uVar1;
@@ -4691,10 +4691,10 @@ void __watcall sub_b07d0(int param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_b085c @ 0xb085c [__watcall]
+// gus_dma_program @ 0xb085c [__watcall]
 // ================================================================================================
 
-void __watcall sub_b085c(int param_1,int unaff_EDX,ushort unaff_BX,ushort unaff_CX,ushort param_5)
+void __watcall gus_dma_program(int param_1,int unaff_EDX,ushort unaff_BX,ushort unaff_CX,ushort param_5)
 
 {
   undefined2 uVar1;
@@ -4724,41 +4724,41 @@ void __watcall sub_b085c(int param_1,int unaff_EDX,ushort unaff_BX,ushort unaff_
       local_c = local_c | 0x80;
     }
   }
-  sub_aa200(*(undefined2 *)(&DAT_000f7981 + param_1),(&unk_f7978)[param_1],&unk_f7978 + param_1,
+  outp(*(undefined2 *)(&DAT_000f7981 + param_1),(&unk_f7978)[param_1],&unk_f7978 + param_1,
             unaff_CX,(ushort)(in_NT & 1) * 0x4000 | (ushort)(in_IF & 1) * 0x200 |
                      (ushort)(in_TF & 1) * 0x100 | 0x40 | (ushort)(in_AF & 1) * 0x10 | 4);
-  sub_aa200(*(undefined2 *)(&DAT_000f7983 + param_1),unaff_BX | (byte)uVar1 & 3);
-  sub_aa200(*(undefined2 *)(&DAT_000f7985 + param_1),0);
-  sub_aa200(*(undefined2 *)(&DAT_000f797d + param_1),local_14);
-  sub_aa200(*(undefined2 *)(&DAT_000f797d + param_1),local_c);
-  sub_aa200((&DAT_000f797a)[param_1],unaff_CX);
-  sub_aa200(*(undefined2 *)(&DAT_000f7985 + param_1),0);
-  sub_aa200(*(undefined2 *)(&DAT_000f797f + param_1),local_10);
-  sub_aa200(*(undefined2 *)(&DAT_000f797f + param_1),local_18);
-  sub_aa200(*(undefined2 *)(&DAT_000f7981 + param_1),(&DAT_000f7979)[param_1]);
+  outp(*(undefined2 *)(&DAT_000f7983 + param_1),unaff_BX | (byte)uVar1 & 3);
+  outp(*(undefined2 *)(&DAT_000f7985 + param_1),0);
+  outp(*(undefined2 *)(&DAT_000f797d + param_1),local_14);
+  outp(*(undefined2 *)(&DAT_000f797d + param_1),local_c);
+  outp((&DAT_000f797a)[param_1],unaff_CX);
+  outp(*(undefined2 *)(&DAT_000f7985 + param_1),0);
+  outp(*(undefined2 *)(&DAT_000f797f + param_1),local_10);
+  outp(*(undefined2 *)(&DAT_000f797f + param_1),local_18);
+  outp(*(undefined2 *)(&DAT_000f7981 + param_1),(&DAT_000f7979)[param_1]);
   return;
 }
 
 
 // ================================================================================================
-// sub_b097c @ 0xb097c [__watcall]
+// gus_dma_mask @ 0xb097c [__watcall]
 // ================================================================================================
 
-void __watcall sub_b097c(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+void __watcall gus_dma_mask(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
-  sub_aa200(*(undefined2 *)(&DAT_000f7981 + param_1 * 0x11),(&unk_f7978)[param_1 * 0x11],unaff_EBX,
+  outp(*(undefined2 *)(&DAT_000f7981 + param_1 * 0x11),(&unk_f7978)[param_1 * 0x11],unaff_EBX,
             unaff_ECX,unaff_EDX);
   return;
 }
 
 
 // ================================================================================================
-// sub_b09a4 @ 0xb09a4 [__watcall]
+// gus_dma_count @ 0xb09a4 [__watcall]
 // ================================================================================================
 
 undefined8 __watcall
-sub_b09a4(int param_1,undefined4 unaff_EDX,undefined4 param_3,undefined4 unaff_ECX)
+gus_dma_count(int param_1,undefined4 unaff_EDX,undefined4 param_3,undefined4 unaff_ECX)
 
 {
   uint uVar1;
@@ -4773,14 +4773,14 @@ sub_b09a4(int param_1,undefined4 unaff_EDX,undefined4 param_3,undefined4 unaff_E
   
   uVar1 = param_1 * 0x11;
   puVar4 = &unk_f7978 + uVar1;
-  sub_aa200(*(undefined2 *)(&DAT_000f7985 + uVar1),0,puVar4,unaff_ECX,
+  outp(*(undefined2 *)(&DAT_000f7985 + uVar1),0,puVar4,unaff_ECX,
             (ushort)(in_NT & 1) * 0x4000 | (ushort)SCARRY4(uVar1,0xf7978) * 0x800 |
             (ushort)(in_IF & 1) * 0x200 | (ushort)(in_TF & 1) * 0x100 |
             (ushort)((int)puVar4 < 0) * 0x80 | (ushort)(puVar4 == (undefined *)0x0) * 0x40 |
             (ushort)(in_AF & 1) * 0x10 | (ushort)((POPCOUNT((uint)puVar4 & 0xff) & 1U) == 0) * 4 |
             (ushort)(0xfff08687 < uVar1));
-  uVar2 = sub_b128c(*(undefined2 *)(&DAT_000f797f + uVar1));
-  uVar5 = sub_b128c(*(undefined2 *)(&DAT_000f797f + uVar1),uVar2);
+  uVar2 = inp(*(undefined2 *)(&DAT_000f797f + uVar1));
+  uVar5 = inp(*(undefined2 *)(&DAT_000f797f + uVar1),uVar2);
   uVar3 = (int)(uVar5 & 0xff000000ff) * 0x100 + (int)((uVar5 & 0xff000000ff) >> 0x20) + 1U & 0xffff;
   if (3 < *(ushort *)(&DAT_000f7987 + uVar1)) {
     uVar3 = uVar3 * 2;
@@ -4790,10 +4790,10 @@ sub_b09a4(int param_1,undefined4 unaff_EDX,undefined4 param_3,undefined4 unaff_E
 
 
 // ================================================================================================
-// sub_b0a14 @ 0xb0a14 [__watcall]
+// gus_file_read @ 0xb0a14 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_b0a14(undefined4 param_1,undefined4 unaff_EDX,undefined2 unaff_BX)
+undefined4 __watcall gus_file_read(undefined4 param_1,undefined4 unaff_EDX,undefined2 unaff_BX)
 
 {
   undefined2 in_DS;
@@ -4805,10 +4805,10 @@ undefined4 __watcall sub_b0a14(undefined4 param_1,undefined4 unaff_EDX,undefined
 
 
 // ================================================================================================
-// sub_b0a40 @ 0xb0a40 [__watcall]
+// gus_file_close @ 0xb0a40 [__watcall]
 // ================================================================================================
 
-int __watcall sub_b0a40(int param_1)
+int __watcall gus_file_close(int param_1)
 
 {
   int iVar1;
@@ -4823,10 +4823,10 @@ int __watcall sub_b0a40(int param_1)
 
 
 // ================================================================================================
-// sub_b0a5c @ 0xb0a5c [__watcall]
+// gus_file_seek @ 0xb0a5c [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_b0a5c(int param_1,__off_t unaff_EDX,int unaff_EBX)
+undefined4 __watcall gus_file_seek(int param_1,__off_t unaff_EDX,int unaff_EBX)
 
 {
   __off_t _Var1;
@@ -4840,10 +4840,10 @@ undefined4 __watcall sub_b0a5c(int param_1,__off_t unaff_EDX,int unaff_EBX)
 
 
 // ================================================================================================
-// sub_b0a78 @ 0xb0a78 [__watcall]
+// gus_file_open @ 0xb0a78 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b0a78(char *param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_file_open(char *param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
@@ -4859,34 +4859,34 @@ undefined8 __watcall sub_b0a78(char *param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_b0aa4 @ 0xb0aa4 [__watcall]
+// gus_setvect @ 0xb0aa4 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b0aa4(void)
+void __watcall gus_setvect(void)
 
 {
-  sub_98ac8();
+  _dos_setvect();
   return;
 }
 
 
 // ================================================================================================
-// sub_b0ab0 @ 0xb0ab0 [__watcall]
+// gus_getvect @ 0xb0ab0 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b0ab0(void)
+void __watcall gus_getvect(void)
 
 {
-  sub_98af3();
+  _dos_getvect();
   return;
 }
 
 
 // ================================================================================================
-// sub_b0abc @ 0xb0abc [__watcall]
+// gus_hook_irq @ 0xb0abc [__watcall]
 // ================================================================================================
 
-void __watcall sub_b0abc(int param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_ECX)
+void __watcall gus_hook_irq(int param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   undefined2 uVar1;
@@ -4904,31 +4904,31 @@ void __watcall sub_b0abc(int param_1,undefined4 param_2,undefined4 unaff_EBX,und
   uVar7 = (ushort)(in_NT & 1) * 0x4000 | (ushort)(in_IF & 1) * 0x200 | (ushort)(in_TF & 1) * 0x100 |
           0x40 | (ushort)(in_AF & 1) * 0x10 | 4;
   uVar1 = *(undefined2 *)(&unk_d86da + param_1 * 8);
-  uVar5 = sub_b0ab0(uVar1);
+  uVar5 = gus_getvect(uVar1);
   *(short *)(&unk_d86e0 + param_1 * 2) = (short)((ulonglong)uVar5 >> 0x20);
   *(int *)(&unk_d86dc + param_1 * 8) = (int)uVar5;
-  sub_b0aa4(uVar1,(int)((ulonglong)uVar5 >> 0x20),unaff_EBX,unaff_ECX,uVar7);
+  gus_setvect(uVar1,(int)((ulonglong)uVar5 >> 0x20),unaff_EBX,unaff_ECX,uVar7);
   bVar3 = ~('\x01' << ((byte)param_1 & 7));
   if (param_1 < 8) {
-    uVar6 = sub_b128c(0x21,bVar3);
+    uVar6 = inp(0x21,bVar3);
     uVar4 = (uint)((uVar6 & 0xff000000ff) >> 0x20) & (uint)(uVar6 & 0xff000000ff);
     uVar2 = 0x21;
   }
   else {
-    uVar6 = sub_b128c(0xa1,bVar3);
+    uVar6 = inp(0xa1,bVar3);
     uVar4 = (uint)((uVar6 & 0xff000000ff) >> 0x20) & (uint)(uVar6 & 0xff000000ff);
     uVar2 = 0xa1;
   }
-  sub_aa200(uVar2,uVar4);
+  outp(uVar2,uVar4);
   return;
 }
 
 
 // ================================================================================================
-// sub_b0b5c @ 0xb0b5c [__watcall]
+// gus_unhook_irq @ 0xb0b5c [__watcall]
 // ================================================================================================
 
-void __watcall sub_b0b5c(int param_1,undefined4 param_2,undefined4 param_3,undefined4 unaff_ECX)
+void __watcall gus_unhook_irq(int param_1,undefined4 param_2,undefined4 param_3,undefined4 unaff_ECX)
 
 {
   undefined4 uVar1;
@@ -4953,43 +4953,43 @@ void __watcall sub_b0b5c(int param_1,undefined4 param_2,undefined4 param_3,undef
     uVar3 = CONCAT31((int3)((uint)unaff_ECX >> 8),(char)param_1) & 0xffffff07;
     cVar2 = '\x01' << (sbyte)uVar3;
     if (param_1 < 8) {
-      uVar5 = sub_b128c(0x21,cVar2,param_1,uVar3,uVar4);
+      uVar5 = inp(0x21,cVar2,param_1,uVar3,uVar4);
       uVar3 = (uint)((uVar5 & 0xff000000ff) >> 0x20) | (uint)(uVar5 & 0xff000000ff);
       uVar1 = 0x21;
     }
     else {
-      uVar5 = sub_b128c(0xa1,cVar2,param_1,uVar3,uVar4);
+      uVar5 = inp(0xa1,cVar2,param_1,uVar3,uVar4);
       uVar3 = (uint)((uVar5 & 0xff000000ff) >> 0x20) | (uint)(uVar5 & 0xff000000ff);
       uVar1 = 0xa1;
     }
-    sub_aa200(uVar1,uVar3);
+    outp(uVar1,uVar3);
   }
-  sub_b0aa4(*(undefined2 *)(&unk_d86da + param_1 * 8));
+  gus_setvect(*(undefined2 *)(&unk_d86da + param_1 * 8));
   return;
 }
 
 
 // ================================================================================================
-// sub_b0be4 @ 0xb0be4 [__watcall]
+// pic_eoi @ 0xb0be4 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_b0be4(ushort param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+pic_eoi(ushort param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   if (7 < param_1) {
-    sub_aa200(0xa0,0x20,unaff_EBX,unaff_ECX,unaff_EDX);
+    outp(0xa0,0x20,unaff_EBX,unaff_ECX,unaff_EDX);
   }
-  sub_aa200(0x20,0x20,unaff_EBX,unaff_ECX,unaff_EDX);
+  outp(0x20,0x20,unaff_EBX,unaff_ECX,unaff_EDX);
   return;
 }
 
 
 // ================================================================================================
-// sub_b0c10 @ 0xb0c10 [__watcall]
+// gus_dma_init_play @ 0xb0c10 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b0c10(int param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_dma_init_play(int param_1,undefined4 unaff_EDX)
 
 {
   uint uVar1;
@@ -4998,7 +4998,7 @@ undefined8 __watcall sub_b0c10(int param_1,undefined4 unaff_EDX)
     uVar1 = CONCAT31((int3)((uint)param_1 >> 8),3);
   }
   else {
-    uVar1 = sub_b07d0(0,param_1);
+    uVar1 = gus_dma_setup_channel(0,param_1);
     uVar1 = uVar1 & 0xffffff00;
   }
   return CONCAT44(unaff_EDX,uVar1);
@@ -5006,10 +5006,10 @@ undefined8 __watcall sub_b0c10(int param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_b0c34 @ 0xb0c34 [__watcall]
+// gus_dma_init_record @ 0xb0c34 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b0c34(int param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_dma_init_record(int param_1,undefined4 unaff_EDX)
 
 {
   uint uVar1;
@@ -5018,7 +5018,7 @@ undefined8 __watcall sub_b0c34(int param_1,undefined4 unaff_EDX)
     uVar1 = CONCAT31((int3)((uint)param_1 >> 8),3);
   }
   else {
-    uVar1 = sub_b07d0(1,param_1);
+    uVar1 = gus_dma_setup_channel(1,param_1);
     uVar1 = uVar1 & 0xffffff00;
   }
   return CONCAT44(unaff_EDX,uVar1);
@@ -5026,25 +5026,25 @@ undefined8 __watcall sub_b0c34(int param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_b0c5c @ 0xb0c5c [__watcall]
+// gus_dma_init @ 0xb0c5c [__watcall]
 // ================================================================================================
 
-char __watcall sub_b0c5c(void)
+char __watcall gus_dma_init(void)
 
 {
   char cVar1;
   int iVar2;
   
   byte_d8ae4 = 1;
-  cVar1 = sub_b0c10(byte_f79a4);
+  cVar1 = gus_dma_init_play(byte_f79a4);
   if (cVar1 != '\0') {
     return cVar1;
   }
-  cVar1 = sub_b0c34(byte_f79a6);
+  cVar1 = gus_dma_init_record(byte_f79a6);
   if (cVar1 != '\0') {
     return cVar1;
   }
-  iVar2 = sub_b14ac(sub_b0e7c);
+  iVar2 = gus_set_dma_callback(gus_dma_next_block);
   if (iVar2 != 0) {
     return '\b';
   }
@@ -5054,11 +5054,11 @@ char __watcall sub_b0c5c(void)
 
 
 // ================================================================================================
-// sub_b0cb8 @ 0xb0cb8 [__watcall]
+// gus_dma_start @ 0xb0cb8 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_b0cb8(undefined4 param_1,undefined4 unaff_EDX,uint unaff_EBX,byte unaff_CL,ushort param_5)
+gus_dma_start(undefined4 param_1,undefined4 unaff_EDX,uint unaff_EBX,byte unaff_CL,ushort param_5)
 
 {
   byte extraout_DL;
@@ -5072,30 +5072,30 @@ sub_b0cb8(undefined4 param_1,undefined4 unaff_EDX,uint unaff_EBX,byte unaff_CL,u
   dword_f79bc = unaff_EDX;
   if ((param_5 & 1) == 0) {
     if (3 < byte_f79a6) {
-      sub_b2720(unaff_EBX,unaff_CL | 4);
+      gus_addr_16bit(unaff_EBX,unaff_CL | 4);
       unaff_CL = extraout_DL_00;
     }
   }
   else {
     if (((unaff_CL & 4) == 0) && (3 < byte_f79a4)) {
-      unaff_EBX = sub_b2720(unaff_EBX,unaff_CL | 4);
+      unaff_EBX = gus_addr_16bit(unaff_EBX,unaff_CL | 4);
       unaff_CL = extraout_DL;
     }
-    sub_aa200(word_d8772,0x42);
-    sub_b19c7(word_d8774,unaff_EBX >> 4 & 0xffff);
+    outp(word_d8772,0x42);
+    outpw(word_d8774,unaff_EBX >> 4 & 0xffff);
   }
   byte_f79c8 = unaff_CL | 0x21;
-  sub_b0e7c(param_5);
+  gus_dma_next_block(param_5);
   return;
 }
 
 
 // ================================================================================================
-// sub_b0d6c @ 0xb0d6c [__watcall]
+// gus_download @ 0xb0d6c [__watcall]
 // ================================================================================================
 
 undefined4 __watcall
-sub_b0d6c(int *param_1,uint unaff_EDX,uint unaff_EBX,undefined unaff_CL,ushort param_5)
+gus_download(int *param_1,uint unaff_EDX,uint unaff_EBX,undefined unaff_CL,ushort param_5)
 
 {
   ushort uVar1;
@@ -5116,9 +5116,9 @@ sub_b0d6c(int *param_1,uint unaff_EDX,uint unaff_EBX,undefined unaff_CL,ushort p
           (ushort)((POPCOUNT((uint)&local_20 & 0xff) & 1U) == 0) * 4 |
           (ushort)(&stack0xfffffff4 < (undefined *)0x14);
   local_20 = param_1;
-  sub_b122f();
+  gus_irq_lock();
   if (dword_d8784 != 0) {
-    sub_b1256();
+    gus_irq_unlock();
     return 7;
   }
   dword_d8784 = 1;
@@ -5126,7 +5126,7 @@ sub_b0d6c(int *param_1,uint unaff_EDX,uint unaff_EBX,undefined unaff_CL,ushort p
   iVar2 = *local_20;
   if ((param_5 & 1) == 0) {
 LAB_000b0e50:
-    sub_b0cb8(local_18,unaff_EDX,unaff_EBX,unaff_CL,param_5);
+    gus_dma_start(local_18,unaff_EDX,unaff_EBX,unaff_CL,param_5);
   }
   else {
     if (((byte_f79a4 < 4) || ((local_18 & 1) == 0)) || ((unaff_EBX & 1) != 0)) {
@@ -5137,7 +5137,7 @@ LAB_000b0e50:
           local_1c = unaff_EDX;
         }
         local_1c = local_1c & 0xffff;
-        sub_b1f9c(iVar2,unaff_EBX,local_1c,unaff_CL,uVar3);
+        gus_poke_block(iVar2,unaff_EBX,local_1c,unaff_CL,uVar3);
         unaff_EDX = unaff_EDX - local_1c;
         local_18 = local_18 + local_1c;
         iVar2 = iVar2 + local_1c;
@@ -5145,20 +5145,20 @@ LAB_000b0e50:
       if (0x1f < unaff_EDX) goto LAB_000b0e50;
     }
     if (unaff_EDX != 0) {
-      sub_b1f9c(iVar2,unaff_EBX,unaff_EDX,unaff_CL,uVar3);
+      gus_poke_block(iVar2,unaff_EBX,unaff_EDX,unaff_CL,uVar3);
     }
     word_f799e = word_f799e | 4;
   }
-  sub_b1256();
+  gus_irq_unlock();
   return 0;
 }
 
 
 // ================================================================================================
-// sub_b0e7c @ 0xb0e7c [__watcall]
+// gus_dma_next_block @ 0xb0e7c [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_b0e7c(uint param_1,uint unaff_EDX)
+longlong __watcall gus_dma_next_block(uint param_1,uint unaff_EDX)
 
 {
   uint uVar1;
@@ -5197,7 +5197,7 @@ longlong __watcall sub_b0e7c(uint param_1,uint unaff_EDX)
     dword_f79c0 = uVar6;
     if ((param_1 & 1) == 0) {
       uVar3 = 0x44;
-      sub_b085c(1,uVar6,0x44,word_f79ba,word_f79b8);
+      gus_dma_program(1,uVar6,0x44,word_f79ba,word_f79b8);
       uVar5 = 0x49;
     }
     else {
@@ -5207,12 +5207,12 @@ longlong __watcall sub_b0e7c(uint param_1,uint unaff_EDX)
       else {
         uVar3 = 0x44;
       }
-      sub_b085c(0,uVar6,uVar3,word_f79ba,word_f79b8);
+      gus_dma_program(0,uVar6,uVar3,word_f79ba,word_f79b8);
       uVar5 = 0x41;
     }
-    sub_aa200(word_d8772,uVar5,uVar3,sVar2,uVar7);
-    sub_aa200(word_d8776,byte_f79c8);
-    sub_b13a1();
+    outp(word_d8772,uVar5,uVar3,sVar2,uVar7);
+    outp(word_d8776,byte_f79c8);
+    gus_delay();
     dword_f79bc = dword_f79bc - uVar6;
     word_f79b8 = word_f79b8 + (short)uVar6;
     word_f79ba = word_f79ba + 1;
@@ -5223,10 +5223,10 @@ longlong __watcall sub_b0e7c(uint param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_b0fa8 @ 0xb0fa8 [__watcall]
+// gus_dma_wait @ 0xb0fa8 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b0fa8(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_dma_wait(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   uint uVar1;
@@ -5236,15 +5236,15 @@ undefined8 __watcall sub_b0fa8(undefined4 param_1,undefined4 unaff_EDX)
   
   iVar3 = 120000;
   while ((dword_d8784 != 0 && (iVar3 = iVar3 + -1, iVar3 != 0))) {
-    uVar1 = sub_b128c(word_d8762);
+    uVar1 = inp(word_d8762);
     if (((uVar1 & 0x80) == 0) && ((word_f799e & 4) == 0)) goto LAB_000b0fe6;
     while( true ) {
-      sub_b16bc();
+      gus_gf1_irq_service();
 LAB_000b0fe6:
       if ((word_f799e & 2) == 0) break;
       word_f799e = word_f799e & 0xfffd;
     }
-    sub_b13a1();
+    gus_delay();
     iVar3 = extraout_EDX;
   }
   if ((dword_d8784 == 0) || (iVar3 != 0)) {
@@ -5258,10 +5258,10 @@ LAB_000b0fe6:
 
 
 // ================================================================================================
-// sub_b1024 @ 0xb1024 [__watcall]
+// gus_dma_idle @ 0xb1024 [__watcall]
 // ================================================================================================
 
-bool __watcall sub_b1024(void)
+bool __watcall gus_dma_idle(void)
 
 {
   return dword_d8784 == 0;
@@ -5269,10 +5269,10 @@ bool __watcall sub_b1024(void)
 
 
 // ================================================================================================
-// sub_b103c @ 0xb103c [__watcall]
+// gus_dma_abort @ 0xb103c [__watcall]
 // ================================================================================================
 
-void __watcall sub_b103c(void)
+void __watcall gus_dma_abort(void)
 
 {
   undefined4 unaff_ECX;
@@ -5292,40 +5292,40 @@ void __watcall sub_b103c(void)
           (ushort)(in_AF & 1) * 0x10 | (ushort)(in_PF & 1) * 4 | (ushort)(in_CF & 1);
   if (dword_d8784 != 0) {
     dword_d8784 = 0;
-    sub_b097c(0);
-    sub_b097c(1);
+    gus_dma_mask(0);
+    gus_dma_mask(1);
     byte_f79c8 = byte_f79c8 & 0xde;
-    sub_aa200(word_d8772,0x41,0,unaff_ECX,uVar1);
-    sub_aa200(word_d8776,byte_f79c8);
-    sub_aa200(word_d8772,0x49);
-    sub_aa200(word_d8776,byte_f79c8);
+    outp(word_d8772,0x41,0,unaff_ECX,uVar1);
+    outp(word_d8776,byte_f79c8);
+    outp(word_d8772,0x49);
+    outp(word_d8776,byte_f79c8);
   }
   return;
 }
 
 
 // ================================================================================================
-// sub_b10d0 @ 0xb10d0 [__watcall]
+// gus_wave_addresses @ 0xb10d0 [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_b10d0(int *param_1,uint unaff_EDX)
+longlong __watcall gus_wave_addresses(int *param_1,uint unaff_EDX)
 
 {
   ulonglong uVar1;
   uint uVar2;
   uint uVar3;
   
-  sub_b122f();
+  gus_irq_lock();
   uVar3 = param_1[5];
   uVar2 = uVar3;
   if ((*(byte *)(param_1 + 0x12) & 1) != 0) {
-    uVar2 = sub_b2720(uVar3);
+    uVar2 = gus_addr_16bit(uVar3);
   }
   *(ushort *)(param_1 + 8) = (ushort)(uVar2 >> 7) & 0x1fff;
   uVar3 = uVar3 + *param_1;
   *(short *)((int)param_1 + 0x1e) = (short)((uVar2 & 0x7f) << 9);
   if ((*(byte *)(param_1 + 0x12) & 1) != 0) {
-    uVar3 = sub_b2720(uVar3);
+    uVar3 = gus_addr_16bit(uVar3);
   }
   *(ushort *)((int)param_1 + 0x22) = (ushort)((byte)uVar3 & 0x7f) << 9;
   *(ushort *)(param_1 + 9) = (ushort)(uVar3 >> 7) & 0x1fff;
@@ -5333,7 +5333,7 @@ longlong __watcall sub_b10d0(int *param_1,uint unaff_EDX)
        *(ushort *)((int)param_1 + 0x22) | (ushort)((*(byte *)(param_1 + 0xd) & 0xffffff0f) << 5);
   uVar3 = param_1[5] + param_1[1];
   if ((*(byte *)(param_1 + 0x12) & 1) != 0) {
-    uVar3 = sub_b2720();
+    uVar3 = gus_addr_16bit();
   }
   *(ushort *)((int)param_1 + 0x26) = (ushort)((byte)uVar3 & 0x7f) << 9;
   *(ushort *)(param_1 + 10) = (ushort)(uVar3 >> 7) & 0x1fff;
@@ -5343,7 +5343,7 @@ longlong __watcall sub_b10d0(int *param_1,uint unaff_EDX)
     uVar3 = (param_1[5] + param_1[0xc]) - 1;
   }
   else {
-    uVar3 = sub_b2720(param_1[5] + param_1[0xc] + -2);
+    uVar3 = gus_addr_16bit(param_1[5] + param_1[0xc] + -2);
   }
   *(ushort *)((int)param_1 + 0x2a) = (ushort)((byte)uVar3 & 0x7f) << 9;
   *(ushort *)(param_1 + 0xb) = (ushort)(uVar3 >> 7) & 0x1fff;
@@ -5351,16 +5351,16 @@ longlong __watcall sub_b10d0(int *param_1,uint unaff_EDX)
           ((int)(uint)*(ushort *)((int)param_1 + 0x1a) >> 1);
   uVar1 = (ulonglong)uVar3 / (ulonglong)(uint)*(ushort *)((int)param_1 + 0x1a);
   *(short *)((int)param_1 + 0x2e) = (short)uVar1;
-  sub_b1256((int)uVar1,uVar3 % (uint)*(ushort *)((int)param_1 + 0x1a));
+  gus_irq_unlock((int)uVar1,uVar3 % (uint)*(ushort *)((int)param_1 + 0x1a));
   return (ulonglong)unaff_EDX << 0x20;
 }
 
 
 // ================================================================================================
-// sub_b121c @ 0xb121c [__watcall]
+// gus_irq_lock_reset @ 0xb121c [__watcall]
 // ================================================================================================
 
-void __watcall sub_b121c(void)
+void __watcall gus_irq_lock_reset(void)
 
 {
   word_d8788 = 0;
@@ -5370,10 +5370,10 @@ void __watcall sub_b121c(void)
 
 
 // ================================================================================================
-// sub_b122f @ 0xb122f [__watcall]
+// gus_irq_lock @ 0xb122f [__watcall]
 // ================================================================================================
 
-void __watcall sub_b122f(void)
+void __watcall gus_irq_lock(void)
 
 {
   word_f79a2 = word_f79a2 + 1;
@@ -5382,34 +5382,34 @@ void __watcall sub_b122f(void)
 
 
 // ================================================================================================
-// sub_b1237 @ 0xb1237 [__watcall]
+// gus_irq_try_lock @ 0xb1237 [__watcall]
 // ================================================================================================
 
-bool __watcall sub_b1237(void)
+bool __watcall gus_irq_try_lock(void)
 
 {
   bool bVar1;
   
   bVar1 = word_f79a2 == 0;
   if (bVar1) {
-    sub_b122f();
+    gus_irq_lock();
   }
   return bVar1;
 }
 
 
 // ================================================================================================
-// sub_b1256 @ 0xb1256 [__watcall]
+// gus_irq_unlock @ 0xb1256 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b1256(void)
+void __watcall gus_irq_unlock(void)
 
 {
   word_f79a2 = word_f79a2 + -1;
   if (word_f79a2 == 0) {
     while (((byte)word_f799e & 6) != 0) {
       word_f799e._0_1_ = (byte)word_f799e & 0xfd;
-      sub_b16bc();
+      gus_gf1_irq_service();
     }
   }
   return;
@@ -5417,10 +5417,10 @@ void __watcall sub_b1256(void)
 
 
 // ================================================================================================
-// sub_b128c @ 0xb128c [__watcall]
+// inp @ 0xb128c [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b128c(undefined2 param_1,undefined4 unaff_EDX)
+undefined8 __watcall inp(undefined2 param_1,undefined4 unaff_EDX)
 
 {
   byte bVar1;
@@ -5431,23 +5431,23 @@ undefined8 __watcall sub_b128c(undefined2 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_b12a0 @ 0xb12a0 [__watcall]
+// gus_gf1_irq_handler @ 0xb12a0 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b12a0(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_gf1_irq_handler(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   ushort extraout_var;
   int iVar1;
   
-  sub_902a0();
-  sub_b0be4(byte_f79a8);
+  empty_func_902a0();
+  pic_eoi(byte_f79a8);
   if (word_f79a2 == 0) {
     iVar1 = (uint)extraout_var << 0x10;
     word_f79a2 = 1;
     do {
       word_f799e = word_f799e & 0xfffd;
-      iVar1 = sub_b16bc(iVar1);
+      iVar1 = gus_gf1_irq_service(iVar1);
     } while ((word_f799e & 2) != 0);
     word_f79a2 = word_f79a2 + -1;
   }
@@ -5459,22 +5459,22 @@ undefined8 __watcall sub_b12a0(undefined4 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_b131c @ 0xb131c [__watcall]
+// gus_midi_irq_handler @ 0xb131c [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b131c(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_midi_irq_handler(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   undefined4 uVar1;
   
-  sub_902a0();
-  sub_b0be4(byte_f79a7);
+  empty_func_902a0();
+  pic_eoi(byte_f79a7);
   if (dword_d87a0 == 0) {
     dword_d87a0 = 1;
     uVar1 = 0;
     do {
       word_f799e = word_f799e & 0xfff7;
-      uVar1 = sub_b15f8(uVar1);
+      uVar1 = gus_midi_irq_service(uVar1);
     } while ((word_f799e & 8) != 0);
     dword_d87a0 = dword_d87a0 + -1;
   }
@@ -5486,10 +5486,10 @@ undefined8 __watcall sub_b131c(undefined4 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_b13a1 @ 0xb13a1 [__watcall]
+// gus_delay @ 0xb13a1 [__watcall]
 // ================================================================================================
 
-undefined __watcall sub_b13a1(void)
+undefined __watcall gus_delay(void)
 
 {
   undefined uVar1;
@@ -5506,10 +5506,10 @@ undefined __watcall sub_b13a1(void)
 
 
 // ================================================================================================
-// sub_b13b5 @ 0xb13b5 [__watcall]
+// gus_set_base_port @ 0xb13b5 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_b13b5(uint param_1)
+undefined4 __watcall gus_set_base_port(uint param_1)
 
 {
   undefined4 uVar1;
@@ -5538,10 +5538,10 @@ undefined4 __watcall sub_b13b5(uint param_1)
 
 
 // ================================================================================================
-// sub_b1400 @ 0xb1400 [__watcall]
+// gus_clear_callbacks @ 0xb1400 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b1400(void)
+void __watcall gus_clear_callbacks(void)
 
 {
   dword_d87ac = 0;
@@ -5562,10 +5562,10 @@ void __watcall sub_b1400(void)
 
 
 // ================================================================================================
-// sub_b145c @ 0xb145c [__watcall]
+// gus_set_callback_pair @ 0xb145c [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_b145c(int *param_1,int unaff_EDX)
+undefined4 __watcall gus_set_callback_pair(int *param_1,int unaff_EDX)
 
 {
   if ((*param_1 != 0) && (unaff_EDX != 0)) {
@@ -5577,10 +5577,10 @@ undefined4 __watcall sub_b145c(int *param_1,int unaff_EDX)
 
 
 // ================================================================================================
-// sub_b1484 @ 0xb1484 [__watcall]
+// gus_set_callback @ 0xb1484 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_b1484(int *param_1,int unaff_EDX)
+undefined4 __watcall gus_set_callback(int *param_1,int unaff_EDX)
 
 {
   if ((*param_1 != 0) && (unaff_EDX != 0)) {
@@ -5592,18 +5592,18 @@ undefined4 __watcall sub_b1484(int *param_1,int unaff_EDX)
 
 
 // ================================================================================================
-// sub_b14ac @ 0xb14ac [__watcall]
+// gus_set_dma_callback @ 0xb14ac [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b14ac(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_set_dma_callback(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
   undefined4 uVar2;
   
-  iVar1 = sub_b145c(&dword_d87b0,param_1);
+  iVar1 = gus_set_callback_pair(&dword_d87b0,param_1);
   if (iVar1 != 0) {
-    iVar1 = sub_b145c(&dword_d87b4,param_1);
+    iVar1 = gus_set_callback_pair(&dword_d87b4,param_1);
     if (iVar1 != 0) {
       uVar2 = 8;
       goto LAB_000b14dc;
@@ -5616,18 +5616,18 @@ LAB_000b14dc:
 
 
 // ================================================================================================
-// sub_b14e4 @ 0xb14e4 [__watcall]
+// gus_set_wave_callback @ 0xb14e4 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b14e4(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_set_wave_callback(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
   undefined4 uVar2;
   
-  iVar1 = sub_b145c(&dword_d87b8,param_1);
+  iVar1 = gus_set_callback_pair(&dword_d87b8,param_1);
   if (iVar1 != 0) {
-    iVar1 = sub_b145c(&dword_d87bc,param_1);
+    iVar1 = gus_set_callback_pair(&dword_d87bc,param_1);
     if (iVar1 != 0) {
       uVar2 = 8;
       goto LAB_000b1514;
@@ -5640,18 +5640,18 @@ LAB_000b1514:
 
 
 // ================================================================================================
-// sub_b151c @ 0xb151c [__watcall]
+// gus_set_volume_callback @ 0xb151c [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b151c(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_set_volume_callback(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
   undefined4 uVar2;
   
-  iVar1 = sub_b145c(&dword_d87c0,param_1);
+  iVar1 = gus_set_callback_pair(&dword_d87c0,param_1);
   if (iVar1 != 0) {
-    iVar1 = sub_b145c(&dword_d87c4,param_1);
+    iVar1 = gus_set_callback_pair(&dword_d87c4,param_1);
     if (iVar1 != 0) {
       uVar2 = 8;
       goto LAB_000b154c;
@@ -5664,22 +5664,22 @@ LAB_000b154c:
 
 
 // ================================================================================================
-// sub_b1554 @ 0xb1554 [__watcall]
+// gus_set_timer_callback @ 0xb1554 [__watcall]
 // ================================================================================================
 
-int __watcall sub_b1554(int param_1)
+int __watcall gus_set_timer_callback(int param_1)
 
 {
   int iVar1;
   
   if (param_1 == 1) {
-    iVar1 = sub_b1484(&dword_d87c8);
+    iVar1 = gus_set_callback(&dword_d87c8);
     if (iVar1 != 0) {
       return 8;
     }
   }
   else if (param_1 == 2) {
-    iVar1 = sub_b1484(&dword_d87cc);
+    iVar1 = gus_set_callback(&dword_d87cc);
     if (iVar1 != 0) {
       return 8;
     }
@@ -5692,15 +5692,15 @@ int __watcall sub_b1554(int param_1)
 
 
 // ================================================================================================
-// sub_b1598 @ 0xb1598 [__watcall]
+// gus_set_midi_xmit_callback @ 0xb1598 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b1598(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_set_midi_xmit_callback(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
   
-  iVar1 = sub_b1484(&dword_d87d4,param_1);
+  iVar1 = gus_set_callback(&dword_d87d4,param_1);
   if (iVar1 != 0) {
     iVar1 = 8;
   }
@@ -5709,15 +5709,15 @@ undefined8 __watcall sub_b1598(undefined4 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_b15b8 @ 0xb15b8 [__watcall]
+// gus_set_midi_recv_callback @ 0xb15b8 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b15b8(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_set_midi_recv_callback(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
   
-  iVar1 = sub_b1484(&dword_d87d0,param_1);
+  iVar1 = gus_set_callback(&dword_d87d0,param_1);
   if (iVar1 != 0) {
     iVar1 = 8;
   }
@@ -5726,15 +5726,15 @@ undefined8 __watcall sub_b15b8(undefined4 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_b15d8 @ 0xb15d8 [__watcall]
+// gus_set_record_callback @ 0xb15d8 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b15d8(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_set_record_callback(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
   
-  iVar1 = sub_b1484(&dword_d87ac,param_1);
+  iVar1 = gus_set_callback(&dword_d87ac,param_1);
   if (iVar1 != 0) {
     iVar1 = 8;
   }
@@ -5743,11 +5743,11 @@ undefined8 __watcall sub_b15d8(undefined4 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_b15f8 @ 0xb15f8 [__watcall]
+// gus_midi_irq_service @ 0xb15f8 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_b15f8(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_ECX)
+gus_midi_irq_service(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   undefined4 extraout_EDX;
@@ -5767,16 +5767,16 @@ sub_b15f8(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 
           (ushort)((POPCOUNT((uint)&local_18 & 0xff) & 1U) == 0) * 4 |
           (ushort)(&stack0xffffffec < (undefined *)0x4);
   dword_d87a8 = dword_d87a8 + 1;
-  local_18 = sub_b128c(word_d8762);
+  local_18 = inp(word_d8762);
   if ((local_18 & 3) != 0) {
-    uVar3 = sub_b128c(word_d876c,local_18,unaff_EBX,unaff_ECX,uVar2);
+    uVar3 = inp(word_d876c,local_18,unaff_EBX,unaff_ECX,uVar2);
     uVar1 = (undefined4)(uVar3 >> 0x20);
     if (((uVar3 & 0x100000000) != 0) && (dword_d87d0 != (code *)0x0)) {
       (*dword_d87d0)();
       uVar1 = extraout_EDX;
     }
     if ((local_18 & 2) != 0) {
-      sub_b128c(word_d876e,uVar1,(int)uVar3);
+      inp(word_d876e,uVar1,(int)uVar3);
       if (dword_d87d4 != (code *)0x0) {
         (*dword_d87d4)();
       }
@@ -5788,21 +5788,21 @@ sub_b15f8(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 
 
 
 // ================================================================================================
-// sub_b1680 @ 0xb1680 [__watcall]
+// gus_midi_irq_poll @ 0xb1680 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b1680(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_midi_irq_poll(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   uint uVar1;
   uint extraout_EDX;
   
-  uVar1 = sub_b128c(word_d8762);
+  uVar1 = inp(word_d8762);
   if (byte_f79a7 != byte_f79a8) {
     uVar1 = uVar1 & 0xfffffffc;
   }
   if ((uVar1 & 3) != 0) {
-    sub_b15f8();
+    gus_midi_irq_service();
     uVar1 = extraout_EDX;
   }
   return CONCAT44(unaff_EDX,uVar1);
@@ -5810,10 +5810,10 @@ undefined8 __watcall sub_b1680(undefined4 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_b16bc @ 0xb16bc [__watcall]
+// gus_gf1_irq_service @ 0xb16bc [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b16bc(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_gf1_irq_service(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   byte bVar1;
@@ -5848,7 +5848,7 @@ undefined8 __watcall sub_b16bc(undefined4 param_1,undefined4 unaff_EDX)
   uVar8 = 0;
   do {
     do {
-      uVar2 = sub_b1680(uVar3);
+      uVar2 = gus_midi_irq_poll(uVar3);
       uVar6 = (undefined2)(uVar2 >> 0x10);
       if ((uVar2 == 0) && ((word_f799e & 4) == 0)) {
         uVar5 = CONCAT22(uVar6,word_f79a2);
@@ -5856,8 +5856,8 @@ undefined8 __watcall sub_b16bc(undefined4 param_1,undefined4 unaff_EDX)
         return CONCAT44(unaff_EDX,uVar5);
       }
       if (((uVar2 & 0x80) != 0) || (uVar3 = CONCAT22(uVar6,word_f799e), (word_f799e & 4) != 0)) {
-        sub_aa200(word_d8772,0x41);
-        uVar3 = sub_b128c(word_d8776);
+        outp(word_d8772,0x41);
+        uVar3 = inp(word_d8776);
         if ((((uVar3 & 0x40) != 0) || ((word_f799e & 4) != 0)) &&
            (word_f799e = word_f799e & 0xfffb, dword_d87b0 != (code *)0x0)) {
           iVar4 = (*dword_d87b0)(uVar10);
@@ -5865,8 +5865,8 @@ undefined8 __watcall sub_b16bc(undefined4 param_1,undefined4 unaff_EDX)
             (*dword_d87b4)();
           }
         }
-        sub_aa200(word_d8772,0x49);
-        uVar3 = sub_b128c(word_d8776);
+        outp(word_d8772,0x49);
+        uVar3 = inp(word_d8776);
         if (((uVar3 & 0x40) != 0) && (dword_d87b0 != (code *)0x0)) {
           uVar3 = (*dword_d87b0)();
           if ((uVar3 == 0) && (dword_d87b4 != (code *)0x0)) {
@@ -5875,9 +5875,9 @@ undefined8 __watcall sub_b16bc(undefined4 param_1,undefined4 unaff_EDX)
         }
       }
       if ((uVar2 & 4) != 0) {
-        sub_aa200(word_d8772,0x45);
-        sub_aa200(word_d8776,dword_f79d8 & 0xfffffffb);
-        uVar3 = sub_aa200(word_d8776,dword_f79d8);
+        outp(word_d8772,0x45);
+        outp(word_d8776,dword_f79d8 & 0xfffffffb);
+        uVar3 = outp(word_d8776,dword_f79d8);
         if (dword_d87c8 != (code *)0x0) {
           uVar3 = (*dword_d87c8)();
           if (uVar3 != 0) {
@@ -5887,9 +5887,9 @@ undefined8 __watcall sub_b16bc(undefined4 param_1,undefined4 unaff_EDX)
         }
       }
       if ((uVar2 & 8) != 0) {
-        sub_aa200(word_d8772,0x45);
-        sub_aa200(word_d8776,dword_f79d8 & 0xfffffff7);
-        uVar3 = sub_aa200(word_d8776,dword_f79d8);
+        outp(word_d8772,0x45);
+        outp(word_d8776,dword_f79d8 & 0xfffffff7);
+        uVar3 = outp(word_d8776,dword_f79d8);
         if (dword_d87cc != (code *)0x0) {
           uVar3 = (*dword_d87cc)();
           if (uVar3 != 0) {
@@ -5899,8 +5899,8 @@ undefined8 __watcall sub_b16bc(undefined4 param_1,undefined4 unaff_EDX)
       }
     } while ((uVar2 & 0x60) == 0);
     while( true ) {
-      sub_aa200(word_d8772,0x8f);
-      uVar2 = sub_b128c(word_d8776);
+      outp(word_d8772,0x8f);
+      uVar2 = inp(word_d8776);
       bVar1 = (byte)uVar2;
       uVar3 = uVar2 & 0xffffffc0;
       if ((char)uVar3 == -0x40) break;
@@ -5950,17 +5950,17 @@ LAB_000b192c:
           uVar8 = uVar8 & ~uVar3;
         }
       }
-      sub_b1680((int)uVar11,(int)(uVar11 >> 0x20));
+      gus_midi_irq_poll((int)uVar11,(int)(uVar11 >> 0x20));
     }
   } while( true );
 }
 
 
 // ================================================================================================
-// sub_b1951 @ 0xb1951 [__watcall]
+// inpw @ 0xb1951 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b1951(undefined2 param_1,undefined4 unaff_EDX)
+undefined8 __watcall inpw(undefined2 param_1,undefined4 unaff_EDX)
 
 {
   ushort uVar1;
@@ -5971,10 +5971,10 @@ undefined8 __watcall sub_b1951(undefined2 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_b195c @ 0xb195c [__watcall]
+// gus_sort_irq_table @ 0xb195c [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b195c(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_sort_irq_table(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   uint uVar1;
@@ -6008,10 +6008,10 @@ LAB_000b19c1:
 
 
 // ================================================================================================
-// sub_b19c7 @ 0xb19c7 [__watcall]
+// outpw @ 0xb19c7 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b19c7(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall outpw(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   out((short)param_1,(short)unaff_EDX);
@@ -6020,12 +6020,12 @@ undefined8 __watcall sub_b19c7(undefined4 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_b19e0 @ 0xb19e0 [__watcall]
+// gus_timer_reset @ 0xb19e0 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-longlong __watcall sub_b19e0(undefined4 param_1,uint unaff_EDX)
+longlong __watcall gus_timer_reset(undefined4 param_1,uint unaff_EDX)
 
 {
   byte_d8b0e = 1;
@@ -6036,12 +6036,12 @@ longlong __watcall sub_b19e0(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_b1a04 @ 0xb1a04 [__watcall]
+// gus_start_timer2 @ 0xb1a04 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-int __watcall sub_b1a04(undefined4 param_1,undefined4 unaff_EDX)
+int __watcall gus_start_timer2(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
@@ -6059,34 +6059,34 @@ int __watcall sub_b1a04(undefined4 param_1,undefined4 unaff_EDX)
   uVar2 = (ushort)(in_NT & 1) * 0x4000 | (ushort)(in_OF & 1) * 0x800 | (ushort)(in_IF & 1) * 0x200 |
           (ushort)(in_TF & 1) * 0x100 | (ushort)(in_SF & 1) * 0x80 | (ushort)(in_ZF & 1) * 0x40 |
           (ushort)(in_AF & 1) * 0x10 | (ushort)(in_PF & 1) * 4 | (ushort)(in_CF & 1);
-  sub_b122f();
-  iVar1 = sub_b1554(2,param_1,param_1,unaff_EDX,uVar2);
+  gus_irq_lock();
+  iVar1 = gus_set_timer_callback(2,param_1,param_1,unaff_EDX,uVar2);
   if (iVar1 == 0) {
-    sub_aa200(word_d8772,0x47);
-    sub_aa200(word_d8776,unaff_EDX);
+    outp(word_d8772,0x47);
+    outp(word_d8776,unaff_EDX);
     dword_f79d8._0_1_ = (byte)dword_f79d8 | 8;
-    sub_aa200(word_d8772,0x45);
-    sub_aa200(word_d8776,(byte)dword_f79d8);
+    outp(word_d8772,0x45);
+    outp(word_d8776,(byte)dword_f79d8);
     _dword_f79e8 = _dword_f79e8 | 2;
-    sub_aa200(word_d8764,4);
-    sub_aa200(word_d8766,_dword_f79e8);
-    sub_b1256();
+    outp(word_d8764,4);
+    outp(word_d8766,_dword_f79e8);
+    gus_irq_unlock();
     iVar1 = 0;
   }
   else {
-    sub_b1256();
+    gus_irq_unlock();
   }
   return iVar1;
 }
 
 
 // ================================================================================================
-// sub_b1ac8 @ 0xb1ac8 [__watcall]
+// gus_start_timer1 @ 0xb1ac8 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-int __watcall sub_b1ac8(undefined4 param_1,undefined4 unaff_EDX)
+int __watcall gus_start_timer1(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
@@ -6104,33 +6104,33 @@ int __watcall sub_b1ac8(undefined4 param_1,undefined4 unaff_EDX)
   uVar2 = (ushort)(in_NT & 1) * 0x4000 | (ushort)(in_OF & 1) * 0x800 | (ushort)(in_IF & 1) * 0x200 |
           (ushort)(in_TF & 1) * 0x100 | (ushort)(in_SF & 1) * 0x80 | (ushort)(in_ZF & 1) * 0x40 |
           (ushort)(in_AF & 1) * 0x10 | (ushort)(in_PF & 1) * 4 | (ushort)(in_CF & 1);
-  sub_b122f();
-  iVar1 = sub_b1554(1,param_1,param_1,unaff_EDX,uVar2);
+  gus_irq_lock();
+  iVar1 = gus_set_timer_callback(1,param_1,param_1,unaff_EDX,uVar2);
   if (iVar1 == 0) {
-    sub_aa200(word_d8772,0x46);
-    sub_aa200(word_d8776,unaff_EDX);
+    outp(word_d8772,0x46);
+    outp(word_d8776,unaff_EDX);
     dword_f79d8._0_1_ = (byte)dword_f79d8 | 4;
-    sub_aa200(word_d8772,0x45);
-    sub_aa200(word_d8776,(byte)dword_f79d8);
+    outp(word_d8772,0x45);
+    outp(word_d8776,(byte)dword_f79d8);
     _dword_f79e8 = _dword_f79e8 | 1;
-    sub_aa200(word_d8764,4);
-    sub_aa200(word_d8766,_dword_f79e8);
-    sub_b1256();
+    outp(word_d8764,4);
+    outp(word_d8766,_dword_f79e8);
+    gus_irq_unlock();
     iVar1 = 0;
   }
   else {
-    sub_b1256();
+    gus_irq_unlock();
   }
   return iVar1;
 }
 
 
 // ================================================================================================
-// sub_b1b8c @ 0xb1b8c [__watcall]
+// gus_stop_timer1 @ 0xb1b8c [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_b1b8c(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_ECX)
+gus_stop_timer1(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   byte in_CF;
@@ -6147,23 +6147,23 @@ sub_b1b8c(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 
   uVar1 = (ushort)(in_NT & 1) * 0x4000 | (ushort)(in_OF & 1) * 0x800 | (ushort)(in_IF & 1) * 0x200 |
           (ushort)(in_TF & 1) * 0x100 | (ushort)(in_SF & 1) * 0x80 | (ushort)(in_ZF & 1) * 0x40 |
           (ushort)(in_AF & 1) * 0x10 | (ushort)(in_PF & 1) * 4 | (ushort)(in_CF & 1);
-  sub_b122f();
-  sub_b1554(1,0,unaff_EBX,unaff_ECX,uVar1);
+  gus_irq_lock();
+  gus_set_timer_callback(1,0,unaff_EBX,unaff_ECX,uVar1);
   dword_f79d8._0_1_ = (byte)dword_f79d8 & 0xfb;
   dword_f79e8 = dword_f79e8 & 0xfe;
-  sub_aa200(word_d8772,0x45);
-  sub_aa200(word_d8776,(byte)dword_f79d8);
-  sub_b1256();
+  outp(word_d8772,0x45);
+  outp(word_d8776,(byte)dword_f79d8);
+  gus_irq_unlock();
   return;
 }
 
 
 // ================================================================================================
-// sub_b1bf8 @ 0xb1bf8 [__watcall]
+// gus_stop_timer2 @ 0xb1bf8 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_b1bf8(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_ECX)
+gus_stop_timer2(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   byte in_CF;
@@ -6180,22 +6180,22 @@ sub_b1bf8(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 
   uVar1 = (ushort)(in_NT & 1) * 0x4000 | (ushort)(in_OF & 1) * 0x800 | (ushort)(in_IF & 1) * 0x200 |
           (ushort)(in_TF & 1) * 0x100 | (ushort)(in_SF & 1) * 0x80 | (ushort)(in_ZF & 1) * 0x40 |
           (ushort)(in_AF & 1) * 0x10 | (ushort)(in_PF & 1) * 4 | (ushort)(in_CF & 1);
-  sub_b122f();
-  sub_b1554(2,0,unaff_EBX,unaff_ECX,uVar1);
+  gus_irq_lock();
+  gus_set_timer_callback(2,0,unaff_EBX,unaff_ECX,uVar1);
   dword_f79d8._0_1_ = (byte)dword_f79d8 & 0xf7;
   dword_f79e8 = dword_f79e8 & 0xfd;
-  sub_aa200(word_d8772,0x45);
-  sub_aa200(word_d8776,(byte)dword_f79d8);
-  sub_b1256();
+  outp(word_d8772,0x45);
+  outp(word_d8776,(byte)dword_f79d8);
+  gus_irq_unlock();
   return;
 }
 
 
 // ================================================================================================
-// sub_b1c70 @ 0xb1c70 [__watcall]
+// gus_voice_alloc_reset @ 0xb1c70 [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_b1c70(undefined4 param_1,uint unaff_EDX)
+longlong __watcall gus_voice_alloc_reset(undefined4 param_1,uint unaff_EDX)
 
 {
   ushort uVar1;
@@ -6211,10 +6211,10 @@ longlong __watcall sub_b1c70(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_b1cbc @ 0xb1cbc [__watcall]
+// gus_voice_alloc @ 0xb1cbc [__watcall]
 // ================================================================================================
 
-uint __watcall sub_b1cbc(undefined4 param_1,undefined4 unaff_EDX)
+uint __watcall gus_voice_alloc(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   uint uVar1;
@@ -6237,7 +6237,7 @@ uint __watcall sub_b1cbc(undefined4 param_1,undefined4 unaff_EDX)
           (ushort)(&stack0x00000000 == (undefined *)0x20) * 0x40 | (ushort)(in_AF & 1) * 0x10 |
           (ushort)((POPCOUNT((uint)&local_20 & 0xff) & 1U) == 0) * 4 |
           (ushort)(&stack0xffffffec < (undefined *)0xc);
-  sub_b122f();
+  gus_irq_lock();
   uVar2 = 0xffffffff;
   local_1c = 0xffffffff;
   local_18 = 1;
@@ -6255,7 +6255,7 @@ uint __watcall sub_b1cbc(undefined4 param_1,undefined4 unaff_EDX)
         dword_d89dc = dword_d89dc + 1;
         (&unk_f7a00)[uVar2 * 3] = unaff_EDX;
       }
-      sub_b1256();
+      gus_irq_unlock();
       return extraout_EDX_00;
     }
     uVar1 = 1 << ((byte)uVar3 & 0x1f);
@@ -6277,30 +6277,30 @@ uint __watcall sub_b1cbc(undefined4 param_1,undefined4 unaff_EDX)
   (&unk_f79f8)[uVar2 * 3] = dword_d89dc;
   dword_d89dc = dword_d89dc + 1;
   (&unk_f7a00)[uVar2 * 3] = unaff_EDX;
-  sub_b1256();
+  gus_irq_unlock();
   return uVar2;
 }
 
 
 // ================================================================================================
-// sub_b1e2c @ 0xb1e2c [__watcall]
+// gus_voice_free @ 0xb1e2c [__watcall]
 // ================================================================================================
 
-void __watcall sub_b1e2c(byte param_1)
+void __watcall gus_voice_free(byte param_1)
 
 {
-  sub_b122f();
+  gus_irq_lock();
   dword_f7b78 = dword_f7b78 & ~(1 << (param_1 & 0x1f));
-  sub_b1256();
+  gus_irq_unlock();
   return;
 }
 
 
 // ================================================================================================
-// sub_b1e64 @ 0xb1e64 [__watcall]
+// gus_voice_add_ref @ 0xb1e64 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b1e64(undefined4 param_1,int unaff_EDX)
+void __watcall gus_voice_add_ref(undefined4 param_1,int unaff_EDX)
 
 {
   int extraout_EDX;
@@ -6314,22 +6314,22 @@ void __watcall sub_b1e64(undefined4 param_1,int unaff_EDX)
   byte in_OF;
   byte in_NT;
   
-  sub_b122f(param_1,param_1,unaff_EDX,param_1,
+  gus_irq_lock(param_1,param_1,unaff_EDX,param_1,
             (ushort)(in_NT & 1) * 0x4000 | (ushort)(in_OF & 1) * 0x800 | (ushort)(in_IF & 1) * 0x200
             | (ushort)(in_TF & 1) * 0x100 | (ushort)(in_SF & 1) * 0x80 | (ushort)(in_ZF & 1) * 0x40
             | (ushort)(in_AF & 1) * 0x10 | (ushort)(in_PF & 1) * 4 | (ushort)(in_CF & 1));
   (&unk_f79fc)[extraout_EDX * 3] = (&unk_f79fc)[extraout_EDX * 3] + unaff_EDX;
-  sub_b1256();
+  gus_irq_unlock();
   return;
 }
 
 
 // ================================================================================================
-// sub_b1ea0 @ 0xb1ea0 [__watcall]
+// gus_peek @ 0xb1ea0 [__watcall]
 // ================================================================================================
 
 undefined8 __watcall
-sub_b1ea0(uint param_1,undefined4 unaff_EDX,undefined4 param_3,undefined4 unaff_ECX)
+gus_peek(uint param_1,undefined4 unaff_EDX,undefined4 param_3,undefined4 unaff_ECX)
 
 {
   undefined uVar1;
@@ -6348,22 +6348,22 @@ sub_b1ea0(uint param_1,undefined4 unaff_EDX,undefined4 param_3,undefined4 unaff_
   uVar3 = (ushort)(in_NT & 1) * 0x4000 | (ushort)(in_OF & 1) * 0x800 | (ushort)(in_IF & 1) * 0x200 |
           (ushort)(in_TF & 1) * 0x100 | (ushort)(in_SF & 1) * 0x80 | (ushort)(in_ZF & 1) * 0x40 |
           (ushort)(in_AF & 1) * 0x10 | (ushort)(in_PF & 1) * 4 | (ushort)(in_CF & 1);
-  sub_b122f();
-  sub_aa200(word_d8772,0x43,param_1,unaff_ECX,uVar3);
-  sub_b19c7(word_d8774,param_1);
-  sub_aa200(word_d8772,0x44);
-  sub_aa200(word_d8776,param_1 >> 0x10 & 0xff);
-  uVar1 = sub_b128c(word_d8778);
-  uVar2 = sub_b1256();
+  gus_irq_lock();
+  outp(word_d8772,0x43,param_1,unaff_ECX,uVar3);
+  outpw(word_d8774,param_1);
+  outp(word_d8772,0x44);
+  outp(word_d8776,param_1 >> 0x10 & 0xff);
+  uVar1 = inp(word_d8778);
+  uVar2 = gus_irq_unlock();
   return CONCAT44(unaff_EDX,CONCAT31((int3)((uint)uVar2 >> 8),uVar1));
 }
 
 
 // ================================================================================================
-// sub_b1f1c @ 0xb1f1c [__watcall]
+// gus_poke @ 0xb1f1c [__watcall]
 // ================================================================================================
 
-void __watcall sub_b1f1c(uint param_1,undefined unaff_DL)
+void __watcall gus_poke(uint param_1,undefined unaff_DL)
 
 {
   byte in_CF;
@@ -6380,22 +6380,22 @@ void __watcall sub_b1f1c(uint param_1,undefined unaff_DL)
   uVar1 = (ushort)(in_NT & 1) * 0x4000 | (ushort)(in_OF & 1) * 0x800 | (ushort)(in_IF & 1) * 0x200 |
           (ushort)(in_TF & 1) * 0x100 | (ushort)(in_SF & 1) * 0x80 | (ushort)(in_ZF & 1) * 0x40 |
           (ushort)(in_AF & 1) * 0x10 | (ushort)(in_PF & 1) * 4 | (ushort)(in_CF & 1);
-  sub_b122f();
-  sub_aa200(word_d8772,0x43,param_1,unaff_DL,uVar1);
-  sub_b19c7(word_d8774,param_1);
-  sub_aa200(word_d8772,0x44);
-  sub_aa200(word_d8776,param_1 >> 0x10 & 0xff);
-  sub_aa200(word_d8778,unaff_DL);
-  sub_b1256();
+  gus_irq_lock();
+  outp(word_d8772,0x43,param_1,unaff_DL,uVar1);
+  outpw(word_d8774,param_1);
+  outp(word_d8772,0x44);
+  outp(word_d8776,param_1 >> 0x10 & 0xff);
+  outp(word_d8778,unaff_DL);
+  gus_irq_unlock();
   return;
 }
 
 
 // ================================================================================================
-// sub_b1f9c @ 0xb1f9c [__watcall]
+// gus_poke_block @ 0xb1f9c [__watcall]
 // ================================================================================================
 
-void __watcall sub_b1f9c(byte *param_1,uint unaff_EDX,int unaff_EBX,byte unaff_CL)
+void __watcall gus_poke_block(byte *param_1,uint unaff_EDX,int unaff_EBX,byte unaff_CL)
 
 {
   bool bVar1;
@@ -6413,16 +6413,16 @@ void __watcall sub_b1f9c(byte *param_1,uint unaff_EDX,int unaff_EBX,byte unaff_C
   else {
     bVar2 = 0x80;
   }
-  sub_b122f();
+  gus_irq_lock();
   while (unaff_EBX != 0) {
-    sub_aa200(word_d8772,0x44);
-    sub_aa200(word_d8776,local_18);
+    outp(word_d8772,0x44);
+    outp(word_d8776,local_18);
     local_18 = local_18 + '\x01';
     pbVar5 = param_1;
     do {
-      sub_aa200(word_d8772,0x43);
+      outp(word_d8772,0x43);
       param_1 = pbVar5 + 1;
-      sub_b19c7(word_d8774,unaff_EDX & 0xffff);
+      outpw(word_d8774,unaff_EDX & 0xffff);
       unaff_EDX = unaff_EDX + 1;
       bVar4 = bVar2 ^ *pbVar5;
       if ((unaff_CL & 0x40) != 0) {
@@ -6433,20 +6433,20 @@ void __watcall sub_b1f9c(byte *param_1,uint unaff_EDX,int unaff_EBX,byte unaff_C
         bVar1 = (bool)(bVar1 ^ 1);
         bVar4 = bVar3;
       }
-      sub_aa200(word_d8778,bVar4);
+      outp(word_d8778,bVar4);
       unaff_EBX = unaff_EBX + -1;
     } while ((unaff_EBX != 0) && (pbVar5 = param_1, (short)unaff_EDX != 0));
   }
-  sub_b1256();
+  gus_irq_unlock();
   return;
 }
 
 
 // ================================================================================================
-// sub_b2074 @ 0xb2074 [__watcall]
+// gus_dram_size @ 0xb2074 [__watcall]
 // ================================================================================================
 
-ulonglong __watcall sub_b2074(uint param_1,undefined4 unaff_EDX)
+ulonglong __watcall gus_dram_size(uint param_1,undefined4 unaff_EDX)
 
 {
   undefined uVar1;
@@ -6459,52 +6459,52 @@ ulonglong __watcall sub_b2074(uint param_1,undefined4 unaff_EDX)
   ushort uVar8;
   undefined2 local_30;
   
-  uVar1 = sub_b1ea0();
+  uVar1 = gus_peek();
   uVar7 = param_1 ^ 0x20;
-  uVar2 = sub_b1ea0(uVar7,0x55);
-  sub_b1f1c(param_1);
-  sub_b1f1c(uVar7,0);
-  uVar5 = sub_b1ea0(param_1);
+  uVar2 = gus_peek(uVar7,0x55);
+  gus_poke(param_1);
+  gus_poke(uVar7,0);
+  uVar5 = gus_peek(param_1);
   if ((char)uVar5 == 'U') {
-    sub_b1f1c(param_1,0);
-    sub_b1f1c(uVar7,0x55);
-    uVar6 = sub_b1ea0(param_1);
+    gus_poke(param_1,0);
+    gus_poke(uVar7,0x55);
+    uVar6 = gus_peek(param_1);
     if ((char)uVar6 != '\0') {
       return CONCAT44(unaff_EDX,uVar6) & 0xffffffffffffff00;
     }
-    sub_b1f1c(param_1,0xaa);
-    sub_b1f1c(uVar7,0);
-    uVar6 = sub_b1ea0(param_1);
+    gus_poke(param_1,0xaa);
+    gus_poke(uVar7,0);
+    uVar6 = gus_peek(param_1);
     if ((char)uVar6 != -0x56) {
       return CONCAT44(unaff_EDX,uVar6) & 0xffffffffffffff00;
     }
-    sub_b1f1c(param_1,0xff);
-    sub_b1f1c(uVar7,0);
-    uVar6 = sub_b1ea0(param_1);
+    gus_poke(param_1,0xff);
+    gus_poke(uVar7,0);
+    uVar6 = gus_peek(param_1);
     if ((char)uVar6 != -1) {
       return CONCAT44(unaff_EDX,uVar6) & 0xffffffffffffff00;
     }
     if (param_1 < 0x40000) {
-      sub_b1f1c(param_1,uVar1);
-      uVar6 = sub_b1f1c(uVar7,uVar2);
+      gus_poke(param_1,uVar1);
+      uVar6 = gus_poke(uVar7,uVar2);
       return CONCAT44(unaff_EDX,CONCAT31((int3)((uint)uVar6 >> 8),1));
     }
     for (uVar8 = 0; (uVar8 != 4 && (local_30 = (ushort)(param_1 >> 0x12), uVar8 != local_30));
         uVar8 = uVar8 + 1) {
       uVar5 = param_1 & 0x3ffff | (uint)uVar8 << 0x12;
-      uVar3 = sub_b1ea0(uVar5,0xaa);
-      sub_b1f1c(uVar5);
-      sub_b1f1c(uVar7,0);
-      cVar4 = sub_b1ea0(param_1);
+      uVar3 = gus_peek(uVar5,0xaa);
+      gus_poke(uVar5);
+      gus_poke(uVar7,0);
+      cVar4 = gus_peek(param_1);
       if (cVar4 == -0x56) {
-        sub_b1f1c(param_1,uVar1);
-        uVar6 = sub_b1f1c(uVar7,uVar2);
+        gus_poke(param_1,uVar1);
+        uVar6 = gus_poke(uVar7,uVar2);
         return CONCAT44(unaff_EDX,uVar6) & 0xffffffffffffff00;
       }
-      sub_b1f1c(uVar5,uVar3);
+      gus_poke(uVar5,uVar3);
     }
-    sub_b1f1c(param_1,uVar1);
-    uVar6 = sub_b1f1c(uVar7,uVar2);
+    gus_poke(param_1,uVar1);
+    uVar6 = gus_poke(uVar7,uVar2);
     uVar5 = CONCAT31((int3)((uint)uVar6 >> 8),2);
   }
   else {
@@ -6515,11 +6515,11 @@ ulonglong __watcall sub_b2074(uint param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_b2220 @ 0xb2220 [__watcall]
+// __cvt_special @ 0xb2220 [__watcall]
 // ================================================================================================
 
 undefined8 __watcall
-sub_b2220(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,
+__cvt_special(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,
          undefined4 param_5,uint param_6,undefined4 *param_7)
 
 {
@@ -6553,22 +6553,22 @@ sub_b2220(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 pa
 
 
 // ================================================================================================
-// sub_b22a4 @ 0xb22a4 [__watcall]
+// __cvt_int_frac @ 0xb22a4 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b22a4(undefined4 param_1,undefined4 param_2)
+undefined8 __watcall __cvt_int_frac(undefined4 param_1,undefined4 param_2)
 
 {
-  sub_b27a0();
+  modf();
   return CONCAT44(param_2,param_1);
 }
 
 
 // ================================================================================================
-// sub_b22e0 @ 0xb22e0 [__watcall] noreturn
+// __cvt_round_digits @ 0xb22e0 [__watcall] noreturn
 // ================================================================================================
 
-void __watcall sub_b22e0(int param_2)
+void __watcall __cvt_round_digits(int param_2)
 
 {
   int iVar1;
@@ -6581,20 +6581,20 @@ void __watcall sub_b22e0(int param_2)
   uVar2 = in_stack_00000010;
   iVar1 = in_stack_0000000c;
   if (param_2 != in_stack_0000000c) {
-    lVar3 = (longdouble)sub_b2321();
+    lVar3 = (longdouble)__pow10_scale();
     param_1 = (double)lVar3;
   }
-  sub_b27f4(&stack0x00000004,uVar2);
+  __Rnd2Int(&stack0x00000004,uVar2);
                     /* WARNING: Subroutine does not return */
-  sub_b27ba(iVar1,uVar2);
+  __cvt_stub(iVar1,uVar2);
 }
 
 
 // ================================================================================================
-// sub_b2319 @ 0xb2319 [__watcall]
+// empty_func_b2319 @ 0xb2319 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b2319(void)
+void __watcall empty_func_b2319(void)
 
 {
   return;
@@ -6602,10 +6602,10 @@ void __watcall sub_b2319(void)
 
 
 // ================================================================================================
-// sub_b2321 @ 0xb2321 [__watcall]
+// __pow10_scale @ 0xb2321 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b2321(undefined4 param_2,undefined4 unaff_EDX)
+undefined8 __watcall __pow10_scale(undefined4 param_2,undefined4 unaff_EDX)
 
 {
   short *psVar1;
@@ -6640,11 +6640,11 @@ LAB_000b23c0:
 
 
 // ================================================================================================
-// sub_b2408 @ 0xb2408 [__watcall]
+// __cvt_digits @ 0xb2408 [__watcall]
 // ================================================================================================
 
 undefined8 __watcall
-sub_b2408(undefined4 param_1_00,undefined4 param_3,undefined4 param_3_00,undefined4 param_4,
+__cvt_digits(undefined4 param_1_00,undefined4 param_3,undefined4 param_3_00,undefined4 param_4,
          int param_1,uint param_6_00,int param_6,int *param_8,undefined4 *param_9,int param_10,
          char *param_11)
 
@@ -6668,7 +6668,7 @@ sub_b2408(undefined4 param_1_00,undefined4 param_3,undefined4 param_3_00,undefin
   
   *param_9 = 0;
   *param_8 = 0;
-  uVar7 = sub_b2220();
+  uVar7 = __cvt_special();
   pcVar2 = (char *)((ulonglong)uVar7 >> 0x20);
   if ((int)uVar7 == 0) {
     local_30 = 0;
@@ -6679,7 +6679,7 @@ sub_b2408(undefined4 param_1_00,undefined4 param_3,undefined4 param_3_00,undefin
       if ((double)CONCAT44(param_6_00,param_1) < 0.0) {
         *param_9 = 0xffffffff;
       }
-      sub_b2980();
+      frexp();
       iVar3 = *param_8;
       if (iVar3 < 0) {
         iVar3 = -iVar3;
@@ -6697,12 +6697,12 @@ sub_b2408(undefined4 param_1_00,undefined4 param_3,undefined4 param_3_00,undefin
           param_6 = 0x10;
         }
         local_1c = 0;
-        lVar6 = (longdouble)sub_b27a0();
+        lVar6 = (longdouble)modf();
         if (((longdouble)0 == lVar6) && (extraout_EDX < param_6)) {
           local_1c = 1;
         }
                     /* WARNING: Subroutine does not return */
-        sub_b22e0(*param_8);
+        __cvt_round_digits(*param_8);
       }
       iStack_20 = (int)local_2e;
       if ((int)(CONCAT22(local_30,uStack_32) | CONCAT22(local_2e,local_30) |
@@ -6721,7 +6721,7 @@ sub_b2408(undefined4 param_1_00,undefined4 param_3,undefined4 param_3_00,undefin
       param_6 = 0x11;
     }
     pcVar4 = acStack_44;
-    sub_b285f(&local_30,acStack_44,param_6);
+    __Bin2String(&local_30,acStack_44,param_6);
     pcVar5 = param_11;
     do {
       cVar1 = *pcVar4;
@@ -6739,10 +6739,10 @@ sub_b2408(undefined4 param_1_00,undefined4 param_3,undefined4 param_3_00,undefin
 
 
 // ================================================================================================
-// sub_b251b @ 0xb251b [__watcall]
+// __cvt_digits_tail @ 0xb251b [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b251b(int param_1,undefined4 param_2,undefined4 param_3,int *unaff_ECX)
+undefined8 __watcall __cvt_digits_tail(int param_1,undefined4 param_2,undefined4 param_3,int *unaff_ECX)
 
 {
   char cVar1;
@@ -6755,7 +6755,7 @@ undefined8 __watcall sub_b251b(int param_1,undefined4 param_2,undefined4 param_3
   if (param_1 != 0) {
     *unaff_ECX = *unaff_ECX + param_1;
                     /* WARNING: Subroutine does not return */
-    sub_b22e0(*unaff_ECX);
+    __cvt_round_digits(*unaff_ECX);
   }
   *(int *)(unaff_EBP + -0x1c) = *(int *)(unaff_EBP + -0x2c) >> 0x10;
   if (((*(int *)(unaff_EBP + -0x2e) >> 0x10 == 0 && *(int *)(unaff_EBP + -0x1c) == 0) &&
@@ -6765,7 +6765,7 @@ undefined8 __watcall sub_b251b(int param_1,undefined4 param_2,undefined4 param_3
   }
   pcVar2 = *(char **)(unaff_EBP + 0x20);
   pcVar3 = (char *)(unaff_EBP + -0x40);
-  sub_b285f(unaff_EBP + -0x2c,unaff_EBP + -0x40);
+  __Bin2String(unaff_EBP + -0x2c,unaff_EBP + -0x40);
   pcVar4 = pcVar2;
   do {
     cVar1 = *pcVar3;
@@ -6781,10 +6781,10 @@ undefined8 __watcall sub_b251b(int param_1,undefined4 param_2,undefined4 param_3
 
 
 // ================================================================================================
-// sub_b255d @ 0xb255d [__watcall]
+// __cvt_digits_int @ 0xb255d [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b255d(int param_1,undefined4 param_2,undefined4 param_3,int *unaff_ECX)
+undefined8 __watcall __cvt_digits_int(int param_1,undefined4 param_2,undefined4 param_3,int *unaff_ECX)
 
 {
   char cVar1;
@@ -6805,7 +6805,7 @@ undefined8 __watcall sub_b255d(int param_1,undefined4 param_2,undefined4 param_3
   }
   pcVar2 = *(char **)(unaff_EBP + 0x20);
   pcVar3 = (char *)(unaff_EBP + -0x40);
-  sub_b285f(unaff_EBP + -0x2c,unaff_EBP + -0x40);
+  __Bin2String(unaff_EBP + -0x2c,unaff_EBP + -0x40);
   pcVar4 = pcVar2;
   do {
     cVar1 = *pcVar3;
@@ -6821,10 +6821,10 @@ undefined8 __watcall sub_b255d(int param_1,undefined4 param_2,undefined4 param_3
 
 
 // ================================================================================================
-// sub_b25ee @ 0xb25ee [__watcall]
+// __ModF @ 0xb25ee [__watcall]
 // ================================================================================================
 
-void __watcall sub_b25ee(uint *param_1,uint *unaff_EDX)
+void __watcall __ModF(uint *param_1,uint *unaff_EDX)
 
 {
   uint uVar1;
@@ -6853,7 +6853,7 @@ void __watcall sub_b25ee(uint *param_1,uint *unaff_EDX)
     }
     unaff_EDX[1] = unaff_EDX[1] & uVar5;
     *unaff_EDX = *unaff_EDX & uVar4;
-    uVar7 = sub_b26c9(~uVar4 & *param_1,~uVar5 & param_1[1]);
+    uVar7 = __Norm(~uVar4 & *param_1,~uVar5 & param_1[1]);
     uVar4 = (uint)((ulonglong)uVar7 >> 0x20);
     if (uVar4 != 0) {
       uVar4 = uVar4 | uVar1 & 0x80000000;
@@ -6869,10 +6869,10 @@ void __watcall sub_b25ee(uint *param_1,uint *unaff_EDX)
 
 
 // ================================================================================================
-// sub_b267e @ 0xb267e [__watcall]
+// __ZBuf2F @ 0xb267e [__watcall]
 // ================================================================================================
 
-void __watcall sub_b267e(byte *param_1,undefined8 *unaff_EDX)
+void __watcall __ZBuf2F(byte *param_1,undefined8 *unaff_EDX)
 
 {
   uint uVar1;
@@ -6900,17 +6900,17 @@ void __watcall sub_b267e(byte *param_1,undefined8 *unaff_EDX)
             (uint)CARRY4(uVar3,uVar3) + (uint)CARRY4(uVar2,uVar4);
     param_1 = param_1 + 1;
   }
-  uVar9 = sub_b26c9(uVar5,iVar6);
+  uVar9 = __Norm(uVar5,iVar6);
   *unaff_EDX = uVar9;
   return;
 }
 
 
 // ================================================================================================
-// sub_b26c9 @ 0xb26c9 [__watcall]
+// __Norm @ 0xb26c9 [__watcall]
 // ================================================================================================
 
-uint __watcall sub_b26c9(uint param_1,uint unaff_EDX)
+uint __watcall __Norm(uint param_1,uint unaff_EDX)
 
 {
   uint uVar1;
@@ -6943,10 +6943,10 @@ uint __watcall sub_b26c9(uint param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_b2720 @ 0xb2720 [__watcall]
+// gus_addr_16bit @ 0xb2720 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b2720(uint param_1,undefined4 unaff_EDX)
+undefined8 __watcall gus_addr_16bit(uint param_1,undefined4 unaff_EDX)
 
 {
   return CONCAT44(unaff_EDX,(int)(param_1 & 0x3ffff) >> 1 | param_1 & 0xfffc0000);
@@ -6954,10 +6954,10 @@ undefined8 __watcall sub_b2720(uint param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_b273c @ 0xb273c [__watcall]
+// gus_addr_from_16bit @ 0xb273c [__watcall]
 // ================================================================================================
 
-uint __watcall sub_b273c(uint param_1,uint unaff_EDX,byte unaff_BL)
+uint __watcall gus_addr_from_16bit(uint param_1,uint unaff_EDX,byte unaff_BL)
 
 {
   uint uVar1;
@@ -6972,38 +6972,38 @@ uint __watcall sub_b273c(uint param_1,uint unaff_EDX,byte unaff_BL)
 
 
 // ================================================================================================
-// sub_b27a0 @ 0xb27a0 [__watcall]
+// modf @ 0xb27a0 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_b27a0(undefined4 param_2)
+undefined4 __watcall modf(undefined4 param_2)
 
 {
   longdouble lVar1;
   double *in_stack_0000000c;
   
-  lVar1 = (longdouble)sub_961d0();
+  lVar1 = (longdouble)fround();
   *in_stack_0000000c = (double)lVar1;
   return param_2;
 }
 
 
 // ================================================================================================
-// sub_b27ba @ 0xb27ba [__watcall] noreturn
+// __cvt_stub @ 0xb27ba [__watcall] noreturn
 // ================================================================================================
 
-void __watcall sub_b27ba(void)
+void __watcall __cvt_stub(void)
 
 {
                     /* WARNING: Subroutine does not return */
-  sub_b28c9();
+  getpow10();
 }
 
 
 // ================================================================================================
-// sub_b27c1 @ 0xb27c1 [__watcall]
+// __CmpBigInt @ 0xb27c1 [__watcall]
 // ================================================================================================
 
-int __watcall sub_b27c1(int param_1,uint *unaff_EDX)
+int __watcall __CmpBigInt(int param_1,uint *unaff_EDX)
 
 {
   uint uVar1;
@@ -7040,10 +7040,10 @@ int __watcall sub_b27c1(int param_1,uint *unaff_EDX)
 
 
 // ================================================================================================
-// sub_b27f4 @ 0xb27f4 [__watcall]
+// __Rnd2Int @ 0xb27f4 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b27f4(uint *param_1,uint *unaff_EDX)
+void __watcall __Rnd2Int(uint *param_1,uint *unaff_EDX)
 
 {
   uint uVar1;
@@ -7097,10 +7097,10 @@ void __watcall sub_b27f4(uint *param_1,uint *unaff_EDX)
 
 
 // ================================================================================================
-// sub_b285f @ 0xb285f [__watcall]
+// __Bin2String @ 0xb285f [__watcall]
 // ================================================================================================
 
-uint __watcall sub_b285f(int *param_1,int unaff_EDX,int unaff_EBX)
+uint __watcall __Bin2String(int *param_1,int unaff_EDX,int unaff_EBX)
 
 {
   ulonglong uVar1;
@@ -7163,14 +7163,14 @@ LAB_000b2889:
 
 
 // ================================================================================================
-// sub_b28c9 @ 0xb28c9 [__watcall] noreturn
+// getpow10 @ 0xb28c9 [__watcall] noreturn
 // ================================================================================================
 
 /* WARNING: Control flow encountered bad instruction data */
 /* WARNING: Instruction at (ram,0x000b2912) overlaps instruction at (ram,0x000b2911)
     */
 
-void __watcall sub_b28c9(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,int unaff_ECX)
+void __watcall getpow10(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,int unaff_ECX)
 
 {
   uint uVar1;
@@ -7193,7 +7193,7 @@ void __watcall sub_b28c9(undefined4 param_1,undefined4 param_2,undefined4 unaff_
   char cVar4;
   
   bVar11 = 0;
-  pbVar5 = (byte *)sub_b297e();
+  pbVar5 = (byte *)empty_func_b297e();
   bVar2 = (byte)pbVar5;
   *pbVar5 = *pbVar5 + bVar2;
   *pbVar5 = *pbVar5 + bVar2;
@@ -7285,10 +7285,10 @@ void __watcall sub_b28c9(undefined4 param_1,undefined4 param_2,undefined4 unaff_
 
 
 // ================================================================================================
-// sub_b297e @ 0xb297e [__watcall]
+// empty_func_b297e @ 0xb297e [__watcall]
 // ================================================================================================
 
-void __watcall sub_b297e(void)
+void __watcall empty_func_b297e(void)
 
 {
   return;
@@ -7296,11 +7296,11 @@ void __watcall sub_b297e(void)
 
 
 // ================================================================================================
-// sub_b2980 @ 0xb2980 [__watcall]
+// frexp @ 0xb2980 [__watcall]
 // ================================================================================================
 
 undefined8 __watcall
-sub_b2980(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,int param_5,
+frexp(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,int param_5,
          uint param_6,int *param_7)
 
 {
@@ -7316,11 +7316,11 @@ sub_b2980(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 pa
 
 
 // ================================================================================================
-// sub_b29f0 @ 0xb29f0 [__watcall]
+// keyboard_install @ 0xb29f0 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_b29f0(undefined4 param_1,undefined2 unaff_DX,undefined4 param_3,undefined4 unaff_ECX)
+keyboard_install(undefined4 param_1,undefined2 unaff_DX,undefined4 param_3,undefined4 unaff_ECX)
 
 {
   undefined uVar1;
@@ -7336,31 +7336,31 @@ sub_b29f0(undefined4 param_1,undefined2 unaff_DX,undefined4 param_3,undefined4 u
     uVar2 = CONCAT31(uVar3,uVar1) | 3;
     out(0x21,(char)uVar2);
     word_d2d6e = in_DS;
-    uVar4 = sub_9864c(uVar2,unaff_DX,9,unaff_ECX,CONCAT31(uVar3,uVar1));
+    uVar4 = dos_getvect(uVar2,unaff_DX,9,unaff_ECX,CONCAT31(uVar3,uVar1));
     word_d2d60 = (undefined2)((uint6)uVar4 >> 0x20);
     dword_d2d5c = (undefined4)uVar4;
-    uVar4 = sub_9864c(dword_d2d5c,word_d2d60,0x16);
+    uVar4 = dos_getvect(dword_d2d5c,word_d2d60,0x16);
     word_d2d66 = (undefined2)((uint6)uVar4 >> 0x20);
     dword_d2d62 = (undefined4)uVar4;
-    uVar4 = sub_9864c(dword_d2d62,word_d2d66,0x23);
+    uVar4 = dos_getvect(dword_d2d62,word_d2d66,0x23);
     word_d2d6c = (undefined2)((uint6)uVar4 >> 0x20);
     dword_d2d68 = (undefined4)uVar4;
-    sub_98664(sub_b2b0a,in_CS,9);
-    sub_98664(unk_b2c00,in_CS,0x23);
+    dos_setvect(keyboard_irq_handler,in_CS,9);
+    dos_setvect(unk_b2c00,in_CS,0x23);
     out(0x21,uVar1);
-    funcptr_d2c84 = sub_b2c4a;
-    sub_b3454(sub_b2a9b);
+    funcptr_d2c84 = keyboard_int16_handler;
+    atexit_wrap(keyboard_remove);
   }
   return;
 }
 
 
 // ================================================================================================
-// sub_b2a9b @ 0xb2a9b [__watcall]
+// keyboard_remove @ 0xb2a9b [__watcall]
 // ================================================================================================
 
 undefined4 __watcall
-sub_b2a9b(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 unaff_ECX)
+keyboard_remove(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 unaff_ECX)
 
 {
   byte bVar1;
@@ -7370,23 +7370,23 @@ sub_b2a9b(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 un
     word_d2d6e = 0;
     bVar1 = in(0x21);
     out(0x21,bVar1 | 3);
-    sub_98664(dword_d2d5c,word_d2d60,9,unaff_ECX,bVar1);
-    sub_98664(dword_d2d68,CONCAT22(extraout_var,word_d2d6c),0x23);
+    dos_setvect(dword_d2d5c,word_d2d60,9,unaff_ECX,bVar1);
+    dos_setvect(dword_d2d68,CONCAT22(extraout_var,word_d2d6c),0x23);
     DAT_00000417 = DAT_00000417 & 0xf0;
     out(0x21,bVar1);
-    funcptr_d2c84 = sub_b2ccd;
+    funcptr_d2c84 = bios_int16;
   }
   return param_1;
 }
 
 
 // ================================================================================================
-// sub_b2b0a @ 0xb2b0a [__watcall]
+// keyboard_irq_handler @ 0xb2b0a [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-undefined4 __watcall sub_b2b0a(undefined4 param_1)
+undefined4 __watcall keyboard_irq_handler(undefined4 param_1)
 
 {
   byte bVar1;
@@ -7450,11 +7450,11 @@ undefined4 __watcall sub_b2b0a(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_b2bf5 @ 0xb2bf5 [__watcall]
+// keyboard_translate @ 0xb2bf5 [__watcall]
 // ================================================================================================
 
 undefined4 __watcall
-sub_b2bf5(uint param_1,undefined4 param_2,int unaff_EBX,undefined4 param_4,undefined4 param_5,
+keyboard_translate(uint param_1,undefined4 param_2,int unaff_EBX,undefined4 param_4,undefined4 param_5,
          undefined4 param_6)
 
 {
@@ -7502,8 +7502,8 @@ undefined8 unk_b2c01(void)
   undefined4 in_EDX;
   byte in_NT;
   
-  sub_902a0();
-  uVar1 = sub_b2c4a();
+  empty_func_902a0();
+  uVar1 = keyboard_int16_handler();
   if ((in_NT & 1) == 0) {
     return CONCAT44(in_EDX,uVar1);
   }
@@ -7512,10 +7512,10 @@ undefined8 unk_b2c01(void)
 
 
 // ================================================================================================
-// sub_b2c4a @ 0xb2c4a [__watcall]
+// keyboard_int16_handler @ 0xb2c4a [__watcall]
 // ================================================================================================
 
-uint __watcall sub_b2c4a(undefined4 param_1)
+uint __watcall keyboard_int16_handler(undefined4 param_1)
 
 {
   int iVar1;
@@ -7542,10 +7542,10 @@ uint __watcall sub_b2c4a(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_b2cbe @ 0xb2cbe [__cdecl]
+// key_down @ 0xb2cbe [__cdecl]
 // ================================================================================================
 
-undefined sub_b2cbe(int param_1)
+undefined key_down(int param_1)
 
 {
   return (&unk_d2cdc)[param_1];
@@ -7553,10 +7553,10 @@ undefined sub_b2cbe(int param_1)
 
 
 // ================================================================================================
-// sub_b2ccd @ 0xb2ccd [__watcall]
+// bios_int16 @ 0xb2ccd [__watcall]
 // ================================================================================================
 
-undefined2 __watcall sub_b2ccd(void)
+undefined2 __watcall bios_int16(void)
 
 {
   code *pcVar1;
@@ -7595,10 +7595,10 @@ void fatalerror(void)
 
 
 // ================================================================================================
-// sub_b2d28 @ 0xb2d28 [__watcall]
+// mouse_set_handler @ 0xb2d28 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b2d28(void)
+void __watcall mouse_set_handler(void)
 
 {
   undefined4 in_stack_00000004;
@@ -7609,10 +7609,10 @@ void __watcall sub_b2d28(void)
 
 
 // ================================================================================================
-// sub_b2d38 @ 0xb2d38 [__watcall]
+// mouse_read_buttons @ 0xb2d38 [__watcall]
 // ================================================================================================
 
-uint __watcall sub_b2d38(undefined4 param_1,undefined4 param_2,uint unaff_EBX)
+uint __watcall mouse_read_buttons(undefined4 param_1,undefined4 param_2,uint unaff_EBX)
 
 {
   code *pcVar1;
@@ -7637,10 +7637,10 @@ uint __watcall sub_b2d38(undefined4 param_1,undefined4 param_2,uint unaff_EBX)
 
 
 // ================================================================================================
-// sub_b2d74 @ 0xb2d74 [__watcall]
+// mouse_set_sensitivity @ 0xb2d74 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b2d74(void)
+void __watcall mouse_set_sensitivity(void)
 
 {
   code *pcVar1;
@@ -7654,10 +7654,10 @@ void __watcall sub_b2d74(void)
 
 
 // ================================================================================================
-// sub_b2d94 @ 0xb2d94 [__watcall]
+// mouse_set_sensitivity_b @ 0xb2d94 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b2d94(void)
+void __watcall mouse_set_sensitivity_b(void)
 
 {
   code *pcVar1;
@@ -7701,10 +7701,10 @@ void getmouse(undefined4 *param_1,undefined4 *param_2,undefined4 *param_3)
 
 
 // ================================================================================================
-// sub_b2def @ 0xb2def [__watcall]
+// mouse_set_x_limits @ 0xb2def [__watcall]
 // ================================================================================================
 
-void __watcall sub_b2def(void)
+void __watcall mouse_set_x_limits(void)
 
 {
   undefined4 in_stack_00000004;
@@ -7717,10 +7717,10 @@ void __watcall sub_b2def(void)
 
 
 // ================================================================================================
-// sub_b2e05 @ 0xb2e05 [__watcall]
+// mouse_set_y_limits @ 0xb2e05 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b2e05(void)
+void __watcall mouse_set_y_limits(void)
 
 {
   undefined4 in_stack_00000004;
@@ -7782,7 +7782,7 @@ undefined4 __watcall readmouse(void)
       dword_d3030 = dword_d2ff8 + -1;
     }
     dword_d3000 = dword_d3000 + 1;
-    dword_d3034 = sub_b2d38();
+    dword_d3034 = mouse_read_buttons();
     dword_d3000 = dword_d3000 + -1;
   }
   dword_d3000 = dword_d3000 + 1;
@@ -7791,10 +7791,10 @@ undefined4 __watcall readmouse(void)
 
 
 // ================================================================================================
-// sub_b2ef6 @ 0xb2ef6 [__watcall]
+// mouse_lock @ 0xb2ef6 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b2ef6(void)
+void __watcall mouse_lock(void)
 
 {
   dword_d3038 = dword_d3038 + 1;
@@ -7803,10 +7803,10 @@ void __watcall sub_b2ef6(void)
 
 
 // ================================================================================================
-// sub_b2efd @ 0xb2efd [__watcall]
+// mouse_unlock @ 0xb2efd [__watcall]
 // ================================================================================================
 
-void __watcall sub_b2efd(void)
+void __watcall mouse_unlock(void)
 
 {
   dword_d3038 = dword_d3038 + -1;
@@ -7815,10 +7815,10 @@ void __watcall sub_b2efd(void)
 
 
 // ================================================================================================
-// sub_b2f04 @ 0xb2f04 [__watcall]
+// mouse_restore_sensitivity @ 0xb2f04 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b2f04(void)
+undefined8 __watcall mouse_restore_sensitivity(void)
 
 {
   code *pcVar1;
@@ -7879,24 +7879,24 @@ int __watcall initmouse(undefined4 param_1,undefined4 param_2,undefined2 unaff_B
     word_d3004 = unaff_BX;
     word_d3006 = extraout_CX;
     word_d3008 = extraout_DX;
-    sub_b2d74();
-    funcptr_d306c = sub_b2efd;
-    funcptr_d3070 = sub_b2efd;
-    funcptr_d3074 = sub_b2ef6;
+    mouse_set_sensitivity();
+    funcptr_d306c = mouse_unlock;
+    funcptr_d3070 = mouse_unlock;
+    funcptr_d3074 = mouse_lock;
     mouse_update_callback = readmouse;
-    *(code **)(puVar3 + -0x1c) = sub_b2f04;
+    *(code **)(puVar3 + -0x1c) = mouse_restore_sensitivity;
     *(undefined4 *)(puVar3 + -0x20) = 0xb3003;
-    sub_b3454();
+    atexit_wrap();
   }
   return dword_d3028;
 }
 
 
 // ================================================================================================
-// sub_b300c @ 0xb300c [__watcall]
+// return_zero_b300c @ 0xb300c [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_b300c(void)
+undefined4 __watcall return_zero_b300c(void)
 
 {
   return 0;
@@ -7904,23 +7904,23 @@ undefined4 __watcall sub_b300c(void)
 
 
 // ================================================================================================
-// sub_b3010 @ 0xb3010 [__watcall]
+// critical_error_handler @ 0xb3010 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b3010(void)
+void __watcall critical_error_handler(void)
 
 {
-  sub_902a0();
+  empty_func_902a0();
   (*dword_d3096)();
   return;
 }
 
 
 // ================================================================================================
-// sub_b3036 @ 0xb3036 [__cdecl]
+// install_critical_error_handler @ 0xb3036 [__cdecl]
 // ================================================================================================
 
-void sub_b3036(undefined4 param_1)
+void install_critical_error_handler(undefined4 param_1)
 
 {
   undefined2 in_DX;
@@ -7930,25 +7930,25 @@ void sub_b3036(undefined4 param_1)
   dword_d3096 = param_1;
   word_d309a = in_CS;
   if (word_d3094 == 0) {
-    uVar1 = sub_9864c(in_CS,in_DX,0x24);
+    uVar1 = dos_getvect(in_CS,in_DX,0x24);
     word_d3094 = (short)((uint6)uVar1 >> 0x20);
     dword_d3090 = (undefined4)uVar1;
-    sub_98664(sub_b3010,in_CS,0x24);
-    sub_b3454(sub_b308b);
+    dos_setvect(critical_error_handler,in_CS,0x24);
+    atexit_wrap(remove_critical_error_handler);
   }
   return;
 }
 
 
 // ================================================================================================
-// sub_b308b @ 0xb308b [__watcall]
+// remove_critical_error_handler @ 0xb308b [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b308b(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall remove_critical_error_handler(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   if (word_d3094 != 0) {
-    sub_98664(dword_d3090,word_d3094,0x24);
+    dos_setvect(dword_d3090,word_d3094,0x24);
     word_d3094 = 0;
   }
   return CONCAT44(unaff_EDX,param_1);
@@ -8051,10 +8051,10 @@ void __watcall joy_detect(void)
 
 
 // ================================================================================================
-// sub_b3168 @ 0xb3168 [__watcall]
+// joystick_read @ 0xb3168 [__watcall]
 // ================================================================================================
 
-byte __watcall sub_b3168(void)
+byte __watcall joystick_read(void)
 
 {
   int iVar1;
@@ -8195,10 +8195,10 @@ void joy_init(void)
 
 
 // ================================================================================================
-// sub_b340b @ 0xb340b [__cdecl]
+// joystick_direction @ 0xb340b [__cdecl]
 // ================================================================================================
 
-undefined sub_b340b(uint param_1)
+undefined joystick_direction(uint param_1)
 
 {
   return (&unk_d41b7)[param_1 & 0xf];
@@ -8206,10 +8206,10 @@ undefined sub_b340b(uint param_1)
 
 
 // ================================================================================================
-// sub_b3421 @ 0xb3421 [__watcall]
+// joystick_x_scaled @ 0xb3421 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b3421(void)
+undefined8 __watcall joystick_x_scaled(void)
 
 {
   uint uVar1;
@@ -8224,10 +8224,10 @@ undefined8 __watcall sub_b3421(void)
 
 
 // ================================================================================================
-// sub_b343a @ 0xb343a [__watcall]
+// joystick_y_scaled @ 0xb343a [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b343a(void)
+undefined8 __watcall joystick_y_scaled(void)
 
 {
   uint uVar1;
@@ -8242,22 +8242,22 @@ undefined8 __watcall sub_b343a(void)
 
 
 // ================================================================================================
-// sub_b3454 @ 0xb3454 [__cdecl]
+// atexit_wrap @ 0xb3454 [__cdecl]
 // ================================================================================================
 
-void sub_b3454(undefined4 param_1)
+void atexit_wrap(undefined4 param_1)
 
 {
-  sub_99bf6(param_1);
+  atexit(param_1);
   return;
 }
 
 
 // ================================================================================================
-// sub_b345d @ 0xb345d [__watcall] noreturn
+// exit_wrap @ 0xb345d [__watcall] noreturn
 // ================================================================================================
 
-void __watcall sub_b345d(void)
+void __watcall exit_wrap(void)
 
 {
                     /* WARNING: Subroutine does not return */
@@ -8441,10 +8441,10 @@ LAB_000b3838:
 
 
 // ================================================================================================
-// sub_b384e @ 0xb384e [__watcall]
+// joystick1_default_center @ 0xb384e [__watcall]
 // ================================================================================================
 
-void __watcall sub_b384e(void)
+void __watcall joystick1_default_center(void)
 
 {
   dword_d3040 = dword_d3040 | 1;
@@ -8457,10 +8457,10 @@ void __watcall sub_b384e(void)
 
 
 // ================================================================================================
-// sub_b387e @ 0xb387e [__watcall]
+// joystick2_default_center @ 0xb387e [__watcall]
 // ================================================================================================
 
-void __watcall sub_b387e(void)
+void __watcall joystick2_default_center(void)
 
 {
   dword_d3040 = dword_d3040 | 2;
@@ -8473,10 +8473,10 @@ void __watcall sub_b387e(void)
 
 
 // ================================================================================================
-// sub_b38ae @ 0xb38ae [__watcall]
+// joystick1_x @ 0xb38ae [__watcall]
 // ================================================================================================
 
-int __watcall sub_b38ae(void)
+int __watcall joystick1_x(void)
 
 {
   uint uVar1;
@@ -8491,10 +8491,10 @@ int __watcall sub_b38ae(void)
 
 
 // ================================================================================================
-// sub_b38cd @ 0xb38cd [__watcall]
+// joystick1_y @ 0xb38cd [__watcall]
 // ================================================================================================
 
-int __watcall sub_b38cd(void)
+int __watcall joystick1_y(void)
 
 {
   uint uVar1;
@@ -8509,10 +8509,10 @@ int __watcall sub_b38cd(void)
 
 
 // ================================================================================================
-// sub_b38ec @ 0xb38ec [__watcall]
+// joystick2_x @ 0xb38ec [__watcall]
 // ================================================================================================
 
-int __watcall sub_b38ec(void)
+int __watcall joystick2_x(void)
 
 {
   uint uVar1;
@@ -8527,10 +8527,10 @@ int __watcall sub_b38ec(void)
 
 
 // ================================================================================================
-// sub_b390b @ 0xb390b [__watcall]
+// joystick2_y @ 0xb390b [__watcall]
 // ================================================================================================
 
-int __watcall sub_b390b(void)
+int __watcall joystick2_y(void)
 
 {
   uint uVar1;
@@ -8570,10 +8570,10 @@ undefined4 __watcall getticks(void)
 
 
 // ================================================================================================
-// sub_b3962 @ 0xb3962 [__cdecl]
+// ticks_since @ 0xb3962 [__cdecl]
 // ================================================================================================
 
-int sub_b3962(int param_1)
+int ticks_since(int param_1)
 
 {
   return dword_d2fdc - param_1;

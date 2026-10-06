@@ -3,10 +3,10 @@
 #include "prototypes.h"
 
 // ================================================================================================
-// sub_7aaaa @ 0x7aaaa [__watcall]
+// settings_draw_buttons @ 0x7aaaa [__watcall]
 // ================================================================================================
 
-void __watcall sub_7aaaa(void)
+void __watcall settings_draw_buttons(void)
 
 {
   uint uVar1;
@@ -99,10 +99,10 @@ LAB_0007ab95:
 
 
 // ================================================================================================
-// sub_7ac31 @ 0x7ac31 [__watcall]
+// settings_pointer_loop @ 0x7ac31 [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_7ac31(undefined4 param_1,uint unaff_EDX)
+longlong __watcall settings_pointer_loop(undefined4 param_1,uint unaff_EDX)
 
 {
   undefined4 *puVar1;
@@ -268,7 +268,7 @@ LAB_0007a1f5:
     return (ulonglong)unaff_EDX << 0x20;
   }
   drawshape(puVar3,iVar4,local_24);
-  iVar4 = sub_7a9c8(local_28,local_2c,&local_34);
+  iVar4 = settings_button_at(local_28,local_2c,&local_34);
   if (iVar4 != 0) {
     if (local_34 < 0x12) {
       uVar5 = local_34 / 2;
@@ -386,7 +386,7 @@ LAB_0007b1be:
             else {
               sfx_enable();
             }
-            sub_8b92f();
+            reload_mode_settings();
           }
           else {
             drawshape_trans(dword_dd64c,0x89,0x148);
@@ -399,10 +399,10 @@ LAB_0007b1be:
       dword_ed360 = uVar5;
       local_34 = local_34 + -9;
     }
-    sub_7aaaa(uVar5);
+    settings_draw_buttons(uVar5);
   }
   ppppuVar7 = (undefined4 ****)local_2c;
-  sub_96440(puVar3,local_28 + -4,local_2c);
+  drawshape_clip_save(puVar3,local_28 + -4,local_2c);
   iVar4 = local_28 + -4;
   goto LAB_0007af46;
 code_r0x0007aef2:
@@ -421,10 +421,10 @@ LAB_0007af46:
 
 
 // ================================================================================================
-// sub_7b39c @ 0x7b39c [__watcall]
+// empty_func_7b39c @ 0x7b39c [__watcall]
 // ================================================================================================
 
-void __watcall sub_7b39c(void)
+void __watcall empty_func_7b39c(void)
 
 {
   __CHK(4);
@@ -468,7 +468,7 @@ longlong __watcall game_settings_screen(undefined4 param_1,uint unaff_EDX)
   game_settings_dialog();
   sound_settings_dialog();
   if (dword_c53fb == 2) {
-    sub_7b846();
+    game_settings_pointer_loop();
   }
   else {
     game_settings_menu();
@@ -549,7 +549,7 @@ void __watcall game_settings_dialog(void)
     printstr_at(aDigitizedSpeech_c3328,0x60,0xd6);
   }
   setdefaultscreen();
-  sub_8050f(10,0x13,4,dword_c53fb,0xfa);
+  draw_settings_title(10,0x13,4,dword_c53fb,0xfa);
   return;
 }
 
@@ -590,7 +590,7 @@ sound_settings_dialog
                 ((option_flags << 0x1d) >> 0x1f) << 2 | ((option_flags << 0x1c) >> 0x1f) << 3 |
                 ((option_flags << 0x1b) >> 0x1f) << 4 | ((option_flags << 0x1a) >> 0x1f) << 5 |
                 uVar1 | uVar2 | uVar3;
-  sub_7b7be();
+  game_settings_draw_buttons();
   settextpos(0xf8,0xff,unaff_EDX,unaff_ECX,unaff_EBX);
   if (dword_c541f == 0x10) {
     printstr_at(aMusic_c331c,0x60,0xaa);
@@ -605,10 +605,10 @@ sound_settings_dialog
 
 
 // ================================================================================================
-// sub_7b734 @ 0x7b734 [__watcall]
+// game_settings_button_at @ 0x7b734 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_7b734(int param_1,int unaff_EDX,int *unaff_EBX)
+undefined4 __watcall game_settings_button_at(int param_1,int unaff_EDX,int *unaff_EBX)
 
 {
   int iVar1;
@@ -642,10 +642,10 @@ undefined4 __watcall sub_7b734(int param_1,int unaff_EDX,int *unaff_EBX)
 
 
 // ================================================================================================
-// sub_7b7be @ 0x7b7be [__watcall]
+// game_settings_draw_buttons @ 0x7b7be [__watcall]
 // ================================================================================================
 
-void __watcall sub_7b7be(void)
+void __watcall game_settings_draw_buttons(void)
 
 {
   int iVar1;
@@ -681,10 +681,10 @@ void __watcall sub_7b7be(void)
 
 
 // ================================================================================================
-// sub_7b846 @ 0x7b846 [__watcall]
+// game_settings_pointer_loop @ 0x7b846 [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_7b846(undefined4 param_1,uint unaff_EDX)
+longlong __watcall game_settings_pointer_loop(undefined4 param_1,uint unaff_EDX)
 
 {
   undefined4 *puVar1;
@@ -839,7 +839,7 @@ LAB_0007bad7:
     goto LAB_0007be88;
   }
   drawshape(puVar2,iVar3,local_24);
-  iVar3 = sub_7b734(local_28,local_2c,&local_34);
+  iVar3 = game_settings_button_at(local_28,local_2c,&local_34);
   if (iVar3 == 0) goto LAB_0007bb2d;
   if (0x11 < local_34) {
     if (local_34 == 0x12) {
@@ -915,7 +915,7 @@ LAB_0007bad7:
       else {
         sfx_enable();
       }
-      sub_8b92f();
+      reload_mode_settings();
       goto LAB_0007b4e5;
     }
     iVar3 = 0x81;
@@ -940,7 +940,7 @@ LAB_0007b4e5:
     uVar4 = ~(1 << ((byte)local_34 & 0x1f));
     dword_ed360 = dword_ed360 & uVar4;
   }
-  sub_7b7be(uVar4);
+  game_settings_draw_buttons(uVar4);
   goto LAB_0007bb2d;
 code_r0x0007bb03:
   if ((local_28 == local_20) && (local_2c == local_24)) goto LAB_0007bad7;
@@ -958,10 +958,10 @@ LAB_0007bb2d:
 
 
 // ================================================================================================
-// sub_7bebb @ 0x7bebb [__watcall]
+// menu_exhibition_settings @ 0x7bebb [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_7bebb(undefined4 param_1,uint unaff_EDX)
+longlong __watcall menu_exhibition_settings(undefined4 param_1,uint unaff_EDX)
 
 {
   undefined4 *puVar1;
@@ -989,7 +989,7 @@ longlong __watcall sub_7bebb(undefined4 param_1,uint unaff_EDX)
   *(undefined2 *)((int)puVar1 + 6) = 0x129;
   grabshape(puVar1,10,0x13);
   setdefaultscreen();
-  sub_7c1ac();
+  sound_settings_draw();
   sound_toggle_dialog();
   sound_settings_menu();
   drawshape(puVar1,10,0x13);
@@ -1048,7 +1048,7 @@ sound_toggle_dialog(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX
   else if (uVar1 == 2) {
     dword_ed360 = dword_ed360 | 0x200;
   }
-  sub_7c0b9();
+  sound_settings_draw_buttons();
   settextpos(0xf8,0xff,unaff_EDX,unaff_ECX,unaff_EBX);
   if (sound_enabled == '\0') {
     printstr_at(aDigitizedSpeech_c3349,0x60,0xd6);
@@ -1062,10 +1062,10 @@ sound_toggle_dialog(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX
 
 
 // ================================================================================================
-// sub_7c0b9 @ 0x7c0b9 [__watcall]
+// sound_settings_draw_buttons @ 0x7c0b9 [__watcall]
 // ================================================================================================
 
-void __watcall sub_7c0b9(void)
+void __watcall sound_settings_draw_buttons(void)
 
 {
   uint uVar1;
@@ -1127,10 +1127,10 @@ void __watcall sub_7c0b9(void)
 
 
 // ================================================================================================
-// sub_7c1ac @ 0x7c1ac [__watcall]
+// sound_settings_draw @ 0x7c1ac [__watcall]
 // ================================================================================================
 
-void __watcall sub_7c1ac(void)
+void __watcall sound_settings_draw(void)
 
 {
   undefined4 uVar1;
@@ -1156,16 +1156,16 @@ void __watcall sub_7c1ac(void)
   if (sound_enabled == '\0') {
     printstr_at(aDigitizedSpeech_c3349,0x60,0xd6);
   }
-  sub_8050f(10,0x13,6,dword_c53fb,0xfa);
+  draw_settings_title(10,0x13,6,dword_c53fb,0xfa);
   return;
 }
 
 
 // ================================================================================================
-// sub_7c28d @ 0x7c28d [__watcall]
+// sound_settings_button_at @ 0x7c28d [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_7c28d(int param_1,int unaff_EDX,int *unaff_EBX)
+undefined4 __watcall sound_settings_button_at(int param_1,int unaff_EDX,int *unaff_EBX)
 
 {
   int iVar1;
@@ -1284,7 +1284,7 @@ LAB_0007c403:
     goto LAB_0007c796;
   }
   drawshape(puVar2,iVar3,local_20);
-  iVar3 = sub_7c28d(local_24,local_28,&local_30);
+  iVar3 = sound_settings_button_at(local_24,local_28,&local_30);
   if (iVar3 != 0) {
     if (local_30 < 0x12) {
       uVar4 = local_30 / 2;
@@ -1379,7 +1379,7 @@ LAB_0007c6d2:
           else {
             sfx_enable();
           }
-          sub_8b92f();
+          reload_mode_settings();
           goto LAB_0007bf4f;
         }
         iVar3 = 0x81;
@@ -1395,9 +1395,9 @@ LAB_0007bf4f:
       uVar4 = dword_ed360 & 0xf1ff | 1 << ((byte)local_30 & 0x1f);
       dword_ed360 = uVar4;
     }
-    sub_7c0b9(uVar4);
+    sound_settings_draw_buttons(uVar4);
   }
-  sub_96440(puVar2,local_24 + -4,local_28);
+  drawshape_clip_save(puVar2,local_24 + -4,local_28);
   iVar3 = local_24 + -4;
   ppppuVar6 = pointer_shapes;
   goto LAB_0007c483;
@@ -1417,10 +1417,10 @@ LAB_0007c483:
 
 
 // ================================================================================================
-// sub_7c852 @ 0x7c852 [__watcall]
+// controller_box_draw_on @ 0x7c852 [__watcall]
 // ================================================================================================
 
-void __watcall sub_7c852(int *param_1)
+void __watcall controller_box_draw_on(int *param_1)
 
 {
   undefined4 uVar1;
@@ -1435,19 +1435,19 @@ void __watcall sub_7c852(int *param_1)
     uVar2 = 0x40;
     uVar1 = 0x42;
   }
-  sub_b4fac(*param_1 + 10,param_1[3] + 0x12,*param_1 + 10,param_1[1] + 0x13,uVar1);
-  sub_b4fac(*param_1 + 10,param_1[1] + 0x13,param_1[2] + 9,param_1[1] + 0x13,uVar1);
-  sub_b4fac(param_1[2] + 10,param_1[1] + 0x14,param_1[2] + 10,param_1[3] + 0x13,uVar2);
-  sub_b4fac(param_1[2] + 10,param_1[3] + 0x13,*param_1 + 0xb,param_1[3] + 0x13,uVar2);
+  drawline(*param_1 + 10,param_1[3] + 0x12,*param_1 + 10,param_1[1] + 0x13,uVar1);
+  drawline(*param_1 + 10,param_1[1] + 0x13,param_1[2] + 9,param_1[1] + 0x13,uVar1);
+  drawline(param_1[2] + 10,param_1[1] + 0x14,param_1[2] + 10,param_1[3] + 0x13,uVar2);
+  drawline(param_1[2] + 10,param_1[3] + 0x13,*param_1 + 0xb,param_1[3] + 0x13,uVar2);
   return;
 }
 
 
 // ================================================================================================
-// sub_7c901 @ 0x7c901 [__watcall]
+// controller_box_draw_off @ 0x7c901 [__watcall]
 // ================================================================================================
 
-void __watcall sub_7c901(int *param_1)
+void __watcall controller_box_draw_off(int *param_1)
 
 {
   undefined4 uVar1;
@@ -1462,19 +1462,19 @@ void __watcall sub_7c901(int *param_1)
     uVar2 = 0x40;
     uVar1 = 0x42;
   }
-  sub_b4fac(*param_1 + 10,param_1[3] + 0x12,*param_1 + 10,param_1[1] + 0x13,uVar2);
-  sub_b4fac(*param_1 + 10,param_1[1] + 0x13,param_1[2] + 9,param_1[1] + 0x13,uVar2);
-  sub_b4fac(param_1[2] + 10,param_1[1] + 0x14,param_1[2] + 10,param_1[3] + 0x13,uVar1);
-  sub_b4fac(param_1[2] + 10,param_1[3] + 0x13,*param_1 + 0xb,param_1[3] + 0x13,uVar1);
+  drawline(*param_1 + 10,param_1[3] + 0x12,*param_1 + 10,param_1[1] + 0x13,uVar2);
+  drawline(*param_1 + 10,param_1[1] + 0x13,param_1[2] + 9,param_1[1] + 0x13,uVar2);
+  drawline(param_1[2] + 10,param_1[1] + 0x14,param_1[2] + 10,param_1[3] + 0x13,uVar1);
+  drawline(param_1[2] + 10,param_1[3] + 0x13,*param_1 + 0xb,param_1[3] + 0x13,uVar1);
   return;
 }
 
 
 // ================================================================================================
-// sub_7c993 @ 0x7c993 [__watcall]
+// menu_p1_controls_a @ 0x7c993 [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_7c993(undefined4 param_1,uint unaff_EDX)
+longlong __watcall menu_p1_controls_a(undefined4 param_1,uint unaff_EDX)
 
 {
   undefined4 *puVar1;
@@ -1512,10 +1512,10 @@ longlong __watcall sub_7c993(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_7c9a1 @ 0x7c9a1 [__watcall]
+// menu_p2_controls_a @ 0x7c9a1 [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_7c9a1(undefined4 param_1,uint unaff_EDX)
+longlong __watcall menu_p2_controls_a(undefined4 param_1,uint unaff_EDX)
 
 {
   undefined4 *puVar1;
@@ -1553,10 +1553,10 @@ longlong __watcall sub_7c9a1(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_7ca53 @ 0x7ca53 [__watcall]
+// menu_p1_controls_b @ 0x7ca53 [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_7ca53(undefined4 param_1,uint unaff_EDX)
+longlong __watcall menu_p1_controls_b(undefined4 param_1,uint unaff_EDX)
 
 {
   undefined4 *puVar1;
@@ -1594,10 +1594,10 @@ longlong __watcall sub_7ca53(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_7ca61 @ 0x7ca61 [__watcall]
+// menu_p2_controls_b @ 0x7ca61 [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_7ca61(undefined4 param_1,uint unaff_EDX)
+longlong __watcall menu_p2_controls_b(undefined4 param_1,uint unaff_EDX)
 
 {
   undefined4 *puVar1;
@@ -1635,12 +1635,12 @@ longlong __watcall sub_7ca61(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_7caf7 @ 0x7caf7 [__watcall]
+// menu_p1_controls_c @ 0x7caf7 [__watcall]
 // ================================================================================================
 
 /* WARNING: Removing unreachable block (ram,0x0007cfe4) */
 
-undefined8 __watcall sub_7caf7(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall menu_p1_controls_c(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   undefined4 *puVar1;
@@ -1721,7 +1721,7 @@ undefined8 __watcall sub_7caf7(undefined4 param_1,undefined4 unaff_EDX)
   }
   user1_team = sVar3;
   ensure_user_slot(0);
-  sub_7cea1();
+  controls_reset_unassigned();
   if ((((&unk_dff3a)[dword_dff36 >> 0x10] == '\x1b') && (extraout_EDX == 1)) &&
      ((iVar2 != 1 && (iVar5 != 1)))) {
     faceoff_timer = 0;
@@ -1730,12 +1730,12 @@ undefined8 __watcall sub_7caf7(undefined4 param_1,undefined4 unaff_EDX)
   do {
     if (((iVar2 == iVar4) || (iVar5 == iVar4)) &&
        ((user1_team != iVar4 && ((short)user2_team != iVar4)))) {
-      sub_7cbb3(iVar4 == 2);
+      controls_goalie_pull_request(iVar4 == 2);
       iVar4 = extraout_EDX_00;
     }
     else if (((iVar2 != iVar4) && (iVar5 != iVar4)) &&
             ((user1_team == iVar4 || ((short)user2_team == iVar4)))) {
-      sub_7cc8a(iVar4 == 2);
+      controls_line_change_request(iVar4 == 2);
       iVar4 = extraout_EDX_01;
     }
     iVar4 = iVar4 + 1;
@@ -1746,12 +1746,12 @@ undefined8 __watcall sub_7caf7(undefined4 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_7cb9f @ 0x7cb9f [__watcall]
+// menu_p2_controls_c @ 0x7cb9f [__watcall]
 // ================================================================================================
 
 /* WARNING: Removing unreachable block (ram,0x0007cfed) */
 
-undefined8 __watcall sub_7cb9f(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall menu_p2_controls_c(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   undefined4 *puVar1;
@@ -1832,7 +1832,7 @@ undefined8 __watcall sub_7cb9f(undefined4 param_1,undefined4 unaff_EDX)
   }
   user2_team._0_2_ = sVar3;
   ensure_user_slot(1);
-  sub_7cea1();
+  controls_reset_unassigned();
   if ((((&unk_dff3a)[dword_dff36 >> 0x10] == '\x1b') && (extraout_EDX == 1)) &&
      ((iVar2 != 1 && (iVar5 != 1)))) {
     faceoff_timer = 0;
@@ -1841,12 +1841,12 @@ undefined8 __watcall sub_7cb9f(undefined4 param_1,undefined4 unaff_EDX)
   do {
     if (((iVar2 == iVar4) || (iVar5 == iVar4)) &&
        ((user1_team != iVar4 && ((short)user2_team != iVar4)))) {
-      sub_7cbb3(iVar4 == 2);
+      controls_goalie_pull_request(iVar4 == 2);
       iVar4 = extraout_EDX_00;
     }
     else if (((iVar2 != iVar4) && (iVar5 != iVar4)) &&
             ((user1_team == iVar4 || ((short)user2_team == iVar4)))) {
-      sub_7cc8a(iVar4 == 2);
+      controls_line_change_request(iVar4 == 2);
       iVar4 = extraout_EDX_01;
     }
     iVar4 = iVar4 + 1;
@@ -1857,10 +1857,10 @@ undefined8 __watcall sub_7cb9f(undefined4 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_7cbb3 @ 0x7cbb3 [__watcall]
+// controls_goalie_pull_request @ 0x7cbb3 [__watcall]
 // ================================================================================================
 
-void __watcall sub_7cbb3(uint param_1)
+void __watcall controls_goalie_pull_request(uint param_1)
 
 {
   int iVar1;
@@ -1887,10 +1887,10 @@ void __watcall sub_7cbb3(uint param_1)
 
 
 // ================================================================================================
-// sub_7cc8a @ 0x7cc8a [__watcall]
+// controls_line_change_request @ 0x7cc8a [__watcall]
 // ================================================================================================
 
-void __watcall sub_7cc8a(uint param_1)
+void __watcall controls_line_change_request(uint param_1)
 
 {
   __CHK(0x10);
@@ -1993,10 +1993,10 @@ void __watcall ensure_user_slot(int param_1)
 
 
 // ================================================================================================
-// sub_7cea1 @ 0x7cea1 [__watcall]
+// controls_reset_unassigned @ 0x7cea1 [__watcall]
 // ================================================================================================
 
-void __watcall sub_7cea1(void)
+void __watcall controls_reset_unassigned(void)
 
 {
   int iVar1;
@@ -2048,10 +2048,10 @@ void __watcall sub_7cea1(void)
 
 
 // ================================================================================================
-// sub_7cfb9 @ 0x7cfb9 [__watcall]
+// controls_apply_user_change @ 0x7cfb9 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_7cfb9(int param_1)
+undefined8 __watcall controls_apply_user_change(int param_1)
 
 {
   uint uVar1;
@@ -2111,7 +2111,7 @@ undefined8 __watcall sub_7cfb9(int param_1)
     }
   }
   ensure_user_slot();
-  sub_7cea1();
+  controls_reset_unassigned();
   if ((((&unk_dff3a)[dword_dff36 >> 0x10] == '\x1b') && (extraout_EDX == 1)) &&
      ((iVar3 != 1 && (iVar6 != 1)))) {
     faceoff_timer = 0;
@@ -2120,12 +2120,12 @@ undefined8 __watcall sub_7cfb9(int param_1)
   do {
     if (((iVar3 == iVar5) || (iVar6 == iVar5)) &&
        ((user1_team != iVar5 && ((short)user2_team != iVar5)))) {
-      sub_7cbb3(iVar5 == 2);
+      controls_goalie_pull_request(iVar5 == 2);
       iVar5 = extraout_EDX_00;
     }
     else if (((iVar3 != iVar5) && (iVar6 != iVar5)) &&
             ((user1_team == iVar5 || ((short)user2_team == iVar5)))) {
-      sub_7cc8a(iVar5 == 2);
+      controls_line_change_request(iVar5 == 2);
       iVar5 = extraout_EDX_01;
     }
     iVar5 = iVar5 + 1;
@@ -2136,10 +2136,10 @@ undefined8 __watcall sub_7cfb9(int param_1)
 
 
 // ================================================================================================
-// sub_7d137 @ 0x7d137 [__watcall]
+// menu_p1_controls_d @ 0x7d137 [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_7d137(undefined4 param_1,uint unaff_EDX)
+longlong __watcall menu_p1_controls_d(undefined4 param_1,uint unaff_EDX)
 
 {
   undefined2 uVar1;
@@ -2202,10 +2202,10 @@ longlong __watcall sub_7d137(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_7d145 @ 0x7d145 [__watcall]
+// menu_p2_controls_d @ 0x7d145 [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_7d145(undefined4 param_1,uint unaff_EDX)
+longlong __watcall menu_p2_controls_d(undefined4 param_1,uint unaff_EDX)
 
 {
   undefined2 uVar1;
@@ -2383,11 +2383,11 @@ void __watcall controller_select_dialog(int param_1)
   iVar1 = 0;
   do {
     if ((dword_ed360 & 1 << ((byte)iVar1 & 0x1f)) == 0) {
-      sub_7c901(&dword_d195c + iVar1 * 4);
+      controller_box_draw_off(&dword_d195c + iVar1 * 4);
       iVar1 = extraout_EDX_00;
     }
     else {
-      sub_7c852();
+      controller_box_draw_on();
       iVar1 = extraout_EDX;
     }
     iVar1 = iVar1 + 1;
@@ -2416,10 +2416,10 @@ void __watcall controller_select_dialog(int param_1)
 
 
 // ================================================================================================
-// sub_7d61f @ 0x7d61f [__watcall]
+// controller_slot_at @ 0x7d61f [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_7d61f(int param_1,int unaff_EDX,int *unaff_EBX)
+undefined4 __watcall controller_slot_at(int param_1,int unaff_EDX,int *unaff_EBX)
 
 {
   int iVar1;
@@ -2441,10 +2441,10 @@ undefined4 __watcall sub_7d61f(int param_1,int unaff_EDX,int *unaff_EBX)
 
 
 // ================================================================================================
-// sub_7d671 @ 0x7d671 [__watcall]
+// controller_boxes_draw @ 0x7d671 [__watcall]
 // ================================================================================================
 
-void __watcall sub_7d671(void)
+void __watcall controller_boxes_draw(void)
 
 {
   int iVar1;
@@ -2455,11 +2455,11 @@ void __watcall sub_7d671(void)
   iVar1 = 0;
   do {
     if ((dword_ed360 & 1 << ((byte)iVar1 & 0x1f)) == 0) {
-      sub_7c901(&dword_d195c + iVar1 * 4);
+      controller_box_draw_off(&dword_d195c + iVar1 * 4);
       iVar1 = extraout_EDX_00;
     }
     else {
-      sub_7c852();
+      controller_box_draw_on();
       iVar1 = extraout_EDX;
     }
     iVar1 = iVar1 + 1;
@@ -2542,7 +2542,7 @@ LAB_0007d130:
     return (ulonglong)unaff_EDX << 0x20;
   }
   drawshape(puVar2,iStack_1c + -4,local_20);
-  iVar3 = sub_7d61f(local_24,local_28);
+  iVar3 = controller_slot_at(local_24,local_28);
   if (iVar3 == 0) goto LAB_0007d7da;
   local_30 = 1 << ((byte)local_30 & 0x1f);
   if (((local_30 & dword_ed360) == 0) && ((dword_ed364 & local_30) != 0)) {
@@ -2577,7 +2577,7 @@ LAB_0007d130:
     }
     else if (0x7f < local_30) {
       if (local_30 < 0x81) {
-        sub_7c852(&unk_d19cc);
+        controller_box_draw_on(&unk_d19cc);
         (&dword_c540b)[param_1] = (int)dword_ed360 >> 2;
         if (dword_ed360 == 0x41) {
           (&dword_c5403)[param_1] = 0xffffffff;
@@ -2619,16 +2619,16 @@ LAB_0007db03:
           }
         }
 LAB_0007db2b:
-        sub_8b85b();
-        sub_8b92f();
+        setup_pause_menu_teams();
+        reload_mode_settings();
         goto LAB_0007d130;
       }
       if (local_30 == 0x100) {
-        sub_7c852(&aX_d19dc);
+        controller_box_draw_on(&aX_d19dc);
         goto LAB_0007d130;
       }
     }
-    sub_7d671();
+    controller_boxes_draw();
   }
   goto LAB_0007d7da;
 code_r0x0007d7b0:
@@ -2647,12 +2647,12 @@ LAB_0007d7da:
 
 
 // ================================================================================================
-// sub_7db67 @ 0x7db67 [__watcall]
+// calendar_start_game @ 0x7db67 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __watcall sub_7db67(int param_1,int unaff_EDX,int unaff_EBX,undefined2 unaff_CX)
+void __watcall calendar_start_game(int param_1,int unaff_EDX,int unaff_EBX,undefined2 unaff_CX)
 
 {
   __CHK(8);
@@ -2698,7 +2698,7 @@ void __watcall sub_7db67(int param_1,int unaff_EDX,int unaff_EBX,undefined2 unaf
     }
   }
   _away_team_id = unaff_CX;
-  sub_8b85b();
+  setup_pause_menu_teams();
   return;
 }
 
@@ -2820,10 +2820,10 @@ LAB_0007de31:
 
 
 // ================================================================================================
-// sub_7dec8 @ 0x7dec8 [__watcall]
+// free_music_banks @ 0x7dec8 [__watcall]
 // ================================================================================================
 
-void __watcall sub_7dec8(void)
+void __watcall free_music_banks(void)
 
 {
   int iVar1;
@@ -2864,10 +2864,10 @@ void __watcall sub_7dec8(void)
 
 
 // ================================================================================================
-// sub_7df4e @ 0x7df4e [__watcall]
+// draw_team_logo_parts @ 0x7df4e [__watcall]
 // ================================================================================================
 
-void __watcall sub_7df4e(uint param_1,byte unaff_DL,undefined4 param_3,undefined4 *unaff_ECX)
+void __watcall draw_team_logo_parts(uint param_1,byte unaff_DL,undefined4 param_3,undefined4 *unaff_ECX)
 
 {
   int iVar1;
@@ -2919,10 +2919,10 @@ LAB_0007e021:
 
 
 // ================================================================================================
-// sub_7e032 @ 0x7e032 [__watcall]
+// return_zero_7e032 @ 0x7e032 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_7e032(void)
+undefined4 __watcall return_zero_7e032(void)
 
 {
   __CHK(4);
@@ -2931,15 +2931,15 @@ undefined4 __watcall sub_7e032(void)
 
 
 // ================================================================================================
-// sub_7e03f @ 0x7e03f [__watcall]
+// mvi_frames_current @ 0x7e03f [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_7e03f(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+mvi_frames_current(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   __CHK(0x14);
-  sub_96a78(dword_ed6d0,unaff_EDX,unaff_ECX,unaff_EBX);
+  mvi_frame_count(dword_ed6d0,unaff_EDX,unaff_ECX,unaff_EBX);
   return;
 }
 
@@ -2961,10 +2961,10 @@ void __watcall replay_draw_button(int param_1)
   iVar4 = (&unk_d1dcc)[param_1 * 7] + -0xa8;
   uVar2 = (&unk_d1dd0)[param_1 * 7];
   iVar3 = (&unk_d1dd4)[param_1 * 7] + -0xa8;
-  sub_b4fac(uVar1,iVar4,uVar2,iVar4,0x10);
-  sub_b4fac(uVar1,iVar4,uVar1,iVar3,0x10);
-  sub_b4fac(uVar2,iVar4,uVar2,iVar3,0x15);
-  sub_b4fac(uVar1,iVar3,uVar2,iVar3,0x15);
+  drawline(uVar1,iVar4,uVar2,iVar4,0x10);
+  drawline(uVar1,iVar4,uVar1,iVar3,0x10);
+  drawline(uVar2,iVar4,uVar2,iVar3,0x15);
+  drawline(uVar1,iVar3,uVar2,iVar3,0x15);
   return;
 }
 
@@ -3063,7 +3063,7 @@ void __watcall instant_replay(int param_1)
   if (dword_d8c74 < 0) {
     dword_d8c74 = 0;
   }
-  sub_8c1e2();
+  setscreen_main();
   set_camera_offset(0,0);
   begin_frame();
   draw_rink(dword_d8c7c,dword_d8c74);
@@ -3089,7 +3089,7 @@ void __watcall instant_replay(int param_1)
     sVar3 = replay_seek_frames((int)(short)local_28,((ushort)dword_ed754 & 0x3f) == 0x10);
     local_28._2_2_ = sVar3 >> 0xf;
     local_28._0_2_ = sVar3;
-    sub_8c1e2();
+    setscreen_main();
     if (dword_ed70c == 0) {
       if (-1 < dword_cd4fa) {
         camera._0_2_ = *(short *)(&unk_e9f18 + (dword_cd4fa >> 0x10) * 2);
@@ -3521,7 +3521,7 @@ LAB_0007eec9:
       }
       setclip(local_20,iVar2,iVar6,iVar5);
     }
-    sub_b500c(dword_ed6e4,0,0);
+    blit_rle_clip(dword_ed6e4,0,0);
     if (local_24 == dword_ed754) {
       setclip(0,0x140,0,0x20);
     }
@@ -3614,7 +3614,7 @@ void __watcall replay_menu(undefined4 param_1,undefined4 unaff_EDX,undefined4 un
       dword_ed6d8 = loadfile(auStack_34,0);
       dword_ed6e4 = locateshape(dword_ed6d8,&aGad1);
       waittimeout();
-      sub_30f12();
+      restore_dialog_background();
       return;
     }
     waittimeout();
@@ -3622,7 +3622,7 @@ void __watcall replay_menu(undefined4 param_1,undefined4 unaff_EDX,undefined4 un
   }
   select_game_surface();
   setclip(0xc2,0xf0,0,0x20);
-  sub_b500c(dword_ed6e4,0,0);
+  blit_rle_clip(dword_ed6e4,0,0);
   replay_draw_button(7);
   setdefaultscreen();
   setclip(0,0x140,0,200);
@@ -3690,12 +3690,12 @@ void __watcall replay_menu(undefined4 param_1,undefined4 unaff_EDX,undefined4 un
   }
   settimeout(100);
   setclip(0,0x140,0,200);
-  sub_b4fac(0x4e,dword_ed6d4 * 0x11 + 0x50,0x4e,dword_ed6d4 * 0x11 + 0x5e,0x10);
+  drawline(0x4e,dword_ed6d4 * 0x11 + 0x50,0x4e,dword_ed6d4 * 0x11 + 0x5e,0x10);
   iVar4 = dword_ed6d4 * 0x11 + 0x50;
-  sub_b4fac(0x4e,iVar4,0xd8,iVar4,0x10);
+  drawline(0x4e,iVar4,0xd8,iVar4,0x10);
   iVar4 = dword_ed6d4 * 0x11 + 0x5e;
-  sub_b4fac(0x4f,iVar4,0xd8,iVar4,0x59);
-  sub_b4fac(0xd8,dword_ed6d4 * 0x11 + 0x51,0xd8,dword_ed6d4 * 0x11 + 0x5e,0x59);
+  drawline(0x4f,iVar4,0xd8,iVar4,0x59);
+  drawline(0xd8,dword_ed6d4 * 0x11 + 0x51,0xd8,dword_ed6d4 * 0x11 + 0x5e,0x59);
   putpixel(0xd8,dword_ed6d4 * 0x11 + 0x50,0x13);
   putpixel(0x4e,dword_ed6d4 * 0x11 + 0x5e,0x13);
   drawshape_remap(pointer_shapes,dword_ed6e0,dword_ed6dc);
@@ -3730,9 +3730,9 @@ LAB_0007f59d:
     dword_ed6d8 = loadfile(auStack_34,0);
     dword_ed6e4 = locateshape(dword_ed6d8,&aGad1);
     waittimeout();
-    sub_30f12();
+    restore_dialog_background();
   }
-  sub_7fc12();
+  replay_time_shift();
   dword_ed6e0 = unaff_EDX;
   dword_ed6dc = unaff_EBX;
   setmousepos(dword_ed6e0,dword_ed6dc);
@@ -3742,7 +3742,7 @@ LAB_0007f59d:
     setdefaultscreen();
     message_dialog(0xffffffff,0xffffffff,&off_d1f25,3,0,0,0,0,0);
     waittimeout();
-    sub_30f12();
+    restore_dialog_background();
   }
   setclip(0,0x140,0,200);
   freemem(puVar2);
@@ -3773,16 +3773,16 @@ void __watcall replay_save_dialog(void)
   getfontstate(auStack_68);
   setfont(dword_ed700);
   fillrect(0,0x4b,0x140,0x4c,0x14);
-  sub_93000(1,0x4c,0x13e,0x95,9);
-  sub_93000(2,0x4d,0x13d,0x96,0x10);
+  fillbox_corners(1,0x4c,0x13e,0x95,9);
+  fillbox_corners(2,0x4d,0x13d,0x96,0x10);
   iVar3 = 0x50;
   for (iStack_1c = 0; iStack_1c < 4; iStack_1c = iStack_1c + 1) {
     iVar1 = iVar3 + 0xe;
-    sub_b4fac(0x4e,iVar3,0x4e,iVar1,0x59);
+    drawline(0x4e,iVar3,0x4e,iVar1,0x59);
     local_20 = 0xd8;
-    sub_b4fac(0x4e,iVar3,0xd8,iVar3,0x59);
-    sub_b4fac(0x4f,iVar1,local_20,iVar1,0x10);
-    sub_b4fac(local_20,iVar3 + 1,local_20,iVar1,0x10);
+    drawline(0x4e,iVar3,0xd8,iVar3,0x59);
+    drawline(0x4f,iVar1,local_20,iVar1,0x10);
+    drawline(local_20,iVar3 + 1,local_20,iVar1,0x10);
     putpixel(local_20,iVar3,0x13);
     putpixel(0x4e,iVar1,0x13);
     iVar3 = iVar3 + 0x11;
@@ -3866,13 +3866,13 @@ undefined8 __watcall replay_save_highlight(int param_1,undefined4 unaff_EDX)
     strcat(acStack_3c,(char *)&aHI);
     iVar1 = _dos_findfirst(acStack_3c,0,auStack_68);
     if (iVar1 == 0) {
-      iVar1 = sub_1453e(acStack_3c,&iStack_14);
+      iVar1 = file_open_trunc(acStack_3c,&iStack_14);
       if (iVar1 != 0) {
         fatalerror(aCanNotOpenSFile,acStack_3c);
       }
     }
     else {
-      iVar1 = sub_14566(acStack_3c,&iStack_14);
+      iVar1 = file_create(acStack_3c,&iStack_14);
       if (iVar1 != 0) {
         fatalerror(&aF1);
       }
@@ -3893,10 +3893,10 @@ undefined8 __watcall replay_save_highlight(int param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_7fc12 @ 0x7fc12 [__watcall]
+// replay_time_shift @ 0x7fc12 [__watcall]
 // ================================================================================================
 
-void __watcall sub_7fc12(void)
+void __watcall replay_time_shift(void)
 
 {
   __CHK(4);
@@ -3907,10 +3907,10 @@ void __watcall sub_7fc12(void)
 
 
 // ================================================================================================
-// sub_7fc31 @ 0x7fc31 [__watcall]
+// cmp_ints @ 0x7fc31 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_7fc31(int *param_1,int *unaff_EDX)
+undefined4 __watcall cmp_ints(int *param_1,int *unaff_EDX)
 
 {
   undefined4 uVar1;
@@ -3928,10 +3928,10 @@ undefined4 __watcall sub_7fc31(int *param_1,int *unaff_EDX)
 
 
 // ================================================================================================
-// sub_7fc5c @ 0x7fc5c [__watcall]
+// team_abbrev_index @ 0x7fc5c [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_7fc5c(int param_1,undefined4 unaff_EDX)
+undefined8 __watcall team_abbrev_index(int param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
@@ -3940,7 +3940,7 @@ undefined8 __watcall sub_7fc5c(int param_1,undefined4 unaff_EDX)
   
   __CHK(0x14);
   iVar3 = -1;
-  iVar1 = sub_93284(param_1,&unk_c3470);
+  iVar1 = _strcspn(param_1,&unk_c3470);
   *(undefined *)(param_1 + iVar1) = 0;
   iVar1 = 0;
   do {
@@ -4000,11 +4000,11 @@ highlights_screen(undefined4 param_1,int *unaff_EDX,undefined4 unaff_EBX,int una
   make_path(acStack_10c,unaff_EBX,&unk_c8113,&aHI_c812d);
   iVar1 = _dos_findfirst(acStack_10c,0,auStack_6c);
   if (iVar1 == 0) {
-    local_174[0] = sub_7fc5c(auStack_4e);
+    local_174[0] = team_abbrev_index(auStack_4e);
     apuStack_1dc[0] = (&off_c54a9)[local_174[0]];
     iVar3 = 1;
     while (iVar1 = _dos_findnext(auStack_6c), iVar1 == 0) {
-      iVar1 = sub_7fc5c(auStack_4e);
+      iVar1 = team_abbrev_index(auStack_4e);
       local_174[iVar3] = iVar1;
       iVar3 = iVar3 + 1;
     }
@@ -4014,11 +4014,11 @@ highlights_screen(undefined4 param_1,int *unaff_EDX,undefined4 unaff_EBX,int una
     message_dialog(0xffffffff,0xffffffff,&off_d1f4b,1,0,0,local_1c,local_20,0xffffffff);
   }
   else {
-    sub_9244c(local_174,iVar3,4,sub_7fc31);
+    qsort(local_174,iVar3,4,cmp_ints);
     for (iStack_18 = 0; iStack_18 < iVar3; iStack_18 = iStack_18 + 1) {
       apuStack_1dc[iStack_18] = (&off_c54a9)[local_174[iStack_18]];
     }
-    iVar1 = sub_303fb(apuStack_1dc,iVar3,aSelectATeam,2,0,auStack_40);
+    iVar1 = listbox_dialog(apuStack_1dc,iVar3,aSelectATeam,2,0,auStack_40);
     if (-1 < iVar1) {
       make_path(param_1,0,(&team_abbrev)[local_174[iVar1]],&aHI_c812d);
       make_path(acStack_10c,unaff_EBX,param_1,0);
@@ -4044,7 +4044,7 @@ highlights_screen(undefined4 param_1,int *unaff_EDX,undefined4 unaff_EBX,int una
           iStack_18 = iStack_18 + 1;
         }
         if (iVar1 == 0) {
-          iVar2 = sub_303fb(iStack_14,iVar3,aSelectAHilight,2,unaff_ECX,*param_5);
+          iVar2 = listbox_dialog(iStack_14,iVar3,aSelectAHilight,2,unaff_ECX,*param_5);
           *unaff_EDX = iVar2;
           if (iVar2 < 0) {
             iVar1 = -1;
@@ -4065,10 +4065,10 @@ highlights_screen(undefined4 param_1,int *unaff_EDX,undefined4 unaff_EBX,int una
 
 
 // ================================================================================================
-// sub_80075 @ 0x80075 [__watcall]
+// league_highlights_flow @ 0x80075 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_80075(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall league_highlights_flow(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
@@ -4158,13 +4158,13 @@ void __watcall highlights_play(void)
   getpalette(0,0x100,auStack_318);
   fade_palette(1,auStack_318,0x10);
   setfont(font_current_default);
-  sub_1bab1();
+  free_sprite_banks();
   freemem(rinkend_bank);
   freemem(scoreboard_bank);
   freemem(numshp_bank);
   freemem(dword_ed700);
-  sub_7dec8();
-  sub_33727();
+  free_music_banks();
+  free_hilight_buffers();
   event_queue_reset();
   return;
 }
@@ -4208,11 +4208,11 @@ void __watcall settings_toggles(void)
 
 
 // ================================================================================================
-// sub_8050f @ 0x8050f [__watcall]
+// draw_settings_title @ 0x8050f [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_8050f(int param_1,int unaff_EDX,undefined4 unaff_EBX,uint unaff_ECX,undefined4 param_5)
+draw_settings_title(int param_1,int unaff_EDX,undefined4 unaff_EBX,uint unaff_ECX,undefined4 param_5)
 
 {
   char *pcVar1;
@@ -4252,10 +4252,10 @@ LAB_000805b0:
 
 
 // ================================================================================================
-// sub_805c4 @ 0x805c4 [__watcall]
+// set_pause_menu_labels @ 0x805c4 [__watcall]
 // ================================================================================================
 
-void __watcall sub_805c4(uint param_1)
+void __watcall set_pause_menu_labels(uint param_1)
 
 {
   __CHK(0x10);
@@ -4285,10 +4285,10 @@ void __watcall sub_805c4(uint param_1)
 
 
 // ================================================================================================
-// sub_80682 @ 0x80682 [__watcall]
+// draw_bevel_box_c @ 0x80682 [__watcall]
 // ================================================================================================
 
-void __watcall sub_80682(int param_1,int unaff_EDX,int unaff_EBX,int unaff_ECX,int param_5)
+void __watcall draw_bevel_box_c(int param_1,int unaff_EDX,int unaff_EBX,int unaff_ECX,int param_5)
 
 {
   int iVar1;
@@ -4297,10 +4297,10 @@ void __watcall sub_80682(int param_1,int unaff_EDX,int unaff_EBX,int unaff_ECX,i
   
   __CHK(0x38);
   fillrect(param_1,unaff_EDX,(unaff_EBX - param_1) + 1,(unaff_ECX - unaff_EDX) + 1,0x70);
-  sub_b4fac(param_1,unaff_EDX,unaff_EBX,unaff_EDX,0x77);
-  sub_b4fac(param_1,unaff_EDX,param_1,unaff_ECX,0x77);
-  sub_b4fac(unaff_EBX,unaff_EDX,unaff_EBX,unaff_ECX,0x62);
-  sub_b4fac(param_1,unaff_ECX,unaff_EBX,unaff_ECX,0x62);
+  drawline(param_1,unaff_EDX,unaff_EBX,unaff_EDX,0x77);
+  drawline(param_1,unaff_EDX,param_1,unaff_ECX,0x77);
+  drawline(unaff_EBX,unaff_EDX,unaff_EBX,unaff_ECX,0x62);
+  drawline(param_1,unaff_ECX,unaff_EBX,unaff_ECX,0x62);
   if (param_5 != 0) {
     iVar1 = unaff_EDX + 2;
     iVar2 = param_1 + 2;
@@ -4499,12 +4499,12 @@ LAB_00080b41:
   } while ((int)uStack_1c < 0x180);
   wait_sprite_fade();
   uVar5 = locateshape(uVar2,&aRoom);
-  sub_912c8(uVar5);
+  drawshape2_remap_home(uVar5);
   freemem(uVar2);
-  sub_80682(0,0x1a7,0x27f,0x1e0,1);
+  draw_bevel_box_c(0,0x1a7,0x27f,0x1e0,1);
   uStack_1c = 2;
   do {
-    sub_80682((&unk_d227c)[uStack_1c * 4],(&unk_d2280)[uStack_1c * 4],(&unk_d2284)[uStack_1c * 4],
+    draw_bevel_box_c((&unk_d227c)[uStack_1c * 4],(&unk_d2280)[uStack_1c * 4],(&unk_d2284)[uStack_1c * 4],
               (&unk_d2288)[uStack_1c * 4],0);
     uStack_1c = uStack_1c + 1;
   } while ((int)uStack_1c < 8);
@@ -4534,7 +4534,7 @@ LAB_00080b41:
     uStack_1c = uStack_1c + 1;
   } while ((int)uStack_1c < 0x300);
   uVar5 = locateshape(uVar2,&a0000_c35dd);
-  sub_912c8(uVar5);
+  drawshape2_remap_home(uVar5);
   freemem(uVar2);
   sprintf(acStack_2c,aJERSV,(&off_d21c0)[*(int *)(&unk_d20e0 + _away_team_id * 4)]);
   uStack_1c = _away_team_id * 2 + 0xa4;
@@ -4557,7 +4557,7 @@ LAB_00080b41:
     uStack_1c = uStack_1c + 1;
   } while ((int)uStack_1c < 0x240);
   uVar5 = locateshape(uVar2,&a0000_c35dd);
-  sub_912c8(uVar5);
+  drawshape2_remap_home(uVar5);
   freemem(uVar2);
   set_text_colors(0x77,0x62);
   uStack_1c = 2;
@@ -4655,9 +4655,9 @@ LAB_000811f6:
   print_text_at(((iVar6 >> 1) - (iVar3 >> 1)) + 2,iVar8,puVar7);
   iVar3 = textwidth((&off_c54a9)[user2_team._2_2_]);
   uStack_1c = 0x12d - iVar3;
-  sub_17636(uStack_1c,0x2c,(&off_c54a9)[user2_team._2_2_]);
-  sub_17636(0x13a,0x2c,&aVs);
-  sub_17636(0x154,0x2c,(&off_c54a9)[_away_team_id]);
+  print_outlined(uStack_1c,0x2c,(&off_c54a9)[user2_team._2_2_]);
+  print_outlined(0x13a,0x2c,&aVs);
+  print_outlined(0x154,0x2c,(&off_c54a9)[_away_team_id]);
   print_text_at(dword_d22dc + 0x12,dword_d22e0 + 3,aAccept);
   print_text_at(dword_d22ec + 0x12,dword_d22f0 + 3,aCancel_c35f3);
   iVar6 = dword_d22a8 + 5;
@@ -4679,7 +4679,7 @@ LAB_000811f6:
     iVar3 = textwidth(aExhibitionGame);
     pcVar4 = aExhibitionGame;
   }
-  sub_17636((0x280 - iVar3) / 2,0x12,pcVar4);
+  print_outlined((0x280 - iVar3) / 2,0x12,pcVar4);
   setfont(font_main);
   if ((sound_enabled != '\0') && (dword_c721d == 0)) {
     puVar7 = (undefined *)0x0;
@@ -4719,10 +4719,10 @@ LAB_000811f6:
 
 
 // ================================================================================================
-// sub_81520 @ 0x81520 [__watcall]
+// locker_room_button_at @ 0x81520 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_81520(int param_1,int unaff_EDX,int *unaff_EBX)
+undefined4 __watcall locker_room_button_at(int param_1,int unaff_EDX,int *unaff_EBX)
 
 {
   int iVar1;
@@ -4817,7 +4817,7 @@ void __watcall draw_jerseys(int param_1,int unaff_EDX,int unaff_EBX,int unaff_EC
   }
   setpalette(uVar6,0x40,acStack_12c);
   uVar6 = locateshape(uVar2,&a0000_c35dd);
-  sub_912c8(uVar6);
+  drawshape2_remap_home(uVar6);
   freemem(uVar2);
   settextpos(0x77,0xff);
   set_text_colors(0x77,0x62);
@@ -4826,7 +4826,7 @@ void __watcall draw_jerseys(int param_1,int unaff_EDX,int unaff_EBX,int unaff_EC
     setfont(font_kaufm);
     puVar4 = (&off_d2230)[*(int *)(&unk_d223c + unaff_EBX * 4)];
     iVar3 = textwidth(puVar4);
-    sub_17636((0x280 - iVar3) / 2,0x12,puVar4);
+    print_outlined((0x280 - iVar3) / 2,0x12,puVar4);
     setfont(font_main);
   }
   if (dword_c53fb == 0) {
@@ -4855,7 +4855,7 @@ void __watcall draw_jerseys(int param_1,int unaff_EDX,int unaff_EBX,int unaff_EC
     local_18 = dword_d22cc + dword_d22d4 >> 1;
     iVar3 = textwidth(puVar4);
     print_text_at((local_18 - (iVar3 >> 1)) + 2,local_1c,puVar4);
-    sub_17636(0x154,0x2c,(&off_c54a9)[*(int *)(&unk_d2150 + param_5 * 4)]);
+    print_outlined(0x154,0x2c,(&off_c54a9)[*(int *)(&unk_d2150 + param_5 * 4)]);
     iVar3 = (unaff_ECX + 0x1b) % 0x1c;
     if ((0x19 < iVar3) && (iVar3 == param_5)) {
       iVar3 = (param_5 + 0x1b) % 0x1c;
@@ -4903,7 +4903,7 @@ void __watcall draw_jerseys(int param_1,int unaff_EDX,int unaff_EBX,int unaff_EC
     local_18 = dword_d22cc + dword_d22d4 >> 1;
     iVar3 = textwidth(puVar4);
     print_text_at((local_18 - (iVar3 >> 1)) + 2,local_1c,puVar4);
-    sub_17636(0x154,0x2c,(&off_c54a9)[*(int *)(&unk_d2150 + param_5 * 4)]);
+    print_outlined(0x154,0x2c,(&off_c54a9)[*(int *)(&unk_d2150 + param_5 * 4)]);
     iVar3 = (unaff_ECX + 0x19) % 0x1a;
     if (iVar3 == param_5) {
       iVar3 = (param_5 + 0x19) % 0x1a;
@@ -4925,7 +4925,7 @@ void __watcall draw_jerseys(int param_1,int unaff_EDX,int unaff_EBX,int unaff_EC
     iVar3 = textwidth((&off_c54a9)[*(int *)(&unk_d2150 + unaff_ECX * 4)]);
     puVar4 = (&off_c54a9)[*(int *)(&unk_d2150 + unaff_ECX * 4)];
   }
-  sub_17636(0x12d - iVar3,0x2c,puVar4);
+  print_outlined(0x12d - iVar3,0x2c,puVar4);
   return;
 }
 
@@ -5008,7 +5008,7 @@ LAB_00081d69:
   if (((uVar2 & 2) == 0) && ((uVar2 & 4) == 0)) goto code_r0x00081db3;
   if ((uVar2 & 2) != 0) {
     drawshape(local_20,local_24 + -4,local_28);
-    iVar3 = sub_81520(local_2c,local_30,&local_38);
+    iVar3 = locker_room_button_at(local_2c,local_30,&local_38);
     if (iVar3 == 0) goto switchD_00081ec1_caseD_8;
     switch(local_38) {
     case 0:
@@ -5194,7 +5194,7 @@ switchD_00081ec1_caseD_6:
     }
     dword_c5407 = iVar5 >> 0x10;
   }
-  sub_8b92f();
+  reload_mode_settings();
   if ((sound_enabled != '\0') && (dword_c721d != 0)) {
     sound_fade(dword_d2431,3,100);
   }
@@ -5214,42 +5214,42 @@ switchD_00081ec1_caseD_6:
 
 
 // ================================================================================================
-// sub_8245a @ 0x8245a [__watcall]
+// sound_card_box_draw_on @ 0x8245a [__watcall]
 // ================================================================================================
 
-void __watcall sub_8245a(int *param_1)
+void __watcall sound_card_box_draw_on(int *param_1)
 
 {
   __CHK(0x28);
-  sub_b4fac(*param_1 + 10,param_1[3] + 0x12,*param_1 + 10,param_1[1] + 0x13,0xf8);
-  sub_b4fac(*param_1 + 10,param_1[1] + 0x13,param_1[2] + 9,param_1[1] + 0x13,0xf8);
-  sub_b4fac(param_1[2] + 10,param_1[1] + 0x14,param_1[2] + 10,param_1[3] + 0x13,0xfa);
-  sub_b4fac(param_1[2] + 10,param_1[3] + 0x13,*param_1 + 0xb,param_1[3] + 0x13,0xfa);
+  drawline(*param_1 + 10,param_1[3] + 0x12,*param_1 + 10,param_1[1] + 0x13,0xf8);
+  drawline(*param_1 + 10,param_1[1] + 0x13,param_1[2] + 9,param_1[1] + 0x13,0xf8);
+  drawline(param_1[2] + 10,param_1[1] + 0x14,param_1[2] + 10,param_1[3] + 0x13,0xfa);
+  drawline(param_1[2] + 10,param_1[3] + 0x13,*param_1 + 0xb,param_1[3] + 0x13,0xfa);
   return;
 }
 
 
 // ================================================================================================
-// sub_824f8 @ 0x824f8 [__watcall]
+// sound_card_box_draw_off @ 0x824f8 [__watcall]
 // ================================================================================================
 
-void __watcall sub_824f8(int *param_1)
+void __watcall sound_card_box_draw_off(int *param_1)
 
 {
   __CHK(0x28);
-  sub_b4fac(*param_1 + 10,param_1[3] + 0x12,*param_1 + 10,param_1[1] + 0x13,0xfa);
-  sub_b4fac(*param_1 + 10,param_1[1] + 0x13,param_1[2] + 9,param_1[1] + 0x13,0xfa);
-  sub_b4fac(param_1[2] + 10,param_1[1] + 0x14,param_1[2] + 10,param_1[3] + 0x13,0xf8);
-  sub_b4fac(param_1[2] + 10,param_1[3] + 0x13,*param_1 + 0xb,param_1[3] + 0x13,0xf8);
+  drawline(*param_1 + 10,param_1[3] + 0x12,*param_1 + 10,param_1[1] + 0x13,0xfa);
+  drawline(*param_1 + 10,param_1[1] + 0x13,param_1[2] + 9,param_1[1] + 0x13,0xfa);
+  drawline(param_1[2] + 10,param_1[1] + 0x14,param_1[2] + 10,param_1[3] + 0x13,0xf8);
+  drawline(param_1[2] + 10,param_1[3] + 0x13,*param_1 + 0xb,param_1[3] + 0x13,0xf8);
   return;
 }
 
 
 // ================================================================================================
-// sub_82579 @ 0x82579 [__watcall]
+// menu_sound_settings @ 0x82579 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_82579(void)
+undefined4 __watcall menu_sound_settings(void)
 
 {
   undefined4 *puVar1;
@@ -5278,7 +5278,7 @@ undefined4 __watcall sub_82579(void)
   *(undefined2 *)(puVar1 + 1) = 0x80;
   *(undefined2 *)((int)puVar1 + 6) = 0xbe;
   grabshape(puVar1,10,0x13);
-  sub_8261c();
+  sound_settings_load_shapes();
   sound_card_menu_a();
   sound_setup_screen();
   drawshape(puVar1,10,0x13);
@@ -5288,10 +5288,10 @@ undefined4 __watcall sub_82579(void)
 
 
 // ================================================================================================
-// sub_8261c @ 0x8261c [__watcall]
+// sound_settings_load_shapes @ 0x8261c [__watcall]
 // ================================================================================================
 
-void __watcall sub_8261c(void)
+void __watcall sound_settings_load_shapes(void)
 
 {
   undefined4 uVar1;
@@ -5330,11 +5330,11 @@ void __watcall sound_card_menu_a(void)
   iVar1 = 0;
   do {
     if ((dword_ed360 & 1 << ((byte)iVar1 & 0x1f)) == 0) {
-      sub_824f8(&dword_d23a3 + iVar1 * 4);
+      sound_card_box_draw_off(&dword_d23a3 + iVar1 * 4);
       iVar1 = extraout_EDX_00;
     }
     else {
-      sub_8245a();
+      sound_card_box_draw_on();
       iVar1 = extraout_EDX;
     }
     iVar1 = iVar1 + 1;
@@ -5360,10 +5360,10 @@ void __watcall sound_card_menu_a(void)
 
 
 // ================================================================================================
-// sub_827b3 @ 0x827b3 [__watcall]
+// sound_card_slot_at @ 0x827b3 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_827b3(int param_1,int unaff_EDX,int *unaff_EBX)
+undefined4 __watcall sound_card_slot_at(int param_1,int unaff_EDX,int *unaff_EBX)
 
 {
   int iVar1;
@@ -5399,11 +5399,11 @@ void __watcall sound_card_menu_b(void)
   iVar1 = 0;
   do {
     if ((dword_ed360 & 1 << ((byte)iVar1 & 0x1f)) == 0) {
-      sub_824f8(&dword_d23a3 + iVar1 * 4);
+      sound_card_box_draw_off(&dword_d23a3 + iVar1 * 4);
       iVar1 = extraout_EDX_00;
     }
     else {
-      sub_8245a();
+      sound_card_box_draw_on();
       iVar1 = extraout_EDX;
     }
     iVar1 = iVar1 + 1;
@@ -5500,7 +5500,7 @@ LAB_00082d4e:
     return (ulonglong)unaff_EDX << 0x20;
   }
   drawshape(puVar1,iStack_1c + -4,local_20);
-  iVar2 = sub_827b3(local_24,local_28,&local_30);
+  iVar2 = sound_card_slot_at(local_24,local_28,&local_30);
   if (iVar2 != 0) {
     local_30 = 1 << ((byte)local_30 & 0x1f);
     if (((dword_ed360 & local_30) == 0) && ((dword_c541b & local_30) != 0)) {
@@ -5523,7 +5523,7 @@ LAB_00082b30:
           if (bVar8) goto LAB_00082b55;
         }
         else if (local_30 < 0x41) {
-          sub_8245a(&unk_d2403);
+          sound_card_box_draw_on(&unk_d2403);
           set_dialog_colors(0xf9,0xfa,0xf8,0xfa,0xf7);
           if ((sound_enabled != '\0') && (dword_c721d != 0)) {
             sound_fade(dword_d2431,3,100);
@@ -5569,10 +5569,10 @@ LAB_00082b30:
               playsample(dword_c721d,dword_d2431,3,0x4c);
             }
           }
-          sub_824f8(&unk_d2403);
+          sound_card_box_draw_off(&unk_d2403);
         }
         else if (local_30 == 0x80) {
-          sub_8245a(&aE_d2413);
+          sound_card_box_draw_on(&aE_d2413);
           goto LAB_00082d45;
         }
       }

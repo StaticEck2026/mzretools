@@ -58,7 +58,7 @@ def main():
     t['faceoff_bonus'] = list(struct.unpack('<7b', le.read(0xcca95, 7)))
     # stick position per frame (stick_offsets_lookup): frames 0x196..0x219 (and 0x3ce..0x44f - 0x1b4)
     t['stick_offsets'] = [list(struct.unpack('<2b', le.read(0xcc7a4 + i * 2, 2))) for i in range(0x219 - 0x196 + 1)]
-    # one timer stick position per facing (sub_50b55)
+    # one timer stick position per facing (one_timer_step)
     t['onetimer_offsets'] = [list(struct.unpack('<2b', le.read(0xccbba + i * 2, 2))) for i in range(8)]
     # ai_puck_carrier: skating targets (x, y) for the attacking team, index want_dir + 6 (0..9) or
     # line_slot - 1 with the goalie pulled

@@ -231,7 +231,7 @@ func start_period(p: int, switch_ends: bool = true) -> void:
 	elif switch_ends:
 		ends_switched = not ends_switched
 	period = p
-	# sub_5ba07: the clock; a random time of the late game announcement (3rd period)
+	# period_clock_init: the clock; a random time of the late game announcement (3rd period)
 	clock_seconds = period_length
 	clock_sub = 0
 	announce_time = clock_seconds - random(clock_seconds >> 1)
@@ -274,7 +274,7 @@ func start_period(p: int, switch_ends: bool = true) -> void:
 			if e.roster_idx >= 0 and e.line_slot >= 0 and team.entity_of[e.roster_idx] == -1:
 				team.entity_of[e.roster_idx] = -2
 			e.line_slot = -1
-		# sub_5e0b0: the current line is dressed at once (dress_line), the players wait at the
+		# dress_current_lines: the current line is dressed at once (dress_line), the players wait at the
 		# bench (INIT_PERIOD) until the faceoff is set up
 		Lines.apply_line_change(self, team)
 		Lines.dress_line(self, team)
@@ -1011,7 +1011,7 @@ func switch_to_nearest(e: Entity, player: int) -> void:
 			best = p.slot
 	var cur := user1_slot if player == 0 else user2_slot
 	if cur == best:
-		# nobody else: the current player lunges for the puck instead (sub_532a2)
+		# nobody else: the current player lunges for the puck instead (lunge_for_puck)
 		e.flags |= Entity.F_BUSY
 		Anim.set_animation(e, 0x589)
 		return
@@ -1148,7 +1148,7 @@ func bounce_off_boards(e: Entity, a: int, b: int) -> void:
 	e.x = clampi(e.xi, -w, w) << 16 | (e.x & 0xffff)
 	e.y = clampi(e.yi, -h, h) << 16 | (e.y & 0xffff)
 
-## collide_net (0x584aa): the puck against a net; players are pushed around it (sub_53ce5)
+## collide_net (0x584aa): the puck against a net; players are pushed around it (collide_player_net)
 func collide_net(e: Entity, net: Entity, px: int, py: int, hw: int, hh: int) -> void:
 	if e.zi > 0xd:
 		return      # over the net
@@ -1214,7 +1214,7 @@ func collide_net(e: Entity, net: Entity, px: int, py: int, hw: int, hh: int) -> 
 	var b := 0x100 if (px - (e.prev_x >> 16)) < 0 else -0x100
 	bounce_off_boards(e, a, b)
 
-## sub_53ce5: a skater or the referee bumps into the net frame
+## collide_player_net: a skater or the referee bumps into the net frame
 func collide_player_net(e: Entity, net: Entity, px: int, py: int) -> void:
 	if e.slot >= 12 and e.slot != Entity.Slot.REFEREE:
 		return
@@ -1388,7 +1388,7 @@ static func _div_trunc(a: int, b: int) -> int:
 	var q := absi(a) / b
 	return -q if a < 0 else q
 
-## sub_93470: integer square root
+## isqrt32: integer square root
 static func isqrt(v: int) -> int:
 	if v <= 0:
 		return 0

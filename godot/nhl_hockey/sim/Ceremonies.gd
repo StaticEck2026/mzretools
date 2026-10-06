@@ -603,7 +603,7 @@ static func compute_three_stars(sim: Sim) -> void:
 			return
 		k += 1
 
-## sub_48789: adds a star unless he already is one; returns 1 when added
+## three_stars_add_unique: adds a star unless he already is one; returns 1 when added
 static func _add_star(sim: Sim, count: int, team: int, roster: int) -> int:
 	for i in count:
 		var s: Array = sim.stars[i]
@@ -649,7 +649,7 @@ static func compare_player_stats(sim: Sim, a: int, b: int) -> int:
 		return _rating_sum(sim, tb, rb) - _rating_sum(sim, ta, ra)
 	return sb[Team.ST_PLUS_MINUS] - sa[Team.ST_PLUS_MINUS]
 
-## sub_487d9: the player is on the ice at the end (not as the extra attacker)
+## player_entity_dressed: the player is on the ice at the end (not as the extra attacker)
 static func _on_ice(sim: Sim, t: int, r: int) -> bool:
 	if sim.teams[t].entity_of[r] < -1:
 		return false
@@ -780,7 +780,7 @@ static func three_stars(sim: Sim, e: Entity) -> void:
 			return
 	_steer(sim, e)
 
-## sub_492f9: re-aims every 12 steps at the target (ahead of the own momentum); stops near it and
+## three_stars_skate_to_spot: re-aims every 12 steps at the target (ahead of the own momentum); stops near it and
 ## turns to face it
 static func _steer(sim: Sim, e: Entity) -> void:
 	e.dir_timer -= 1
@@ -799,7 +799,7 @@ static func _steer(sim: Sim, e: Entity) -> void:
 				e.facing = (e.facing + (((diff & 7) & 4) >> 1) - 1) & 7
 	_skate(sim, e, e.want_dir)
 
-## sub_49260: skate in a direction (one facing step per call), brake on 9, glide otherwise
+## three_stars_skate_dir: skate in a direction (one facing step per call), brake on 9, glide otherwise
 static func _skate(sim: Sim, e: Entity, dir: int) -> void:
 	if e.line_slot == 0:
 		sim.goalie_move(e, dir)

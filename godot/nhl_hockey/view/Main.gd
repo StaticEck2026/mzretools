@@ -58,7 +58,7 @@ var panel_view: PanelView
 var vcr: VcrView
 var pause_menu: PauseMenu
 var box_sprites: Array[Sprite2D] = []   # the players sitting in the penalty boxes (frame 0x17e)
-var end_boards: Sprite2D              # TRINKND.PPV over the sprites near the bottom end (sub_11136)
+var end_boards: Sprite2D              # TRINKND.PPV over the sprites near the bottom end (draw_rink_end)
 var effect_frames: Dictionary = {}    # F000_149.PPV "0000".."0104" (load_effect_frames)
 var crowd_sprites: Array[Sprite2D] = []  # draw_nets_and_effects: 18 figures, per bench base / figure / overlay
 var tick_acc := 0.0                   # 100 Hz timer ticks of the replay speed
@@ -343,7 +343,7 @@ func _stop_sounds() -> void:
 	sim.sfx_queue.clear()
 	if announcer != null:
 		announcer.stop()
-	# the pause screen (sub_10f6d) and the replay stop the organ (stop_crowd_loop)
+	# the pause screen (leave_match_video) and the replay stop the organ (stop_crowd_loop)
 	sim.music_queue.clear()
 	if music != null:
 		music.stop_all()
@@ -607,7 +607,7 @@ func _remap_team(slot: int) -> int:
 
 ## draw_sprites: the frames under the controlled players (389 / 390) and the puck carrier (391);
 ## a controlled player outside the view gets an arrow at the edge instead (arrow_frames by the
-## direction of sub_b340b, mirrored on the left side)
+## direction of joystick_direction, mirrored on the left side)
 const ARROW_DIR := [0, 1, 5, 0, 3, 2, 4, 3, 7, 8, 6, 7, 0, 1, 5, 0]    # unk_d41b7: edge flags -> direction
 
 func _update_markers(scene: Dictionary) -> void:
@@ -747,7 +747,7 @@ func _fonts() -> Dictionary:
 func _load_assets() -> void:
 	if not GameFiles.available():
 		return
-	# rosters, lines and ratings (sub_1c26c / sub_1c3f6)
+	# rosters, lines and ratings (db_open_files / db_load_team_roster)
 	var db := Database.open(GameFiles.read_raw("teams.db"), GameFiles.read_raw("key.db"), GameFiles.read_raw("att.db"))
 	if db != null:
 		home_team = clampi(home_team, 0, db.team_count() - 1)

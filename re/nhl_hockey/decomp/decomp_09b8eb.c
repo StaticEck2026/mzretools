@@ -3,10 +3,10 @@
 #include "prototypes.h"
 
 // ================================================================================================
-// sub_9b8eb @ 0x9b8eb [__watcall]
+// __fill_buffer @ 0x9b8eb [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_9b8eb(undefined4 *param_1,undefined4 unaff_EDX)
+undefined8 __watcall __fill_buffer(undefined4 *param_1,undefined4 unaff_EDX)
 
 {
   uint uVar1;
@@ -14,17 +14,17 @@ undefined8 __watcall sub_9b8eb(undefined4 *param_1,undefined4 unaff_EDX)
   undefined4 uVar3;
   
   if (param_1[2] == 0) {
-    sub_9b353();
+    __ioalloc();
   }
   if (((*(byte *)((int)param_1 + 0xd) & 0x20) != 0) && ((*(byte *)((int)param_1 + 0xd) & 6) != 0)) {
-    sub_a2e85(0x2000);
+    __flushall(0x2000);
   }
   uVar1 = param_1[3];
   *param_1 = param_1[2];
   *(byte *)(param_1 + 3) = *(byte *)(param_1 + 3) & 0xfb;
   if (((uVar1 & 0x2400) == 0x2400) && (param_1[4] == 0)) {
     param_1[1] = 0;
-    iVar2 = sub_a2eb4();
+    iVar2 = __getche_raw();
     if (iVar2 != -1) {
       *(char *)*param_1 = (char)iVar2;
       param_1[1] = 1;
@@ -37,7 +37,7 @@ undefined8 __watcall sub_9b8eb(undefined4 *param_1,undefined4 unaff_EDX)
     else {
       uVar3 = 1;
     }
-    uVar3 = sub_a2ed1(param_1[4],*param_1,uVar3);
+    uVar3 = __qread(param_1[4],*param_1,uVar3);
     param_1[1] = uVar3;
   }
   if ((int)param_1[1] < 1) {
@@ -54,10 +54,10 @@ undefined8 __watcall sub_9b8eb(undefined4 *param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_9b996 @ 0x9b996 [__watcall]
+// ungetc @ 0x9b996 [__watcall]
 // ================================================================================================
 
-uint __watcall sub_9b996(uint param_1,int *unaff_EDX)
+uint __watcall ungetc(uint param_1,int *unaff_EDX)
 
 {
   int iVar1;
@@ -69,7 +69,7 @@ uint __watcall sub_9b996(uint param_1,int *unaff_EDX)
   }
   if (((*(byte *)((int)unaff_EDX + 0xd) & 0x10) == 0) && ((*(byte *)(unaff_EDX + 3) & 1) != 0)) {
     if (unaff_EDX[2] == 0) {
-      sub_9b353(unaff_EDX);
+      __ioalloc(unaff_EDX);
       unaff_EDX = extraout_EDX;
     }
     if (unaff_EDX[1] == 0) {
@@ -101,10 +101,10 @@ LAB_0009b9aa:
 
 
 // ================================================================================================
-// sub_9ba18 @ 0x9ba18 [__cdecl]
+// __scnf @ 0x9ba18 [__cdecl]
 // ================================================================================================
 
-int sub_9ba18(void)
+int __scnf(void)
 
 {
   byte *pbVar1;
@@ -127,7 +127,7 @@ int sub_9ba18(void)
     if (uVar6 == 0) goto LAB_0009bc1a;
     if (((&unk_c4b6c)[(byte)(*local_18 + 1)] & 2) == 0) {
       if (uVar6 == 0x25) {
-        local_18 = (byte *)sub_9bc3a(pbVar1);
+        local_18 = (byte *)__scnf_getspec(pbVar1);
         bVar2 = *local_18;
         if (bVar2 != 0) {
           local_18 = local_18 + 1;
@@ -144,11 +144,11 @@ int sub_9ba18(void)
             if (bVar2 < 0x59) goto LAB_0009bb5e;
             if (bVar2 < 99) {
               if (bVar2 != 0x5b) goto LAB_0009bbe6;
-              iVar4 = sub_9bf5d();
+              iVar4 = __scan_charlist();
             }
             else {
               if (99 < bVar2) goto LAB_0009bb5e;
-              iVar4 = sub_9bd48();
+              iVar4 = __scan_char();
             }
 LAB_0009bbb9:
             if (iVar4 < 1) goto LAB_0009bc1a;
@@ -160,7 +160,7 @@ LAB_0009bbb9:
         else {
           if (bVar2 < 0x68) {
 LAB_0009bb8d:
-            iVar4 = sub_9c043();
+            iVar4 = __scan_float();
             goto LAB_0009bbb9;
           }
           if (bVar2 < 0x70) {
@@ -170,17 +170,17 @@ LAB_0009bb8d:
             else {
               if (0x6e < bVar2) {
 LAB_0009bb5e:
-                iVar4 = sub_9c321();
+                iVar4 = __scan_int();
                 goto LAB_0009bbb9;
               }
-              sub_9bebc();
+              __report_scan();
             }
           }
           else {
             if (bVar2 < 0x71) goto LAB_0009bb5e;
             if (bVar2 < 0x75) {
               if (bVar2 == 0x73) {
-                iVar4 = sub_9bdce();
+                iVar4 = __scan_string();
                 goto LAB_0009bbb9;
               }
             }
@@ -201,13 +201,13 @@ LAB_0009ba7b:
       }
     }
     else {
-      sub_9bd13();
+      __scan_white();
       local_18 = pbVar1;
     }
 LAB_0009bbe6:
   } while ((*(byte *)(in_EAX + 4) & 2) == 0);
-  if ((*local_18 == 0x25) && (pcVar5 = (char *)sub_9bc3a(local_18 + 1), *pcVar5 == 'n')) {
-    sub_9bebc();
+  if ((*local_18 == 0x25) && (pcVar5 = (char *)__scnf_getspec(local_18 + 1), *pcVar5 == 'n')) {
+    __report_scan();
   }
 LAB_0009bc1a:
   if ((local_14 == 0) && ((*(byte *)(in_EAX + 4) & 2) != 0)) {
@@ -218,10 +218,10 @@ LAB_0009bc1a:
 
 
 // ================================================================================================
-// sub_9bc3a @ 0x9bc3a [__watcall]
+// __scnf_getspec @ 0x9bc3a [__watcall]
 // ================================================================================================
 
-byte * __watcall sub_9bc3a(byte *param_1,int unaff_EDX)
+byte * __watcall __scnf_getspec(byte *param_1,int unaff_EDX)
 
 {
   byte bVar1;
@@ -275,10 +275,10 @@ byte * __watcall sub_9bc3a(byte *param_1,int unaff_EDX)
 
 
 // ================================================================================================
-// sub_9bd13 @ 0x9bd13 [__watcall]
+// __scan_white @ 0x9bd13 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_9bd13(undefined4 *param_1,undefined4 unaff_EDX)
+undefined8 __watcall __scan_white(undefined4 *param_1,undefined4 unaff_EDX)
 
 {
   char cVar1;
@@ -299,10 +299,10 @@ undefined8 __watcall sub_9bd13(undefined4 *param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_9bd48 @ 0x9bd48 [__watcall]
+// __scan_char @ 0x9bd48 [__watcall]
 // ================================================================================================
 
-int __watcall sub_9bd48(undefined4 *param_1,int *unaff_EDX)
+int __watcall __scan_char(undefined4 *param_1,int *unaff_EDX)
 
 {
   undefined2 uVar1;
@@ -351,10 +351,10 @@ int __watcall sub_9bd48(undefined4 *param_1,int *unaff_EDX)
 
 
 // ================================================================================================
-// sub_9bdce @ 0x9bdce [__watcall]
+// __scan_string @ 0x9bdce [__watcall]
 // ================================================================================================
 
-int __watcall sub_9bdce(undefined4 *param_1,int *unaff_EDX)
+int __watcall __scan_string(undefined4 *param_1,int *unaff_EDX)
 
 {
   byte bVar1;
@@ -408,7 +408,7 @@ int __watcall sub_9bdce(undefined4 *param_1,int *unaff_EDX)
           }
           puVar4 = (undefined2 *)((int)puVar4 + (uint)local_18);
         }
-        iVar3 = sub_9c540(param_1);
+        iVar3 = __cgetw(param_1);
         if (iVar3 == -1) goto LAB_0009be96;
       } while (((&unk_c4b6c)[(byte)((char)iVar3 + 1)] & 2) == 0);
     }
@@ -432,10 +432,10 @@ LAB_0009be96:
 
 
 // ================================================================================================
-// sub_9bebc @ 0x9bebc [__watcall]
+// __report_scan @ 0x9bebc [__watcall]
 // ================================================================================================
 
-void __watcall sub_9bebc(int param_1,int *unaff_EDX,undefined4 unaff_EBX)
+void __watcall __report_scan(int param_1,int *unaff_EDX,undefined4 unaff_EBX)
 
 {
   byte bVar1;
@@ -472,10 +472,10 @@ void __watcall sub_9bebc(int param_1,int *unaff_EDX,undefined4 unaff_EBX)
 
 
 // ================================================================================================
-// sub_9bf1a @ 0x9bf1a [__watcall]
+// __makelist @ 0x9bf1a [__watcall]
 // ================================================================================================
 
-byte * __watcall sub_9bf1a(byte *param_1,void *unaff_EDX)
+byte * __watcall __makelist(byte *param_1,void *unaff_EDX)
 
 {
   byte *pbVar1;
@@ -500,10 +500,10 @@ byte * __watcall sub_9bf1a(byte *param_1,void *unaff_EDX)
 
 
 // ================================================================================================
-// sub_9bf5d @ 0x9bf5d [__watcall]
+// __scan_charlist @ 0x9bf5d [__watcall]
 // ================================================================================================
 
-int __watcall sub_9bf5d(undefined4 *param_1,int *unaff_EDX,undefined4 *unaff_EBX)
+int __watcall __scan_charlist(undefined4 *param_1,int *unaff_EDX,undefined4 *unaff_EBX)
 
 {
   byte bVar1;
@@ -524,7 +524,7 @@ int __watcall sub_9bf5d(undefined4 *param_1,int *unaff_EDX,undefined4 *unaff_EBX
   if (local_1c != 0) {
     *unaff_EBX = (char *)*unaff_EBX + 1;
   }
-  uVar5 = sub_9bf1a(*unaff_EBX,abStack_3c);
+  uVar5 = __makelist(*unaff_EBX,abStack_3c);
   uVar4 = local_1c;
   *unaff_EBX = uVar5;
   bVar1 = *(byte *)(param_1 + 4);
@@ -576,10 +576,10 @@ LAB_0009c025:
 
 
 // ================================================================================================
-// sub_9c043 @ 0x9c043 [__watcall]
+// __scan_float @ 0x9c043 [__watcall]
 // ================================================================================================
 
-int __watcall sub_9c043(undefined4 *param_1,int *unaff_EDX)
+int __watcall __scan_float(undefined4 *param_1,int *unaff_EDX)
 
 {
   byte bVar1;
@@ -622,7 +622,7 @@ int __watcall sub_9c043(undefined4 *param_1,int *unaff_EDX)
   if (iVar12 != 0) {
     if ((iVar5 == 0x2b) || (pcVar10 = &local_88, iVar5 == 0x2d)) {
       local_88 = (char)iVar5;
-      iVar5 = sub_9c540(extraout_ECX);
+      iVar5 = __cgetw(extraout_ECX);
       pcVar10 = local_87;
       iVar8 = iVar8 + 1;
       if (iVar5 == -1) goto LAB_0009c263;
@@ -640,7 +640,7 @@ int __watcall sub_9c043(undefined4 *param_1,int *unaff_EDX)
             sStack_1e = (short)iVar5 + sStack_1e * 10 + -0x30;
           }
           iVar11 = iVar11 + 1;
-          iVar5 = sub_9c540(extraout_ECX);
+          iVar5 = __cgetw(extraout_ECX);
           if (iVar5 == -1) goto LAB_0009c263;
         } while (((&unk_c4b6c)[(byte)((char)iVar5 + 1)] & 0x20) != 0);
       }
@@ -648,7 +648,7 @@ int __watcall sub_9c043(undefined4 *param_1,int *unaff_EDX)
       iVar12 = iVar11;
       if (iVar5 == 0x2e) {
         *pcVar10 = '.';
-        iVar5 = sub_9c540(extraout_ECX);
+        iVar5 = __cgetw(extraout_ECX);
         pcVar10 = pcVar10 + 1;
         if (iVar5 == -1) goto LAB_0009c263;
         if ((!bVar4) && (((&unk_c4b6c)[(byte)((char)iVar5 + 1)] & 0x20) == 0)) goto LAB_0009c25c;
@@ -657,7 +657,7 @@ int __watcall sub_9c043(undefined4 *param_1,int *unaff_EDX)
           if (((&unk_c4b6c)[(byte)((char)iVar5 + 1)] & 0x20) == 0) break;
           iVar11 = iVar11 + 1;
           *pcVar10 = (char)iVar5;
-          iVar5 = sub_9c540(extraout_ECX);
+          iVar5 = __cgetw(extraout_ECX);
           pcVar10 = pcVar10 + 1;
         } while (iVar5 != -1);
         if ((*(byte *)(extraout_ECX + 4) & 0x10) != 0) {
@@ -680,13 +680,13 @@ int __watcall sub_9c043(undefined4 *param_1,int *unaff_EDX)
       if (((*(byte *)(extraout_ECX + 4) & 0x10) == 0) && ((iVar5 == 0x65 || (iVar5 == 0x45)))) {
         iVar11 = iVar12 + 1;
         *pcVar9 = (char)iVar5;
-        iVar5 = sub_9c540(extraout_ECX);
+        iVar5 = __cgetw(extraout_ECX);
         pcVar10 = pcVar9 + 1;
         if (iVar5 == -1) goto LAB_0009c263;
         if ((iVar5 == 0x2b) || (iVar5 == 0x2d)) {
           iVar11 = iVar12 + 2;
           *pcVar10 = (char)iVar5;
-          iVar5 = sub_9c540(extraout_ECX);
+          iVar5 = __cgetw(extraout_ECX);
           pcVar10 = pcVar9 + 2;
           if (iVar5 == -1) goto LAB_0009c263;
         }
@@ -697,7 +697,7 @@ int __watcall sub_9c043(undefined4 *param_1,int *unaff_EDX)
           do {
             iVar11 = iVar11 + 1;
             *pcVar10 = (char)iVar5;
-            iVar5 = sub_9c540(extraout_ECX);
+            iVar5 = __cgetw(extraout_ECX);
             pcVar10 = pcVar10 + 1;
             if (iVar5 == -1) goto LAB_0009c263;
           } while (((&unk_c4b6c)[(byte)((char)iVar5 + 1)] & 0x20) != 0);
@@ -746,7 +746,7 @@ LAB_0009c263:
         piVar7[1] = local_34;
         return iVar11;
       }
-      iVar5 = sub_a2ef0(local_38,local_34);
+      iVar5 = __FDFS(local_38,local_34);
     }
     *piVar7 = iVar5;
   }
@@ -755,10 +755,10 @@ LAB_0009c263:
 
 
 // ================================================================================================
-// sub_9c321 @ 0x9c321 [__watcall]
+// __scan_int @ 0x9c321 [__watcall]
 // ================================================================================================
 
-int __watcall sub_9c321(undefined4 *param_1,int *unaff_EDX,int unaff_EBX,int unaff_ECX)
+int __watcall __scan_int(undefined4 *param_1,int *unaff_EDX,int unaff_EBX,int unaff_ECX)
 
 {
   byte bVar1;
@@ -795,18 +795,18 @@ LAB_0009c490:
       iVar5 = iVar4;
       if ((unaff_ECX != 0) && ((iVar4 == 0x2b || (iVar4 == 0x2d)))) {
         iVar9 = iVar9 + 1;
-        iVar5 = sub_9c540(param_1);
+        iVar5 = __cgetw(param_1);
         local_20 = iVar4;
         if (iVar5 == -1) goto LAB_0009c497;
       }
       if (unaff_EBX == 0) {
         if (iVar5 == 0x30) {
           iVar8 = 1;
-          iVar7 = sub_9c540(param_1);
+          iVar7 = __cgetw(param_1);
           if (iVar7 == -1) goto LAB_0009c497;
           if ((iVar7 == 0x78) || (iVar7 == 0x58)) {
             iVar9 = iVar9 + 2;
-            iVar5 = sub_9c540(param_1,iVar7,1,iVar7);
+            iVar5 = __cgetw(param_1,iVar7,1,iVar7);
             iVar8 = 0;
             if (iVar5 == -1) goto LAB_0009c497;
             unaff_EBX = 0x10;
@@ -822,17 +822,17 @@ LAB_0009c490:
       }
       else if ((unaff_EBX == 0x10) && (iVar5 == 0x30)) {
         iVar8 = 1;
-        iVar7 = sub_9c540(param_1);
+        iVar7 = __cgetw(param_1);
         if (iVar7 == -1) goto LAB_0009c497;
         if ((iVar7 == 0x78) || (iVar5 = iVar7, iVar7 == 0x58)) {
           iVar9 = iVar9 + 2;
-          iVar5 = sub_9c540(param_1,iVar7,1,iVar7);
+          iVar5 = __cgetw(param_1,iVar7,1,iVar7);
           iVar8 = 0;
           goto LAB_0009c433;
         }
       }
       do {
-        uVar10 = sub_9c519(iVar5);
+        uVar10 = __radix_value(iVar5);
         if (unaff_EBX <= (int)uVar10) {
           if (((int)((ulonglong)uVar10 >> 0x20) != 0x3a) ||
              (iVar4 = 0x3a, (*(byte *)(param_1 + 4) & 0x80) == 0)) goto LAB_0009c490;
@@ -840,7 +840,7 @@ LAB_0009c490:
         }
         iVar8 = iVar8 + 1;
         local_18 = local_18 * unaff_EBX + (int)uVar10;
-        iVar5 = sub_9c540(param_1,local_18,iVar8,iVar7);
+        iVar5 = __cgetw(param_1,local_18,iVar8,iVar7);
 LAB_0009c433:
       } while (iVar5 != -1);
     }
@@ -881,9 +881,9 @@ LAB_0009c497:
   return iVar8;
 LAB_0009c467:
   iVar8 = iVar8 + 1;
-  iVar7 = sub_9c540(param_1,iVar4,iVar8,iVar7);
+  iVar7 = __cgetw(param_1,iVar4,iVar8,iVar7);
   if (iVar7 == -1) goto LAB_0009c497;
-  iVar4 = sub_9c519(iVar7,iVar7);
+  iVar4 = __radix_value(iVar7,iVar7);
   if (unaff_EBX <= iVar4) goto LAB_0009c490;
   iVar4 = local_18 * unaff_EBX + iVar4;
   local_18 = iVar4;
@@ -892,10 +892,10 @@ LAB_0009c467:
 
 
 // ================================================================================================
-// sub_9c519 @ 0x9c519 [__watcall]
+// __radix_value @ 0x9c519 [__watcall]
 // ================================================================================================
 
-int __watcall sub_9c519(int param_1)
+int __watcall __radix_value(int param_1)
 
 {
   int iVar1;
@@ -903,7 +903,7 @@ int __watcall sub_9c519(int param_1)
   if ((0x2f < param_1) && (param_1 < 0x3a)) {
     return param_1 + -0x30;
   }
-  iVar1 = sub_9afb0();
+  iVar1 = tolower();
   if ((0x60 < iVar1) && (iVar1 < 0x67)) {
     return iVar1 + -0x57;
   }
@@ -912,10 +912,10 @@ int __watcall sub_9c519(int param_1)
 
 
 // ================================================================================================
-// sub_9c540 @ 0x9c540 [__watcall]
+// __cgetw @ 0x9c540 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_9c540(undefined4 *param_1,undefined4 unaff_EDX,undefined4 unaff_EBX)
+undefined8 __watcall __cgetw(undefined4 *param_1,undefined4 unaff_EDX,undefined4 unaff_EBX)
 
 {
   int iVar1;
@@ -936,10 +936,10 @@ LAB_0009c560:
 
 
 // ================================================================================================
-// sub_9c563 @ 0x9c563 [__watcall]
+// vsprintf_putc @ 0x9c563 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9c563(int *param_1,undefined unaff_DL)
+void __watcall vsprintf_putc(int *param_1,undefined unaff_DL)
 
 {
   undefined *puVar1;
@@ -968,10 +968,10 @@ int __watcall vsprintf(char *__s,char *__format,__gnuc_va_list __arg)
 
 
 // ================================================================================================
-// sub_9c58c @ 0x9c58c [__watcall]
+// vfprintf_alt @ 0x9c58c [__watcall]
 // ================================================================================================
 
-int __watcall sub_9c58c(FILE *__s,char *__format,__gnuc_va_list __arg)
+int __watcall vfprintf_alt(FILE *__s,char *__format,__gnuc_va_list __arg)
 
 {
   char *pcVar1;
@@ -983,7 +983,7 @@ int __watcall sub_9c58c(FILE *__s,char *__format,__gnuc_va_list __arg)
   pcVar1 = __s->_IO_read_base;
   *(byte *)&__s->_IO_read_base = *(byte *)&__s->_IO_read_base & 0xcf;
   if (__s->_IO_read_end == (char *)0x0) {
-    sub_9b353(__s);
+    __ioalloc(__s);
   }
   bVar3 = *(byte *)((int)&__s->_IO_read_base + 1);
   bVar4 = (bVar3 & 4) != 0;
@@ -997,7 +997,7 @@ int __watcall sub_9c58c(FILE *__s,char *__format,__gnuc_va_list __arg)
     bVar3 = *(byte *)((int)&__s->_IO_read_base + 1);
     *(byte *)((int)&__s->_IO_read_base + 1) = bVar3 & 0xfa;
     *(byte *)((int)&__s->_IO_read_base + 1) = bVar3 & 0xfa | 4;
-    sub_9b232(__s);
+    __flush(__s);
     iVar2 = extraout_EDX;
   }
   if ((*(byte *)&__s->_IO_read_base & 0x20) != 0) {
@@ -1009,10 +1009,10 @@ int __watcall sub_9c58c(FILE *__s,char *__format,__gnuc_va_list __arg)
 
 
 // ================================================================================================
-// sub_9c594 @ 0x9c594 [__cdecl]
+// toupper_ascii @ 0x9c594 [__cdecl]
 // ================================================================================================
 
-uint sub_9c594(uint param_1)
+uint toupper_ascii(uint param_1)
 
 {
   if ((0x60 < param_1) && (param_1 < 0x7b)) {
@@ -1023,10 +1023,10 @@ uint sub_9c594(uint param_1)
 
 
 // ================================================================================================
-// sub_9c5a8 @ 0x9c5a8 [__watcall]
+// return_zero_9c5a8 @ 0x9c5a8 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_9c5a8(void)
+undefined4 __watcall return_zero_9c5a8(void)
 
 {
   return 0;
@@ -1034,10 +1034,10 @@ undefined4 __watcall sub_9c5a8(void)
 
 
 // ================================================================================================
-// sub_9c5b0 @ 0x9c5b0 [__cdecl]
+// palette_closest @ 0x9c5b0 [__cdecl]
 // ================================================================================================
 
-uint sub_9c5b0(uint param_1)
+uint palette_closest(uint param_1)
 
 {
   char *pcVar1;
@@ -1146,12 +1146,12 @@ uint sub_9c5b0(uint param_1)
 
 
 // ================================================================================================
-// sub_9c890 @ 0x9c890 [__cdecl]
+// printstr2_centered @ 0x9c890 [__cdecl]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void sub_9c890(undefined4 param_1,undefined4 param_2)
+void printstr2_centered(undefined4 param_1,undefined4 param_2)
 
 {
   int iVar1;
@@ -1165,10 +1165,10 @@ void sub_9c890(undefined4 param_1,undefined4 param_2)
 
 
 // ================================================================================================
-// sub_9c8d0 @ 0x9c8d0 [__watcall]
+// shape_data_size @ 0x9c8d0 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_9c8d0(int param_1,undefined4 unaff_EDX)
+undefined8 __watcall shape_data_size(int param_1,undefined4 unaff_EDX)
 
 {
   return CONCAT44(unaff_EDX,(*(int *)(param_1 + 4) >> 0x10) * (*(int *)(param_1 + 2) >> 0x10) + 0x10
@@ -1196,25 +1196,25 @@ unpackfile(undefined4 *param_1,int param_2,int param_3,uint param_4,int param_5,
   if ((((((int)(char)*param_1 & 0x80U) != 0) || (param_7 != 0x10000)) || (param_8 != 0x10000)) ||
      (param_6 != 0)) {
     uVar5 = 0x20;
-    uVar1 = sub_9c8d0(param_1);
+    uVar1 = shape_data_size(param_1);
     puVar2 = (undefined4 *)allocmem(aUnpackf,uVar1,uVar5);
     puVar6 = puVar2;
     if (((int)(char)*param_1 & 0x80U) == 0) {
-      uVar4 = sub_9c8d0(param_1);
-      sub_b3abc(param_1,(int)((ulonglong)uVar4 >> 0x20),(int)uVar4);
+      uVar4 = shape_data_size(param_1);
+      memmove_dwords(param_1,(int)((ulonglong)uVar4 >> 0x20),(int)uVar4);
       param_1 = puVar2;
     }
     else {
-      sub_b7218(param_1,puVar2,0);
-      sub_935e0(aUnpacking);
+      shape_unpack(param_1,puVar2,0);
+      debug_printf(aUnpacking);
       param_1 = puVar2;
     }
   }
   if (param_4 != 0) {
     if (param_4 < 2) {
-      iVar3 = sub_91fa4(param_7,*(int *)((int)param_1 + 6) >> 0x10);
+      iVar3 = fixmul16(param_7,*(int *)((int)param_1 + 6) >> 0x10);
       param_2 = param_2 - iVar3;
-      iVar3 = sub_91fa4(param_8,(int)param_1[2] >> 0x10,puVar6,param_4,param_2);
+      iVar3 = fixmul16(param_8,(int)param_1[2] >> 0x10,puVar6,param_4,param_2);
       param_3 = param_3 - iVar3;
     }
     else if (param_4 == 2) {
@@ -1223,17 +1223,17 @@ unpackfile(undefined4 *param_1,int param_2,int param_3,uint param_4,int param_5,
     }
   }
   if (param_7 < 0) {
-    iVar3 = sub_91fa4(-param_7,*(int *)((int)param_1 + 2) >> 0x10);
+    iVar3 = fixmul16(-param_7,*(int *)((int)param_1 + 2) >> 0x10);
     param_2 = param_2 - iVar3;
-    sub_a2fd0(param_1,puVar6,param_4,param_2);
+    shape_flip_h(param_1,puVar6,param_4,param_2);
   }
   if (param_8 < 0) {
-    iVar3 = sub_91fa4(-param_8,(int)param_1[1] >> 0x10);
+    iVar3 = fixmul16(-param_8,(int)param_1[1] >> 0x10);
     param_3 = param_3 - iVar3;
-    sub_a3050(param_1);
+    shape_flip_v(param_1);
   }
   if (param_6 != 0) {
-    sub_a30d0(param_1);
+    shape_recolor(param_1);
   }
   (*(code *)(&funcptr_d516c)[param_5])(param_1,param_2,param_3);
   if (puVar6 != (undefined4 *)0x0) {
@@ -1244,10 +1244,10 @@ unpackfile(undefined4 *param_1,int param_2,int param_3,uint param_4,int param_5,
 
 
 // ================================================================================================
-// sub_9ca6c @ 0x9ca6c [__cdecl]
+// drawshapex_xor @ 0x9ca6c [__cdecl]
 // ================================================================================================
 
-void sub_9ca6c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_xor(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,0,1,0,0x10000,0x10000);
@@ -1256,10 +1256,10 @@ void sub_9ca6c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9ca90 @ 0x9ca90 [__watcall]
+// drawshapex_xor_home @ 0x9ca90 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9ca90(void)
+void __watcall drawshapex_xor_home(void)
 
 {
   undefined4 in_stack_00000004;
@@ -1270,10 +1270,10 @@ void __watcall sub_9ca90(void)
 
 
 // ================================================================================================
-// sub_9cab4 @ 0x9cab4 [__cdecl]
+// drawshapex_xor_centered @ 0x9cab4 [__cdecl]
 // ================================================================================================
 
-void sub_9cab4(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_xor_centered(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,1,1,0,0x10000,0x10000);
@@ -1282,10 +1282,10 @@ void sub_9cab4(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9cadc @ 0x9cadc [__cdecl]
+// drawshapex_xor_b @ 0x9cadc [__cdecl]
 // ================================================================================================
 
-void sub_9cadc(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_xor_b(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,0,1,0,0x10000,0x10000);
@@ -1294,10 +1294,10 @@ void sub_9cadc(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9cb00 @ 0x9cb00 [__cdecl]
+// drawshapex_xor_home_b @ 0x9cb00 [__cdecl]
 // ================================================================================================
 
-void sub_9cb00(undefined4 param_1)
+void drawshapex_xor_home_b(undefined4 param_1)
 
 {
   unpackfile(param_1,0,0,2,1,0,0x10000,0x10000);
@@ -1306,10 +1306,10 @@ void sub_9cb00(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_9cb24 @ 0x9cb24 [__cdecl]
+// drawshapex_xor_centered_b @ 0x9cb24 [__cdecl]
 // ================================================================================================
 
-void sub_9cb24(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_xor_centered_b(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,1,1,0,0x10000,0x10000);
@@ -1318,10 +1318,10 @@ void sub_9cb24(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9cb4c @ 0x9cb4c [__cdecl]
+// drawshapex_xor_c @ 0x9cb4c [__cdecl]
 // ================================================================================================
 
-void sub_9cb4c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_xor_c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,0,1,0,0x10000,0x10000);
@@ -1330,10 +1330,10 @@ void sub_9cb4c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9cb70 @ 0x9cb70 [__cdecl]
+// drawshapex_xor_home_c @ 0x9cb70 [__cdecl]
 // ================================================================================================
 
-void sub_9cb70(undefined4 param_1)
+void drawshapex_xor_home_c(undefined4 param_1)
 
 {
   unpackfile(param_1,0,0,2,1,0,0x10000,0x10000);
@@ -1342,10 +1342,10 @@ void sub_9cb70(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_9cb94 @ 0x9cb94 [__cdecl]
+// drawshapex_xor_centered_c @ 0x9cb94 [__cdecl]
 // ================================================================================================
 
-void sub_9cb94(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_xor_centered_c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,1,1,0,0x10000,0x10000);
@@ -1354,10 +1354,10 @@ void sub_9cb94(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9cbbc @ 0x9cbbc [__cdecl]
+// drawshapex_xor_d @ 0x9cbbc [__cdecl]
 // ================================================================================================
 
-void sub_9cbbc(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_xor_d(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,0,1,0,0x10000,0x10000);
@@ -1366,10 +1366,10 @@ void sub_9cbbc(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9cbe0 @ 0x9cbe0 [__cdecl]
+// drawshapex_xor_home_d @ 0x9cbe0 [__cdecl]
 // ================================================================================================
 
-void sub_9cbe0(undefined4 param_1)
+void drawshapex_xor_home_d(undefined4 param_1)
 
 {
   unpackfile(param_1,0,0,2,1,0,0x10000,0x10000);
@@ -1378,10 +1378,10 @@ void sub_9cbe0(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_9cc04 @ 0x9cc04 [__cdecl]
+// drawshapex_xor_centered_d @ 0x9cc04 [__cdecl]
 // ================================================================================================
 
-void sub_9cc04(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_xor_centered_d(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,1,1,0,0x10000,0x10000);
@@ -1390,10 +1390,10 @@ void sub_9cc04(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9cc2c @ 0x9cc2c [__cdecl]
+// drawshapex_remap @ 0x9cc2c [__cdecl]
 // ================================================================================================
 
-void sub_9cc2c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_remap(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,0,2,0,0x10000,0x10000);
@@ -1402,10 +1402,10 @@ void sub_9cc2c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9cc50 @ 0x9cc50 [__cdecl]
+// drawshapex_remap_home @ 0x9cc50 [__cdecl]
 // ================================================================================================
 
-void sub_9cc50(undefined4 param_1)
+void drawshapex_remap_home(undefined4 param_1)
 
 {
   unpackfile(param_1,0,0,2,2,0,0x10000,0x10000);
@@ -1414,10 +1414,10 @@ void sub_9cc50(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_9cc74 @ 0x9cc74 [__cdecl]
+// drawshapex_remap_centered @ 0x9cc74 [__cdecl]
 // ================================================================================================
 
-void sub_9cc74(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_remap_centered(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,1,2,0,0x10000,0x10000);
@@ -1426,10 +1426,10 @@ void sub_9cc74(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9cc9c @ 0x9cc9c [__cdecl]
+// drawshapex_remap_b @ 0x9cc9c [__cdecl]
 // ================================================================================================
 
-void sub_9cc9c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_remap_b(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,0,2,0,0x10000,0x10000);
@@ -1438,10 +1438,10 @@ void sub_9cc9c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9ccc0 @ 0x9ccc0 [__cdecl]
+// drawshapex_remap_home_b @ 0x9ccc0 [__cdecl]
 // ================================================================================================
 
-void sub_9ccc0(undefined4 param_1)
+void drawshapex_remap_home_b(undefined4 param_1)
 
 {
   unpackfile(param_1,0,0,2,2,0,0x10000,0x10000);
@@ -1450,10 +1450,10 @@ void sub_9ccc0(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_9cce4 @ 0x9cce4 [__cdecl]
+// drawshapex_remap_centered_b @ 0x9cce4 [__cdecl]
 // ================================================================================================
 
-void sub_9cce4(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_remap_centered_b(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,1,2,0,0x10000,0x10000);
@@ -1462,10 +1462,10 @@ void sub_9cce4(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9cd0c @ 0x9cd0c [__cdecl]
+// drawshapex_xor_hflip @ 0x9cd0c [__cdecl]
 // ================================================================================================
 
-void sub_9cd0c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_xor_hflip(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,0,1,0,0xffff0000,0x10000);
@@ -1474,10 +1474,10 @@ void sub_9cd0c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9cd30 @ 0x9cd30 [__cdecl]
+// drawshapex_xor_hflip_home @ 0x9cd30 [__cdecl]
 // ================================================================================================
 
-void sub_9cd30(undefined4 param_1)
+void drawshapex_xor_hflip_home(undefined4 param_1)
 
 {
   unpackfile(param_1,0,0,2,1,0,0xffff0000,0x10000);
@@ -1486,10 +1486,10 @@ void sub_9cd30(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_9cd54 @ 0x9cd54 [__cdecl]
+// drawshapex_xor_hflip_centered @ 0x9cd54 [__cdecl]
 // ================================================================================================
 
-void sub_9cd54(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_xor_hflip_centered(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,1,1,0,0xffff0000,0x10000);
@@ -1498,10 +1498,10 @@ void sub_9cd54(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9cd7c @ 0x9cd7c [__cdecl]
+// drawshapex_xor_hflip_b @ 0x9cd7c [__cdecl]
 // ================================================================================================
 
-void sub_9cd7c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_xor_hflip_b(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,0,1,0,0xffff0000,0x10000);
@@ -1510,10 +1510,10 @@ void sub_9cd7c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9cda0 @ 0x9cda0 [__cdecl]
+// drawshapex_xor_hflip_home_b @ 0x9cda0 [__cdecl]
 // ================================================================================================
 
-void sub_9cda0(undefined4 param_1)
+void drawshapex_xor_hflip_home_b(undefined4 param_1)
 
 {
   unpackfile(param_1,0,0,2,1,0,0xffff0000,0x10000);
@@ -1522,10 +1522,10 @@ void sub_9cda0(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_9cdc4 @ 0x9cdc4 [__cdecl]
+// drawshapex_xor_hflip_centered_b @ 0x9cdc4 [__cdecl]
 // ================================================================================================
 
-void sub_9cdc4(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_xor_hflip_centered_b(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,1,1,0,0xffff0000,0x10000);
@@ -1534,10 +1534,10 @@ void sub_9cdc4(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9cdec @ 0x9cdec [__cdecl]
+// drawshapex_remap_hflip @ 0x9cdec [__cdecl]
 // ================================================================================================
 
-void sub_9cdec(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_remap_hflip(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,0,2,0,0xffff0000,0x10000);
@@ -1546,10 +1546,10 @@ void sub_9cdec(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9ce10 @ 0x9ce10 [__cdecl]
+// drawshapex_remap_hflip_home @ 0x9ce10 [__cdecl]
 // ================================================================================================
 
-void sub_9ce10(undefined4 param_1)
+void drawshapex_remap_hflip_home(undefined4 param_1)
 
 {
   unpackfile(param_1,0,0,2,2,0,0xffff0000,0x10000);
@@ -1558,10 +1558,10 @@ void sub_9ce10(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_9ce34 @ 0x9ce34 [__cdecl]
+// drawshapex_remap_hflip_centered @ 0x9ce34 [__cdecl]
 // ================================================================================================
 
-void sub_9ce34(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_remap_hflip_centered(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,1,2,0,0xffff0000,0x10000);
@@ -1570,10 +1570,10 @@ void sub_9ce34(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9ce5c @ 0x9ce5c [__cdecl]
+// drawshapex_remap_hflip_b @ 0x9ce5c [__cdecl]
 // ================================================================================================
 
-void sub_9ce5c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_remap_hflip_b(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,0,2,0,0xffff0000,0x10000);
@@ -1582,10 +1582,10 @@ void sub_9ce5c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9ce80 @ 0x9ce80 [__cdecl]
+// drawshapex_remap_hflip_home_b @ 0x9ce80 [__cdecl]
 // ================================================================================================
 
-void sub_9ce80(undefined4 param_1)
+void drawshapex_remap_hflip_home_b(undefined4 param_1)
 
 {
   unpackfile(param_1,0,0,2,2,0,0xffff0000,0x10000);
@@ -1594,10 +1594,10 @@ void sub_9ce80(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_9cea4 @ 0x9cea4 [__cdecl]
+// drawshapex_remap_hflip_centered_b @ 0x9cea4 [__cdecl]
 // ================================================================================================
 
-void sub_9cea4(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_remap_hflip_centered_b(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,1,2,0,0xffff0000,0x10000);
@@ -1606,10 +1606,10 @@ void sub_9cea4(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9cecc @ 0x9cecc [__cdecl]
+// drawshapex_xor_recolor @ 0x9cecc [__cdecl]
 // ================================================================================================
 
-void sub_9cecc(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_xor_recolor(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,0,1,1,0x10000,0x10000);
@@ -1618,10 +1618,10 @@ void sub_9cecc(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9cef0 @ 0x9cef0 [__cdecl]
+// drawshapex_xor_recolor_home @ 0x9cef0 [__cdecl]
 // ================================================================================================
 
-void sub_9cef0(undefined4 param_1)
+void drawshapex_xor_recolor_home(undefined4 param_1)
 
 {
   unpackfile(param_1,0,0,2,1,1,0x10000,0x10000);
@@ -1630,10 +1630,10 @@ void sub_9cef0(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_9cf14 @ 0x9cf14 [__cdecl]
+// drawshapex_xor_recolor_centered @ 0x9cf14 [__cdecl]
 // ================================================================================================
 
-void sub_9cf14(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_xor_recolor_centered(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,1,1,1,0x10000,0x10000);
@@ -1642,10 +1642,10 @@ void sub_9cf14(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9cf3c @ 0x9cf3c [__cdecl]
+// drawshapex_xor_recolor_b @ 0x9cf3c [__cdecl]
 // ================================================================================================
 
-void sub_9cf3c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_xor_recolor_b(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,0,1,1,0x10000,0x10000);
@@ -1654,10 +1654,10 @@ void sub_9cf3c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9cf60 @ 0x9cf60 [__cdecl]
+// drawshapex_xor_recolor_home_b @ 0x9cf60 [__cdecl]
 // ================================================================================================
 
-void sub_9cf60(undefined4 param_1)
+void drawshapex_xor_recolor_home_b(undefined4 param_1)
 
 {
   unpackfile(param_1,0,0,2,1,1,0x10000,0x10000);
@@ -1666,10 +1666,10 @@ void sub_9cf60(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_9cf84 @ 0x9cf84 [__cdecl]
+// drawshapex_xor_recolor_centered_b @ 0x9cf84 [__cdecl]
 // ================================================================================================
 
-void sub_9cf84(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_xor_recolor_centered_b(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,1,1,1,0x10000,0x10000);
@@ -1678,10 +1678,10 @@ void sub_9cf84(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9cfac @ 0x9cfac [__cdecl]
+// drawshapex_remap_recolor @ 0x9cfac [__cdecl]
 // ================================================================================================
 
-void sub_9cfac(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_remap_recolor(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,0,2,1,0x10000,0x10000);
@@ -1690,10 +1690,10 @@ void sub_9cfac(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9cfd0 @ 0x9cfd0 [__cdecl]
+// drawshapex_remap_recolor_home @ 0x9cfd0 [__cdecl]
 // ================================================================================================
 
-void sub_9cfd0(undefined4 param_1)
+void drawshapex_remap_recolor_home(undefined4 param_1)
 
 {
   unpackfile(param_1,0,0,2,2,1,0x10000,0x10000);
@@ -1702,10 +1702,10 @@ void sub_9cfd0(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_9cff4 @ 0x9cff4 [__cdecl]
+// drawshapex_remap_recolor_centered @ 0x9cff4 [__cdecl]
 // ================================================================================================
 
-void sub_9cff4(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_remap_recolor_centered(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,1,2,1,0x10000,0x10000);
@@ -1714,10 +1714,10 @@ void sub_9cff4(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9d01c @ 0x9d01c [__cdecl]
+// drawshapex_remap_recolor_b @ 0x9d01c [__cdecl]
 // ================================================================================================
 
-void sub_9d01c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_remap_recolor_b(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,0,2,1,0x10000,0x10000);
@@ -1726,10 +1726,10 @@ void sub_9d01c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9d040 @ 0x9d040 [__cdecl]
+// drawshapex_remap_recolor_home_b @ 0x9d040 [__cdecl]
 // ================================================================================================
 
-void sub_9d040(undefined4 param_1)
+void drawshapex_remap_recolor_home_b(undefined4 param_1)
 
 {
   unpackfile(param_1,0,0,2,2,1,0x10000,0x10000);
@@ -1738,10 +1738,10 @@ void sub_9d040(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_9d064 @ 0x9d064 [__cdecl]
+// drawshapex_remap_recolor_centered_b @ 0x9d064 [__cdecl]
 // ================================================================================================
 
-void sub_9d064(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshapex_remap_recolor_centered_b(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   unpackfile(param_1,param_2,param_3,1,2,1,0x10000,0x10000);
@@ -1750,10 +1750,10 @@ void sub_9d064(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_9d090 @ 0x9d090 [__cdecl]
+// save_screen_shape @ 0x9d090 [__cdecl]
 // ================================================================================================
 
-undefined4 sub_9d090(char *param_1)
+undefined4 save_screen_shape(char *param_1)
 
 {
   char cVar1;
@@ -1775,7 +1775,7 @@ undefined4 sub_9d090(char *param_1)
   
   bVar11 = 0;
   uVar7 = (uint)(dword_d2f84 == 7);
-  sub_b3a88(auStack_c8);
+  save_screen_state(auStack_c8);
   setdefaultscreen();
   local_10 = dword_d30c4 * dword_d30a8;
   if (dword_d2f84 == 7) {
@@ -1783,9 +1783,9 @@ undefined4 sub_9d090(char *param_1)
   }
   local_10 = local_10 + 0x340;
   uVar8 = 0;
-  local_14 = sub_8cc8c(s_voSHAPE_000c4931 + 3,local_10,0x20);
+  local_14 = reservemem_try(s_voSHAPE_000c4931 + 3,local_10,0x20);
   if (local_14 != 0) {
-    pcVar3 = (char *)sub_8dbd4(local_14);
+    pcVar3 = (char *)memblock_ptr(local_14);
     local_18 = pcVar3;
     strncpy(pcVar3,(char *)(&off_d518c)[uVar7],4);
     *(int *)(pcVar3 + 4) = local_10;
@@ -1823,7 +1823,7 @@ undefined4 sub_9d090(char *param_1)
     *(undefined2 *)((int)puVar5 + 10) = 0;
     *(undefined2 *)(puVar5 + 3) = 0;
     *(undefined2 *)((int)puVar5 + 0xe) = 0;
-    sub_91538(puVar5);
+    grabshape_home(puVar5);
     pcVar3 = local_68;
     do {
       cVar1 = *param_1;
@@ -1868,19 +1868,19 @@ LAB_0009d269:
         pcVar10 = pcVar10 + 2;
       } while (cVar1 != '\0');
     }
-    uVar8 = sub_932ec(local_68,local_18,local_10);
+    uVar8 = savefileblock_try(local_68,local_18,local_10);
     releasememblock(local_14);
   }
-  sub_b3aa1(auStack_c8);
+  restore_screen_state(auStack_c8);
   return uVar8;
 }
 
 
 // ================================================================================================
-// sub_9d2e0 @ 0x9d2e0 [__cdecl]
+// window_select @ 0x9d2e0 [__cdecl]
 // ================================================================================================
 
-int sub_9d2e0(int *param_1)
+int window_select(int *param_1)
 
 {
   int iVar1;
@@ -1888,7 +1888,7 @@ int sub_9d2e0(int *param_1)
   
   iVar1 = *param_1;
   if (iVar1 != 0) {
-    uVar2 = sub_8e3c4(iVar1 + 0x30);
+    uVar2 = identity_8e3c4(iVar1 + 0x30);
     *(undefined4 *)(iVar1 + 0x2c) = uVar2;
     setscreen(iVar1);
   }
@@ -1897,14 +1897,14 @@ int sub_9d2e0(int *param_1)
 
 
 // ================================================================================================
-// sub_9d307 @ 0x9d307 [__watcall]
+// __setEFGfmt @ 0x9d307 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9d307(void)
+void __watcall __setEFGfmt(void)
 
 {
-  funcptr_d5668 = sub_a313f;
-  funcptr_d566c = sub_a3264;
+  funcptr_d5668 = _EFG_Format;
+  funcptr_d566c = __cnvs2d;
   return;
 }
 
@@ -1970,10 +1970,10 @@ void FUN_0009d352(void)
     else {
       uVar5 = (ushort)((uint)in_EDX >> 0x10);
       if (byte_d4d06 == '\x01') {
-        sub_a649a(0,CONCAT22(uVar5,word_d41f8));
+        __init_387_emulator(0,CONCAT22(uVar5,word_d41f8));
       }
       else {
-        cVar4 = sub_a649a(0,(uint)uVar5 << 0x10);
+        cVar4 = __init_387_emulator(0,(uint)uVar5 << 0x10);
         if (cVar4 != '\x01') {
           FUN_0009d43a();
         }
@@ -1984,7 +1984,7 @@ void FUN_0009d352(void)
     FUN_0009d41d();
     *(undefined4 *)(iVar3 + 0x38) = extraout_EDX;
     *(undefined4 *)(iVar3 + 0x3c) = extraout_ECX;
-    sub_9d487();
+    _set_EM_MP_bits();
   }
   return;
 }
@@ -2023,17 +2023,17 @@ void FUN_0009d43a(void)
   else {
     pcVar1 = (code *)swi(0x21);
     (*pcVar1)();
-    sub_9d487();
+    _set_EM_MP_bits();
   }
   return;
 }
 
 
 // ================================================================================================
-// sub_9d487 @ 0x9d487 [__watcall]
+// _set_EM_MP_bits @ 0x9d487 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9d487(void)
+void __watcall _set_EM_MP_bits(void)
 
 {
   code *pcVar1;
@@ -2048,11 +2048,11 @@ void __watcall sub_9d487(void)
 
 
 // ================================================================================================
-// sub_9d4a7 @ 0x9d4a7 [__watcall]
+// __fini_387_emulator @ 0x9d4a7 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_9d4a7(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+__fini_387_emulator(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   code *pcVar1;
@@ -2070,17 +2070,17 @@ sub_9d4a7(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined
       (*pcVar1)();
     }
     else if (byte_d4d06 == '\x01') {
-      sub_a6564(0,word_d41f8,unaff_EBX,unaff_ECX,unaff_EDX,unaff_EBX,unaff_ECX);
+      __dpmi_fini_hooks(0,word_d41f8,unaff_EBX,unaff_ECX,unaff_EDX,unaff_EBX,unaff_ECX);
     }
     else {
-      cVar2 = sub_a6564(byte_d4d06,0,unaff_EBX,unaff_ECX,unaff_EDX,unaff_EBX,unaff_ECX);
+      cVar2 = __dpmi_fini_hooks(byte_d4d06,0,unaff_EBX,unaff_ECX,unaff_EDX,unaff_EBX,unaff_ECX);
       if (cVar2 != '\x01') {
-        sub_9d521();
+        unhook_pharlap();
       }
     }
   }
   else {
-    sub_9d55c();
+    _reset_EM_MP_bits();
   }
   byte_d51dc = 0;
   return;
@@ -2088,11 +2088,11 @@ sub_9d4a7(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined
 
 
 // ================================================================================================
-// sub_9d4b1 @ 0x9d4b1 [__watcall]
+// __fini_387_emulator_body @ 0x9d4b1 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_9d4b1(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+__fini_387_emulator_body(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   code *pcVar1;
@@ -2107,17 +2107,17 @@ sub_9d4b1(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined
       (*pcVar1)();
     }
     else if (byte_d4d06 == '\x01') {
-      sub_a6564(0,word_d41f8,unaff_EBX,unaff_ECX,unaff_EDX,unaff_EBX,unaff_ECX);
+      __dpmi_fini_hooks(0,word_d41f8,unaff_EBX,unaff_ECX,unaff_EDX,unaff_EBX,unaff_ECX);
     }
     else {
-      cVar2 = sub_a6564(byte_d4d06,0,unaff_EBX,unaff_ECX,unaff_EDX,unaff_EBX,unaff_ECX);
+      cVar2 = __dpmi_fini_hooks(byte_d4d06,0,unaff_EBX,unaff_ECX,unaff_EDX,unaff_EBX,unaff_ECX);
       if (cVar2 != '\x01') {
-        sub_9d521();
+        unhook_pharlap();
       }
     }
   }
   else {
-    sub_9d55c();
+    _reset_EM_MP_bits();
   }
   byte_d51dc = 0;
   return;
@@ -2125,10 +2125,10 @@ sub_9d4b1(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined
 
 
 // ================================================================================================
-// sub_9d521 @ 0x9d521 [__watcall]
+// unhook_pharlap @ 0x9d521 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9d521(void)
+void __watcall unhook_pharlap(void)
 
 {
   code *pcVar1;
@@ -2136,17 +2136,17 @@ void __watcall sub_9d521(void)
   pcVar1 = (code *)swi(0x21);
   (*pcVar1)();
   if ('\x02' < byte_d4d06) {
-    sub_9d55c();
+    _reset_EM_MP_bits();
   }
   return;
 }
 
 
 // ================================================================================================
-// sub_9d55c @ 0x9d55c [__watcall]
+// _reset_EM_MP_bits @ 0x9d55c [__watcall]
 // ================================================================================================
 
-void __watcall sub_9d55c(void)
+void __watcall _reset_EM_MP_bits(void)
 
 {
   code *pcVar1;
@@ -2215,26 +2215,26 @@ unkbyte10 unk_9d582(void)
 
 
 // ================================================================================================
-// sub_9d586 @ 0x9d586 [__watcall]
+// __init_8087 @ 0x9d586 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9d586(void)
+void __watcall __init_8087(void)
 
 {
   if (byte_d4b9d != '\0') {
     funcptr_d6600 = unk_9d57d;
     funcptr_d6604 = unk_9d582;
   }
-  sub_a65be(word_d65fc);
+  __get_fpu_cw(word_d65fc);
   return;
 }
 
 
 // ================================================================================================
-// sub_9d5b7 @ 0x9d5b7 [__watcall]
+// __reinit_8087 @ 0x9d5b7 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9d5b7(void)
+void __watcall __reinit_8087(void)
 
 {
   if (byte_d4b9d == '\0') {
@@ -2244,23 +2244,23 @@ void __watcall sub_9d5b7(void)
     funcptr_d6600 = unk_9d57d;
     funcptr_d6604 = unk_9d582;
   }
-  sub_a65be(word_d65fc);
+  __get_fpu_cw(word_d65fc);
   return;
 }
 
 
 // ================================================================================================
-// sub_9d5c1 @ 0x9d5c1 [__watcall]
+// __chk8087 @ 0x9d5c1 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9d5c1(void)
+void __watcall __chk8087(void)
 
 {
   char cVar1;
   
   if (byte_d4b9c == '\0') {
     byte_d4b9d = byte_d4b9c;
-    cVar1 = sub_9d586();
+    cVar1 = __init_8087();
     if (word_d4d04 == '\0') {
       byte_d4b9c = cVar1;
       byte_d4b9d = cVar1;
@@ -2271,10 +2271,10 @@ void __watcall sub_9d5c1(void)
 
 
 // ================================================================================================
-// sub_9d601 @ 0x9d601 [__watcall]
+// calibrate_delay_loop @ 0x9d601 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9d601(void)
+void __watcall calibrate_delay_loop(void)
 
 {
   code *pcVar1;
@@ -2301,10 +2301,10 @@ void __watcall sub_9d601(void)
 
 
 // ================================================================================================
-// sub_9d633 @ 0x9d633 [__watcall]
+// delay_loop @ 0x9d633 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9d633(int param_1)
+void __watcall delay_loop(int param_1)
 
 {
   code *pcVar1;
@@ -2326,10 +2326,10 @@ void __watcall sub_9d633(int param_1)
 
 
 // ================================================================================================
-// sub_9d66b @ 0x9d66b [__watcall]
+// __get_errno_ptr @ 0x9d66b [__watcall]
 // ================================================================================================
 
-undefined * __watcall sub_9d66b(void)
+undefined * __watcall __get_errno_ptr(void)
 
 {
   return &unk_f24d4;
@@ -2337,10 +2337,10 @@ undefined * __watcall sub_9d66b(void)
 
 
 // ================================================================================================
-// sub_9d671 @ 0x9d671 [__watcall]
+// __get_doserrno_ptr @ 0x9d671 [__watcall]
 // ================================================================================================
 
-undefined * __watcall sub_9d671(void)
+undefined * __watcall __get_doserrno_ptr(void)
 
 {
   return &unk_f24d0;
@@ -2348,10 +2348,10 @@ undefined * __watcall sub_9d671(void)
 
 
 // ================================================================================================
-// sub_9d677 @ 0x9d677 [__watcall]
+// strerror @ 0x9d677 [__watcall]
 // ================================================================================================
 
-char * __watcall sub_9d677(int param_1)
+char * __watcall strerror(int param_1)
 
 {
   if ((-1 < param_1) && (param_1 < 0x10)) {
@@ -2362,10 +2362,10 @@ char * __watcall sub_9d677(int param_1)
 
 
 // ================================================================================================
-// sub_9d68e @ 0x9d68e [__watcall]
+// stackavail @ 0x9d68e [__watcall]
 // ================================================================================================
 
-int __watcall sub_9d68e(void)
+int __watcall stackavail(void)
 
 {
   return (int)&stack0x00000000 - dword_d4ce8;
@@ -2373,15 +2373,15 @@ int __watcall sub_9d68e(void)
 
 
 // ================================================================================================
-// sub_9d698 @ 0x9d698 [__watcall]
+// pcspk_drv_init @ 0x9d698 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9d698(void)
+void __watcall pcspk_drv_init(void)
 
 {
   short sVar1;
   
-  sub_902a0();
+  empty_func_902a0();
   for (sVar1 = 0; sVar1 < 0x10; sVar1 = sVar1 + 1) {
     (&unk_f24d9)[sVar1 * 0x30] = 0;
   }
@@ -2389,42 +2389,42 @@ void __watcall sub_9d698(void)
     (&unk_f27ee)[sVar1 * 0x4e] = 0;
     (&unk_f27ef)[sVar1 * 0x4e] = 0x10;
   }
-  sub_a65e8();
+  pcspk_hw_init();
   return;
 }
 
 
 // ================================================================================================
-// sub_9d6e6 @ 0x9d6e6 [__watcall]
+// pcspk_drv_shutdown @ 0x9d6e6 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9d6e6(void)
+void __watcall pcspk_drv_shutdown(void)
 
 {
-  sub_902a0();
-  sub_a6612();
+  empty_func_902a0();
+  pcspk_hw_shutdown();
   return;
 }
 
 
 // ================================================================================================
-// sub_9d6f3 @ 0x9d6f3 [__watcall]
+// pcspk_drv_tick @ 0x9d6f3 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9d6f3(void)
+void __watcall pcspk_drv_tick(void)
 
 {
-  sub_902a0();
-  sub_9d880();
+  empty_func_902a0();
+  pcspk_update_voices();
   return;
 }
 
 
 // ================================================================================================
-// sub_9d700 @ 0x9d700 [__cdecl]
+// pcspk_note_on @ 0x9d700 [__cdecl]
 // ================================================================================================
 
-void sub_9d700(byte param_1,char param_2)
+void pcspk_note_on(byte param_1,char param_2)
 
 {
   int iVar1;
@@ -2433,7 +2433,7 @@ void sub_9d700(byte param_1,char param_2)
   int iVar4;
   undefined8 uVar5;
   
-  sub_902a0();
+  empty_func_902a0();
   iVar1 = (uint)param_1 * 0x4e;
   if (param_1 == 9) {
     iVar2 = snd_patch_timbre();
@@ -2443,7 +2443,7 @@ void sub_9d700(byte param_1,char param_2)
     iVar2 = *(int *)(&unk_f27f6 + iVar1);
   }
   if (iVar2 != 0) {
-    uVar5 = sub_9da99(iVar2);
+    uVar5 = timbre_env_sign(iVar2);
     iVar4 = (int)((ulonglong)uVar5 >> 0x20);
     iVar2 = (int)(short)uVar5;
     if (iVar2 != -1) {
@@ -2469,7 +2469,7 @@ void sub_9d700(byte param_1,char param_2)
       (&DAT_000f24fa)[iVar3] = 0;
       (&DAT_000f2501)[iVar3] = 0;
       (&DAT_000f2506)[iVar3] = (char)uVar5;
-      sub_a6635((uint)uVar5 & 0xff,&unk_f24d8 + iVar3,(int)(char)(param_2 + *(char *)(iVar4 + 0x10))
+      pcspk_hw_voice_on((uint)uVar5 & 0xff,&unk_f24d8 + iVar3,(int)(char)(param_2 + *(char *)(iVar4 + 0x10))
                );
     }
   }
@@ -2478,15 +2478,15 @@ void sub_9d700(byte param_1,char param_2)
 
 
 // ================================================================================================
-// sub_9d805 @ 0x9d805 [__cdecl]
+// pcspk_note_off @ 0x9d805 [__cdecl]
 // ================================================================================================
 
-void sub_9d805(byte param_1,char param_2)
+void pcspk_note_off(byte param_1,char param_2)
 
 {
   short sVar1;
   
-  sub_902a0();
+  empty_func_902a0();
   sVar1 = 0;
   while ((sVar1 < 0x10 &&
          (((unk_f24d9 == '\0' || (param_2 != DAT_000f24db)) || (param_1 != unk_f24d8))))) {
@@ -2505,15 +2505,15 @@ void sub_9d805(byte param_1,char param_2)
 
 
 // ================================================================================================
-// sub_9d858 @ 0x9d858 [__cdecl]
+// pcspk_program @ 0x9d858 [__cdecl]
 // ================================================================================================
 
-void sub_9d858(byte param_1)
+void pcspk_program(byte param_1)
 
 {
   undefined4 uVar1;
   
-  sub_902a0();
+  empty_func_902a0();
   uVar1 = snd_patch_timbre();
   *(undefined4 *)(&unk_f27f6 + (uint)param_1 * 0x4e) = uVar1;
   return;
@@ -2521,10 +2521,10 @@ void sub_9d858(byte param_1)
 
 
 // ================================================================================================
-// sub_9d880 @ 0x9d880 [__watcall]
+// pcspk_update_voices @ 0x9d880 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9d880(void)
+void __watcall pcspk_update_voices(void)
 
 {
   int iVar1;
@@ -2539,7 +2539,7 @@ void __watcall sub_9d880(void)
   uVar2 = 0;
   do {
     if (byte_d5224 <= uVar2) {
-      sub_a677b();
+      pcspk_hw_update();
       return;
     }
     if (pbVar6[1] != 0) {
@@ -2579,7 +2579,7 @@ void __watcall sub_9d880(void)
           pbVar6[0x16] = 0;
           pbVar6[1] = 0;
           (&unk_f27ee)[(uint)*pbVar6 * 0x4e] = (&unk_f27ee)[(uint)*pbVar6 * 0x4e] + -1;
-          sub_a6672(pbVar6[0x2e]);
+          pcspk_hw_voice_off(pbVar6[0x2e]);
         }
       }
       if (*(char *)(iVar1 + 0x28) != '\0') {
@@ -2593,7 +2593,7 @@ void __watcall sub_9d880(void)
               pbVar6[0x27] = *(byte *)(iVar1 + 0x29);
               if (pbVar6[0x26] == 2) {
                 *(short *)(pbVar6 + 0x1c) = *(short *)(pbVar6 + 0x1c) - *(short *)(pbVar6 + 0x24);
-                uVar7 = sub_a2ac8((int)*(short *)(pbVar6 + 0x1c),*(undefined2 *)(iVar1 + 0x2e));
+                uVar7 = abs((int)*(short *)(pbVar6 + 0x1c),*(undefined2 *)(iVar1 + 0x2e));
                 if ((int)((ulonglong)uVar7 >> 0x20) <= (int)uVar7) {
                   if ((*(byte *)(iVar1 + 0x34) & 1) == 0) {
 LAB_0009d9c8:
@@ -2608,7 +2608,7 @@ LAB_0009d9c8:
               else {
                 sVar5 = *(short *)(pbVar6 + 0x1c);
                 *(short *)(pbVar6 + 0x1c) = sVar5 + *(short *)(pbVar6 + 0x24);
-                uVar7 = sub_a2ac8((int)(short)(sVar5 + *(short *)(pbVar6 + 0x24)),
+                uVar7 = abs((int)(short)(sVar5 + *(short *)(pbVar6 + 0x24)),
                                   *(undefined2 *)(iVar1 + 0x2e));
                 if ((int)((ulonglong)uVar7 >> 0x20) <= (int)uVar7) {
                   if ((*(byte *)(iVar1 + 0x34) & 2) == 0) goto LAB_0009d9c8;
@@ -2644,7 +2644,7 @@ LAB_0009d9c8:
           *(short *)(pbVar6 + 0x1e) = *(short *)(pbVar6 + 0x1e) + -1;
         }
       }
-      sub_a6684(pbVar6[0x2e],pbVar6,*(undefined4 *)(pbVar6 + 0x2a),*(undefined4 *)(pbVar6 + 0x10));
+      pcspk_hw_voice_pitch(pbVar6[0x2e],pbVar6,*(undefined4 *)(pbVar6 + 0x2a),*(undefined4 *)(pbVar6 + 0x10));
     }
     pbVar6 = pbVar6 + 0x30;
     uVar2 = uVar2 + 1;
@@ -2653,10 +2653,10 @@ LAB_0009d9c8:
 
 
 // ================================================================================================
-// sub_9da99 @ 0x9da99 [__watcall]
+// timbre_env_sign @ 0x9da99 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_9da99(int param_1)
+undefined4 __watcall timbre_env_sign(int param_1)
 
 {
   if (*(short *)(param_1 + 0xc) == 0) {
@@ -2667,10 +2667,10 @@ undefined4 __watcall sub_9da99(int param_1)
 
 
 // ================================================================================================
-// sub_9daac @ 0x9daac [__watcall]
+// pcspk_drv_send_midi @ 0x9daac [__watcall]
 // ================================================================================================
 
-void __watcall sub_9daac(void)
+void __watcall pcspk_drv_send_midi(void)
 
 {
   ushort uVar1;
@@ -2686,7 +2686,7 @@ void __watcall sub_9daac(void)
   byte local_1c;
   byte local_14;
   
-  sub_902a0();
+  empty_func_902a0();
   iVar3 = dword_d4f9a;
   local_1c = 0xc0;
   local_20 = 1;
@@ -2708,14 +2708,14 @@ void __watcall sub_9daac(void)
           local_3c = pbVar4;
           if (0x7f < local_1c) {
             if (local_1c < 0x81) {
-              sub_9d805(local_14,*pbVar4);
+              pcspk_note_off(local_14,*pbVar4);
             }
             else if (local_1c == 0x90) {
               if ((&DAT_000f21fd)[iVar3] == '\0') {
-                sub_9d805(local_14,*pbVar4);
+                pcspk_note_off(local_14,*pbVar4);
               }
               else {
-                sub_9d700(local_14,*pbVar4,(&DAT_000f21fd)[iVar3]);
+                pcspk_note_on(local_14,*pbVar4,(&DAT_000f21fd)[iVar3]);
               }
             }
           }
@@ -2723,7 +2723,7 @@ void __watcall sub_9daac(void)
         else {
           local_3c = pbVar4;
           if (((0xb0 < local_1c) && (0xbf < local_1c)) && (local_1c < 0xc1)) {
-            sub_9d858(local_14,*pbVar4);
+            pcspk_program(local_14,*pbVar4);
           }
         }
       }
@@ -2749,10 +2749,10 @@ void __watcall sub_9daac(void)
 
 
 // ================================================================================================
-// sub_9dc9f @ 0x9dc9f [__watcall]
+// sbdac_drv_send_midi @ 0x9dc9f [__watcall]
 // ================================================================================================
 
-void __watcall sub_9dc9f(void)
+void __watcall sbdac_drv_send_midi(void)
 
 {
   ushort uVar1;
@@ -2768,7 +2768,7 @@ void __watcall sub_9dc9f(void)
   byte local_18;
   byte local_14;
   
-  sub_902a0();
+  empty_func_902a0();
   iVar3 = dword_d4f9a;
   local_14 = 0xc0;
   local_18 = 1;
@@ -2790,30 +2790,30 @@ void __watcall sub_9dc9f(void)
           local_28 = pbVar4;
           if (0x7f < local_14) {
             if (local_14 < 0x81) {
-              sub_9f685(local_1c,*pbVar4);
+              sbdac_channel_notes_off(local_1c,*pbVar4);
             }
             else if (local_14 == 0x90) {
               if ((&DAT_000f21fd)[iVar3] == '\0') {
-                sub_9f685(local_1c,*pbVar4);
+                sbdac_channel_notes_off(local_1c,*pbVar4);
               }
               else {
-                sub_9f725(local_1c,*pbVar4,(&DAT_000f21fd)[iVar3]);
+                sbdac_note_on(local_1c,*pbVar4,(&DAT_000f21fd)[iVar3]);
               }
             }
           }
         }
         else if (local_14 < 0xb1) {
-          sub_9fa5d(local_1c,*pbVar4,(&DAT_000f21fd)[iVar3]);
+          sbdac_controller(local_1c,*pbVar4,(&DAT_000f21fd)[iVar3]);
           local_28 = pbVar4;
         }
         else {
           local_28 = pbVar4;
           if (0xbf < local_14) {
             if (local_14 < 0xc1) {
-              sub_9fc24(local_1c,*pbVar4);
+              sbdac_program(local_1c,*pbVar4);
             }
             else if (local_14 == 0xe0) {
-              sub_9fc94(local_1c,(int)(short)((ushort)(byte)(&DAT_000f21fd)[iVar3] * 0x100 + -0x4000
+              sbdac_pitch_bend(local_1c,(int)(short)((ushort)(byte)(&DAT_000f21fd)[iVar3] * 0x100 + -0x4000
                                              ));
             }
           }
@@ -2841,38 +2841,38 @@ void __watcall sub_9dc9f(void)
 
 
 // ================================================================================================
-// sub_9de9c @ 0x9de9c [__watcall]
+// adlib_drv_default_port @ 0x9de9c [__watcall]
 // ================================================================================================
 
-void __watcall sub_9de9c(void)
+void __watcall adlib_drv_default_port(void)
 
 {
-  sub_902a0();
-  sub_a6a01();
+  empty_func_902a0();
+  opl_default_port();
   return;
 }
 
 
 // ================================================================================================
-// sub_9dea9 @ 0x9dea9 [__watcall]
+// adlib_drv_detect @ 0x9dea9 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9dea9(void)
+void __watcall adlib_drv_detect(void)
 
 {
   undefined4 in_stack_00000004;
   
-  sub_902a0();
-  sub_a6a09(in_stack_00000004);
+  empty_func_902a0();
+  opl_detect(in_stack_00000004);
   return;
 }
 
 
 // ================================================================================================
-// sub_9debe @ 0x9debe [__watcall]
+// adlib_drv_init @ 0x9debe [__watcall]
 // ================================================================================================
 
-void __watcall sub_9debe(void)
+void __watcall adlib_drv_init(void)
 
 {
   int iVar1;
@@ -2880,7 +2880,7 @@ void __watcall sub_9debe(void)
   uint uVar3;
   undefined4 in_stack_00000004;
   
-  sub_902a0();
+  empty_func_902a0();
   word_f3452 = 0x1ff;
   word_f3450 = 0;
   word_f344e = 0;
@@ -2900,29 +2900,29 @@ void __watcall sub_9debe(void)
     (&unk_f3196)[(uint)uVar2 * 0x56] = 0xff;
     (&unk_f3150)[(uint)uVar2 * 0x2b] = uVar2;
   }
-  sub_a69e8(in_stack_00000004);
+  opl_init_port(in_stack_00000004);
   return;
 }
 
 
 // ================================================================================================
-// sub_9df73 @ 0x9df73 [__watcall]
+// adlib_drv_shutdown @ 0x9df73 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9df73(void)
+void __watcall adlib_drv_shutdown(void)
 
 {
-  sub_902a0();
-  sub_a69fb();
+  empty_func_902a0();
+  opl_shutdown();
   return;
 }
 
 
 // ================================================================================================
-// sub_9df80 @ 0x9df80 [__watcall]
+// adlib_drv_tick @ 0x9df80 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9df80(void)
+void __watcall adlib_drv_tick(void)
 
 {
   ushort *puVar1;
@@ -2933,14 +2933,14 @@ void __watcall sub_9df80(void)
   ushort uVar6;
   ushort uVar7;
   
-  sub_902a0();
+  empty_func_902a0();
   uVar6 = 1;
   for (uVar7 = 0; uVar7 < 9; uVar7 = uVar7 + 1) {
     if ((uVar6 & word_f3450) != 0) {
       uVar4 = (uint)uVar7;
       iVar5 = uVar4 * 0x56;
       if ((&DAT_000f3170)[uVar4 * 0x2b] == 0) {
-        sub_9e390(*(undefined4 *)((int)&DAT_000f314c + iVar5),&unk_f3150 + uVar4 * 0x2b,1);
+        adlib_voice_off(*(undefined4 *)((int)&DAT_000f314c + iVar5),&unk_f3150 + uVar4 * 0x2b,1);
         uVar2 = ~uVar6;
         word_f3450 = word_f3450 & uVar2;
         word_f344e = word_f344e & uVar2;
@@ -2958,21 +2958,21 @@ void __watcall sub_9df80(void)
           sVar3 = (&DAT_000f319c)[uVar4 * 0x2b] + -1;
         }
         (&DAT_000f319c)[uVar4 * 0x2b] = sVar3;
-        sub_9ebd5(*(undefined4 *)((int)&DAT_000f314c + iVar5),&unk_f3150 + uVar4 * 0x2b);
+        adlib_voice_output(*(undefined4 *)((int)&DAT_000f314c + iVar5),&unk_f3150 + uVar4 * 0x2b);
       }
     }
     uVar6 = uVar6 * 2;
   }
-  sub_a68c9();
+  opl_flush_regs();
   return;
 }
 
 
 // ================================================================================================
-// sub_9e026 @ 0x9e026 [__watcall]
+// adlib_voice_patch @ 0x9e026 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9e026(int param_1,int unaff_EDX)
+void __watcall adlib_voice_patch(int param_1,int unaff_EDX)
 
 {
   undefined4 uVar1;
@@ -2999,10 +2999,10 @@ void __watcall sub_9e026(int param_1,int unaff_EDX)
 
 
 // ================================================================================================
-// sub_9e087 @ 0x9e087 [__watcall]
+// adlib_channel_release @ 0x9e087 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9e087(uint param_1,char unaff_DL)
+void __watcall adlib_channel_release(uint param_1,char unaff_DL)
 
 {
   int iVar1;
@@ -3030,16 +3030,16 @@ void __watcall sub_9e087(uint param_1,char unaff_DL)
   }
   word_f344e = word_f344e | uVar5;
   (&DAT_000f319c)[iVar2 * 0x2b] = (short)(&DAT_000f319c)[iVar2 * 0x2b] >> 1;
-  sub_9e378(*(undefined4 *)((int)&DAT_000f314c + iVar3),&unk_f3150 + iVar2 * 0x2b);
+  adlib_voice_release(*(undefined4 *)((int)&DAT_000f314c + iVar3),&unk_f3150 + iVar2 * 0x2b);
   return;
 }
 
 
 // ================================================================================================
-// sub_9e0ff @ 0x9e0ff [__watcall]
+// adlib_controller @ 0x9e0ff [__watcall]
 // ================================================================================================
 
-void __watcall sub_9e0ff(byte param_1,byte unaff_DL,byte unaff_BL)
+void __watcall adlib_controller(byte param_1,byte unaff_DL,byte unaff_BL)
 
 {
   int iVar1;
@@ -3062,7 +3062,7 @@ void __watcall sub_9e0ff(byte param_1,byte unaff_DL,byte unaff_BL)
       }
     }
     else if (unaff_DL < 8) {
-      uVar2 = sub_a6b73(unaff_BL);
+      uVar2 = adlib_controller_table(unaff_BL);
       *(undefined2 *)(iVar1 + 6) = uVar2;
     }
     else if (unaff_DL == 10) {
@@ -3082,7 +3082,7 @@ void __watcall sub_9e0ff(byte param_1,byte unaff_DL,byte unaff_BL)
       uVar6 = 1;
       for (uVar5 = 0; uVar5 < 9; uVar5 = uVar5 + 1) {
         if ((uVar6 & uVar3) != 0) {
-          sub_9e087(param_1,(&unk_f3197)[(uint)uVar5 * 0x56]);
+          adlib_channel_release(param_1,(&unk_f3197)[(uint)uVar5 * 0x56]);
         }
         uVar6 = uVar6 * 2;
       }
@@ -3101,7 +3101,7 @@ void __watcall sub_9e0ff(byte param_1,byte unaff_DL,byte unaff_BL)
     uVar6 = 1;
     for (uVar5 = 0; uVar5 < 9; uVar5 = uVar5 + 1) {
       if ((uVar6 & uVar3) != 0) {
-        sub_9e390(*(undefined4 *)((int)&DAT_000f314c + (uint)uVar5 * 0x56),
+        adlib_voice_off(*(undefined4 *)((int)&DAT_000f314c + (uint)uVar5 * 0x56),
                   &unk_f3150 + (uint)uVar5 * 0x2b,1);
         uVar4 = ~uVar6;
         word_f3450 = word_f3450 & uVar4;
@@ -3118,10 +3118,10 @@ void __watcall sub_9e0ff(byte param_1,byte unaff_DL,byte unaff_BL)
 
 
 // ================================================================================================
-// sub_9e28b @ 0x9e28b [__watcall]
+// adlib_program @ 0x9e28b [__watcall]
 // ================================================================================================
 
-void __watcall sub_9e28b(uint param_1,undefined unaff_DL)
+void __watcall adlib_program(uint param_1,undefined unaff_DL)
 
 {
   *(undefined *)((&unk_f3108)[param_1 & 0xff] + 0x1b) = unaff_DL;
@@ -3130,10 +3130,10 @@ void __watcall sub_9e28b(uint param_1,undefined unaff_DL)
 
 
 // ================================================================================================
-// sub_9e29b @ 0x9e29b [__watcall]
+// adlib_pitch_bend @ 0x9e29b [__watcall]
 // ================================================================================================
 
-void __watcall sub_9e29b(uint param_1,short unaff_DX)
+void __watcall adlib_pitch_bend(uint param_1,short unaff_DX)
 
 {
   *(short *)((&unk_f3108)[param_1 & 0xff] + 0xc) = unaff_DX * 2;
@@ -3142,10 +3142,10 @@ void __watcall sub_9e29b(uint param_1,short unaff_DX)
 
 
 // ================================================================================================
-// sub_9e2b1 @ 0x9e2b1 [__watcall]
+// adlib_voice_load_timbre @ 0x9e2b1 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9e2b1(int param_1,int unaff_EDX,undefined unaff_BL,undefined unaff_CL)
+void __watcall adlib_voice_load_timbre(int param_1,int unaff_EDX,undefined unaff_BL,undefined unaff_CL)
 
 {
   char cVar1;
@@ -3160,10 +3160,10 @@ void __watcall sub_9e2b1(int param_1,int unaff_EDX,undefined unaff_BL,undefined 
     *(char *)(unaff_EDX + 0x26) = (sVar2 == 0) + '\x01';
   }
   if (*(short *)(param_1 + 0x22) != 0) {
-    sub_9e59d(param_1 + 0x24,unaff_EDX + 0x28);
+    adlib_env_init(param_1 + 0x24,unaff_EDX + 0x28);
   }
   if (*(short *)(param_1 + 0x32) != 0) {
-    sub_9e4d7(param_1 + 0x34,unaff_EDX + 0x36);
+    adlib_lfo_init(param_1 + 0x34,unaff_EDX + 0x36);
   }
   *(undefined2 *)(unaff_EDX + 0x1c) = 0;
   *(undefined2 *)(unaff_EDX + 0x1a) = *(undefined2 *)(unaff_EDX + 0x1c);
@@ -3171,9 +3171,9 @@ void __watcall sub_9e2b1(int param_1,int unaff_EDX,undefined unaff_BL,undefined 
   *(undefined *)(unaff_EDX + 0x19) = unaff_BL;
   *(undefined *)(unaff_EDX + 0x18) = unaff_BL;
   cVar1 = *(char *)(*(int *)(unaff_EDX + 0x42) + 0xd);
-  sVar2 = sub_a6b32();
+  sVar2 = adlib_note_fnum();
   *(short *)(unaff_EDX + 0x14) = sVar2 + cVar1;
-  uVar3 = sub_a6b5d(unaff_CL);
+  uVar3 = adlib_level_table(unaff_CL);
   *(undefined2 *)(unaff_EDX + 0x10) = uVar3;
   *(undefined *)(unaff_EDX + 0x1e) = 1;
   *(undefined2 *)(unaff_EDX + 0x20) = 0xffff;
@@ -3182,10 +3182,10 @@ void __watcall sub_9e2b1(int param_1,int unaff_EDX,undefined unaff_BL,undefined 
 
 
 // ================================================================================================
-// sub_9e378 @ 0x9e378 [__watcall]
+// adlib_voice_release @ 0x9e378 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9e378(int param_1,int unaff_EDX)
+void __watcall adlib_voice_release(int param_1,int unaff_EDX)
 
 {
   if (*(short *)(param_1 + 0x10) != 0) {
@@ -3198,10 +3198,10 @@ void __watcall sub_9e378(int param_1,int unaff_EDX)
 
 
 // ================================================================================================
-// sub_9e390 @ 0x9e390 [__watcall]
+// adlib_voice_off @ 0x9e390 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9e390(int param_1,short *unaff_EDX,int unaff_EBX,undefined4 unaff_ECX)
+void __watcall adlib_voice_off(int param_1,short *unaff_EDX,int unaff_EBX,undefined4 unaff_ECX)
 
 {
   if (*(short *)(param_1 + 0x10) != 0) {
@@ -3223,18 +3223,18 @@ void __watcall sub_9e390(int param_1,short *unaff_EDX,int unaff_EBX,undefined4 u
     *(byte *)(unaff_EDX + 7) = *(byte *)(unaff_EDX + 7) & 0xdf;
     *(byte *)((int)unaff_EDX + 5) = *(byte *)((int)unaff_EDX + 5) & 0xf0 | 0xe;
     *(byte *)(unaff_EDX + 5) = *(byte *)(unaff_EDX + 5) & 0xf0 | 0xe;
-    sub_a699d((int)*unaff_EDX,unaff_EDX + 1,unaff_ECX);
-    sub_a68c9();
+    opl_voice_regs((int)*unaff_EDX,unaff_EDX + 1,unaff_ECX);
+    opl_flush_regs();
   }
   return;
 }
 
 
 // ================================================================================================
-// sub_9e428 @ 0x9e428 [__watcall]
+// adlib_env_step @ 0x9e428 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9e428(int param_1,short *unaff_EDX)
+void __watcall adlib_env_step(int param_1,short *unaff_EDX)
 
 {
   short sVar1;
@@ -3284,10 +3284,10 @@ joined_r0x0009e4c7:
 
 
 // ================================================================================================
-// sub_9e4d7 @ 0x9e4d7 [__watcall]
+// adlib_lfo_init @ 0x9e4d7 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9e4d7(short *param_1,undefined2 *unaff_EDX)
+void __watcall adlib_lfo_init(short *param_1,undefined2 *unaff_EDX)
 
 {
   short sVar1;
@@ -3303,16 +3303,16 @@ void __watcall sub_9e4d7(short *param_1,undefined2 *unaff_EDX)
     return;
   }
   *(undefined *)(unaff_EDX + 1) = 2;
-  sub_9e511();
+  adlib_lfo_step();
   return;
 }
 
 
 // ================================================================================================
-// sub_9e511 @ 0x9e511 [__watcall]
+// adlib_lfo_step @ 0x9e511 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9e511(int param_1,undefined2 *unaff_EDX)
+void __watcall adlib_lfo_step(int param_1,undefined2 *unaff_EDX)
 
 {
   byte bVar1;
@@ -3362,10 +3362,10 @@ void __watcall sub_9e511(int param_1,undefined2 *unaff_EDX)
 
 
 // ================================================================================================
-// sub_9e59d @ 0x9e59d [__watcall]
+// adlib_env_init @ 0x9e59d [__watcall]
 // ================================================================================================
 
-void __watcall sub_9e59d(int param_1,undefined2 *unaff_EDX)
+void __watcall adlib_env_init(int param_1,undefined2 *unaff_EDX)
 
 {
   undefined2 uVar1;
@@ -3383,10 +3383,10 @@ void __watcall sub_9e59d(int param_1,undefined2 *unaff_EDX)
 
 
 // ================================================================================================
-// sub_9e5c9 @ 0x9e5c9 [__watcall]
+// adlib_env_update @ 0x9e5c9 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9e5c9(short *param_1,short *unaff_EDX)
+void __watcall adlib_env_update(short *param_1,short *unaff_EDX)
 
 {
   byte bVar1;
@@ -3408,8 +3408,8 @@ LAB_0009e601:
     if (unaff_EDX[3] < param_1[1]) {
       sVar2 = unaff_EDX[6];
       unaff_EDX[6] = sVar2 + unaff_EDX[5];
-      uVar3 = sub_b4a60((int)(uint)(ushort)(sVar2 + unaff_EDX[5]) >> 6);
-      sVar2 = sub_91fa4((int)unaff_EDX[4] << 2,uVar3);
+      uVar3 = sin_lookup((int)(uint)(ushort)(sVar2 + unaff_EDX[5]) >> 6);
+      sVar2 = fixmul16((int)unaff_EDX[4] << 2,uVar3);
       unaff_EDX[1] = sVar2;
       goto LAB_0009e641;
     }
@@ -3435,10 +3435,10 @@ LAB_0009e641:
 
 
 // ================================================================================================
-// sub_9e676 @ 0x9e676 [__watcall]
+// adlib_drv_send_midi @ 0x9e676 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9e676(void)
+void __watcall adlib_drv_send_midi(void)
 
 {
   ushort uVar1;
@@ -3454,7 +3454,7 @@ void __watcall sub_9e676(void)
   byte local_1c;
   byte local_14;
   
-  sub_902a0();
+  empty_func_902a0();
   iVar3 = dword_d4f9a;
   local_1c = 0xc0;
   local_20 = 1;
@@ -3476,30 +3476,30 @@ void __watcall sub_9e676(void)
           local_2c = pbVar4;
           if (0x7f < local_1c) {
             if (local_1c < 0x81) {
-              sub_9e087(local_14,*pbVar4);
+              adlib_channel_release(local_14,*pbVar4);
             }
             else if (local_1c == 0x90) {
               if ((&DAT_000f21fd)[iVar3] == '\0') {
-                sub_9e087(local_14,*pbVar4);
+                adlib_channel_release(local_14,*pbVar4);
               }
               else {
-                sub_9ece8(local_14,*pbVar4,(&DAT_000f21fd)[iVar3]);
+                adlib_note_on(local_14,*pbVar4,(&DAT_000f21fd)[iVar3]);
               }
             }
           }
         }
         else if (local_1c < 0xb1) {
-          sub_9e0ff(local_14,*pbVar4,(&DAT_000f21fd)[iVar3]);
+          adlib_controller(local_14,*pbVar4,(&DAT_000f21fd)[iVar3]);
           local_2c = pbVar4;
         }
         else {
           local_2c = pbVar4;
           if (0xbf < local_1c) {
             if (local_1c < 0xc1) {
-              sub_9e28b(local_14,*pbVar4);
+              adlib_program(local_14,*pbVar4);
             }
             else if (local_1c == 0xe0) {
-              sub_9e29b(local_14,(int)(short)((ushort)*pbVar4 +
+              adlib_pitch_bend(local_14,(int)(short)((ushort)*pbVar4 +
                                               (ushort)(byte)(&DAT_000f21fd)[iVar3] * 0x80 + -0x2000)
                        );
             }
@@ -3528,10 +3528,10 @@ void __watcall sub_9e676(void)
 
 
 // ================================================================================================
-// sub_9e85b @ 0x9e85b [__watcall]
+// adlib_voice_modulate @ 0x9e85b [__watcall]
 // ================================================================================================
 
-void __watcall sub_9e85b(int param_1,int unaff_EDX,undefined2 unaff_BX,short unaff_CX)
+void __watcall adlib_voice_modulate(int param_1,int unaff_EDX,undefined2 unaff_BX,short unaff_CX)
 
 {
   char cVar1;
@@ -3542,7 +3542,7 @@ void __watcall sub_9e85b(int param_1,int unaff_EDX,undefined2 unaff_BX,short una
   switch(unaff_BX) {
   case 1:
     *(char *)(unaff_EDX + 0x19) = *(char *)(unaff_EDX + 0x18) + (char)unaff_CX;
-    uVar2 = sub_a6b32();
+    uVar2 = adlib_note_fnum();
     *(undefined2 *)(unaff_EDX + 0x16) = uVar2;
     break;
   case 2:
@@ -3553,39 +3553,39 @@ void __watcall sub_9e85b(int param_1,int unaff_EDX,undefined2 unaff_BX,short una
     if (unaff_CX < 0) {
       local_2c = -unaff_CX;
     }
-    uVar2 = sub_91fa4((int)*(short *)(unaff_EDX + 0x12) << 2,(int)local_2c);
+    uVar2 = fixmul16((int)*(short *)(unaff_EDX + 0x12) << 2,(int)local_2c);
     *(undefined2 *)(unaff_EDX + 0x12) = uVar2;
     break;
   case 5:
-    sVar3 = sub_91fa4((int)unaff_CX,(int)*(short *)(param_1 + 0x2c));
+    sVar3 = fixmul16((int)unaff_CX,(int)*(short *)(param_1 + 0x2c));
     *(short *)(unaff_EDX + 0x30) = *(short *)(param_1 + 0x28) + sVar3;
     break;
   case 7:
     if (unaff_CX < 1) {
       if (unaff_CX < 0) {
         if (*(short *)(unaff_EDX + 0x1c) == 0) {
-          sVar3 = sub_a6b32();
+          sVar3 = adlib_note_fnum();
           *(short *)(unaff_EDX + 0x1c) = *(short *)(unaff_EDX + 0x16) - sVar3;
         }
-        sVar3 = sub_91fa4((int)unaff_CX << 2,*(undefined2 *)(unaff_EDX + 0x1c));
+        sVar3 = fixmul16((int)unaff_CX << 2,*(undefined2 *)(unaff_EDX + 0x1c));
         *(short *)(unaff_EDX + 0x16) = *(short *)(unaff_EDX + 0x16) + sVar3;
       }
     }
     else {
       if (*(short *)(unaff_EDX + 0x1a) == 0) {
-        sVar3 = sub_a6b32();
+        sVar3 = adlib_note_fnum();
         *(short *)(unaff_EDX + 0x1a) = sVar3 - *(short *)(unaff_EDX + 0x16);
       }
-      sVar3 = sub_91fa4((int)unaff_CX << 2,*(undefined2 *)(unaff_EDX + 0x1a));
+      sVar3 = fixmul16((int)unaff_CX << 2,*(undefined2 *)(unaff_EDX + 0x1a));
       *(short *)(unaff_EDX + 0x16) = *(short *)(unaff_EDX + 0x16) + sVar3;
     }
     break;
   case 8:
-    uVar2 = sub_91fa4((int)unaff_CX,*(undefined2 *)(param_1 + 0x2e));
+    uVar2 = fixmul16((int)unaff_CX,*(undefined2 *)(param_1 + 0x2e));
     *(undefined2 *)(unaff_EDX + 0x32) = uVar2;
     break;
   case 9:
-    cVar1 = sub_91fa4((int)unaff_CX,0x3f);
+    cVar1 = fixmul16((int)unaff_CX,0x3f);
     *(byte *)(unaff_EDX + 8) = *(byte *)(unaff_EDX + 8) & 0xc0;
     *(byte *)(unaff_EDX + 8) = *(byte *)(unaff_EDX + 8) | 0x3fU - cVar1 & 0x3f;
   }
@@ -3594,10 +3594,10 @@ void __watcall sub_9e85b(int param_1,int unaff_EDX,undefined2 unaff_BX,short una
 
 
 // ================================================================================================
-// sub_9eaa6 @ 0x9eaa6 [__watcall]
+// adlib_voice_update @ 0x9eaa6 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9eaa6(int param_1,int unaff_EDX)
+void __watcall adlib_voice_update(int param_1,int unaff_EDX)
 
 {
   int iVar1;
@@ -3607,49 +3607,49 @@ void __watcall sub_9eaa6(int param_1,int unaff_EDX)
   *(undefined2 *)(unaff_EDX + 0x16) = *(undefined2 *)(unaff_EDX + 0x14);
   *(undefined2 *)(unaff_EDX + 0x12) = *(undefined2 *)(unaff_EDX + 0x10);
   if (*(short *)(param_1 + 0x32) != 0) {
-    sub_9e511(param_1 + 0x34,unaff_EDX + 0x36);
-    sub_9e85b(param_1,unaff_EDX,*(undefined2 *)(param_1 + 0x32),(int)*(short *)(unaff_EDX + 0x36));
+    adlib_lfo_step(param_1 + 0x34,unaff_EDX + 0x36);
+    adlib_voice_modulate(param_1,unaff_EDX,*(undefined2 *)(param_1 + 0x32),(int)*(short *)(unaff_EDX + 0x36));
   }
-  sub_9e85b(param_1,unaff_EDX,7,(int)*(short *)(iVar1 + 8));
+  adlib_voice_modulate(param_1,unaff_EDX,7,(int)*(short *)(iVar1 + 8));
   if (*(short *)(param_1 + 0x10) != 0) {
-    sub_9e428(param_1 + 0x12,unaff_EDX + 0x22);
-    sub_9e85b(param_1,unaff_EDX,*(undefined2 *)(param_1 + 0x10),(int)*(short *)(unaff_EDX + 0x22));
+    adlib_env_step(param_1 + 0x12,unaff_EDX + 0x22);
+    adlib_voice_modulate(param_1,unaff_EDX,*(undefined2 *)(param_1 + 0x10),(int)*(short *)(unaff_EDX + 0x22));
   }
   if (*(short *)(param_1 + 0x22) != 0) {
-    sub_9e5c9(param_1 + 0x24,unaff_EDX + 0x28);
-    sub_9e85b(param_1,unaff_EDX,*(undefined2 *)(param_1 + 0x22),(int)*(short *)(unaff_EDX + 0x28));
+    adlib_env_update(param_1 + 0x24,unaff_EDX + 0x28);
+    adlib_voice_modulate(param_1,unaff_EDX,*(undefined2 *)(param_1 + 0x22),(int)*(short *)(unaff_EDX + 0x28));
   }
   psVar2 = *(short **)(unaff_EDX + 0x42);
-  sub_9e85b(param_1,unaff_EDX,5,(int)*psVar2);
-  sub_9e85b(param_1,unaff_EDX,3,(int)psVar2[1]);
+  adlib_voice_modulate(param_1,unaff_EDX,5,(int)*psVar2);
+  adlib_voice_modulate(param_1,unaff_EDX,3,(int)psVar2[1]);
   return;
 }
 
 
 // ================================================================================================
-// sub_9ebd5 @ 0x9ebd5 [__watcall]
+// adlib_voice_output @ 0x9ebd5 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9ebd5(int param_1,short *unaff_EDX)
+void __watcall adlib_voice_output(int param_1,short *unaff_EDX)
 
 {
   char cVar1;
   
-  sub_9eaa6(param_1,unaff_EDX);
+  adlib_voice_update(param_1,unaff_EDX);
   if ((*(byte *)(unaff_EDX + 6) & 1) == 1) {
-    cVar1 = sub_91fa4((int)unaff_EDX[9] << 2,
+    cVar1 = fixmul16((int)unaff_EDX[9] << 2,
                       (int)(short)(0x3f - (ushort)(*(byte *)(param_1 + 8) & 0x3f)));
     *(byte *)(unaff_EDX + 4) = *(byte *)(unaff_EDX + 4) & 0xc0;
     *(byte *)(unaff_EDX + 4) = *(byte *)(unaff_EDX + 4) | 0x3fU - cVar1 & 0x3f;
   }
-  cVar1 = sub_91fa4((int)unaff_EDX[9] << 2,
+  cVar1 = fixmul16((int)unaff_EDX[9] << 2,
                     (int)(short)(0x3f - (ushort)(*(byte *)(param_1 + 3) & 0x3f)));
   *(byte *)((int)unaff_EDX + 3) = *(byte *)((int)unaff_EDX + 3) & 0xc0;
   *(byte *)((int)unaff_EDX + 3) = *(byte *)((int)unaff_EDX + 3) | 0x3fU - cVar1 & 0x3f;
   *(short *)((int)unaff_EDX + 0xd) = unaff_EDX[0xb];
   *(byte *)(unaff_EDX + 7) = *(byte *)(unaff_EDX + 7) & 0xdf;
   *(byte *)(unaff_EDX + 7) = *(byte *)(unaff_EDX + 7) | (*(byte *)(unaff_EDX + 0xf) & 1) << 5;
-  sub_a699d((int)*unaff_EDX,unaff_EDX + 1);
+  opl_voice_regs((int)*unaff_EDX,unaff_EDX + 1);
   if (0 < unaff_EDX[0x10]) {
     unaff_EDX[0x10] = unaff_EDX[0x10] + -1;
   }
@@ -3658,10 +3658,10 @@ void __watcall sub_9ebd5(int param_1,short *unaff_EDX)
 
 
 // ================================================================================================
-// sub_9ece8 @ 0x9ece8 [__watcall]
+// adlib_note_on @ 0x9ece8 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9ece8(byte param_1,byte unaff_DL,undefined unaff_BL)
+void __watcall adlib_note_on(byte param_1,byte unaff_DL,undefined unaff_BL)
 
 {
   ushort uVar1;
@@ -3715,15 +3715,15 @@ void __watcall sub_9ece8(byte param_1,byte unaff_DL,undefined unaff_BL)
         *(int *)((int)&unk_f3148 + iVar6) = iVar3;
         (&unk_f3197)[iVar6] = unaff_DL;
         *(int *)(&DAT_000f3192 + iVar6) = iVar3 + 4;
-        sub_9e026(iVar3,(int *)((int)&unk_f3148 + iVar6));
-        sub_9e2b1(*(undefined4 *)((int)&DAT_000f314c + iVar6),
+        adlib_voice_patch(iVar3,(int *)((int)&unk_f3148 + iVar6));
+        adlib_voice_load_timbre(*(undefined4 *)((int)&DAT_000f314c + iVar6),
                   &unk_f3150 + (local_38 & 0xffff) * 0x2b,
                   *(char *)(*(int *)(&DAT_000f3198 + iVar6) + 7) + local_20,unaff_BL);
       }
       else {
         uVar4 = word_f344e & *(ushort *)(iVar3 + 0x16);
         if (uVar4 == 0) {
-          sub_9e390(local_44[1],local_44 + 2,1);
+          adlib_voice_off(local_44[1],local_44 + 2,1);
           uVar4 = (ushort)local_28;
           word_f3452 = word_f3452 & ~uVar4;
           word_f344e = word_f344e & ~uVar4;
@@ -3733,8 +3733,8 @@ void __watcall sub_9ece8(byte param_1,byte unaff_DL,undefined unaff_BL)
           *local_44 = iVar3;
           *(byte *)((int)local_44 + 0x4f) = unaff_DL;
           *(int *)((int)local_44 + 0x4a) = iVar3 + 4;
-          sub_9e026(iVar3,local_44);
-          sub_9e2b1(local_44[1],local_44 + 2,*(char *)(local_44[0x14] + 7) + local_20,unaff_BL);
+          adlib_voice_patch(iVar3,local_44);
+          adlib_voice_load_timbre(local_44[1],local_44 + 2,*(char *)(local_44[0x14] + 7) + local_20,unaff_BL);
         }
         else {
           local_38 = 0;
@@ -3743,7 +3743,7 @@ void __watcall sub_9ece8(byte param_1,byte unaff_DL,undefined unaff_BL)
           }
           local_38 = local_38 & 0xffff;
           iVar6 = local_38 * 0x56;
-          sub_9e390(*(undefined4 *)((int)&DAT_000f314c + iVar6),&unk_f3150 + local_38 * 0x2b,1);
+          adlib_voice_off(*(undefined4 *)((int)&DAT_000f314c + iVar6),&unk_f3150 + local_38 * 0x2b,1);
           uVar4 = uVar4 & -uVar4;
           word_f3452 = word_f3452 & ~uVar4;
           word_f344e = word_f344e & ~uVar4;
@@ -3753,8 +3753,8 @@ void __watcall sub_9ece8(byte param_1,byte unaff_DL,undefined unaff_BL)
           *(int *)((int)&unk_f3148 + iVar6) = iVar3;
           (&unk_f3197)[iVar6] = unaff_DL;
           *(int *)(&DAT_000f3192 + iVar6) = iVar3 + 4;
-          sub_9e026(iVar3,(int *)((int)&unk_f3148 + iVar6));
-          sub_9e2b1(*(undefined4 *)((int)&DAT_000f314c + iVar6),&unk_f3150 + local_38 * 0x2b,
+          adlib_voice_patch(iVar3,(int *)((int)&unk_f3148 + iVar6));
+          adlib_voice_load_timbre(*(undefined4 *)((int)&DAT_000f314c + iVar6),&unk_f3150 + local_38 * 0x2b,
                     *(char *)(*(int *)(&DAT_000f3198 + iVar6) + 7) + local_20,unaff_BL);
         }
       }
@@ -3776,7 +3776,7 @@ void __watcall sub_9ece8(byte param_1,byte unaff_DL,undefined unaff_BL)
           }
           local_34 = (uint)(ushort)((ushort)local_34 << 1);
         }
-        sub_9e390(local_44[1],local_44 + 2,0);
+        adlib_voice_off(local_44[1],local_44 + 2,0);
         uVar4 = (ushort)local_28;
         word_f3452 = word_f3452 & ~uVar4;
         word_f344e = word_f344e & ~uVar4;
@@ -3799,24 +3799,24 @@ void __watcall sub_9ece8(byte param_1,byte unaff_DL,undefined unaff_BL)
     uVar4 = uVar4 + 1;
     local_34 = local_34 << 1;
   }
-  sub_9e390(*(undefined4 *)((int)&DAT_000f314c + iVar6),&unk_f3150 + uVar5 * 0x2b,1);
+  adlib_voice_off(*(undefined4 *)((int)&DAT_000f314c + iVar6),&unk_f3150 + uVar5 * 0x2b,1);
   word_f3450 = word_f3450 | (ushort)local_34;
   word_f3452 = word_f3452 & ~(ushort)local_34;
   word_f344e = word_f344e & ~(ushort)local_34;
   *(ushort *)(iVar3 + 0x18) = *(ushort *)(iVar3 + 0x18) & ~(ushort)local_34;
   *(ushort *)(iVar3 + 0x14) = *(ushort *)(iVar3 + 0x14) | (ushort)local_34;
-  sub_9e026(iVar3,piVar7);
-  sub_9e2b1(*(undefined4 *)((int)&DAT_000f314c + iVar6),&unk_f3150 + uVar5 * 0x2b,
+  adlib_voice_patch(iVar3,piVar7);
+  adlib_voice_load_timbre(*(undefined4 *)((int)&DAT_000f314c + iVar6),&unk_f3150 + uVar5 * 0x2b,
             *(char *)(*(int *)(&DAT_000f3198 + iVar6) + 7) + local_20,unaff_BL);
   return;
 }
 
 
 // ================================================================================================
-// sub_9f226 @ 0x9f226 [__watcall]
+// sbdac_drv_detect @ 0x9f226 [__watcall]
 // ================================================================================================
 
-int __watcall sub_9f226(void)
+int __watcall sbdac_drv_detect(void)
 
 {
   byte bVar1;
@@ -3831,12 +3831,12 @@ int __watcall sub_9f226(void)
   int local_8 [2];
   
   local_8[0] = 0x9f22c;
-  sub_902a0();
+  empty_func_902a0();
   local_8[0] = 0;
   local_c = 0;
   local_10 = -1;
   local_14 = 9;
-  pbVar2 = (byte *)sub_a6b87(aBLASTER);
+  pbVar2 = (byte *)getenv(aBLASTER);
   if (pbVar2 != (byte *)0x0) {
     while (bVar1 = *pbVar2, bVar1 != 0) {
       if (bVar1 < 0x56) {
@@ -3865,7 +3865,7 @@ LAB_0009f2f0:
             pbVar2 = pbVar4;
           }
 LAB_0009f31d:
-          iVar3 = sub_9f34c(pbVar4,piVar5,uVar6);
+          iVar3 = blaster_parse_hex(pbVar4,piVar5,uVar6);
           pbVar2 = pbVar2 + iVar3;
         }
         else if (bVar1 == 0x49) {
@@ -3877,9 +3877,9 @@ LAB_0009f2c5:
       }
       else if (bVar1 < 0x57) {
 LAB_0009f2d1:
-        iVar3 = sub_9f34c(pbVar2 + 1,&local_14,10);
+        iVar3 = blaster_parse_hex(pbVar2 + 1,&local_14,10);
         pbVar2 = pbVar2 + 1 + iVar3;
-        sub_9fd3d(local_8[0],local_14);
+        sb_mixer_set_volume(local_8[0],local_14);
       }
       else if (bVar1 < 100) {
         if (bVar1 == 0x61) goto LAB_0009f2b7;
@@ -3902,10 +3902,10 @@ LAB_0009f2d1:
 
 
 // ================================================================================================
-// sub_9f34c @ 0x9f34c [__watcall]
+// blaster_parse_hex @ 0x9f34c [__watcall]
 // ================================================================================================
 
-int __watcall sub_9f34c(int param_1,undefined4 *unaff_EDX)
+int __watcall blaster_parse_hex(int param_1,undefined4 *unaff_EDX)
 
 {
   char cVar1;
@@ -3919,31 +3919,31 @@ int __watcall sub_9f34c(int param_1,undefined4 *unaff_EDX)
     local_18[iVar3] = cVar1;
   }
   local_18[iVar3] = '\0';
-  uVar2 = sub_a6d24(local_18,local_10);
+  uVar2 = strtoul(local_18,local_10);
   *unaff_EDX = uVar2;
   return iVar3;
 }
 
 
 // ================================================================================================
-// sub_9f387 @ 0x9f387 [__watcall]
+// sbdac_drv_init @ 0x9f387 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_9f387(void)
+undefined4 __watcall sbdac_drv_init(void)
 
 {
   char cVar1;
   void *__s;
   int in_stack_00000004;
   
-  sub_902a0();
+  empty_func_902a0();
   if (in_stack_00000004 != 0) {
-    __s = (void *)sub_9fcab(0x40,&unk_d5258,&dword_d525c);
+    __s = (void *)dpmi_alloc_dos_memory(0x40,&unk_d5258,&dword_d525c);
     if (0xfe00 < ((uint)__s & 0xffff)) {
       __s = (void *)(((uint)__s & 0xf0000) + 0x10000);
     }
     memset(__s,0x80,0x200);
-    cVar1 = sub_a6da0(in_stack_00000004,dword_d524c,__s,0x200);
+    cVar1 = mix_init(in_stack_00000004,dword_d524c,__s,0x200);
     if (cVar1 != -1) {
       dword_d5250 = __s;
       return 1;
@@ -3955,10 +3955,10 @@ undefined4 __watcall sub_9f387(void)
 
 
 // ================================================================================================
-// sub_9f418 @ 0x9f418 [__watcall]
+// sbdac_drv_reset_voices @ 0x9f418 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9f418(void)
+void __watcall sbdac_drv_reset_voices(void)
 
 {
   int iVar1;
@@ -3966,7 +3966,7 @@ void __watcall sub_9f418(void)
   undefined4 *puVar3;
   undefined4 *puVar4;
   
-  sub_902a0();
+  empty_func_902a0();
   if (dword_d5250 != 0) {
     word_f3716 = 0xf;
     word_f3718 = 0;
@@ -3996,16 +3996,16 @@ void __watcall sub_9f418(void)
 
 
 // ================================================================================================
-// sub_9f4a0 @ 0x9f4a0 [__watcall]
+// sbdac_drv_shutdown @ 0x9f4a0 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9f4a0(void)
+void __watcall sbdac_drv_shutdown(void)
 
 {
-  sub_902a0();
+  empty_func_902a0();
   if (dword_d5250 != 0) {
-    sub_a6ded();
-    sub_9fd01(dword_d525c);
+    mix_shutdown();
+    dpmi_free_dos_memory(dword_d525c);
     dword_d5250 = 0;
   }
   return;
@@ -4013,23 +4013,23 @@ void __watcall sub_9f4a0(void)
 
 
 // ================================================================================================
-// sub_9f4c8 @ 0x9f4c8 [__watcall]
+// sbdac_drv_tick @ 0x9f4c8 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9f4c8(void)
+void __watcall sbdac_drv_tick(void)
 
 {
   ushort uVar1;
   short sVar2;
   int iVar3;
   
-  sub_902a0();
+  empty_func_902a0();
   uVar1 = 1;
   for (iVar3 = 0; iVar3 < 4; iVar3 = iVar3 + 1) {
     if ((uVar1 & word_f3714) != 0) {
-      sVar2 = sub_a7094(iVar3);
+      sVar2 = mix_voice_free(iVar3);
       if (sVar2 != 0) {
-        sub_9fbb5(&unk_f3454 + iVar3 * 0x11);
+        sbdac_voice_free(&unk_f3454 + iVar3 * 0x11);
       }
     }
     if ((short)(&DAT_000f345a)[iVar3 * 0x11] < 1) {
@@ -4042,20 +4042,20 @@ void __watcall sub_9f4c8(void)
   }
   for (iVar3 = 0; iVar3 < 4; iVar3 = iVar3 + 1) {
     if ((&DAT_000f34e6)[iVar3 * 0xb] != 0) {
-      sub_a70dd(iVar3,0,0,(int)*(short *)(*(int *)((int)&unk_f34dc + iVar3 * 0x16) + 4),
+      mix_voice_position(iVar3,0,0,(int)*(short *)(*(int *)((int)&unk_f34dc + iVar3 * 0x16) + 4),
                 (int)(short)(&DAT_000f34ec)[iVar3 * 0xb]);
     }
   }
-  sub_a905e();
+  mix_fill_buffer();
   return;
 }
 
 
 // ================================================================================================
-// sub_9f577 @ 0x9f577 [__watcall]
+// sbdac_drv_control @ 0x9f577 [__watcall]
 // ================================================================================================
 
-int __watcall sub_9f577(void)
+int __watcall sbdac_drv_control(void)
 
 {
   short sVar1;
@@ -4064,63 +4064,63 @@ int __watcall sub_9f577(void)
   int unaff_ESI;
   int in_stack_00000004;
   
-  sub_902a0();
+  empty_func_902a0();
   uVar3 = (ushort)in_stack_00000004;
   if (uVar3 < 9) {
     if (uVar3 < 7) {
       return -1;
     }
     if (uVar3 < 8) {
-      sVar1 = sub_a6d8d();
+      sVar1 = mix_rate_khz();
     }
     else {
-      sVar1 = sub_a9ba4();
+      sVar1 = sb_dma_half_done();
     }
   }
   else {
     if (9 < uVar3) {
       if (uVar3 < 0x32) {
         if (uVar3 == 10) {
-          iVar2 = sub_a70bc();
+          iVar2 = mix_voice_get_volume();
           return iVar2;
         }
       }
       else if (uVar3 < 0x33) {
-        sub_a6ec3(in_stack_00000004 >> 0x18,in_stack_00000004 >> 0x10 & 0xff);
+        mix_voice_volume(in_stack_00000004 >> 0x18,in_stack_00000004 >> 0x10 & 0xff);
       }
       else if (uVar3 == 0x33) {
-        sub_aa1d9();
+        sb_mixer_stereo();
         return unaff_ESI;
       }
       return -1;
     }
-    sVar1 = sub_a7094((int)in_stack_00000004._2_2_);
+    sVar1 = mix_voice_free((int)in_stack_00000004._2_2_);
   }
   return (int)sVar1;
 }
 
 
 // ================================================================================================
-// sub_9f622 @ 0x9f622 [__watcall]
+// sbdac_set_channel_volume @ 0x9f622 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9f622(void)
+void __watcall sbdac_set_channel_volume(void)
 
 {
   short in_stack_00000004;
   undefined2 in_stack_00000008;
   
-  sub_902a0();
+  empty_func_902a0();
   *(undefined2 *)(&unk_f3538 + in_stack_00000004 * 0x1e) = in_stack_00000008;
   return;
 }
 
 
 // ================================================================================================
-// sub_9f642 @ 0x9f642 [__watcall]
+// sbdac_play_sample @ 0x9f642 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9f642(void)
+void __watcall sbdac_play_sample(void)
 
 {
   short param_5;
@@ -4133,18 +4133,18 @@ void __watcall sub_9f642(void)
   undefined4 in_stack_00000020;
   undefined4 in_stack_00000024;
   
-  sub_902a0();
-  sub_a6fe1((int)param_5,param_6 + param_7,param_8,param_9,in_stack_00000018,in_stack_0000001c,
+  empty_func_902a0();
+  mix_play_sample((int)param_5,param_6 + param_7,param_8,param_9,in_stack_00000018,in_stack_0000001c,
             in_stack_00000020,in_stack_00000024);
   return;
 }
 
 
 // ================================================================================================
-// sub_9f685 @ 0x9f685 [__watcall]
+// sbdac_channel_notes_off @ 0x9f685 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9f685(short param_1,short unaff_DX)
+void __watcall sbdac_channel_notes_off(short param_1,short unaff_DX)
 
 {
   int iVar1;
@@ -4173,7 +4173,7 @@ void __watcall sub_9f685(short param_1,short unaff_DX)
         if (sVar2 < 2) {
           return;
         }
-        sub_a6e7b();
+        mix_voice_release();
         return;
       }
     }
@@ -4184,10 +4184,10 @@ void __watcall sub_9f685(short param_1,short unaff_DX)
 
 
 // ================================================================================================
-// sub_9f725 @ 0x9f725 [__watcall]
+// sbdac_note_on @ 0x9f725 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9f725(short param_1,short unaff_DX,short unaff_BX)
+void __watcall sbdac_note_on(short param_1,short unaff_DX,short unaff_BX)
 
 {
   int iVar1;
@@ -4211,7 +4211,7 @@ void __watcall sub_9f725(short param_1,short unaff_DX,short unaff_BX)
     if (99 < unaff_DX) {
       return;
     }
-    sub_9fc24(iVar4,(int)(short)(unaff_DX + 0x5c));
+    sbdac_program(iVar4,(int)(short)(unaff_DX + 0x5c));
     sVar2 = 0x3c;
   }
   if (*(short *)(&unk_f3538 + iVar1) == 0) {
@@ -4258,22 +4258,22 @@ void __watcall sub_9f725(short param_1,short unaff_DX,short unaff_BX)
   }
   puVar8 = &unk_f3454 + sVar7 * 0x11;
 LAB_0009f8b3:
-  sub_9f8c5((int)sVar2,(int)unaff_DX,(int)unaff_BX,puVar5,puVar8);
+  sbdac_voice_start((int)sVar2,(int)unaff_DX,(int)unaff_BX,puVar5,puVar8);
   return;
 }
 
 
 // ================================================================================================
-// sub_9f8c5 @ 0x9f8c5 [__watcall]
+// sbdac_voice_start @ 0x9f8c5 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_9f8c5(short param_1,ushort unaff_DX,ushort unaff_BX,ushort *unaff_ECX,ushort *param_5)
+sbdac_voice_start(short param_1,ushort unaff_DX,ushort unaff_BX,ushort *unaff_ECX,ushort *param_5)
 
 {
   int iVar1;
   
-  sub_9fc04((int)(short)param_5[1]);
+  sbdac_voice_stop((int)(short)param_5[1]);
   **(ushort **)(param_5 + 7) = **(ushort **)(param_5 + 7) & ~*param_5;
   *(ushort *)(*(int *)(param_5 + 7) + 2) = *(ushort *)(*(int *)(param_5 + 7) + 2) & ~*param_5;
   *(ushort **)(param_5 + 7) = unaff_ECX;
@@ -4281,7 +4281,7 @@ sub_9f8c5(short param_1,ushort unaff_DX,ushort unaff_BX,ushort *unaff_ECX,ushort
   *(undefined4 *)(param_5 + 9) = *(undefined4 *)(unaff_ECX + 5);
   iVar1 = *(int *)(unaff_ECX + 7);
   *(int *)(param_5 + 0xb) = iVar1;
-  sub_9f9c4((int)(short)param_5[1],*(undefined4 *)(param_5 + 9),(int)*(char *)(iVar1 + 8),
+  sbdac_voice_setup((int)(short)param_5[1],*(undefined4 *)(param_5 + 9),(int)*(char *)(iVar1 + 8),
             (int)*(char *)(iVar1 + 10),*(undefined *)(iVar1 + 0xd));
   param_5[3] = (ushort)*(byte *)(*(int *)(param_5 + 0xb) + 0xc) << 6;
   param_5[4] = unaff_DX;
@@ -4291,21 +4291,21 @@ sub_9f8c5(short param_1,ushort unaff_DX,ushort unaff_BX,ushort *unaff_ECX,ushort
   word_f3714 = word_f3714 & ~*param_5;
   *unaff_ECX = *unaff_ECX | *param_5;
   unaff_ECX[1] = unaff_ECX[1] & ~*param_5;
-  sub_9fbaa((int)(short)param_5[1],unaff_ECX + 9);
-  sub_9fa1a((int)(short)param_5[1],(int)(short)(*(char *)(*(int *)(unaff_ECX + 7) + 7) + param_1),
+  sbdac_voice_set_timbre((int)(short)param_5[1],unaff_ECX + 9);
+  sbdac_voice_volume((int)(short)param_5[1],(int)(short)(*(char *)(*(int *)(unaff_ECX + 7) + 7) + param_1),
             (int)(short)unaff_BX);
-  sub_9fb93((int)(short)param_5[1],1,(int)*(char *)((int)unaff_ECX + 0x15));
-  sub_9fb93((int)(short)param_5[1],7,(int)*(char *)(unaff_ECX + 9));
+  sbdac_voice_controller((int)(short)param_5[1],1,(int)*(char *)((int)unaff_ECX + 0x15));
+  sbdac_voice_controller((int)(short)param_5[1],7,(int)*(char *)(unaff_ECX + 9));
   return;
 }
 
 
 // ================================================================================================
-// sub_9f9c4 @ 0x9f9c4 [__watcall]
+// sbdac_voice_setup @ 0x9f9c4 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_9f9c4(short param_1,int unaff_EDX,undefined2 unaff_BX,undefined2 unaff_CX,undefined2 param_5)
+sbdac_voice_setup(short param_1,int unaff_EDX,undefined2 unaff_BX,undefined2 unaff_CX,undefined2 param_5)
 
 {
   int iVar1;
@@ -4317,18 +4317,18 @@ sub_9f9c4(short param_1,int unaff_EDX,undefined2 unaff_BX,undefined2 unaff_CX,un
   *(undefined2 *)(&DAT_000f34ee + iVar2) = unaff_BX;
   (&DAT_000f34ec)[iVar1 * 0xb] = unaff_CX;
   *(undefined2 *)(&DAT_000f34f0 + iVar2) = param_5;
-  sub_a6f3c(iVar1,*(undefined2 *)(unaff_EDX + 0x12));
-  sub_a6fa2(iVar1,*(undefined4 *)(unaff_EDX + 0xc),*(undefined4 *)(unaff_EDX + 0x14),
+  mix_voice_pitch(iVar1,*(undefined2 *)(unaff_EDX + 0x12));
+  mix_voice_sample(iVar1,*(undefined4 *)(unaff_EDX + 0xc),*(undefined4 *)(unaff_EDX + 0x14),
             *(undefined4 *)(unaff_EDX + 0x18),*(undefined4 *)(unaff_EDX + 0x1c));
   return;
 }
 
 
 // ================================================================================================
-// sub_9fa1a @ 0x9fa1a [__watcall]
+// sbdac_voice_volume @ 0x9fa1a [__watcall]
 // ================================================================================================
 
-void __watcall sub_9fa1a(short param_1,short unaff_DX,short unaff_BX)
+void __watcall sbdac_voice_volume(short param_1,short unaff_DX,short unaff_BX)
 
 {
   int iVar1;
@@ -4341,16 +4341,16 @@ void __watcall sub_9fa1a(short param_1,short unaff_DX,short unaff_BX)
   if (0x7e < iVar1) {
     iVar1 = 0x7f;
   }
-  sub_a6e10((int)param_1,(int)unaff_DX,(int)(short)iVar1);
+  mix_voice_velocity((int)param_1,(int)unaff_DX,(int)(short)iVar1);
   return;
 }
 
 
 // ================================================================================================
-// sub_9fa5d @ 0x9fa5d [__watcall]
+// sbdac_controller @ 0x9fa5d [__watcall]
 // ================================================================================================
 
-void __watcall sub_9fa5d(short param_1,ushort unaff_DX,short unaff_BX)
+void __watcall sbdac_controller(short param_1,ushort unaff_DX,short unaff_BX)
 
 {
   ushort uVar1;
@@ -4383,7 +4383,7 @@ void __watcall sub_9fa5d(short param_1,ushort unaff_DX,short unaff_BX)
         uVar4 = 1;
         for (sVar3 = 0; sVar3 < 4; sVar3 = sVar3 + 1) {
           if ((uVar4 & uVar1) != 0) {
-            sub_9f685((int)param_1,(int)(short)(&unk_f345c)[sVar3 * 0x11]);
+            sbdac_channel_notes_off((int)param_1,(int)(short)(&unk_f345c)[sVar3 * 0x11]);
           }
           uVar4 = uVar4 * 2;
         }
@@ -4394,7 +4394,7 @@ void __watcall sub_9fa5d(short param_1,ushort unaff_DX,short unaff_BX)
       uVar4 = 1;
       for (sVar3 = 0; sVar3 < 4; sVar3 = sVar3 + 1) {
         if ((uVar4 & uVar1) != 0) {
-          sub_9fbb5(&unk_f3454 + sVar3 * 0x11);
+          sbdac_voice_free(&unk_f3454 + sVar3 * 0x11);
         }
         uVar4 = uVar4 * 2;
       }
@@ -4404,7 +4404,7 @@ void __watcall sub_9fa5d(short param_1,ushort unaff_DX,short unaff_BX)
   uVar4 = 1;
   for (sVar3 = 0; sVar3 < 4; sVar3 = sVar3 + 1) {
     if ((uVar4 & uVar1) != 0) {
-      sub_9fb93((int)sVar3,(int)(short)unaff_DX,(int)unaff_BX);
+      sbdac_voice_controller((int)sVar3,(int)(short)unaff_DX,(int)unaff_BX);
     }
     uVar4 = uVar4 * 2;
   }
@@ -4413,24 +4413,24 @@ void __watcall sub_9fa5d(short param_1,ushort unaff_DX,short unaff_BX)
 
 
 // ================================================================================================
-// sub_9fb93 @ 0x9fb93 [__watcall]
+// sbdac_voice_controller @ 0x9fb93 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9fb93(short param_1,short unaff_DX,short unaff_BX,undefined4 unaff_ECX)
+void __watcall sbdac_voice_controller(short param_1,short unaff_DX,short unaff_BX,undefined4 unaff_ECX)
 
 {
   if (unaff_DX == 7) {
-    sub_a6ec3((int)param_1,(int)unaff_BX,unaff_ECX);
+    mix_voice_volume((int)param_1,(int)unaff_BX,unaff_ECX);
   }
   return;
 }
 
 
 // ================================================================================================
-// sub_9fbaa @ 0x9fbaa [__watcall]
+// sbdac_voice_set_timbre @ 0x9fbaa [__watcall]
 // ================================================================================================
 
-void __watcall sub_9fbaa(short param_1,undefined4 unaff_EDX)
+void __watcall sbdac_voice_set_timbre(short param_1,undefined4 unaff_EDX)
 
 {
   *(undefined4 *)((int)&unk_f34dc + param_1 * 0x16) = unaff_EDX;
@@ -4439,15 +4439,15 @@ void __watcall sub_9fbaa(short param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_9fbb5 @ 0x9fbb5 [__watcall]
+// sbdac_voice_free @ 0x9fbb5 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9fbb5(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+void __watcall sbdac_voice_free(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   ushort *extraout_EDX;
   
-  sub_9fc04((int)*(short *)(param_1 + 2),param_1,unaff_EBX,unaff_ECX,unaff_EDX,unaff_EBX);
+  sbdac_voice_stop((int)*(short *)(param_1 + 2),param_1,unaff_EBX,unaff_ECX,unaff_EDX,unaff_EBX);
   extraout_EDX[3] = 0;
   word_f3716 = word_f3716 | *extraout_EDX;
   word_f3718 = word_f3718 & ~*extraout_EDX;
@@ -4460,24 +4460,24 @@ void __watcall sub_9fbb5(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,u
 
 
 // ================================================================================================
-// sub_9fc04 @ 0x9fc04 [__watcall]
+// sbdac_voice_stop @ 0x9fc04 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_9fc04(short param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+sbdac_voice_stop(short param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   (&DAT_000f34e6)[param_1 * 0xb] = 0;
-  sub_a6ea2((int)param_1,unaff_EDX,unaff_ECX,unaff_EBX);
+  mix_voice_stop((int)param_1,unaff_EDX,unaff_ECX,unaff_EBX);
   return;
 }
 
 
 // ================================================================================================
-// sub_9fc24 @ 0x9fc24 [__watcall]
+// sbdac_program @ 0x9fc24 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9fc24(short param_1,ushort unaff_DX)
+void __watcall sbdac_program(short param_1,ushort unaff_DX)
 
 {
   int iVar1;
@@ -4502,10 +4502,10 @@ void __watcall sub_9fc24(short param_1,ushort unaff_DX)
 
 
 // ================================================================================================
-// sub_9fc94 @ 0x9fc94 [__watcall]
+// sbdac_pitch_bend @ 0x9fc94 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9fc94(short param_1,undefined2 unaff_DX)
+void __watcall sbdac_pitch_bend(short param_1,undefined2 unaff_DX)
 
 {
   *(undefined2 *)(&unk_f354a + param_1 * 0x1e) = unaff_DX;
@@ -4514,10 +4514,10 @@ void __watcall sub_9fc94(short param_1,undefined2 unaff_DX)
 
 
 // ================================================================================================
-// sub_9fcab @ 0x9fcab [__watcall]
+// dpmi_alloc_dos_memory @ 0x9fcab [__watcall]
 // ================================================================================================
 
-int __watcall sub_9fcab(undefined2 param_1,uint *unaff_EDX,uint *unaff_EBX)
+int __watcall dpmi_alloc_dos_memory(undefined2 param_1,uint *unaff_EDX,uint *unaff_EBX)
 
 {
   ushort local_34 [2];
@@ -4536,10 +4536,10 @@ int __watcall sub_9fcab(undefined2 param_1,uint *unaff_EDX,uint *unaff_EBX)
 
 
 // ================================================================================================
-// sub_9fd01 @ 0x9fd01 [__watcall]
+// dpmi_free_dos_memory @ 0x9fd01 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9fd01(undefined2 param_1)
+void __watcall dpmi_free_dos_memory(undefined2 param_1)
 
 {
   undefined2 local_34 [6];
@@ -4555,10 +4555,10 @@ void __watcall sub_9fd01(undefined2 param_1)
 
 
 // ================================================================================================
-// sub_9fd3d @ 0x9fd3d [__watcall]
+// sb_mixer_set_volume @ 0x9fd3d [__watcall]
 // ================================================================================================
 
-void __watcall sub_9fd3d(int param_1,byte unaff_DL)
+void __watcall sb_mixer_set_volume(int param_1,byte unaff_DL)
 
 {
   int iVar1;
@@ -4566,22 +4566,22 @@ void __watcall sub_9fd3d(int param_1,byte unaff_DL)
   
   iVar1 = param_1 + 4;
   param_1 = param_1 + 5;
-  sub_aa200(iVar1,4);
+  outp(iVar1,4);
   iVar2 = (int)(char)(unaff_DL << 4 | unaff_DL);
-  sub_aa200(param_1,iVar2);
-  sub_aa200(iVar1,0x22);
-  sub_aa200(param_1,iVar2);
-  sub_aa200(iVar1,0x26);
-  sub_aa200(param_1,iVar2);
+  outp(param_1,iVar2);
+  outp(iVar1,0x22);
+  outp(param_1,iVar2);
+  outp(iVar1,0x26);
+  outp(param_1,iVar2);
   return;
 }
 
 
 // ================================================================================================
-// sub_9fd94 @ 0x9fd94 [__watcall]
+// mpu_drv_default_port @ 0x9fd94 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_9fd94(void)
+undefined4 __watcall mpu_drv_default_port(void)
 
 {
   return 0x70330;
@@ -4589,10 +4589,10 @@ undefined4 __watcall sub_9fd94(void)
 
 
 // ================================================================================================
-// sub_9fd9a @ 0x9fd9a [__watcall]
+// mpu_drv_detect @ 0x9fd9a [__watcall]
 // ================================================================================================
 
-int __watcall sub_9fd9a(void)
+int __watcall mpu_drv_detect(void)
 
 {
   int iVar1;
@@ -4602,19 +4602,19 @@ int __watcall sub_9fd9a(void)
   dword_d5264 = dword_d5260 + 1;
   byte_d5279 = param_1._2_1_;
   byte_d527a = '\x01' << (param_1._2_1_ & 0x1f);
-  sub_9feb0();
-  sub_9ff04();
-  sub_9ff55();
-  iVar1 = sub_9feb0();
+  mpu_send_command();
+  pit2_delay();
+  mpu_read_data();
+  iVar1 = mpu_send_command();
   return iVar1 + 1;
 }
 
 
 // ================================================================================================
-// sub_9fdea @ 0x9fdea [__watcall]
+// mpu_drv_init @ 0x9fdea [__watcall]
 // ================================================================================================
 
-void __watcall sub_9fdea(void)
+void __watcall mpu_drv_init(void)
 
 {
   uint param_1;
@@ -4625,54 +4625,54 @@ void __watcall sub_9fdea(void)
   byte_d527a = '\x01' << (param_1._2_1_ & 0x1f);
   dword_d5268 = 0;
   dword_d526c = 0xff;
-  sub_9fe94(dword_d5270 | dword_d5274);
+  mpu_reset(dword_d5270 | dword_d5274);
   return;
 }
 
 
 // ================================================================================================
-// sub_9fe3b @ 0x9fe3b [__watcall]
+// mpu_drv_shutdown @ 0x9fe3b [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_9fe3b(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall mpu_drv_shutdown(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
   
   iVar1 = 0x10;
   do {
-    sub_9ff78();
-    sub_9ff78();
-    sub_9ff78();
+    mpu_write_data();
+    mpu_write_data();
+    mpu_write_data();
     iVar1 = iVar1 + -1;
   } while (iVar1 != 0);
-  sub_9feb0();
-  sub_9ff04();
-  sub_9feb0();
-  sub_9ff04();
+  mpu_send_command();
+  pit2_delay();
+  mpu_send_command();
+  pit2_delay();
   return CONCAT44(unaff_EDX,param_1);
 }
 
 
 // ================================================================================================
-// sub_9fe94 @ 0x9fe94 [__watcall]
+// mpu_reset @ 0x9fe94 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9fe94(void)
+void __watcall mpu_reset(void)
 
 {
-  sub_9feb0();
-  sub_9ff04();
-  sub_9feb0();
+  mpu_send_command();
+  pit2_delay();
+  mpu_send_command();
   return;
 }
 
 
 // ================================================================================================
-// sub_9feb0 @ 0x9feb0 [__watcall]
+// mpu_send_command @ 0x9feb0 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_9feb0(void)
+undefined4 __watcall mpu_send_command(void)
 
 {
   code *pcVar1;
@@ -4708,10 +4708,10 @@ undefined4 __watcall sub_9feb0(void)
 
 
 // ================================================================================================
-// sub_9ff04 @ 0x9ff04 [__watcall]
+// pit2_delay @ 0x9ff04 [__watcall]
 // ================================================================================================
 
-byte __watcall sub_9ff04(void)
+byte __watcall pit2_delay(void)
 
 {
   byte bVar1;
@@ -4743,10 +4743,10 @@ byte __watcall sub_9ff04(void)
 
 
 // ================================================================================================
-// sub_9ff55 @ 0x9ff55 [__watcall]
+// mpu_read_data @ 0x9ff55 [__watcall]
 // ================================================================================================
 
-uint __watcall sub_9ff55(void)
+uint __watcall mpu_read_data(void)
 
 {
   char cVar1;
@@ -4767,10 +4767,10 @@ uint __watcall sub_9ff55(void)
 
 
 // ================================================================================================
-// sub_9ff78 @ 0x9ff78 [__watcall]
+// mpu_write_data @ 0x9ff78 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_9ff78(void)
+undefined8 __watcall mpu_write_data(void)
 
 {
   byte bVar1;
@@ -4796,29 +4796,29 @@ LAB_0009ff9e:
 
 
 // ================================================================================================
-// sub_9ffa0 @ 0x9ffa0 [__watcall]
+// mpu_drv_send_midi @ 0x9ffa0 [__watcall]
 // ================================================================================================
 
-void __watcall sub_9ffa0(void)
+void __watcall mpu_drv_send_midi(void)
 
 {
   short in_stack_00000004;
   
-  sub_902a0();
+  empty_func_902a0();
   for (; in_stack_00000004 != 0; in_stack_00000004 = in_stack_00000004 + -1) {
-    sub_9ff78();
+    mpu_write_data();
   }
   return;
 }
 
 
 // ================================================================================================
-// sub_9ffca @ 0x9ffca [__watcall]
+// dpmi_alloc_dos_buffer @ 0x9ffca [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-undefined8 __watcall sub_9ffca(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall dpmi_alloc_dos_buffer(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   ushort local_48 [2];
@@ -4843,10 +4843,10 @@ undefined8 __watcall sub_9ffca(undefined4 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_a0064 @ 0xa0064 [__watcall]
+// dpmi_free_dos_buffer @ 0xa0064 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a0064(void)
+void __watcall dpmi_free_dos_buffer(void)
 
 {
   undefined2 auStackY_40 [6];
@@ -4864,10 +4864,10 @@ void __watcall sub_a0064(void)
 
 
 // ================================================================================================
-// sub_a00c1 @ 0xa00c1 [__watcall]
+// gus_load_patches @ 0xa00c1 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a00c1(void)
+void __watcall gus_load_patches(void)
 
 {
   int iVar1;
@@ -4897,11 +4897,11 @@ void __watcall sub_a00c1(void)
     strcpy(acStack_8c,aCULTRASNDMIDI);
     strcat(acStack_8c,(char *)(local_2c + 1));
     strcat(acStack_8c,(char *)&aPAT);
-    iVar1 = sub_aa210(acStack_8c,auStack_14c);
+    iVar1 = gus_patch_check_header(acStack_8c,auStack_14c);
     if (iVar1 == 0) {
       if (9 < (int)((uint)uStack_f7 + local_28)) break;
       local_34 = *local_2c;
-      iVar1 = sub_aa300(acStack_8c,auStack_14c,&unk_f371c + local_34 * 0x1c,&local_3c,0x800,
+      iVar1 = gus_load_patch(acStack_8c,auStack_14c,&unk_f371c + local_34 * 0x1c,&local_3c,0x800,
                         &unk_f55f8 + local_28 * 0x49,local_30);
       if (iVar1 == 0) {
         local_28 = local_28 + (uint)uStack_f7;
@@ -4927,12 +4927,12 @@ void __watcall sub_a00c1(void)
 
 
 // ================================================================================================
-// sub_a0288 @ 0xa0288 [__watcall]
+// gus_open @ 0xa0288 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __watcall sub_a0288(void)
+void __watcall gus_open(void)
 
 {
   byte bVar1;
@@ -4947,8 +4947,8 @@ void __watcall sub_a0288(void)
   
   bVar6 = 0;
   __CHK(0x38);
-  if ((dword_d53a8 == 0) && (sVar2 = sub_a04b9(0), sVar2 != 0)) {
-    dword_f55f4 = sub_9ffca();
+  if ((dword_d53a8 == 0) && (sVar2 = gus_probe(0), sVar2 != 0)) {
+    dword_f55f4 = dpmi_alloc_dos_buffer();
     bVar1 = byte_f5321;
     word_f531c = 0x1c;
     if (7 < byte_f5320) {
@@ -4960,22 +4960,22 @@ void __watcall sub_a0288(void)
         byte_f5320 = 5;
       }
     }
-    iVar3 = sub_aab5c(&word_f531c);
+    iVar3 = gus_open_card(&word_f531c);
     if (iVar3 == 0) {
-      sub_ab79c(0x7f);
+      gus_midi_open_voices(0x7f);
       dword_d53a8 = 1;
       _dword_f55e4 = 0;
-      for (local_20 = sub_ad6f4(); 0x40000 < local_20; local_20 = local_20 + -0x40000) {
+      for (local_20 = gus_mem_reset(); 0x40000 < local_20; local_20 = local_20 + -0x40000) {
         _dword_f55e4 = _dword_f55e4 + 1;
       }
-      dword_f55e8 = sub_ad4dc(0x801);
-      __src = (char *)sub_a6b87(aULTRADIR);
+      dword_f55e8 = gus_mem_alloc(0x801);
+      __src = (char *)getenv(aULTRADIR);
       if (__src != (char *)0x0) {
         strcpy(aCULTRASNDMIDI,__src);
         strcat(aCULTRASNDMIDI,aMIDI);
       }
-      sub_a00c1();
-      sub_aea23(dword_f55f4,dword_f55e8,0x800);
+      gus_load_patches();
+      gus_stream_open(dword_f55f4,dword_f55e8,0x800);
       dword_f58d4._0_2_ = 0xf;
       dword_f58d4._2_2_ = 0;
       dword_f58d0._2_2_ = 0;
@@ -5001,44 +5001,44 @@ void __watcall sub_a0288(void)
 
 
 // ================================================================================================
-// sub_a044d @ 0xa044d [__watcall]
+// gus_close @ 0xa044d [__watcall]
 // ================================================================================================
 
-void __watcall sub_a044d(void)
+void __watcall gus_close(void)
 
 {
   __CHK(0x1c);
   if ((((dword_d53a8 != 0) && (dword_d53b4 == 0)) && (dword_d53b0 == 0)) && (dword_d53ac == 0)) {
-    sub_aac48();
-    sub_a0064();
+    gus_close_card();
+    dpmi_free_dos_buffer();
     dword_d53a4 = 0;
     dword_d53a8 = 0;
-    sub_aedbc();
+    gus_stream_close();
   }
   return;
 }
 
 
 // ================================================================================================
-// sub_a04b9 @ 0xa04b9 [__cdecl]
+// gus_probe @ 0xa04b9 [__cdecl]
 // ================================================================================================
 
-undefined4 sub_a04b9(void)
+undefined4 gus_probe(void)
 
 {
   int iVar1;
   
   __CHK(0x18);
-  sub_902a0();
+  empty_func_902a0();
   if (dword_d53a4 == 0) {
     if (dword_d53a0 == 0) {
-      iVar1 = sub_af1d0(&word_f531c);
+      iVar1 = gus_parse_ultrasnd(&word_f531c);
       if (iVar1 == 0) {
         return 0;
       }
       dword_d53a0 = 1;
     }
-    iVar1 = sub_af2e0(word_f531e);
+    iVar1 = gus_probe_port(word_f531e);
     if (iVar1 == 0) {
       return 0;
     }
@@ -5049,18 +5049,18 @@ undefined4 sub_a04b9(void)
 
 
 // ================================================================================================
-// sub_a053c @ 0xa053c [__watcall]
+// gus_drv_detect @ 0xa053c [__watcall]
 // ================================================================================================
 
-uint __watcall sub_a053c(void)
+uint __watcall gus_drv_detect(void)
 
 {
   int iVar1;
   uint uStackY_14;
   
   __CHK(0x18);
-  sub_902a0();
-  iVar1 = sub_af1d0(&word_f531c);
+  empty_func_902a0();
+  iVar1 = gus_parse_ultrasnd(&word_f531c);
   if (iVar1 == 0) {
     uStackY_14 = 0;
   }
@@ -5073,16 +5073,16 @@ uint __watcall sub_a053c(void)
 
 
 // ================================================================================================
-// sub_a059b @ 0xa059b [__watcall]
+// gus_drv_init_music @ 0xa059b [__watcall]
 // ================================================================================================
 
-void __watcall sub_a059b(void)
+void __watcall gus_drv_init_music(void)
 
 {
   __CHK(0x14);
-  sub_902a0();
+  empty_func_902a0();
   if (dword_d53b4 == 0) {
-    sub_a0288();
+    gus_open();
     dword_d53b4 = 1;
   }
   return;
@@ -5090,16 +5090,16 @@ void __watcall sub_a059b(void)
 
 
 // ================================================================================================
-// sub_a05d3 @ 0xa05d3 [__watcall]
+// gus_drv_init_digital @ 0xa05d3 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a05d3(void)
+void __watcall gus_drv_init_digital(void)
 
 {
   __CHK(0x14);
-  sub_902a0();
+  empty_func_902a0();
   if (dword_d53b0 == 0) {
-    sub_a0288();
+    gus_open();
     dword_d53b0 = 1;
   }
   return;
@@ -5107,44 +5107,44 @@ void __watcall sub_a05d3(void)
 
 
 // ================================================================================================
-// sub_a060b @ 0xa060b [__watcall]
+// gus_drv_shutdown_music @ 0xa060b [__watcall]
 // ================================================================================================
 
-void __watcall sub_a060b(void)
+void __watcall gus_drv_shutdown_music(void)
 
 {
   __CHK(0x14);
-  sub_902a0();
+  empty_func_902a0();
   if (dword_d53b4 != 0) {
     dword_d53b4 = 0;
-    sub_a044d();
+    gus_close();
   }
   return;
 }
 
 
 // ================================================================================================
-// sub_a0643 @ 0xa0643 [__watcall]
+// gus_drv_shutdown_digital @ 0xa0643 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a0643(void)
+void __watcall gus_drv_shutdown_digital(void)
 
 {
   __CHK(0x14);
-  sub_902a0();
+  empty_func_902a0();
   if (dword_d53b0 != 0) {
     dword_d53b0 = 0;
-    sub_a044d();
+    gus_close();
   }
   return;
 }
 
 
 // ================================================================================================
-// sub_a067b @ 0xa067b [__watcall]
+// gus_drv_tick @ 0xa067b [__watcall]
 // ================================================================================================
 
-void __watcall sub_a067b(void)
+void __watcall gus_drv_tick(void)
 
 {
   int iVar1;
@@ -5154,15 +5154,15 @@ void __watcall sub_a067b(void)
   short sStack_14;
   
   __CHK(0x3c);
-  sub_902a0();
+  empty_func_902a0();
   sStack_14 = 1;
   for (local_1c = 0; local_1c < 4; local_1c = local_1c + 1) {
     iVar2 = local_1c * 0x22;
     uStack_16 = (undefined2)((uint)(&unk_f5324 + iVar2) >> 0x10);
     if ((int)(CONCAT22(sStack_14,uStack_16) & dword_f58d0) >> 0x10 != 0) {
-      iVar1 = sub_aef0e(local_1c);
+      iVar1 = gus_dig_voice_active(local_1c);
       if (iVar1 != 0) {
-        sub_a15aa(&unk_f5324 + iVar2);
+        gus_drv_voice_free(&unk_f5324 + iVar2);
       }
     }
     if (*(short *)(&unk_f532a + iVar2) < 1) {
@@ -5176,20 +5176,20 @@ void __watcall sub_a067b(void)
   for (local_1c = 0; local_1c < 4; local_1c = local_1c + 1) {
     iVar2 = local_1c * 0x16;
     if (*(short *)(&DAT_000f5596 + iVar2) != 0) {
-      sub_af112(local_1c,0,0,*(int *)(*(int *)(&unk_f558c + iVar2) + 2) >> 0x10,
+      gus_dig_update(local_1c,0,0,*(int *)(*(int *)(&unk_f558c + iVar2) + 2) >> 0x10,
                 *(int *)(&DAT_000f559a + iVar2) >> 0x10);
     }
   }
-  sub_ae9eb();
+  gus_stream_tick();
   return;
 }
 
 
 // ================================================================================================
-// sub_a076e @ 0xa076e [__watcall]
+// gus_drv_control @ 0xa076e [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_a076e(void)
+undefined4 __watcall gus_drv_control(void)
 
 {
   uint uVar1;
@@ -5198,7 +5198,7 @@ undefined4 __watcall sub_a076e(void)
   ushort local_1c;
   
   __CHK(0x28);
-  sub_902a0();
+  empty_func_902a0();
   if (dword_d53a8 == 0) {
     return 0xffffffff;
   }
@@ -5206,7 +5206,7 @@ undefined4 __watcall sub_a076e(void)
   if (local_1c < 9) {
     if (6 < local_1c) {
       if (7 < local_1c) {
-        uVar2 = sub_af198();
+        uVar2 = gus_dig_get_voices();
         return uVar2;
       }
       return 0x56;
@@ -5215,15 +5215,15 @@ undefined4 __watcall sub_a076e(void)
   else {
     uVar1 = in_stack_00000004 >> 0x10;
     if (local_1c < 10) {
-      uVar2 = sub_aef0e(uVar1);
+      uVar2 = gus_dig_voice_active(uVar1);
       return uVar2;
     }
     if (local_1c < 0xb) {
-      uVar2 = sub_af1a4(uVar1);
+      uVar2 = gus_dig_get_rate(uVar1);
       return uVar2;
     }
     if (local_1c == 0x32) {
-      sub_aefea(in_stack_00000004 >> 0x18,uVar1 & 0xff);
+      gus_dig_pan(in_stack_00000004 >> 0x18,uVar1 & 0xff);
       return 0xffffffff;
     }
   }
@@ -5232,27 +5232,27 @@ undefined4 __watcall sub_a076e(void)
 
 
 // ================================================================================================
-// sub_a0853 @ 0xa0853 [__watcall]
+// gus_set_channel_volume @ 0xa0853 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a0853(void)
+void __watcall gus_set_channel_volume(void)
 
 {
   int in_stack_00000002;
   undefined2 in_stack_00000008;
   
   __CHK(0x14);
-  sub_902a0();
+  empty_func_902a0();
   *(undefined2 *)(&unk_f53b0 + (in_stack_00000002 >> 0x10) * 0x1e) = in_stack_00000008;
   return;
 }
 
 
 // ================================================================================================
-// sub_a0886 @ 0xa0886 [__watcall]
+// gus_play_sample @ 0xa0886 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a0886(void)
+void __watcall gus_play_sample(void)
 
 {
   int in_stack_00000002;
@@ -5266,9 +5266,9 @@ void __watcall sub_a0886(void)
   undefined4 in_stack_00000024;
   
   __CHK(0x34);
-  sub_902a0();
+  empty_func_902a0();
   if (dword_d53a8 != 0) {
-    sub_aee54(in_stack_00000002 >> 0x10,param_6 + param_7,param_8,in_stack_00000014,
+    gus_dig_play(in_stack_00000002 >> 0x10,param_6 + param_7,param_8,in_stack_00000014,
               in_stack_00000018,in_stack_0000001c,in_stack_00000020,in_stack_00000024);
   }
   return;
@@ -5276,10 +5276,10 @@ void __watcall sub_a0886(void)
 
 
 // ================================================================================================
-// sub_a08d7 @ 0xa08d7 [__watcall]
+// gus_program @ 0xa08d7 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a08d7(short param_1,ushort unaff_DX)
+void __watcall gus_program(short param_1,ushort unaff_DX)
 
 {
   undefined4 uVar1;
@@ -5306,10 +5306,10 @@ void __watcall sub_a08d7(short param_1,ushort unaff_DX)
 
 
 // ================================================================================================
-// sub_a0981 @ 0xa0981 [__watcall]
+// gus_pitch_bend @ 0xa0981 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a0981(short param_1,undefined2 unaff_DX)
+void __watcall gus_pitch_bend(short param_1,undefined2 unaff_DX)
 
 {
   __CHK(0x20);
@@ -5319,36 +5319,36 @@ void __watcall sub_a0981(short param_1,undefined2 unaff_DX)
 
 
 // ================================================================================================
-// sub_a09b9 @ 0xa09b9 [__watcall]
+// gus_voice_stop @ 0xa09b9 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a09b9(short param_1)
+void __watcall gus_voice_stop(short param_1)
 
 {
   __CHK(0x28);
   *(undefined2 *)(&DAT_000f5596 + param_1 * 0x16) = 0;
-  sub_aefc9((int)param_1);
+  gus_dig_release((int)param_1);
   return;
 }
 
 
 // ================================================================================================
-// sub_a0a08 @ 0xa0a08 [__watcall]
+// gus_voice_start @ 0xa0a08 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_a0a08(short param_1,ushort unaff_DX,ushort unaff_BX,ushort *unaff_ECX,ushort *param_5)
+gus_voice_start(short param_1,ushort unaff_DX,ushort unaff_BX,ushort *unaff_ECX,ushort *param_5)
 
 {
   __CHK(0x24);
-  sub_a09b9(*(int *)param_5 >> 0x10);
+  gus_voice_stop(*(int *)param_5 >> 0x10);
   **(ushort **)(param_5 + 7) = **(ushort **)(param_5 + 7) & ~*param_5;
   *(ushort *)(*(int *)(param_5 + 7) + 2) = *(ushort *)(*(int *)(param_5 + 7) + 2) & ~*param_5;
   *(ushort **)(param_5 + 7) = unaff_ECX;
   param_5[6] = unaff_ECX[3];
   *(undefined4 *)(param_5 + 9) = *(undefined4 *)(unaff_ECX + 5);
   *(undefined4 *)(param_5 + 0xb) = *(undefined4 *)(unaff_ECX + 7);
-  sub_a0bac(*(int *)param_5 >> 0x10,*(undefined4 *)(param_5 + 9),
+  gus_voice_setup(*(int *)param_5 >> 0x10,*(undefined4 *)(param_5 + 9),
             (int)(short)*(char *)(*(int *)(param_5 + 0xb) + 8),
             (int)(short)*(char *)(*(int *)(param_5 + 0xb) + 10),
             *(undefined *)(*(int *)(param_5 + 0xb) + 0xd));
@@ -5360,21 +5360,21 @@ sub_a0a08(short param_1,ushort unaff_DX,ushort unaff_BX,ushort *unaff_ECX,ushort
   dword_f58d0._2_2_ = dword_f58d0._2_2_ & ~*param_5;
   *unaff_ECX = *unaff_ECX | *param_5;
   unaff_ECX[1] = unaff_ECX[1] & ~*param_5;
-  sub_a0d0c(*(int *)param_5 >> 0x10,unaff_ECX + 9);
-  sub_a0c5b(*(int *)param_5 >> 0x10,(int)(short)(*(char *)(*(int *)(unaff_ECX + 7) + 7) + param_1),
+  gus_voice_set_timbre(*(int *)param_5 >> 0x10,unaff_ECX + 9);
+  gus_voice_volume(*(int *)param_5 >> 0x10,(int)(short)(*(char *)(*(int *)(unaff_ECX + 7) + 7) + param_1),
             (int)(short)unaff_BX);
-  sub_a0d43(*(int *)param_5 >> 0x10,1,(int)(short)*(char *)((int)unaff_ECX + 0x15));
-  sub_a0d43(*(int *)param_5 >> 0x10,7,(int)(short)*(char *)(unaff_ECX + 9));
+  gus_voice_controller(*(int *)param_5 >> 0x10,1,(int)(short)*(char *)((int)unaff_ECX + 0x15));
+  gus_voice_controller(*(int *)param_5 >> 0x10,7,(int)(short)*(char *)(unaff_ECX + 9));
   return;
 }
 
 
 // ================================================================================================
-// sub_a0bac @ 0xa0bac [__watcall]
+// gus_voice_setup @ 0xa0bac [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_a0bac(short param_1,undefined4 unaff_EDX,undefined2 unaff_BX,undefined2 unaff_CX,
+gus_voice_setup(short param_1,undefined4 unaff_EDX,undefined2 unaff_BX,undefined2 unaff_CX,
          undefined2 param_5)
 
 {
@@ -5386,17 +5386,17 @@ sub_a0bac(short param_1,undefined4 unaff_EDX,undefined2 unaff_BX,undefined2 unaf
   *(undefined2 *)(&DAT_000f559e + iVar1) = unaff_BX;
   *(undefined2 *)(&DAT_000f559c + iVar1) = unaff_CX;
   *(undefined2 *)(&DAT_000f55a0 + iVar1) = param_5;
-  sub_af076();
-  sub_af0d5();
+  gus_dig_set_freq();
+  gus_dig_set_sample();
   return;
 }
 
 
 // ================================================================================================
-// sub_a0c5b @ 0xa0c5b [__watcall]
+// gus_voice_volume @ 0xa0c5b [__watcall]
 // ================================================================================================
 
-void __watcall sub_a0c5b(short param_1,undefined2 unaff_DX)
+void __watcall gus_voice_volume(short param_1,undefined2 unaff_DX)
 
 {
   int iVar1;
@@ -5406,16 +5406,16 @@ void __watcall sub_a0c5b(short param_1,undefined2 unaff_DX)
   *(undefined2 *)(&DAT_000f5598 + iVar1) = unaff_DX;
   *(undefined2 *)(&DAT_000f559a + iVar1) = *(undefined2 *)(&DAT_000f5598 + iVar1);
   *(undefined2 *)(&DAT_000f5596 + iVar1) = 3;
-  sub_aef33();
+  gus_dig_volume();
   return;
 }
 
 
 // ================================================================================================
-// sub_a0d0c @ 0xa0d0c [__watcall]
+// gus_voice_set_timbre @ 0xa0d0c [__watcall]
 // ================================================================================================
 
-void __watcall sub_a0d0c(short param_1,undefined4 unaff_EDX)
+void __watcall gus_voice_set_timbre(short param_1,undefined4 unaff_EDX)
 
 {
   __CHK(0x20);
@@ -5425,25 +5425,25 @@ void __watcall sub_a0d0c(short param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_a0d43 @ 0xa0d43 [__watcall]
+// gus_voice_controller @ 0xa0d43 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a0d43(short param_1,short unaff_DX,short unaff_BX)
+void __watcall gus_voice_controller(short param_1,short unaff_DX,short unaff_BX)
 
 {
   __CHK(0x2c);
   if (unaff_DX == 7) {
-    sub_aefea((int)param_1,(int)unaff_BX,param_1 * 0x16 + 0x558c);
+    gus_dig_pan((int)param_1,(int)unaff_BX,param_1 * 0x16 + 0x558c);
   }
   return;
 }
 
 
 // ================================================================================================
-// sub_a0d99 @ 0xa0d99 [__watcall]
+// gus_patch_drv_send_midi @ 0xa0d99 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a0d99(void)
+void __watcall gus_patch_drv_send_midi(void)
 
 {
   ushort uVar1;
@@ -5460,7 +5460,7 @@ void __watcall sub_a0d99(void)
   byte bStack_14;
   
   __CHK(0x40);
-  sub_902a0();
+  empty_func_902a0();
   iVar3 = dword_d4f9a;
   local_1c = 0xc0;
   local_18 = 1;
@@ -5483,24 +5483,24 @@ void __watcall sub_a0d99(void)
             local_2c = pbVar4;
             if (0x7f < local_1c) {
               if (local_1c < 0x81) {
-                sub_ac6e8(*pbVar4,bStack_14);
+                gus_midi_voice_start(*pbVar4,bStack_14);
               }
               else if (local_1c == 0x90) {
                 if ((&DAT_000f21fd)[iVar3] == '\0') {
-                  sub_ac6e8(*pbVar4,bStack_14);
+                  gus_midi_voice_start(*pbVar4,bStack_14);
                 }
                 else if (bStack_14 == 9) {
-                  sub_ac0cc(&unk_f371c + (*pbVar4 + 0x80) * 0x1c,1,*pbVar4,(&DAT_000f21fd)[iVar3],9)
+                  gus_midi_note_on(&unk_f371c + (*pbVar4 + 0x80) * 0x1c,1,*pbVar4,(&DAT_000f21fd)[iVar3],9)
                   ;
                 }
                 else {
-                  sub_ac0cc(0,1,*pbVar4,(&DAT_000f21fd)[iVar3],bStack_14);
+                  gus_midi_note_on(0,1,*pbVar4,(&DAT_000f21fd)[iVar3],bStack_14);
                 }
               }
             }
           }
           else if (local_1c < 0xb1) {
-            sub_af428(bStack_14,*pbVar4,(&DAT_000f21fd)[iVar3]);
+            gus_midi_controller(bStack_14,*pbVar4,(&DAT_000f21fd)[iVar3]);
             local_2c = pbVar4;
           }
           else {
@@ -5508,11 +5508,11 @@ void __watcall sub_a0d99(void)
             if (0xbf < local_1c) {
               if (local_1c < 0xc1) {
                 if (bStack_14 != 9) {
-                  sub_ad298(&unk_f371c + (uint)*pbVar4 * 0x1c,bStack_14);
+                  gus_midi_program(&unk_f371c + (uint)*pbVar4 * 0x1c,bStack_14);
                 }
               }
               else if (local_1c == 0xe0) {
-                sub_af340(bStack_14,*pbVar4,(&DAT_000f21fd)[iVar3]);
+                gus_midi_note_off(bStack_14,*pbVar4,(&DAT_000f21fd)[iVar3]);
               }
             }
           }
@@ -5540,10 +5540,10 @@ void __watcall sub_a0d99(void)
 
 
 // ================================================================================================
-// sub_a0fea @ 0xa0fea [__watcall]
+// gus_drv_send_midi @ 0xa0fea [__watcall]
 // ================================================================================================
 
-void __watcall sub_a0fea(void)
+void __watcall gus_drv_send_midi(void)
 
 {
   ushort uVar1;
@@ -5560,7 +5560,7 @@ void __watcall sub_a0fea(void)
   byte bStackY_14;
   
   __CHK(0x3c);
-  sub_902a0();
+  empty_func_902a0();
   iVar3 = dword_d4f9a;
   local_1c = 0xc0;
   local_18 = 1;
@@ -5583,30 +5583,30 @@ void __watcall sub_a0fea(void)
             local_2c = pbVar4;
             if (0x7f < local_1c) {
               if (local_1c < 0x81) {
-                sub_a14af(bStackY_14,*pbVar4);
+                gus_channel_notes_off(bStackY_14,*pbVar4);
               }
               else if (local_1c == 0x90) {
                 if ((&DAT_000f21fd)[iVar3] == '\0') {
-                  sub_a14af(bStackY_14,*pbVar4);
+                  gus_channel_notes_off(bStackY_14,*pbVar4);
                 }
                 else {
-                  sub_a11fe(bStackY_14,*pbVar4,(&DAT_000f21fd)[iVar3]);
+                  gus_note_on(bStackY_14,*pbVar4,(&DAT_000f21fd)[iVar3]);
                 }
               }
             }
           }
           else if (local_1c < 0xb1) {
-            sub_a1632(bStackY_14,*pbVar4,(&DAT_000f21fd)[iVar3]);
+            gus_controller(bStackY_14,*pbVar4,(&DAT_000f21fd)[iVar3]);
             local_2c = pbVar4;
           }
           else {
             local_2c = pbVar4;
             if (0xbf < local_1c) {
               if (local_1c < 0xc1) {
-                sub_a08d7(bStackY_14,*pbVar4);
+                gus_program(bStackY_14,*pbVar4);
               }
               else if (local_1c == 0xe0) {
-                sub_a0981(bStackY_14,
+                gus_pitch_bend(bStackY_14,
                           (int)(short)((ushort)(byte)(&DAT_000f21fd)[iVar3] * 0x100 + -0x4000));
               }
             }
@@ -5635,10 +5635,10 @@ void __watcall sub_a0fea(void)
 
 
 // ================================================================================================
-// sub_a11fe @ 0xa11fe [__watcall]
+// gus_note_on @ 0xa11fe [__watcall]
 // ================================================================================================
 
-void __watcall sub_a11fe(short param_1,short unaff_DX,short unaff_BX)
+void __watcall gus_note_on(short param_1,short unaff_DX,short unaff_BX)
 
 {
   short sVar1;
@@ -5666,7 +5666,7 @@ void __watcall sub_a11fe(short param_1,short unaff_DX,short unaff_BX)
     if (99 < unaff_DX) {
       return;
     }
-    sub_a08d7(9,(int)(short)(unaff_DX + 0x5c));
+    gus_program(9,(int)(short)(unaff_DX + 0x5c));
     sStack_14 = 0x3c;
   }
   if ((*(short *)(&unk_f53b0 + iVar3) != 0) && (*(short *)(&DAT_000f53b4 + iVar3) != 0)) {
@@ -5686,7 +5686,7 @@ void __watcall sub_a11fe(short param_1,short unaff_DX,short unaff_BX)
       if (((((int)(short)(local_24 & *puVar5) & *(int *)(&DAT_000f53ae + iVar3) >> 0x10) != 0) &&
           (puVar5 == *(ushort **)(&unk_f5332 + iVar4))) &&
          (unaff_DX == *(short *)(&DAT_000f532c + iVar4))) {
-        sub_a0a08((int)sStack_14,(int)unaff_DX,(int)unaff_BX,puVar5,puVar6);
+        gus_voice_start((int)sStack_14,(int)unaff_DX,(int)unaff_BX,puVar5,puVar6);
         return;
       }
       local_24 = local_24 << 1;
@@ -5702,20 +5702,20 @@ void __watcall sub_a11fe(short param_1,short unaff_DX,short unaff_BX)
         for (local_24 = local_24 & -local_24; local_24 != 0; local_24 = (short)local_24 >> 1) {
           local_20 = local_20 + 1;
         }
-        sub_a0a08((int)sStack_14,(int)unaff_DX,(int)unaff_BX,puVar5,&unk_f5324 + local_20 * 0x22);
+        gus_voice_start((int)sStack_14,(int)unaff_DX,(int)unaff_BX,puVar5,&unk_f5324 + local_20 * 0x22);
         return;
       }
     }
     local_24 = dword_f58d0._2_2_ & *(ushort *)(&unk_f53b0 + iVar3);
     if (local_24 == 0) {
-      sub_a0a08((int)sStack_14,(int)unaff_DX,(int)unaff_BX,puVar5,CONCAT22(uStack_3a,local_3c));
+      gus_voice_start((int)sStack_14,(int)unaff_DX,(int)unaff_BX,puVar5,CONCAT22(uStack_3a,local_3c));
     }
     else {
       local_20 = -1;
       for (local_24 = local_24 & -local_24; local_24 != 0; local_24 = (short)local_24 >> 1) {
         local_20 = local_20 + 1;
       }
-      sub_a0a08((int)sStack_14,(int)unaff_DX,(int)unaff_BX,puVar5,&unk_f5324 + local_20 * 0x22);
+      gus_voice_start((int)sStack_14,(int)unaff_DX,(int)unaff_BX,puVar5,&unk_f5324 + local_20 * 0x22);
     }
   }
   return;
@@ -5723,10 +5723,10 @@ void __watcall sub_a11fe(short param_1,short unaff_DX,short unaff_BX)
 
 
 // ================================================================================================
-// sub_a14af @ 0xa14af [__watcall]
+// gus_channel_notes_off @ 0xa14af [__watcall]
 // ================================================================================================
 
-void __watcall sub_a14af(undefined4 param_1,undefined4 unaff_EDX)
+void __watcall gus_channel_notes_off(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   short sVar1;
@@ -5763,20 +5763,20 @@ void __watcall sub_a14af(undefined4 param_1,undefined4 unaff_EDX)
   dword_f58d0._2_2_ = dword_f58d0._2_2_ | local_24;
   *(short *)(&unk_f532a + iVar3) = *(short *)(&unk_f532a + iVar3) >> 1;
   *(undefined2 *)(&DAT_000f5596 + sVar1 * 0x16) = 1;
-  sub_aefa2();
+  gus_dig_stop();
   return;
 }
 
 
 // ================================================================================================
-// sub_a15aa @ 0xa15aa [__watcall]
+// gus_drv_voice_free @ 0xa15aa [__watcall]
 // ================================================================================================
 
-void __watcall sub_a15aa(ushort *param_1)
+void __watcall gus_drv_voice_free(ushort *param_1)
 
 {
   __CHK(0x20);
-  sub_a09b9(*(int *)param_1 >> 0x10);
+  gus_voice_stop(*(int *)param_1 >> 0x10);
   param_1[3] = 0;
   dword_f58d4._0_2_ = (ushort)dword_f58d4 | *param_1;
   dword_f58d4._2_2_ = dword_f58d4._2_2_ & ~*param_1;
@@ -5788,10 +5788,10 @@ void __watcall sub_a15aa(ushort *param_1)
 
 
 // ================================================================================================
-// sub_a1632 @ 0xa1632 [__watcall]
+// gus_controller @ 0xa1632 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a1632(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX)
+void __watcall gus_controller(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX)
 
 {
   int iVar1;
@@ -5841,7 +5841,7 @@ void __watcall sub_a1632(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaf
           sStackY_18 = (short)iVar1;
           if (3 < sStackY_18) break;
           if ((int)(CONCAT22(sStackY_1c,uStackY_1e) & CONCAT22(uVar2,uStackY_16)) >> 0x10 != 0) {
-            sub_a14af((int)local_20,*(int *)(&unk_f532a + sStackY_18 * 0x22) >> 0x10);
+            gus_channel_notes_off((int)local_20,*(int *)(&unk_f532a + sStackY_18 * 0x22) >> 0x10);
           }
           iVar1 = iVar1 + 1;
           sStackY_1c = sStackY_1c << 1;
@@ -5853,7 +5853,7 @@ void __watcall sub_a1632(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaf
       sStackY_1c = 1;
       for (sStackY_18 = 0; sStackY_18 < 4; sStackY_18 = sStackY_18 + 1) {
         if ((int)(CONCAT22(sStackY_1c,uStackY_1e) & CONCAT22(uVar2,uStackY_16)) >> 0x10 != 0) {
-          sub_a15aa(&unk_f5324 + sStackY_18 * 0x22);
+          gus_drv_voice_free(&unk_f5324 + sStackY_18 * 0x22);
         }
         sStackY_1c = sStackY_1c << 1;
       }
@@ -5863,7 +5863,7 @@ void __watcall sub_a1632(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaf
   sStackY_1c = 1;
   for (sStackY_18 = 0; sStackY_18 < 4; sStackY_18 = sStackY_18 + 1) {
     if ((int)(CONCAT22(sStackY_1c,uStackY_1e) & CONCAT22(uVar2,uStackY_16)) >> 0x10 != 0) {
-      sub_a0d43((int)sStackY_18,(int)(short)local_28,
+      gus_voice_controller((int)sStackY_18,(int)(short)local_28,
                 CONCAT13(uStackY_23,CONCAT12(local_24,uStackY_26)) >> 0x10);
     }
     sStackY_1c = sStackY_1c << 1;
@@ -5873,12 +5873,12 @@ void __watcall sub_a1632(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaf
 
 
 // ================================================================================================
-// sub_a1800 @ 0xa1800 [__cdecl]
+// printstr_centered @ 0xa1800 [__cdecl]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void sub_a1800(undefined4 param_1,undefined4 param_2)
+void printstr_centered(undefined4 param_1,undefined4 param_2)
 
 {
   int iVar1;
@@ -5892,22 +5892,22 @@ void sub_a1800(undefined4 param_1,undefined4 param_2)
 
 
 // ================================================================================================
-// sub_a1840 @ 0xa1840 [__cdecl]
+// window_clip_full @ 0xa1840 [__cdecl]
 // ================================================================================================
 
-void sub_a1840(undefined4 *param_1)
+void window_clip_full(undefined4 *param_1)
 
 {
-  sub_b6f84(param_1,0,*param_1,0,param_1[1]);
+  window_setclip(param_1,0,*param_1,0,param_1[1]);
   return;
 }
 
 
 // ================================================================================================
-// sub_a185c @ 0xa185c [__watcall]
+// setclip_screen @ 0xa185c [__watcall]
 // ================================================================================================
 
-void __watcall sub_a185c(void)
+void __watcall setclip_screen(void)
 
 {
   setclip(0,dword_d30a4,0,dword_d30a8);
@@ -5916,10 +5916,10 @@ void __watcall sub_a185c(void)
 
 
 // ================================================================================================
-// sub_a1877 @ 0xa1877 [__watcall]
+// debug_break @ 0xa1877 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_a1877(undefined4 param_1,undefined2 unaff_DX)
+undefined4 __watcall debug_break(undefined4 param_1,undefined2 unaff_DX)
 
 {
   code *pcVar1;
@@ -5935,10 +5935,10 @@ undefined4 __watcall sub_a1877(undefined4 param_1,undefined2 unaff_DX)
 
 
 // ================================================================================================
-// sub_a188b @ 0xa188b [__watcall]
+// return_one_a188b @ 0xa188b [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_a188b(void)
+undefined4 __watcall return_one_a188b(void)
 
 {
   return 1;
@@ -5946,10 +5946,10 @@ undefined4 __watcall sub_a188b(void)
 
 
 // ================================================================================================
-// sub_a189a @ 0xa189a [__watcall]
+// return_zero_a189a @ 0xa189a [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_a189a(void)
+undefined4 __watcall return_zero_a189a(void)
 
 {
   return 0;
@@ -5957,11 +5957,11 @@ undefined4 __watcall sub_a189a(void)
 
 
 // ================================================================================================
-// sub_a189e @ 0xa189e [__watcall]
+// __int386x @ 0xa189e [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_a189e(undefined4 param_1,undefined4 *unaff_EDX,undefined2 *unaff_EBX,undefined4 unaff_ECX)
+__int386x(undefined4 param_1,undefined4 *unaff_EDX,undefined2 *unaff_EBX,undefined4 unaff_ECX)
 
 {
   undefined4 unaff_ESI;
@@ -5971,7 +5971,7 @@ sub_a189e(undefined4 param_1,undefined4 *unaff_EDX,undefined2 *unaff_EBX,undefin
   byte in_CF;
   undefined8 uVar1;
   
-  uVar1 = sub_a18d6();
+  uVar1 = __dointerrupt();
   *unaff_EDX = (int)uVar1;
   unaff_EDX[1] = unaff_EBX;
   unaff_EDX[2] = unaff_ECX;
@@ -5986,10 +5986,10 @@ sub_a189e(undefined4 param_1,undefined4 *unaff_EDX,undefined2 *unaff_EBX,undefin
 
 
 // ================================================================================================
-// sub_a18d6 @ 0xa18d6 [__watcall]
+// __dointerrupt @ 0xa18d6 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_a18d6(void)
+undefined8 __watcall __dointerrupt(void)
 
 {
   undefined4 *unaff_EDI;
@@ -5999,11 +5999,11 @@ undefined8 __watcall sub_a18d6(void)
 
 
 // ================================================================================================
-// sub_a18fb @ 0xa18fb [__watcall]
+// _DoINTR @ 0xa18fb [__watcall]
 // ================================================================================================
 
 undefined8 __watcall
-sub_a18fb(undefined4 param_1,undefined4 *unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+_DoINTR(undefined4 param_1,undefined4 *unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   undefined4 unaff_EBP;
@@ -6024,7 +6024,7 @@ sub_a18fb(undefined4 param_1,undefined4 *unaff_EDX,undefined4 unaff_EBX,undefine
   byte in_NT;
   undefined8 uVar1;
   
-  uVar1 = sub_a1948();
+  uVar1 = __dointr_call();
   *unaff_EDX = (int)uVar1;
   *(ushort *)(unaff_EDX + 9) =
        (ushort)(in_NT & 1) * 0x4000 | (ushort)(in_OF & 1) * 0x800 | (ushort)(in_IF & 1) * 0x200 |
@@ -6045,10 +6045,10 @@ sub_a18fb(undefined4 param_1,undefined4 *unaff_EDX,undefined4 unaff_EBX,undefine
 
 
 // ================================================================================================
-// sub_a1948 @ 0xa1948 [__watcall]
+// __dointr_call @ 0xa1948 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_a1948(undefined4 param_1,undefined4 *unaff_EDX)
+undefined8 __watcall __dointr_call(undefined4 param_1,undefined4 *unaff_EDX)
 
 {
   return CONCAT44(unaff_EDX[3],*unaff_EDX);
@@ -6071,10 +6071,10 @@ void unk_a197c(void)
 
 
 // ================================================================================================
-// sub_a1c7c @ 0xa1c7c [__watcall]
+// __Slash_C @ 0xa1c7c [__watcall]
 // ================================================================================================
 
-undefined * __watcall sub_a1c7c(undefined *param_1,char unaff_DL,undefined4 unaff_EBX)
+undefined * __watcall __Slash_C(undefined *param_1,char unaff_DL,undefined4 unaff_EBX)
 
 {
   code *pcVar1;
@@ -6095,10 +6095,10 @@ undefined * __watcall sub_a1c7c(undefined *param_1,char unaff_DL,undefined4 unaf
 
 
 // ================================================================================================
-// sub_a1ca2 @ 0xa1ca2 [__watcall]
+// __file_exists_attr @ 0xa1ca2 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_a1ca2(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall __file_exists_attr(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
@@ -6110,22 +6110,22 @@ undefined8 __watcall sub_a1ca2(undefined4 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_a1cc1 @ 0xa1cc1 [__watcall]
+// __spawn_with_args @ 0xa1cc1 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_a1cc1(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX,
+__spawn_with_args(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX,
          undefined4 param_5)
 
 {
-  sub_af8ee(unaff_EDX,param_5,unaff_EBX,0,param_1,unaff_ECX);
-  sub_af943(param_1,unaff_EDX,unaff_EBX,unaff_ECX,param_5);
+  __ccmdline(unaff_EDX,param_5,unaff_EBX,0,param_1,unaff_ECX);
+  __dospawn(param_1,unaff_EDX,unaff_EBX,unaff_ECX,param_5);
   return;
 }
 
 
 // ================================================================================================
-// sub_a1cf4 @ 0xa1cf4 [__watcall]
+// spawnve @ 0xa1cf4 [__watcall]
 // ================================================================================================
 
 /* WARNING: Removing unreachable block (ram,0x000a1ec8) */
@@ -6133,7 +6133,7 @@ sub_a1cc1(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined
 /* WARNING: Type propagation algorithm not settling */
 
 undefined4 __watcall
-sub_a1cf4(uint param_1,char *unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+spawnve(uint param_1,char *unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   char **ppcVar1;
@@ -6176,21 +6176,21 @@ sub_a1cf4(uint param_1,char *unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX
   __CHK(0xe4);
   local_c4[0] = param_1;
   if (1 < param_1) {
-    sub_9878a(9);
+    __set_errno(9);
     return 0xffffffff;
   }
-  iVar2 = sub_af7b6(unaff_EBX,unaff_ECX,&local_34,local_38,local_3c,&local_40,0);
+  iVar2 = __cenvarg(unaff_EBX,unaff_ECX,&local_34,local_38,local_3c,&local_40,0);
   puVar10 = local_c4;
   puVar11 = local_c4;
   if (iVar2 == -1) {
     return 0xffffffff;
   }
   sVar3 = strlen(unaff_EDX);
-  uVar13 = sub_91984(sVar3 + 0x9a);
+  uVar13 = malloc(sVar3 + 0x9a);
   local_2c = (int)uVar13;
   if (local_2c == 0) {
     uVar5 = (int)((ulonglong)uVar13 >> 0x20) + 3U & 0xfffffffc;
-    uVar13 = sub_9d68e();
+    uVar13 = stackavail();
     if (uVar5 < (uint)uVar13) {
       iVar2 = -uVar5;
       puVar10 = (uint *)((int)local_c4 + iVar2);
@@ -6203,7 +6203,7 @@ sub_a1cf4(uint param_1,char *unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX
     puVar11 = puVar10;
     if (puVar4 == (undefined *)0x0) {
       *(undefined4 *)((int)puVar10 + -4) = 0xa1d98;
-      sub_91a67(local_34);
+      free(local_34);
       return 0xffffffff;
     }
   }
@@ -6211,17 +6211,17 @@ sub_a1cf4(uint param_1,char *unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX
   *(char ***)((int)puVar11 + -4) = &local_50;
   *(undefined4 **)((int)puVar11 + -8) = &local_54;
   *(undefined4 *)((int)puVar11 + -0xc) = 0xa1dbb;
-  sub_afa55(unaff_EDX,local_18 + (int)((ulonglong)uVar13 >> 0x20) + -0x93,&local_4c,&local_48);
+  __splitpath_drive(unaff_EDX,local_18 + (int)((ulonglong)uVar13 >> 0x20) + -0x93,&local_4c,&local_48);
   *(undefined4 *)((int)puVar11 + -4) = 0xa1dc4;
   (*(code *)funcptr_d6600)();
   iVar2 = local_40;
   *(undefined4 *)((int)puVar11 + -4) = 0xa1dcc;
-  local_30 = (char **)sub_91984(iVar2);
+  local_30 = (char **)malloc(iVar2);
   local_20 = local_30;
   if (local_30 == (char **)0x0) {
     uVar5 = local_40 + 3U & 0xfffffffc;
     *(undefined4 *)((int)puVar11 + -4) = 0xa1de4;
-    uVar13 = sub_9d68e(uVar5,uVar5);
+    uVar13 = stackavail(uVar5,uVar5);
     if ((uint)((ulonglong)uVar13 >> 0x20) < (uint)uVar13) {
       iVar2 = -(local_40 + 3U & 0xfffffffc);
       local_20 = (char **)((int)puVar11 + iVar2);
@@ -6232,9 +6232,9 @@ sub_a1cf4(uint param_1,char *unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX
     }
     if (local_20 == (char **)0x0) {
       *(undefined4 *)((int)puVar11 + -4) = 0xa1e09;
-      sub_9878a(2);
+      __set_errno(2);
       *(undefined4 *)((int)puVar11 + -4) = 0xa1e1a;
-      sub_987ad(10);
+      __set_doserrno(10);
       uVar13 = CONCAT44(extraout_EDX,0xffffffff);
       ppcVar9 = &local_4c;
       goto LAB_000a1fc3;
@@ -6246,9 +6246,9 @@ sub_a1cf4(uint param_1,char *unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX
   *(char **)((int)puVar11 + -4) = local_50;
   ppcVar9 = local_48;
   *(undefined4 *)((int)puVar11 + -8) = 0xa1e56;
-  sub_99af4(local_18,local_4c,ppcVar9,local_54);
+  _makepath(local_18,local_4c,ppcVar9,local_54);
   *(undefined4 *)((int)puVar11 + -4) = 0xa1e60;
-  sub_9878a(1);
+  __set_errno(1);
   if (*local_50 == '\0') {
     *(undefined4 *)((int)puVar11 + -4) = 0xa1ebd;
     sVar3 = strlen(local_18);
@@ -6258,20 +6258,20 @@ sub_a1cf4(uint param_1,char *unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX
     *(undefined4 *)pcVar7 = aCom;
     pcVar7[(uint)bVar12 * -8 + 4] = (&DAT_000c4ac0)[(uint)bVar12 * -8];
     *(undefined4 *)((int)puVar11 + -4) = 0xa1eec;
-    sub_9878a(0,local_18,local_20);
+    __set_errno(0,local_18,local_20);
     *(undefined4 *)((int)puVar11 + -4) = unaff_EBX;
     uVar6 = local_34;
     uVar5 = local_c4[0];
     *(undefined4 *)((int)puVar11 + -8) = 0xa1efa;
-    uVar6 = sub_a1cc1(uVar5,extraout_EDX_01,local_20,uVar6);
+    uVar6 = __spawn_with_args(uVar5,extraout_EDX_01,local_20,uVar6);
     *(undefined4 *)((int)puVar11 + -4) = 0xa1f02;
-    uVar14 = sub_9d66b();
+    uVar14 = __get_errno_ptr();
     pcVar7 = local_28;
     uVar13 = CONCAT44((int)((ulonglong)uVar14 >> 0x20),uVar6);
     ppcVar9 = local_20;
     if (*(int *)uVar14 != 1) goto LAB_000a1fc3;
     *(undefined4 *)((int)puVar11 + -4) = 0xa1f1b;
-    sub_9878a(0,local_18,local_20);
+    __set_errno(0,local_18,local_20);
     *(undefined2 *)((int)puVar11 + -4) = in_DS;
     *(undefined4 *)((int)puVar11 + -4) = unaff_EBX;
     *(undefined4 *)pcVar7 = aExe;
@@ -6279,19 +6279,19 @@ sub_a1cf4(uint param_1,char *unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX
     uVar5 = local_c4[0];
     pcVar7[(uint)bVar12 * -8 + 4] = (&DAT_000c4ac5)[(uint)bVar12 * -8];
     *(undefined4 *)((int)puVar11 + -8) = 0xa1f32;
-    uVar6 = sub_a1cc1(uVar5,extraout_EDX_02,local_20,uVar6);
+    uVar6 = __spawn_with_args(uVar5,extraout_EDX_02,local_20,uVar6);
     *(undefined4 *)((int)puVar11 + -4) = 0xa1f3a;
-    uVar14 = sub_9d66b();
+    uVar14 = __get_errno_ptr();
     pcVar7 = local_28;
     uVar8 = (undefined4)((ulonglong)uVar14 >> 0x20);
     uVar13 = CONCAT44(uVar8,uVar6);
     if (*(int *)uVar14 != 1) goto LAB_000a1fc3;
     *(undefined4 *)((int)puVar11 + -4) = 0xa1f52;
-    sub_9878a(0,uVar8,local_20);
+    __set_errno(0,uVar8,local_20);
     *(undefined4 *)pcVar7 = aBat;
     pcVar7[(uint)bVar12 * -8 + 4] = (&DAT_000c4abb)[(uint)bVar12 * -8];
     *(undefined4 *)((int)puVar11 + -4) = 0xa1f5c;
-    uVar14 = sub_a1ca2(local_18);
+    uVar14 = __file_exists_attr(local_18);
     uVar13 = CONCAT44((int)((ulonglong)uVar14 >> 0x20),uVar6);
     iVar2 = (int)uVar14;
   }
@@ -6300,52 +6300,52 @@ sub_a1cf4(uint param_1,char *unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX
     iVar2 = stricmp(local_50,&aBat);
     if (iVar2 != 0) {
       *(undefined4 *)((int)puVar11 + -4) = 0xa1e9f;
-      sub_9878a(0,local_18,local_20);
+      __set_errno(0,local_18,local_20);
       *(undefined4 *)((int)puVar11 + -4) = unaff_EBX;
       uVar6 = local_34;
       uVar5 = local_c4[0];
       *(undefined4 *)((int)puVar11 + -8) = 0xa1ead;
-      uVar13 = sub_a1cc1(uVar5,extraout_EDX_00,local_20,uVar6);
+      uVar13 = __spawn_with_args(uVar5,extraout_EDX_00,local_20,uVar6);
       ppcVar9 = local_20;
       goto LAB_000a1fc3;
     }
     *(undefined4 *)((int)puVar11 + -4) = 0xa1e85;
-    uVar14 = sub_a1ca2(local_18);
+    uVar14 = __file_exists_attr(local_18);
     uVar13 = CONCAT44((int)((ulonglong)uVar14 >> 0x20),0xffffffff);
     iVar2 = (int)uVar14;
   }
   if (iVar2 != 0) {
     *(undefined4 *)((int)puVar11 + -4) = 0xa1f73;
-    sub_91a67(local_34,unaff_EBX,local_20,1);
+    free(local_34,unaff_EBX,local_20,1);
     local_34 = 0;
     *(undefined4 *)((int)puVar11 + -4) = 0xa1f82;
-    sub_af8ee(local_18);
+    __ccmdline(local_18);
     *(undefined4 *)((int)puVar11 + -4) = 0;
     *(char ***)((int)puVar11 + -8) = local_20;
     *(char **)((int)puVar11 + -0xc) = local_18;
     *(undefined4 *)((int)puVar11 + -0x10) = 0xa1f96;
-    uVar6 = sub_a1c7c(local_44,0);
+    uVar6 = __Slash_C(local_44,0);
     *(undefined4 *)((int)puVar11 + -0x10) = uVar6;
     *(char **)((int)puVar11 + -0x14) = aCOMMAND;
     *(undefined4 *)((int)puVar11 + -0x18) = 0xa1fb4;
-    uVar6 = sub_a6b87(aCOMSPEC);
+    uVar6 = getenv(aCOMSPEC);
     *(undefined4 *)((int)puVar11 + -0x18) = uVar6;
     *(uint *)((int)puVar11 + -0x1c) = local_c4[0];
     *(undefined4 *)((int)puVar11 + -0x20) = 0xa1fbd;
-    uVar13 = sub_98a81();
+    uVar13 = spawnl();
     ppcVar9 = local_20;
   }
 LAB_000a1fc3:
   ppcVar1 = local_30;
   local_1c = (undefined4)uVar13;
   *(undefined4 *)((int)puVar11 + -4) = 0xa1fcb;
-  sub_91a67(ppcVar1,(int)((ulonglong)uVar13 >> 0x20),ppcVar9);
+  free(ppcVar1,(int)((ulonglong)uVar13 >> 0x20),ppcVar9);
   iVar2 = local_2c;
   *(undefined4 *)((int)puVar11 + -4) = 0xa1fd3;
-  sub_91a67(iVar2);
+  free(iVar2);
   uVar6 = local_34;
   *(undefined4 *)((int)puVar11 + -4) = 0xa1fdb;
-  sub_91a67(uVar6);
+  free(uVar6);
   *(undefined4 *)((int)puVar11 + -4) = 0xa1fe4;
   (*(code *)funcptr_d6604)();
   return local_1c;
@@ -6353,12 +6353,12 @@ LAB_000a1fc3:
 
 
 // ================================================================================================
-// sub_a2000 @ 0xa2000 [__cdecl]
+// draw_textured_triangle @ 0xa2000 [__cdecl]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void sub_a2000(int param_1,int param_2,int *param_3)
+void draw_textured_triangle(int param_1,int param_2,int *param_3)
 
 {
   int iVar1;
@@ -6398,7 +6398,7 @@ void sub_a2000(int param_1,int param_2,int *param_3)
   int local_14;
   
   iVar11 = *(int *)(param_1 + 2) >> 0x10;
-  sub_b72d4(param_1 + 0x10,&unk_f6138);
+  texture_set(param_1 + 0x10,&unk_f6138);
   uVar15 = 0;
   uVar18 = 0;
   iVar17 = param_3[1];
@@ -6524,7 +6524,7 @@ LAB_000a22e5:
           }
         }
         if ((0 < iVar16) && (dword_d30b0 < iVar17)) {
-          sub_b72e9(iVar14 + *(int *)(off_d30cc + local_20),
+          texture_span(iVar14 + *(int *)(off_d30cc + local_20),
                     (iVar5 >> 0x10) + iVar11 * (local_18 >> 0x10) + (&unk_f6138)[iVar12],iVar16);
         }
         iVar5 = iVar5 + local_2c;
@@ -6583,7 +6583,7 @@ LAB_000a22e5:
         }
       }
       if ((0 < iVar3) && (dword_d30b0 <= iVar17)) {
-        sub_b72e9(iVar4 + *(int *)(off_d30cc + local_28),
+        texture_span(iVar4 + *(int *)(off_d30cc + local_28),
                   (iVar5 >> 0x10) + iVar11 * (local_18 >> 0x10) + (&unk_f6138)[iVar10],iVar3);
       }
       iVar5 = iVar5 + local_2c;
@@ -6598,10 +6598,10 @@ LAB_000a22e5:
 
 
 // ================================================================================================
-// sub_a2610 @ 0xa2610 [__watcall]
+// find_file_ext @ 0xa2610 [__watcall]
 // ================================================================================================
 
-char * __watcall sub_a2610(void)
+char * __watcall find_file_ext(void)
 
 {
   char cVar1;
@@ -6623,7 +6623,7 @@ char * __watcall sub_a2610(void)
     pcVar4[1] = cVar1;
     pcVar4 = pcVar4 + 2;
   } while (cVar1 != '\0');
-  pcVar4 = (char *)sub_b00e4(in_stack_00000008,0x2e);
+  pcVar4 = (char *)strrchr(in_stack_00000008,0x2e);
   if (pcVar4 == (char *)0x0) {
     uVar3 = 0xffffffff;
     pcVar4 = in_stack_00000008;
@@ -6645,7 +6645,7 @@ char * __watcall sub_a2610(void)
     cVar1 = *in_stack_0000000c;
     while (cVar1 != '\0') {
       strncpy(pcVar4,in_stack_0000000c,4);
-      iVar2 = sub_98a40(in_stack_00000008);
+      iVar2 = file_exists(in_stack_00000008);
       if (iVar2 != 0) {
         return pcVar4;
       }
@@ -6684,9 +6684,9 @@ undefined4 packed_read(undefined4 param_1,undefined4 param_2,int param_3)
       param_3 = 0x100;
     }
   }
-  iVar1 = sub_b3c74(param_1,local_10c,param_3);
+  iVar1 = dos_read_blocks(param_1,local_10c,param_3);
   if (iVar1 != 0) {
-    uVar2 = sub_9762c();
+    uVar2 = unpacked_size();
   }
   seekhandle(param_1,param_2);
   return uVar2;
@@ -6694,40 +6694,40 @@ undefined4 packed_read(undefined4 param_1,undefined4 param_2,int param_3)
 
 
 // ================================================================================================
-// sub_a2744 @ 0xa2744 [__watcall]
+// loadfile_packed_data_fatal @ 0xa2744 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a2744(void)
+void __watcall loadfile_packed_data_fatal(void)
 
 {
   undefined4 in_stack_00000004;
   undefined4 in_stack_00000008;
   
-  sub_a2774(in_stack_00000004,in_stack_00000008,1);
+  loadfile_packed_data(in_stack_00000004,in_stack_00000008,1);
   return;
 }
 
 
 // ================================================================================================
-// sub_a275c @ 0xa275c [__watcall]
+// loadfile_packed_data_try @ 0xa275c [__watcall]
 // ================================================================================================
 
-void __watcall sub_a275c(void)
+void __watcall loadfile_packed_data_try(void)
 
 {
   undefined4 in_stack_00000004;
   undefined4 in_stack_00000008;
   
-  sub_a2774(in_stack_00000004,in_stack_00000008,0);
+  loadfile_packed_data(in_stack_00000004,in_stack_00000008,0);
   return;
 }
 
 
 // ================================================================================================
-// sub_a2774 @ 0xa2774 [__cdecl]
+// loadfile_packed_data @ 0xa2774 [__cdecl]
 // ================================================================================================
 
-undefined4 * sub_a2774(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+undefined4 * loadfile_packed_data(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   undefined4 *puVar1;
@@ -6741,10 +6741,10 @@ undefined4 * sub_a2774(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_a2794 @ 0xa2794 [__watcall]
+// loadfile_packed_fatal @ 0xa2794 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a2794(void)
+void __watcall loadfile_packed_fatal(void)
 
 {
   undefined4 in_stack_00000004;
@@ -6756,10 +6756,10 @@ void __watcall sub_a2794(void)
 
 
 // ================================================================================================
-// sub_a27ac @ 0xa27ac [__watcall]
+// loadfile_packed_try @ 0xa27ac [__watcall]
 // ================================================================================================
 
-void __watcall sub_a27ac(void)
+void __watcall loadfile_packed_try(void)
 
 {
   undefined4 in_stack_00000004;
@@ -6808,9 +6808,9 @@ undefined4 * loadfile_packed(undefined4 param_1,undefined4 param_2,undefined4 pa
         closehandle(local_1c);
         return (undefined4 *)0x0;
       }
-      iVar3 = sub_8e3cc(*puVar1);
-      uVar4 = sub_8e3d4((iVar3 + uVar2) - local_14 & 0xfffffffc);
-      sub_b3c74(local_1c,uVar4,local_14 + 3U & 0xfffffffc);
+      iVar3 = identity_8e3cc(*puVar1);
+      uVar4 = identity_8e3d4((iVar3 + uVar2) - local_14 & 0xfffffffc);
+      dos_read_blocks(local_1c,uVar4,local_14 + 3U & 0xfffffffc);
       unpack(uVar4,*puVar1,local_14,param_3);
       resizemem(puVar1,local_10,param_3);
       closehandle(local_1c);
@@ -6858,18 +6858,18 @@ int shpi_from_compressed(int param_1,int param_2)
   int local_14;
   int local_10;
   
-  iVar2 = sub_b0100();
-  iVar3 = sub_b0100();
+  iVar2 = read_le_n();
+  iVar3 = read_le_n();
   local_14 = iVar2 + 10;
   if (param_2 != 0) {
     local_28 = iVar3;
-    sub_b3abc(&aSHPI_d544c,param_2,0x10);
-    sub_b0148(param_2 + 4,local_14,4);
-    sub_b0148(param_2 + 8,iVar3,4);
+    memmove_dwords(&aSHPI_d544c,param_2,0x10);
+    write_le_n(param_2 + 4,local_14,4);
+    write_le_n(param_2 + 8,iVar3,4);
     iVar1 = iVar3 * 8;
     iVar5 = param_2 + 0x10;
     local_10 = param_1 + 6;
-    sub_b3abc(local_10 + iVar1,iVar1 + iVar5,iVar2 + -6 + iVar3 * -8);
+    memmove_dwords(local_10 + iVar1,iVar1 + iVar5,iVar2 + -6 + iVar3 * -8);
     local_1c = 0;
     if (0 < iVar3) {
       iVar2 = param_2 + 0x14;
@@ -6877,14 +6877,14 @@ int shpi_from_compressed(int param_1,int param_2)
       local_20 = iVar3 * 4 + local_10;
       local_24 = iVar1;
       do {
-        iVar3 = sub_b0100();
+        iVar3 = read_le_n();
         iVar3 = local_24 + iVar3 + 0x10;
         uVar7 = 4;
-        uVar4 = sub_b0100();
-        sub_b0148(iVar5,uVar4,uVar7);
-        sub_b0148(iVar2,iVar3,4);
+        uVar4 = read_le_n();
+        write_le_n(iVar5,uVar4,uVar7);
+        write_le_n(iVar2,iVar3,4);
         puVar6 = (undefined *)(iVar3 + param_2);
-        sub_b3abc(puVar6,&local_38,0x10);
+        memmove_dwords(puVar6,&local_38,0x10);
         *puVar6 = local_2c;
         puVar6[1] = local_2b;
         puVar6[2] = local_2a;
@@ -6926,10 +6926,10 @@ void packed_size(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_a2ac8 @ 0xa2ac8 [__watcall]
+// abs @ 0xa2ac8 [__watcall]
 // ================================================================================================
 
-int __watcall sub_a2ac8(int param_1)
+int __watcall abs(int param_1)
 
 {
   if (param_1 < 0) {
@@ -6940,10 +6940,10 @@ int __watcall sub_a2ac8(int param_1)
 
 
 // ================================================================================================
-// sub_a2acf @ 0xa2acf [__watcall]
+// __init_amblksiz @ 0xa2acf [__watcall]
 // ================================================================================================
 
-void __watcall sub_a2acf(void)
+void __watcall __init_amblksiz(void)
 
 {
   dword_d5674 = 0x8000;
@@ -6952,23 +6952,23 @@ void __watcall sub_a2acf(void)
 
 
 // ================================================================================================
-// sub_a2adc @ 0xa2adc [__watcall]
+// __float_not_loaded @ 0xa2adc [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_a2adc(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+__float_not_loaded(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
-  sub_98683(aFloatingPointSupportNotL,1,unaff_EBX,unaff_ECX,unaff_EDX);
+  __fatal_runtime_error(aFloatingPointSupportNotL,1,unaff_EBX,unaff_ECX,unaff_EDX);
   return;
 }
 
 
 // ================================================================================================
-// sub_a2b13 @ 0xa2b13 [__watcall]
+// ultoa @ 0xa2b13 [__watcall]
 // ================================================================================================
 
-char * __watcall sub_a2b13(uint param_1,char *unaff_EDX,uint unaff_EBX)
+char * __watcall ultoa(uint param_1,char *unaff_EDX,uint unaff_EBX)
 
 {
   char cVar1;
@@ -6996,26 +6996,26 @@ char * __watcall sub_a2b13(uint param_1,char *unaff_EDX,uint unaff_EBX)
 
 
 // ================================================================================================
-// sub_a2b5c @ 0xa2b5c [__watcall]
+// ltoa @ 0xa2b5c [__watcall]
 // ================================================================================================
 
-undefined * __watcall sub_a2b5c(int param_1,undefined *unaff_EDX,int unaff_EBX)
+undefined * __watcall ltoa(int param_1,undefined *unaff_EDX,int unaff_EBX)
 
 {
   if ((unaff_EBX == 10) && (param_1 < 0)) {
     param_1 = -param_1;
     *unaff_EDX = 0x2d;
   }
-  sub_a2b13(param_1);
+  ultoa(param_1);
   return unaff_EDX;
 }
 
 
 // ================================================================================================
-// sub_a2b77 @ 0xa2b77 [__watcall]
+// toupper @ 0xa2b77 [__watcall]
 // ================================================================================================
 
-int __watcall sub_a2b77(int param_1)
+int __watcall toupper(int param_1)
 
 {
   if ((0x60 < param_1) && (param_1 < 0x7b)) {
@@ -7026,10 +7026,10 @@ int __watcall sub_a2b77(int param_1)
 
 
 // ================================================================================================
-// sub_a2b85 @ 0xa2b85 [__watcall]
+// _heapenable @ 0xa2b85 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_a2b85(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall _heapenable(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   undefined4 uVar1;
@@ -7041,10 +7041,10 @@ undefined8 __watcall sub_a2b85(undefined4 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_a2b95 @ 0xa2b95 [__watcall]
+// sbrk @ 0xa2b95 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_a2b95(int param_1)
+undefined8 __watcall sbrk(int param_1)
 
 {
   code *pcVar1;
@@ -7067,7 +7067,7 @@ undefined8 __watcall sub_a2b95(int param_1)
   puVar8 = &stack0xffffffec;
   if (((byte_d4d06 == 1) && (byte_d4d07 == '\0')) || (byte_d4d06 == 9)) {
     if (param_1 < 1) {
-      puVar5 = (undefined4 *)sub_9d66b();
+      puVar5 = (undefined4 *)__get_errno_ptr();
       *puVar5 = 9;
     }
     else {
@@ -7095,7 +7095,7 @@ undefined8 __watcall sub_a2b95(int param_1)
       }
       puVar8 = &stack0xfffffff0;
       if (puVar4 != (undefined2 *)0x0) goto LAB_000a2c4e;
-      puVar5 = (undefined4 *)sub_9d66b(0,uVar6,uVar3);
+      puVar5 = (undefined4 *)__get_errno_ptr(0,uVar6,uVar3);
       *puVar5 = 5;
       puVar7 = &stack0xfffffff0;
     }
@@ -7107,7 +7107,7 @@ undefined8 __watcall sub_a2b95(int param_1)
       uVar2 = SegmentLimit((uint)in_DS);
       dword_d4cd8 = (ushort)uVar2 + 1;
     }
-    puVar4 = (undefined2 *)sub_a2c54(dword_d4cd8 + param_1);
+    puVar4 = (undefined2 *)__brk(dword_d4cd8 + param_1);
   }
 LAB_000a2c4e:
   return CONCAT44(*(undefined4 *)(puVar8 + 8),puVar4);
@@ -7115,10 +7115,10 @@ LAB_000a2c4e:
 
 
 // ================================================================================================
-// sub_a2c54 @ 0xa2c54 [__watcall]
+// __brk @ 0xa2c54 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_a2c54(uint param_1)
+undefined8 __watcall __brk(uint param_1)
 
 {
   code *pcVar1;
@@ -7171,7 +7171,7 @@ undefined8 __watcall sub_a2c54(uint param_1)
   }
 LAB_000a2cbb:
   *(undefined4 *)((int)puVar7 + -4) = 0xa2cc0;
-  puVar3 = (undefined4 *)sub_9d66b();
+  puVar3 = (undefined4 *)__get_errno_ptr();
   *puVar3 = 5;
   uVar4 = 0xffffffff;
   puVar8 = (undefined *)puVar7;
@@ -7181,10 +7181,10 @@ LAB_000a2c4e:
 
 
 // ================================================================================================
-// sub_a2d16 @ 0xa2d16 [__watcall]
+// tell @ 0xa2d16 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a2d16(int param_1)
+void __watcall tell(int param_1)
 
 {
   lseek(param_1,0,1);
@@ -7193,11 +7193,11 @@ void __watcall sub_a2d16(int param_1)
 
 
 // ================================================================================================
-// sub_a2d27 @ 0xa2d27 [__watcall]
+// __InitFiles @ 0xa2d27 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_a2d27(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+__InitFiles(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   undefined4 *puVar1;
@@ -7205,11 +7205,11 @@ sub_a2d27(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined
   
   byte_d4d59 = byte_d4d59 & 0xf8 | 4;
   for (puVar2 = &unk_d4d18; *(int *)(puVar2 + 0xc) != 0; puVar2 = puVar2 + 0x1a) {
-    puVar1 = (undefined4 *)sub_91984(8);
+    puVar1 = (undefined4 *)malloc(8);
     if (puVar1 == (undefined4 *)0x0) {
-      puVar1 = (undefined4 *)sub_91984(8);
+      puVar1 = (undefined4 *)malloc(8);
       if (puVar1 == (undefined4 *)0x0) {
-        sub_98683(aNotEnoughMemoryToAllocat,1,0,puVar2,unaff_EDX,unaff_ECX,unaff_EBX);
+        __fatal_runtime_error(aNotEnoughMemoryToAllocat,1,0,puVar2,unaff_EDX,unaff_ECX,unaff_EBX);
       }
     }
     puVar1[1] = puVar2;
@@ -7222,23 +7222,23 @@ sub_a2d27(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined
 
 
 // ================================================================================================
-// sub_a2d9f @ 0xa2d9f [__watcall]
+// __full_io_exit @ 0xa2d9f [__watcall]
 // ================================================================================================
 
-void __watcall sub_a2d9f(void)
+void __watcall __full_io_exit(void)
 
 {
-  sub_a2db0(0);
-  sub_9b09f();
+  __closeall_streams(0);
+  __purgefp();
   return;
 }
 
 
 // ================================================================================================
-// sub_a2db0 @ 0xa2db0 [__watcall]
+// __closeall_streams @ 0xa2db0 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_a2db0(int param_1,undefined4 unaff_EDX)
+undefined8 __watcall __closeall_streams(int param_1,undefined4 unaff_EDX)
 
 {
   undefined4 *puVar1;
@@ -7265,7 +7265,7 @@ code_r0x000a2de2:
       uVar4 = 0;
     }
 LAB_000a2def:
-    sub_91d3a(puVar2,uVar4);
+    __shutdown_stream(puVar2,uVar4);
     iVar5 = iVar5 + 1;
   }
   goto LAB_000a2df7;
@@ -7273,10 +7273,10 @@ LAB_000a2def:
 
 
 // ================================================================================================
-// sub_a2e02 @ 0xa2e02 [__watcall]
+// __qwrite @ 0xa2e02 [__watcall]
 // ================================================================================================
 
-uint __watcall sub_a2e02(undefined4 param_1,undefined4 param_2,uint unaff_EBX)
+uint __watcall __qwrite(undefined4 param_1,undefined4 param_2,uint unaff_EBX)
 
 {
   code *pcVar1;
@@ -7291,7 +7291,7 @@ uint __watcall sub_a2e02(undefined4 param_1,undefined4 param_2,uint unaff_EBX)
   undefined6 uVar9;
   
   puVar7 = (undefined4 *)&stack0xffffffec;
-  uVar3 = sub_9b72e();
+  uVar3 = __GetIOMode();
   if ((uVar3 & 0x80) != 0) {
     bVar8 = 0;
     pcVar1 = (code *)swi(0x21);
@@ -7316,21 +7316,21 @@ uint __watcall sub_a2e02(undefined4 param_1,undefined4 param_2,uint unaff_EBX)
       return uVar5;
     }
     *puVar7 = 0xa2e74;
-    sub_9878a(0xc,uVar5,param_1);
+    __set_errno(0xc,uVar5,param_1);
     return extraout_EDX;
   }
 LAB_000a2e3f:
   *(undefined4 *)((int)puVar6 + -4) = 0xa2e44;
-  uVar3 = sub_9a735(uVar3 & 0xffff,uVar5,param_1);
+  uVar3 = __set_errno_dos(uVar3 & 0xffff,uVar5,param_1);
   return uVar3;
 }
 
 
 // ================================================================================================
-// sub_a2e85 @ 0xa2e85 [__watcall]
+// __flushall @ 0xa2e85 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_a2e85(uint param_1,undefined4 unaff_EDX)
+undefined8 __watcall __flushall(uint param_1,undefined4 unaff_EDX)
 
 {
   undefined4 *extraout_EDX;
@@ -7341,7 +7341,7 @@ undefined8 __watcall sub_a2e85(uint param_1,undefined4 unaff_EDX)
   for (puVar1 = dword_f24c8; puVar1 != (undefined4 *)0x0; puVar1 = (undefined4 *)*puVar1) {
     if (((*(uint *)(puVar1[1] + 0xc) & param_1) != 0) &&
        (iVar2 = iVar2 + 1, (*(byte *)(puVar1[1] + 0xd) & 0x10) != 0)) {
-      sub_9b232();
+      __flush();
       puVar1 = extraout_EDX;
     }
   }
@@ -7350,10 +7350,10 @@ undefined8 __watcall sub_a2e85(uint param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_a2eb4 @ 0xa2eb4 [__watcall]
+// __getche_raw @ 0xa2eb4 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_a2eb4(void)
+undefined8 __watcall __getche_raw(void)
 
 {
   code *pcVar1;
@@ -7374,10 +7374,10 @@ undefined8 __watcall sub_a2eb4(void)
 
 
 // ================================================================================================
-// sub_a2ed1 @ 0xa2ed1 [__watcall]
+// __qread @ 0xa2ed1 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a2ed1(undefined4 param_1)
+void __watcall __qread(undefined4 param_1)
 
 {
   code *pcVar1;
@@ -7391,17 +7391,17 @@ void __watcall sub_a2ed1(undefined4 param_1)
   bVar3 = (in_CF & 1) != 0;
   uVar2 = (iVar4 << 1 | (uint)in_CF) >> 1;
   if (bVar3) {
-    sub_9a735(uVar2 & 0xffff,uVar2 | (uint)bVar3 << 0x1f,param_1);
+    __set_errno_dos(uVar2 & 0xffff,uVar2 | (uint)bVar3 << 0x1f,param_1);
   }
   return;
 }
 
 
 // ================================================================================================
-// sub_a2ef0 @ 0xa2ef0 [__watcall]
+// __FDFS @ 0xa2ef0 [__watcall]
 // ================================================================================================
 
-uint __watcall sub_a2ef0(uint param_1,uint unaff_EDX)
+uint __watcall __FDFS(uint param_1,uint unaff_EDX)
 
 {
   uint uVar1;
@@ -7426,53 +7426,53 @@ uint __watcall sub_a2ef0(uint param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_a2f40 @ 0xa2f40 [__cdecl]
+// drawshape_alt @ 0xa2f40 [__cdecl]
 // ================================================================================================
 
-void sub_a2f40(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void drawshape_alt(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   if (dword_d30c8 == 0) {
-    sub_b763b(param_1,param_2,param_3);
+    drawshape_alt_linear(param_1,param_2,param_3);
     return;
   }
-  funcptr_d43e4 = sub_b01b0;
+  funcptr_d43e4 = putpixels_skip_ff;
   drawshape(param_1,param_2,param_3);
-  funcptr_d43e4 = sub_b3abc;
+  funcptr_d43e4 = memmove_dwords;
   return;
 }
 
 
 // ================================================================================================
-// sub_a2f84 @ 0xa2f84 [__cdecl]
+// drawshape_alt_home @ 0xa2f84 [__cdecl]
 // ================================================================================================
 
-void sub_a2f84(int param_1)
+void drawshape_alt_home(int param_1)
 
 {
-  sub_a2f40(param_1,*(int *)(param_1 + 10) >> 0x10,*(int *)(param_1 + 0xc) >> 0x10);
+  drawshape_alt(param_1,*(int *)(param_1 + 10) >> 0x10,*(int *)(param_1 + 0xc) >> 0x10);
   return;
 }
 
 
 // ================================================================================================
-// sub_a2fa0 @ 0xa2fa0 [__cdecl]
+// drawshape_alt_centered @ 0xa2fa0 [__cdecl]
 // ================================================================================================
 
-void sub_a2fa0(int param_1,int param_2,int param_3)
+void drawshape_alt_centered(int param_1,int param_2,int param_3)
 
 {
-  sub_a2f40(param_1,param_2 - (*(int *)(param_1 + 6) >> 0x10),
+  drawshape_alt(param_1,param_2 - (*(int *)(param_1 + 6) >> 0x10),
             param_3 - (*(int *)(param_1 + 8) >> 0x10));
   return;
 }
 
 
 // ================================================================================================
-// sub_a2fd0 @ 0xa2fd0 [__cdecl]
+// shape_flip_h @ 0xa2fd0 [__cdecl]
 // ================================================================================================
 
-void sub_a2fd0(int param_1)
+void shape_flip_h(int param_1)
 
 {
   undefined uVar1;
@@ -7513,10 +7513,10 @@ void sub_a2fd0(int param_1)
 
 
 // ================================================================================================
-// sub_a3050 @ 0xa3050 [__cdecl]
+// shape_flip_v @ 0xa3050 [__cdecl]
 // ================================================================================================
 
-void sub_a3050(int param_1)
+void shape_flip_v(int param_1)
 
 {
   undefined uVar1;
@@ -7555,23 +7555,23 @@ void sub_a3050(int param_1)
 
 
 // ================================================================================================
-// sub_a30d0 @ 0xa30d0 [__cdecl]
+// shape_recolor @ 0xa30d0 [__cdecl]
 // ================================================================================================
 
-void sub_a30d0(int param_1)
+void shape_recolor(int param_1)
 
 {
-  sub_b026c(param_1 + 0x10,&unk_d42e4,
+  translate_bytes(param_1 + 0x10,&unk_d42e4,
             (*(int *)(param_1 + 4) >> 0x10) * (*(int *)(param_1 + 2) >> 0x10));
   return;
 }
 
 
 // ================================================================================================
-// sub_a30f8 @ 0xa30f8 [__watcall]
+// shapes_recolor_all @ 0xa30f8 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a30f8(void)
+void __watcall shapes_recolor_all(void)
 
 {
   undefined4 uVar1;
@@ -7584,10 +7584,10 @@ void __watcall sub_a30f8(void)
   while( true ) {
     iVar2 = shapecount(in_stack_00000004);
     if (iVar2 <= iVar3) break;
-    sub_90373(in_stack_00000004,iVar3,local_10);
+    shape_offset(in_stack_00000004,iVar3,local_10);
     if (local_10[0] != '!') {
       uVar1 = getshape(in_stack_00000004,iVar3);
-      sub_a30d0(uVar1);
+      shape_recolor(uVar1);
     }
     iVar3 = iVar3 + 1;
   }
@@ -7596,10 +7596,10 @@ void __watcall sub_a30f8(void)
 
 
 // ================================================================================================
-// sub_a313f @ 0xa313f [__watcall]
+// _EFG_Format @ 0xa313f [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_a313f(char *param_1,int *unaff_EDX,int unaff_EBX)
+undefined8 __watcall _EFG_Format(char *param_1,int *unaff_EDX,int unaff_EBX)
 
 {
   undefined4 *puVar1;
@@ -7645,7 +7645,7 @@ LAB_000a319e:
   if (*(int *)(unaff_EBX + 8) == -1) {
     *(undefined4 *)(unaff_EBX + 8) = 6;
   }
-  sub_b0403(param_1,&local_1c,*(undefined4 *)(unaff_EBX + 8),0,0x27,uVar3,3,bVar2,
+  __cvt_float(param_1,&local_1c,*(undefined4 *)(unaff_EBX + 8),0,0x27,uVar3,3,bVar2,
             *(byte *)(unaff_EBX + 0x15) & 0x5f);
   if (*param_1 == '*') {
     *(undefined *)(unaff_EBX + 0x16) = 0x2a;
@@ -7653,7 +7653,7 @@ LAB_000a319e:
   param_1[0x27] = '\0';
   for (; *param_1 == ' '; param_1 = param_1 + 1) {
   }
-  sub_a321c(param_1,unaff_EBX);
+  __cvt_EFG_trim(param_1,unaff_EBX);
   local_14 = CONCAT22(local_14._2_2_,in_DS);
   *(undefined4 *)(unaff_EBX + 8) = 0xffffffff;
 LAB_000a3210:
@@ -7662,10 +7662,10 @@ LAB_000a3210:
 
 
 // ================================================================================================
-// sub_a321c @ 0xa321c [__watcall]
+// __cvt_EFG_trim @ 0xa321c [__watcall]
 // ================================================================================================
 
-void __watcall sub_a321c(char *param_1,int unaff_EDX)
+void __watcall __cvt_EFG_trim(char *param_1,int unaff_EDX)
 
 {
   char cVar1;
@@ -7695,16 +7695,16 @@ void __watcall sub_a321c(char *param_1,int unaff_EDX)
 
 
 // ================================================================================================
-// sub_a3264 @ 0xa3264 [__watcall]
+// __cnvs2d @ 0xa3264 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_a3264(undefined4 param_1,double *unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+__cnvs2d(undefined4 param_1,double *unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   longdouble lVar1;
   
-  lVar1 = (longdouble)sub_b0627(param_1,0,unaff_EDX,unaff_ECX,unaff_EBX);
+  lVar1 = (longdouble)__strtod(param_1,0,unaff_EDX,unaff_ECX,unaff_EBX);
   *unaff_EDX = (double)lVar1;
   return;
 }
@@ -7771,22 +7771,22 @@ byte * unk_a32d6(void)
 
 
 // ================================================================================================
-// sub_a35ec @ 0xa35ec [__watcall]
+// __int7_pl3 @ 0xa35ec [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_a35ec(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall __int7_pl3(undefined4 param_1,undefined4 unaff_EDX)
 
 {
-  sub_a3680();
+  emu387_decode();
   return CONCAT44(unaff_EDX,param_1);
 }
 
 
 // ================================================================================================
-// sub_a360d @ 0xa360d [__cdecl]
+// __int7_X32VM @ 0xa360d [__cdecl]
 // ================================================================================================
 
-undefined8 sub_a360d(undefined4 param_1,undefined4 param_2,undefined4 *param_3)
+undefined8 __int7_X32VM(undefined4 param_1,undefined4 param_2,undefined4 *param_3)
 
 {
   undefined4 uVar1;
@@ -7795,7 +7795,7 @@ undefined8 sub_a360d(undefined4 param_1,undefined4 param_2,undefined4 *param_3)
   
   uVar1 = param_3[4];
   uVar2 = *param_3;
-  sub_a3680();
+  emu387_decode();
   LOCK();
   UNLOCK();
   *param_3 = uVar2;
@@ -7805,22 +7805,22 @@ undefined8 sub_a360d(undefined4 param_1,undefined4 param_2,undefined4 *param_3)
 
 
 // ================================================================================================
-// sub_a365c @ 0xa365c [__watcall]
+// __int7 @ 0xa365c [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_a365c(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall __int7(undefined4 param_1,undefined4 unaff_EDX)
 
 {
-  sub_a3680();
+  emu387_decode();
   return CONCAT44(unaff_EDX,param_1);
 }
 
 
 // ================================================================================================
-// sub_a3680 @ 0xa3680 [__watcall]
+// emu387_decode @ 0xa3680 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a3680(void)
+void __watcall emu387_decode(void)
 
 {
   byte bVar1;
@@ -7841,7 +7841,7 @@ void __watcall sub_a3680(void)
   }
   bVar1 = param_14[1];
   if (0xbf < bVar1) {
-    uVar2 = sub_902a0();
+    uVar2 = empty_func_902a0();
                     /* WARNING: Could not recover jumptable at 0x000a37ab. Too many branches */
                     /* WARNING: Treating indirect jump as call */
     (*(code *)(&PTR_sub_a41e6_000a34ec)[(byte)((byte)((ushort)uVar2 >> 8) & 0x38 | (byte)uVar2)])();
@@ -7849,7 +7849,7 @@ void __watcall sub_a3680(void)
   }
   uVar3 = CONCAT11(bVar1 >> 3,bVar1) & 0x1807;
   uVar2 = (*(code *)(&PTR_sub_a38de_000a332c)[(byte)((byte)uVar3 | (byte)(uVar3 >> 8))])();
-  sub_902a0();
+  empty_func_902a0();
                     /* WARNING: Could not recover jumptable at 0x000a36fe. Too many branches */
                     /* WARNING: Treating indirect jump as call */
   (*(code *)(&PTR_sub_a39dd_000a33ec)[(byte)((byte)((ushort)uVar2 >> 8) & 0x38 | (byte)uVar2)])();
@@ -7858,10 +7858,10 @@ void __watcall sub_a3680(void)
 
 
 // ================================================================================================
-// sub_a3822 @ 0xa3822 [__watcall]
+// emu387_pop_set_cc @ 0xa3822 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a3822(int param_1)
+void __watcall emu387_pop_set_cc(int param_1)
 
 {
   ushort uVar1;
@@ -7875,16 +7875,16 @@ void __watcall sub_a3822(int param_1)
   uVar1 = *(ushort *)(&unk_a3282 + *(ushort *)(&unk_a327e + unaff_EDI));
   *(ushort *)(unaff_EBP + 4) = *(ushort *)(unaff_EBP + 4) & 0xc7ff;
   *(ushort *)(unaff_EBP + 4) = *(ushort *)(unaff_EBP + 4) | uVar1;
-  sub_a3680();
+  emu387_decode();
   return;
 }
 
 
 // ================================================================================================
-// sub_a3874 @ 0xa3874 [__watcall]
+// emu387_set_cc @ 0xa3874 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a3874(int param_1)
+void __watcall emu387_set_cc(int param_1)
 
 {
   ushort uVar1;
@@ -7892,16 +7892,16 @@ void __watcall sub_a3874(int param_1)
   
   uVar1 = *(ushort *)(unaff_EBP + 4) & 0xb8ff;
   *(ushort *)(unaff_EBP + 4) = CONCAT11((byte)(uVar1 >> 8) | (&DAT_000a331f)[param_1],(char)uVar1);
-  sub_a3680();
+  emu387_decode();
   return;
 }
 
 
 // ================================================================================================
-// sub_a3890 @ 0xa3890 [__watcall]
+// emu387_exception @ 0xa3890 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a3890(byte param_1)
+void __watcall emu387_exception(byte param_1)
 
 {
   int iVar1;
@@ -7932,10 +7932,10 @@ void __watcall sub_a3890(byte param_1)
 
 
 // ================================================================================================
-// sub_a38de @ 0xa38de [__watcall]
+// emu387_ea_eax @ 0xa38de [__watcall]
 // ================================================================================================
 
-void __watcall sub_a38de(void)
+void __watcall emu387_ea_eax(void)
 
 {
   return;
@@ -7943,10 +7943,10 @@ void __watcall sub_a38de(void)
 
 
 // ================================================================================================
-// sub_a38e4 @ 0xa38e4 [__watcall]
+// emu387_ea_ecx @ 0xa38e4 [__watcall]
 // ================================================================================================
 
-void __watcall sub_a38e4(void)
+void __watcall emu387_ea_ecx(void)
 
 {
   return;
@@ -7954,10 +7954,10 @@ void __watcall sub_a38e4(void)
 
 
 // ================================================================================================
-// sub_a38ea @ 0xa38ea [__watcall]
+// emu387_ea_edx @ 0xa38ea [__watcall]
 // ================================================================================================
 
-void __watcall sub_a38ea(void)
+void __watcall emu387_ea_edx(void)
 
 {
   return;

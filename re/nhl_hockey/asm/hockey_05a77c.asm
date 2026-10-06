@@ -1438,10 +1438,10 @@ loc_5b876:
 
 
 ; ====================================================================================================
-; sub_5b881  [0x5b881, 249 bytes, 41 instructions]
-; called by: sub_5e086
+; team_state_clear  [0x5b881, 249 bytes, 41 instructions]
+; called by: reset_match_state
 ; ====================================================================================================
-sub_5b881:
+team_state_clear:
     push 0xc                                     ; 05b881 680c000000
     call __CHK                                   ; 05b886 e8c1100300
     push ebx                                     ; 05b88b 53
@@ -1489,10 +1489,11 @@ loc_5b89b:
 
 
 ; ====================================================================================================
-; sub_5b97a  [0x5b97a, 87 bytes, 32 instructions]
-; called by: sub_5e086, simulate_game_offscreen
+; team_energy_init  [0x5b97a, 87 bytes, 32 instructions]
+; the energy of every player from the table of his condition
+; called by: reset_match_state, simulate_game_offscreen
 ; ====================================================================================================
-sub_5b97a:
+team_energy_init:
     push 0x14                                    ; 05b97a 6814000000
     call __CHK                                   ; 05b97f e8c80f0300
     push ebx                                     ; 05b984 53
@@ -1534,10 +1535,11 @@ loc_5b9c6:
 
 
 ; ====================================================================================================
-; sub_5b9d1  [0x5b9d1, 54 bytes, 12 instructions]
-; called by: show_scoreboard, sub_5ba07, savegame_io
+; period_length  [0x5b9d1, 54 bytes, 12 instructions]
+; seconds of a period by the option (overtime length after the third)
+; called by: show_scoreboard, period_clock_init, savegame_io
 ; ====================================================================================================
-sub_5b9d1:
+period_length:
     push 4                                       ; 05b9d1 6804000000
     call __CHK                                   ; 05b9d6 e8710f0300
     mov eax, dword ptr [option_flags]            ; 05b9db a1ff530c00
@@ -1554,14 +1556,14 @@ loc_5ba06:
 
 
 ; ====================================================================================================
-; sub_5ba07  [0x5ba07, 71 bytes, 18 instructions]
+; period_clock_init  [0x5ba07, 71 bytes, 18 instructions]
 ; called by: period_init
 ; ====================================================================================================
-sub_5ba07:
+period_clock_init:
     push 8                                       ; 05ba07 6808000000
     call __CHK                                   ; 05ba0c e83b0f0300
     push edx                                     ; 05ba11 52
-    call sub_5b9d1                               ; 05ba12 e8baffffff
+    call period_length                           ; 05ba12 e8baffffff
     mov word ptr [clock_seconds], ax             ; 05ba17 66a3dc900c00
     xor edx, edx                                 ; 05ba1d 31d2
     mov word ptr [clock_sub], dx                 ; 05ba1f 668915de900c00
@@ -1579,10 +1581,10 @@ sub_5ba07:
 
 
 ; ====================================================================================================
-; sub_5ba4e  [0x5ba4e, 59 bytes, 25 instructions]
-; called by: sub_5ba89
+; entities_clear  [0x5ba4e, 59 bytes, 25 instructions]
+; called by: entities_init
 ; ====================================================================================================
-sub_5ba4e:
+entities_clear:
     push 0x10                                    ; 05ba4e 6810000000
     call __CHK                                   ; 05ba53 e8f40e0300
     push ebx                                     ; 05ba58 53
@@ -1617,10 +1619,10 @@ loc_5ba7f:
 
 
 ; ====================================================================================================
-; sub_5ba89  [0x5ba89, 277 bytes, 76 instructions]
-; called by: sub_5d7f7
+; entities_init  [0x5ba89, 277 bytes, 76 instructions]
+; called by: entities_setup
 ; ====================================================================================================
-sub_5ba89:
+entities_init:
     push 0x18                                    ; 05ba89 6818000000
     call __CHK                                   ; 05ba8e e8b90e0300
     push ebx                                     ; 05ba93 53
@@ -1628,7 +1630,7 @@ sub_5ba89:
     push edx                                     ; 05ba95 52
     push esi                                     ; 05ba96 56
     push edi                                     ; 05ba97 57
-    call sub_5ba4e                               ; 05ba98 e8b1ffffff
+    call entities_clear                          ; 05ba98 e8b1ffffff
     mov edx, entity_init                         ; 05ba9d ba5abd0c00
     mov eax, entities                            ; 05baa2 b81cf80d00
     mov esi, unk_e9ade                           ; 05baa7 bede9a0e00
@@ -2025,7 +2027,7 @@ loc_5bee3:
 ; ====================================================================================================
 ; apply_line_change  [0x5bef4, 284 bytes, 81 instructions]
 ; moves the requested line onto the ice, benches the others
-; called by: init_match, request_line_change, cpu_line_change_select, ai_puck_faceoff, ai_puck_faceoff2, ai_consider_shot, maybe_pull_goalie, cpu_line_change, sub_5e0b0, sub_671e8, choose_goalie, simulate_game_offscreen (+1 more)
+; called by: init_match, request_line_change, cpu_line_change_select, ai_puck_faceoff, ai_puck_faceoff2, ai_consider_shot, maybe_pull_goalie, cpu_line_change, dress_current_lines, hotkey_pull_goalie, choose_goalie, simulate_game_offscreen (+1 more)
 ; ====================================================================================================
 apply_line_change:
     push 0x1c                                    ; 05bef4 681c000000
@@ -2142,10 +2144,10 @@ period_init:
     xor edx, edx                                 ; 05c01f 31d2
     mov word ptr [word_e0306], dx                ; 05c021 66891506030e00
     mov word ptr [word_e0304], dx                ; 05c028 66891504030e00
-    call sub_5a669                               ; 05c02f e835e6ffff
+    call period_strategy_init                    ; 05c02f e835e6ffff
     mov word ptr [dword_e9a9e], dx               ; 05c034 6689159e9a0e00
-    call sub_5d7f7                               ; 05c03b e8b7170000
-    call sub_5ba07                               ; 05c040 e8c2f9ffff
+    call entities_setup                          ; 05c03b e8b7170000
+    call period_clock_init                       ; 05c040 e8c2f9ffff
     mov si, word ptr [user1_team]                ; 05c045 668b35c6900c00
     cmp si, 1                                    ; 05c04c 6683fe01
     jne loc_5c05d                                ; 05c050 750b
@@ -2207,7 +2209,7 @@ loc_5c130:
     and byte ptr [action_flags], 0xaf            ; 05c137 8025bc900c00af
     mov eax, dword ptr [replay_buffer]           ; 05c13e a178900c00
     mov dword ptr [replay_write_ptr], eax        ; 05c143 a39c030e00
-    call sub_67564                               ; 05c148 e817b40000
+    call replay_reset                            ; 05c148 e817b40000
     mov word ptr [crowd_noise], 0xffff           ; 05c14d 66c705dcc00c00ff..
     call sim_tick                                ; 05c156 e869000000
     call sim_tick                                ; 05c15b e864000000
@@ -3193,10 +3195,10 @@ hold_camera:
 
 
 ; ====================================================================================================
-; sub_5cd4f  [0x5cd4f, 195 bytes, 40 instructions]
-; called by: sub_5e086
+; game_state_clear  [0x5cd4f, 195 bytes, 40 instructions]
+; called by: reset_match_state
 ; ====================================================================================================
-sub_5cd4f:
+game_state_clear:
     push 0xc                                     ; 05cd4f 680c000000
     call __CHK                                   ; 05cd54 e8f3fb0200
     push ebx                                     ; 05cd59 53
@@ -3390,7 +3392,7 @@ loc_5cfb6:
     lea eax, [ebp - 0x30]                        ; 05cfba 8d45d0
     push eax                                     ; 05cfbd 50
     push 3                                       ; 05cfbe 6a03
-    call sub_93540                               ; 05cfc0 e87b650300
+    call shellsort_by_key                        ; 05cfc0 e87b650300
     add esp, 0xc                                 ; 05cfc5 83c40c
     xor edx, edx                                 ; 05cfc8 31d2
     mov word ptr [ebp - 0xc], dx                 ; 05cfca 668955f4
@@ -3554,7 +3556,7 @@ loc_5d16e:
     mov dword ptr [ebp - 0x20], eax              ; 05d186 8945e0
     movsx eax, bx                                ; 05d189 0fbfc3
     push eax                                     ; 05d18c 50
-    call sub_b340b                               ; 05d18d e879620500
+    call joystick_direction                      ; 05d18d e879620500
     add esp, 4                                   ; 05d192 83c404
     lea edx, [eax + eax]                         ; 05d195 8d1400
     movsx eax, di                                ; 05d198 0fbfc7
@@ -3929,7 +3931,7 @@ loc_5d5ba:
     sar eax, 0x10                                ; 05d5bf c1f810
     cmp eax, 0xffffff70                          ; 05d5c2 3d70ffffff
     jge loc_5d5ce                                ; 05d5c7 7d05
-    call sub_11136                               ; 05d5c9 e8683bfbff
+    call draw_rink_end                           ; 05d5c9 e8683bfbff
 loc_5d5ce:
     cmp word ptr [word_dffa2], 0                 ; 05d5ce 66833da2ff0d0000
     jge loc_5d610                                ; 05d5d6 7d38
@@ -4099,10 +4101,10 @@ loc_5d7f0:
 
 
 ; ====================================================================================================
-; sub_5d7f7  [0x5d7f7, 91 bytes, 25 instructions]
+; entities_setup  [0x5d7f7, 91 bytes, 25 instructions]
 ; called by: period_init, simulate_game_offscreen
 ; ====================================================================================================
-sub_5d7f7:
+entities_setup:
     push 0xc                                     ; 05d7f7 680c000000
     call __CHK                                   ; 05d7fc e84bf10200
     push ebx                                     ; 05d801 53
@@ -4111,7 +4113,7 @@ sub_5d7f7:
     xor edx, edx                                 ; 05d80a 31d2
     mov word ptr [camera], dx                    ; 05d80c 66891598900c00
     mov word ptr [dword_c909a], dx               ; 05d813 6689159a900c00
-    call sub_5ba89                               ; 05d81a e86ae2ffff
+    call entities_init                           ; 05d81a e86ae2ffff
     test byte ptr [game_flags], 2                ; 05d81f f605bb900c0002
     je loc_5d841                                 ; 05d826 7419
     mov eax, entities                            ; 05d828 b81cf80d00
@@ -4529,7 +4531,7 @@ sort_draw_order:
 ; ====================================================================================================
 ; sort_draw_order2  [0x5dd7c, 34 bytes, 11 instructions]
 ; sort_draw_order without clearing action_flags bit 7
-; called by: init_match, three_stars_sequence, ai_exit_penalty_box, ai_puck_faceoff2, sub_5ba89, savegame_io, simulate_game_offscreen
+; called by: init_match, three_stars_sequence, ai_exit_penalty_box, ai_puck_faceoff2, entities_init, savegame_io, simulate_game_offscreen
 ; ====================================================================================================
 sort_draw_order2:
     push 0x20                                    ; 05dd7c 6820000000
@@ -4546,10 +4548,10 @@ sort_draw_order2:
 
 
 ; ====================================================================================================
-; sub_5dd9e  [0x5dd9e, 30 bytes, 6 instructions]
-; called by: sub_1b982
+; set_game_over  [0x5dd9e, 30 bytes, 6 instructions]
+; called by: free_match_resources
 ; ====================================================================================================
-sub_5dd9e:
+set_game_over:
     push 4                                       ; 05dd9e 6804000000
     call __CHK                                   ; 05dda3 e8a4eb0200
     cmp word ptr [game_over], 0                  ; 05dda8 66833d48bc0c0000
@@ -4577,7 +4579,7 @@ loc_5ddd9:
 ; ====================================================================================================
 ; period_start_reset  [0x5ddda, 104 bytes, 32 instructions]
 ; count_penalized, reset_team_for_period, power play / penalty kill lines
-; called by: sub_5de42
+; called by: period_reset_entities
 ; ====================================================================================================
 period_start_reset:
     push 0x10                                    ; 05ddda 6810000000
@@ -4621,10 +4623,10 @@ loc_5de38:
 
 
 ; ====================================================================================================
-; sub_5de42  [0x5de42, 46 bytes, 17 instructions]
+; period_reset_entities  [0x5de42, 46 bytes, 17 instructions]
 ; called by: period_cleanup, simulate_game_offscreen
 ; ====================================================================================================
-sub_5de42:
+period_reset_entities:
     push 0xc                                     ; 05de42 680c000000
     call __CHK                                   ; 05de47 e800eb0200
     push ebx                                     ; 05de4c 53
@@ -4649,20 +4651,20 @@ loc_5de67:
 
 ; ====================================================================================================
 ; period_cleanup  [0x5de70, 54 bytes, 10 instructions]
-; called by: end_of_period, sub_5e086
+; called by: end_of_period, reset_match_state
 ; ====================================================================================================
 period_cleanup:
     push 4                                       ; 05de70 6804000000
     call __CHK                                   ; 05de75 e8d2ea0200
     cmp word ptr [period_idx], 4                 ; 05de7a 66833dda900c0004
-    je sub_5dd9e                                 ; 05de82 0f8416ffffff
-    call sub_5de42                               ; 05de88 e8b5ffffff
+    je set_game_over                             ; 05de82 0f8416ffffff
+    call period_reset_entities                   ; 05de88 e8b5ffffff
     cmp word ptr [period_idx], 0                 ; 05de8d 66833dda900c0000
     jle loc_5de9c                                ; 05de95 7e05
-    call sub_10f6d                               ; 05de97 e8d130fbff
+    call leave_match_video                       ; 05de97 e8d130fbff
 loc_5de9c:
     call period_init                             ; 05de9c e86fe1ffff
-    jmp sub_510a9                                ; 05dea1 e90332ffff
+    jmp reset_bench_slots                        ; 05dea1 e90332ffff
 
 
 ; ====================================================================================================
@@ -4845,28 +4847,28 @@ loc_5e07b:
 
 
 ; ====================================================================================================
-; sub_5e086  [0x5e086, 42 bytes, 11 instructions]
+; reset_match_state  [0x5e086, 42 bytes, 11 instructions]
 ; called by: reset_game_state
 ; ====================================================================================================
-sub_5e086:
+reset_match_state:
     push 8                                       ; 05e086 6808000000
     call __CHK                                   ; 05e08b e8bce80200
     push edx                                     ; 05e090 52
-    call sub_5cd4f                               ; 05e091 e8b9ecffff
-    call sub_5b881                               ; 05e096 e8e6d7ffff
+    call game_state_clear                        ; 05e091 e8b9ecffff
+    call team_state_clear                        ; 05e096 e8e6d7ffff
     xor edx, edx                                 ; 05e09b 31d2
     mov word ptr [period_idx], dx                ; 05e09d 668915da900c00
-    call sub_5b97a                               ; 05e0a4 e8d1d8ffff
+    call team_energy_init                        ; 05e0a4 e8d1d8ffff
     call period_cleanup                          ; 05e0a9 e8c2fdffff
     pop edx                                      ; 05e0ae 5a
     ret                                          ; 05e0af c3
 
 
 ; ====================================================================================================
-; sub_5e0b0  [0x5e0b0, 45 bytes, 9 instructions]
+; dress_current_lines  [0x5e0b0, 45 bytes, 9 instructions]
 ; called by: setup_demo_faceoff
 ; ====================================================================================================
-sub_5e0b0:
+dress_current_lines:
     push 4                                       ; 05e0b0 6804000000
     call __CHK                                   ; 05e0b5 e892e80200
     mov eax, team_home                           ; 05e0ba b814f60d00
@@ -4880,7 +4882,7 @@ sub_5e0b0:
 ; ====================================================================================================
 ; dress_line  [0x5e0dd, 144 bytes, 46 instructions]
 ; puts the next line onto the ice at a faceoff (role state, NEAREST for the centre)
-; called by: init_match, dress_line_if_start, ai_puck_faceoff2, sub_5e0b0, simulate_game_offscreen
+; called by: init_match, dress_line_if_start, ai_puck_faceoff2, dress_current_lines, simulate_game_offscreen
 ; ====================================================================================================
 dress_line:
     push 0x14                                    ; 05e0dd 6814000000
@@ -6001,7 +6003,7 @@ loc_5ed9b:
 ; ====================================================================================================
 ; skating_accelerate  [0x5edad, 673 bytes, 191 instructions]
 ; adds dir8_vectors[heading] scaled by speed and weight
-; called by: sub_49260, ai_stanley_cup, ai_goalie, apply_skating, goalie_move, skating_turn
+; called by: three_stars_skate_dir, ai_stanley_cup, ai_goalie, apply_skating, goalie_move, skating_turn
 ; ====================================================================================================
 skating_accelerate:
     push 0x14                                    ; 05edad 6814000000
@@ -7012,7 +7014,7 @@ loc_5f820:
 
 ; ====================================================================================================
 ; brake  [0x5f82a, 136 bytes, 45 instructions]
-; called by: sub_49260, ai_goalie, stop_skating, goalie_move
+; called by: three_stars_skate_dir, ai_goalie, stop_skating, goalie_move
 ; ====================================================================================================
 brake:
     push 0x18                                    ; 05f82a 6818000000
@@ -7072,7 +7074,7 @@ loc_5f8a7:
 
 ; ====================================================================================================
 ; goalie_move  [0x5f8b2, 216 bytes, 76 instructions]
-; called by: sub_49260, apply_skating
+; called by: three_stars_skate_dir, apply_skating
 ; ====================================================================================================
 goalie_move:
     push 0xc                                     ; 05f8b2 680c000000
@@ -8916,10 +8918,10 @@ loc_61235:
 loc_61244:
     call apply_settings                          ; 061244 e85815fdff
 loc_61249:
-    call sub_5b9d1                               ; 061249 e883a7ffff
+    call period_length                           ; 061249 e883a7ffff
     mov word ptr [dword_e9ab8], ax               ; 06124e 66a3b89a0e00
     mov eax, 1                                   ; 061254 b801000000
-    call sub_1bbcc                               ; 061259 e86ea9fbff
+    call load_team_databases                     ; 061259 e86ea9fbff
     mov edx, dword ptr [dword_c90ca]             ; 06125e 8b15ca900c00
     sar edx, 0x10                                ; 061264 c1fa10
     mov eax, dword ptr [user2_team]              ; 061267 a1c8900c00
@@ -8959,7 +8961,7 @@ loc_612f9:
     call show_penalty                            ; 0612f9 e89b0b0000
     mov eax, dword ptr [replay_buffer]           ; 0612fe a178900c00
     mov dword ptr [replay_write_ptr], eax        ; 061303 a39c030e00
-    call sub_67564                               ; 061308 e857620000
+    call replay_reset                            ; 061308 e857620000
     and byte ptr [action_flags], 0xef            ; 06130d 8025bc900c00ef
     mov word ptr [word_cbec4], 1                 ; 061314 66c705c4be0c0001..
     mov dword ptr [dword_df70a], entities        ; 06131d c7050af70d001cf8..
@@ -9517,10 +9519,11 @@ loc_619b7:
 
 
 ; ====================================================================================================
-; sub_619c8  [0x619c8, 95 bytes, 21 instructions]
-; called by: goal_milestone_check, sub_62c37
+; queue_deferred_call  [0x619c8, 95 bytes, 21 instructions]
+; a callback with its arguments run by run_deferred_calls
+; called by: goal_milestone_check, ref_queue_infraction_event
 ; ====================================================================================================
-sub_619c8:
+queue_deferred_call:
     push 8                                       ; 0619c8 6808000000
     call __CHK                                   ; 0619cd e87aaf0200
     push esi                                     ; 0619d2 56
@@ -9545,10 +9548,10 @@ sub_619c8:
 
 
 ; ====================================================================================================
-; sub_61a27  [0x61a27, 99 bytes, 35 instructions]
+; run_deferred_calls  [0x61a27, 99 bytes, 35 instructions]
 ; called by: game_loop
 ; ====================================================================================================
-sub_61a27:
+run_deferred_calls:
     push 0x28                                    ; 061a27 6828000000
     call __CHK                                   ; 061a2c e81baf0200
     push ebx                                     ; 061a31 53
@@ -9591,8 +9594,9 @@ loc_61a83:
 
 
 ; ====================================================================================================
-; sub_61a8a  [0x61a8a, 251 bytes, 73 instructions]
-; called by: sub_61b85
+; gsummary_append_record  [0x61a8a, 251 bytes, 73 instructions]
+; an 11 byte game event to gsummary.db
+; called by: gsummary_flush
 ;   uses string "B3"
 ;   uses string "B4"
 ;   uses string "B5"
@@ -9600,7 +9604,7 @@ loc_61a83:
 ;   uses string "B7"
 ;   uses string "B8"
 ; ====================================================================================================
-sub_61a8a:
+gsummary_append_record:
     push 0x1c                                    ; 061a8a 681c000000
     call __CHK                                   ; 061a8f e8b8ae0200
     push ebx                                     ; 061a94 53
@@ -9683,10 +9687,10 @@ loc_61b76:
 
 
 ; ====================================================================================================
-; sub_61b85  [0x61b85, 58 bytes, 21 instructions]
-; called by: game_loop, sub_190be, sub_1920f, ai_puck_faceoff2, simulate_game_offscreen
+; gsummary_flush  [0x61b85, 58 bytes, 21 instructions]
+; called by: game_loop, end_match_from_period, end_match_from_loop, ai_puck_faceoff2, simulate_game_offscreen
 ; ====================================================================================================
-sub_61b85:
+gsummary_flush:
     push 0xc                                     ; 061b85 680c000000
     call __CHK                                   ; 061b8a e8bdad0200
     push ecx                                     ; 061b8f 51
@@ -9701,7 +9705,7 @@ loc_61b95:
     shl eax, 2                                   ; 061b9c c1e002
     sub eax, edx                                 ; 061b9f 29d0
     add eax, unk_e9b4c                           ; 061ba1 054c9b0e00
-    call sub_61a8a                               ; 061ba6 e8dffeffff
+    call gsummary_append_record                  ; 061ba6 e8dffeffff
     inc edx                                      ; 061bab 42
 loc_61bac:
     cmp edx, dword ptr [dword_cd34c]             ; 061bac 3b154cd30c00
@@ -9714,12 +9718,12 @@ loc_61bac:
 
 
 ; ====================================================================================================
-; sub_61bbf  [0x61bbf, 99 bytes, 31 instructions]
-; called by: sub_1920f
+; gsummary_write_header  [0x61bbf, 99 bytes, 31 instructions]
+; called by: end_match_from_loop
 ;   uses string "B3"
 ;   uses string "B4"
 ; ====================================================================================================
-sub_61bbf:
+gsummary_write_header:
     push 0x18                                    ; 061bbf 6818000000
     call __CHK                                   ; 061bc4 e883ad0200
     push ebx                                     ; 061bc9 53
@@ -9758,12 +9762,12 @@ loc_61c14:
 
 
 ; ====================================================================================================
-; sub_61c22  [0x61c22, 100 bytes, 27 instructions]
-; called by: sub_190be, sub_1920f
+; gsummary_seek_last  [0x61c22, 100 bytes, 27 instructions]
+; called by: end_match_from_period, end_match_from_loop
 ;   uses string "B3"
 ;   uses string "B6"
 ; ====================================================================================================
-sub_61c22:
+gsummary_seek_last:
     push 0x18                                    ; 061c22 6818000000
     call __CHK                                   ; 061c27 e820ad0200
     push ebx                                     ; 061c2c 53
@@ -9796,15 +9800,15 @@ loc_61c72:
 
 
 ; ====================================================================================================
-; sub_61c86  [0x61c86, 194 bytes, 52 instructions]
-; called by: sub_190be
+; gsummary_write_final  [0x61c86, 194 bytes, 52 instructions]
+; called by: end_match_from_period
 ;   uses string "B3"
 ;   uses string "B4"
 ;   uses string "B5"
 ;   uses string "B6"
 ;   uses string "B8"
 ; ====================================================================================================
-sub_61c86:
+gsummary_write_final:
     push 0x18                                    ; 061c86 6818000000
     call __CHK                                   ; 061c8b e8bcac0200
     push ebx                                     ; 061c90 53
@@ -10489,7 +10493,7 @@ loc_62471:
     call load_cutscene_clip                      ; 062472 e820400000
 loc_62477:
     call show_penalty                            ; 062477 e81dfaffff
-    call sub_66dda                               ; 06247c e859490000
+    call info_panel_open                         ; 06247c e859490000
     mov ax, word ptr [input_enabled]             ; 062481 66a10c4d0c00
     mov word ptr [word_e9aa0], ax                ; 062487 66a3a09a0e00
     xor edx, edx                                 ; 06248d 31d2
@@ -10605,7 +10609,7 @@ loc_625da:
     call load_cutscene_clip                      ; 0625da e8b83e0000
 loc_625df:
     call show_penalty                            ; 0625df e8b5f8ffff
-    call sub_66dda                               ; 0625e4 e8f1470000
+    call info_panel_open                         ; 0625e4 e8f1470000
     mov ax, word ptr [input_enabled]             ; 0625e9 66a10c4d0c00
     mov word ptr [word_e9aa0], ax                ; 0625ef 66a3a09a0e00
     xor eax, eax                                 ; 0625f5 31c0
@@ -10772,7 +10776,7 @@ announce_injury:
     mov dword ptr [dword_cd34c], ecx             ; 0627e1 890d4cd30c00
 loc_627e7:
     call show_penalty                            ; 0627e7 e8adf6ffff
-    call sub_66dda                               ; 0627ec e8e9450000
+    call info_panel_open                         ; 0627ec e8e9450000
 loc_627f1:
     xor eax, eax                                 ; 0627f1 31c0
     pop edi                                      ; 0627f3 5f

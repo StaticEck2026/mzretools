@@ -23,8 +23,8 @@ games) is the main part still missing (see its README for the exact list). [STRU
 | Original layer | Address range | In Godot |
 |---|---|---|
 | Watcom runtime, DOS/DPMI, memory manager, file I/O | `0x8ffd4+`, `0x8c1b7-0x8ffd3` | GDScript/C# standard library, `FileAccess`, resources |
-| Timer interrupt (100 Hz) + frame pacing | `inittimer`, `addtimer`, `sub_10dcd`, `get_frame_ticks` | `_physics_process` with `physics_ticks_per_second = 60` |
-| Keyboard, joystick (port 201h), mouse (int 33h) | `sub_10a86`, `sub_10ac6`, `joy_read`, `readmouse` | `Input` actions, polled at the same rate the original samples them (20 Hz for the simulation's control buffer) |
+| Timer interrupt (100 Hz) + frame pacing | `inittimer`, `addtimer`, `control_timer_tick`, `get_frame_ticks` | `_physics_process` with `physics_ticks_per_second = 60` |
+| Keyboard, joystick (port 201h), mouse (int 33h) | `read_controller`, `scan_keyboard_control`, `joy_read`, `readmouse` | `Input` actions, polled at the same rate the original samples them (20 Hz for the simulation's control buffer) |
 | VGA/VESA, palettes, blitters, fonts | `initgraphics`, `setpalette`, `drawshape*`, `printstr*` | `SubViewport` 320x200 (game) / 640x480 (menus), `Sprite2D`/`AnimatedSprite2D`, palette shader, `FontFile` |
 | Sound (8SVX samples, channels, patches) | `loadsound`, `playsample`, `sound_*`, `loadpatches` | `AudioStreamWAV`, `AudioStreamPlayer` pool, buses for crowd/speech/sfx |
 | **Game code** | `0x10000-0x8c1b7` | **port**: simulation, AI, rules, camera, menus flow, stats, databases, save games |
@@ -118,7 +118,7 @@ Work top down from the flow documented in README.md and port routine by routine:
    the same instruction level approach mzdiff uses for 16-bit code, applied to behaviour.
 
 Recommended order: data loading (teams/rosters) -> rink and camera -> player movement and puck physics
-(`sim_update_players`, `sub_65d01`, `sub_675d6`) -> rules and clock (`sim_game_state`, `game_clock_tick`) ->
+(`sim_update_players`, `update_camera`, `replay_record_frame`) -> rules and clock (`sim_game_state`, `game_clock_tick`) ->
 AI roles -> HUD and pause menu -> front end menus -> season/playoff mode, statistics and saves -> audio and
 announcer.
 

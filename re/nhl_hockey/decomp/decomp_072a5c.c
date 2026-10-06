@@ -3,10 +3,10 @@
 #include "prototypes.h"
 
 // ================================================================================================
-// sub_72a5c @ 0x72a5c [__watcall]
+// database_slot_at @ 0x72a5c [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_72a5c(int param_1,int unaff_EDX,int *unaff_EBX)
+undefined4 __watcall database_slot_at(int param_1,int unaff_EDX,int *unaff_EBX)
 
 {
   int iVar1;
@@ -28,10 +28,10 @@ undefined4 __watcall sub_72a5c(int param_1,int unaff_EDX,int *unaff_EBX)
 
 
 // ================================================================================================
-// sub_72ac6 @ 0x72ac6 [__watcall]
+// database_select_draw @ 0x72ac6 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_72ac6(int *param_1,undefined4 unaff_EDX)
+undefined8 __watcall database_select_draw(int *param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
@@ -57,14 +57,14 @@ undefined8 __watcall sub_72ac6(int *param_1,undefined4 unaff_EDX)
   else {
     if (*param_1 < 7) {
       for (iVar5 = 0; iVar5 < *param_1; iVar5 = iVar5 + 1) {
-        sub_2c135(param_1[iVar5 + 4],(&dword_d1124)[iVar5 * 4] + 10,(&dword_d1128)[iVar5 * 4] + 0x10
+        printstr_copy_at(param_1[iVar5 + 4],(&dword_d1124)[iVar5 * 4] + 10,(&dword_d1128)[iVar5 * 4] + 0x10
                  );
       }
     }
     else {
       iVar5 = 0;
       do {
-        sub_2c135(param_1[param_1[2] + iVar5 + 4],(&dword_d1124)[iVar5 * 4] + 10,
+        printstr_copy_at(param_1[param_1[2] + iVar5 + 4],(&dword_d1124)[iVar5 * 4] + 10,
                   (&dword_d1128)[iVar5 * 4] + 0x10);
         iVar5 = iVar5 + 1;
       } while (iVar5 < 6);
@@ -72,7 +72,7 @@ undefined8 __watcall sub_72ac6(int *param_1,undefined4 unaff_EDX)
     if (0 < *param_1) {
       fillrect(dword_d1114 + 0xd,dword_d1118 + 0x16,(dword_d111c - dword_d1114) + -5,
                (dword_d1120 - dword_d1118) + -5,0xf8);
-      sub_2c135(param_1[param_1[1] + 4],dword_d1114 + 0xd,dword_d1118 + 0x13);
+      printstr_copy_at(param_1[param_1[1] + 4],dword_d1114 + 0xd,dword_d1118 + 0x13);
     }
     iVar5 = param_1[1];
     if ((param_1[2] <= iVar5) && (iVar5 <= param_1[3])) {
@@ -80,7 +80,7 @@ undefined8 __watcall sub_72ac6(int *param_1,undefined4 unaff_EDX)
       fillrect((&dword_d1124)[iVar5 * 4] + 10,(&dword_d1128)[iVar5 * 4] + 0x13,
                (&dword_d112c)[iVar5 * 4] - (&dword_d1124)[iVar5 * 4],
                (&dword_d1130)[iVar5 * 4] - (&dword_d1128)[iVar5 * 4],0xf8);
-      sub_2c135(param_1[param_1[2] + iVar5 + 4],(&dword_d1124)[iVar5 * 4] + 10,
+      printstr_copy_at(param_1[param_1[2] + iVar5 + 4],(&dword_d1124)[iVar5 * 4] + 10,
                 (&dword_d1128)[iVar5 * 4] + 0x10);
     }
     fillrect(dword_d1104 + 10,dword_d1108 + 0x13,(dword_d110c - dword_d1104) + 1,
@@ -109,10 +109,10 @@ undefined8 __watcall sub_72ac6(int *param_1,undefined4 unaff_EDX)
       iVar1 = dword_d1108 + 0x13 + (param_1[2] * 0x8e) / *param_1;
       iVar3 = dword_d110c + 10;
       iVar2 = dword_d1108 + 0x13 + ((param_1[3] + 1) * 0x8e) / *param_1;
-      sub_b4fac(iVar4,iVar1,dword_d110c + 9,iVar1,0x7d,iVar3);
-      sub_b4fac(iVar4,iVar1,iVar4,iVar2 + -1,0x7d);
-      sub_b4fac(iVar3,iVar1 + 1,iVar3,iVar2,0x7b);
-      sub_b4fac(iVar5 + 0xb,iVar2,iVar3,iVar2,0x7b);
+      drawline(iVar4,iVar1,dword_d110c + 9,iVar1,0x7d,iVar3);
+      drawline(iVar4,iVar1,iVar4,iVar2 + -1,0x7d);
+      drawline(iVar3,iVar1 + 1,iVar3,iVar2,0x7b);
+      drawline(iVar5 + 0xb,iVar2,iVar3,iVar2,0x7b);
     }
     uVar6 = dword_dd634;
     if (((dword_dd658 == 0) || (uVar6 = dword_dd63c, dword_dd658 < 2)) ||
@@ -207,7 +207,7 @@ LAB_00072ec6:
     else {
       iStack_1c = 0;
       local_38 = (undefined4 **)0x730e1;
-      iVar2 = sub_72a5c(local_28,local_2c,&local_34);
+      iVar2 = database_slot_at(local_28,local_2c,&local_34);
       if (iVar2 != 0) {
         local_34 = 1 << ((byte)local_34 & 0x1f);
         if ((local_34 & dword_dd668) != 0) {
@@ -220,7 +220,7 @@ LAB_00072ec6:
                   piVar10[2] = piVar10[2] + -1;
                   piVar10[3] = piVar10[3] + -1;
                   local_38 = (undefined4 **)0x731d0;
-                  sub_72ac6(piVar10);
+                  database_select_draw(piVar10);
                 }
                 local_38 = (undefined4 **)0x46;
                 uVar14 = 0x18;
@@ -236,7 +236,7 @@ LAB_00072ec6:
                   piVar10[2] = piVar10[2] + 1;
                   piVar10[3] = piVar10[3] + 1;
                   local_38 = (undefined4 **)0x73210;
-                  sub_72ac6(piVar10);
+                  database_select_draw(piVar10);
                 }
                 local_38 = (undefined4 **)0x46;
                 uVar14 = 0x18;
@@ -252,10 +252,10 @@ LAB_000731db:
                   local_38 = ppuVar1;
                   freemem();
                   local_38 = (undefined4 **)0x732f4;
-                  sub_733c4();
+                  database_load_selected();
                   pppuVar7 = &local_38;
                   local_38 = (undefined4 **)0x732f9;
-                  sub_6de7e();
+                  dbedit_free_lists_all();
                   *(undefined4 *)((int)pppuVar7 + -4) = 0x732fe;
                   player_ratings_card();
                   uVar4 = 1;
@@ -273,7 +273,7 @@ LAB_000731db:
                     piVar10 = (int *)(&off_d1184)[dword_dd658];
                   }
                   local_38 = (undefined4 **)0x7334e;
-                  sub_72ac6(piVar10);
+                  database_select_draw(piVar10);
                   local_38 = (undefined4 **)0xbf;
                   uVar14 = 0x23;
                   uVar4 = dword_dd638;
@@ -283,7 +283,7 @@ LAB_000731db:
             }
 LAB_00073361:
             local_38 = (undefined4 **)0x73370;
-            sub_2c3ff(local_28,local_2c,&local_34);
+            league_slot_at(local_28,local_2c,&local_34);
             if (9 < (int)local_34) {
               piVar10[1] = piVar10[2] + local_34 + -10;
             }
@@ -346,14 +346,14 @@ LAB_00073294:
           }
 LAB_000732a6:
           local_38 = (undefined4 **)0x732ad;
-          sub_72ac6(piVar10);
+          database_select_draw(piVar10);
         }
       }
     }
   }
   else if ((local_20 != local_2c) || (local_2c != local_24)) {
     local_38 = (undefined4 **)0x72fbf;
-    iVar2 = sub_72a5c(local_28,local_2c,&local_34);
+    iVar2 = database_slot_at(local_28,local_2c,&local_34);
     if ((iVar2 == 0) || (local_34 != 8)) {
       iStack_1c = 0;
     }
@@ -420,10 +420,10 @@ LAB_00072f4f:
 
 
 // ================================================================================================
-// sub_733c4 @ 0x733c4 [__watcall]
+// database_load_selected @ 0x733c4 [__watcall]
 // ================================================================================================
 
-void __watcall sub_733c4(void)
+void __watcall database_load_selected(void)
 
 {
   char acStackY_1c [16];
@@ -471,22 +471,22 @@ void __watcall sub_733c4(void)
     strcpy((char *)&unk_ec7c0,acStackY_1c);
     strcat(acStackY_1c,(char *)&aDBX_c30c3);
   }
-  sub_7345b();
+  database_load_set();
   return;
 }
 
 
 // ================================================================================================
-// sub_7345b @ 0x7345b [__cdecl]
+// database_load_set @ 0x7345b [__cdecl]
 // ================================================================================================
 
-void sub_7345b(void)
+void database_load_set(void)
 
 {
   undefined auStack_30 [32];
   
   __CHK(0x3c);
-  sub_6ca8f();
+  dbedit_free_databases();
   make_path(auStack_30);
   dword_d07bb = loadfile(auStack_30,0x20);
   dword_d07d3 = filesize(auStack_30);
@@ -538,7 +538,7 @@ longlong __watcall database_dbx_check(int *param_1,uint unaff_EDX)
     iVar2 = _dos_findfirst(acStack_2c,0x10,auStack_58);
     if (iVar2 == 0) {
       if ((bStack_43 & 0x10) != 0) {
-        sub_14442(auStack_3a);
+        delete_directory(auStack_3a);
       }
       iVar2 = *param_1;
       *param_1 = iVar2 + -1;
@@ -581,10 +581,10 @@ longlong __watcall database_dbx_check(int *param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_73703 @ 0x73703 [__watcall]
+// menu_load_database @ 0x73703 [__watcall]
 // ================================================================================================
 
-void __watcall sub_73703(void)
+void __watcall menu_load_database(void)
 
 {
   undefined4 *puVar1;
@@ -684,10 +684,10 @@ edit_lines_screen_a(undefined param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,
 
 
 // ================================================================================================
-// sub_739b6 @ 0x739b6 [__watcall]
+// lines_find_number @ 0x739b6 [__watcall]
 // ================================================================================================
 
-byte __watcall sub_739b6(char param_1,byte unaff_DL)
+byte __watcall lines_find_number(char param_1,byte unaff_DL)
 
 {
   byte bVar1;
@@ -832,7 +832,7 @@ edit_lines_screen(int param_1,int **param_2,byte unaff_BL,undefined4 param_4,int
     bVar9 = *(byte *)(param_1 + local_44);
     if (bVar9 != 100) {
       uVar17 = (uint)local_14;
-      bVar9 = sub_739b6(bVar9,uVar17);
+      bVar9 = lines_find_number(bVar9,uVar17);
       bVar9 = (&unk_ea991)[(uint)bVar9 * 0x1b + uVar17 * 0x2f4];
     }
     abStack_134[local_44] = bVar9;
@@ -841,7 +841,7 @@ edit_lines_screen(int param_1,int **param_2,byte unaff_BL,undefined4 param_4,int
   local_44 = 0;
   do {
     uVar17 = (uint)local_14;
-    bVar9 = sub_739b6(*(undefined *)(param_1 + local_44 + 0x28),uVar17);
+    bVar9 = lines_find_number(*(undefined *)(param_1 + local_44 + 0x28),uVar17);
     if ((*(char *)(param_1 + local_44 + 0x28) != 'd') &&
        (iVar12 = (uint)bVar9 * 0x1b + uVar17 * 0x2f4, (&unk_ea993)[iVar12] == '\x03')) {
       (&unk_ea993)[iVar12] = 2;
@@ -862,7 +862,7 @@ edit_lines_screen(int param_1,int **param_2,byte unaff_BL,undefined4 param_4,int
   load_homepals(uVar17,param_7,local_3c);
   local_18 = (&unk_d1238)[(byte)(&unk_d11bc)[(uint)(byte)(&byte_d079e)[uVar17] * 4]];
   local_10 = byte_d12de;
-  sub_75046(abStack_134,param_2,uVar17);
+  lines_draw_scratch_list(abStack_134,param_2,uVar17);
   puVar19 = install_path;
   if (byte_ed9e7 != '\x01') {
     puVar19 = (undefined *)0x0;
@@ -940,7 +940,7 @@ LAB_00073f22:
     *(undefined4 *)(puVar20 + -0x10) = 0x74404;
     drawshape();
     *(undefined4 *)(puVar20 + -4) = 0x74415;
-    iVar12 = sub_77f6f(local_48,local_4c,&local_58);
+    iVar12 = lines_slot_at(local_48,local_4c,&local_58);
     if (iVar12 != 0) {
       for (local_44 = 3; -1 < local_44; local_44 = local_44 + -1) {
         iVar12 = local_84[local_44];
@@ -998,7 +998,7 @@ LAB_00073f22:
               if (abStack_134[iVar16] < 100) {
                 bVar9 = abStack_134[iVar16];
                 *(undefined4 *)(puVar20 + -4) = 0x7460d;
-                sub_7a099(&unk_d1238,bVar9,local_18,local_10);
+                jersey_number_bitmap(&unk_d1238,bVar9,local_18,local_10);
               }
               else {
                 iVar16 = 0;
@@ -1044,7 +1044,7 @@ LAB_00073f22:
               if (abStack_128[iVar16] < 100) {
                 bVar9 = abStack_128[iVar16];
                 *(undefined4 *)(puVar20 + -4) = 0x74774;
-                sub_7a099(&unk_d1238,bVar9,local_18,local_10);
+                jersey_number_bitmap(&unk_d1238,bVar9,local_18,local_10);
               }
               else {
                 iVar16 = 0;
@@ -1090,7 +1090,7 @@ LAB_00073f22:
               if (abStack_122[iVar16] < 100) {
                 bVar9 = abStack_122[iVar16];
                 *(undefined4 *)(puVar20 + -4) = 0x748e4;
-                sub_7a099(&unk_d1238,bVar9,local_18,local_10);
+                jersey_number_bitmap(&unk_d1238,bVar9,local_18,local_10);
               }
               else {
                 iVar16 = 0;
@@ -1137,7 +1137,7 @@ LAB_00073f22:
               if (abStack_118[iVar16] < 100) {
                 bVar9 = abStack_118[iVar16];
                 *(undefined4 *)(puVar20 + -4) = 0x74a4f;
-                sub_7a099(&unk_d1238,bVar9,local_18,local_10);
+                jersey_number_bitmap(&unk_d1238,bVar9,local_18,local_10);
               }
               else {
                 iVar16 = 0;
@@ -1179,7 +1179,7 @@ LAB_00073f22:
               if (abStack_110[iVar12] < 100) {
                 bVar9 = abStack_110[iVar12];
                 *(undefined4 *)(puVar20 + -4) = 0x74b7a;
-                sub_7a099(&unk_d1238,bVar9,local_18,local_10);
+                jersey_number_bitmap(&unk_d1238,bVar9,local_18,local_10);
               }
               else {
                 iVar16 = 0;
@@ -1219,7 +1219,7 @@ LAB_00073f22:
             if (abStack_110[iVar12 + 2] < 100) {
               bVar9 = abStack_110[iVar12 + 2];
               *(undefined4 *)(puVar20 + -4) = 0x74c95;
-              sub_7a099(&unk_d1238,bVar9,local_18,local_10);
+              jersey_number_bitmap(&unk_d1238,bVar9,local_18,local_10);
             }
             else {
               iVar16 = 0;
@@ -1270,11 +1270,11 @@ LAB_00073f22:
             *(undefined4 *)(puVar20 + -0x18) = 0x74dff;
             sprintf(*(char **)(puVar20 + -0x14),*(char **)(puVar20 + -0x10));
             *(undefined4 *)(puVar20 + -4) = 0x74e21;
-            sub_76771(0x1fa,local_60 * 0xd + 0x16,auStack_c4);
+            print_field(0x1fa,local_60 * 0xd + 0x16,auStack_c4);
           }
           local_60 = local_58;
-          funcptr_d056c = sub_75868;
-          funcptr_d058c = sub_75770;
+          funcptr_d056c = lines_dress_player;
+          funcptr_d058c = lines_scratch_player;
           if ((&unk_ea993)[local_58 * 0x1b + (uint)local_14 * 0x2f4] == '\x02') {
             *(undefined4 *)(puVar20 + -4) = 0xc1;
             *(undefined4 *)(puVar20 + -8) = 0xfd;
@@ -1295,7 +1295,7 @@ LAB_00073f22:
           *(undefined4 *)(puVar20 + -0x18) = 0x74edf;
           sprintf(*(char **)(puVar20 + -0x14),*(char **)(puVar20 + -0x10));
           *(undefined4 *)(puVar20 + -4) = 0x74f01;
-          sub_76771(0x1fa,local_60 * 0xd + 0x16,auStack_c4);
+          print_field(0x1fa,local_60 * 0xd + 0x16,auStack_c4);
         }
       }
     }
@@ -1606,7 +1606,7 @@ LAB_00074f01:
     if ((&unk_ea993)[iVar12] != '\x02') {
       uVar1 = (&unk_ea991)[iVar12];
       *(undefined4 *)(puVar20 + -4) = 0x74fcb;
-      sub_7a099(&unk_d1238,uVar1,local_18,local_10);
+      jersey_number_bitmap(&unk_d1238,uVar1,local_18,local_10);
       *(undefined1 **)(puVar20 + -4) = &unk_d1238;
       *(undefined4 *)(puVar20 + -8) = 0x74fd5;
       ppiVar14 = param_2;
@@ -1674,7 +1674,7 @@ code_r0x00073f44:
     if ((&unk_ea993)[iVar12] != '\x02') {
       uVar1 = (&unk_ea991)[iVar12];
       *(undefined4 *)(puVar20 + -4) = 0x73ed8;
-      sub_7a099(&unk_d1238,uVar1,local_18,local_10);
+      jersey_number_bitmap(&unk_d1238,uVar1,local_18,local_10);
       *(undefined1 **)(puVar20 + -4) = &unk_d1238;
       *(undefined4 *)(puVar20 + -8) = 0x73ee2;
       setremaptable();
@@ -1700,10 +1700,10 @@ LAB_00073f14:
 
 
 // ================================================================================================
-// sub_75046 @ 0x75046 [__watcall]
+// lines_draw_scratch_list @ 0x75046 [__watcall]
 // ================================================================================================
 
-void __watcall sub_75046(int param_1,undefined4 unaff_EDX,byte unaff_BL)
+void __watcall lines_draw_scratch_list(int param_1,undefined4 unaff_EDX,byte unaff_BL)
 
 {
   undefined uVar1;
@@ -1721,7 +1721,7 @@ void __watcall sub_75046(int param_1,undefined4 unaff_EDX,byte unaff_BL)
   iVar6 = 0;
   do {
     if (*(byte *)(iVar6 + param_1) < 100) {
-      sub_7a099(&unk_d1238,*(byte *)(iVar6 + param_1),uVar1,uVar4);
+      jersey_number_bitmap(&unk_d1238,*(byte *)(iVar6 + param_1),uVar1,uVar4);
     }
     else {
       iVar5 = 0;
@@ -1758,7 +1758,7 @@ void __watcall sub_75046(int param_1,undefined4 unaff_EDX,byte unaff_BL)
     iVar5 = iVar6 * 0x1b;
     sprintf(acStack_40,aC2dS_c3107,(uint)(byte)(&unk_ea990)[iVar5 + iVar3],
             (uint)(byte)(&unk_ea991)[iVar5 + iVar3],iVar3 + iVar5 + 0xea998);
-    sub_76771(0x1fa,iVar6 * 0xd + 0x16,acStack_40);
+    print_field(0x1fa,iVar6 * 0xd + 0x16,acStack_40);
     iVar6 = iVar6 + 1;
   } while (iVar6 < 0x1c);
   return;
@@ -1897,10 +1897,10 @@ LAB_0007539e:
 
 
 // ================================================================================================
-// sub_75456 @ 0x75456 [__watcall]
+// roster_dress_done @ 0x75456 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_75456(int param_1,int unaff_EDX,byte param_3)
+undefined4 __watcall roster_dress_done(int param_1,int unaff_EDX,byte param_3)
 
 {
   int iVar1;
@@ -1996,7 +1996,7 @@ roster_screen(undefined4 param_1,undefined4 param_2,byte unaff_BL,int *unaff_ECX
   clearclip(0);
   uVar3 = (uint)bStack_10;
   draw_lines_screen(uVar3,param_5,param_6,param_7,param_8);
-  sub_75046(param_1,param_5,uVar3);
+  lines_draw_scratch_list(param_1,param_5,uVar3);
   setdefaultscreen();
   drawshape2_home(*(undefined4 *)(dword_ea2b4 + 0x2c));
   if (-1 < *unaff_ECX) {
@@ -2011,18 +2011,18 @@ roster_screen(undefined4 param_1,undefined4 param_2,byte unaff_BL,int *unaff_ECX
     iVar1 = *unaff_ECX * 0x1b;
     sprintf(acStack_30,aC2dS_c3107,(uint)(byte)(&unk_ea990)[iVar2 + iVar1],
             (uint)(byte)(&unk_ea991)[iVar2 + iVar1],iVar2 + iVar1 + 0xea998);
-    sub_76771(0x1fa,*unaff_ECX * 0xd + 0x16,acStack_30);
+    print_field(0x1fa,*unaff_ECX * 0xd + 0x16,acStack_30);
   }
   return 0;
 }
 
 
 // ================================================================================================
-// sub_75770 @ 0x75770 [__watcall]
+// lines_scratch_player @ 0x75770 [__watcall]
 // ================================================================================================
 
 undefined4 __watcall
-sub_75770(int param_1,undefined4 param_2,byte unaff_BL,int *unaff_ECX,undefined4 param_5)
+lines_scratch_player(int param_1,undefined4 param_2,byte unaff_BL,int *unaff_ECX,undefined4 param_5)
 
 {
   int iVar1;
@@ -2041,22 +2041,22 @@ sub_75770(int param_1,undefined4 param_2,byte unaff_BL,int *unaff_ECX,undefined4
   iVar1 = (uint)unaff_BL * 0x2f4;
   (&unk_ea993)[iVar1 + *unaff_ECX * 0x1b] = 2;
   bStack_10 = unaff_BL;
-  sub_75046(param_1,param_5);
+  lines_draw_scratch_list(param_1,param_5);
   settextpos(0xfd,0xc1);
   iVar2 = *unaff_ECX * 0x1b;
   sprintf(acStack_30,aC2dS_c3107,(uint)(byte)(&unk_ea990)[iVar1 + iVar2],
           (uint)(byte)(&unk_ea991)[iVar1 + iVar2],iVar1 + 0xea998 + iVar2);
-  sub_76771(0x1fa,*unaff_ECX * 0xd + 0x16,acStack_30);
+  print_field(0x1fa,*unaff_ECX * 0xd + 0x16,acStack_30);
   return 0;
 }
 
 
 // ================================================================================================
-// sub_75868 @ 0x75868 [__watcall]
+// lines_dress_player @ 0x75868 [__watcall]
 // ================================================================================================
 
 undefined4 __watcall
-sub_75868(undefined4 param_1,undefined4 param_2,uint unaff_EBX,int *unaff_ECX,undefined4 param_5)
+lines_dress_player(undefined4 param_1,undefined4 param_2,uint unaff_EBX,int *unaff_ECX,undefined4 param_5)
 
 {
   int iVar1;
@@ -2066,21 +2066,21 @@ sub_75868(undefined4 param_1,undefined4 param_2,uint unaff_EBX,int *unaff_ECX,un
   __CHK(0x44);
   iVar2 = (unaff_EBX & 0xff) * 0x2f4;
   (&unk_ea993)[iVar2 + *unaff_ECX * 0x1b] = 3;
-  sub_75046(param_1,param_5);
+  lines_draw_scratch_list(param_1,param_5);
   settextpos(0xc0,0xc1);
   iVar1 = *unaff_ECX * 0x1b;
   sprintf(acStack_2c,aC2dS_c3107,(uint)(byte)(&unk_ea990)[iVar2 + iVar1],
           (uint)(byte)(&unk_ea991)[iVar2 + iVar1],iVar2 + iVar1 + 0xea998);
-  sub_76771(0x1fa,*unaff_ECX * 0xd + 0x16,acStack_2c);
+  print_field(0x1fa,*unaff_ECX * 0xd + 0x16,acStack_2c);
   return 0;
 }
 
 
 // ================================================================================================
-// sub_75931 @ 0x75931 [__watcall]
+// cmp_roster_skaters @ 0x75931 [__watcall]
 // ================================================================================================
 
-int __watcall sub_75931(int *param_1,int *unaff_EDX)
+int __watcall cmp_roster_skaters(int *param_1,int *unaff_EDX)
 
 {
   ushort uVar1;
@@ -2129,10 +2129,10 @@ LAB_00075a2e:
 
 
 // ================================================================================================
-// sub_75a37 @ 0x75a37 [__watcall]
+// cmp_roster_goalies @ 0x75a37 [__watcall]
 // ================================================================================================
 
-int __watcall sub_75a37(int *param_1,int *unaff_EDX)
+int __watcall cmp_roster_goalies(int *param_1,int *unaff_EDX)
 
 {
   ushort uVar1;
@@ -2191,11 +2191,11 @@ LAB_00075b9c:
 
 
 // ================================================================================================
-// sub_75baa @ 0x75baa [__watcall]
+// roster_regular_season_stats @ 0x75baa [__watcall]
 // ================================================================================================
 
 longlong __watcall
-sub_75baa(undefined4 param_1,uint unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+roster_regular_season_stats(undefined4 param_1,uint unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   __CHK(0x10);
@@ -2206,11 +2206,11 @@ sub_75baa(undefined4 param_1,uint unaff_EDX,undefined4 unaff_EBX,undefined4 unaf
 
 
 // ================================================================================================
-// sub_75bde @ 0x75bde [__watcall]
+// roster_playoff_stats @ 0x75bde [__watcall]
 // ================================================================================================
 
 longlong __watcall
-sub_75bde(undefined4 param_1,uint unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+roster_playoff_stats(undefined4 param_1,uint unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   __CHK(0x10);
@@ -2252,7 +2252,7 @@ roster_table(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefi
   for (iVar6 = 0; iVar6 < 0x19; iVar6 = iVar6 + 1) {
     iVar7 = *(int *)(iVar6 * 4 + (&dword_eaf78)[byte_ec7e0] + 0x4c);
     if (iVar7 != -1) {
-      puVar2 = (undefined4 *)sub_6cbb7(iVar7);
+      puVar2 = (undefined4 *)dbedit_key_ptr(iVar7);
       puVar1 = puVar2;
       puVar8 = (undefined4 *)(dword_dd11c + iVar6 * 0x34);
       for (iVar7 = 0xd; iVar7 != 0; iVar7 = iVar7 + -1) {
@@ -2260,7 +2260,7 @@ roster_table(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefi
         puVar1 = puVar1 + 1;
         puVar8 = puVar8 + 1;
       }
-      puVar1 = (undefined4 *)sub_6cbe8(puVar2[10]);
+      puVar1 = (undefined4 *)dbedit_career_ptr(puVar2[10]);
       puVar8 = (undefined4 *)(dword_ebc70 + local_14 * 0x28);
       for (iVar7 = 10; iVar7 != 0; iVar7 = iVar7 + -1) {
         *puVar8 = *puVar1;
@@ -2276,7 +2276,7 @@ roster_table(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefi
   for (iVar6 = 0; iVar6 < 3; iVar6 = iVar6 + 1) {
     iVar7 = *(int *)(iVar6 * 4 + (&dword_eaf78)[byte_ec7e0] + 0xb0);
     if (iVar7 != -1) {
-      puVar2 = (undefined4 *)sub_6cbb7(iVar7);
+      puVar2 = (undefined4 *)dbedit_key_ptr(iVar7);
       puVar1 = puVar2;
       puVar8 = (undefined4 *)(dword_dd11c + (iVar6 + 0x19) * 0x34);
       for (iVar7 = 0xd; iVar7 != 0; iVar7 = iVar7 + -1) {
@@ -2284,7 +2284,7 @@ roster_table(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefi
         puVar1 = puVar1 + 1;
         puVar8 = puVar8 + 1;
       }
-      uVar11 = sub_6cbfd(puVar2[10]);
+      uVar11 = dbedit_career_ptr_b(puVar2[10]);
       puVar1 = (undefined4 *)uVar11;
       puVar8 = (undefined4 *)(dword_ebc6c + iStack_10 * 0x2c);
       for (iVar7 = 0xb; iVar7 != 0; iVar7 = iVar7 + -1) {
@@ -2297,8 +2297,8 @@ roster_table(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefi
       iStack_10 = iStack_10 + 1;
     }
   }
-  sub_9244c(&unk_dc6bc,local_14,4,sub_75931,unaff_ECX,unaff_EBX);
-  sub_9244c(&unk_dc720,iStack_10,4,sub_75a37);
+  qsort(&unk_dc6bc,local_14,4,cmp_roster_skaters,unaff_ECX,unaff_EBX);
+  qsort(&unk_dc720,iStack_10,4,cmp_roster_goalies);
   setscreen(dword_ea2b4);
   clearclip(0);
   sprintf(acStack_64,aEmbS_c6935,(&dword_eaf78)[byte_ec7e0]);
@@ -2318,7 +2318,7 @@ roster_table(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefi
   draw_menu_items(aDisplay + 0xc,2,param_1,unaff_EDX,unaff_EBX);
   set_text_colors(param_1,unaff_ECX);
   sprintf(acStack_64,aSRoster,(&dword_eaf78)[byte_ec7e0] + 5);
-  sub_17573(0x19,acStack_64);
+  print_centered_shadow(0x19,acStack_64);
   print_text_at(0x14,0x30,&aPos_c313f);
   print_text_at(0x42,0x30,&aNo_c3143);
   print_text_at(0x60,0x30,&aName_c3146);
@@ -2336,9 +2336,9 @@ roster_table(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefi
     sprintf(acStack_64,(char *)&aC_c3169,(int)*(char *)(iVar9 + 2));
     print_text_at(0x14,iVar7,acStack_64);
     if (*(byte *)(iVar9 + 1) < 100) {
-      sub_176ae(0x42,iVar7,&a2d,*(byte *)(iVar9 + 1));
+      print_textf(0x42,iVar7,&a2d,*(byte *)(iVar9 + 1));
     }
-    sub_29c75(acStack_64,iVar9 + 3,iVar9 + 0x13,0xa6);
+    format_team_name(acStack_64,iVar9 + 3,iVar9 + 0x13,0xa6);
     print_text_at(0x60,iVar7,acStack_64);
     if (dword_c6956 == 0) {
       puVar10 = (undefined2 *)(dword_ebc70 + local_18 * 0x28);
@@ -2346,13 +2346,13 @@ roster_table(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefi
     else {
       puVar10 = (undefined2 *)(local_18 * 0x28 + dword_ebc70 + 0x12);
     }
-    sub_176ae(0x10e,iVar7,&a2d,*puVar10);
-    sub_176ae(0x136,iVar7,&a3d,puVar10[1]);
-    sub_176ae(0x15e,iVar7,&a3d,puVar10[2]);
-    sub_176ae(0x186,iVar7,&a3d,puVar10[3]);
-    sub_176ae(0x1ae,iVar7,&a4d,puVar10[7]);
-    sub_176ae(0x1e8,iVar7,&a3d,puVar10[6]);
-    sub_176ae(0x210,iVar7,&a4d,*(int *)(puVar10 + 7) >> 0x10);
+    print_textf(0x10e,iVar7,&a2d,*puVar10);
+    print_textf(0x136,iVar7,&a3d,puVar10[1]);
+    print_textf(0x15e,iVar7,&a3d,puVar10[2]);
+    print_textf(0x186,iVar7,&a3d,puVar10[3]);
+    print_textf(0x1ae,iVar7,&a4d,puVar10[7]);
+    print_textf(0x1e8,iVar7,&a3d,puVar10[6]);
+    print_textf(0x210,iVar7,&a4d,*(int *)(puVar10 + 7) >> 0x10);
     iVar7 = iVar7 + 0xd;
   }
   print_text_at(0x14,0x195,&aPos_c313f);
@@ -2376,9 +2376,9 @@ roster_table(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefi
     sprintf(acStack_64,(char *)&aC_c3169,(int)*(char *)(iVar9 + 2));
     print_text_at(0x14,iVar7,acStack_64);
     if (*(byte *)(iVar9 + 1) < 100) {
-      sub_176ae(0x42,iVar7,&a2d,*(byte *)(iVar9 + 1));
+      print_textf(0x42,iVar7,&a2d,*(byte *)(iVar9 + 1));
     }
-    sub_29c75(acStack_64,iVar9 + 3,iVar9 + 0x13,0xa6);
+    format_team_name(acStack_64,iVar9 + 3,iVar9 + 0x13,0xa6);
     print_text_at(0x60,iVar7,acStack_64);
     if (dword_c6956 == 0) {
       puVar10 = (undefined2 *)(local_18 * 0x2c + dword_ebc6c);
@@ -2387,17 +2387,17 @@ roster_table(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefi
       puVar10 = (undefined2 *)(local_18 * 0x2c + dword_ebc6c + 0x16);
     }
     local_1c = puVar10;
-    sub_176ae(0x10e,iVar7,&a2d,*puVar10);
-    sub_176ae(0x136,iVar7,&a4d,puVar10[6]);
-    sub_176db(0x15e,iVar7,a2d22d,(ushort)puVar10[8] / 100,(uint)(ushort)puVar10[8] % 100);
-    sub_176ae(400,iVar7,&a2d,puVar10[1]);
-    sub_176ae(0x1ae,iVar7,&a2d,puVar10[2]);
+    print_textf(0x10e,iVar7,&a2d,*puVar10);
+    print_textf(0x136,iVar7,&a4d,puVar10[6]);
+    print_textf2(0x15e,iVar7,a2d22d,(ushort)puVar10[8] / 100,(uint)(ushort)puVar10[8] % 100);
+    print_textf(400,iVar7,&a2d,puVar10[1]);
+    print_textf(0x1ae,iVar7,&a2d,puVar10[2]);
     if (dword_c6956 == 0) {
-      sub_176ae(0x1cc,iVar7,&a2d,puVar10[3]);
+      print_textf(0x1cc,iVar7,&a2d,puVar10[3]);
     }
-    sub_176ae(0x1ea,iVar7,&a3d,local_1c[7]);
-    sub_176ae(0x20e,iVar7,&a4d,local_1c[9]);
-    sub_176db(0x240,iVar7,a3d1d,(ushort)local_1c[10] / 10,(uint)(ushort)local_1c[10] % 10);
+    print_textf(0x1ea,iVar7,&a3d,local_1c[7]);
+    print_textf(0x20e,iVar7,&a4d,local_1c[9]);
+    print_textf2(0x240,iVar7,a3d1d,(ushort)local_1c[10] / 10,(uint)(ushort)local_1c[10] % 10);
     iVar7 = iVar7 + 0xd;
   }
   setdefaultscreen();
@@ -2432,11 +2432,11 @@ void __watcall fade_palette(int param_1,int unaff_EDX,int unaff_EBX)
   }
   if (iVar4 < 2) {
     if (param_1 == 0) {
-      sub_76614(unaff_EDX);
+      setpalette_vsync_b(unaff_EDX);
     }
     else {
       _memset_fill(&unk_ec7e4,0,unaff_EBX,0x300);
-      sub_76614(&unk_ec7e4);
+      setpalette_vsync_b(&unk_ec7e4);
       clearclip(0);
     }
   }
@@ -2452,7 +2452,7 @@ void __watcall fade_palette(int param_1,int unaff_EDX,int unaff_EBX)
         (&unk_ec7e4)[iVar3] = (char)(iVar2 / iVar4);
         iVar3 = iVar3 + 1;
       } while (iVar3 < 0x300);
-      sub_76614(&unk_ec7e4,iVar2 % iVar4);
+      setpalette_vsync_b(&unk_ec7e4,iVar2 % iVar4);
     }
   }
   return;
@@ -2460,10 +2460,10 @@ void __watcall fade_palette(int param_1,int unaff_EDX,int unaff_EBX)
 
 
 // ================================================================================================
-// sub_7651b @ 0x7651b [__watcall]
+// fade_palette_steps @ 0x7651b [__watcall]
 // ================================================================================================
 
-void __watcall sub_7651b(int param_1,int unaff_EDX,int unaff_EBX)
+void __watcall fade_palette_steps(int param_1,int unaff_EDX,int unaff_EBX)
 
 {
   int iVar1;
@@ -2484,11 +2484,11 @@ void __watcall sub_7651b(int param_1,int unaff_EDX,int unaff_EBX)
   }
   if (iVar4 < 2) {
     if (param_1 == 0) {
-      sub_76614(unaff_EDX);
+      setpalette_vsync_b(unaff_EDX);
     }
     else {
       _memset_fill(&unk_ecae4,0,unaff_EBX,0x300);
-      sub_76614(&unk_ecae4);
+      setpalette_vsync_b(&unk_ecae4);
       clearclip(0);
     }
   }
@@ -2504,8 +2504,8 @@ void __watcall sub_7651b(int param_1,int unaff_EDX,int unaff_EBX)
         (&unk_ecae4)[iVar3] = (char)(iVar2 / iVar4);
         iVar3 = iVar3 + 1;
       } while (iVar3 < 0x300);
-      sub_96218(0x2d,iVar2 % iVar4);
-      sub_76614(&unk_ecae4);
+      delay_ms(0x2d,iVar2 % iVar4);
+      setpalette_vsync_b(&unk_ecae4);
     }
   }
   return;
@@ -2513,10 +2513,10 @@ void __watcall sub_7651b(int param_1,int unaff_EDX,int unaff_EBX)
 
 
 // ================================================================================================
-// sub_76614 @ 0x76614 [__watcall]
+// setpalette_vsync_b @ 0x76614 [__watcall]
 // ================================================================================================
 
-void __watcall sub_76614(int param_1)
+void __watcall setpalette_vsync_b(int param_1)
 
 {
   int iVar1;
@@ -2534,10 +2534,10 @@ void __watcall sub_76614(int param_1)
 
 
 // ================================================================================================
-// sub_7665e @ 0x7665e [__watcall]
+// random_byte_lfsr @ 0x7665e [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_7665e(byte *param_1,undefined4 unaff_EDX)
+undefined8 __watcall random_byte_lfsr(byte *param_1,undefined4 unaff_EDX)
 
 {
   ushort uVar1;
@@ -2558,10 +2558,10 @@ undefined8 __watcall sub_7665e(byte *param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_7668d @ 0x7668d [__watcall]
+// screen_update_rect @ 0x7668d [__watcall]
 // ================================================================================================
 
-void __watcall sub_7668d(int param_1,int unaff_EDX,int unaff_EBX,int unaff_ECX)
+void __watcall screen_update_rect(int param_1,int unaff_EDX,int unaff_EBX,int unaff_ECX)
 
 {
   __CHK(0x30);
@@ -2584,17 +2584,17 @@ void __watcall sub_7668d(int param_1,int unaff_EDX,int unaff_EBX,int unaff_ECX)
     unaff_EBX = unaff_EBX - param_1;
     unaff_ECX = unaff_ECX - unaff_EDX;
     setdefaultscreen();
-    sub_8c218(dword_eda04 == 0,param_1,unaff_EDX,unaff_EBX,unaff_ECX,0);
+    empty_func_8c218(dword_eda04 == 0,param_1,unaff_EDX,unaff_EBX,unaff_ECX,0);
   }
   return;
 }
 
 
 // ================================================================================================
-// sub_76771 @ 0x76771 [__watcall]
+// print_field @ 0x76771 [__watcall]
 // ================================================================================================
 
-void __watcall sub_76771(int param_1,int unaff_EDX,undefined4 unaff_EBX)
+void __watcall print_field(int param_1,int unaff_EDX,undefined4 unaff_EBX)
 
 {
   int iVar1;
@@ -2654,10 +2654,10 @@ void __watcall edit_lines_screen_b(undefined4 param_1)
   if ((sound_enabled != '\0') && (piVar5 = (int *)local_54, (option_flags._1_1_ & 1) != 0)) {
     piVar5 = &local_58;
     local_58 = 0x76898;
-    sub_8373e();
+    speech_stop_and_flush();
     do {
       *(undefined4 *)((int)piVar5 + -4) = 0x7689d;
-      iVar1 = sub_836e4();
+      iVar1 = speech_clip_pending();
     } while (iVar1 != 0);
   }
   *(undefined4 *)((int)piVar5 + -4) = 0x768a6;
@@ -2718,7 +2718,7 @@ void __watcall edit_lines_screen_b(undefined4 param_1)
   *(undefined4 *)((int)piVar5 + -4) = 0x769ed;
   edit_lines_keys(param_1);
   *(undefined4 *)((int)piVar5 + -4) = 0x76a06;
-  sub_9244c(&unk_ed0f4,0x1c,0x16);
+  qsort(&unk_ed0f4,0x1c,0x16);
   *(undefined4 *)((int)piVar5 + -4) = uVar2;
   *(undefined4 *)((int)piVar5 + -8) = *(undefined4 *)((int)piVar5 + 0x40);
   *(undefined4 *)((int)piVar5 + -0xc) = *(undefined4 *)((int)piVar5 + 0x44);
@@ -2743,10 +2743,10 @@ void __watcall edit_lines_screen_b(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_76a93 @ 0x76a93 [__watcall]
+// cmp_player_names_b @ 0x76a93 [__watcall]
 // ================================================================================================
 
-int __watcall sub_76a93(char *param_1,char *unaff_EDX)
+int __watcall cmp_player_names_b(char *param_1,char *unaff_EDX)
 
 {
   char cVar1;
@@ -2895,8 +2895,8 @@ edit_lines_screen2(int param_1,int **param_2,byte unaff_BL,undefined4 param_4,in
   ppiVar12 = (int **)((*local_74 + local_74[2]) / 2);
   piVar13 = (int *)((local_74[1] + local_74[3]) / 2);
   funcptr_cf443 = lines_teams_b;
-  funcptr_cf363 = sub_79188;
-  funcptr_cf223 = sub_79188;
+  funcptr_cf363 = lines_use_these;
+  funcptr_cf223 = lines_use_these;
   funcptr_cf3c3 = lines_teams_a;
   funcptr_cf283 = lines_teams_a;
   local_4c = 0;
@@ -2953,7 +2953,7 @@ edit_lines_screen2(int param_1,int **param_2,byte unaff_BL,undefined4 param_4,in
   }
   local_14 = (&unk_d1238)[(byte)(&unk_d11bc)[sVar11 * 4]];
   local_18 = byte_d12de;
-  sub_78366(acStack_124,param_2,local_10);
+  lines_draw_list(acStack_124,param_2,local_10);
   puVar20 = install_path;
   if (byte_ed9e7 != '\x01') {
     puVar20 = (undefined *)0x0;
@@ -3049,7 +3049,7 @@ LAB_0007704c:
     local_a4[6] = 0;
     local_a4[5] = 0;
     *(undefined4 *)(puVar22 + -4) = 0x775b0;
-    iVar14 = sub_77f6f(local_50,local_54,&local_64);
+    iVar14 = lines_slot_at(local_50,local_54,&local_64);
     if (iVar14 != 0) {
       if (((local_64 < 100) && (local_60 != -1)) &&
          ((&rosters)[(uint)local_10 * 0x444 + (uint)(byte)(&unk_ed0f6)[local_60 * 0x16] * 0x27] !=
@@ -3076,7 +3076,7 @@ LAB_0007704c:
             do {
               cVar3 = acStack_124[local_4c * 3 + iVar14];
               *(undefined4 *)(puVar22 + -4) = 0x7770a;
-              sub_7a099(&unk_d1238,cVar3,local_14,local_18);
+              jersey_number_bitmap(&unk_d1238,cVar3,local_14,local_18);
               *(undefined1 **)(puVar22 + -4) = &unk_d1238;
               *(undefined4 *)(puVar22 + -8) = 0x77714;
               setremaptable();
@@ -3105,7 +3105,7 @@ LAB_0007704c:
             do {
               cVar3 = acStack_118[local_4c * 2 + iVar14];
               *(undefined4 *)(puVar22 + -4) = 0x77805;
-              sub_7a099(&unk_d1238,cVar3,local_14,local_18);
+              jersey_number_bitmap(&unk_d1238,cVar3,local_14,local_18);
               *(undefined1 **)(puVar22 + -4) = &unk_d1238;
               *(undefined4 *)(puVar22 + -8) = 0x7780f;
               setremaptable();
@@ -3134,7 +3134,7 @@ LAB_0007704c:
             do {
               cVar3 = acStack_112[local_4c * 5 + iVar14];
               *(undefined4 *)(puVar22 + -4) = 0x7790f;
-              sub_7a099(&unk_d1238,cVar3,local_14,local_18);
+              jersey_number_bitmap(&unk_d1238,cVar3,local_14,local_18);
               *(undefined1 **)(puVar22 + -4) = &unk_d1238;
               *(undefined4 *)(puVar22 + -8) = 0x77919;
               setremaptable();
@@ -3164,7 +3164,7 @@ LAB_0007704c:
             do {
               cVar3 = acStack_108[local_4c * 4 + iVar14];
               *(undefined4 *)(puVar22 + -4) = 0x77a11;
-              sub_7a099(&unk_d1238,cVar3,local_14,local_18);
+              jersey_number_bitmap(&unk_d1238,cVar3,local_14,local_18);
               *(undefined1 **)(puVar22 + -4) = &unk_d1238;
               *(undefined4 *)(puVar22 + -8) = 0x77a1b;
               setremaptable();
@@ -3191,7 +3191,7 @@ LAB_0007704c:
             do {
               cVar3 = acStack_100[iVar14];
               *(undefined4 *)(puVar22 + -4) = 0x77aca;
-              sub_7a099(&unk_d1238,cVar3,local_14,local_18);
+              jersey_number_bitmap(&unk_d1238,cVar3,local_14,local_18);
               *(undefined1 **)(puVar22 + -4) = &unk_d1238;
               *(undefined4 *)(puVar22 + -8) = 0x77ad4;
               setremaptable();
@@ -3216,7 +3216,7 @@ LAB_0007704c:
           do {
             cVar3 = acStack_100[iVar14 + 2];
             *(undefined4 *)(puVar22 + -4) = 0x77b72;
-            sub_7a099(&unk_d1238,cVar3,local_14,local_18);
+            jersey_number_bitmap(&unk_d1238,cVar3,local_14,local_18);
             *(undefined1 **)(puVar22 + -4) = &unk_d1238;
             *(undefined4 *)(puVar22 + -8) = 0x77b7c;
             setremaptable();
@@ -3229,8 +3229,8 @@ LAB_0007704c:
           } while (iVar14 < 2);
         }
         funcptr_cf443 = lines_teams_b;
-        funcptr_cf363 = sub_79188;
-        funcptr_cf223 = sub_79188;
+        funcptr_cf363 = lines_use_these;
+        funcptr_cf223 = lines_use_these;
         funcptr_cf3c3 = lines_teams_a;
         funcptr_cf283 = lines_teams_a;
         local_4c = 0;
@@ -3274,11 +3274,11 @@ LAB_0007704c:
             *(undefined4 *)(puVar22 + -0x18) = 0x77d35;
             sprintf(*(char **)(puVar22 + -0x14),*(char **)(puVar22 + -0x10));
             *(undefined4 *)(puVar22 + -4) = 0x77d57;
-            sub_76771(0x1fa,local_60 * 0xd + 0x16,auStack_d4);
+            print_field(0x1fa,local_60 * 0xd + 0x16,auStack_d4);
           }
           local_60 = local_64;
-          funcptr_cf2a3 = sub_79f41;
-          funcptr_cf2c3 = sub_79de1;
+          funcptr_cf2a3 = lines_dress_player_b;
+          funcptr_cf2c3 = lines_scratch_player_b;
           if ((&rosters)[(uint)local_10 * 0x444 + (uint)(byte)(&unk_ed0f6)[local_64 * 0x16] * 0x27]
               == '\x02') {
             *(undefined4 *)(puVar22 + -4) = 0xc1;
@@ -3299,7 +3299,7 @@ LAB_0007704c:
           *(undefined4 *)(puVar22 + -0x18) = 0x77e0d;
           sprintf(*(char **)(puVar22 + -0x14),*(char **)(puVar22 + -0x10));
           *(undefined4 *)(puVar22 + -4) = 0x77e2f;
-          sub_76771(0x1fa,local_60 * 0xd + 0x16,auStack_d4);
+          print_field(0x1fa,local_60 * 0xd + 0x16,auStack_d4);
         }
       }
     }
@@ -3604,7 +3604,7 @@ LAB_00077e2f:
         '\x02') {
       uVar2 = (&unk_ed0f5)[local_60 * 0x16];
       *(undefined4 *)(puVar22 + -4) = 0x77f12;
-      sub_7a099(&unk_d1238,uVar2,local_14,local_18);
+      jersey_number_bitmap(&unk_d1238,uVar2,local_14,local_18);
       *(undefined1 **)(puVar22 + -4) = &unk_d1238;
       *(undefined4 *)(puVar22 + -8) = 0x77f1c;
       ppiVar21 = param_2;
@@ -3672,7 +3672,7 @@ code_r0x0007706e:
         '\x02') {
       uVar2 = (&unk_ed0f5)[local_60 * 0x16];
       *(undefined4 *)(puVar22 + -4) = 0x77002;
-      sub_7a099(&unk_d1238,uVar2,local_14,local_18);
+      jersey_number_bitmap(&unk_d1238,uVar2,local_14,local_18);
       *(undefined1 **)(puVar22 + -4) = &unk_d1238;
       *(undefined4 *)(puVar22 + -8) = 0x7700c;
       setremaptable();
@@ -3698,10 +3698,10 @@ LAB_0007703e:
 
 
 // ================================================================================================
-// sub_77f6f @ 0x77f6f [__watcall]
+// lines_slot_at @ 0x77f6f [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_77f6f(int param_1,int unaff_EDX,int *unaff_EBX)
+undefined4 __watcall lines_slot_at(int param_1,int unaff_EDX,int *unaff_EBX)
 
 {
   int iVar1;
@@ -3758,7 +3758,7 @@ void __watcall edit_lines_keys(int param_1)
   if (iVar1 != 0) {
     fatalerror(&aA1_c31d9);
   }
-  iVar1 = sub_92068(acStack_3c,0x200);
+  iVar1 = c_open(acStack_3c,0x200);
   if (iVar1 < 0) {
     fatalerror(&aA2_c31dc);
   }
@@ -3826,18 +3826,18 @@ void __watcall edit_lines_keys(int param_1)
     }
     iStack_1c = iStack_1c + 1;
   } while (iStack_1c < 3);
-  sub_923c9(iVar1);
+  _close(iVar1);
   return;
 }
 
 
 // ================================================================================================
-// sub_78366 @ 0x78366 [__watcall]
+// lines_draw_list @ 0x78366 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __watcall sub_78366(int param_1,undefined4 unaff_EDX,byte unaff_BL)
+void __watcall lines_draw_list(int param_1,undefined4 unaff_EDX,byte unaff_BL)
 
 {
   int iVar1;
@@ -3859,7 +3859,7 @@ void __watcall sub_78366(int param_1,undefined4 unaff_EDX,byte unaff_BL)
   iVar3 = 0;
   local_1c = unaff_BL;
   do {
-    sub_7a099(&unk_d1238,*(undefined *)(iVar3 + param_1),uStack_14,local_18);
+    jersey_number_bitmap(&unk_d1238,*(undefined *)(iVar3 + param_1),uStack_14,local_18);
     setremaptable(&unk_d1238);
     drawshape2_trans(unaff_EDX,(&unk_d1338)[iVar3 * 2],(&unk_d133c)[iVar3 * 2]);
     iVar3 = iVar3 + 1;
@@ -3893,7 +3893,7 @@ void __watcall sub_78366(int param_1,undefined4 unaff_EDX,byte unaff_BL)
     iVar1 = iVar3 * 0x16;
     sprintf(acStack_3c,aC2dS_c31cb,(uint)(byte)(&unk_ed0f4)[iVar1],(uint)(byte)(&unk_ed0f5)[iVar1],
             &unk_ed0f7 + iVar1);
-    sub_76771(0x1fa,iVar3 * 0xd + 0x16,acStack_3c);
+    print_field(0x1fa,iVar3 * 0xd + 0x16,acStack_3c);
     iVar3 = iVar3 + 1;
   } while (iVar3 < 0x1c);
   return;
@@ -3962,7 +3962,7 @@ draw_lines_screen(int param_1,undefined4 param_2,undefined4 param_3,undefined4 u
   freemem(uVar2);
   draw_menu_items(unaff_ECX,param_5,local_14,local_18,uStack_10);
   settextpos(0xc0,0xc1);
-  sub_78be7(500,0x13,0x27f,0x1df,1);
+  draw_bevel_box_b(500,0x13,0x27f,0x1df,1);
   puVar6 = install_path;
   if (byte_ed9e7 != '\x01') {
     puVar6 = (undefined *)0x0;
@@ -3976,42 +3976,42 @@ draw_lines_screen(int param_1,undefined4 param_2,undefined4 param_3,undefined4 u
   uVar5 = locateshape(uVar2,(&off_c57cc)[sVar1]);
   drawshape_remap(uVar5,0x218,0x191);
   freemem(uVar2);
-  sub_78be7(5,0x2c,0x45,0x54,1);
+  draw_bevel_box_b(5,0x2c,0x45,0x54,1);
   printstr_at(aForward,0xc,0x33);
   printstr_at(aLine1,0x13,0x40);
-  sub_78be7(5,0x5d,0x45,0x85,1);
+  draw_bevel_box_b(5,0x5d,0x45,0x85,1);
   printstr_at(aForward,0xc,100);
   printstr_at(aLine2,0x13,0x71);
-  sub_78be7(5,0x8e,0x45,0xb6,1);
+  draw_bevel_box_b(5,0x8e,0x45,0xb6,1);
   printstr_at(aForward,0xc,0x95);
   printstr_at(aLine3,0x13,0xa2);
-  sub_78be7(5,0xbf,0x45,0xe7,1);
+  draw_bevel_box_b(5,0xbf,0x45,0xe7,1);
   printstr_at(aForward,0xc,0xc6);
   printstr_at(aLine4,0x13,0xd3);
-  sub_78be7(5,0xfa,0x45,0x122,1);
+  draw_bevel_box_b(5,0xfa,0x45,0x122,1);
   printstr_at(aPower,0x10,0x101);
   printstr_at(aPlay1,0x11,0x10e);
-  sub_78be7(5,299,0x45,0x153,1);
+  draw_bevel_box_b(5,299,0x45,0x153,1);
   printstr_at(aPower,0x10,0x132);
   printstr_at(aPlay2,0x11,0x13f);
-  sub_78be7(5,0x166,0x45,0x18e,1);
+  draw_bevel_box_b(5,0x166,0x45,0x18e,1);
   printstr_at(aPenalty,0xc,0x16d);
   printstr_at(aKill1,0x13,0x17a);
-  sub_78be7(5,0x197,0x45,0x1bf,1);
+  draw_bevel_box_b(5,0x197,0x45,0x1bf,1);
   printstr_at(aPenalty,0xc,0x19e);
   printstr_at(aKill2,0x13,0x1ab);
-  sub_78be7(0x114,0x2c,0x154,0x54,1);
+  draw_bevel_box_b(0x114,0x2c,0x154,0x54,1);
   printstr_at(aDefense_c3253,0x11b,0x33);
   printstr_at(aLine1,0x120,0x40);
-  sub_78be7(0x114,0x5d,0x154,0x85,1);
+  draw_bevel_box_b(0x114,0x5d,0x154,0x85,1);
   printstr_at(aDefense_c3253,0x11b,100);
   printstr_at(aLine2,0x120,0x71);
-  sub_78be7(0x114,0x8e,0x154,0xb6,1);
+  draw_bevel_box_b(0x114,0x8e,0x154,0xb6,1);
   printstr_at(aDefense_c3253,0x11b,0x95);
   printstr_at(aLine3,0x120,0xa2);
-  sub_78be7(0x186,200,0x1e4,0xf0,1);
+  draw_bevel_box_b(0x186,200,0x1e4,0xf0,1);
   printstr_at(aGoaltenders,399,0xd5);
-  sub_78be7(0x173,0x166,0x1c7,0x18e,1);
+  draw_bevel_box_b(0x173,0x166,0x1c7,0x18e,1);
   printstr_at(aExtra,0x189,0x16d);
   printstr_at(aAttackers,0x17d,0x17a);
   return;
@@ -4092,10 +4092,10 @@ void __watcall load_homepals(int param_1,undefined4 param_2,int unaff_EBX)
 
 
 // ================================================================================================
-// sub_78be7 @ 0x78be7 [__watcall]
+// draw_bevel_box_b @ 0x78be7 [__watcall]
 // ================================================================================================
 
-void __watcall sub_78be7(int param_1,int unaff_EDX,int unaff_EBX,int unaff_ECX,int param_5)
+void __watcall draw_bevel_box_b(int param_1,int unaff_EDX,int unaff_EBX,int unaff_ECX,int param_5)
 
 {
   int iVar1;
@@ -4104,10 +4104,10 @@ void __watcall sub_78be7(int param_1,int unaff_EDX,int unaff_EBX,int unaff_ECX,i
   
   __CHK(0x38);
   fillrect(param_1,unaff_EDX,(unaff_EBX - param_1) + 1,(unaff_ECX - unaff_EDX) + 1,dword_d0b16);
-  sub_b4fac(param_1,unaff_EDX,unaff_EBX + -1,unaff_EDX,dword_d0b1a);
-  sub_b4fac(param_1,unaff_EDX,param_1,unaff_ECX + -1,dword_d0b1a);
-  sub_b4fac(unaff_EBX,unaff_EDX + 1,unaff_EBX,unaff_ECX,dword_d0b1e);
-  sub_b4fac(param_1 + 1,unaff_ECX,unaff_EBX,unaff_ECX,dword_d0b1e);
+  drawline(param_1,unaff_EDX,unaff_EBX + -1,unaff_EDX,dword_d0b1a);
+  drawline(param_1,unaff_EDX,param_1,unaff_ECX + -1,dword_d0b1a);
+  drawline(unaff_EBX,unaff_EDX + 1,unaff_EBX,unaff_ECX,dword_d0b1e);
+  drawline(param_1 + 1,unaff_ECX,unaff_EBX,unaff_ECX,dword_d0b1e);
   putpixel(param_1,unaff_ECX,dword_d0b22);
   putpixel(unaff_EBX,unaff_EDX,dword_d0b22);
   if (param_5 != 0) {
@@ -4141,10 +4141,10 @@ void __watcall sub_78be7(int param_1,int unaff_EDX,int unaff_EBX,int unaff_ECX,i
 
 
 // ================================================================================================
-// sub_78e29 @ 0x78e29 [__watcall]
+// empty_func_78e29 @ 0x78e29 [__watcall]
 // ================================================================================================
 
-void __watcall sub_78e29(void)
+void __watcall empty_func_78e29(void)
 
 {
   __CHK(0x10);
@@ -4278,12 +4278,12 @@ LAB_00079054:
 
 
 // ================================================================================================
-// sub_79090 @ 0x79090 [__watcall]
+// lines_reset_dressed @ 0x79090 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __watcall sub_79090(byte param_1,int unaff_EDX)
+void __watcall lines_reset_dressed(byte param_1,int unaff_EDX)
 
 {
   byte *pbVar1;
@@ -4327,12 +4327,12 @@ void __watcall sub_79090(byte param_1,int unaff_EDX)
 
 
 // ================================================================================================
-// sub_79188 @ 0x79188 [__watcall]
+// lines_use_these @ 0x79188 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-undefined4 __watcall sub_79188(int param_1,int unaff_EDX,byte param_3)
+undefined4 __watcall lines_use_these(int param_1,int unaff_EDX,byte param_3)
 
 {
   int iVar1;
@@ -4383,10 +4383,10 @@ undefined4 __watcall sub_79188(int param_1,int unaff_EDX,byte param_3)
 
 
 // ================================================================================================
-// sub_7928a @ 0x7928a [__watcall]
+// lines_cancel @ 0x7928a [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_7928a(void)
+undefined4 __watcall lines_cancel(void)
 
 {
   __CHK(4);
@@ -4395,11 +4395,11 @@ undefined4 __watcall sub_7928a(void)
 
 
 // ================================================================================================
-// sub_7929c @ 0x7929c [__watcall]
+// lines_use_original @ 0x7929c [__watcall]
 // ================================================================================================
 
 undefined4 __watcall
-sub_7929c(int param_1,undefined4 param_2,byte unaff_BL,undefined4 *unaff_ECX,undefined4 param_5)
+lines_use_original(int param_1,undefined4 param_2,byte unaff_BL,undefined4 *unaff_ECX,undefined4 param_5)
 
 {
   int iVar1;
@@ -4407,10 +4407,10 @@ sub_7929c(int param_1,undefined4 param_2,byte unaff_BL,undefined4 *unaff_ECX,und
   
   __CHK(0x18);
   puVar2 = &unk_dbd1c + (uint)unaff_BL * 0x2e8;
-  sub_79090((uint)unaff_BL,puVar2);
+  lines_reset_dressed((uint)unaff_BL,puVar2);
   funcptr_cf443 = lines_teams_b;
-  funcptr_cf363 = sub_79188;
-  funcptr_cf223 = sub_79188;
+  funcptr_cf363 = lines_use_these;
+  funcptr_cf223 = lines_use_these;
   funcptr_cf3c3 = lines_teams_a;
   funcptr_cf283 = lines_teams_a;
   iVar1 = 0;
@@ -4429,7 +4429,7 @@ sub_7929c(int param_1,undefined4 param_2,byte unaff_BL,undefined4 *unaff_ECX,und
     }
     iVar1 = iVar1 + 1;
   } while (iVar1 < 0x28);
-  sub_78366(param_1,param_5,unaff_BL);
+  lines_draw_list(param_1,param_5,unaff_BL);
   *unaff_ECX = 0xffffffff;
   funcptr_cf2c3 = (undefined *)0x0;
   funcptr_cf2a3 = (undefined *)0x0;
@@ -4438,21 +4438,21 @@ sub_7929c(int param_1,undefined4 param_2,byte unaff_BL,undefined4 *unaff_ECX,und
 
 
 // ================================================================================================
-// sub_793a4 @ 0x793a4 [__watcall]
+// lines_use_default @ 0x793a4 [__watcall]
 // ================================================================================================
 
 undefined4 __watcall
-sub_793a4(int param_1,undefined4 param_2,byte unaff_BL,undefined4 *unaff_ECX,undefined4 param_5)
+lines_use_default(int param_1,undefined4 param_2,byte unaff_BL,undefined4 *unaff_ECX,undefined4 param_5)
 
 {
   byte *pbVar1;
   int iVar2;
   
   __CHK(0x18);
-  sub_79090((uint)unaff_BL,&unk_dbcec + (uint)unaff_BL * 0xba);
+  lines_reset_dressed((uint)unaff_BL,&unk_dbcec + (uint)unaff_BL * 0xba);
   funcptr_cf443 = lines_teams_b;
-  funcptr_cf363 = sub_79188;
-  funcptr_cf223 = sub_79188;
+  funcptr_cf363 = lines_use_these;
+  funcptr_cf223 = lines_use_these;
   funcptr_cf3c3 = lines_teams_a;
   funcptr_cf283 = lines_teams_a;
   iVar2 = 0;
@@ -4471,7 +4471,7 @@ sub_793a4(int param_1,undefined4 param_2,byte unaff_BL,undefined4 *unaff_ECX,und
     }
     iVar2 = iVar2 + 1;
   } while (iVar2 < 0x28);
-  sub_78366(param_1,param_5,unaff_BL);
+  lines_draw_list(param_1,param_5,unaff_BL);
   *unaff_ECX = 0xffffffff;
   funcptr_cf2c3 = (undefined *)0x0;
   funcptr_cf2a3 = (undefined *)0x0;
@@ -4518,10 +4518,10 @@ undefined4 __watcall lines_teams_a(int param_1,undefined4 param_2,byte param_3)
       __format = &byte_dd710;
     }
     sprintf(acStack_34,__format,aTeams_c3288);
-    iVar1 = sub_92068(acStack_34,0x202);
+    iVar1 = c_open(acStack_34,0x202);
     if (iVar1 < 0) {
       settextmode();
-      sub_9621d(&aB2);
+      perror(&aB2);
       waitkey();
                     /* WARNING: Subroutine does not return */
       exit(1);
@@ -4578,7 +4578,7 @@ undefined4 __watcall lines_teams_a(int param_1,undefined4 param_2,byte param_3)
         }
       }
     }
-    iVar5 = sub_96267(iVar1,auStack_31c,0x2e8);
+    iVar5 = write(iVar1,auStack_31c,0x2e8);
     if ((iVar5 < 0) || (iVar5 != 0x2e8)) {
       fatalerror(&aB7_c329e);
     }
@@ -4596,7 +4596,7 @@ undefined4 __watcall lines_teams_a(int param_1,undefined4 param_2,byte param_3)
       puVar6 = puVar6 + (uint)bVar8 * -2 + 1;
       puVar7 = puVar7 + (uint)bVar8 * -2 + 1;
     }
-    sub_923c9(iVar1);
+    _close(iVar1);
   }
   return 0;
 }
@@ -4642,7 +4642,7 @@ undefined4 __watcall lines_teams_b(int param_1,undefined4 param_2,byte param_3)
       __format = &byte_dd710;
     }
     sprintf(acStack_34,__format,aTeams_c3288);
-    iVar1 = sub_92068(acStack_34,0x202);
+    iVar1 = c_open(acStack_34,0x202);
     if (iVar1 < 0) {
       fatalerror(&aB2_c32a1);
     }
@@ -4696,7 +4696,7 @@ undefined4 __watcall lines_teams_b(int param_1,undefined4 param_2,byte param_3)
         iVar6 = iVar6 + 1;
       }
     }
-    iVar6 = sub_96267(iVar1,auStack_31c,0x2e8);
+    iVar6 = write(iVar1,auStack_31c,0x2e8);
     if ((iVar6 < 0) || (iVar6 != 0x2e8)) {
       fatalerror(&aB7_c329e);
     }
@@ -4714,7 +4714,7 @@ undefined4 __watcall lines_teams_b(int param_1,undefined4 param_2,byte param_3)
       puVar7 = puVar7 + (uint)bVar9 * -2 + 1;
       puVar8 = puVar8 + (uint)bVar9 * -2 + 1;
     }
-    sub_923c9(iVar1);
+    _close(iVar1);
     uVar2 = 1;
   }
   else {
@@ -4798,7 +4798,7 @@ roster_stats_table(undefined4 param_1,undefined4 param_2,byte unaff_BL,int *unaf
   dword_dd110 = 0;
   uVar2 = (uint)bStack_10;
   draw_lines_screen(uVar2,param_5,0,param_7,param_8);
-  sub_78366(param_1,param_5,uVar2);
+  lines_draw_list(param_1,param_5,uVar2);
   if (-1 < *unaff_ECX) {
     if ((&rosters)[uVar2 * 0x444 + (uint)(byte)(&unk_ed0f6)[*unaff_ECX * 0x16] * 0x27] == '\x02') {
       uVar3 = 0xfd;
@@ -4810,7 +4810,7 @@ roster_stats_table(undefined4 param_1,undefined4 param_2,byte unaff_BL,int *unaf
     iVar1 = *unaff_ECX * 0x16;
     sprintf(acStack_30,aC2dS_c31cb,(uint)(byte)(&unk_ed0f4)[iVar1],(uint)(byte)(&unk_ed0f5)[iVar1],
             &unk_ed0f7 + iVar1);
-    sub_76771(0x1fa,*unaff_ECX * 0xd + 0x16,acStack_30);
+    print_field(0x1fa,*unaff_ECX * 0xd + 0x16,acStack_30);
   }
   fade_palette(0,auStack_330,0x10);
   return 0;
@@ -4818,10 +4818,10 @@ roster_stats_table(undefined4 param_1,undefined4 param_2,byte unaff_BL,int *unaf
 
 
 // ================================================================================================
-// sub_79dd1 @ 0x79dd1 [__watcall]
+// menu_return_one @ 0x79dd1 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_79dd1(void)
+undefined4 __watcall menu_return_one(void)
 
 {
   __CHK(4);
@@ -4830,11 +4830,11 @@ undefined4 __watcall sub_79dd1(void)
 
 
 // ================================================================================================
-// sub_79de1 @ 0x79de1 [__watcall]
+// lines_scratch_player_b @ 0x79de1 [__watcall]
 // ================================================================================================
 
 undefined4 __watcall
-sub_79de1(int param_1,undefined4 param_2,byte unaff_BL,int *unaff_ECX,undefined4 param_5)
+lines_scratch_player_b(int param_1,undefined4 param_2,byte unaff_BL,int *unaff_ECX,undefined4 param_5)
 
 {
   int iVar1;
@@ -4850,8 +4850,8 @@ sub_79de1(int param_1,undefined4 param_2,byte unaff_BL,int *unaff_ECX,undefined4
     iVar1 = iVar1 + 1;
   } while (iVar1 < 0x28);
   funcptr_cf443 = lines_teams_b;
-  funcptr_cf363 = sub_79188;
-  funcptr_cf223 = sub_79188;
+  funcptr_cf363 = lines_use_these;
+  funcptr_cf223 = lines_use_these;
   funcptr_cf3c3 = lines_teams_a;
   funcptr_cf283 = lines_teams_a;
   iVar1 = 0;
@@ -4868,22 +4868,22 @@ sub_79de1(int param_1,undefined4 param_2,byte unaff_BL,int *unaff_ECX,undefined4
   } while (iVar1 < 0x28);
   (&rosters)[(uint)unaff_BL * 0x444 + (uint)(byte)(&unk_ed0f6)[*unaff_ECX * 0x16] * 0x27] = 2;
   bStack_10 = unaff_BL;
-  sub_78366(param_1,param_5);
+  lines_draw_list(param_1,param_5);
   settextpos(0xfc,0xc1);
   iVar1 = *unaff_ECX * 0x16;
   sprintf(acStack_30,aC2dS_c31cb,(uint)(byte)(&unk_ed0f4)[iVar1],(uint)(byte)(&unk_ed0f5)[iVar1],
           &unk_ed0f7 + iVar1);
-  sub_76771(0x1fa,*unaff_ECX * 0xd + 0x16,acStack_30);
+  print_field(0x1fa,*unaff_ECX * 0xd + 0x16,acStack_30);
   return 0;
 }
 
 
 // ================================================================================================
-// sub_79f41 @ 0x79f41 [__watcall]
+// lines_dress_player_b @ 0x79f41 [__watcall]
 // ================================================================================================
 
 undefined4 __watcall
-sub_79f41(undefined4 param_1,undefined4 param_2,uint unaff_EBX,int *unaff_ECX,undefined4 param_5)
+lines_dress_player_b(undefined4 param_1,undefined4 param_2,uint unaff_EBX,int *unaff_ECX,undefined4 param_5)
 
 {
   int iVar1;
@@ -4891,22 +4891,22 @@ sub_79f41(undefined4 param_1,undefined4 param_2,uint unaff_EBX,int *unaff_ECX,un
   
   __CHK(0x40);
   (&rosters)[(unaff_EBX & 0xff) * 0x444 + (uint)(byte)(&unk_ed0f6)[*unaff_ECX * 0x16] * 0x27] = 3;
-  sub_78366(param_1,param_5);
+  lines_draw_list(param_1,param_5);
   settextpos(0xc0,0xc1);
   iVar1 = *unaff_ECX * 0x16;
   sprintf(acStack_28,aC2dS_c31cb,(uint)(byte)(&unk_ed0f4)[iVar1],(uint)(byte)(&unk_ed0f5)[iVar1],
           &unk_ed0f7 + iVar1);
-  sub_76771(0x1fa,*unaff_ECX * 0xd + 0x16,acStack_28);
+  print_field(0x1fa,*unaff_ECX * 0xd + 0x16,acStack_28);
   return 0;
 }
 
 
 // ================================================================================================
-// sub_7a017 @ 0x7a017 [__watcall]
+// jersey_digit_bits @ 0x7a017 [__watcall]
 // ================================================================================================
 
 uint __watcall
-sub_7a017(int param_1,int unaff_EDX,undefined unaff_BL,undefined4 param_4,int param_5)
+jersey_digit_bits(int param_1,int unaff_EDX,undefined unaff_BL,undefined4 param_4,int param_5)
 
 {
   uint uVar1;
@@ -4938,10 +4938,10 @@ sub_7a017(int param_1,int unaff_EDX,undefined unaff_BL,undefined4 param_4,int pa
 
 
 // ================================================================================================
-// sub_7a099 @ 0x7a099 [__watcall]
+// jersey_number_bitmap @ 0x7a099 [__watcall]
 // ================================================================================================
 
-void __watcall sub_7a099(int param_1,uint unaff_EDX,undefined unaff_BL,undefined unaff_CL)
+void __watcall jersey_number_bitmap(int param_1,uint unaff_EDX,undefined unaff_BL,undefined unaff_CL)
 
 {
   short sVar1;
@@ -4957,24 +4957,24 @@ void __watcall sub_7a099(int param_1,uint unaff_EDX,undefined unaff_BL,undefined
   if (unaff_EDX < 100) {
     bVar2 = 9 < unaff_EDX;
     if (bVar2) {
-      sub_7a017(param_1,unaff_EDX / 10,unaff_BL,unaff_CL,0);
+      jersey_digit_bits(param_1,unaff_EDX / 10,unaff_BL,unaff_CL,0);
       unaff_EDX = unaff_EDX % 10;
       param_1 = param_1 + 0x6c;
     }
     else {
       param_1 = param_1 + 0x30;
     }
-    sub_7a017(param_1,unaff_EDX,unaff_BL,unaff_CL,bVar2);
+    jersey_digit_bits(param_1,unaff_EDX,unaff_BL,unaff_CL,bVar2);
   }
   return;
 }
 
 
 // ================================================================================================
-// sub_7a13a @ 0x7a13a [__watcall]
+// league_play_settings_screen @ 0x7a13a [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_7a13a(undefined4 param_1,uint unaff_EDX)
+longlong __watcall league_play_settings_screen(undefined4 param_1,uint unaff_EDX)
 
 {
   undefined4 uVar1;
@@ -5006,7 +5006,7 @@ longlong __watcall sub_7a13a(undefined4 param_1,uint unaff_EDX)
   *(undefined2 *)((int)puVar2 + 6) = 0x152;
   grabshape(puVar2,10,0x13);
   settings_dialog(0);
-  sub_7a88e();
+  settings_flags_to_buttons();
   settings_menu(1);
   drawshape(puVar2,10,0x13);
   freemem(puVar2);
@@ -5018,10 +5018,10 @@ longlong __watcall sub_7a13a(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_7a1fc @ 0x7a1fc [__watcall]
+// menu_playoff_settings @ 0x7a1fc [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_7a1fc(undefined4 param_1,uint unaff_EDX)
+longlong __watcall menu_playoff_settings(undefined4 param_1,uint unaff_EDX)
 
 {
   undefined4 *puVar1;
@@ -5050,7 +5050,7 @@ longlong __watcall sub_7a1fc(undefined4 param_1,uint unaff_EDX)
   *(undefined2 *)((int)puVar1 + 6) = 0x152;
   grabshape(puVar1,10,0x13);
   settings_dialog(1);
-  sub_7a88e();
+  settings_flags_to_buttons();
   settings_menu(0);
   drawshape(puVar1,10,0x13);
   freemem(puVar1);
@@ -5061,10 +5061,10 @@ longlong __watcall sub_7a1fc(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_7a29c @ 0x7a29c [__watcall]
+// league_settings_screen @ 0x7a29c [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_7a29c(undefined4 param_1,uint unaff_EDX)
+longlong __watcall league_settings_screen(undefined4 param_1,uint unaff_EDX)
 
 {
   undefined4 *puVar1;
@@ -5095,7 +5095,7 @@ longlong __watcall sub_7a29c(undefined4 param_1,uint unaff_EDX)
   save_settings(&settings_exhibition);
   apply_settings(&settings_playoff);
   settings_dialog(0);
-  sub_7a88e();
+  settings_flags_to_buttons();
   settings_menu(1);
   load_game_set(&settings_playoff);
   apply_settings(&settings_exhibition);
@@ -5108,10 +5108,10 @@ longlong __watcall sub_7a29c(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_7a335 @ 0x7a335 [__watcall]
+// menu_league_settings @ 0x7a335 [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_7a335(undefined4 param_1,uint unaff_EDX)
+longlong __watcall menu_league_settings(undefined4 param_1,uint unaff_EDX)
 
 {
   undefined4 *puVar1;
@@ -5140,7 +5140,7 @@ longlong __watcall sub_7a335(undefined4 param_1,uint unaff_EDX)
   *(undefined2 *)((int)puVar1 + 6) = 0x152;
   grabshape(puVar1,10,0x13);
   settings_screen_b();
-  sub_7a88e();
+  settings_flags_to_buttons();
   settings_menu(1);
   drawshape(puVar1,10,0x13);
   freemem(puVar1);
@@ -5151,10 +5151,10 @@ longlong __watcall sub_7a335(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_7a39f @ 0x7a39f [__watcall]
+// menu_show_league_settings @ 0x7a39f [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_7a39f(undefined4 param_1,uint unaff_EDX)
+longlong __watcall menu_show_league_settings(undefined4 param_1,uint unaff_EDX)
 
 {
   undefined4 *puVar1;
@@ -5182,8 +5182,8 @@ longlong __watcall sub_7a39f(undefined4 param_1,uint unaff_EDX)
   *(undefined2 *)((int)puVar1 + 6) = 0x152;
   grabshape(puVar1,10,0x13);
   settings_screen_b();
-  sub_7a88e();
-  sub_7ac31();
+  settings_flags_to_buttons();
+  settings_pointer_loop();
   drawshape(puVar1,10,0x13);
   freemem(puVar1);
   freemem(dword_d20a8);
@@ -5245,9 +5245,9 @@ void __watcall settings_screen_a(void)
   if (sound_enabled == '\0') {
     printstr_at(aDigitizedSpeech,0x68,0xd6);
   }
-  sub_8050f(10,0x13,5,dword_c53fb,0xfa);
-  sub_7a88e();
-  sub_7ac31();
+  draw_settings_title(10,0x13,5,dword_c53fb,0xfa);
+  settings_flags_to_buttons();
+  settings_pointer_loop();
   puVar1 = puStack_1c;
   drawshape(puStack_1c,10,0x13);
   freemem(puVar1);
@@ -5305,17 +5305,17 @@ longlong __watcall settings_screen_b(undefined4 param_1,uint unaff_EDX)
   else {
     uVar1 = 5;
   }
-  sub_8050f(10,0x13,uVar1,dword_c53fb,0xfa);
+  draw_settings_title(10,0x13,uVar1,dword_c53fb,0xfa);
   setdefaultscreen();
   return (ulonglong)unaff_EDX << 0x20;
 }
 
 
 // ================================================================================================
-// sub_7a6ad @ 0x7a6ad [__watcall]
+// set_settings_context @ 0x7a6ad [__watcall]
 // ================================================================================================
 
-void __watcall sub_7a6ad(undefined4 param_1)
+void __watcall set_settings_context(undefined4 param_1)
 
 {
   __CHK(4);
@@ -5386,18 +5386,18 @@ void __watcall settings_dialog(int param_1)
   else {
     uVar2 = 0x40;
   }
-  sub_8050f(10,0x13,3,dword_c53fb,uVar2);
+  draw_settings_title(10,0x13,3,dword_c53fb,uVar2);
   return;
 }
 
 
 // ================================================================================================
-// sub_7a88e @ 0x7a88e [__watcall]
+// settings_flags_to_buttons @ 0x7a88e [__watcall]
 // ================================================================================================
 
 /* WARNING: Removing unreachable block (ram,0x0007a96b) */
 
-void __watcall sub_7a88e(void)
+void __watcall settings_flags_to_buttons(void)
 
 {
   uint uVar1;
@@ -5450,16 +5450,16 @@ void __watcall sub_7a88e(void)
   case 7:
     dword_ed360 = dword_ed360 | 0x8000;
   }
-  sub_7aaaa();
+  settings_draw_buttons();
   return;
 }
 
 
 // ================================================================================================
-// sub_7a9c8 @ 0x7a9c8 [__watcall]
+// settings_button_at @ 0x7a9c8 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_7a9c8(int param_1,int unaff_EDX,uint *unaff_EBX)
+undefined4 __watcall settings_button_at(int param_1,int unaff_EDX,uint *unaff_EBX)
 
 {
   int iVar1;

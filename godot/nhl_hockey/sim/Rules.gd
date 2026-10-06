@@ -857,7 +857,7 @@ static func count_defenders_ahead(sim: Sim) -> bool:
 	sim.defenders_ahead = 1
 	return true
 
-## sub_64338: breakaway bookkeeping when the puck crosses the blue line
+## note_breakaway: breakaway bookkeeping when the puck crosses the blue line
 static func note_breakaway(sim: Sim) -> void:
 	count_defenders_ahead(sim)
 	sim.breakaway = sim.defenders_ahead != 0
@@ -934,7 +934,7 @@ static func place_faceoff(sim: Sim) -> void:
 		e.flags2 &= ~Entity.F2_OFFSIDE
 		if e.line_slot < 0 or e.state() == Entity.State.PENALTY_BOX or e.state() == Entity.State.DOOR_OPEN:
 			continue
-		# sub_5e0dd: a player coming onto the ice gets his role on the stack (and NEAREST for the centre)
+		# dress_line: a player coming onto the ice gets his role on the stack (and NEAREST for the centre)
 		if e.state() == Entity.State.INIT_PERIOD or e.state() == Entity.State.ALL_GOTO_FACEOFF:
 			AI.set_default_state(sim, e)
 			if e.line_slot == 4:

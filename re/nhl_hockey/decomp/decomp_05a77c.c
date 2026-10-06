@@ -789,10 +789,10 @@ void __watcall reset_team_for_period(int param_1)
 
 
 // ================================================================================================
-// sub_5b881 @ 0x5b881 [__watcall]
+// team_state_clear @ 0x5b881 [__watcall]
 // ================================================================================================
 
-void __watcall sub_5b881(void)
+void __watcall team_state_clear(void)
 
 {
   undefined *puVar1;
@@ -831,10 +831,10 @@ void __watcall sub_5b881(void)
 
 
 // ================================================================================================
-// sub_5b97a @ 0x5b97a [__watcall]
+// team_energy_init @ 0x5b97a [__watcall]
 // ================================================================================================
 
-void __watcall sub_5b97a(void)
+void __watcall team_energy_init(void)
 
 {
   int iVar1;
@@ -861,12 +861,12 @@ void __watcall sub_5b97a(void)
 
 
 // ================================================================================================
-// sub_5b9d1 @ 0x5b9d1 [__watcall]
+// period_length @ 0x5b9d1 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-undefined2 __watcall sub_5b9d1(void)
+undefined2 __watcall period_length(void)
 
 {
   undefined2 uVar1;
@@ -881,16 +881,16 @@ undefined2 __watcall sub_5b9d1(void)
 
 
 // ================================================================================================
-// sub_5ba07 @ 0x5ba07 [__watcall]
+// period_clock_init @ 0x5ba07 [__watcall]
 // ================================================================================================
 
-void __watcall sub_5ba07(void)
+void __watcall period_clock_init(void)
 
 {
   short sVar1;
   
   __CHK(8);
-  clock_seconds = sub_5b9d1();
+  clock_seconds = period_length();
   clock_sub = 0;
   dword_e9ab6._2_2_ = clock_seconds;
   sVar1 = randomrange((int)(clock_seconds >> 1));
@@ -901,10 +901,10 @@ void __watcall sub_5ba07(void)
 
 
 // ================================================================================================
-// sub_5ba4e @ 0x5ba4e [__watcall]
+// entities_clear @ 0x5ba4e [__watcall]
 // ================================================================================================
 
-void __watcall sub_5ba4e(void)
+void __watcall entities_clear(void)
 
 {
   undefined4 *puVar1;
@@ -924,10 +924,10 @@ void __watcall sub_5ba4e(void)
 
 
 // ================================================================================================
-// sub_5ba89 @ 0x5ba89 [__watcall]
+// entities_init @ 0x5ba89 [__watcall]
 // ================================================================================================
 
-void __watcall sub_5ba89(void)
+void __watcall entities_init(void)
 
 {
   byte bVar1;
@@ -939,7 +939,7 @@ void __watcall sub_5ba89(void)
   short *psVar7;
   
   __CHK(0x18);
-  sub_5ba4e();
+  entities_clear();
   puVar4 = &entity_init;
   puVar2 = &entities;
   puVar6 = &unk_e9ade;
@@ -1246,12 +1246,12 @@ void __watcall period_init(void)
   word_e0306 = 0;
   word_e0304 = 0;
   uStackY_18 = 0x5c034;
-  sub_5a669();
+  period_strategy_init();
   uStackY_18 = 0x5c040;
   dword_e9a9e._0_2_ = extraout_DX;
-  sub_5d7f7();
+  entities_setup();
   uStackY_18 = 0x5c045;
-  sub_5ba07();
+  period_clock_init();
   if (user1_team == 1) {
     _user1_slot = 2;
   }
@@ -1290,7 +1290,7 @@ void __watcall period_init(void)
   action_flags = action_flags & 0xaf;
   replay_write_ptr = replay_buffer;
   uStackY_18 = 0x5c14d;
-  sub_67564();
+  replay_reset();
   crowd_noise._0_2_ = 0xffff;
   puVar1 = &uStackY_18;
   uStackY_18 = 0x5c15b;
@@ -1900,12 +1900,12 @@ void __watcall hold_camera(void)
 
 
 // ================================================================================================
-// sub_5cd4f @ 0x5cd4f [__watcall]
+// game_state_clear @ 0x5cd4f [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __watcall sub_5cd4f(void)
+void __watcall game_state_clear(void)
 
 {
   __CHK(0xc);
@@ -2021,7 +2021,7 @@ void __watcall draw_sprites(int param_1,short unaff_DX)
   if (-1 < sStack_24) {
     aiStack_50[4] = (int)(&unk_df820)[sStack_24 * 0x20] >> 0x10;
   }
-  sub_93540(3,aiStack_50 + 3,(short)aiStack_50);
+  shellsort_by_key(3,aiStack_50 + 3,(short)aiStack_50);
   for (sStack_20 = 0; sStack_20 < 3; sStack_20 = sStack_20 + 1) {
     sVar15 = *(short *)(aiStack_50 + sStack_20);
     if (sVar15 == 2) {
@@ -2103,7 +2103,7 @@ LAB_0005d1c9:
             uVar10 = uVar13 & 8;
             local_38 = (int)sVar11;
             local_34 = (int)sVar5;
-            iVar6 = sub_b340b(uVar13,0);
+            iVar6 = joystick_direction(uVar13,0);
             iVar8 = *(int *)((int)&arrow_frames + sVar15 * 0x10 + iVar6 * 2) >> 0x10;
             iVar6 = local_34;
             iVar7 = local_38;
@@ -2237,7 +2237,7 @@ LAB_0005d500:
     setclip(dword_d30bc,dword_d30c0,dword_d30b0,uStack_18);
   }
   if (camera._2_2_ < -0x90) {
-    sub_11136();
+    draw_rink_end();
   }
   if (((dword_dffa0 < 0) && (0x229 < dword_dffac._2_2_)) && (dword_dffac._2_2_ < 0x238)) {
     draw_sprite_world(dword_dffac >> 0x10,dword_dff9c >> 0x10,dword_dffa0 >> 0x10,0,0);
@@ -2305,10 +2305,10 @@ LAB_0005d684:
 
 
 // ================================================================================================
-// sub_5d7f7 @ 0x5d7f7 [__watcall]
+// entities_setup @ 0x5d7f7 [__watcall]
 // ================================================================================================
 
-void __watcall sub_5d7f7(void)
+void __watcall entities_setup(void)
 
 {
   undefined4 *puVar1;
@@ -2318,7 +2318,7 @@ void __watcall sub_5d7f7(void)
   action_flags = action_flags & 0xfe;
   camera._0_2_ = 0;
   camera._2_2_ = 0;
-  sub_5ba89();
+  entities_init();
   if ((game_flags & 2) != 0) {
     puVar1 = &entities;
     for (sVar2 = 0; sVar2 < 0xc; sVar2 = sVar2 + 1) {
@@ -2691,10 +2691,10 @@ void __watcall sort_draw_order2(void)
 
 
 // ================================================================================================
-// sub_5dd9e @ 0x5dd9e [__watcall]
+// set_game_over @ 0x5dd9e [__watcall]
 // ================================================================================================
 
-void __watcall sub_5dd9e(void)
+void __watcall set_game_over(void)
 
 {
   __CHK(4);
@@ -2756,10 +2756,10 @@ void __watcall period_start_reset(void)
 
 
 // ================================================================================================
-// sub_5de42 @ 0x5de42 [__watcall]
+// period_reset_entities @ 0x5de42 [__watcall]
 // ================================================================================================
 
-void __watcall sub_5de42(void)
+void __watcall period_reset_entities(void)
 
 {
   short sVar1;
@@ -2782,12 +2782,12 @@ void __watcall period_cleanup(void)
 {
   __CHK(4);
   if (period_idx != 4) {
-    sub_5de42();
+    period_reset_entities();
     if (0 < period_idx) {
-      sub_10f6d();
+      leave_match_video();
     }
     period_init();
-    sub_510a9();
+    reset_bench_slots();
     return;
   }
   __CHK(4);
@@ -2920,27 +2920,27 @@ void __watcall reset_players_for_faceoff(void)
 
 
 // ================================================================================================
-// sub_5e086 @ 0x5e086 [__watcall]
+// reset_match_state @ 0x5e086 [__watcall]
 // ================================================================================================
 
-void __watcall sub_5e086(void)
+void __watcall reset_match_state(void)
 
 {
   __CHK(8);
-  sub_5cd4f();
-  sub_5b881();
+  game_state_clear();
+  team_state_clear();
   period_idx = 0;
-  sub_5b97a();
+  team_energy_init();
   period_cleanup();
   return;
 }
 
 
 // ================================================================================================
-// sub_5e0b0 @ 0x5e0b0 [__watcall]
+// dress_current_lines @ 0x5e0b0 [__watcall]
 // ================================================================================================
 
-void __watcall sub_5e0b0(void)
+void __watcall dress_current_lines(void)
 
 {
   int iVar1;
@@ -5067,8 +5067,8 @@ longlong __watcall savegame_io(undefined4 param_1,uint unaff_EDX)
   }
   apply_settings(puVar8);
 LAB_00061249:
-  dword_e9ab6._2_2_ = sub_5b9d1();
-  sub_1bbcc(1);
+  dword_e9ab6._2_2_ = period_length();
+  load_team_databases(1);
   load_team_palettes((int)user2_team._2_2_,(int)_away_team_id,&unk_df314);
   dword_c66d4 = 1;
   dword_c66d0 = 1;
@@ -5084,7 +5084,7 @@ LAB_00061249:
   }
   show_penalty();
   replay_write_ptr = replay_buffer;
-  sub_67564();
+  replay_reset();
   _action_flags = _action_flags & 0xffef;
   word_cbec4 = 1;
   dword_df70a = &entities;
@@ -5399,11 +5399,11 @@ void __watcall draw_nets_and_effects(void)
 
 
 // ================================================================================================
-// sub_619c8 @ 0x619c8 [__watcall]
+// queue_deferred_call @ 0x619c8 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_619c8(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 unaff_ECX,
+queue_deferred_call(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 unaff_ECX,
          undefined4 param_5,undefined4 param_6,undefined4 param_7,undefined4 param_8)
 
 {
@@ -5425,10 +5425,10 @@ sub_619c8(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 un
 
 
 // ================================================================================================
-// sub_61a27 @ 0x61a27 [__watcall]
+// run_deferred_calls @ 0x61a27 [__watcall]
 // ================================================================================================
 
-void __watcall sub_61a27(void)
+void __watcall run_deferred_calls(void)
 
 {
   code *pcVar1;
@@ -5452,10 +5452,10 @@ void __watcall sub_61a27(void)
 
 
 // ================================================================================================
-// sub_61a8a @ 0x61a8a [__watcall]
+// gsummary_append_record @ 0x61a8a [__watcall]
 // ================================================================================================
 
-void __watcall sub_61a8a(undefined4 param_1)
+void __watcall gsummary_append_record(undefined4 param_1)
 
 {
   int iVar1;
@@ -5494,10 +5494,10 @@ void __watcall sub_61a8a(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_61b85 @ 0x61b85 [__watcall]
+// gsummary_flush @ 0x61b85 [__watcall]
 // ================================================================================================
 
-void __watcall sub_61b85(void)
+void __watcall gsummary_flush(void)
 
 {
   int iVar1;
@@ -5506,7 +5506,7 @@ void __watcall sub_61b85(void)
   __CHK(0xc);
   iVar1 = 0;
   while (iVar1 < dword_cd34c) {
-    sub_61a8a(&unk_e9b4c + iVar1 * 0xb);
+    gsummary_append_record(&unk_e9b4c + iVar1 * 0xb);
     iVar1 = extraout_EDX + 1;
   }
   dword_cd34c = 0;
@@ -5515,10 +5515,10 @@ void __watcall sub_61b85(void)
 
 
 // ================================================================================================
-// sub_61bbf @ 0x61bbf [__watcall]
+// gsummary_write_header @ 0x61bbf [__watcall]
 // ================================================================================================
 
-void __watcall sub_61bbf(void)
+void __watcall gsummary_write_header(void)
 
 {
   int iVar1;
@@ -5539,10 +5539,10 @@ void __watcall sub_61bbf(void)
 
 
 // ================================================================================================
-// sub_61c22 @ 0x61c22 [__watcall]
+// gsummary_seek_last @ 0x61c22 [__watcall]
 // ================================================================================================
 
-void __watcall sub_61c22(void)
+void __watcall gsummary_seek_last(void)
 
 {
   int iVar1;
@@ -5568,10 +5568,10 @@ void __watcall sub_61c22(void)
 
 
 // ================================================================================================
-// sub_61c86 @ 0x61c86 [__watcall]
+// gsummary_write_final @ 0x61c86 [__watcall]
 // ================================================================================================
 
-void __watcall sub_61c86(void)
+void __watcall gsummary_write_final(void)
 
 {
   int iVar1;
@@ -5873,7 +5873,7 @@ announce_goal(int param_1,undefined param_2,undefined unaff_BL,undefined unaff_C
     load_cutscene_clip(uVar3);
   }
   show_penalty();
-  sub_66dda();
+  info_panel_open();
   dword_e9a9e = CONCAT22(input_enabled,(undefined2)dword_e9a9e);
   byte_e9ad3 = dword_e9ac8;
   byte_e9ad7 = byte_e9acc;
@@ -5943,7 +5943,7 @@ record_penalty(uint param_1,int param_2,int unaff_EBX,undefined unaff_CL,undefin
   load_cutscene_clip(uVar2);
 LAB_000625df:
   show_penalty();
-  sub_66dda();
+  info_panel_open();
   dword_e9a9e = CONCAT22(input_enabled,(undefined2)dword_e9a9e);
   _input_enabled = 0;
   if (400 < crowd_noise._2_2_) {
@@ -6017,7 +6017,7 @@ announce_injury(undefined param_1,undefined unaff_DL,undefined unaff_BL,undefine
     }
     dword_cd34c = iVar1;
     show_penalty();
-    sub_66dda();
+    info_panel_open();
   }
   return 0;
 }

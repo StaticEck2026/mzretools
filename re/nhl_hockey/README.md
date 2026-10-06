@@ -88,13 +88,13 @@ above it). The ones identified so far are named in the map, see the tables below
 _cstart_ (0x8ffd4)                  Watcom startup, DOS/4GW environment
  └ __CMain (0x99c32)
     └ main (0x10094)                disk space / memory checks, DPMI, initmem, initgraphics(640,480),
-       │                            inittimer + addtimer(sub_10dcd), initmouse, fonts (.VFN), pointer shape,
+       │                            inittimer + addtimer(control_timer_tick), initmouse, fonts (.VFN), pointer shape,
        │                            load_cfg_palette (NHL.CFG), load_nhl_cfg (nhl.cfg, ALLFILES.TXT),
        │                            joystick detection/calibration, game.set
        ├ frontend_main_menu (0x31ab5)   EA SPORTS "desk" menus (maindesk/easndesk .iff screens,
        │   │                            "Sports Central", "League Calendar", "Playoff Tree", "Broadcast Booth");
        │   │                            menu handlers are called through the table at 0xc65c0
-       │   └ ... match setup flows calling play_game (sub_32da9, sub_36b93, sub_89268)
+       │   └ ... match setup flows calling play_game (exhibition_mode, league_calendar_flow, playoff_tree_screen)
        │       └ play_game (0x11d09)    loads game.sav and the .PPV team graphics, sets up the match
        │           └ game_loop (0x1167b)
        │               ├ get_frame_ticks      100 Hz timer ticks since the last frame
@@ -104,8 +104,8 @@ _cstart_ (0x8ffd4)                  Watcom startup, DOS/4GW environment
        │               │   └ sim_tick (0x5c1c4)
        │               │       ├ sim_game_state (0x5c302)     stoppages, whistles, faceoffs
        │               │       ├ sim_update_players (0x5c40f) 12 players (6 per team)
-       │               │       ├ sub_65d01
-       │               │       └ sub_675d6 (tail call)
+       │               │       ├ update_camera
+       │               │       └ replay_record_frame (tail call)
        │               ├ camera: from the tracked object at 0xc9098 (x + 32 clamped 0..64, 236 - y clamped 0..424)
        │               ├ draw_rink (0x33dd3) -> draw_sprites (0x5ce12) -> draw_clock (0x14cf1) -> present_frame (0x6ada7)
        │               ├ pause_menu (0x1935d), instant_replay (0x7e0fa), show_scoreboard (0x150c6)
@@ -116,13 +116,13 @@ _cstart_ (0x8ffd4)                  Watcom startup, DOS/4GW environment
 Key facts for a reimplementation:
 
 - **Timing**: `inittimer` programs PIT channel 0 with divisor `0x2e9c` = **100 Hz**. The timer callback
-  (`sub_10dcd`) counts ticks for the frame loop and every 5 ticks (20 Hz) samples both controllers and the
+  (`control_timer_tick`) counts ticks for the frame loop and every 5 ticks (20 Hz) samples both controllers and the
   keyboard into a 50 entry ring buffer (3 bytes per entry) which the simulation consumes every 3 steps.
   The simulation runs at a fixed **60 steps per second**, rendering happens once per loop iteration.
 - **Video**: menus run at **640x480x256** (`initgraphics(0x280, 0x1e0)`, VESA through `EAVESA.COM`), the
   match at **320x200x256** (`set_video_mode(0x140, 200)`). In game the play field is a 320x168 window
   with a 32 pixel status/clock bar below (`subwindowdefadr(..., 0, 0xa8, 0x140, 0x20)`).
-- **Rink**: the `rink` shape is rendered once into a 384x592 off-screen window (`sub_3377c`) and the camera
+- **Rink**: the `rink` shape is rendered once into a 384x592 off-screen window (`load_rink`) and the camera
   scrolls over it vertically (the rink is viewed from above, goals at the top and bottom).
 - **Game clock**: `game_clock_tick` counts 24 simulation steps per clock second, i.e. the clock runs 2.5x
   faster than real time.
@@ -147,7 +147,7 @@ sound effects (`dig`) and the speech bank (`viv`).
 | `.iff` sound (`VHDR`) | `loadsound`, `playsample` | IFF **8SVX** samples (the menu screens' music loops) |
 | `PCFF001.PAT` / `.TIM` / `.DIG` | `snd_play_patch`, `snd_patch_record`, `load_timbre_file`, `bind_patch_timbres` | the patch bank: id -> patch record -> timbre (FM: the OPL2 registers and the driver's envelopes in PCFF000.TIM; digital: the sample id in PCFF001.DIG, 30 signed 8 bit samples mixed at 11025 Hz) |
 | `HOMEPALS.BIN`, `AWAYPALS.BIN`, `RINKPAL.QFS` | `load_team_palettes`, `setremaptable` | match palette and the per team colour remap tables of the sprites |
-| `.cor` / `.bar` / `.int` | `sub_84ddd`, `sub_847ce`, `sub_59c1d` ... | announcer speech clips: `.cor` words and numbers ("1minute", "goalnum", "pennum"), `.bar` phrases ("scor1per", "eastfind", "stanleyd"), `.int` intros ("nhl", "lineups", "goodnite") |
+| `.cor` / `.bar` / `.int` | `say_time_remaining`, `say_highlight_intro`, `say_nhl_intro` ... | announcer speech clips: `.cor` words and numbers ("1minute", "goalnum", "pennum"), `.bar` phrases ("scor1per", "eastfind", "stanleyd"), `.int` intros ("nhl", "lineups", "goodnite") |
 | `.PAT` / `.TIM`, `.KMS` + `.CFG`, `.BGP`, `.SCN` | `loadpatches`, `music_load_kms`, `kms_track_tick`, `load_music_banks`, `play_speech` | the patch set of each sound card (`%0.3sFF%03d.PAT/.TIM`, chosen by the `.SCN`), the songs (MIDI like event lists for the 100 Hz sequencer), the sound card drivers (byte pair packed 16 bit images) |
 | `.pen` | | penalty announcements (roughing, charging, slashing, hooking, tripping ...) |
 | `.db`, `.dbx`, `.org`, `.HI`, `.SET`, `.sav` | `db_open_files`, `db_load_team_roster`, `db_read_player`, `savegame_io` ... | databases and saves: `teams.db` (28 teams, rosters as offsets into `key.db`, line tables), `key.db` (player names, numbers, positions), `att.db` (ratings), `career.db`, `season.db`, `carteams.db`, `schedule.db`, `gsummary.db`, `game.set`, `game.sav`, league directories `*.nhl`, `*.po`, `*.lp` |
@@ -164,11 +164,31 @@ like `defo defd wingo wingd cento centd goalie puckc nearest shoot passrec`.
 
 ## Named routines
 
-825 routines and 190 variables are named so far (the rest keep `sub_<address>` / `dword_<address>` names).
-Library names in lower case without prefix (`reservemem`, `locateshape`, `initgraphics`, `addtimer`,
-`unpack`, ...) are EA's own names recovered from their error messages; C runtime functions carry their
-standard names; game routines use `snake_case` names describing what was understood of them, with the 47 AI
-state handlers prefixed `ai_` and named after the original state names found in the data. The reverse
+All 2593 routines are named, and 190 variables (the other variables keep their `dword_<address>` style
+names). Library names in lower case without prefix (`reservemem`, `locateshape`, `initgraphics`,
+`addtimer`, `unpack`, ...) are EA's own names recovered from their error messages; C runtime functions
+carry the names of the Watcom C library (`__` prefixed internals such as `__prtf_convert`, `__InitFiles`,
+`__MemAllocator`), placed by comparing the code with the Open Watcom 1.9 libraries (`tools/omflib.py`,
+`tools/lesigmatch.py`: exact signatures where the code is identical, else instruction sequence similarity
+plus reading the routine); game routines use `snake_case` names describing what was understood of them,
+with the 47 AI state handlers prefixed `ai_` and named after the original state names found in the data.
+Menu callbacks are named after the menu item text that points at them (`hub_sports_desk` "Sports Desk",
+`leaders_save_pct` "Save Percentage ...", `league_trade_players` "Trade Players ..."). Families of
+routines share a prefix:
+
+| Prefix | Range | |
+|---|---|---|
+| `emu387_*`, `__f*` / `__*_ext` | `0xa3200`-`0xa6560` | the 387 emulator of the Watcom runtime: one handler per ESC opcode and form, named after the instruction (`emu387_fadd_m32`, `emu387_fxch`, `emu387_grp_d9f0`), the effective address stubs (`emu387_ea_esi_d8`) and the extended precision arithmetic |
+| `pcspk_*`, `adlib_*` / `opl_*`, `sbdac_*` / `dsp_*` / `mix_*`, `mpu_*`, `gus_*` | `0x9d698`-`0xb2220` | the built in sound drivers behind `drv_send_midi`: PC speaker, AdLib (OPL2), Sound Blaster DAC with its 4 voice software mixer, MPU-401 (MT-32) and the Gravis UltraSound low level library (DRAM, DMA, voices, MIDI patches, digital stream) |
+| `vesa_*` | `0xb5e00`-`0xb7000` | the banked VESA versions of the drawing routines (`vesa_drawshape`, `vesa_fillrect`, `vesa_set_bank`) |
+| `blit_rle_*` | `0xb4cb4`-`0xb5d80` | the run length sprite blitters of `blit_sprite`: clipped / remapped / mirrored combinations, each with `_centered` / plain / `_home` entries |
+| `zm_*` | `0x6a044`-`0x6afbe` | the zone manager: dirty rectangles of the sprites, restored from the background window and copied from the hidden page |
+| `dbedit_*` | `0x6c043`-`0x71960` | the database editor (Central Registry): SEASON / CAREER / CARTEAMS / KEY / TEAMS / ATT in memory, rosters, free agents |
+| `speech_*`, `say_*` | `0x833c5`-`0x85507` | the announcer: clip cache of the VIV bank, sentences |
+| `cmp_*` | | `qsort` comparators of the statistics tables (`cmp_leaders_goals`, `cmp_team_power_play`, `cmp_standings`) |
+| `playoff_*`, `schedule_*`, `league_*` | | play-off rounds and series, the league schedule, league files (merge, rebuild, import) |
+
+The reverse
 engineered data structures (entities, teams, AI dispatch, controls, globals) are described in
 [STRUCTURES.md](STRUCTURES.md) and the file formats in [FORMATS.md](FORMATS.md). The most important routines:
 
@@ -211,8 +231,9 @@ The full list with descriptions is in `hockey.map` (lines starting with `#@`).
 
 The recommended loop is the one used throughout mzretools: study a routine in the listing and the pseudo-C,
 rename it (and important variables) in `hockey.map`, add a `#@` comment, rerun `tools/lede.sh` and all outputs
-(listing, JSON, ELF symbols, Ghidra output) pick up the new names. The simulation core, the AI dispatch, the
-controls, the asset loaders and most screens are named; what remains unnamed is mostly menu/screen helpers in
-`0x1b000-0x45000`, the HUD drawing helpers under `draw_clock`, the season/statistics screens and small sim
-helpers. The Godot reimplementation that uses this material lives in
+(listing, JSON, ELF symbols, Ghidra output) pick up the new names. Every routine has a name now; the names
+of the less studied areas (the season and play-off bookkeeping, the database editor, the Gravis UltraSound
+library internals) describe what the code was seen to do and are the places where a closer reading can still
+refine them, as can the many variables that keep their address names. The Godot reimplementation that uses
+this material lives in
 [godot/nhl_hockey](../../godot/nhl_hockey); the asset tools in [tools/nhl](../../tools/nhl).

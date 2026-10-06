@@ -438,6 +438,10 @@ Besides the map it can write an annotated listing (symbolic operands, callers, r
 
 `lede.sh game.exe outdir` runs `ledisasm.py` with all outputs enabled and, if `GHIDRA_HOME` points to a Ghidra 11 installation, imports the ELF into a headless Ghidra, teaches it the Watcom register calling convention, applies the names and conventions from the map and writes the decompiled pseudo-C of every routine into `outdir/decomp`. See [re/nhl_hockey](re/nhl_hockey) for the complete output for EA's NHL Hockey, including an analysis of the program and a guide for porting it to a modern engine.
 
+### omflib.py and lesigmatch.py
+
+`omflib.py LIB... --json sigs.json` reads OMF object libraries (as written by the Watcom, Microsoft and Borland librarians) and turns the public routines of their modules into byte signatures, the bytes covered by fixups masked (`--list` prints the modules and their symbols). `lesigmatch.py game.exe game.json --libs LIB...` compares those signatures with the routines found by `ledisasm.py` and reports the routines whose code equals a library routine; a module matched by one routine is then aligned as a whole, which also places its static routines. `--names out.txt` writes the matches of still unnamed routines as a names list. This is how the C runtime routines of NHL Hockey were checked against the Open Watcom 1.9 libraries (the game was built with an older Watcom release, so most routines differ in details and were identified by reading them instead).
+
 ### nhl/ and godot/
 
 `tools/nhl/nhltool.py` reads the data files of NHL Hockey using the formats recovered from the disassembly (RefPack and EA's other pack codes, SHPI shape banks, VFN fonts, 8SVX/RIFF samples, rink tile maps, VIV speech banks) and converts them to PNG/WAV; `tools/nhl/extract_tables.py` pulls the static tables (animation sequences, direction vectors, AI state names, ...) out of the executable into JSON. [godot/nhl_hockey](godot/nhl_hockey) is a Godot 4 project rebuilding the game from that material: it loads the original assets from the user's installation at runtime and ports the simulation routine by routine from the decompiled code.

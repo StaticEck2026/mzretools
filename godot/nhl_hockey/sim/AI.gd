@@ -503,7 +503,7 @@ static func try_check(sim: Sim, e: Entity) -> void:
 		else:
 			PuckLogic.start_hook(sim, e, o)
 		return
-	# sub_534bb: block a shot
+	# try_shot_block: block a shot
 	var k2 := 8
 	if sim.power_play and sim.power_play_team != e.team:
 		k2 = 4
@@ -993,7 +993,7 @@ static func shoot(sim: Sim, e: Entity) -> void:
 		pressed = 0x10        # fake shot
 	PuckLogic.shot_control(sim, e, control, pressed)
 
-## ai_pass_receiver (0x50f3f) with the one timer logic of sub_50b55
+## ai_pass_receiver (0x50f3f) with the one timer logic of one_timer_step
 static func pass_receiver(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_BUSY:
 		return
@@ -1026,7 +1026,7 @@ static func pass_receiver(sim: Sim, e: Entity) -> void:
 			return
 	one_timer_step(sim, e)
 
-## sub_50e5c: is a one timer on from here
+## one_timer_chance: is a one timer on from here
 static func one_timer_chance(sim: Sim, e: Entity) -> bool:
 	var ay := absi(e.yi)
 	if ay <= 0x4e or ay >= 0xde or (e.yi < 0) != ((e.flags & Entity.F_ATTACK_UP) == 0):
@@ -1048,13 +1048,13 @@ static func one_timer_chance(sim: Sim, e: Entity) -> bool:
 			odds = 2
 	return sim.random(odds) == 0
 
-## sub_50afe: the pass arrived
+## pass_completed: the pass arrived
 static func pass_completed(sim: Sim, e: Entity) -> void:
 	if sim.pass_target >= 0 and sim.same_team(sim.pass_target, e.slot) and not sim.no_stats:
 		sim.team_of(e).passes_completed += 1
 	sim.pass_target = -1
 
-## sub_50b55: wind up as the pass comes, fire when the puck reaches the blade
+## one_timer_step: wind up as the pass comes, fire when the puck reaches the blade
 static func one_timer_step(sim: Sim, e: Entity) -> void:
 	var puck := sim.puck
 	if sim.puck_carrier >= 0 or e.react_timer <= -0x1a:

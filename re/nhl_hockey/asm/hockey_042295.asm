@@ -176,7 +176,7 @@ loc_424c0:
     mov ebx, edi                                 ; 0424ca 89fb
     lea edx, [esp + 0x394]                       ; 0424cc 8d942494030000
     mov eax, dword ptr [esp + 0x39c]             ; 0424d3 8b84249c030000
-    call sub_3a28f                               ; 0424da e8b07dffff
+    call schedule_write_record                   ; 0424da e8b07dffff
     mov edx, eax                                 ; 0424df 89c2
     test eax, eax                                ; 0424e1 85c0
     jne loc_4250a                                ; 0424e3 7525
@@ -203,7 +203,7 @@ loc_4250a:
     mov ebx, esi                                 ; 042530 89f3
     lea edx, [esp + 8]                           ; 042532 8d542408
     mov eax, dword ptr [esp + 0x3a0]             ; 042536 8b8424a0030000
-    call sub_3a2b8                               ; 04253d e8767dffff
+    call db_write_team_record                    ; 04253d e8767dffff
     mov edx, eax                                 ; 042542 89c2
 loc_42544:
     test edx, edx                                ; 042544 85d2
@@ -228,7 +228,7 @@ loc_4255c:
     mov ebx, ecx                                 ; 042584 89cb
     lea edx, [esp + 8]                           ; 042586 8d542408
     mov eax, dword ptr [esp + 0x3a0]             ; 04258a 8b8424a0030000
-    call sub_3a2b8                               ; 042591 e8227dffff
+    call db_write_team_record                    ; 042591 e8227dffff
     mov edx, eax                                 ; 042596 89c2
 loc_42598:
     inc edi                                      ; 042598 47
@@ -254,7 +254,7 @@ loc_425e2:
     mov ebx, edi                                 ; 0425e2 89fb
     lea edx, [esp + 0x394]                       ; 0425e4 8d942494030000
     mov eax, dword ptr [esp + 0x39c]             ; 0425eb 8b84249c030000
-    call sub_3a28f                               ; 0425f2 e8987cffff
+    call schedule_write_record                   ; 0425f2 e8987cffff
     mov edx, eax                                 ; 0425f7 89c2
     inc edi                                      ; 0425f9 47
 loc_425fa:
@@ -267,7 +267,7 @@ loc_42606:
     call file_close                              ; 04260d e86a1ffdff
     lea eax, [esp + 0x39c]                       ; 042612 8d84249c030000
     call file_close                              ; 042619 e85e1ffdff
-    call sub_30f12                               ; 04261e e8efe8feff
+    call restore_dialog_background               ; 04261e e8efe8feff
     mov eax, edx                                 ; 042623 89d0
     add esp, 0x3a8                               ; 042625 81c4a8030000
     pop ebp                                      ; 04262b 5d
@@ -279,10 +279,10 @@ loc_42606:
 
 
 ; ====================================================================================================
-; sub_42631  [0x42631, 634 bytes, 197 instructions]
-; called by: sub_41cc4
+; schedule_play_games  [0x42631, 634 bytes, 197 instructions]
+; called by: league_play_day
 ; ====================================================================================================
-sub_42631:
+schedule_play_games:
     push 0x40                                    ; 042631 6840000000
     call __CHK                                   ; 042636 e811a30400
     push esi                                     ; 04263b 56
@@ -304,7 +304,7 @@ sub_42631:
     xor edx, edx                                 ; 042669 31d2
     mov dl, byte ptr [esp + 1]                   ; 04266b 8a542401
     mov al, byte ptr [esp]                       ; 04266f 8a0424
-    call sub_41c79                               ; 042672 e802f6ffff
+    call date_to_day_index                       ; 042672 e802f6ffff
     mov dword ptr [esp + 0x14], eax              ; 042677 89442414
     xor ecx, ecx                                 ; 04267b 31c9
     mov dword ptr [esp + 0x18], ecx              ; 04267d 894c2418
@@ -322,7 +322,7 @@ loc_42688:
     xor edx, edx                                 ; 04269d 31d2
     mov dl, byte ptr [esp + 1]                   ; 04269f 8a542401
     mov al, byte ptr [esp]                       ; 0426a3 8a0424
-    call sub_41c79                               ; 0426a6 e8cef5ffff
+    call date_to_day_index                       ; 0426a6 e8cef5ffff
     cmp eax, dword ptr [esp + 0x14]              ; 0426ab 3b442414
     jg loc_42785                                 ; 0426af 0f8fd0000000
     mov dword ptr [esp + 0x18], esi              ; 0426b5 89742418
@@ -393,7 +393,7 @@ loc_42751:
     mov ebx, esi                                 ; 042776 89f3
     mov edx, esp                                 ; 042778 89e2
     mov eax, edi                                 ; 04277a 89f8
-    call sub_3a28f                               ; 04277c e80e7bffff
+    call schedule_write_record                   ; 04277c e80e7bffff
     mov ebx, eax                                 ; 042781 89c3
     jmp loc_427c3                                ; 042783 eb3e
 
@@ -475,7 +475,7 @@ loc_42844:
     mov ebx, esi                                 ; 042869 89f3
     mov edx, esp                                 ; 04286b 89e2
     mov eax, edi                                 ; 04286d 89f8
-    call sub_3a28f                               ; 04286f e81b7affff
+    call schedule_write_record                   ; 04286f e81b7affff
     mov ebx, eax                                 ; 042874 89c3
 loc_42876:
     inc esi                                      ; 042876 46
@@ -507,7 +507,7 @@ loc_428a0:
 ; ====================================================================================================
 ; schedule_screen  [0x428ab, 783 bytes, 200 instructions]
 ; "sche"
-; called by: sub_42631
+; called by: schedule_play_games
 ;   uses string "sche"
 ; ====================================================================================================
 schedule_screen:
@@ -526,7 +526,7 @@ schedule_screen:
     mov ebx, ebp                                 ; 0428d3 89eb
     mov edx, eax                                 ; 0428d5 89c2
     lea eax, [esp + 4]                           ; 0428d7 8d442404
-    call sub_42bba                               ; 0428db e8da020000
+    call schedule_rank_teams                     ; 0428db e8da020000
     test eax, eax                                ; 0428e0 85c0
     je loc_428eb                                 ; 0428e2 7407
     mov ebx, eax                                 ; 0428e4 89c3
@@ -588,7 +588,7 @@ loc_4296a:
     mov ebx, ebp                                 ; 042981 89eb
     mov edx, esi                                 ; 042983 89f2
     lea eax, [esp + 8]                           ; 042985 8d442408
-    call sub_42fed                               ; 042989 e85f060000
+    call playoff_make_round1                     ; 042989 e85f060000
     mov dword ptr [esp + 0x9c], eax              ; 04298e 8984249c000000
     test eax, eax                                ; 042995 85c0
     jne loc_42b9d                                ; 042997 0f8500020000
@@ -602,7 +602,7 @@ loc_429ae:
     mov ebx, ebp                                 ; 0429af 89eb
     mov edx, esi                                 ; 0429b1 89f2
     lea eax, [esp + 8]                           ; 0429b3 8d442408
-    call sub_42fed                               ; 0429b7 e831060000
+    call playoff_make_round1                     ; 0429b7 e831060000
     mov dword ptr [esp + 0x9c], eax              ; 0429bc 8984249c000000
     test eax, eax                                ; 0429c3 85c0
     jne loc_42b9d                                ; 0429c5 0f85d2010000
@@ -612,7 +612,7 @@ loc_429ae:
     mov ebx, dword ptr [esp + 0x9c]              ; 0429da 8b9c249c000000
     mov edx, ebp                                 ; 0429e1 89ea
     mov eax, esi                                 ; 0429e3 89f0
-    call sub_43644                               ; 0429e5 e85a0c0000
+    call playoff_round1_done                     ; 0429e5 e85a0c0000
     mov dword ptr [esp + 0x9c], eax              ; 0429ea 8984249c000000
     test eax, eax                                ; 0429f1 85c0
     jne loc_42b9d                                ; 0429f3 0f85a4010000
@@ -624,7 +624,7 @@ loc_429ae:
     mov ecx, edi                                 ; 042a0d 89f9
     mov ebx, ebp                                 ; 042a0f 89eb
     mov eax, esi                                 ; 042a11 89f0
-    call sub_43757                               ; 042a13 e83f0d0000
+    call playoff_make_round2                     ; 042a13 e83f0d0000
     mov dword ptr [esp + 0x9c], eax              ; 042a18 8984249c000000
     test eax, eax                                ; 042a1f 85c0
     jne loc_42b9d                                ; 042a21 0f8576010000
@@ -634,7 +634,7 @@ loc_429ae:
     mov ebx, dword ptr [esp + 0x9c]              ; 042a36 8b9c249c000000
     mov edx, ebp                                 ; 042a3d 89ea
     mov eax, esi                                 ; 042a3f 89f0
-    call sub_43e40                               ; 042a41 e8fa130000
+    call playoff_round2_done                     ; 042a41 e8fa130000
     mov dword ptr [esp + 0x9c], eax              ; 042a46 8984249c000000
     test eax, eax                                ; 042a4d 85c0
     jne loc_42b9d                                ; 042a4f 0f8548010000
@@ -646,7 +646,7 @@ loc_429ae:
     mov ecx, edi                                 ; 042a69 89f9
     mov ebx, ebp                                 ; 042a6b 89eb
     mov eax, esi                                 ; 042a6d 89f0
-    call sub_43f4b                               ; 042a6f e8d7140000
+    call playoff_make_round3                     ; 042a6f e8d7140000
     mov dword ptr [esp + 0x9c], eax              ; 042a74 8984249c000000
     test eax, eax                                ; 042a7b 85c0
     jne loc_42b9d                                ; 042a7d 0f851a010000
@@ -656,7 +656,7 @@ loc_429ae:
     mov ebx, dword ptr [esp + 0x9c]              ; 042a92 8b9c249c000000
     mov edx, ebp                                 ; 042a99 89ea
     mov eax, esi                                 ; 042a9b 89f0
-    call sub_443b6                               ; 042a9d e814190000
+    call playoff_round3_done                     ; 042a9d e814190000
     mov dword ptr [esp + 0x9c], eax              ; 042aa2 8984249c000000
     test eax, eax                                ; 042aa9 85c0
     jne loc_42b9d                                ; 042aab 0f85ec000000
@@ -670,7 +670,7 @@ loc_429ae:
     mov ecx, edi                                 ; 042aca 89f9
     mov ebx, ebp                                 ; 042acc 89eb
     mov eax, esi                                 ; 042ace 89f0
-    call sub_444c9                               ; 042ad0 e8f4190000
+    call playoff_make_final                      ; 042ad0 e8f4190000
     mov dword ptr [esp + 0x9c], eax              ; 042ad5 8984249c000000
     test eax, eax                                ; 042adc 85c0
     jne loc_42b9d                                ; 042ade 0f85b9000000
@@ -680,7 +680,7 @@ loc_429ae:
     mov ebx, dword ptr [esp + 0x9c]              ; 042af3 8b9c249c000000
     mov edx, ebp                                 ; 042afa 89ea
     mov eax, esi                                 ; 042afc 89f0
-    call sub_447a6                               ; 042afe e8a31c0000
+    call playoff_final_done                      ; 042afe e8a31c0000
     mov dword ptr [esp + 0x9c], eax              ; 042b03 8984249c000000
     test eax, eax                                ; 042b0a 85c0
     jne loc_42b9d                                ; 042b0c 0f858b000000
@@ -727,10 +727,10 @@ loc_42bad:
 
 
 ; ====================================================================================================
-; sub_42bba  [0x42bba, 496 bytes, 140 instructions]
+; schedule_rank_teams  [0x42bba, 496 bytes, 140 instructions]
 ; called by: schedule_screen
 ; ====================================================================================================
-sub_42bba:
+schedule_rank_teams:
     push 0x3e4                                   ; 042bba 68e4030000
     call __CHK                                   ; 042bbf e8889d0400
     push ecx                                     ; 042bc4 51
@@ -775,7 +775,7 @@ loc_42bd4:
     lea ebx, [esp + 0x2f0]                       ; 042c49 8d9c24f0020000
     lea edx, [esp + 0x398]                       ; 042c50 8d942498030000
     mov eax, edi                                 ; 042c57 89f8
-    call sub_42daa                               ; 042c59 e84c010000
+    call sort_teams_by_points                    ; 042c59 e84c010000
     mov edx, dword ptr [edi + 4]                 ; 042c5e 8b5704
     mov eax, dword ptr [edi]                     ; 042c61 8b07
     mov eax, dword ptr [eax*4 + unk_c5519]       ; 042c63 8b048519550c00
@@ -844,7 +844,7 @@ loc_42cb6:
     lea ecx, [esp + 0x360]                       ; 042d28 8d8c2460030000
     lea ebx, [esp + 0x2f0]                       ; 042d2f 8d9c24f0020000
     lea edx, [esp + 0x398]                       ; 042d36 8d942498030000
-    call sub_42daa                               ; 042d3d e868000000
+    call sort_teams_by_points                    ; 042d3d e868000000
     mov eax, dword ptr [edi + 0x38]              ; 042d42 8b4738
     mov edx, dword ptr [edi + 0x3c]              ; 042d45 8b573c
     mov eax, dword ptr [eax*4 + unk_c5519]       ; 042d48 8b048519550c00
@@ -889,10 +889,10 @@ loc_42d9f:
 
 
 ; ====================================================================================================
-; sub_42daa  [0x42daa, 367 bytes, 125 instructions]
-; called by: sub_42bba, sub_444c9
+; sort_teams_by_points  [0x42daa, 367 bytes, 125 instructions]
+; called by: schedule_rank_teams, playoff_make_final
 ; ====================================================================================================
-sub_42daa:
+sort_teams_by_points:
     push 0x38                                    ; 042daa 6838000000
     call __CHK                                   ; 042daf e8989b0400
     push esi                                     ; 042db4 56
@@ -1004,23 +1004,23 @@ loc_42eab:
     mov ebx, ebp                                 ; 042eba 89eb
     mov edx, ecx                                 ; 042ebc 89ca
     mov eax, esi                                 ; 042ebe 89f0
-    call sub_42f19                               ; 042ec0 e854000000
+    call swap_dwords                             ; 042ec0 e854000000
     mov ebx, dword ptr [esp + 8]                 ; 042ec5 8b5c2408
     mov edx, ecx                                 ; 042ec9 89ca
     mov eax, esi                                 ; 042ecb 89f0
-    call sub_42f19                               ; 042ecd e847000000
+    call swap_dwords                             ; 042ecd e847000000
     mov ebx, dword ptr [esp + 4]                 ; 042ed2 8b5c2404
     mov edx, ecx                                 ; 042ed6 89ca
     mov eax, esi                                 ; 042ed8 89f0
-    call sub_42f19                               ; 042eda e83a000000
+    call swap_dwords                             ; 042eda e83a000000
     mov ebx, dword ptr [esp]                     ; 042edf 8b1c24
     mov edx, ecx                                 ; 042ee2 89ca
     mov eax, esi                                 ; 042ee4 89f0
-    call sub_42f19                               ; 042ee6 e82e000000
+    call swap_dwords                             ; 042ee6 e82e000000
     mov ebx, dword ptr [esp + 0x38]              ; 042eeb 8b5c2438
     mov edx, ecx                                 ; 042eef 89ca
     mov eax, esi                                 ; 042ef1 89f0
-    call sub_42f19                               ; 042ef3 e821000000
+    call swap_dwords                             ; 042ef3 e821000000
 loc_42ef8:
     inc ecx                                      ; 042ef8 41
 loc_42ef9:
@@ -1037,10 +1037,10 @@ loc_42f04:
 
 
 ; ====================================================================================================
-; sub_42f19  [0x42f19, 41 bytes, 19 instructions]
-; called by: sub_42daa
+; swap_dwords  [0x42f19, 41 bytes, 19 instructions]
+; called by: sort_teams_by_points
 ; ====================================================================================================
-sub_42f19:
+swap_dwords:
     push 0xc                                     ; 042f19 680c000000
     call __CHK                                   ; 042f1e e8299a0400
     push ecx                                     ; 042f23 51
@@ -1063,10 +1063,10 @@ sub_42f19:
 
 
 ; ====================================================================================================
-; sub_42f42  [0x42f42, 171 bytes, 60 instructions]
-; called by: sub_42fed, sub_43757, sub_43f4b, sub_444c9
+; playoff_set_series  [0x42f42, 171 bytes, 60 instructions]
+; called by: playoff_make_round1, playoff_make_round2, playoff_make_round3, playoff_make_final
 ; ====================================================================================================
-sub_42f42:
+playoff_set_series:
     push 8                                       ; 042f42 6808000000
     call __CHK                                   ; 042f47 e8009a0400
     push esi                                     ; 042f4c 56
@@ -1140,10 +1140,10 @@ loc_42fe5:
 
 
 ; ====================================================================================================
-; sub_42fed  [0x42fed, 1623 bytes, 435 instructions]
+; playoff_make_round1  [0x42fed, 1623 bytes, 435 instructions]
 ; called by: schedule_screen
 ; ====================================================================================================
-sub_42fed:
+playoff_make_round1:
     push 0x5fc                                   ; 042fed 68fc050000
     call __CHK                                   ; 042ff2 e855990400
     push esi                                     ; 042ff7 56
@@ -1214,7 +1214,7 @@ loc_43092:
     jne loc_430db                                ; 0430c8 7511
     mov edx, esp                                 ; 0430ca 89e2
     mov eax, esi                                 ; 0430cc 89f0
-    call sub_3a2b8                               ; 0430ce e8e571ffff
+    call db_write_team_record                    ; 0430ce e8e571ffff
     test eax, eax                                ; 0430d3 85c0
     jne loc_43639                                ; 0430d5 0f855e050000
 loc_430db:
@@ -1232,7 +1232,7 @@ loc_430db:
     mov ebx, dword ptr [edx + 0x38]              ; 043100 8b5a38
     lea edx, [esp + 0x2e8]                       ; 043103 8d9424e8020000
     mov eax, esi                                 ; 04310a 89f0
-    call sub_3a2b8                               ; 04310c e8a771ffff
+    call db_write_team_record                    ; 04310c e8a771ffff
     test eax, eax                                ; 043111 85c0
     jne loc_43639                                ; 043113 0f8520050000
 loc_43119:
@@ -1314,7 +1314,7 @@ loc_431e7:
     jne loc_43220                                ; 04320d 7511
     mov edx, esp                                 ; 04320f 89e2
     mov eax, esi                                 ; 043211 89f0
-    call sub_3a2b8                               ; 043213 e8a070ffff
+    call db_write_team_record                    ; 043213 e8a070ffff
     test eax, eax                                ; 043218 85c0
     jne loc_43639                                ; 04321a 0f8519040000
 loc_43220:
@@ -1333,7 +1333,7 @@ loc_43220:
     mov ebx, dword ptr [edx]                     ; 04324a 8b1a
     lea edx, [esp + 0x2e8]                       ; 04324c 8d9424e8020000
     mov eax, esi                                 ; 043253 89f0
-    call sub_3a2b8                               ; 043255 e85e70ffff
+    call db_write_team_record                    ; 043255 e85e70ffff
     test eax, eax                                ; 04325a 85c0
     jne loc_43639                                ; 04325c 0f85d7030000
 loc_43262:
@@ -1415,7 +1415,7 @@ loc_43335:
     jne loc_4336f                                ; 04335c 7511
     mov edx, esp                                 ; 04335e 89e2
     mov eax, esi                                 ; 043360 89f0
-    call sub_3a2b8                               ; 043362 e8516fffff
+    call db_write_team_record                    ; 043362 e8516fffff
     test eax, eax                                ; 043367 85c0
     jne loc_43639                                ; 043369 0f85ca020000
 loc_4336f:
@@ -1434,7 +1434,7 @@ loc_4336f:
     mov ebx, dword ptr [edx + 0x38]              ; 04339a 8b5a38
     lea edx, [esp + 0x2e8]                       ; 04339d 8d9424e8020000
     mov eax, esi                                 ; 0433a4 89f0
-    call sub_3a2b8                               ; 0433a6 e80d6fffff
+    call db_write_team_record                    ; 0433a6 e80d6fffff
     test eax, eax                                ; 0433ab 85c0
     jne loc_43639                                ; 0433ad 0f8586020000
 loc_433b3:
@@ -1447,49 +1447,49 @@ loc_433b3:
     mov edx, dword ptr [ebp]                     ; 0433ce 8b5500
     mov ecx, edi                                 ; 0433d1 89f9
     mov eax, dword ptr [esp + 0x5e4]             ; 0433d3 8b8424e4050000
-    call sub_42f42                               ; 0433da e863fbffff
+    call playoff_set_series                      ; 0433da e863fbffff
     mov ebx, dword ptr [ebp + 0x18]              ; 0433df 8b5d18
     mov edx, dword ptr [ebp + 4]                 ; 0433e2 8b5504
     mov eax, dword ptr [esp + 0x5e4]             ; 0433e5 8b8424e4050000
     add eax, 0x2a                                ; 0433ec 83c02a
     mov ecx, edi                                 ; 0433ef 89f9
-    call sub_42f42                               ; 0433f1 e84cfbffff
+    call playoff_set_series                      ; 0433f1 e84cfbffff
     mov ebx, dword ptr [ebp + 0x14]              ; 0433f6 8b5d14
     mov edx, dword ptr [ebp + 8]                 ; 0433f9 8b5508
     mov eax, dword ptr [esp + 0x5e4]             ; 0433fc 8b8424e4050000
     add eax, 0x54                                ; 043403 83c054
     mov ecx, edi                                 ; 043406 89f9
-    call sub_42f42                               ; 043408 e835fbffff
+    call playoff_set_series                      ; 043408 e835fbffff
     mov ebx, dword ptr [ebp + 0x10]              ; 04340d 8b5d10
     mov edx, dword ptr [ebp + 0xc]               ; 043410 8b550c
     mov eax, dword ptr [esp + 0x5e4]             ; 043413 8b8424e4050000
     add eax, 0x7e                                ; 04341a 83c07e
     mov ecx, edi                                 ; 04341d 89f9
-    call sub_42f42                               ; 04341f e81efbffff
+    call playoff_set_series                      ; 04341f e81efbffff
     mov ebx, dword ptr [ebp + 0x54]              ; 043424 8b5d54
     mov edx, dword ptr [ebp + 0x38]              ; 043427 8b5538
     mov eax, dword ptr [esp + 0x5e4]             ; 04342a 8b8424e4050000
     add eax, 0xa8                                ; 043431 05a8000000
     mov ecx, edi                                 ; 043436 89f9
-    call sub_42f42                               ; 043438 e805fbffff
+    call playoff_set_series                      ; 043438 e805fbffff
     mov ebx, dword ptr [ebp + 0x50]              ; 04343d 8b5d50
     mov edx, dword ptr [ebp + 0x3c]              ; 043440 8b553c
     mov eax, dword ptr [esp + 0x5e4]             ; 043443 8b8424e4050000
     add eax, 0xd2                                ; 04344a 05d2000000
     mov ecx, edi                                 ; 04344f 89f9
-    call sub_42f42                               ; 043451 e8ecfaffff
+    call playoff_set_series                      ; 043451 e8ecfaffff
     mov ebx, dword ptr [ebp + 0x4c]              ; 043456 8b5d4c
     mov edx, dword ptr [ebp + 0x40]              ; 043459 8b5540
     mov eax, dword ptr [esp + 0x5e4]             ; 04345c 8b8424e4050000
     add eax, 0xfc                                ; 043463 05fc000000
     mov ecx, edi                                 ; 043468 89f9
-    call sub_42f42                               ; 04346a e8d3faffff
+    call playoff_set_series                      ; 04346a e8d3faffff
     mov ebx, dword ptr [ebp + 0x48]              ; 04346f 8b5d48
     mov edx, dword ptr [ebp + 0x44]              ; 043472 8b5544
     mov eax, dword ptr [esp + 0x5e4]             ; 043475 8b8424e4050000
     add eax, 0x126                               ; 04347c 0526010000
     mov ecx, edi                                 ; 043481 89f9
-    call sub_42f42                               ; 043483 e8bafaffff
+    call playoff_set_series                      ; 043483 e8bafaffff
     xor edx, edx                                 ; 043488 31d2
     mov dword ptr [esp + 0x5d4], edx             ; 04348a 899424d4050000
     jmp loc_43628                                ; 043491 e992010000
@@ -1608,10 +1608,10 @@ loc_43639:
 
 
 ; ====================================================================================================
-; sub_43644  [0x43644, 275 bytes, 94 instructions]
-; called by: schedule_screen, sub_44899, schedule_screen2
+; playoff_round1_done  [0x43644, 275 bytes, 94 instructions]
+; called by: schedule_screen, playoff_advance, schedule_screen2
 ; ====================================================================================================
-sub_43644:
+playoff_round1_done:
     push 0x94                                    ; 043644 6894000000
     call __CHK                                   ; 043649 e8fe920400
     push esi                                     ; 04364e 56
@@ -1628,7 +1628,7 @@ sub_43644:
     mov eax, esp                                 ; 04366b 89e0
     call _memset_dwords                          ; 04366d e875cc0400
     mov eax, edi                                 ; 043672 89f8
-    call sub_42221                               ; 043674 e8a8ebffff
+    call playoff_series_count                    ; 043674 e8a8ebffff
     mov ebp, eax                                 ; 043679 89c5
     xor edx, edx                                 ; 04367b 31d2
     mov dword ptr [esp + 0x74], edx              ; 04367d 89542474
@@ -1723,10 +1723,10 @@ loc_43751:
 
 
 ; ====================================================================================================
-; sub_43757  [0x43757, 1769 bytes, 478 instructions]
-; called by: schedule_screen, sub_44899, schedule_screen2
+; playoff_make_round2  [0x43757, 1769 bytes, 478 instructions]
+; called by: schedule_screen, playoff_advance, schedule_screen2
 ; ====================================================================================================
-sub_43757:
+playoff_make_round2:
     push 0x618                                   ; 043757 6818060000
     call __CHK                                   ; 04375c e8eb910400
     push esi                                     ; 043761 56
@@ -1738,7 +1738,7 @@ sub_43757:
     mov edi, ebx                                 ; 04376d 89df
     mov dword ptr [esp + 0x5f8], ecx             ; 04376f 898c24f8050000
     mov ebp, eax                                 ; 043776 89c5
-    call sub_42221                               ; 043778 e8a4eaffff
+    call playoff_series_count                    ; 043778 e8a4eaffff
     mov dword ptr [esp + 0x5f4], eax             ; 04377d 898424f4050000
     lea ecx, [eax - 1]                           ; 043784 8d48ff
     jmp loc_43857                                ; 043787 e9cb000000
@@ -1838,7 +1838,7 @@ loc_4385f:
 loc_43866:
     lea edx, [esp + 0x5fc]                       ; 043866 8d9424fc050000
     lea eax, [esp + 0x600]                       ; 04386d 8d842400060000
-    call sub_41c9b                               ; 043874 e822e4ffff
+    call day_to_month_day                        ; 043874 e822e4ffff
     lea edx, [ecx + 0x4d]                        ; 043879 8d514d
     mov eax, edx                                 ; 04387c 89d0
     shl eax, 2                                   ; 04387e c1e002
@@ -1864,7 +1864,7 @@ loc_43866:
     mov byte ptr [esp + 0x5fc], ah               ; 0438c1 88a424fc050000
     lea edx, [esp + 0x5fc]                       ; 0438c8 8d9424fc050000
     lea eax, [esp + 0x600]                       ; 0438cf 8d842400060000
-    call sub_41c9b                               ; 0438d6 e8c0e3ffff
+    call day_to_month_day                        ; 0438d6 e8c0e3ffff
     lea edx, [ecx + 0x3f]                        ; 0438db 8d513f
     mov eax, edx                                 ; 0438de 89d0
     shl eax, 2                                   ; 0438e0 c1e002
@@ -1898,7 +1898,7 @@ loc_4392b:
     call _memset_dwords                          ; 043944 e89ec90400
     mov edx, dword ptr [esp + 0x5f4]             ; 043949 8b9424f4050000
     mov eax, ebp                                 ; 043950 89e8
-    call sub_87760                               ; 043952 e8093e0400
+    call series_winner                           ; 043952 e8093e0400
     xor edx, edx                                 ; 043957 31d2
     mov dl, byte ptr [ebp + 2]                   ; 043959 8a5502
     cmp eax, edx                                 ; 04395c 39d0
@@ -1911,7 +1911,7 @@ loc_43969:
 loc_43970:
     lea eax, [ebp + 0x2a]                        ; 043970 8d452a
     mov edx, dword ptr [esp + 0x5f4]             ; 043973 8b9424f4050000
-    call sub_87760                               ; 04397a e8e13d0400
+    call series_winner                           ; 04397a e8e13d0400
     xor edx, edx                                 ; 04397f 31d2
     mov dl, byte ptr [ebp + 0x2c]                ; 043981 8a552c
     cmp eax, edx                                 ; 043984 39d0
@@ -1924,7 +1924,7 @@ loc_43991:
 loc_43998:
     lea eax, [ebp + 0x54]                        ; 043998 8d4554
     mov edx, dword ptr [esp + 0x5f4]             ; 04399b 8b9424f4050000
-    call sub_87760                               ; 0439a2 e8b93d0400
+    call series_winner                           ; 0439a2 e8b93d0400
     xor edx, edx                                 ; 0439a7 31d2
     mov dl, byte ptr [ebp + 0x56]                ; 0439a9 8a5556
     cmp eax, edx                                 ; 0439ac 39d0
@@ -1937,7 +1937,7 @@ loc_439b9:
 loc_439c0:
     lea eax, [ebp + 0x7e]                        ; 0439c0 8d457e
     mov edx, dword ptr [esp + 0x5f4]             ; 0439c3 8b9424f4050000
-    call sub_87760                               ; 0439ca e8913d0400
+    call series_winner                           ; 0439ca e8913d0400
     xor edx, edx                                 ; 0439cf 31d2
     mov dl, byte ptr [ebp + 0x80]                ; 0439d1 8a9580000000
     cmp eax, edx                                 ; 0439d7 39d0
@@ -1972,13 +1972,13 @@ loc_43a0f:
     mov ecx, esi                                 ; 043a1c 89f1
     mov ebx, dword ptr [esp + 0x5e0]             ; 043a1e 8b9c24e0050000
     mov edx, dword ptr [esp + 0x5d4]             ; 043a25 8b9424d4050000
-    call sub_42f42                               ; 043a2c e811f5ffff
+    call playoff_set_series                      ; 043a2c e811f5ffff
     mov eax, dword ptr [esp]                     ; 043a31 8b0424
     add eax, 0x17a                               ; 043a34 057a010000
     mov ecx, esi                                 ; 043a39 89f1
     mov ebx, dword ptr [esp + 0x5dc]             ; 043a3b 8b9c24dc050000
     mov edx, dword ptr [esp + 0x5d8]             ; 043a42 8b9424d8050000
-    call sub_42f42                               ; 043a49 e8f4f4ffff
+    call playoff_set_series                      ; 043a49 e8f4f4ffff
     mov eax, dword ptr [esp + 0x618]             ; 043a4e 8b842418060000
     mov dword ptr [eax], 0                       ; 043a55 c70000000000
     xor ecx, ecx                                 ; 043a5b 31c9
@@ -2054,7 +2054,7 @@ loc_43b24:
     mov ebx, dword ptr [esp + edx + 0x5d4]       ; 043b4a 8b9c14d4050000
     lea edx, [esp + 4]                           ; 043b51 8d542404
     mov eax, edi                                 ; 043b55 89f8
-    call sub_3a2b8                               ; 043b57 e85c67ffff
+    call db_write_team_record                    ; 043b57 e85c67ffff
     test eax, eax                                ; 043b5c 85c0
     jne loc_43e35                                ; 043b5e 0f85d1020000
 loc_43b64:
@@ -2072,7 +2072,7 @@ loc_43b64:
     mov ebx, dword ptr [esp + edx + 0x5d4]       ; 043b8b 8b9c14d4050000
     lea edx, [esp + 0x2ec]                       ; 043b92 8d9424ec020000
     mov eax, edi                                 ; 043b99 89f8
-    call sub_3a2b8                               ; 043b9b e81867ffff
+    call db_write_team_record                    ; 043b9b e81867ffff
     test eax, eax                                ; 043ba0 85c0
     jne loc_43e35                                ; 043ba2 0f858d020000
 loc_43ba8:
@@ -2085,7 +2085,7 @@ loc_43ba8:
     call _memset_dwords                          ; 043bc3 e81fc70400
     lea eax, [ebp + 0xa8]                        ; 043bc8 8d85a8000000
     mov edx, dword ptr [esp + 0x5f4]             ; 043bce 8b9424f4050000
-    call sub_87760                               ; 043bd5 e8863b0400
+    call series_winner                           ; 043bd5 e8863b0400
     xor edx, edx                                 ; 043bda 31d2
     mov dl, byte ptr [ebp + 0xaa]                ; 043bdc 8a95aa000000
     cmp eax, edx                                 ; 043be2 39d0
@@ -2098,7 +2098,7 @@ loc_43bef:
 loc_43bf6:
     lea eax, [ebp + 0xd2]                        ; 043bf6 8d85d2000000
     mov edx, dword ptr [esp + 0x5f4]             ; 043bfc 8b9424f4050000
-    call sub_87760                               ; 043c03 e8583b0400
+    call series_winner                           ; 043c03 e8583b0400
     xor edx, edx                                 ; 043c08 31d2
     mov dl, byte ptr [ebp + 0xd4]                ; 043c0a 8a95d4000000
     cmp eax, edx                                 ; 043c10 39d0
@@ -2111,7 +2111,7 @@ loc_43c1d:
 loc_43c24:
     lea eax, [ebp + 0xfc]                        ; 043c24 8d85fc000000
     mov edx, dword ptr [esp + 0x5f4]             ; 043c2a 8b9424f4050000
-    call sub_87760                               ; 043c31 e82a3b0400
+    call series_winner                           ; 043c31 e82a3b0400
     xor edx, edx                                 ; 043c36 31d2
     mov dl, byte ptr [ebp + 0xfe]                ; 043c38 8a95fe000000
     cmp eax, edx                                 ; 043c3e 39d0
@@ -2124,7 +2124,7 @@ loc_43c4b:
 loc_43c52:
     lea eax, [ebp + 0x126]                       ; 043c52 8d8526010000
     mov edx, dword ptr [esp + 0x5f4]             ; 043c58 8b9424f4050000
-    call sub_87760                               ; 043c5f e8fc3a0400
+    call series_winner                           ; 043c5f e8fc3a0400
     xor edx, edx                                 ; 043c64 31d2
     mov dl, byte ptr [ebp + 0x128]               ; 043c66 8a9528010000
     cmp eax, edx                                 ; 043c6c 39d0
@@ -2159,13 +2159,13 @@ loc_43ca4:
     mov ecx, esi                                 ; 043cb1 89f1
     mov ebx, dword ptr [esp + 0x5e0]             ; 043cb3 8b9c24e0050000
     mov edx, dword ptr [esp + 0x5d4]             ; 043cba 8b9424d4050000
-    call sub_42f42                               ; 043cc1 e87cf2ffff
+    call playoff_set_series                      ; 043cc1 e87cf2ffff
     mov eax, dword ptr [esp]                     ; 043cc6 8b0424
     add eax, 0x1ce                               ; 043cc9 05ce010000
     mov ecx, esi                                 ; 043cce 89f1
     mov ebx, dword ptr [esp + 0x5dc]             ; 043cd0 8b9c24dc050000
     mov edx, dword ptr [esp + 0x5d8]             ; 043cd7 8b9424d8050000
-    call sub_42f42                               ; 043cde e85ff2ffff
+    call playoff_set_series                      ; 043cde e85ff2ffff
     xor ecx, ecx                                 ; 043ce3 31c9
 loc_43ce5:
     mov edx, ecx                                 ; 043ce5 89ca
@@ -2239,7 +2239,7 @@ loc_43dad:
     mov ebx, dword ptr [esp + edx + 0x5d4]       ; 043dd3 8b9c14d4050000
     lea edx, [esp + 4]                           ; 043dda 8d542404
     mov eax, edi                                 ; 043dde 89f8
-    call sub_3a2b8                               ; 043de0 e8d364ffff
+    call db_write_team_record                    ; 043de0 e8d364ffff
     test eax, eax                                ; 043de5 85c0
     jne loc_43e35                                ; 043de7 754c
 loc_43de9:
@@ -2257,7 +2257,7 @@ loc_43de9:
     mov ebx, dword ptr [esp + edx + 0x5d4]       ; 043e10 8b9c14d4050000
     lea edx, [esp + 0x2ec]                       ; 043e17 8d9424ec020000
     mov eax, edi                                 ; 043e1e 89f8
-    call sub_3a2b8                               ; 043e20 e89364ffff
+    call db_write_team_record                    ; 043e20 e89364ffff
     test eax, eax                                ; 043e25 85c0
     jne loc_43e35                                ; 043e27 750c
 loc_43e29:
@@ -2271,10 +2271,10 @@ loc_43e35:
 
 
 ; ====================================================================================================
-; sub_43e40  [0x43e40, 267 bytes, 88 instructions]
-; called by: schedule_screen, sub_44899, schedule_screen2
+; playoff_round2_done  [0x43e40, 267 bytes, 88 instructions]
+; called by: schedule_screen, playoff_advance, schedule_screen2
 ; ====================================================================================================
-sub_43e40:
+playoff_round2_done:
     push 0x94                                    ; 043e40 6894000000
     call __CHK                                   ; 043e45 e8028b0400
     push esi                                     ; 043e4a 56
@@ -2290,7 +2290,7 @@ sub_43e40:
     lea eax, [esp + 0xc]                         ; 043e60 8d44240c
     call _memset_dwords                          ; 043e64 e87ec40400
     mov eax, esi                                 ; 043e69 89f0
-    call sub_42221                               ; 043e6b e8b1e3ffff
+    call playoff_series_count                    ; 043e6b e8b1e3ffff
     mov ebp, eax                                 ; 043e70 89c5
     xor edx, edx                                 ; 043e72 31d2
     mov dword ptr [esp + 0x74], edx              ; 043e74 89542474
@@ -2378,10 +2378,10 @@ loc_43f29:
 
 
 ; ====================================================================================================
-; sub_43f4b  [0x43f4b, 1131 bytes, 293 instructions]
-; called by: schedule_screen, sub_44899, schedule_screen2
+; playoff_make_round3  [0x43f4b, 1131 bytes, 293 instructions]
+; called by: schedule_screen, playoff_advance, schedule_screen2
 ; ====================================================================================================
-sub_43f4b:
+playoff_make_round3:
     push 0x608                                   ; 043f4b 6808060000
     call __CHK                                   ; 043f50 e8f7890400
     push esi                                     ; 043f55 56
@@ -2394,7 +2394,7 @@ sub_43f4b:
     mov dword ptr [esp + 0x5e4], ecx             ; 043f63 898c24e4050000
     lea esi, [eax + 0x150]                       ; 043f6a 8db050010000
     mov eax, esi                                 ; 043f70 89f0
-    call sub_42221                               ; 043f72 e8aae2ffff
+    call playoff_series_count                    ; 043f72 e8aae2ffff
     mov dword ptr [esp + 0x5d8], eax             ; 043f77 898424d8050000
     lea ebx, [eax - 1]                           ; 043f7e 8d58ff
     jmp loc_43ffd                                ; 043f81 e977000000
@@ -2460,7 +2460,7 @@ loc_44001:
 loc_44008:
     lea edx, [esp + 0x5f0]                       ; 044008 8d9424f0050000
     lea eax, [esp + 0x5f4]                       ; 04400f 8d8424f4050000
-    call sub_41c9b                               ; 044016 e880dcffff
+    call day_to_month_day                        ; 044016 e880dcffff
     lea edx, [ebx + 0x23]                        ; 04401b 8d5323
     mov eax, edx                                 ; 04401e 89d0
     shl eax, 2                                   ; 044020 c1e002
@@ -2476,7 +2476,7 @@ loc_44008:
     mov byte ptr [esp + 0x5f0], cl               ; 044041 888c24f0050000
     lea edx, [esp + 0x5f0]                       ; 044048 8d9424f0050000
     lea eax, [esp + 0x5f4]                       ; 04404f 8d8424f4050000
-    call sub_41c9b                               ; 044056 e840dcffff
+    call day_to_month_day                        ; 044056 e840dcffff
     lea edx, [ebx + 0x1c]                        ; 04405b 8d531c
     mov eax, edx                                 ; 04405e 89d0
     shl eax, 2                                   ; 044060 c1e002
@@ -2496,12 +2496,12 @@ loc_44089:
     jl loc_44008                                 ; 04408b 0f8c77ffffff
     mov edx, dword ptr [esp + 0x5d8]             ; 044091 8b9424d8050000
     mov eax, esi                                 ; 044098 89f0
-    call sub_87760                               ; 04409a e8c1360400
+    call series_winner                           ; 04409a e8c1360400
     mov dword ptr [esp + 0x5dc], eax             ; 04409f 898424dc050000
     mov dword ptr [esp + 0x5e8], eax             ; 0440a6 898424e8050000
     lea eax, [esi + 0x2a]                        ; 0440ad 8d462a
     mov edx, dword ptr [esp + 0x5d8]             ; 0440b0 8b9424d8050000
-    call sub_87760                               ; 0440b7 e8a4360400
+    call series_winner                           ; 0440b7 e8a4360400
     mov dword ptr [esp + 0x5ec], eax             ; 0440bc 898424ec050000
     xor edx, edx                                 ; 0440c3 31d2
     mov dl, byte ptr [esi + 2]                   ; 0440c5 8a5602
@@ -2520,7 +2520,7 @@ loc_440e9:
     mov edx, eax                                 ; 0440eb 89c2
 loc_440ed:
     mov eax, dword ptr [esp + 0x5d4]             ; 0440ed 8b8424d4050000
-    call sub_42f42                               ; 0440f4 e849eeffff
+    call playoff_set_series                      ; 0440f4 e849eeffff
     mov eax, dword ptr [esp + 0x608]             ; 0440f9 8b842408060000
     mov dword ptr [eax], 0                       ; 044100 c70000000000
     mov eax, dword ptr [esp + 0x5e8]             ; 044106 8b8424e8050000
@@ -2582,7 +2582,7 @@ loc_441b4:
     mov ebx, dword ptr [esp + 0x5e8]             ; 0441d8 8b9c24e8050000
     lea edx, [esp + 0x2ec]                       ; 0441df 8d9424ec020000
     mov eax, ebp                                 ; 0441e6 89e8
-    call sub_3a2b8                               ; 0441e8 e8cb60ffff
+    call db_write_team_record                    ; 0441e8 e8cb60ffff
     test eax, eax                                ; 0441ed 85c0
     jne loc_443ab                                ; 0441ef 0f85b6010000
 loc_441f5:
@@ -2597,18 +2597,18 @@ loc_441f5:
     mov ebx, ecx                                 ; 044217 89cb
     lea edx, [esp + 4]                           ; 044219 8d542404
     mov eax, ebp                                 ; 04421d 89e8
-    call sub_3a2b8                               ; 04421f e89460ffff
+    call db_write_team_record                    ; 04421f e89460ffff
     test eax, eax                                ; 044224 85c0
     jne loc_443ab                                ; 044226 0f857f010000
 loc_4422c:
     lea eax, [esi + 0x54]                        ; 04422c 8d4654
     mov edx, dword ptr [esp + 0x5d8]             ; 04422f 8b9424d8050000
-    call sub_87760                               ; 044236 e825350400
+    call series_winner                           ; 044236 e825350400
     mov dword ptr [esp + 0x5e0], eax             ; 04423b 898424e0050000
     mov dword ptr [esp + 0x5e8], eax             ; 044242 898424e8050000
     lea eax, [esi + 0x7e]                        ; 044249 8d467e
     mov edx, dword ptr [esp + 0x5d8]             ; 04424c 8b9424d8050000
-    call sub_87760                               ; 044253 e808350400
+    call series_winner                           ; 044253 e808350400
     mov dword ptr [esp + 0x5ec], eax             ; 044258 898424ec050000
     xor edx, edx                                 ; 04425f 31d2
     mov dl, byte ptr [esi + 0x56]                ; 044261 8a5656
@@ -2626,7 +2626,7 @@ loc_4427e:
     mov edx, eax                                 ; 044280 89c2
 loc_44282:
     mov eax, esi                                 ; 044282 89f0
-    call sub_42f42                               ; 044284 e8b9ecffff
+    call playoff_set_series                      ; 044284 e8b9ecffff
     mov eax, dword ptr [esp + 0x5e8]             ; 044289 8b8424e8050000
     shl eax, 4                                   ; 044290 c1e004
     mov ecx, dword ptr [esp + 0x5e8]             ; 044293 8b8c24e8050000
@@ -2687,7 +2687,7 @@ loc_44339:
     mov ebx, dword ptr [esp + 0x5e8]             ; 04435d 8b9c24e8050000
     lea edx, [esp + 0x2ec]                       ; 044364 8d9424ec020000
     mov eax, ebp                                 ; 04436b 89e8
-    call sub_3a2b8                               ; 04436d e8465fffff
+    call db_write_team_record                    ; 04436d e8465fffff
     test eax, eax                                ; 044372 85c0
     jne loc_443ab                                ; 044374 7535
 loc_44376:
@@ -2702,7 +2702,7 @@ loc_44376:
     mov ebx, edi                                 ; 044398 89fb
     lea edx, [esp + 4]                           ; 04439a 8d542404
     mov eax, ebp                                 ; 04439e 89e8
-    call sub_3a2b8                               ; 0443a0 e8135fffff
+    call db_write_team_record                    ; 0443a0 e8135fffff
     test eax, eax                                ; 0443a5 85c0
     jne loc_443ab                                ; 0443a7 7502
 loc_443a9:
@@ -2713,10 +2713,10 @@ loc_443ab:
 
 
 ; ====================================================================================================
-; sub_443b6  [0x443b6, 275 bytes, 90 instructions]
-; called by: schedule_screen, sub_44899, schedule_screen2
+; playoff_round3_done  [0x443b6, 275 bytes, 90 instructions]
+; called by: schedule_screen, playoff_advance, schedule_screen2
 ; ====================================================================================================
-sub_443b6:
+playoff_round3_done:
     push 0x94                                    ; 0443b6 6894000000
     call __CHK                                   ; 0443bb e88c850400
     push esi                                     ; 0443c0 56
@@ -2732,7 +2732,7 @@ sub_443b6:
     lea eax, [esp + 0xc]                         ; 0443d6 8d44240c
     call _memset_dwords                          ; 0443da e808bf0400
     mov eax, esi                                 ; 0443df 89f0
-    call sub_42221                               ; 0443e1 e83bdeffff
+    call playoff_series_count                    ; 0443e1 e83bdeffff
     mov ebp, eax                                 ; 0443e6 89c5
     xor edx, edx                                 ; 0443e8 31d2
     mov dword ptr [esp + 0x74], edx              ; 0443ea 89542474
@@ -2822,10 +2822,10 @@ loc_444a7:
 
 
 ; ====================================================================================================
-; sub_444c9  [0x444c9, 733 bytes, 182 instructions]
-; called by: schedule_screen, sub_44899, schedule_screen2
+; playoff_make_final  [0x444c9, 733 bytes, 182 instructions]
+; called by: schedule_screen, playoff_advance, schedule_screen2
 ; ====================================================================================================
-sub_444c9:
+playoff_make_final:
     push 0x638                                   ; 0444c9 6838060000
     call __CHK                                   ; 0444ce e879840400
     push esi                                     ; 0444d3 56
@@ -2838,7 +2838,7 @@ sub_444c9:
     mov ebp, ecx                                 ; 0444e1 89cd
     lea ecx, [eax + 0x1f8]                       ; 0444e3 8d88f8010000
     mov eax, ecx                                 ; 0444e9 89c8
-    call sub_42221                               ; 0444eb e831ddffff
+    call playoff_series_count                    ; 0444eb e831ddffff
     mov dword ptr [esp + 0x614], eax             ; 0444f0 89842414060000
     lea ebx, [eax - 1]                           ; 0444f7 8d58ff
     jmp loc_44549                                ; 0444fa eb4d
@@ -2886,7 +2886,7 @@ loc_44551:
     add byte ptr [esp + 0x618], 2                ; 044551 8084241806000002
     lea edx, [esp + 0x618]                       ; 044559 8d942418060000
     lea eax, [esp + 0x61c]                       ; 044560 8d84241c060000
-    call sub_41c9b                               ; 044567 e82fd7ffff
+    call day_to_month_day                        ; 044567 e82fd7ffff
     lea edx, [ebx + 0xe]                         ; 04456c 8d530e
     mov eax, edx                                 ; 04456f 89d0
     shl eax, 2                                   ; 044571 c1e002
@@ -2903,11 +2903,11 @@ loc_4458f:
     jl loc_44551                                 ; 044591 7cbe
     mov edx, dword ptr [esp + 0x614]             ; 044593 8b942414060000
     mov eax, ecx                                 ; 04459a 89c8
-    call sub_87760                               ; 04459c e8bf310400
+    call series_winner                           ; 04459c e8bf310400
     mov dword ptr [esp + 0x5d4], eax             ; 0445a1 898424d4050000
     lea eax, [ecx + 0x2a]                        ; 0445a8 8d412a
     mov edx, dword ptr [esp + 0x614]             ; 0445ab 8b942414060000
-    call sub_87760                               ; 0445b2 e8a9310400
+    call series_winner                           ; 0445b2 e8a9310400
     mov dword ptr [esp + 0x5d8], eax             ; 0445b7 898424d8050000
     mov eax, dword ptr [esp + 0x634]             ; 0445be 8b842434060000
     mov dword ptr [eax], 0                       ; 0445c5 c70000000000
@@ -2965,7 +2965,7 @@ loc_4466a:
     mov ebx, dword ptr [esp + 0x5d4]             ; 044683 8b9c24d4050000
     lea edx, [esp + 4]                           ; 04468a 8d542404
     mov eax, edi                                 ; 04468e 89f8
-    call sub_3a2b8                               ; 044690 e8235cffff
+    call db_write_team_record                    ; 044690 e8235cffff
     test eax, eax                                ; 044695 85c0
     jne loc_4479b                                ; 044697 0f85fe000000
 loc_4469d:
@@ -2978,7 +2978,7 @@ loc_4469d:
     mov ebx, dword ptr [esp + 0x5d8]             ; 0446b2 8b9c24d8050000
     lea edx, [esp + 0x2ec]                       ; 0446b9 8d9424ec020000
     mov eax, edi                                 ; 0446c0 89f8
-    call sub_3a2b8                               ; 0446c2 e8f15bffff
+    call db_write_team_record                    ; 0446c2 e8f15bffff
     test eax, eax                                ; 0446c7 85c0
     jne loc_4479b                                ; 0446c9 0f85cc000000
 loc_446cf:
@@ -3017,13 +3017,13 @@ loc_446cf:
     lea ebx, [esp + 0x604]                       ; 044762 8d9c2404060000
     lea edx, [esp + 0x614]                       ; 044769 8d942414060000
     lea eax, [esp + 0x5dc]                       ; 044770 8d8424dc050000
-    call sub_42daa                               ; 044777 e82ee6ffff
+    call sort_teams_by_points                    ; 044777 e82ee6ffff
     mov eax, dword ptr [esp]                     ; 04477c 8b0424
     add eax, 0x24c                               ; 04477f 054c020000
     mov ecx, esi                                 ; 044784 89f1
     mov ebx, dword ptr [esp + 0x5d8]             ; 044786 8b9c24d8050000
     mov edx, dword ptr [esp + 0x5d4]             ; 04478d 8b9424d4050000
-    call sub_42f42                               ; 044794 e8a9e7ffff
+    call playoff_set_series                      ; 044794 e8a9e7ffff
     xor eax, eax                                 ; 044799 31c0
 loc_4479b:
     add esp, 0x620                               ; 04479b 81c420060000
@@ -3031,10 +3031,10 @@ loc_4479b:
 
 
 ; ====================================================================================================
-; sub_447a6  [0x447a6, 227 bytes, 77 instructions]
-; called by: schedule_screen, sub_44899, schedule_screen2
+; playoff_final_done  [0x447a6, 227 bytes, 77 instructions]
+; called by: schedule_screen, playoff_advance, schedule_screen2
 ; ====================================================================================================
-sub_447a6:
+playoff_final_done:
     push 0x90                                    ; 0447a6 6890000000
     call __CHK                                   ; 0447ab e89c810400
     push esi                                     ; 0447b0 56
@@ -3050,7 +3050,7 @@ sub_447a6:
     lea eax, [esp + 0xc]                         ; 0447c6 8d44240c
     call _memset_dwords                          ; 0447ca e818bb0400
     mov eax, esi                                 ; 0447cf 89f0
-    call sub_42221                               ; 0447d1 e84bdaffff
+    call playoff_series_count                    ; 0447d1 e84bdaffff
     mov ebp, eax                                 ; 0447d6 89c5
     xor edi, edi                                 ; 0447d8 31ff
     jmp loc_44877                                ; 0447da e998000000
@@ -3131,10 +3131,11 @@ jpt_44889:
     dd loc_4499d                                 ; 044895
 
 ; ====================================================================================================
-; sub_44899  [0x44899, 424 bytes, 120 instructions]
+; playoff_advance  [0x44899, 424 bytes, 120 instructions]
+; checks the round, builds the next one, the awards after the final
 ; called by: schedule_screen2
 ; ====================================================================================================
-sub_44899:
+playoff_advance:
     push 0x48                                    ; 044899 6848000000
     call __CHK                                   ; 04489e e8a9800400
     push esi                                     ; 0448a3 56
@@ -3158,7 +3159,7 @@ loc_448c8:
     mov eax, dword ptr [dword_c8c61]             ; 0448cd a1618c0c00
     mov ecx, dword ptr [esp + 0x40]              ; 0448d2 8b4c2440
     mov edx, esi                                 ; 0448d6 89f2
-    call sub_43644                               ; 0448d8 e867edffff
+    call playoff_round1_done                     ; 0448d8 e867edffff
     test eax, eax                                ; 0448dd 85c0
     jne loc_44a38                                ; 0448df 0f8553010000
     lea eax, [esp + 0x24]                        ; 0448e5 8d442424
@@ -3169,7 +3170,7 @@ loc_448c8:
     mov eax, dword ptr [dword_c8c61]             ; 0448f6 a1618c0c00
     mov ecx, ebp                                 ; 0448fb 89e9
     mov ebx, esi                                 ; 0448fd 89f3
-    call sub_43757                               ; 0448ff e853eeffff
+    call playoff_make_round2                     ; 0448ff e853eeffff
     test eax, eax                                ; 044904 85c0
     jne loc_44a38                                ; 044906 0f852c010000
 loc_4490c:
@@ -3179,7 +3180,7 @@ loc_4490c:
     mov ecx, dword ptr [esp + 0x40]              ; 044916 8b4c2440
     mov ebx, edi                                 ; 04491a 89fb
     mov edx, esi                                 ; 04491c 89f2
-    call sub_43e40                               ; 04491e e81df5ffff
+    call playoff_round2_done                     ; 04491e e81df5ffff
     test eax, eax                                ; 044923 85c0
     jne loc_44a38                                ; 044925 0f850d010000
     lea eax, [esp + 0x24]                        ; 04492b 8d442424
@@ -3190,7 +3191,7 @@ loc_4490c:
     mov eax, dword ptr [dword_c8c61]             ; 04493c a1618c0c00
     mov ecx, ebp                                 ; 044941 89e9
     mov ebx, esi                                 ; 044943 89f3
-    call sub_43f4b                               ; 044945 e801f6ffff
+    call playoff_make_round3                     ; 044945 e801f6ffff
     test eax, eax                                ; 04494a 85c0
     jne loc_44a38                                ; 04494c 0f85e6000000
 loc_44952:
@@ -3200,7 +3201,7 @@ loc_44952:
     mov ecx, dword ptr [esp + 0x40]              ; 04495c 8b4c2440
     mov ebx, edi                                 ; 044960 89fb
     mov edx, esi                                 ; 044962 89f2
-    call sub_443b6                               ; 044964 e84dfaffff
+    call playoff_round3_done                     ; 044964 e84dfaffff
     test eax, eax                                ; 044969 85c0
     jne loc_44a38                                ; 04496b 0f85c7000000
     lea eax, [esp + 0x24]                        ; 044971 8d442424
@@ -3213,7 +3214,7 @@ loc_44952:
     mov eax, dword ptr [dword_c8c61]             ; 044987 a1618c0c00
     mov ecx, ebp                                 ; 04498c 89e9
     mov ebx, esi                                 ; 04498e 89f3
-    call sub_444c9                               ; 044990 e834fbffff
+    call playoff_make_final                      ; 044990 e834fbffff
     test eax, eax                                ; 044995 85c0
     jne loc_44a38                                ; 044997 0f859b000000
 loc_4499d:
@@ -3223,7 +3224,7 @@ loc_4499d:
     mov ecx, dword ptr [esp + 0x40]              ; 0449a7 8b4c2440
     mov ebx, edi                                 ; 0449ab 89fb
     mov edx, esi                                 ; 0449ad 89f2
-    call sub_447a6                               ; 0449af e8f2fdffff
+    call playoff_final_done                      ; 0449af e8f2fdffff
     test eax, eax                                ; 0449b4 85c0
     jne loc_44a38                                ; 0449b6 0f857c000000
     mov edx, dword ptr [dword_c8c61]             ; 0449bc 8b15618c0c00
@@ -3269,7 +3270,7 @@ loc_44a38:
 ; ====================================================================================================
 ; schedule_screen2  [0x44a41, 910 bytes, 253 instructions]
 ; "Sch"
-; called by: sub_41cc4
+; called by: league_play_day
 ;   uses string "Sch"
 ; ====================================================================================================
 schedule_screen2:
@@ -3373,7 +3374,7 @@ loc_44aea:
     mov ecx, dword ptr [esp + 0x4c]              ; 044b84 8b4c244c
     mov ebx, dword ptr [esp + 0x30]              ; 044b88 8b5c2430
     mov edx, dword ptr [esp + 0x34]              ; 044b8c 8b542434
-    call sub_43644                               ; 044b90 e8afeaffff
+    call playoff_round1_done                     ; 044b90 e8afeaffff
     mov ebp, eax                                 ; 044b95 89c5
     test eax, eax                                ; 044b97 85c0
     jne loc_44da9                                ; 044b99 0f850a020000
@@ -3385,7 +3386,7 @@ loc_44aea:
     mov eax, dword ptr [dword_c8c61]             ; 044bb0 a1618c0c00
     mov ecx, edi                                 ; 044bb5 89f9
     mov ebx, dword ptr [esp + 0x34]              ; 044bb7 8b5c2434
-    call sub_43757                               ; 044bbb e897ebffff
+    call playoff_make_round2                     ; 044bbb e897ebffff
     mov ebp, eax                                 ; 044bc0 89c5
     test eax, eax                                ; 044bc2 85c0
     jne loc_44da9                                ; 044bc4 0f85df010000
@@ -3401,7 +3402,7 @@ loc_44be1:
     mov ebx, dword ptr [esp + 0x38]              ; 044be3 8b5c2438
     mov edx, dword ptr [esp + 0x3c]              ; 044be7 8b54243c
     mov eax, esi                                 ; 044beb 89f0
-    call sub_44899                               ; 044bed e8a7fcffff
+    call playoff_advance                         ; 044bed e8a7fcffff
     jmp loc_44d74                                ; 044bf2 e97d010000
 
 loc_44bf7:
@@ -3414,7 +3415,7 @@ loc_44bf7:
     mov ecx, dword ptr [esp + 0x4c]              ; 044c10 8b4c244c
     mov ebx, dword ptr [esp + 0x30]              ; 044c14 8b5c2430
     mov edx, dword ptr [esp + 0x34]              ; 044c18 8b542434
-    call sub_43e40                               ; 044c1c e81ff2ffff
+    call playoff_round2_done                     ; 044c1c e81ff2ffff
     mov ebp, eax                                 ; 044c21 89c5
     test eax, eax                                ; 044c23 85c0
     jne loc_44da9                                ; 044c25 0f857e010000
@@ -3426,7 +3427,7 @@ loc_44bf7:
     mov eax, dword ptr [dword_c8c61]             ; 044c3c a1618c0c00
     mov ecx, edi                                 ; 044c41 89f9
     mov ebx, dword ptr [esp + 0x34]              ; 044c43 8b5c2434
-    call sub_43f4b                               ; 044c47 e8fff2ffff
+    call playoff_make_round3                     ; 044c47 e8fff2ffff
     mov ebp, eax                                 ; 044c4c 89c5
     test eax, eax                                ; 044c4e 85c0
     jne loc_44da9                                ; 044c50 0f8553010000
@@ -3449,7 +3450,7 @@ loc_44c72:
     mov ecx, dword ptr [esp + 0x4c]              ; 044c8f 8b4c244c
     mov ebx, dword ptr [esp + 0x30]              ; 044c93 8b5c2430
     mov edx, dword ptr [esp + 0x34]              ; 044c97 8b542434
-    call sub_443b6                               ; 044c9b e816f7ffff
+    call playoff_round3_done                     ; 044c9b e816f7ffff
     mov ebp, eax                                 ; 044ca0 89c5
     test eax, eax                                ; 044ca2 85c0
     jne loc_44da9                                ; 044ca4 0f85ff000000
@@ -3462,7 +3463,7 @@ loc_44c72:
     mov eax, dword ptr [dword_c8c61]             ; 044cbc a1618c0c00
     mov ecx, edi                                 ; 044cc1 89f9
     mov ebx, dword ptr [esp + 0x38]              ; 044cc3 8b5c2438
-    call sub_444c9                               ; 044cc7 e8fdf7ffff
+    call playoff_make_final                      ; 044cc7 e8fdf7ffff
     mov ebp, eax                                 ; 044ccc 89c5
     test eax, eax                                ; 044cce 85c0
     jne loc_44da9                                ; 044cd0 0f85d3000000
@@ -3477,7 +3478,7 @@ loc_44c72:
     mov ebx, dword ptr [esp + 0x38]              ; 044cef 8b5c2438
     mov edx, dword ptr [esp + 0x3c]              ; 044cf3 8b54243c
     mov eax, esi                                 ; 044cf7 89f0
-    call sub_44899                               ; 044cf9 e89bfbffff
+    call playoff_advance                         ; 044cf9 e89bfbffff
     mov dword ptr [esp + 0x34], 0x4ad            ; 044cfe c7442434ad040000
     jmp loc_44d74                                ; 044d06 eb6c
 
@@ -3491,7 +3492,7 @@ loc_44d08:
     mov ecx, dword ptr [esp + 0x4c]              ; 044d21 8b4c244c
     mov ebx, dword ptr [esp + 0x30]              ; 044d25 8b5c2430
     mov edx, dword ptr [esp + 0x34]              ; 044d29 8b542434
-    call sub_447a6                               ; 044d2d e874faffff
+    call playoff_final_done                      ; 044d2d e874faffff
     mov ebp, eax                                 ; 044d32 89c5
     test eax, eax                                ; 044d34 85c0
     jne loc_44da9                                ; 044d36 7571
@@ -3623,7 +3624,7 @@ loc_44e02:
     mov ebx, 8                                   ; 044e92 bb08000000
     lea edx, [esp + 0x60]                        ; 044e97 8d542460
     mov eax, aEnterNewLeagueName                 ; 044e9b b827820c00        "Enter New League Name"
-    call sub_2fedf                               ; 044ea0 e83ab0feff
+    call text_entry_dialog                       ; 044ea0 e83ab0feff
     mov dword ptr [esp + 0x68], eax              ; 044ea5 89442468
     cmp byte ptr [esp + 0x4c], 0                 ; 044ea9 807c244c00
     je loc_45260                                 ; 044eae 0f84ac030000
@@ -3665,7 +3666,7 @@ loc_44e02:
     cmp eax, 1                                   ; 044f31 83f801
     jne loc_44f41                                ; 044f34 750b
     lea eax, [esp + 0x4c]                        ; 044f36 8d44244c
-    call sub_14442                               ; 044f3a e803f5fcff
+    call delete_directory                        ; 044f3a e803f5fcff
     jmp loc_44f46                                ; 044f3f eb05
 
 loc_44f41:
@@ -3692,7 +3693,7 @@ loc_44f46:
 loc_44f7e:
     test esi, esi                                ; 044f7e 85f6
     jne loc_44f8e                                ; 044f80 750c
-    call sub_2fdd1                               ; 044f82 e84aaefeff
+    call choose_db_or_org                        ; 044f82 e84aaefeff
     cmp eax, -1                                  ; 044f87 83f8ff
     jne loc_44f8e                                ; 044f8a 7502
     mov esi, eax                                 ; 044f8c 89c6
@@ -3700,7 +3701,7 @@ loc_44f8e:
     test esi, esi                                ; 044f8e 85f6
     jne loc_44fd9                                ; 044f90 7547
     xor eax, eax                                 ; 044f92 31c0
-    call sub_106c8                               ; 044f94 e82fb7fcff
+    call disk_free_bytes                         ; 044f94 e82fb7fcff
     cmp eax, 0x800                               ; 044f99 3d00080000
     jge loc_44fce                                ; 044f9e 7d2e
     push 0x1f4                                   ; 044fa0 68f4010000
@@ -3770,7 +3771,7 @@ loc_45068:
     mov ebx, dword ptr [dword_dd770]             ; 04506d 8b1d70d70d00
     mov edx, unk_c8d06                           ; 045073 ba068d0c00
     xor eax, eax                                 ; 045078 31c0
-    call sub_149bf                               ; 04507a e840f9fcff
+    call db_file_sizes_kb                        ; 04507a e840f9fcff
     xor esi, esi                                 ; 04507f 31f6
 loc_45081:
     mov edx, 1                                   ; 045081 ba01000000
@@ -3793,7 +3794,7 @@ loc_45086:
     lea eax, [esp + 0x2c]                        ; 0450b5 8d44242c
     call make_path                               ; 0450b9 e860f2fcff
     lea eax, [esp + 0x2c]                        ; 0450be 8d44242c
-    call sub_142e7                               ; 0450c2 e820f2fcff
+    call file_exists_rd                          ; 0450c2 e820f2fcff
     test eax, eax                                ; 0450c7 85c0
     je loc_450d2                                 ; 0450c9 7407
     xor eax, eax                                 ; 0450cb 31c0
@@ -3850,7 +3851,7 @@ loc_45129:
     mov ebx, unk_ddd1d                           ; 045177 bb1ddd0d00
     mov edx, unk_dd7b4                           ; 04517c bab4d70d00
     mov eax, league_dir                          ; 045181 b851840c00
-    call sub_413cd                               ; 045186 e842c2ffff
+    call pinfo_db_create                         ; 045186 e842c2ffff
     mov edi, eax                                 ; 04518b 89c7
     xor ebp, ebp                                 ; 04518d 31ed
     mov dword ptr [esp + 0x68], ebp              ; 04518f 896c2468
@@ -3862,7 +3863,7 @@ loc_45195:
     mov eax, dword ptr [eax*4 + off_c80d7]       ; 0451a0 8b0485d7800c00
     xor ecx, ecx                                 ; 0451a7 31c9
     mov ebx, aDB                                 ; 0451a9 bb1a810c00        ".DB"
-    call sub_1466b                               ; 0451ae e8b8f4fcff
+    call copy_file                               ; 0451ae e8b8f4fcff
     mov edi, eax                                 ; 0451b3 89c7
     inc dword ptr [esp + 0x68]                   ; 0451b5 ff442468
 loc_451b9:
@@ -3881,7 +3882,7 @@ loc_451c6:
     call league_db_load                          ; 0451dd e8b3d0ffff
     mov edi, eax                                 ; 0451e2 89c7
 loc_451e4:
-    call sub_30f12                               ; 0451e4 e829bdfeff
+    call restore_dialog_background               ; 0451e4 e829bdfeff
     test edi, edi                                ; 0451e9 85ff
     jne loc_45203                                ; 0451eb 7516
     mov ebx, 0xffffffff                          ; 0451ed bbffffffff
@@ -3921,7 +3922,7 @@ loc_4524f:
     xor dh, dh                                   ; 04524f 30f6
     mov byte ptr [byte_c5386], dh                ; 045251 883586530c00
     lea eax, [esp + 0x4c]                        ; 045257 8d44244c
-    call sub_14442                               ; 04525b e8e2f1fcff
+    call delete_directory                        ; 04525b e8e2f1fcff
 loc_45260:
     push 0                                       ; 045260 6a00
     mov ecx, 0x3f                                ; 045262 b93f000000
@@ -3940,10 +3941,10 @@ loc_45260:
 
 
 ; ====================================================================================================
-; sub_45282  [0x45282, 36 bytes, 14 instructions]
+; rand_below  [0x45282, 36 bytes, 14 instructions]
 ; called by: playoff_setup_screen
 ; ====================================================================================================
-sub_45282:
+rand_below:
     push 0xc                                     ; 045282 680c000000
     call __CHK                                   ; 045287 e8c0760400
     push ebx                                     ; 04528c 53
@@ -3961,10 +3962,10 @@ sub_45282:
 
 
 ; ====================================================================================================
-; sub_452a6  [0x452a6, 31 bytes, 12 instructions]
+; add_pair_max4  [0x452a6, 31 bytes, 12 instructions]
 ; called by: playoff_setup_screen
 ; ====================================================================================================
-sub_452a6:
+add_pair_max4:
     push 8                                       ; 0452a6 6808000000
     call __CHK                                   ; 0452ab e89c760400
     push esi                                     ; 0452b0 56
@@ -3983,7 +3984,7 @@ loc_452c3:
 ; ====================================================================================================
 ; playoff_setup_screen  [0x452c5, 9868 bytes, 2412 instructions]
 ; pset/aps/apset/gset/ags/agset
-; called by: sub_42631, sub_43644, sub_43e40, sub_443b6, sub_447a6, sub_87d5a, sub_87e77, sub_88625
+; called by: schedule_play_games, playoff_round1_done, playoff_round2_done, playoff_round3_done, playoff_final_done, playoff_update_team_db_e, playoff_update_team_db_f, playoff_record_series
 ;   uses string "t"
 ;   uses string "at"
 ;   uses string "pk"
@@ -4137,7 +4138,7 @@ loc_454da:
     mov ebx, dword ptr [esp + ecx + 0x13c]       ; 0454e8 8b9c0c3c010000
     mov edx, dword ptr [esp + ecx + 0x164]       ; 0454ef 8b940c64010000
     mov eax, dword ptr [esp + 0x21c]             ; 0454f6 8b84241c020000
-    call sub_3a2ee                               ; 0454fd e8ec4dffff
+    call db_read_record_4c                       ; 0454fd e8ec4dffff
     mov dword ptr [esp + 0x1a4], eax             ; 045502 898424a4010000
     test eax, eax                                ; 045509 85c0
     jne loc_45591                                ; 04550b 0f8580000000
@@ -4209,7 +4210,7 @@ loc_455cc:
     mov eax, dword ptr [ecx + eax + 0x4c]        ; 045619 8b44014c
     cmp eax, -1                                  ; 04561d 83f8ff
     je loc_4590e                                 ; 045620 0f84e8020000
-    call sub_6cbb7                               ; 045626 e88c750200
+    call dbedit_key_ptr                          ; 045626 e88c750200
     mov edx, dword ptr [esp + ebx + 0x17c]       ; 04562b 8b941c7c010000
     mov dword ptr [ecx + edx], eax               ; 045632 890411
     cmp dword ptr [esp + 0x1a4], 0               ; 045635 83bc24a401000000
@@ -4217,7 +4218,7 @@ loc_455cc:
     mov eax, dword ptr [esp + ebx + 0x17c]       ; 045643 8b841c7c010000
     mov eax, dword ptr [ecx + eax]               ; 04564a 8b0401
     mov eax, dword ptr [eax + 0x28]              ; 04564d 8b4028
-    call sub_6cbe8                               ; 045650 e893750200
+    call dbedit_career_ptr                       ; 045650 e893750200
     mov edx, dword ptr [esp + ebx + 0x12c]       ; 045655 8b941c2c010000
     mov dword ptr [ecx + edx], eax               ; 04565c 890411
     mov ebp, dword ptr [esp + ebx + 0x12c]       ; 04565f 8bac1c2c010000
@@ -4370,7 +4371,7 @@ loc_4589c:
     mov eax, dword ptr [esp + edx + 0x17c]       ; 0458ba 8b84147c010000
     mov eax, dword ptr [ebx + eax]               ; 0458c1 8b0403
     mov eax, dword ptr [eax + 0x2c]              ; 0458c4 8b402c
-    call sub_6cbcc                               ; 0458c7 e800730200
+    call dbedit_season_ptr                       ; 0458c7 e800730200
     mov ecx, eax                                 ; 0458cc 89c1
     mov eax, dword ptr [esp + edx + 0x154]       ; 0458ce 8b841454010000
     mov dword ptr [ebx + eax], ecx               ; 0458d5 890c03
@@ -4410,7 +4411,7 @@ loc_4593d:
     mov eax, dword ptr [ebx + eax + 0xb0]        ; 045958 8b8403b0000000
     cmp eax, -1                                  ; 04595f 83f8ff
     je loc_45a44                                 ; 045962 0f84dc000000
-    call sub_6cbb7                               ; 045968 e84a720200
+    call dbedit_key_ptr                          ; 045968 e84a720200
     mov ecx, eax                                 ; 04596d 89c1
     mov eax, dword ptr [esp + edx + 0x134]       ; 04596f 8b841434010000
     mov dword ptr [ebx + eax], ecx               ; 045976 890c03
@@ -4419,7 +4420,7 @@ loc_4593d:
     mov eax, dword ptr [esp + edx + 0x134]       ; 045983 8b841434010000
     mov eax, dword ptr [ebx + eax]               ; 04598a 8b0403
     mov eax, dword ptr [eax + 0x28]              ; 04598d 8b4028
-    call sub_6cbfd                               ; 045990 e868720200
+    call dbedit_career_ptr_b                     ; 045990 e868720200
     mov ecx, eax                                 ; 045995 89c1
     mov eax, dword ptr [esp + edx + 0x14c]       ; 045997 8b84144c010000
     mov dword ptr [ebx + eax], ecx               ; 04599e 890c03
@@ -4447,7 +4448,7 @@ loc_459d7:
     mov eax, dword ptr [esp + edx + 0x134]       ; 0459f5 8b841434010000
     mov eax, dword ptr [ebx + eax]               ; 0459fc 8b0403
     mov eax, dword ptr [eax + 0x2c]              ; 0459ff 8b402c
-    call sub_6cbe1                               ; 045a02 e8da710200
+    call dbedit_season_ptr_b                     ; 045a02 e8da710200
     mov ecx, dword ptr [esp + edx + 0x124]       ; 045a07 8b8c1424010000
     mov dword ptr [ecx + ebx], eax               ; 045a0e 890419
     cmp dword ptr [esp], 0x444                   ; 045a11 813c2444040000
@@ -4772,7 +4773,7 @@ loc_45e67:
     xor ebx, ebx                                 ; 045e67 31db
 loc_45e69:
     mov eax, 0xa                                 ; 045e69 b80a000000
-    call sub_45282                               ; 045e6e e80ff4ffff
+    call rand_below                              ; 045e6e e80ff4ffff
     mov edx, eax                                 ; 045e73 89c2
     cmp eax, ebx                                 ; 045e75 39d8
     je loc_45ec0                                 ; 045e77 7447
@@ -4813,7 +4814,7 @@ loc_45ef1:
     xor ebx, ebx                                 ; 045ef1 31db
 loc_45ef3:
     mov eax, 3                                   ; 045ef3 b803000000
-    call sub_45282                               ; 045ef8 e885f3ffff
+    call rand_below                              ; 045ef8 e885f3ffff
     mov edx, eax                                 ; 045efd 89c2
     cmp eax, ebx                                 ; 045eff 39d8
     je loc_45f4c                                 ; 045f01 7449
@@ -4961,7 +4962,7 @@ loc_46105:
     mov dword ptr [esp + 0x1d0], eax             ; 046107 898424d0010000
 loc_4610e:
     mov eax, 0x3e8                               ; 04610e b8e8030000
-    call sub_45282                               ; 046113 e86af1ffff
+    call rand_below                              ; 046113 e86af1ffff
     mov ecx, eax                                 ; 046118 89c1
     mov ebx, dword ptr [esp + 0x1d0]             ; 04611a 8b9c24d0010000
     shl ebx, 2                                   ; 046121 c1e302
@@ -5138,7 +5139,7 @@ loc_463ac:
     cmp byte ptr [esp + eax + 0xec], 0           ; 0463ca 80bc04ec00000000
     jne loc_46456                                ; 0463d2 0f857e000000
     mov eax, 0x3e8                               ; 0463d8 b8e8030000
-    call sub_45282                               ; 0463dd e8a0eeffff
+    call rand_below                              ; 0463dd e8a0eeffff
     cmp eax, 0x3c                                ; 0463e2 83f83c
     jge loc_463eb                                ; 0463e5 7d04
     mov dl, 5                                    ; 0463e7 b205
@@ -5657,7 +5658,7 @@ loc_46b38:
     lea ebx, [edx + 0xd]                         ; 046b54 8d5a0d
 loc_46b57:
     mov eax, 0x3e8                               ; 046b57 b8e8030000
-    call sub_45282                               ; 046b5c e821e7ffff
+    call rand_below                              ; 046b5c e821e7ffff
     mov edx, eax                                 ; 046b61 89c2
     mov ecx, dword ptr [esp + 0x220]             ; 046b63 8b8c2420020000
     test ecx, ecx                                ; 046b6a 85c9
@@ -5830,7 +5831,7 @@ loc_46d5e:
     xor ch, ch                                   ; 046e04 30ed
     mov byte ptr [esp + 0x204], ch               ; 046e06 88ac2404020000
     mov eax, 0x3e8                               ; 046e0d b8e8030000
-    call sub_45282                               ; 046e12 e86be4ffff
+    call rand_below                              ; 046e12 e86be4ffff
     mov edx, eax                                 ; 046e17 89c2
     cmp eax, 0x320                               ; 046e19 3d20030000
     jg loc_46e3b                                 ; 046e1e 7f1b
@@ -6154,7 +6155,7 @@ loc_472b8:
     mov ebx, 1                                   ; 0472f2 bb01000000
     lea edx, [esp + 0xd4]                        ; 0472f7 8d9424d4000000
     lea eax, [esp + 0x194]                       ; 0472fe 8d842494010000
-    call sub_452a6                               ; 047305 e89cdfffff
+    call add_pair_max4                           ; 047305 e89cdfffff
 loc_4730a:
     mov eax, dword ptr [esp + 0x188]             ; 04730a 8b842488010000
     cmp byte ptr [eax], 0                        ; 047311 803800
@@ -6171,7 +6172,7 @@ loc_4730a:
     xor ebx, ebx                                 ; 04733b 31db
     lea edx, [esp + 0xd4]                        ; 04733d 8d9424d4000000
     lea eax, [esp + 0x194]                       ; 047344 8d842494010000
-    call sub_452a6                               ; 04734b e856dfffff
+    call add_pair_max4                           ; 04734b e856dfffff
 loc_47350:
     xor ecx, ecx                                 ; 047350 31c9
     mov dword ptr [esp + 0x1d0], ecx             ; 047352 898c24d0010000
@@ -6265,7 +6266,7 @@ loc_47460:
     mov ecx, eax                                 ; 04746d 89c1
     lea edx, [esp + 0xd4]                        ; 04746f 8d9424d4000000
     lea eax, [esp + 0x194]                       ; 047476 8d842494010000
-    call sub_452a6                               ; 04747d e824deffff
+    call add_pair_max4                           ; 04747d e824deffff
 loc_47482:
     mov ch, 0xff                                 ; 047482 b5ff
     mov cl, ch                                   ; 047484 88e9
@@ -6319,7 +6320,7 @@ loc_4750b:
     mov ecx, eax                                 ; 047518 89c1
     lea edx, [esp + 0xd4]                        ; 04751a 8d9424d4000000
     lea eax, [esp + 0x194]                       ; 047521 8d842494010000
-    call sub_452a6                               ; 047528 e879ddffff
+    call add_pair_max4                           ; 047528 e879ddffff
 loc_4752d:
     mov ch, 0xff                                 ; 04752d b5ff
     mov cl, ch                                   ; 04752f 88e9
@@ -6375,7 +6376,7 @@ loc_475b4:
     mov ecx, eax                                 ; 0475c1 89c1
     lea edx, [esp + 0xd4]                        ; 0475c3 8d9424d4000000
     lea eax, [esp + 0x194]                       ; 0475ca 8d842494010000
-    call sub_452a6                               ; 0475d1 e8d0dcffff
+    call add_pair_max4                           ; 0475d1 e8d0dcffff
 loc_475d6:
     xor ebx, ebx                                 ; 0475d6 31db
     mov dword ptr [esp + 0x1d0], ebx             ; 0475d8 899c24d0010000
@@ -6494,7 +6495,7 @@ loc_47733:
     mov ebx, dword ptr [esp + edi*4 + 0x13c]     ; 047733 8b9cbc3c010000
     mov edx, dword ptr [esp + edi*4 + 0x16c]     ; 04773a 8b94bc6c010000
     mov eax, dword ptr [esp + 0x218]             ; 047741 8b842418020000
-    call sub_3a2b8                               ; 047748 e86b2bffff
+    call db_write_team_record                    ; 047748 e86b2bffff
     mov dword ptr [esp + 0x1a4], eax             ; 04774d 898424a4010000
     mov dword ptr [esp + 0x1cc], ebp             ; 047754 89ac24cc010000
     mov edi, dword ptr [esp + 0x1a4]             ; 04775b 8bbc24a4010000
@@ -6690,7 +6691,7 @@ loc_479e5:
 ; ====================================================================================================
 ; loading_screen  [0x479e9, 584 bytes, 164 instructions]
 ; "load" shape with palette cycling while files load
-; called by: main, demo_game, sub_190be, sub_1920f, exit_game_dialog, sub_1a9ac, sub_1aa6d, sub_1aac4, draw_team_logos, exhibition_mode, calendar_screen, league_calendar_flow (+6 more)
+; called by: main, demo_game, end_match_from_period, end_match_from_loop, exit_game_dialog, menu_penalty_summary, menu_scoring_summary, menu_team_scratches, draw_team_logos, exhibition_mode, calendar_screen, league_calendar_flow (+6 more)
 ;   uses string "load"
 ;   uses string "!pal"
 ; ====================================================================================================
@@ -6719,7 +6720,7 @@ loading_screen:
     push 0                                       ; 047a38 6a00
     call clearclip                               ; 047a3a e8edbe0600
     add esp, 4                                   ; 047a3f 83c404
-    call sub_8dab8                               ; 047a42 e871600400
+    call largest_free_locked                     ; 047a42 e871600400
     cmp eax, 0x222e0                             ; 047a47 3de0220200
     jle loc_47c25                                ; 047a4c 0f8ed3010000
     mov ebx, 0x900                               ; 047a52 bb00090000
@@ -6881,7 +6882,7 @@ loc_47c25:
 
 ; ====================================================================================================
 ; wait_sprite_fade  [0x47c31, 165 bytes, 55 instructions]
-; called by: play_game, demo_game, credits_screen, sub_190be, boxscore_screen, frontend_main_menu, calendar_screen, simulate_game_offscreen, edit_lines_screen_a, edit_lines_screen_b, highlights_play, locker_room_screen (+1 more)
+; called by: play_game, demo_game, credits_screen, end_match_from_period, boxscore_screen, frontend_main_menu, calendar_screen, simulate_game_offscreen, edit_lines_screen_a, edit_lines_screen_b, highlights_play, locker_room_screen (+1 more)
 ; ====================================================================================================
 wait_sprite_fade:
     push 0x1c                                    ; 047c31 681c000000
@@ -7194,7 +7195,7 @@ loc_47f56:
     sar eax, 0x10                                ; 04808f c1f810
     cmp eax, -1                                  ; 048092 83f8ff
     je loc_4809c                                 ; 048095 7405
-    call sub_66dda                               ; 048097 e83eed0100
+    call info_panel_open                         ; 048097 e83eed0100
 loc_4809c:
     call select_game_surface                     ; 04809c e821410400
     xor ebx, ebx                                 ; 0480a1 31db
@@ -7342,7 +7343,7 @@ loc_4827b:
     call fade_palette_to                         ; 0482a8 e8eb92fcff
     call fade_ambient_audio                      ; 0482ad e831150100
     call stop_crowd_loop                         ; 0482b2 e8ca160100
-    call sub_8374d                               ; 0482b7 e891b40300
+    call speech_flush                            ; 0482b7 e891b40300
     xor edx, edx                                 ; 0482bc 31d2
     mov dword ptr [pause_requested], edx         ; 0482be 8915144e0c00
     mov eax, 0xffffffff                          ; 0482c4 b8ffffffff
@@ -7362,7 +7363,7 @@ loc_482cb:
     call fade_palette_to                         ; 0482f6 e89d92fcff
 loc_482fb:
     call stop_crowd_loop                         ; 0482fb e881160100
-    call sub_8374d                               ; 048300 e848b40300
+    call speech_flush                            ; 048300 e848b40300
     xor eax, eax                                 ; 048305 31c0
 loc_48307:
     pop ebp                                      ; 048307 5d
@@ -7378,7 +7379,7 @@ loc_48308:
 ; ====================================================================================================
 ; match_sequence  [0x4830e, 37 bytes, 10 instructions]
 ; runs the anthem / intro sequence then the game
-; called by: sub_13e8f, sub_13fa7
+; called by: play_match_from_start, play_demo_match
 ; ====================================================================================================
 match_sequence:
     push 4                                       ; 04830e 6804000000
@@ -7785,10 +7786,10 @@ loc_48784:
 
 
 ; ====================================================================================================
-; sub_48789  [0x48789, 80 bytes, 28 instructions]
+; three_stars_add_unique  [0x48789, 80 bytes, 28 instructions]
 ; called by: compute_three_stars
 ; ====================================================================================================
-sub_48789:
+three_stars_add_unique:
     push 0xc                                     ; 048789 680c000000
     call __CHK                                   ; 04878e e8b9410400
     push ecx                                     ; 048793 51
@@ -7825,10 +7826,10 @@ loc_487ba:
 
 
 ; ====================================================================================================
-; sub_487d9  [0x487d9, 98 bytes, 37 instructions]
+; player_entity_dressed  [0x487d9, 98 bytes, 37 instructions]
 ; called by: compare_player_stats
 ; ====================================================================================================
-sub_487d9:
+player_entity_dressed:
     push 0xc                                     ; 0487d9 680c000000
     call __CHK                                   ; 0487de e869410400
     push ebx                                     ; 0487e3 53
@@ -8027,11 +8028,11 @@ loc_489a5:
 loc_489b0:
     mov edx, ebp                                 ; 0489b0 89ea
     mov eax, edi                                 ; 0489b2 89f8
-    call sub_487d9                               ; 0489b4 e820feffff
+    call player_entity_dressed                   ; 0489b4 e820feffff
     mov ecx, eax                                 ; 0489b9 89c1
     mov edx, dword ptr [esp + 4]                 ; 0489bb 8b542404
     mov eax, ebx                                 ; 0489bf 89d8
-    call sub_487d9                               ; 0489c1 e813feffff
+    call player_entity_dressed                   ; 0489c1 e813feffff
     xor ecx, eax                                 ; 0489c6 31c1
     je loc_489e2                                 ; 0489c8 7418
     test eax, eax                                ; 0489ca 85c0
@@ -8205,7 +8206,7 @@ loc_48afd:
     sar ebx, 0x10                                ; 048b8b c1fb10
     movsx eax, di                                ; 048b8e 0fbfc7
     mov edx, esi                                 ; 048b91 89f2
-    call sub_48789                               ; 048b93 e8f1fbffff
+    call three_stars_add_unique                  ; 048b93 e8f1fbffff
     add edi, eax                                 ; 048b98 01c7
 loc_48b9a:
     xor ecx, ecx                                 ; 048b9a 31c9
@@ -8260,7 +8261,7 @@ loc_48c0a:
     add esi, 0x19                                ; 048c41 83c619
     movsx ebx, si                                ; 048c44 0fbfde
     movsx eax, di                                ; 048c47 0fbfc7
-    call sub_48789                               ; 048c4a e83afbffff
+    call three_stars_add_unique                  ; 048c4a e83afbffff
     add edi, eax                                 ; 048c4f 01c7
 loc_48c51:
     inc ecx                                      ; 048c51 41
@@ -8338,7 +8339,7 @@ loc_48d1d:
     mov ecx, compare_player_stats                ; 048d31 b93b880400
     mov ebx, 4                                   ; 048d36 bb04000000
     mov eax, esp                                 ; 048d3b 89e0
-    call sub_9244c                               ; 048d3d e80a970400
+    call qsort                                   ; 048d3d e80a970400
     xor ecx, ecx                                 ; 048d42 31c9
     jmp loc_48ebf                                ; 048d44 e976010000
 
@@ -8376,7 +8377,7 @@ loc_48d49:
     movsx ebx, dx                                ; 048daa 0fbfda
     movsx edx, si                                ; 048dad 0fbfd6
     movsx eax, di                                ; 048db0 0fbfc7
-    call sub_48789                               ; 048db3 e8d1f9ffff
+    call three_stars_add_unique                  ; 048db3 e8d1f9ffff
     add edi, eax                                 ; 048db8 01c7
     cmp di, 3                                    ; 048dba 6683ff03
     jge loc_48eb3                                ; 048dbe 0f8def000000
@@ -8444,7 +8445,7 @@ loc_48dd0:
     mov eax, dword ptr [esp + 0xcc]              ; 048e7f 8b8424cc000000
     movsx edx, ax                                ; 048e86 0fbfd0
     movsx eax, di                                ; 048e89 0fbfc7
-    call sub_48789                               ; 048e8c e8f8f8ffff
+    call three_stars_add_unique                  ; 048e8c e8f8f8ffff
     add edi, eax                                 ; 048e91 01c7
     cmp di, 3                                    ; 048e93 6683ff03
     jge loc_48eb3                                ; 048e97 7d1a
@@ -8486,7 +8487,7 @@ loc_48ecf:
     movsx edx, ax                                ; 048ef3 0fbfd0
     movsx eax, di                                ; 048ef6 0fbfc7
     mov ebx, esi                                 ; 048ef9 89f3
-    call sub_48789                               ; 048efb e889f8ffff
+    call three_stars_add_unique                  ; 048efb e889f8ffff
     add edi, eax                                 ; 048f00 01c7
     cmp di, 3                                    ; 048f02 6683ff03
     jge loc_48eb3                                ; 048f06 7dab
@@ -8658,7 +8659,7 @@ loc_49095:
     mov word ptr [camera_target_x], bx           ; 049205 66891dac900c00
     mov word ptr [dword_c909a], cx               ; 04920c 66890d9a900c00
     mov word ptr [camera_target_y], cx           ; 049213 66890dae900c00
-    call sub_66dda                               ; 04921a e8bbdb0100
+    call info_panel_open                         ; 04921a e8bbdb0100
     call sequence_loop                           ; 04921f e80ff1ffff
     test eax, eax                                ; 049224 85c0
     jge loc_4922f                                ; 049226 7d07
@@ -8670,7 +8671,7 @@ loc_4922f:
     mov word ptr [word_cc0de], bx                ; 04923c 66891ddec00c00
     cmp byte ptr [sound_enabled], 0              ; 049243 803d30240d0000
     je loc_49256                                 ; 04924a 740a
-    call sub_837a8                               ; 04924c e857a50300
+    call speech_stop_channels                    ; 04924c e857a50300
     jmp loc_48308                                ; 049251 e9b2f0ffff
 
 loc_49256:
@@ -8679,10 +8680,10 @@ loc_49256:
 
 
 ; ====================================================================================================
-; sub_49260  [0x49260, 153 bytes, 55 instructions]
-; called by: sub_492f9
+; three_stars_skate_dir  [0x49260, 153 bytes, 55 instructions]
+; called by: three_stars_skate_to_spot
 ; ====================================================================================================
-sub_49260:
+three_stars_skate_dir:
     push 8                                       ; 049260 6808000000
     call __CHK                                   ; 049265 e8e2360400
     push ebx                                     ; 04926a 53
@@ -8749,10 +8750,10 @@ loc_492f7:
 
 
 ; ====================================================================================================
-; sub_492f9  [0x492f9, 359 bytes, 107 instructions]
+; three_stars_skate_to_spot  [0x492f9, 359 bytes, 107 instructions]
 ; called by: ai_three_stars
 ; ====================================================================================================
-sub_492f9:
+three_stars_skate_to_spot:
     push 0x10                                    ; 0492f9 6810000000
     call __CHK                                   ; 0492fe e849360400
     push ebx                                     ; 049303 53
@@ -8865,7 +8866,7 @@ loc_4944f:
     mov edx, dword ptr [ebx + 0x25]              ; 04944f 8b5325
     sar edx, 0x18                                ; 049452 c1fa18
     mov eax, ebx                                 ; 049455 89d8
-    call sub_49260                               ; 049457 e804feffff
+    call three_stars_skate_dir                   ; 049457 e804feffff
     pop edx                                      ; 04945c 5a
     pop ecx                                      ; 04945d 59
     pop ebx                                      ; 04945e 5b
@@ -8987,7 +8988,7 @@ loc_49598:
     mov ax, word ptr [ebx + 0x2c]                ; 0495a2 668b432c
     mov word ptr [dword_e03c0], ax               ; 0495a6 66a3c0030e00
     mov eax, ebx                                 ; 0495ac 89d8
-    call sub_492f9                               ; 0495ae e846fdffff
+    call three_stars_skate_to_spot               ; 0495ae e846fdffff
 loc_495b3:
     pop edi                                      ; 0495b3 5f
     pop edx                                      ; 0495b4 5a

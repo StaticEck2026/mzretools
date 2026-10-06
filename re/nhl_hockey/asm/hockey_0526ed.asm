@@ -9477,10 +9477,10 @@ loc_59485:
 
 
 ; ====================================================================================================
-; sub_59493  [0x59493, 31 bytes, 12 instructions]
+; load_sound_data  [0x59493, 31 bytes, 12 instructions]
 ; called by: load_patch_file, load_timbre_file, music_load_kms
 ; ====================================================================================================
-sub_59493:
+load_sound_data:
     push 0x14                                    ; 059493 6814000000
     call __CHK                                   ; 059498 e8af340300
     push ebx                                     ; 05949d 53
@@ -9488,7 +9488,7 @@ sub_59493:
     mov ebx, dword ptr [dword_ccc94]             ; 05949f 8b1d94cc0c00
     push ebx                                     ; 0594a5 53
     push edx                                     ; 0594a6 52
-    call sub_8e8b8                               ; 0594a7 e80c540300
+    call loadfile_data                           ; 0594a7 e80c540300
 loc_594ac:
     add esp, 8                                   ; 0594ac 83c408
     pop ecx                                      ; 0594af 59
@@ -9497,10 +9497,10 @@ loc_594ac:
 
 
 ; ====================================================================================================
-; sub_594b2  [0x594b2, 27 bytes, 9 instructions]
+; load_sound_file_try  [0x594b2, 27 bytes, 9 instructions]
 ; called by: loadpatches, load_timbre_file, loadsound
 ; ====================================================================================================
-sub_594b2:
+load_sound_file_try:
     push 0x14                                    ; 0594b2 6814000000
     call __CHK                                   ; 0594b7 e890340300
     push ebx                                     ; 0594bc 53
@@ -9508,7 +9508,7 @@ sub_594b2:
     mov ebx, dword ptr [dword_ccc94]             ; 0594be 8b1d94cc0c00
     push ebx                                     ; 0594c4 53
     push edx                                     ; 0594c5 52
-    call sub_8e908                               ; 0594c6 e83d540300
+    call loadfile_try                            ; 0594c6 e83d540300
     jmp loc_594ac                                ; 0594cb ebdf
 
 
@@ -9617,12 +9617,12 @@ loc_595cb:
     mov al, byte ptr [byte_d2439]                ; 0595da a039240d00
     xor ebx, ebx                                 ; 0595df 31db
     mov edx, 8                                   ; 0595e1 ba08000000
-    call sub_8fdb2                               ; 0595e6 e8c7670300
+    call snd_queue_volume                        ; 0595e6 e8c7670300
     xor eax, eax                                 ; 0595eb 31c0
     mov al, byte ptr [byte_d2439]                ; 0595ed a039240d00
     mov ebx, 0x24                                ; 0595f2 bb24000000
     mov edx, 8                                   ; 0595f7 ba08000000
-    call sub_8fe4f                               ; 0595fc e84e680300
+    call snd_queue_note_off                      ; 0595fc e84e680300
     jmp loc_59652                                ; 059601 eb4f
 
 loc_59603:
@@ -9634,17 +9634,17 @@ loc_59603:
     mov al, byte ptr [byte_d2439]                ; 059612 a039240d00
     mov ebx, 0x7d                                ; 059617 bb7d000000
     mov edx, 8                                   ; 05961c ba08000000
-    call sub_8fd84                               ; 059621 e85e670300
+    call snd_queue_program                       ; 059621 e85e670300
     xor eax, eax                                 ; 059626 31c0
     mov al, byte ptr [byte_d2439]                ; 059628 a039240d00
     mov ebx, 0x24                                ; 05962d bb24000000
     mov edx, 8                                   ; 059632 ba08000000
-    call sub_8fe1c                               ; 059637 e8e0670300
+    call snd_queue_note_on                       ; 059637 e8e0670300
     xor eax, eax                                 ; 05963c 31c0
     mov al, byte ptr [byte_d2439]                ; 05963e a039240d00
     mov ebx, 0x40                                ; 059643 bb40000000
     mov edx, 8                                   ; 059648 ba08000000
-    call sub_8fde5                               ; 05964d e893670300
+    call snd_queue_bend                          ; 05964d e893670300
 loc_59652:
     test ecx, ecx                                ; 059652 85c9
     jle loc_596a3                                ; 059654 7e4d
@@ -9652,7 +9652,7 @@ loc_59652:
     mov al, byte ptr [byte_d2439]                ; 059658 a039240d00
     mov ebx, ecx                                 ; 05965d 89cb
     mov edx, 8                                   ; 05965f ba08000000
-    call sub_8fdb2                               ; 059664 e849670300
+    call snd_queue_volume                        ; 059664 e849670300
     cmp ecx, 0x7f                                ; 059669 83f97f
     jge loc_59677                                ; 05966c 7d09
     cmp dword ptr [dword_ccc8c], 0x7f            ; 05966e 833d8ccc0c007f
@@ -9673,7 +9673,7 @@ loc_5968b:
     xor eax, eax                                 ; 059692 31c0
     mov al, byte ptr [byte_d2439]                ; 059694 a039240d00
     mov edx, 8                                   ; 059699 ba08000000
-    call sub_8fde5                               ; 05969e e842670300
+    call snd_queue_bend                          ; 05969e e842670300
 loc_596a3:
     mov dword ptr [dword_ccc8c], ecx             ; 0596a3 890d8ccc0c00
     cmp dword ptr [dword_ccc90], 0               ; 0596a9 833d90cc0c0000
@@ -9684,18 +9684,18 @@ loc_596a3:
     mov al, byte ptr [byte_d2439]                ; 0596b8 a039240d00
     mov ebx, 0x7e                                ; 0596bd bb7e000000
     mov edx, 7                                   ; 0596c2 ba07000000
-    call sub_8fd84                               ; 0596c7 e8b8660300
+    call snd_queue_program                       ; 0596c7 e8b8660300
     xor eax, eax                                 ; 0596cc 31c0
     mov al, byte ptr [byte_d2439]                ; 0596ce a039240d00
     mov ebx, 0x24                                ; 0596d3 bb24000000
     mov edx, 7                                   ; 0596d8 ba07000000
-    call sub_8fe1c                               ; 0596dd e83a670300
+    call snd_queue_note_on                       ; 0596dd e83a670300
 loc_596e2:
     xor eax, eax                                 ; 0596e2 31c0
     mov al, byte ptr [byte_d2439]                ; 0596e4 a039240d00
     mov ebx, esi                                 ; 0596e9 89f3
     mov edx, 7                                   ; 0596eb ba07000000
-    call sub_8fdb2                               ; 0596f0 e8bd660300
+    call snd_queue_volume                        ; 0596f0 e8bd660300
     mov ebx, 3                                   ; 0596f5 bb03000000
     mov eax, esi                                 ; 0596fa 89f0
     mov edx, esi                                 ; 0596fc 89f2
@@ -9721,7 +9721,7 @@ loc_5972c:
     xor eax, eax                                 ; 05972c 31c0
     mov al, byte ptr [byte_d2439]                ; 05972e a039240d00
     mov edx, 7                                   ; 059733 ba07000000
-    call sub_8fde5                               ; 059738 e8a8660300
+    call snd_queue_bend                          ; 059738 e8a8660300
     mov dword ptr [dword_ccc90], esi             ; 05973d 893590cc0c00
 loc_59743:
     pop esi                                      ; 059743 5e
@@ -9733,7 +9733,7 @@ loc_59743:
 
 ; ====================================================================================================
 ; sound_pause_all  [0x59748, 155 bytes, 41 instructions]
-; called by: handle_hotkey, sub_1b982, fade_ambient_audio, replay_seek_frames, game_settings_menu, instant_replay
+; called by: handle_hotkey, free_match_resources, fade_ambient_audio, replay_seek_frames, game_settings_menu, instant_replay
 ; ====================================================================================================
 sound_pause_all:
     push 0x10                                    ; 059748 6810000000
@@ -9751,12 +9751,12 @@ sound_pause_all:
     mov al, byte ptr [byte_d2439]                ; 059776 a039240d00
     xor ebx, ebx                                 ; 05977b 31db
     mov edx, 8                                   ; 05977d ba08000000
-    call sub_8fdb2                               ; 059782 e82b660300
+    call snd_queue_volume                        ; 059782 e82b660300
     xor eax, eax                                 ; 059787 31c0
     mov al, byte ptr [byte_d2439]                ; 059789 a039240d00
     mov ebx, 0x24                                ; 05978e bb24000000
     mov edx, 8                                   ; 059793 ba08000000
-    call sub_8fe4f                               ; 059798 e8b2660300
+    call snd_queue_note_off                      ; 059798 e8b2660300
     xor ebx, ebx                                 ; 05979d 31db
     mov dword ptr [dword_ccc8c], ebx             ; 05979f 891d8ccc0c00
 loc_597a5:
@@ -9766,12 +9766,12 @@ loc_597a5:
     mov al, byte ptr [byte_d2439]                ; 0597b0 a039240d00
     xor ebx, ebx                                 ; 0597b5 31db
     mov edx, 7                                   ; 0597b7 ba07000000
-    call sub_8fdb2                               ; 0597bc e8f1650300
+    call snd_queue_volume                        ; 0597bc e8f1650300
     xor eax, eax                                 ; 0597c1 31c0
     mov al, byte ptr [byte_d2439]                ; 0597c3 a039240d00
     mov ebx, 0x24                                ; 0597c8 bb24000000
     mov edx, 7                                   ; 0597cd ba07000000
-    call sub_8fe4f                               ; 0597d2 e878660300
+    call snd_queue_note_off                      ; 0597d2 e878660300
     xor esi, esi                                 ; 0597d7 31f6
     mov dword ptr [dword_ccc90], esi             ; 0597d9 893590cc0c00
 loc_597df:
@@ -9783,7 +9783,7 @@ loc_597df:
 
 ; ====================================================================================================
 ; fade_ambient_audio  [0x597e3, 128 bytes, 37 instructions]
-; called by: sub_10f6d, handle_hotkey, game_loop, faceoff_wait_loop, three_stars_sequence, simulate_game_offscreen
+; called by: leave_match_video, handle_hotkey, game_loop, faceoff_wait_loop, three_stars_sequence, simulate_game_offscreen
 ; ====================================================================================================
 fade_ambient_audio:
     push 0x1c                                    ; 0597e3 681c000000
@@ -9832,7 +9832,7 @@ loc_5985d:
 
 ; ====================================================================================================
 ; sound_resume_all  [0x59863, 33 bytes, 9 instructions]
-; called by: handle_hotkey, play_game, sub_13e8f, sub_13fa7, match_sequence, game_settings_menu
+; called by: handle_hotkey, play_game, play_match_from_start, play_demo_match, match_sequence, game_settings_menu
 ; ====================================================================================================
 sound_resume_all:
     push 8                                       ; 059863 6808000000
@@ -9918,10 +9918,10 @@ loc_59942:
 
 
 ; ====================================================================================================
-; sub_59945  [0x59945, 60 bytes, 18 instructions]  <unreferenced>
+; stop_crowd_loop_fade  [0x59945, 60 bytes, 18 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_59945:
+stop_crowd_loop_fade:
     push 0xc                                     ; 059945 680c000000
     call __CHK                                   ; 05994a e8fd2f0300
     push ebx                                     ; 05994f 53
@@ -9945,7 +9945,7 @@ loc_5997e:
 
 ; ====================================================================================================
 ; stop_crowd_loop  [0x59981, 56 bytes, 15 instructions]
-; called by: sub_10f6d, handle_hotkey, game_loop, awards_screen, ea_sports_intro, credits_screen, boxscore_screen, team_select_screen2, faceoff_wait_loop, faceoff_resolve, ai_puck_faceoff2, play_sample_by_ptr (+1 more)
+; called by: leave_match_video, handle_hotkey, game_loop, awards_screen, ea_sports_intro, credits_screen, boxscore_screen, team_select_screen2, faceoff_wait_loop, faceoff_resolve, ai_puck_faceoff2, play_sample_by_ptr (+1 more)
 ; ====================================================================================================
 stop_crowd_loop:
     push 8                                       ; 059981 6808000000
@@ -10074,7 +10074,7 @@ announce_one_minute_left:
     je loc_59a7d                                 ; 059a98 74e3
     test byte ptr [game_flags], 0x10             ; 059a9a f605bb900c0010
     jne loc_59a7d                                ; 059aa1 75da
-    call sub_837a8                               ; 059aa3 e8009d0200
+    call speech_stop_channels                    ; 059aa3 e8009d0200
     jmp say_one_minute_left                      ; 059aa8 e9ffb90200
 
 
@@ -10088,7 +10088,7 @@ speech_busy:
     cmp byte ptr [sound_enabled], 0              ; 059ab7 803d30240d0000
     je loc_59acd                                 ; 059abe 740d
     test byte ptr [settings2], 1                 ; 059ac0 f60500540c0001
-    jne sub_836e4                                ; 059ac7 0f85179c0200
+    jne speech_clip_pending                      ; 059ac7 0f85179c0200
 loc_59acd:
     xor eax, eax                                 ; 059acd 31c0
     ret                                          ; 059acf c3
@@ -10110,7 +10110,7 @@ say_goal_wrapper:
     je loc_59b0a                                 ; 059aee 741a
     test byte ptr [game_flags], 0x10             ; 059af0 f605bb900c0010
     jne loc_59b0a                                ; 059af7 7511
-    call sub_837a8                               ; 059af9 e8aa9c0200
+    call speech_stop_channels                    ; 059af9 e8aa9c0200
     mov edi, dword ptr [esp + 0xc]               ; 059afe 8b7c240c
     push edi                                     ; 059b02 57
     mov eax, esi                                 ; 059b03 89f0
@@ -10134,7 +10134,7 @@ say_star_wrapper:
     je loc_59b3a                                 ; 059b23 7415
     test byte ptr [settings2], 1                 ; 059b25 f60500540c0001
     je loc_59b3a                                 ; 059b2c 740c
-    call sub_837a8                               ; 059b2e e8759c0200
+    call speech_stop_channels                    ; 059b2e e8759c0200
     mov eax, ecx                                 ; 059b33 89c8
     call say_star                                ; 059b35 e8d9b60200
 loc_59b3a:
@@ -10157,7 +10157,7 @@ say_penalty_wrapper:
     je loc_59b82                                 ; 059b52 742e
     test byte ptr [settings2], 1                 ; 059b54 f60500540c0001
     je loc_59b82                                 ; 059b5b 7425
-    call sub_837a8                               ; 059b5d e8469c0200
+    call speech_stop_channels                    ; 059b5d e8469c0200
     mov edi, dword ptr [esp + 0x20]              ; 059b62 8b7c2420
     push edi                                     ; 059b66 57
     mov ebp, dword ptr [esp + 0x20]              ; 059b67 8b6c2420
@@ -10190,7 +10190,7 @@ say_penalty_shot_wrapper:
     je loc_59bb3                                 ; 059b9c 7415
     test byte ptr [settings2], 1                 ; 059b9e f60500540c0001
     je loc_59bb3                                 ; 059ba5 740c
-    call sub_837a8                               ; 059ba7 e8fc9b0200
+    call speech_stop_channels                    ; 059ba7 e8fc9b0200
     mov eax, esi                                 ; 059bac 89f0
     call say_penalty_shot                        ; 059bae e86bb50200
 loc_59bb3:
@@ -10239,7 +10239,7 @@ say_period_score:
     je loc_59bfb                                 ; 059c0d 74ec
     test byte ptr [settings2], 1                 ; 059c0f f60500540c0001
     je loc_59bfb                                 ; 059c16 74e3
-    jmp sub_84a7d                                ; 059c18 e960ae0200
+    jmp say_period_score_bar                     ; 059c18 e960ae0200
 
 
 ; ====================================================================================================
@@ -10254,7 +10254,7 @@ say_nhl_intro:
     je loc_59bfb                                 ; 059c2e 74cb
     test byte ptr [settings2], 1                 ; 059c30 f60500540c0001
     je loc_59bfb                                 ; 059c37 74c2
-    jmp sub_846b4                                ; 059c39 e976aa0200
+    jmp say_nhl_int                              ; 059c39 e976aa0200
 
 
 ; ====================================================================================================
@@ -10269,7 +10269,7 @@ say_goodnight:
     je loc_59bfb                                 ; 059c4f 74aa
     test byte ptr [settings2], 1                 ; 059c51 f60500540c0001
     je loc_59bfb                                 ; 059c58 74a1
-    jmp sub_846c8                                ; 059c5a e969aa0200
+    jmp say_goodnite_int                         ; 059c5a e969aa0200
 
 
 ; ====================================================================================================
@@ -10284,7 +10284,7 @@ say_lineups:
     je loc_59bfb                                 ; 059c70 7489
     test byte ptr [settings2], 1                 ; 059c72 f60500540c0001
     je loc_59bfb                                 ; 059c79 7480
-    jmp sub_846dc                                ; 059c7b e95caa0200
+    jmp say_lineups_int                          ; 059c7b e95caa0200
 
 
 ; ====================================================================================================
@@ -10299,7 +10299,7 @@ say_elsenhl:
     je loc_59bfb                                 ; 059c91 0f8464ffffff
     test byte ptr [settings2], 1                 ; 059c97 f60500540c0001
     je loc_59bfb                                 ; 059c9e 0f8457ffffff
-    jmp sub_847ba                                ; 059ca4 e911ab0200
+    jmp say_elsenhl_int                          ; 059ca4 e911ab0200
 
 
 ; ====================================================================================================
@@ -10383,7 +10383,7 @@ speech_stop:
     cmp byte ptr [sound_enabled], 0              ; 059d5e 803d30240d0000
     je loc_59d70                                 ; 059d65 7409
 loc_59d67:
-    call sub_85507                               ; 059d67 e89bb70200
+    call speech_load_xbruce2                     ; 059d67 e89bb70200
     test eax, eax                                ; 059d6c 85c0
     je loc_59d67                                 ; 059d6e 74f7
 loc_59d70:
@@ -10418,7 +10418,7 @@ loc_59d97:
 ; ====================================================================================================
 ; set_animation  [0x59d9a, 33 bytes, 8 instructions]
 ; set_animation(entity, sequence)
-; called by: init_match, ai_anthem, ai_ref_anthem, three_stars_sequence, sub_49260, ai_three_stars, ai_get_cup, ai_puck_give_cup, ai_stanley_cup, ai_celebrate_goal, ai_exit_bench, ai_game_misconduct (+42 more)
+; called by: init_match, ai_anthem, ai_ref_anthem, three_stars_sequence, three_stars_skate_dir, ai_three_stars, ai_get_cup, ai_puck_give_cup, ai_stanley_cup, ai_celebrate_goal, ai_exit_bench, ai_game_misconduct (+42 more)
 ; ====================================================================================================
 set_animation:
     push 4                                       ; 059d9a 6804000000
@@ -10911,10 +10911,10 @@ loc_5a280:
 
 
 ; ====================================================================================================
-; sub_5a288  [0x5a288, 102 bytes, 39 instructions]
+; line_player_rating  [0x5a288, 102 bytes, 39 instructions]
 ; no references found
 ; ====================================================================================================
-sub_5a288:
+line_player_rating:
     cmp dx, 6                                    ; 05a288 6683fa06
     jge loc_5a2ad                                ; 05a28c 7d1f
     mov ebx, dword ptr [eax + 0xda]              ; 05a28e 8b98da000000
@@ -10995,7 +10995,7 @@ line_avg_energy:
     mov esi, eax                                 ; 05a31a 89c6
     mov ecx, edx                                 ; 05a31c 89d1
     cmp dx, 4                                    ; 05a31e 6683fa04
-    jge sub_5a288                                ; 05a322 0f8d60ffffff
+    jge line_player_rating                       ; 05a322 0f8d60ffffff
     movsx edx, dx                                ; 05a328 0fbfd2
     mov eax, edx                                 ; 05a32b 89d0
     shl eax, 2                                   ; 05a32d c1e002
@@ -11239,7 +11239,7 @@ stick_offset_from_frame:
 
 ; ====================================================================================================
 ; adjust_strategy  [0x5a581, 232 bytes, 64 instructions]
-; called by: sub_5a669, time_announcements
+; called by: period_strategy_init, time_announcements
 ; ====================================================================================================
 adjust_strategy:
     push 0x10                                    ; 05a581 6810000000
@@ -11320,10 +11320,10 @@ loc_5a658:
 
 
 ; ====================================================================================================
-; sub_5a669  [0x5a669, 275 bytes, 60 instructions]
+; period_strategy_init  [0x5a669, 275 bytes, 60 instructions]
 ; called by: period_init
 ; ====================================================================================================
-sub_5a669:
+period_strategy_init:
     push 0x14                                    ; 05a669 6814000000
     call __CHK                                   ; 05a66e e8d9220300
     push ebx                                     ; 05a673 53

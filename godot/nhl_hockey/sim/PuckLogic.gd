@@ -2,7 +2,7 @@ class_name PuckLogic
 ## Everything that happens between the puck and the players: carrying, picking up, deflections,
 ## goalie saves, passes, shots, body checks and hooks. Ports of puck_update, update_carrier,
 ## puck_check_players, puck_player_interaction, goalie_save, puck_hits_player, attach_puck_to_stick,
-## do_pass, sub_551cf (pass lead), start_shot, shot_control, do_shot, body_check, hook_button and
+## do_pass, pass_lead (pass lead), start_shot, shot_control, do_shot, body_check, hook_button and
 ## the collision resolution of collide_pair (resolve_body_check, knock_down).
 
 # --------------------------------------------------------------------------------------------
@@ -110,7 +110,7 @@ static func update_carrier(sim: Sim, c: Entity) -> void:
 		if diff >= 0:          # no icing for the short handed team
 			sim.icing_flags |= 4
 
-## sub_4dd51: the carrier entered the offensive zone with team mates already inside
+## carrier_zone_entry: the carrier entered the offensive zone with team mates already inside
 static func carrier_in_offensive_zone(sim: Sim, c: Entity) -> bool:
 	if sim.no_stats or not sim.opt_two_line_pass:
 		return false
@@ -124,7 +124,7 @@ static func carrier_in_offensive_zone(sim: Sim, c: Entity) -> bool:
 		return sim.last_touch_y < -0x4d and c.yi >= 0
 	return sim.last_touch_y > 0x4d and c.yi <= 0
 
-## sub_4dcdd: offside when the carrier crosses the blue line with the flag set
+## offside_entry_check: offside when the carrier crosses the blue line with the flag set
 static func offside_entry_check(sim: Sim, c: Entity) -> bool:
 	if not sim.opt_offsides or sim.penalty_shot:
 		return false
@@ -396,7 +396,7 @@ static func attach_puck_to_stick(sim: Sim, e: Entity) -> void:
 		e.flags |= Entity.F_BUSY
 		Anim.set_animation(e, 0x84b)    # stung by the puck
 
-## sub_56f5a: a player becomes the carrier
+## take_puck: a player becomes the carrier
 static func take_puck(sim: Sim, e: Entity) -> void:
 	sim.puck_carrier = e.slot
 	var team := sim.team_of(e)
@@ -427,7 +427,7 @@ static func take_puck(sim: Sim, e: Entity) -> void:
 		shot_landed(sim)
 		Rules.end_penalty_shot(sim)
 		e.timer_b = 5 if e.anim == 0x181 else 0x8c   # time until the goalie must play the puck
-	# sub_5b1ce: the user follows the puck to the new carrier of his team
+	# follow_puck_user_switch: the user follows the puck to the new carrier of his team
 	if e.slot != sim.user1_slot and e.slot != sim.user2_slot:
 		var t := e.team + 1
 		if sim.user1_team == t and sim.user1_slot >= 0:
@@ -435,7 +435,7 @@ static func take_puck(sim: Sim, e: Entity) -> void:
 		elif sim.user2_team == t and sim.user2_slot >= 0:
 			sim.user2_slot = sim.find_switch_target(e.slot, sim.user2_slot)
 
-## sub_55d28: a shot reached a player or the net: shot statistics
+## shot_landed: a shot reached a player or the net: shot statistics
 static func shot_landed(sim: Sim) -> void:
 	if not sim.shot_in_flight:
 		return
@@ -455,7 +455,7 @@ static func shot_landed(sim: Sim) -> void:
 			if g >= 0:
 				opp.goalie_stats[g][1] += 1
 
-## sub_57a3e: the puck squirts away from a failed take
+## release_puck_random: the puck squirts away from a failed take
 static func release_puck_random(sim: Sim) -> void:
 	sim.puck_carrier = -1
 	var puck := sim.puck
@@ -464,7 +464,7 @@ static func release_puck_random(sim: Sim) -> void:
 	puck.vz = sim.random(0x1000)
 	puck_spin(sim, puck)
 
-## sub_4dfa4 / sub_4d907: puck frame bookkeeping (flat disc vs rolling)
+## puck_spin / puck_flat: puck frame bookkeeping (flat disc vs rolling)
 static func puck_spin(sim: Sim, puck: Entity) -> void:
 	if ((puck.vx >> 16) + (puck.vy >> 16)) < 0x14 and absi(puck.vx) + absi(puck.vy) < 0x1400:
 		puck_flat(sim, puck)
@@ -480,7 +480,7 @@ static func puck_flat(_sim: Sim, puck: Entity) -> void:
 	puck.anim_pos = 0
 	puck.anim_hold = -1
 
-## sub_54990: a player in front of the net is pushed off the goalie
+## net_push_off: a player in front of the net is pushed off the goalie
 static func net_pushed_off(sim: Sim, e: Entity) -> bool:
 	if sim.random(0x20) != 0:
 		return false
@@ -494,7 +494,7 @@ static func net_pushed_off(sim: Sim, e: Entity) -> bool:
 	return true
 
 # --------------------------------------------------------------------------------------------
-# passing (pass_button, do_pass, pass_to_entity, sub_551cf)
+# passing (pass_button, do_pass, pass_to_entity, pass_lead)
 # --------------------------------------------------------------------------------------------
 
 ## pass_button (0x50a1a): the pass goes out in the direction held when A is released
@@ -582,7 +582,7 @@ static func pass_to_entity(sim: Sim, e: Entity, target: Entity) -> void:
 	sim.puck.vx = sim.random(spread)
 	sim.puck.vy = sim.random(spread)
 
-## sub_551cf: lead the pass to where the receiver will be
+## pass_lead: lead the pass to where the receiver will be
 static func pass_lead(sim: Sim, e: Entity, target: Entity) -> void:
 	var puck := sim.puck
 	if not sim.no_stats:
@@ -622,7 +622,7 @@ static func pass_lead(sim: Sim, e: Entity, target: Entity) -> void:
 	puck.vx = (lx << 16) / tt
 	puck.vy = (ly << 16) / tt
 
-## sub_54c09: is the lane to the receiver open enough for a direct pass
+## pass_lane_ok: is the lane to the receiver open enough for a direct pass
 static func pass_lane_ok(sim: Sim, e: Entity, target: Entity) -> bool:
 	if e.line_slot == 0:
 		return false

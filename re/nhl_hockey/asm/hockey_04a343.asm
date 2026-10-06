@@ -6125,7 +6125,7 @@ loc_4e837:
     sar eax, 0x10                                ; 04e886 c1f810
     cmp eax, -1                                  ; 04e889 83f8ff
     je loc_4e8ea                                 ; 04e88c 745c
-    call sub_66dda                               ; 04e88e e847850100
+    call info_panel_open                         ; 04e88e e847850100
     mov eax, 1                                   ; 04e893 b801000000
     pop edx                                      ; 04e898 5a
     pop ecx                                      ; 04e899 59
@@ -6144,7 +6144,7 @@ loc_4e89b:
     je loc_4e8ea                                 ; 04e8be 742a
     mov eax, 9                                   ; 04e8c0 b809000000
     call play_speech                             ; 04e8c5 e847b10000
-    call sub_66dda                               ; 04e8ca e80b850100
+    call info_panel_open                         ; 04e8ca e80b850100
     mov eax, edx                                 ; 04e8cf 89d0
     pop edx                                      ; 04e8d1 5a
     pop ecx                                      ; 04e8d2 59
@@ -6718,7 +6718,7 @@ loc_4efea:
     mov si, word ptr [ref_infraction]            ; 04f02a 668b35d6900c00
     cmp si, 4                                    ; 04f031 6683fe04
     jne loc_4f095                                ; 04f035 755e
-    call sub_62c37                               ; 04f037 e8fb3b0100
+    call ref_queue_infraction_event              ; 04f037 e8fb3b0100
     test ax, ax                                  ; 04f03c 6685c0
     jne loc_4f0c6                                ; 04f03f 0f8581000000
     mov eax, dword ptr [ref_infraction]          ; 04f045 a1d6900c00
@@ -6737,7 +6737,7 @@ loc_4efea:
     cmp eax, -1                                  ; 04f07d 83f8ff
     je loc_4f0c6                                 ; 04f080 7444
     mov word ptr [dword_e9a9e], 1                ; 04f082 66c7059e9a0e0001..
-    call sub_66dda                               ; 04f08b e84a7d0100
+    call info_panel_open                         ; 04f08b e84a7d0100
     jmp loc_4f5b7                                ; 04f090 e922050000
 
 loc_4f095:
@@ -7847,7 +7847,7 @@ loc_4fd42:
 
 ; ====================================================================================================
 ; flush_key_events  [0x4fd47, 27 bytes, 8 instructions]
-; called by: run_sim_steps, game_loop, play_game, reset_game_state, demo_game, sub_1b982, boxscore_screen, init_match, three_stars_sequence, dump_stats_log, simulate_game_offscreen
+; called by: run_sim_steps, game_loop, play_game, reset_game_state, demo_game, free_match_resources, boxscore_screen, init_match, three_stars_sequence, dump_stats_log, simulate_game_offscreen
 ; ====================================================================================================
 flush_key_events:
     push 8                                       ; 04fd47 6808000000
@@ -9650,10 +9650,11 @@ loc_51092:
 
 
 ; ====================================================================================================
-; sub_510a9  [0x510a9, 108 bytes, 39 instructions]
+; reset_bench_slots  [0x510a9, 108 bytes, 39 instructions]
+; the dressed skaters of both teams in the bench slots
 ; called by: period_cleanup
 ; ====================================================================================================
-sub_510a9:
+reset_bench_slots:
     push 0x14                                    ; 0510a9 6814000000
     call __CHK                                   ; 0510ae e899b80300
     push ebx                                     ; 0510b3 53
@@ -9703,10 +9704,10 @@ loc_5110b:
 
 
 ; ====================================================================================================
-; sub_51115  [0x51115, 159 bytes, 56 instructions]
+; bench_player_slot  [0x51115, 159 bytes, 56 instructions]
 ; called by: ai_bench_wait
 ; ====================================================================================================
-sub_51115:
+bench_player_slot:
     push 0x20                                    ; 051115 6820000000
     call __CHK                                   ; 05111a e82db80300
     push ebx                                     ; 05111f 53
@@ -10200,7 +10201,7 @@ loc_51606:
     mov eax, ebx                                 ; 05163c 89d8
     call set_animation                           ; 05163e e857870000
     mov eax, ebx                                 ; 051643 89d8
-    call sub_51115                               ; 051645 e8cbfaffff
+    call bench_player_slot                       ; 051645 e8cbfaffff
     pop edi                                      ; 05164a 5f
     pop edx                                      ; 05164b 5a
     pop ecx                                      ; 05164c 59
@@ -10687,7 +10688,7 @@ loc_51c9a:
     mov ax, word ptr [input_enabled]             ; 051ca2 66a10c4d0c00
     mov word ptr [word_e9aa0], ax                ; 051ca8 66a3a09a0e00
     mov dword ptr [input_enabled], ebp           ; 051cae 892d0c4d0c00
-    call sub_61b85                               ; 051cb4 e8ccfe0000
+    call gsummary_flush                          ; 051cb4 e8ccfe0000
     mov eax, dword ptr [dword_e9a9e]             ; 051cb9 a19e9a0e00
     sar eax, 0x10                                ; 051cbe c1f810
     mov dword ptr [input_enabled], eax           ; 051cc1 a30c4d0c00

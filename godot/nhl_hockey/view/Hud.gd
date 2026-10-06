@@ -15,7 +15,7 @@ const SCORE_X := [[0x2e, 0x38], [0xff, 0x109]]   # tens / ones per team (draw_sc
 const CLOCK_X := [0x8c, 0x95, 0xa1, 0xaa]          # draw_clock_full
 const PANEL_X := [64, 184]                         # 'hlin' / 'vlin' home position
 const BARS_X := [0x4a, 0xc1]                       # draw_line_box
-const ENERGY_X := [0x2b, 0xfc]                     # sub_15707: energy of the current line
+const ENERGY_X := [0x2b, 0xfc]                     # draw_energy_bar: energy of the current line
 const PENALTY_X := [0x48, 0xbf]                    # draw_penalty_clocks
 
 var sim: Sim
@@ -144,7 +144,7 @@ func _draw_line_bars(team: Team, x0: int) -> void:
 		draw_rect(Rect2(x0 + 0x20, y, w, 3), c)
 		y += 6
 
-## draw_energy_bar (sub_15707): the energy of the players on the ice (0..8 pixels)
+## draw_energy_bar: the energy of the players on the ice (0..8 pixels)
 func _draw_energy(team: Team, x0: int) -> void:
 	var w := clampi(Lines.team_avg_energy(sim, team) / 500, 0, 8)
 	var c := palette.colors[0x67]

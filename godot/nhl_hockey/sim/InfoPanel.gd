@@ -2,7 +2,7 @@ class_name InfoPanel
 ## The scoreboard panel of the stoppages: it opens for a goal, a penalty, an injury or the three
 ## stars, shows up to five lines of text and may play a short clip of the crowd or the referee
 ## (GOAL, SIREN, CLAP, HOOK, ... from Tables.announcer_ppv_names). The referee waits for it, which
-## is what gives a goal celebration its length. Ports of sub_66dda (open), load_cutscene_clip,
+## is what gives a goal celebration its length. Ports of info_panel_open (open), load_cutscene_clip,
 ## update_announcer (the panel part), show_penalty, announce_goal, record_penalty and
 ## announce_injury; draw_penalty_box_overlay draws it (view/Hud.gd).
 
@@ -23,7 +23,7 @@ const CLIP_SAVE := 8
 const CLIP_CROSS_CHECK := 9
 const CLIP_GUILTY := 10
 
-## sub_66dda: opens the panel (or starts the clip when it was held open)
+## info_panel_open: opens the panel (or starts the clip when it was held open)
 static func open(sim: Sim) -> void:
 	sim.panel = OPEN if sim.panel == HELD else 0
 

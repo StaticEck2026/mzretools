@@ -56,7 +56,7 @@ copies 0x300 bytes from +0x10 straight to the VGA DAC.
 
 ### Sprite frames (`blit_sprite`, `blit_rle_frame`)
 
-All `.PPV` frames use the run length code (`sub_b4cd8`): a count byte `c` followed by one colour byte when
+All `.PPV` frames use the run length code (`blit_rle_frame`): a count byte `c` followed by one colour byte when
 `1 <= c <= 0x7f` (the colour repeated `c` times; colour `0xff` is a run of `c` transparent pixels which the
 blitter skips), `0x100 - c` literal colour bytes when `c >= 0x80`, and `c == 0` ends the frame. Rows are not
 aligned, the stream is simply `width * height` pixels long.

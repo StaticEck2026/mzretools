@@ -2,7 +2,7 @@ class_name PanelView
 extends Node2D
 ## The info panel of the stoppages (draw_penalty_box_overlay, 0x665ad): a 123x75 box at (12, 12) of
 ## the ice view that zooms open in 16 steps (and closed after 600), filled with colour 0x10 and a
-## dotted colour 9 (sub_65ca8 plots every second pixel of every second row) inside a 4 pixel black
+## dotted colour 9 (draw_stipple_rect plots every second pixel of every second row) inside a 4 pixel black
 ## frame. It shows up to five centred lines of text (InfoPanel texts) in the two halves of the
 ## dithered score font (SCOR3B in colour 0x25, SCOR2B in 0x27 at the same position), or the frame
 ## of the running clip (the PPV of Tables.announcer_ppv_names). SAVED draws its frames 0x12..0x14
@@ -85,7 +85,7 @@ func _draw() -> void:
 		return
 	_draw_text()
 
-## sub_65ca8: every second pixel of every second row (from the second row)
+## draw_stipple_rect: every second pixel of every second row (from the second row)
 func _dots(r: Rect2, color: Color) -> void:
 	var key := "%d|%d|%s" % [int(r.size.x), int(r.size.y), color.to_html()]
 	if not dots_cache.has(key):

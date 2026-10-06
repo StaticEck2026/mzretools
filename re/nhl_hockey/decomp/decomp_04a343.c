@@ -3578,7 +3578,7 @@ LAB_0004e7ba:
          (crowd_noise._2_2_ < 0x2bd)) {
         load_cutscene_clip(0);
         if (dword_cbeca >> 0x10 != -1) {
-          sub_66dda();
+          info_panel_open();
           return CONCAT44(unaff_EDX,1);
         }
       }
@@ -3587,7 +3587,7 @@ LAB_0004e7ba:
       load_cutscene_clip(2);
       if (dword_cbeca >> 0x10 != -1) {
         play_speech(9);
-        sub_66dda();
+        info_panel_open();
         return CONCAT44(unaff_EDX,extraout_EDX_00);
       }
     }
@@ -3915,7 +3915,7 @@ void __watcall ai_ref_pickup_puck(int param_1)
         *(undefined2 *)(param_1 + 0x32) = 0;
         set_animation(param_1,0xa5b);
         if (ref_infraction == 4) {
-          sVar2 = sub_62c37();
+          sVar2 = ref_queue_infraction_event();
           if (sVar2 == 0) {
             iVar7 = (_ref_infraction >> 0x10) * 0x80;
             if (((&unk_df87f)[iVar7] == '\0') || ((short)dword_e9a9e != 0)) goto LAB_0004f0b9;
@@ -3923,7 +3923,7 @@ void __watcall ai_ref_pickup_puck(int param_1)
             load_cutscene_clip(8);
             if (dword_cbeca >> 0x10 != -1) {
               dword_e9a9e = CONCAT22(dword_e9a9e._2_2_,1);
-              sub_66dda();
+              info_panel_open();
               return;
             }
           }
@@ -5590,10 +5590,10 @@ void __watcall ai_pass_receiver(int param_1)
 
 
 // ================================================================================================
-// sub_510a9 @ 0x510a9 [__watcall]
+// reset_bench_slots @ 0x510a9 [__watcall]
 // ================================================================================================
 
-void __watcall sub_510a9(void)
+void __watcall reset_bench_slots(void)
 
 {
   int iVar1;
@@ -5622,10 +5622,10 @@ void __watcall sub_510a9(void)
 
 
 // ================================================================================================
-// sub_51115 @ 0x51115 [__watcall]
+// bench_player_slot @ 0x51115 [__watcall]
 // ================================================================================================
 
-void __watcall sub_51115(int param_1)
+void __watcall bench_player_slot(int param_1)
 
 {
   int iVar1;
@@ -5937,7 +5937,7 @@ void __watcall ai_bench_wait(int param_1)
           }
           *(undefined2 *)(param_1 + 0x26) = 100;
           set_animation(param_1,0x289);
-          sub_51115(param_1);
+          bench_player_slot(param_1);
           return;
         }
       }
@@ -6249,7 +6249,7 @@ void __watcall ai_puck_faceoff2(int param_1)
   dword_e9a9e = CONCAT22(input_enabled,(undefined2)dword_e9a9e);
   _input_enabled = 0;
   uStackY_1c = 0x51cb9;
-  sub_61b85();
+  gsummary_flush();
   _input_enabled = dword_e9a9e >> 0x10;
   _word_cbec8 = 0xffff;
   word_cbece = 0xffff;

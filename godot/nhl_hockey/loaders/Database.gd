@@ -1,6 +1,6 @@
 class_name Database
-## The team and player databases as read by the roster loader of HOCKEY.EXE (sub_1c26c /
-## sub_1c3f6 / sub_1c0af, see re/nhl_hockey/FORMATS.md):
+## The team and player databases as read by the roster loader of HOCKEY.EXE (db_open_files /
+## db_load_team_roster / db_read_player, see re/nhl_hockey/FORMATS.md):
 ##  TEAMS.DB  28 records of 0x2e8 bytes: +0 abbreviation (5), +5 city (21), +0x1a name (13),
 ##            +0x4c 25 x i32 skater keys, +0xb0 3 x i32 goalie keys (-1 = empty), +0xbc lines:
 ##            4 forward lines x 3 (LW C RW), 3 defence pairs x 2, 2 power play units x 5,

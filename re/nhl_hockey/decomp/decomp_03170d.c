@@ -3,11 +3,11 @@
 #include "prototypes.h"
 
 // ================================================================================================
-// sub_3170d @ 0x3170d [__watcall]
+// text_entry_loop @ 0x3170d [__watcall]
 // ================================================================================================
 
 int __watcall
-sub_3170d(int param_1,int param_2,undefined4 param_3,undefined4 unaff_ECX,undefined4 param_5,
+text_entry_loop(int param_1,int param_2,undefined4 param_3,undefined4 unaff_ECX,undefined4 param_5,
          code *param_6,int param_7,uint param_8)
 
 {
@@ -28,11 +28,11 @@ sub_3170d(int param_1,int param_2,undefined4 param_3,undefined4 unaff_ECX,undefi
   dword_dd690 = 0;
   dword_dd698 = param_1;
   dword_dd6a4 = unaff_ECX;
-  sub_31599(param_8);
+  text_entry_draw(param_8);
   dword_dd68c = 1;
   dword_dd69c = 1;
   bVar1 = false;
-  sub_314b4(param_8);
+  text_entry_draw_cursor(param_8);
   settimeout(param_7);
   settimeout2(4);
 LAB_00031901:
@@ -53,29 +53,29 @@ LAB_00031901:
       if ((iStack_10 == 0xd) || ((iStack_10 == 0x1b && ((param_8 & 4) != 0)))) goto LAB_00031a9f;
       if (iStack_10 == 0x4d00) {
         if (*(char *)(param_1 + dword_dd690) == '\0') goto LAB_00031901;
-        sub_314b4(param_8);
+        text_entry_draw_cursor(param_8);
         if (dword_dd690 < param_2) {
           dword_dd690 = dword_dd690 + 1;
         }
       }
       else if (iStack_10 == 0x4b00) {
-        sub_314b4(param_8);
+        text_entry_draw_cursor(param_8);
         if (dword_dd690 != 0) {
           dword_dd690 = dword_dd690 + -1;
         }
       }
       else if (iStack_10 == 0x4700) {
-        sub_314b4(param_8);
+        text_entry_draw_cursor(param_8);
         dword_dd690 = 0;
       }
       else if (iStack_10 == 0x4f00) {
-        sub_314b4(param_8);
+        text_entry_draw_cursor(param_8);
         for (dword_dd690 = 0; *(char *)(param_1 + dword_dd690) != '\0';
             dword_dd690 = dword_dd690 + 1) {
         }
       }
       else if (iStack_10 == 0x5200) {
-        sub_314b4(param_8);
+        text_entry_draw_cursor(param_8);
         if (bVar1) {
           bVar1 = false;
           dword_dd68c = 1;
@@ -89,7 +89,7 @@ LAB_00031901:
         if (iStack_10 == 0x5300) {
           if ((param_2 <= dword_dd690) || (*(char *)(param_1 + dword_dd690) == '\0'))
           goto LAB_00031901;
-          sub_314b4(param_8);
+          text_entry_draw_cursor(param_8);
           for (iVar4 = dword_dd690; iVar4 < param_2; iVar4 = iVar4 + 1) {
             *(undefined *)(param_1 + iVar4) = *(undefined *)(param_1 + 1 + iVar4);
           }
@@ -99,7 +99,7 @@ LAB_000318ea:
         else {
           if (iStack_10 == 8) {
             if (dword_dd690 != 0) {
-              sub_314b4(param_8);
+              text_entry_draw_cursor(param_8);
               iVar4 = dword_dd690 + -1;
               dword_dd690 = iVar4;
               for (; iVar4 < param_2; iVar4 = iVar4 + 1) {
@@ -135,7 +135,7 @@ LAB_000318ea:
 LAB_000319c6:
             if (!bVar5 && bVar6 == iVar4 < 0) goto LAB_00031901;
           }
-          sub_314b4(param_8);
+          text_entry_draw_cursor(param_8);
           if (bVar1) {
             for (iVar4 = param_2 + -2; dword_dd690 <= iVar4; iVar4 = iVar4 + -1) {
               *(undefined *)(param_1 + 1 + iVar4) = *(undefined *)(param_1 + iVar4);
@@ -149,19 +149,19 @@ LAB_000319c6:
             dword_dd690 = dword_dd690 + 1;
           }
         }
-        sub_31599(param_8);
+        text_entry_draw(param_8);
       }
-      sub_314b4(param_8);
+      text_entry_draw_cursor(param_8);
       goto LAB_00031901;
     }
     settimeout2(4);
     uVar2 = dword_dd69c;
     dword_dd69c = 1;
-    sub_314b4(param_8,uVar2);
+    text_entry_draw_cursor(param_8,uVar2);
     dword_dd69c = (uint)(extraout_EDX == 0);
-    if ((param_7 != 0) && (iVar4 = sub_b39a7(), iVar4 != 0)) {
+    if ((param_7 != 0) && (iVar4 = timeout_reached(), iVar4 != 0)) {
 LAB_00031a9f:
-      sub_314b4(param_8);
+      text_entry_draw_cursor(param_8);
       return iStack_10;
     }
   } while( true );
@@ -246,7 +246,7 @@ longlong __watcall frontend_main_menu(undefined4 param_1,uint unaff_EDX)
   local_bc[0] = 0x31ba5;
   (*(code *)mouse_update_callback)();
   local_bc[0] = 0x31baa;
-  sub_8b85b();
+  setup_pause_menu_teams();
   local_bc[0] = 0x31bb1;
   set_menu_mode(0);
   dword_c65c0 = hub_sports_central;
@@ -701,10 +701,10 @@ LAB_00031e85:
 
 
 // ================================================================================================
-// sub_3270b @ 0x3270b [__watcall]
+// menu_exit @ 0x3270b [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_3270b(void)
+undefined4 __watcall menu_exit(void)
 
 {
   __CHK(4);
@@ -855,7 +855,7 @@ void __watcall apply_settings(int *param_1)
   else {
     sfx_enable();
   }
-  sub_8b85b();
+  setup_pause_menu_teams();
   if (dword_c53fb == 0) {
     pcVar1 = (&team_abbrev)[user2_team._2_2_];
     if (pcVar1[2] == '\0') {
@@ -911,8 +911,8 @@ void __watcall load_game_set(int *param_1)
   else {
     make_path(acStack_44,&league_dir,&aGame,&aSet);
   }
-  iVar1 = sub_142e7(acStack_44);
-  if ((iVar1 == 0) && (uVar2 = sub_106c8(), uVar2 < 0x75)) {
+  iVar1 = file_exists_rd(acStack_44);
+  if ((iVar1 == 0) && (uVar2 = disk_free_bytes(), uVar2 < 0x75)) {
     uStack_1c = 0x140;
     local_20 = 0xf0;
     setmousepos(0x140,0xf0);
@@ -932,7 +932,7 @@ void __watcall load_game_set(int *param_1)
   *(undefined4 *)((int)param_1 + 0x69) = dword_c540f;
   *(undefined4 *)((int)param_1 + 0x6d) = dword_c5413;
   *(undefined4 *)((int)param_1 + 0x71) = dword_c5417;
-  iVar1 = sub_14566(acStack_44,&local_24);
+  iVar1 = file_create(acStack_44,&local_24);
   if (iVar1 != 0) {
     fatalerror(&aE2);
   }
@@ -949,10 +949,10 @@ void __watcall load_game_set(int *param_1)
 
 
 // ================================================================================================
-// sub_32c9e @ 0x32c9e [__watcall]
+// pinfo_copy_records @ 0x32c9e [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_32c9e(undefined4 param_1,undefined4 unaff_EDX)
+undefined4 __watcall pinfo_copy_records(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
@@ -980,7 +980,7 @@ undefined4 __watcall sub_32c9e(undefined4 param_1,undefined4 unaff_EDX)
       memcpy(auStackY_100,auStackY_88,0xd);
     }
     else {
-      iVar1 = sub_14566(unaff_EDX,&uStackY_14);
+      iVar1 = file_create(unaff_EDX,&uStackY_14);
       if (iVar1 != 0) {
         return 0xffffffff;
       }
@@ -1027,11 +1027,11 @@ undefined8 __watcall exhibition_mode(int *param_1,undefined4 unaff_EDX)
     dword_c65cc = exh_hub_standings;
     dword_c65d0 = exh_hub_stats;
     dword_dc234 = (int)((ulonglong)uVar4 >> 0x20);
-    sub_10712();
+    setup_controls();
     option_flags._1_1_ = option_flags._1_1_ | 2;
     uVar3 = extraout_EDX;
     if (*param_1 < 0) {
-      sub_1befd(0);
+      begin_game_session(0);
       uVar1 = team_select_screen((int)user2_team._2_2_,(int)_away_team_id);
       ui_shutdown(uVar1,uVar1);
       uVar3 = extraout_EDX_00;
@@ -1143,20 +1143,20 @@ undefined8 __watcall new_league_mode(undefined4 param_1,undefined4 unaff_EDX)
   dword_c53ef = 0;
   dword_c53f3 = 1;
   apply_settings(&settings_league);
-  sub_7a6ad(0);
+  set_settings_context(0);
   new_league_dialog();
-  sub_7b39c();
+  empty_func_7b39c();
   if (byte_c5386 == '\0') {
-    sub_1d518();
+    set_league_menu_titles();
     set_menu_mode(0);
     dword_ce4e3 = (code *)0x0;
     dword_ce503 = (code *)0x0;
     dword_ce527 = (undefined *)0x0;
   }
   else {
-    sub_1d518();
+    set_league_menu_titles();
     set_menu_mode(0);
-    dword_ce4e3 = sub_336e6;
+    dword_ce4e3 = league_select_team;
     dword_ce503 = league_calendar_screen;
     dword_ce527 = &unk_ce64f;
   }
@@ -1180,10 +1180,10 @@ undefined8 __watcall new_league_mode(undefined4 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_3322a @ 0x3322a [__watcall]
+// league_add_team @ 0x3322a [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_3322a(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall league_add_team(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   undefined4 uVar1;
@@ -1205,10 +1205,10 @@ undefined8 __watcall sub_3322a(undefined4 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_332c0 @ 0x332c0 [__watcall]
+// league_remove_team @ 0x332c0 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_332c0(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall league_remove_team(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   undefined4 uVar1;
@@ -1230,10 +1230,10 @@ undefined8 __watcall sub_332c0(undefined4 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_332f6 @ 0x332f6 [__watcall]
+// league_change_play_settings @ 0x332f6 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_332f6(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall league_change_play_settings(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
@@ -1245,7 +1245,7 @@ undefined8 __watcall sub_332f6(undefined4 param_1,undefined4 unaff_EDX)
   uVar2 = 0;
   save_settings(&settings_exhibition);
   apply_settings(&settings_league);
-  iVar1 = sub_40f4e();
+  iVar1 = league_settings_flow();
   if (iVar1 == 0) {
     iVar3 = -1;
   }
@@ -1257,7 +1257,7 @@ undefined8 __watcall sub_332f6(undefined4 param_1,undefined4 unaff_EDX)
     uVar2 = 2;
   }
   if (iVar3 != 0) {
-    sub_7a13a();
+    league_play_settings_screen();
   }
   save_settings(&settings_league);
   apply_settings(&settings_exhibition);
@@ -1266,16 +1266,16 @@ undefined8 __watcall sub_332f6(undefined4 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_3339d @ 0x3339d [__watcall]
+// league_rebuild_databases @ 0x3339d [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_3339d(void)
+undefined4 __watcall league_rebuild_databases(void)
 
 {
   __CHK(4);
   save_settings(&settings_exhibition);
   apply_settings(&settings_league);
-  sub_3b9ca();
+  league_rebuild();
   save_settings(&settings_league);
   apply_settings(&settings_exhibition);
   return 0;
@@ -1283,10 +1283,10 @@ undefined4 __watcall sub_3339d(void)
 
 
 // ================================================================================================
-// sub_333d7 @ 0x333d7 [__watcall]
+// league_merge_update_teams @ 0x333d7 [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_333d7(undefined4 param_1,uint unaff_EDX)
+longlong __watcall league_merge_update_teams(undefined4 param_1,uint unaff_EDX)
 
 {
   int iVar1;
@@ -1295,7 +1295,7 @@ longlong __watcall sub_333d7(undefined4 param_1,uint unaff_EDX)
   __CHK(0x20);
   save_settings(&settings_exhibition);
   apply_settings(&settings_league);
-  iVar1 = sub_3b8b0();
+  iVar1 = league_merge_and_update();
   save_settings(&settings_league);
   apply_settings(&settings_exhibition);
   if (iVar1 != 0) {
@@ -1310,10 +1310,10 @@ longlong __watcall sub_333d7(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_33469 @ 0x33469 [__watcall]
+// league_merge_files @ 0x33469 [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_33469(undefined4 param_1,uint unaff_EDX)
+longlong __watcall league_merge_files(undefined4 param_1,uint unaff_EDX)
 
 {
   int iVar1;
@@ -1337,10 +1337,10 @@ longlong __watcall sub_33469(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_334fb @ 0x334fb [__watcall]
+// league_update_team_databases @ 0x334fb [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_334fb(void)
+undefined4 __watcall league_update_team_databases(void)
 
 {
   __CHK(4);
@@ -1354,10 +1354,10 @@ undefined4 __watcall sub_334fb(void)
 
 
 // ================================================================================================
-// sub_33523 @ 0x33523 [__watcall]
+// league_trade_players @ 0x33523 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_33523(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall league_trade_players(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   undefined4 uVar1;
@@ -1393,7 +1393,7 @@ undefined8 __watcall league_calendar_screen(int *param_1,undefined4 unaff_EDX)
   save_settings(&settings_exhibition);
   apply_settings(&settings_league);
   set_menu_mode(3);
-  sub_7a6ad(1);
+  set_settings_context(1);
   set_hub_title(2);
   if (*param_1 < 0) {
     strcpy(acStack_30,&league_dir);
@@ -1421,10 +1421,10 @@ undefined8 __watcall league_calendar_screen(int *param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_3366f @ 0x3366f [__watcall]
+// league_hilights @ 0x3366f [__watcall]
 // ================================================================================================
 
-longlong __watcall sub_3366f(undefined4 param_1,uint unaff_EDX)
+longlong __watcall league_hilights(undefined4 param_1,uint unaff_EDX)
 
 {
   int iVar1;
@@ -1433,7 +1433,7 @@ longlong __watcall sub_3366f(undefined4 param_1,uint unaff_EDX)
   save_settings(&settings_exhibition);
   apply_settings(&settings_league);
   dword_c53fb = 0;
-  iVar1 = sub_80075();
+  iVar1 = league_highlights_flow();
   if (iVar1 == 0) {
     apply_settings(&settings_exhibition);
     return CONCAT44(unaff_EDX,2);
@@ -1444,10 +1444,10 @@ longlong __watcall sub_3366f(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sub_336be @ 0x336be [__watcall]
+// league_import_databases @ 0x336be [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_336be(void)
+undefined4 __watcall league_import_databases(void)
 
 {
   __CHK(4);
@@ -1461,10 +1461,10 @@ undefined4 __watcall sub_336be(void)
 
 
 // ================================================================================================
-// sub_336e6 @ 0x336e6 [__watcall]
+// league_select_team @ 0x336e6 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_336e6(undefined4 param_1,undefined4 unaff_EDX)
+undefined8 __watcall league_select_team(undefined4 param_1,undefined4 unaff_EDX)
 
 {
   undefined4 uVar1;
@@ -1486,10 +1486,10 @@ undefined8 __watcall sub_336e6(undefined4 param_1,undefined4 unaff_EDX)
 
 
 // ================================================================================================
-// sub_3371c @ 0x3371c [__watcall]
+// empty_func_3371c @ 0x3371c [__watcall]
 // ================================================================================================
 
-void __watcall sub_3371c(void)
+void __watcall empty_func_3371c(void)
 
 {
   __CHK(4);
@@ -1498,10 +1498,10 @@ void __watcall sub_3371c(void)
 
 
 // ================================================================================================
-// sub_33727 @ 0x33727 [__watcall]
+// free_hilight_buffers @ 0x33727 [__watcall]
 // ================================================================================================
 
-void __watcall sub_33727(void)
+void __watcall free_hilight_buffers(void)
 
 {
   __CHK(0x1c);
@@ -1540,11 +1540,11 @@ void __watcall load_rink(int param_1)
   short sStack_1c;
   
   __CHK(0x48);
-  if ((dword_c73d4 != 0) && (iVar2 = sub_8dbc0(dword_c73d4), iVar2 != 0x37840)) {
+  if ((dword_c73d4 != 0) && (iVar2 = memblock_size_byname(dword_c73d4), iVar2 != 0x37840)) {
     freemem(dword_c73d4);
     dword_c73d4 = 0;
   }
-  if ((dword_c73d0 != 0) && (iVar2 = sub_8dbc0(dword_c73d0), iVar2 != 0x37840)) {
+  if ((dword_c73d0 != 0) && (iVar2 = memblock_size_byname(dword_c73d0), iVar2 != 0x37840)) {
     freemem(dword_c73d0);
     dword_c73d0 = 0;
   }
@@ -1575,7 +1575,7 @@ void __watcall load_rink(int param_1)
       fatalerror(aInvalidFileSSizeD,local_38,(int)sStack_1c);
     }
     local_28 = allocmem(aTILES,(int)sStack_1c,0);
-    iVar2 = sub_92ee4(local_38,local_28);
+    iVar2 = loadfile_to_buffer_try(local_38,local_28);
     if (iVar2 == 0) {
       fatalerror(aErrorLoadingFileS,local_38);
     }
@@ -1636,11 +1636,11 @@ void __watcall load_rink(int param_1)
   mark_rink_dirty(0x180);
   set_camera_offset(0,0);
   set_view_rect(0,0,0x180,0x250);
-  sub_6a0f6(dword_c73d4);
-  sub_6a156(dword_c73d0);
+  zm_set_hidden_window(dword_c73d4);
+  zm_set_background_window(dword_c73d0);
   mark_rink_dirty(1);
-  sub_6a106();
-  sub_6ad4f();
+  zm_select_hidden_window();
+  zm_restore_background();
   return;
 }
 
@@ -1780,10 +1780,10 @@ int __watcall draw_rink(int param_1,int unaff_EDX)
 
 
 // ================================================================================================
-// sub_33e6a @ 0x33e6a [__watcall]
+// wait_ticks_or_input @ 0x33e6a [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_33e6a(int param_1,undefined4 unaff_EDX)
+undefined8 __watcall wait_ticks_or_input(int param_1,undefined4 unaff_EDX)
 
 {
   int iVar1;
@@ -1965,16 +1965,16 @@ calendar_draw_games(int param_1,int param_2,undefined4 param_3,int unaff_ECX,int
         iVar10 = iVar11 + 0x3e;
         local_38 = iVar11 + -1;
         local_34 = iVar12 + -1;
-        sub_b4fac(local_34,local_38,local_24,local_38,0xbb);
+        drawline(local_34,local_38,local_24,local_38,0xbb);
         local_2c = local_24 + -1;
-        sub_b4fac(iVar12,iVar11,local_2c,iVar11,0xbb);
-        sub_b4fac(local_34,local_38,local_34,iVar10,0xbb);
+        drawline(iVar12,iVar11,local_2c,iVar11,0xbb);
+        drawline(local_34,local_38,local_34,iVar10,0xbb);
         local_28 = iVar11 + 0x3d;
-        sub_b4fac(iVar12,iVar11,iVar12,local_28,0xbb);
-        sub_b4fac(local_24,local_38,local_24,iVar10,0xbb);
-        sub_b4fac(local_2c,iVar11,local_2c,local_28,0xbb);
-        sub_b4fac(local_34,iVar10,local_24,iVar10,0xbb);
-        sub_b4fac(iVar12,local_28,local_2c,local_28,0xbb);
+        drawline(iVar12,iVar11,iVar12,local_28,0xbb);
+        drawline(local_24,local_38,local_24,iVar10,0xbb);
+        drawline(local_2c,iVar11,local_2c,local_28,0xbb);
+        drawline(local_34,iVar10,local_24,iVar10,0xbb);
+        drawline(iVar12,local_28,local_2c,local_28,0xbb);
       }
       setfontstate(auStack_a8);
       return;
@@ -2070,15 +2070,15 @@ LAB_00034328:
 
 
 // ================================================================================================
-// sub_34691 @ 0x34691 [__watcall]
+// calendar_next_month @ 0x34691 [__watcall]
 // ================================================================================================
 
-void __watcall sub_34691(void)
+void __watcall calendar_next_month(void)
 
 {
   __CHK(0x10);
-  funcptr_c85f6 = sub_34691;
-  funcptr_c8616 = sub_346fe;
+  funcptr_c85f6 = calendar_next_month;
+  funcptr_c8616 = calendar_prev_month;
   dword_dd7a0 = dword_dd7a0 + 1;
   if (dword_dd7a0 == 0xc) {
     dword_dd7a0 = 0;
@@ -2095,15 +2095,15 @@ void __watcall sub_34691(void)
 
 
 // ================================================================================================
-// sub_346fe @ 0x346fe [__watcall]
+// calendar_prev_month @ 0x346fe [__watcall]
 // ================================================================================================
 
-void __watcall sub_346fe(void)
+void __watcall calendar_prev_month(void)
 
 {
   __CHK(0xc);
-  funcptr_c85f6 = sub_34691;
-  funcptr_c8616 = sub_346fe;
+  funcptr_c85f6 = calendar_next_month;
+  funcptr_c8616 = calendar_prev_month;
   dword_dd7a0 = dword_dd7a0 + -1;
   if (dword_dd7a0 == -1) {
     dword_dd7a0 = 0xb;
@@ -2120,10 +2120,10 @@ void __watcall sub_346fe(void)
 
 
 // ================================================================================================
-// sub_3476b @ 0x3476b [__watcall]
+// calendar_return @ 0x3476b [__watcall]
 // ================================================================================================
 
-void __watcall sub_3476b(void)
+void __watcall calendar_return(void)
 
 {
   __CHK(8);
@@ -2134,11 +2134,11 @@ void __watcall sub_3476b(void)
 
 
 // ================================================================================================
-// sub_34789 @ 0x34789 [__watcall]
+// fade_in_bank_palette @ 0x34789 [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_34789(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+fade_in_bank_palette(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   int iVar1;
@@ -2151,10 +2151,10 @@ sub_34789(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined
 
 
 // ================================================================================================
-// sub_347b7 @ 0x347b7 [__watcall]
+// calendar_game_opponent @ 0x347b7 [__watcall]
 // ================================================================================================
 
-void __watcall sub_347b7(uint param_1,int unaff_EDX,int unaff_EBX)
+void __watcall calendar_game_opponent(uint param_1,int unaff_EDX,int unaff_EBX)
 
 {
   int iVar1;
@@ -2173,7 +2173,7 @@ void __watcall sub_347b7(uint param_1,int unaff_EDX,int unaff_EBX)
     uVar2 = 0xffffffff;
   }
   unaff_EDX = unaff_EBX * 6 + unaff_EDX;
-  sub_7db67(param_1,uVar2,*(undefined *)(unaff_EDX + 2),*(undefined *)(unaff_EDX + 3));
+  calendar_start_game(param_1,uVar2,*(undefined *)(unaff_EDX + 2),*(undefined *)(unaff_EDX + 3));
   return;
 }
 
@@ -2384,7 +2384,7 @@ int __watcall calendar_screen(undefined4 param_1,undefined4 param_2,uint unaff_E
   file_close(&uStack_64);
   if ((-1 < (short)uStack_28) && (sVar7 == 0)) {
     iVar9 = uStack_22 >> 0x10;
-    sub_347b7(unaff_EBX,abStack_4e0,iVar9);
+    calendar_game_opponent(unaff_EBX,abStack_4e0,iVar9);
     dword_ddd30 = (uint)abStack_4e0[iVar9 * 6];
     dword_ddd28 = (uint)abStack_4e0[iVar9 * 6 + 1];
     dword_dd780 = *(int *)((int)&uStack_23a + iVar9 * 2) >> 0x10;
@@ -2394,13 +2394,13 @@ int __watcall calendar_screen(undefined4 param_1,undefined4 param_2,uint unaff_E
       funcptr_c85f6 = (undefined *)0x0;
     }
     else {
-      funcptr_c85f6 = sub_34691;
+      funcptr_c85f6 = calendar_next_month;
     }
     if (dword_dd7a0 == 9) {
       funcptr_c8616 = (undefined *)0x0;
     }
     else {
-      funcptr_c8616 = sub_346fe;
+      funcptr_c8616 = calendar_prev_month;
     }
     sStack_14 = (short)dword_dd7a0;
     setdefaultscreen();
@@ -2429,7 +2429,7 @@ int __watcall calendar_screen(undefined4 param_1,undefined4 param_2,uint unaff_E
         playsample(dword_c721d,dword_d2431,3,0x4c);
       }
     }
-    sub_34789(dword_c8992);
+    fade_in_bank_palette(dword_c8992);
     local_5c = (undefined4 *******)
                allocmem(aPointer_c1842,
                         (((int)pointer_shapes[1] >> 0x10) + 1) *
@@ -2532,7 +2532,7 @@ LAB_00035eea:
                     dword_ddd28 = (uint)abStack_4e0[(uStack_22 >> 0x10) * 6 + 1];
                     uStack_18 = sVar7;
                     if (dword_dd794 == 0) {
-                      sub_347b7(unaff_EBX,abStack_4e0);
+                      calendar_game_opponent(unaff_EBX,abStack_4e0);
                     }
                     setdefaultscreen();
                     draw_menu_items(aStatistics_c864c + 0xb,3,local_48,local_40,local_44);
@@ -2791,7 +2791,7 @@ LAB_00035eea:
                 draw_menu_items(aStatistics_c864c + 0xb,3,local_48,local_40,local_44);
                 calendar_draw_games(dword_dd7a0,auStack_154,uStack_3c,abStack_4e0,(int)local_2c,
                                     unaff_EBX,local_38,dword_c8992);
-                sub_34789(dword_c8992);
+                fade_in_bank_palette(dword_c8992);
                 dword_ddd2c = 0;
               }
               sStack_14 = (short)dword_dd7a0;
@@ -2905,7 +2905,7 @@ league_import_export_check(char *param_1,int unaff_EDX,int unaff_EBX,int unaff_E
   iVar3 = 0;
   __src = (char *)(unaff_EBX * 0x1e + unaff_EDX);
   dword_c7ae8 = (char *)0x0;
-  iVar1 = sub_41344(param_1,local_24);
+  iVar1 = league_player_id_check(param_1,local_24);
   if (__src[0x17] != '\x01') goto LAB_0003614e;
   if ((iVar1 == unaff_EBX) ||
      ((iVar1 < 0 && ((__src[0x18] == '\x01' || ((__src[0x16] & 1U) != 0)))))) {
@@ -2918,10 +2918,10 @@ league_import_export_check(char *param_1,int unaff_EDX,int unaff_EBX,int unaff_E
   }
   else {
     if (param_5 == 0) {
-      iVar3 = sub_3d84f(param_1,__src,0xffffffff);
+      iVar3 = player_league_dialog(param_1,__src,0xffffffff);
     }
     else {
-      sub_41171(auStack_c0,__src,param_1);
+      format_from_league(auStack_c0,__src,param_1);
       dword_c7615 = auStack_c0;
       iVar3 = player_id_read(param_1,__src,0xffffffff);
     }
@@ -2952,10 +2952,10 @@ LAB_0003614e:
 
 
 // ================================================================================================
-// sub_36207 @ 0x36207 [__watcall]
+// league_save_name @ 0x36207 [__watcall]
 // ================================================================================================
 
-void __watcall sub_36207(char *param_1,undefined4 param_2,int unaff_EBX,int unaff_ECX)
+void __watcall league_save_name(char *param_1,undefined4 param_2,int unaff_EBX,int unaff_ECX)
 
 {
   char *__src;
@@ -3100,24 +3100,24 @@ LAB_0003642b:
   local_24 = 0;
   while ((local_24 < 3 && (iVar4 == 0))) {
     if (*(int *)((int)&dword_e9af4 + local_24 * 4 + 2) >> 0x10 == unaff_ECX) {
-      iVar4 = sub_1463d(local_44[4],auStack_f0,
+      iVar4 = file_read_b(local_44[4],auStack_f0,
                         aiStack_3c4[*(int *)(&unk_e9af8 + local_24 * 2) >> 0x10]);
       if (iVar4 == 0) {
         if (cStack_ee == 'G') {
-          iVar4 = sub_3a266(local_44[3],local_128,uStack_c4);
+          iVar4 = file_read_d(local_44[3],local_128,uStack_c4);
         }
         else {
-          iVar4 = sub_1478b(local_44[3],local_bc,uStack_c4);
+          iVar4 = file_read_c(local_44[3],local_bc,uStack_c4);
         }
       }
       if (iVar4 == 0) {
         if (cStack_ee == 'G') {
           asStack_f8[local_24] = asStack_f8[local_24] + 1;
-          iVar4 = sub_3a27d(local_44[3],local_128,uStack_c4);
+          iVar4 = file_write_d(local_44[3],local_128,uStack_c4);
         }
         else {
           asStack_94[local_24] = asStack_94[local_24] + 1;
-          iVar4 = sub_3a24f(local_44[3],local_bc,uStack_c4);
+          iVar4 = file_write_c(local_44[3],local_bc,uStack_c4);
         }
       }
     }
@@ -3130,7 +3130,7 @@ LAB_000365ff:
   }
   else {
     if (iVar4 == 0) {
-      iVar4 = sub_147ff(local_44[2],local_53 + 3);
+      iVar4 = file_read_record11(local_44[2],local_53 + 3);
     }
     if (iVar4 == 0) {
       iVar5 = 0;
@@ -3140,7 +3140,7 @@ LAB_000365ff:
       local_24 = 0;
       local_14 = (undefined  [4])0x0;
       while ((local_24 <= local_28 && (iVar4 == 0))) {
-        iVar4 = sub_147ff(local_44[2],local_53 + 3,local_24);
+        iVar4 = file_read_record11(local_44[2],local_53 + 3,local_24);
         if ((iVar4 == 0) && (local_53[3] == '\x01')) {
           if (cStack_4f == '\0') {
             iVar5 = iVar5 + 1;
@@ -3174,9 +3174,9 @@ LAB_000365ff:
   local_24 = 0;
   while ((local_24 < 0x19 && (iVar4 == 0))) {
     if (aiStack_3c4[local_24] != -1) {
-      iVar4 = sub_1463d(local_44[4],auStack_f0,aiStack_3c4[local_24]);
+      iVar4 = file_read_b(local_44[4],auStack_f0,aiStack_3c4[local_24]);
       if (iVar4 == 0) {
-        iVar4 = sub_1478b(local_44[3],local_bc,uStack_c4);
+        iVar4 = file_read_c(local_44[3],local_bc,uStack_c4);
       }
       if ((iVar4 == 0) && (acStack_6c[local_24] != '\0')) {
         *psVar7 = *psVar7 + 1;
@@ -3192,7 +3192,7 @@ LAB_000365ff:
         psVar7[4] = psVar7[4] + *(short *)(&word_db090 + local_24 * 4 + unaff_ECX * 100);
         psVar7[5] = psVar7[5] + *(short *)((int)&word_db090 + iVar4 + 2);
         psVar7[7] = psVar7[7] + *(short *)((int)&word_db094 + iVar4 + 2);
-        iVar4 = sub_3a24f(local_44[3],local_bc,uStack_c4);
+        iVar4 = file_write_c(local_44[3],local_bc,uStack_c4);
       }
     }
     local_24 = local_24 + 1;
@@ -3214,7 +3214,7 @@ LAB_000365ff:
   do {
     if ((2 < local_24) || (iVar4 != 0)) {
       if (iVar4 == 0) {
-        iVar4 = sub_3a2b8(local_44[5],auStack_410,unaff_EBX);
+        iVar4 = db_write_team_record(local_44[5],auStack_410,unaff_EBX);
       }
       file_close(local_44 + 2);
       file_close(local_44 + 3);
@@ -3223,9 +3223,9 @@ LAB_000365ff:
       return iVar4;
     }
     if (aiStack_360[local_24] != -1) {
-      iVar4 = sub_1463d(local_44[4],auStack_f0,aiStack_360[local_24]);
+      iVar4 = file_read_b(local_44[4],auStack_f0,aiStack_360[local_24]);
       if (iVar4 == 0) {
-        iVar4 = sub_3a266(local_44[3],local_128,uStack_c4);
+        iVar4 = file_read_d(local_44[3],local_128,uStack_c4);
       }
       if (((iVar4 == 0) && (local_53[local_24] != '\0')) &&
          (iVar5 = local_24 * 6 + unaff_ECX * 0x12, *(short *)((int)&word_dc240 + iVar5) != 0)) {
@@ -3269,7 +3269,7 @@ LAB_00036a58:
           uVar8 = (uint)puVar6[9];
           puVar6[10] = (ushort)((int)((uVar8 - puVar6[7]) * 1000 + uVar8 / 2) / (int)uVar8);
         }
-        iVar4 = sub_3a27d(local_44[3],local_128,uStack_c4);
+        iVar4 = file_write_d(local_44[3],local_128,uStack_c4);
       }
     }
     local_24 = local_24 + 1;
@@ -3336,9 +3336,9 @@ void __watcall league_calendar_flow(int *param_1)
   dword_ddd44 = CONCAT22(0xffff,(undefined2)dword_ddd44);
   setmouselimits(0,0,0x280,0x1e0);
   if (-1 < *param_1) {
-    sub_41b80(*param_1);
+    league_db_read_header(*param_1);
   }
-  iVar2 = sub_41337(&league_dir,3);
+  iVar2 = return_zero_41337(&league_dir,3);
   do {
     iStack_1c = 0;
     if (iVar2 == 0) {
@@ -3387,7 +3387,7 @@ void __watcall league_calendar_flow(int *param_1)
     iStack_24 = iStack_1c;
     if (iVar2 == 0) {
       set_dialog_colors(0xf9,0xfa,0xf8,0xfa,0);
-      dword_ddd38 = sub_41344(&league_dir,auStack_68);
+      dword_ddd38 = league_player_id_check(&league_dir,auStack_68);
       if ((int)dword_ddd38 < 0) {
         team_info_screen(&league_dir,&dword_ddac0,&unk_ddac4,&unk_dd7b4,8,aSelectATeamToPlay,
                          &dword_ddd38);
@@ -3523,16 +3523,16 @@ void __watcall league_calendar_flow(int *param_1)
           bVar10 = byte_ddd42 != dword_ddd38;
           if (bVar10) {
             local_38 = 1;
-            sub_36207(&byte_dd750,&unk_ddd59,&unk_dd7b4);
+            league_save_name(&byte_dd750,&unk_ddd59,&unk_dd7b4);
             puVar11 = &unk_ddd4c;
           }
           else {
             local_38 = 0;
-            sub_36207(&byte_dd750,&unk_ddd4c,&unk_dd7b4);
+            league_save_name(&byte_dd750,&unk_ddd4c,&unk_dd7b4);
             puVar11 = &unk_ddd59;
           }
           unaff_EBP = (uint)!bVar10;
-          sub_36207(&byte_dd710,puVar11,&unk_dd7b4,byte_ddd43);
+          league_save_name(&byte_dd710,puVar11,&unk_dd7b4,byte_ddd43);
           if (byte_dd710 == '\0') {
             strcpy(&byte_dd710,&byte_dd750);
           }
@@ -3552,12 +3552,12 @@ void __watcall league_calendar_flow(int *param_1)
             user2_team._2_2_ = (ushort)byte_ddd42;
             _away_team_id = (ushort)byte_ddd43;
           }
-          sub_10712();
+          setup_controls();
           iVar2 = 0;
           if (*param_1 < 0) {
             iVar2 = check_disk_space_for_game();
             if (iVar2 == 0) {
-              sub_1befd(byte_dc268,byte_dc267);
+              begin_game_session(byte_dc268,byte_dc267);
               iVar2 = team_select_screen(user2_team._2_1_,away_team_id);
             }
             else {
@@ -3633,7 +3633,7 @@ void __watcall league_calendar_flow(int *param_1)
             local_7c[0] = 0;
             local_64 = iVar2;
             make_path(local_ac,&unk_ddd4c,aPINFO,&aDB);
-            iVar2 = sub_1453e(local_ac,&local_48);
+            iVar2 = file_open_trunc(local_ac,&local_48);
           }
           if (iVar2 == 0) {
             iVar2 = file_write(local_48,&local_64,4,2);
@@ -3645,7 +3645,7 @@ void __watcall league_calendar_flow(int *param_1)
           if (dword_ddd3c != 0) {
             if (iVar2 == 0) {
               make_path(local_ac,&unk_ddd59,aPINFO,&aDB);
-              iVar2 = sub_1453e(local_ac,&local_48);
+              iVar2 = file_open_trunc(local_ac,&local_48);
             }
             if (iVar2 == 0) {
               iVar2 = file_write(local_48,&local_64,4,2);
@@ -3656,10 +3656,10 @@ void __watcall league_calendar_flow(int *param_1)
             file_close(&local_48);
           }
           if (iVar2 == 0) {
-            iVar2 = sub_3a28f(local_40,&byte_ddd40);
+            iVar2 = schedule_write_record(local_40,&byte_ddd40);
           }
           if ((iVar2 == 0) && (dword_ddd3c != 0)) {
-            iVar2 = sub_3a28f(local_50,&byte_ddd40);
+            iVar2 = schedule_write_record(local_50,&byte_ddd40);
           }
           if (iVar2 == 0) {
             if (dword_ddd44._2_2_ < 0x444) {
@@ -3676,21 +3676,21 @@ void __watcall league_calendar_flow(int *param_1)
               make_path(local_ac,&unk_ddd4c,off_c80e7,&aXx);
               iVar2 = file_open_rw(local_ac,&local_54);
               if (iVar2 == 0) {
-                iVar2 = sub_41f64(local_40,local_54,dword_ddd44 >> 0x10);
+                iVar2 = league_update_standings(local_40,local_54,dword_ddd44 >> 0x10);
               }
               file_close(&local_54);
               if ((iVar2 == 0) && (dword_ddd3c != 0)) {
                 make_path(local_ac,&unk_ddd59,off_c80e7,&aXx_c8158);
                 iVar2 = file_open_rw(local_ac,&local_6c);
                 if (iVar2 == 0) {
-                  iVar2 = sub_41f64(local_50,local_6c,dword_ddd44 >> 0x10);
+                  iVar2 = league_update_standings(local_50,local_6c,dword_ddd44 >> 0x10);
                 }
                 file_close(&local_6c);
               }
             }
           }
           if (iVar2 == 0) {
-            iVar2 = sub_41cc4(&unk_ddd4c,&aXx,(dword_ddd44 >> 0x10) + -1,&unk_dd7b4,dword_ddd38,2);
+            iVar2 = league_play_day(&unk_ddd4c,&aXx,(dword_ddd44 >> 0x10) + -1,&unk_dd7b4,dword_ddd38,2);
             if (iVar2 == 0) {
               iVar2 = season_record_result
                                 (&unk_ddd4c,&aXx,dword_ddd38,local_38,iStack_30,&unk_ddd4c);
@@ -3701,7 +3701,7 @@ void __watcall league_calendar_flow(int *param_1)
                 puVar11 = &unk_ddd4c;
               }
               else {
-                iVar2 = sub_41cc4(&unk_ddd59,&aXx_c8158,dword_ddd44 >> 0x10,&unk_dd7b4,dword_ddd34,2
+                iVar2 = league_play_day(&unk_ddd59,&aXx_c8158,dword_ddd44 >> 0x10,&unk_dd7b4,dword_ddd34,2
                                  );
                 if (iVar2 != 0) goto LAB_000379f4;
                 puVar8 = &aXx_c8158;
@@ -3712,7 +3712,7 @@ void __watcall league_calendar_flow(int *param_1)
             }
           }
 LAB_000379f4:
-          sub_30f12();
+          restore_dialog_background();
           clearclip(0);
         }
         if (((iVar2 != 0) && (iStack_34 == 0)) && (iVar2 != 4)) {
@@ -3744,7 +3744,7 @@ LAB_000379f4:
         iVar2 = 0;
       }
       make_path(local_ac,&league_dir,&aGAME,&aSAV);
-    } while (((-1 < dword_ddd44) && (iVar2 == 0)) && (iVar4 = sub_142e7(local_ac), iVar4 == 0));
+    } while (((-1 < dword_ddd44) && (iVar2 == 0)) && (iVar4 = file_exists_rd(local_ac), iVar4 == 0));
   }
   setmouselimits(0,0,0x280,0x1e0);
   return;
@@ -3752,10 +3752,10 @@ LAB_000379f4:
 
 
 // ================================================================================================
-// sub_37b92 @ 0x37b92 [__watcall]
+// team_grid_slot_at @ 0x37b92 [__watcall]
 // ================================================================================================
 
-uint __watcall sub_37b92(int param_1,int unaff_EDX,int unaff_EBX)
+uint __watcall team_grid_slot_at(int param_1,int unaff_EDX,int unaff_EBX)
 
 {
   byte *pbVar1;
@@ -3795,10 +3795,10 @@ uint __watcall sub_37b92(int param_1,int unaff_EDX,int unaff_EBX)
 
 
 // ================================================================================================
-// sub_37c53 @ 0x37c53 [__watcall]
+// team_grid_draw_name @ 0x37c53 [__watcall]
 // ================================================================================================
 
-void __watcall sub_37c53(uint param_1,int unaff_EDX,undefined4 unaff_EBX,int unaff_ECX)
+void __watcall team_grid_draw_name(uint param_1,int unaff_EDX,undefined4 unaff_EBX,int unaff_ECX)
 
 {
   int iVar1;
@@ -3838,11 +3838,11 @@ void __watcall sub_37c53(uint param_1,int unaff_EDX,undefined4 unaff_EBX,int una
 
 
 // ================================================================================================
-// sub_37d6a @ 0x37d6a [__watcall]
+// team_grid_save_back @ 0x37d6a [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_37d6a(uint param_1,int unaff_EDX,undefined4 unaff_EBX,int unaff_ECX,undefined4 param_5)
+team_grid_save_back(uint param_1,int unaff_EDX,undefined4 unaff_EBX,int unaff_ECX,undefined4 param_5)
 
 {
   int iVar1;
@@ -3877,10 +3877,10 @@ sub_37d6a(uint param_1,int unaff_EDX,undefined4 unaff_EBX,int unaff_ECX,undefine
 
 
 // ================================================================================================
-// sub_37e5b @ 0x37e5b [__watcall]
+// team_grid_restore_back @ 0x37e5b [__watcall]
 // ================================================================================================
 
-void __watcall sub_37e5b(void)
+void __watcall team_grid_restore_back(void)
 
 {
   __CHK(0x20);
@@ -3894,10 +3894,10 @@ void __watcall sub_37e5b(void)
 
 
 // ================================================================================================
-// sub_37ea6 @ 0x37ea6 [__watcall]
+// team_grid_highlight @ 0x37ea6 [__watcall]
 // ================================================================================================
 
-void __watcall sub_37ea6(uint param_1,int unaff_EDX,int unaff_EBX)
+void __watcall team_grid_highlight(uint param_1,int unaff_EDX,int unaff_EBX)
 
 {
   int iVar1;
@@ -3919,12 +3919,12 @@ void __watcall sub_37ea6(uint param_1,int unaff_EDX,int unaff_EBX)
         }
         iVar1 = iVar4 * 0x5c;
         if (unaff_EBX == 0) {
-          sub_93000(iVar2,iVar1 + 0x56,iVar2 + 0x4a,iVar1 + 0x93,0);
-          sub_93000(iVar2 + -1,iVar1 + 0x55,iVar2 + 0x4b,iVar1 + 0x94,0);
+          fillbox_corners(iVar2,iVar1 + 0x56,iVar2 + 0x4a,iVar1 + 0x93,0);
+          fillbox_corners(iVar2 + -1,iVar1 + 0x55,iVar2 + 0x4b,iVar1 + 0x94,0);
         }
         else {
-          sub_92f50(iVar2,iVar1 + 0x56,iVar2 + 0x4a,iVar1 + 0x93,0x80);
-          sub_92f50(iVar2 + -1,iVar1 + 0x55,iVar2 + 0x4b,iVar1 + 0x94,0x80);
+          xorbox(iVar2,iVar1 + 0x56,iVar2 + 0x4a,iVar1 + 0x93,0x80);
+          xorbox(iVar2 + -1,iVar1 + 0x55,iVar2 + 0x4b,iVar1 + 0x94,0x80);
         }
       }
       iVar3 = iVar3 + 1;
@@ -3936,10 +3936,10 @@ void __watcall sub_37ea6(uint param_1,int unaff_EDX,int unaff_EBX)
 
 
 // ================================================================================================
-// sub_37fba @ 0x37fba [__watcall]
+// team_grid_draw @ 0x37fba [__watcall]
 // ================================================================================================
 
-void __watcall sub_37fba(int param_1,char *unaff_EDX,int unaff_EBX,undefined4 unaff_ECX)
+void __watcall team_grid_draw(int param_1,char *unaff_EDX,int unaff_EBX,undefined4 unaff_ECX)
 
 {
   undefined4 uVar1;
@@ -3954,7 +3954,7 @@ void __watcall sub_37fba(int param_1,char *unaff_EDX,int unaff_EBX,undefined4 un
   
   __CHK(0xe8);
   strcpy(acStack_64,unaff_EDX);
-  sub_17573(0x28,acStack_64);
+  print_centered_shadow(0x28,acStack_64);
   puVar2 = install_path;
   if (byte_ed98e != '\x01') {
     puVar2 = (undefined *)0x0;
@@ -3981,7 +3981,7 @@ void __watcall sub_37fba(int param_1,char *unaff_EDX,int unaff_EBX,undefined4 un
       }
       drawshape_remap(auStack_cc[uVar5],iVar3,iVar4 * 0x5c + 0x58);
       if (*(char *)(uVar5 * 0x1e + param_1 + 0x17) == '\x01') {
-        sub_37c53(uVar5,param_1,unaff_ECX,unaff_EBX);
+        team_grid_draw_name(uVar5,param_1,unaff_ECX,unaff_EBX);
       }
       iVar6 = iVar6 + 1;
     } while (iVar6 < 7);
@@ -4047,7 +4047,7 @@ league_control_dialog(int param_1,int unaff_EDX,undefined4 unaff_EBX,undefined4 
     } while (iVar3 < 0x1a);
   }
   else {
-    iVar1 = sub_303fb(__s,unaff_EDX,aWhoWillControlTheLeague,0,0,0);
+    iVar1 = listbox_dialog(__s,unaff_EDX,aWhoWillControlTheLeague,0,0,0);
   }
   *(undefined *)(param_1 + 0x18 + aiStack_f8[iVar1] * 0x1e) = 1;
   *(undefined *)(param_1 + 0x19 + aiStack_f8[iVar1] * 0x1e) = 1;
@@ -4056,10 +4056,10 @@ league_control_dialog(int param_1,int unaff_EDX,undefined4 unaff_EBX,undefined4 
     iStack_10 = 0;
     strcpy(acStack_90,aEnterMasterControllerPas);
     strcat(acStack_90,(char *)(aiStack_f8[iVar1] * 0x1e + param_1));
-    sub_2fedf(acStack_90,acStack_3c,10,0x3c,0,0,0,0,2);
+    text_entry_dialog(acStack_90,acStack_3c,10,0x3c,0,0,0,0,2);
     strcpy(acStack_90,aVerifyMasterControllerPa);
     strcat(acStack_90,(char *)(aiStack_f8[iVar1] * 0x1e + param_1));
-    sub_2fedf(acStack_90,acStack_30,10,0x3c,0,0,0,0,2);
+    text_entry_dialog(acStack_90,acStack_30,10,0x3c,0,0,0,0,2);
     iVar3 = strcmp(acStack_3c,acStack_30);
     if (iVar3 != 0) {
       message_dialog(0xffffffff,0xffffffff,&off_c8055,2,0,0,unaff_EBX,unaff_ECX,0xffffffff);
@@ -4067,7 +4067,7 @@ league_control_dialog(int param_1,int unaff_EDX,undefined4 unaff_EBX,undefined4 
     }
   } while (iStack_10 != 0);
   strcpy(&unk_ddd1d,acStack_3c);
-  sub_3a597(&unk_ddd1d,aiStack_f8[iVar1]);
+  password_scramble(&unk_ddd1d,aiStack_f8[iVar1]);
   dword_dd7b0 = iStack_10;
   dword_dd7ac = iStack_10;
   byte_ddd10 = 0;
@@ -4078,10 +4078,10 @@ league_control_dialog(int param_1,int unaff_EDX,undefined4 unaff_EBX,undefined4 
 
 
 // ================================================================================================
-// sub_38386 @ 0x38386 [__watcall]
+// team_info_confirm @ 0x38386 [__watcall]
 // ================================================================================================
 
-void __watcall sub_38386(int param_1,int unaff_EDX,uint unaff_EBX,int unaff_ECX)
+void __watcall team_info_confirm(int param_1,int unaff_EDX,uint unaff_EBX,int unaff_ECX)
 
 {
   int iVar1;
@@ -4129,10 +4129,10 @@ LAB_0003849f:
 
 
 // ================================================================================================
-// sub_384b8 @ 0x384b8 [__watcall]
+// team_info_load_stats @ 0x384b8 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_384b8(undefined4 param_1,int unaff_EDX)
+undefined4 __watcall team_info_load_stats(undefined4 param_1,int unaff_EDX)
 
 {
   int iVar1;
@@ -4336,10 +4336,10 @@ LAB_00038af5:
 
 
 // ================================================================================================
-// sub_38b25 @ 0x38b25 [__watcall]
+// dialog_done @ 0x38b25 [__watcall]
 // ================================================================================================
 
-void __watcall sub_38b25(void)
+void __watcall dialog_done(void)
 
 {
   __CHK(4);
@@ -4349,10 +4349,10 @@ void __watcall sub_38b25(void)
 
 
 // ================================================================================================
-// sub_38b3a @ 0x38b3a [__watcall]
+// dialog_cancel @ 0x38b3a [__watcall]
 // ================================================================================================
 
-void __watcall sub_38b3a(void)
+void __watcall dialog_cancel(void)
 
 {
   __CHK(4);
@@ -4449,7 +4449,7 @@ team_info_screen(undefined4 param_1,int *unaff_EDX,int unaff_EBX,void *unaff_ECX
     make_path(local_108,param_1,off_c80e7,&aDB);
     iVar9 = file_open_read(local_108,&local_58);
     if (iVar9 == 0) {
-      iVar9 = sub_384b8(local_58,local_e8);
+      iVar9 = team_info_load_stats(local_58,local_e8);
     }
     file_close(&local_58);
   }
@@ -4490,7 +4490,7 @@ team_info_screen(undefined4 param_1,int *unaff_EDX,int unaff_EBX,void *unaff_ECX
       clearclip(0);
       set_text_colors(0x40,0x43);
       drawshape_remap(uVar3,0,0);
-      sub_37fba(__dest,param_6,local_e8,uVar3);
+      team_grid_draw(__dest,param_6,local_e8,uVar3);
       if ((param_5 & 1) == 0) {
         if ((param_5 & 8) != 0) {
           off_c87b0 = &unk_c86cc;
@@ -4515,7 +4515,7 @@ LAB_00038e22:
       draw_menu_items(&unk_c8778,local_8c[2],0x40,0x41,0x42);
       local_14 = 0;
       *param_7 = (uint)local_e8[0];
-      sub_37ea6((uint)local_e8[0],local_e8,0xffffffff);
+      team_grid_highlight((uint)local_e8[0],local_e8,0xffffffff);
       if (param_5 == 1) {
         local_38 = 0;
       }
@@ -4596,7 +4596,7 @@ LAB_0003a0de:
           if (iVar9 == 0) {
             drawshape(ppppppuVar4,iVar11,local_64);
             if (local_18 == 0) {
-              local_5c = sub_37b92(local_68,local_6c);
+              local_5c = team_grid_slot_at(local_68,local_6c);
               if (((param_5 == 0x10) && (local_14 == 1)) && (local_5c == *param_7)) {
                 local_5c = 0xffffffff;
               }
@@ -4611,9 +4611,9 @@ LAB_0003a0de:
                       puVar10 = param_7 + local_14;
                       if ((*(char *)((int)__dest + *puVar10 * 0x1e + 0x19) == '\0') &&
                          (*(char *)((int)__dest + *puVar10 * 0x1e + 0x17) == '\x01')) {
-                        sub_37d6a(*puVar10,local_e8,ppppppuVar4,local_60,local_64);
-                        sub_37ea6(*puVar10,local_e8,0);
-                        sub_37ea6(*puVar10,local_e8,0xffffffff);
+                        team_grid_save_back(*puVar10,local_e8,ppppppuVar4,local_60,local_64);
+                        team_grid_highlight(*puVar10,local_e8,0);
+                        team_grid_highlight(*puVar10,local_e8,0xffffffff);
                         dword_c786c = (void *)(*puVar10 * 0x1e + (int)__dest);
                         iVar9 = message_dialog(0xffffffff,0xffffffff,&off_c7868,2,&unk_c7870,2,
                                                &local_60,&local_64,0xffffffff);
@@ -4623,11 +4623,11 @@ LAB_0003a0de:
                           local_38 = local_38 + -1;
                           memset((void *)(*puVar10 * 0x1e + (int)__dest),0,0xb);
                           memset((void *)((int)__dest + *puVar10 * 0x1e + 0xb),0,0xb);
-                          sub_37e5b(*puVar10,local_e8);
-                          sub_37c53(*puVar10,__dest,uVar3,local_e8);
+                          team_grid_restore_back(*puVar10,local_e8);
+                          team_grid_draw_name(*puVar10,__dest,uVar3,local_e8);
                         }
                         else {
-                          sub_37e5b(*puVar10,local_e8);
+                          team_grid_restore_back(*puVar10,local_e8);
                         }
                         goto LAB_0003a06b;
                       }
@@ -4635,9 +4635,9 @@ LAB_0003a0de:
                     if (((param_5 & 3) != 0) &&
                        (puVar10 = param_7 + local_14,
                        *(char *)((int)__dest + *puVar10 * 0x1e + 0x17) == '\0')) {
-                      sub_37d6a(*puVar10,local_e8,ppppppuVar4,local_60,local_64);
-                      sub_37ea6(*puVar10,local_e8,0);
-                      sub_37ea6(*puVar10,local_e8,0xffffffff);
+                      team_grid_save_back(*puVar10,local_e8,ppppppuVar4,local_60,local_64);
+                      team_grid_highlight(*puVar10,local_e8,0);
+                      team_grid_highlight(*puVar10,local_e8,0xffffffff);
                       memset((void *)(*puVar10 * 0x1e + (int)__dest),0,0xb);
                       memset((void *)((int)__dest + *puVar10 * 0x1e + 0xb),0,0xb);
                       acStack_19c[0] = aWhoWillPlayThe[0];
@@ -4666,7 +4666,7 @@ LAB_0003a0de:
                       strcat(acStack_19c,pcVar15);
                       strcat(acStack_19c,&unk_c1900);
                       do {
-                        iVar9 = sub_2fedf(acStack_19c,local_a0,10,0x46,0,0,0,1,4);
+                        iVar9 = text_entry_dialog(acStack_19c,local_a0,10,0x46,0,0,0,1,4);
                         if (iVar9 != 0x1b) {
                           strcpy((char *)(param_7[local_14] * 0x1e + (int)__dest),local_a0);
                           iVar9 = 0;
@@ -4688,11 +4688,11 @@ LAB_0003a0de:
                         if (iVar9 == 0x1b) break;
                         strcpy(acStack_19c,aEnterPasswordFor);
                         strcat(acStack_19c,(char *)(param_7[local_14] * 0x1e + (int)__dest));
-                        iVar9 = sub_2fedf(acStack_19c,local_a0,10,0x3c,0,0,0,0,6);
+                        iVar9 = text_entry_dialog(acStack_19c,local_a0,10,0x3c,0,0,0,0,6);
                         if (iVar9 != 0x1b) {
                           strcpy(acStack_19c,aVerifyPasswordFor);
                           strcat(acStack_19c,(char *)(param_7[local_14] * 0x1e + (int)__dest));
-                          iVar9 = sub_2fedf(acStack_19c,local_ac,10,0x3c,0,0,0,0,6);
+                          iVar9 = text_entry_dialog(acStack_19c,local_ac,10,0x3c,0,0,0,0,6);
                         }
                         if (iVar9 != 0x1b) {
                           iVar9 = 0;
@@ -4706,22 +4706,22 @@ LAB_0003a0de:
                       } while (iVar9 != 0);
                       puVar10 = param_7 + local_14;
                       if (iVar9 == 0x1b) {
-                        sub_37e5b(*puVar10,local_e8);
+                        team_grid_restore_back(*puVar10,local_e8);
                       }
                       else {
                         *(undefined *)((int)__dest + *puVar10 * 0x1e + 0x17) = 1;
                         local_38 = local_38 + 1;
                         strcpy((char *)((int)__dest + *puVar10 * 0x1e + 0xb),local_a0);
-                        sub_3a597((int)__dest + *puVar10 * 0x1e + 0xb);
-                        sub_37e5b(*puVar10,local_e8);
-                        sub_37c53(*puVar10,__dest,uVar3,local_e8);
+                        password_scramble((int)__dest + *puVar10 * 0x1e + 0xb);
+                        team_grid_restore_back(*puVar10,local_e8);
+                        team_grid_draw_name(*puVar10,__dest,uVar3,local_e8);
                       }
                       event_queue_reset();
                     }
                   }
                   else {
-                    sub_37ea6(uVar17,local_e8,0);
-                    sub_37ea6(*puVar10,local_e8,0xffffffff);
+                    team_grid_highlight(uVar17,local_e8,0);
+                    team_grid_highlight(*puVar10,local_e8,0xffffffff);
                     if ((local_14 == 0) && ((param_5 & 0x10) != 0)) {
                       local_14 = 1;
                       param_7[1] = 0xffffffff;
@@ -4733,9 +4733,9 @@ LAB_0003a0de:
                 }
                 else {
                   if (-1 < (int)uVar17) {
-                    sub_37ea6(uVar17,local_e8,0xffffffff);
+                    team_grid_highlight(uVar17,local_e8,0xffffffff);
                   }
-                  sub_37ea6(param_7[local_14],local_e8,0xffffffff);
+                  team_grid_highlight(param_7[local_14],local_e8,0xffffffff);
                 }
               }
             }
@@ -4921,7 +4921,7 @@ LAB_0003a100:
         if ((param_5 & 1) != 0) {
           league_control_dialog(__dest,*unaff_EDX,&local_60,&local_64);
         }
-        sub_38386(__dest,unaff_ECX,param_5,*unaff_EDX);
+        team_info_confirm(__dest,unaff_ECX,param_5,*unaff_EDX);
         memcpy(unaff_ECX,__dest,0x30c);
       }
       freemem(__dest);

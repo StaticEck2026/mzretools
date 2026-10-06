@@ -9,7 +9,7 @@ class Shape:
 	var height: int
 	var center_x: int      # hotspot (+8, +0xa); blit_sprite draws the frame at (x - center_x, y - center_y)
 	var center_y: int
-	var x: int             # position (+0xc, +0xe) used by drawshape_home / sub_b4cf2
+	var x: int             # position (+0xc, +0xe) used by drawshape_home / blit_rle_frame_home
 	var y: int
 	var pixels: PackedByteArray   # 8 bit indices
 	var transparent: int = 0      # 0 for plain shapes (drawshape), 0xff for the run length frames
@@ -76,7 +76,7 @@ func palette() -> PackedColorArray:
 			return s.palette
 	return PackedColorArray()
 
-## Pixel stream of the sprite frames (blit_sprite -> sub_b4cd8): a count byte c followed by
+## Pixel stream of the sprite frames (blit_sprite -> blit_rle_frame): a count byte c followed by
 ## c in 1..0x7f: one colour byte repeated c times (colour 0xff = c transparent pixels, the blitter
 ## skips them), c >= 0x80: 0x100 - c literal colour bytes, c == 0: end of the frame.
 static func rle_decode(data: PackedByteArray, pos: int, count: int) -> PackedByteArray:

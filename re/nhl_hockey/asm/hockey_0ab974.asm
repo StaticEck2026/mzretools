@@ -11,10 +11,10 @@
 section code1 vstart=0xab974
 
 ; ====================================================================================================
-; sub_ab974  [0xab974, 315 bytes, 113 instructions]
-; called by: sub_abab0
+; gus_midi_timer_tick  [0xab974, 315 bytes, 113 instructions]
+; called by: gus_midi_start_timer
 ; ====================================================================================================
-sub_ab974:
+gus_midi_timer_tick:
     push ebp                                     ; 0ab974 55
     mov ebp, esp                                 ; 0ab975 89e5
     push ebx                                     ; 0ab977 53
@@ -98,18 +98,18 @@ loc_aba2f:
     xor eax, eax                                 ; 0aba2f 31c0
     mov edx, esi                                 ; 0aba31 89f2
     mov ax, word ptr [word_d8770]                ; 0aba33 66a170870d00
-    call sub_aa200                               ; 0aba39 e8c2e7ffff
+    call outp                                    ; 0aba39 e8c2e7ffff
     xor eax, eax                                 ; 0aba3e 31c0
     mov edx, 1                                   ; 0aba40 ba01000000
     mov ax, word ptr [word_d8772]                ; 0aba45 66a172870d00
-    call sub_aa200                               ; 0aba4b e8b0e7ffff
+    call outp                                    ; 0aba4b e8b0e7ffff
     xor edx, edx                                 ; 0aba50 31d2
     mov dx, word ptr [ebx + 0xa]                 ; 0aba52 668b530a
     xor eax, eax                                 ; 0aba56 31c0
     add edx, ecx                                 ; 0aba58 01ca
     mov ax, word ptr [word_d8774]                ; 0aba5a 66a174870d00
     add edx, edx                                 ; 0aba60 01d2
-    call sub_b19c7                               ; 0aba62 e8605f0000
+    call outpw                                   ; 0aba62 e8605f0000
     mov dh, byte ptr [ebx + 0x17]                ; 0aba67 8a7317
     inc dh                                       ; 0aba6a fec6
     mov cl, byte ptr [ebx + 0x1a]                ; 0aba6c 8a4b1a
@@ -146,16 +146,16 @@ loc_aba93:
     db 0x90 ; 0abaaf |.| (padding)
 
 ; ====================================================================================================
-; sub_abab0  [0xabab0, 25 bytes, 10 instructions]
-; called by: sub_ab80c, sub_ac0cc
+; gus_midi_start_timer  [0xabab0, 25 bytes, 10 instructions]
+; called by: gus_midi_set_controller, gus_midi_note_on
 ; ====================================================================================================
-sub_abab0:
+gus_midi_start_timer:
     push ebp                                     ; 0abab0 55
     mov ebp, esp                                 ; 0abab1 89e5
     push edx                                     ; 0abab3 52
-    mov eax, sub_ab974                           ; 0abab4 b874b90a00
+    mov eax, gus_midi_timer_tick                 ; 0abab4 b874b90a00
     mov edx, 0xbb                                ; 0abab9 babb000000
-    call sub_b1a04                               ; 0ababe e8415f0000
+    call gus_start_timer2                        ; 0ababe e8415f0000
     lea esp, [ebp - 4]                           ; 0abac3 8d65fc
     pop edx                                      ; 0abac6 5a
     pop ebp                                      ; 0abac7 5d
@@ -164,23 +164,23 @@ sub_abab0:
     db 0x8d, 0x40, 0x00 ; 0abac9 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_abacc  [0xabacc, 12 bytes, 6 instructions]
-; called by: sub_ab80c, sub_abf5c
+; gus_midi_stop_timer  [0xabacc, 12 bytes, 6 instructions]
+; called by: gus_midi_set_controller, gus_voice_release
 ; ====================================================================================================
-sub_abacc:
+gus_midi_stop_timer:
     push ebp                                     ; 0abacc 55
     mov ebp, esp                                 ; 0abacd 89e5
-    call sub_b1bf8                               ; 0abacf e824610000
+    call gus_stop_timer2                         ; 0abacf e824610000
     mov esp, ebp                                 ; 0abad4 89ec
     pop ebp                                      ; 0abad6 5d
     ret                                          ; 0abad7 c3
 
 
 ; ====================================================================================================
-; sub_abad8  [0xabad8, 351 bytes, 123 instructions]
-; called by: sub_ab6d0, sub_ab80c, sub_ac0cc
+; gus_midi_voice_volume  [0xabad8, 351 bytes, 123 instructions]
+; called by: gus_midi_voice_off, gus_midi_set_controller, gus_midi_note_on
 ; ====================================================================================================
-sub_abad8:
+gus_midi_voice_volume:
     push ebp                                     ; 0abad8 55
     mov ebp, esp                                 ; 0abad9 89e5
     push ecx                                     ; 0abadb 51
@@ -313,10 +313,10 @@ loc_abc2f:
     db 0x90 ; 0abc37 |.| (padding)
 
 ; ====================================================================================================
-; sub_abc38  [0xabc38, 294 bytes, 111 instructions]
-; called by: sub_ab244, sub_ac0cc
+; gus_midi_voice_pan  [0xabc38, 294 bytes, 111 instructions]
+; called by: gus_midi_voices_init, gus_midi_note_on
 ; ====================================================================================================
-sub_abc38:
+gus_midi_voice_pan:
     push ebp                                     ; 0abc38 55
     mov ebp, esp                                 ; 0abc39 89e5
     push ebx                                     ; 0abc3b 53
@@ -443,10 +443,10 @@ loc_abd48:
     db 0x8b, 0xc0 ; 0abd5e |..| (padding)
 
 ; ====================================================================================================
-; sub_abd60  [0xabd60, 63 bytes, 31 instructions]
-; called by: sub_ac0cc
+; gus_midi_frequency  [0xabd60, 63 bytes, 31 instructions]
+; called by: gus_midi_note_on
 ; ====================================================================================================
-sub_abd60:
+gus_midi_frequency:
     push ebp                                     ; 0abd60 55
     mov ebp, esp                                 ; 0abd61 89e5
     push ecx                                     ; 0abd63 51
@@ -455,7 +455,7 @@ sub_abd60:
     mov ecx, edx                                 ; 0abd67 89d1
     pushf                                        ; 0abd69 669c
     cli                                          ; 0abd6b fa
-    call sub_b122f                               ; 0abd6c e8be540000
+    call gus_irq_lock                            ; 0abd6c e8be540000
     mov eax, edx                                 ; 0abd71 89d0
     shl ebx, 9                                   ; 0abd73 c1e309
     sar eax, 1                                   ; 0abd76 d1f8
@@ -470,7 +470,7 @@ sub_abd60:
     add eax, ebx                                 ; 0abd89 01d8
     div esi                                      ; 0abd8b f7f6
     mov ebx, eax                                 ; 0abd8d 89c3
-    call sub_b1256                               ; 0abd8f e8c2540000
+    call gus_irq_unlock                          ; 0abd8f e8c2540000
     popf                                         ; 0abd94 669d
     mov eax, ebx                                 ; 0abd96 89d8
     lea esp, [ebp - 8]                           ; 0abd98 8d65f8
@@ -482,10 +482,10 @@ sub_abd60:
     db 0x90 ; 0abd9f |.| (padding)
 
 ; ====================================================================================================
-; sub_abda0  [0xabda0, 118 bytes, 45 instructions]
-; called by: sub_ac0cc
+; gus_env_rate  [0xabda0, 118 bytes, 45 instructions]
+; called by: gus_midi_note_on
 ; ====================================================================================================
-sub_abda0:
+gus_env_rate:
     push ebp                                     ; 0abda0 55
     mov ebp, esp                                 ; 0abda1 89e5
     push ebx                                     ; 0abda3 53
@@ -541,10 +541,10 @@ loc_abe0f:
     db 0x8b, 0xc0 ; 0abe16 |..| (padding)
 
 ; ====================================================================================================
-; sub_abe18  [0xabe18, 324 bytes, 89 instructions]
-; called by: sub_ac050, sub_accc0, sub_ad160, sub_ad344
+; gus_voice_stop_hw  [0xabe18, 324 bytes, 89 instructions]
+; called by: gus_midi_channel_stop, gus_wave_callback, gus_voice_kill, gus_midi_sustain_off
 ; ====================================================================================================
-sub_abe18:
+gus_voice_stop_hw:
     push ebp                                     ; 0abe18 55
     mov ebp, esp                                 ; 0abe19 89e5
     push ebx                                     ; 0abe1b 53
@@ -553,7 +553,7 @@ sub_abe18:
     mov edx, eax                                 ; 0abe1e 89c2
     pushf                                        ; 0abe20 669c
     cli                                          ; 0abe22 fa
-    call sub_b122f                               ; 0abe23 e807540000
+    call gus_irq_lock                            ; 0abe23 e807540000
     mov eax, edx                                 ; 0abe28 89d0
     mov ebx, eax                                 ; 0abe2a 89c3
     shl ebx, 5                                   ; 0abe2c c1e305
@@ -570,27 +570,27 @@ sub_abe18:
     or ch, 0xc                                   ; 0abe4f 80cd0c
     mov ax, word ptr [word_d8770]                ; 0abe52 66a170870d00
     mov byte ptr [ebx + 0x13], ch                ; 0abe58 886b13
-    call sub_aa200                               ; 0abe5b e8a0e3ffff
+    call outp                                    ; 0abe5b e8a0e3ffff
     xor eax, eax                                 ; 0abe60 31c0
     mov edx, 0xd                                 ; 0abe62 ba0d000000
     mov ax, word ptr [word_d8772]                ; 0abe67 66a172870d00
-    call sub_aa200                               ; 0abe6d e88ee3ffff
+    call outp                                    ; 0abe6d e88ee3ffff
     xor eax, eax                                 ; 0abe72 31c0
     mov edx, 3                                   ; 0abe74 ba03000000
     mov ax, word ptr [word_d8776]                ; 0abe79 66a176870d00
-    call sub_aa200                               ; 0abe7f e87ce3ffff
-    call sub_b13a1                               ; 0abe84 e818550000
+    call outp                                    ; 0abe7f e87ce3ffff
+    call gus_delay                               ; 0abe84 e818550000
     xor eax, eax                                 ; 0abe89 31c0
     mov edx, 3                                   ; 0abe8b ba03000000
     mov ax, word ptr [word_d8776]                ; 0abe90 66a176870d00
-    call sub_aa200                               ; 0abe96 e865e3ffff
+    call outp                                    ; 0abe96 e865e3ffff
     xor eax, eax                                 ; 0abe9b 31c0
     mov edx, 0x89                                ; 0abe9d ba89000000
     mov ax, word ptr [word_d8772]                ; 0abea2 66a172870d00
-    call sub_aa200                               ; 0abea8 e853e3ffff
+    call outp                                    ; 0abea8 e853e3ffff
     xor eax, eax                                 ; 0abead 31c0
     mov ax, word ptr [word_d8774]                ; 0abeaf 66a174870d00
-    call sub_b1951                               ; 0abeb5 e8975a0000
+    call inpw                                    ; 0abeb5 e8975a0000
     shr eax, 8                                   ; 0abeba c1e808
     cmp eax, 5                                   ; 0abebd 83f805
     jbe loc_abf4d                                ; 0abec0 0f8687000000
@@ -598,36 +598,36 @@ sub_abe18:
     mov edx, 7                                   ; 0abec8 ba07000000
     mov ax, word ptr [word_d8772]                ; 0abecd 66a172870d00
     mov byte ptr [ebx + 0x15], 0x40              ; 0abed3 c6431540
-    call sub_aa200                               ; 0abed7 e824e3ffff
+    call outp                                    ; 0abed7 e824e3ffff
     xor eax, eax                                 ; 0abedc 31c0
     mov edx, 5                                   ; 0abede ba05000000
     mov ax, word ptr [word_d8776]                ; 0abee3 66a176870d00
-    call sub_aa200                               ; 0abee9 e812e3ffff
+    call outp                                    ; 0abee9 e812e3ffff
     xor eax, eax                                 ; 0abeee 31c0
     mov edx, 6                                   ; 0abef0 ba06000000
     mov ax, word ptr [word_d8772]                ; 0abef5 66a172870d00
-    call sub_aa200                               ; 0abefb e800e3ffff
+    call outp                                    ; 0abefb e800e3ffff
     xor eax, eax                                 ; 0abf00 31c0
     mov edx, 0x3f                                ; 0abf02 ba3f000000
     mov ax, word ptr [word_d8776]                ; 0abf07 66a176870d00
-    call sub_aa200                               ; 0abf0d e8eee2ffff
+    call outp                                    ; 0abf0d e8eee2ffff
     xor eax, eax                                 ; 0abf12 31c0
     mov edx, 0xd                                 ; 0abf14 ba0d000000
     mov ax, word ptr [word_d8772]                ; 0abf19 66a172870d00
-    call sub_aa200                               ; 0abf1f e8dce2ffff
+    call outp                                    ; 0abf1f e8dce2ffff
     xor eax, eax                                 ; 0abf24 31c0
     xor edx, edx                                 ; 0abf26 31d2
     mov ax, word ptr [word_d8776]                ; 0abf28 66a176870d00
     mov dl, byte ptr [ebx + 0x15]                ; 0abf2e 8a5315
-    call sub_aa200                               ; 0abf31 e8cae2ffff
-    call sub_b13a1                               ; 0abf36 e866540000
+    call outp                                    ; 0abf31 e8cae2ffff
+    call gus_delay                               ; 0abf36 e866540000
     xor eax, eax                                 ; 0abf3b 31c0
     xor edx, edx                                 ; 0abf3d 31d2
     mov ax, word ptr [word_d8776]                ; 0abf3f 66a176870d00
     mov dl, byte ptr [ebx + 0x15]                ; 0abf45 8a5315
-    call sub_aa200                               ; 0abf48 e8b3e2ffff
+    call outp                                    ; 0abf48 e8b3e2ffff
 loc_abf4d:
-    call sub_b1256                               ; 0abf4d e804530000
+    call gus_irq_unlock                          ; 0abf4d e804530000
     popf                                         ; 0abf52 669d
     lea esp, [ebp - 0xc]                         ; 0abf54 8d65f4
     pop edx                                      ; 0abf57 5a
@@ -638,10 +638,10 @@ loc_abf4d:
 
 
 ; ====================================================================================================
-; sub_abf5c  [0xabf5c, 242 bytes, 71 instructions]
-; called by: sub_ac050, sub_accc0, sub_ad160, sub_ad344
+; gus_voice_release  [0xabf5c, 242 bytes, 71 instructions]
+; called by: gus_midi_channel_stop, gus_wave_callback, gus_voice_kill, gus_midi_sustain_off
 ; ====================================================================================================
-sub_abf5c:
+gus_voice_release:
     push ebp                                     ; 0abf5c 55
     mov ebp, esp                                 ; 0abf5d 89e5
     push ebx                                     ; 0abf5f 53
@@ -651,7 +651,7 @@ sub_abf5c:
     pushf                                        ; 0abf64 669c
     cli                                          ; 0abf66 fa
     mov ecx, ebx                                 ; 0abf67 89d9
-    call sub_b122f                               ; 0abf69 e8c1520000
+    call gus_irq_lock                            ; 0abf69 e8c1520000
     mov eax, ecx                                 ; 0abf6e 89c8
     shl eax, 5                                   ; 0abf70 c1e005
     add eax, ecx                                 ; 0abf73 01c8
@@ -662,35 +662,35 @@ sub_abf5c:
     xor eax, eax                                 ; 0abf86 31c0
     mov edx, ebx                                 ; 0abf88 89da
     mov ax, word ptr [word_d8770]                ; 0abf8a 66a170870d00
-    call sub_aa200                               ; 0abf90 e86be2ffff
+    call outp                                    ; 0abf90 e86be2ffff
 loc_abf95:
     xor eax, eax                                 ; 0abf95 31c0
     mov edx, 0x8d                                ; 0abf97 ba8d000000
     mov ax, word ptr [word_d8772]                ; 0abf9c 66a172870d00
-    call sub_aa200                               ; 0abfa2 e859e2ffff
+    call outp                                    ; 0abfa2 e859e2ffff
     xor eax, eax                                 ; 0abfa7 31c0
     mov ax, word ptr [word_d8776]                ; 0abfa9 66a176870d00
-    call sub_b128c                               ; 0abfaf e8d8520000
+    call inp                                     ; 0abfaf e8d8520000
     test al, 3                                   ; 0abfb4 a803
     je loc_abf95                                 ; 0abfb6 74dd
     xor eax, eax                                 ; 0abfb8 31c0
     xor edx, edx                                 ; 0abfba 31d2
     mov ax, word ptr [word_d8772]                ; 0abfbc 66a172870d00
-    call sub_aa200                               ; 0abfc2 e839e2ffff
+    call outp                                    ; 0abfc2 e839e2ffff
     xor eax, eax                                 ; 0abfc7 31c0
     mov edx, 3                                   ; 0abfc9 ba03000000
     mov ax, word ptr [word_d8776]                ; 0abfce 66a176870d00
-    call sub_aa200                               ; 0abfd4 e827e2ffff
-    call sub_b13a1                               ; 0abfd9 e8c3530000
+    call outp                                    ; 0abfd4 e827e2ffff
+    call gus_delay                               ; 0abfd9 e8c3530000
     xor eax, eax                                 ; 0abfde 31c0
     mov edx, 3                                   ; 0abfe0 ba03000000
     mov ax, word ptr [word_d8776]                ; 0abfe5 66a176870d00
-    call sub_aa200                               ; 0abfeb e810e2ffff
+    call outp                                    ; 0abfeb e810e2ffff
     mov byte ptr [ecx + 0x13], 0                 ; 0abff0 c6411300
     mov eax, ebx                                 ; 0abff4 89d8
     mov byte ptr [ecx + 0x16], 0                 ; 0abff6 c6411600
     xor dl, dl                                   ; 0abffa 30d2
-    call sub_b1e2c                               ; 0abffc e82b5e0000
+    call gus_voice_free                          ; 0abffc e82b5e0000
     mov byte ptr [ebx*4 + unk_f5978], dl         ; 0ac001 88149d78590f00
     mov byte ptr [ebx*4 + unk_f5979], dl         ; 0ac008 88149d79590f00
     mov eax, dword ptr [ecx]                     ; 0ac00f 8b01
@@ -706,9 +706,9 @@ loc_ac028:
     dec dx                                       ; 0ac02f 664a
     mov word ptr [word_f611a], dx                ; 0ac031 6689151a610f00
     jne loc_ac03f                                ; 0ac038 7505
-    call sub_abacc                               ; 0ac03a e88dfaffff
+    call gus_midi_stop_timer                     ; 0ac03a e88dfaffff
 loc_ac03f:
-    call sub_b1256                               ; 0ac03f e812520000
+    call gus_irq_unlock                          ; 0ac03f e812520000
     popf                                         ; 0ac044 669d
     lea esp, [ebp - 0xc]                         ; 0ac046 8d65f4
     pop edx                                      ; 0ac049 5a
@@ -720,10 +720,10 @@ loc_ac03f:
     db 0x8b, 0xc0 ; 0ac04e |..| (padding)
 
 ; ====================================================================================================
-; sub_ac050  [0xac050, 122 bytes, 45 instructions]
-; called by: sub_ac0cc
+; gus_midi_channel_stop  [0xac050, 122 bytes, 45 instructions]
+; called by: gus_midi_note_on
 ; ====================================================================================================
-sub_ac050:
+gus_midi_channel_stop:
     push ebp                                     ; 0ac050 55
     mov ebp, esp                                 ; 0ac051 89e5
     push ebx                                     ; 0ac053 53
@@ -733,7 +733,7 @@ sub_ac050:
     mov ecx, eax                                 ; 0ac057 89c1
     pushf                                        ; 0ac059 669c
     cli                                          ; 0ac05b fa
-    call sub_b122f                               ; 0ac05c e8ce510000
+    call gus_irq_lock                            ; 0ac05c e8ce510000
     xor edx, edx                                 ; 0ac061 31d2
 loc_ac063:
     lea ebx, [edx*2]                             ; 0ac063 8d1c5500000000
@@ -741,7 +741,7 @@ loc_ac063:
     sar eax, 0x10                                ; 0ac071 c1f810
     cmp eax, -1                                  ; 0ac074 83f8ff
     je loc_ac07e                                 ; 0ac077 7405
-    call sub_abe18                               ; 0ac079 e89afdffff
+    call gus_voice_stop_hw                       ; 0ac079 e89afdffff
 loc_ac07e:
     inc edx                                      ; 0ac07e 42
     cmp edx, 4                                   ; 0ac07f 83fa04
@@ -759,12 +759,12 @@ loc_ac086:
     test byte ptr [esi + eax + unk_f5c0b], 1     ; 0ac0a3 f684060b5c0f0001
     je loc_ac0b4                                 ; 0ac0ab 7407
     mov eax, ebx                                 ; 0ac0ad 89d8
-    call sub_abf5c                               ; 0ac0af e8a8feffff
+    call gus_voice_release                       ; 0ac0af e8a8feffff
 loc_ac0b4:
     inc edx                                      ; 0ac0b4 42
     cmp edx, 4                                   ; 0ac0b5 83fa04
     jl loc_ac086                                 ; 0ac0b8 7ccc
-    call sub_b1256                               ; 0ac0ba e897510000
+    call gus_irq_unlock                          ; 0ac0ba e897510000
     popf                                         ; 0ac0bf 669d
     lea esp, [ebp - 0x10]                        ; 0ac0c1 8d65f0
     pop esi                                      ; 0ac0c4 5e
@@ -777,10 +777,10 @@ loc_ac0b4:
     db 0x8b, 0xc0 ; 0ac0ca |..| (padding)
 
 ; ====================================================================================================
-; sub_ac0cc  [0xac0cc, 1561 bytes, 443 instructions]
-; called by: sub_a0d99
+; gus_midi_note_on  [0xac0cc, 1561 bytes, 443 instructions]
+; called by: gus_patch_drv_send_midi
 ; ====================================================================================================
-sub_ac0cc:
+gus_midi_note_on:
     push ebp                                     ; 0ac0cc 55
     mov ebp, esp                                 ; 0ac0cd 89e5
     push esi                                     ; 0ac0cf 56
@@ -794,7 +794,7 @@ sub_ac0cc:
     jne loc_ac0f2                                ; 0ac0e1 750f
     mov edx, dword ptr [ebp + 8]                 ; 0ac0e3 8b5508
     mov eax, ebx                                 ; 0ac0e6 89d8
-    call sub_ac6e8                               ; 0ac0e8 e8fb050000
+    call gus_midi_voice_start                    ; 0ac0e8 e8fb050000
     jmp loc_ac6dc                                ; 0ac0ed e9ea050000
 
 loc_ac0f2:
@@ -811,7 +811,7 @@ loc_ac109:
     je loc_ac6dc                                 ; 0ac10b 0f84cb050000
     pushf                                        ; 0ac111 669c
     cli                                          ; 0ac113 fa
-    call sub_b122f                               ; 0ac114 e816510000
+    call gus_irq_lock                            ; 0ac114 e816510000
     mov ebx, 0xffffffff                          ; 0ac119 bbffffffff
     mov eax, dword ptr [edi - 2]                 ; 0ac11e 8b47fe
     xor ecx, ecx                                 ; 0ac121 31c9
@@ -833,7 +833,7 @@ loc_ac13e:
     je loc_ac163                                 ; 0ac153 740e
     mov edx, dword ptr [ebp - 0x1c]              ; 0ac155 8b55e4
     mov eax, esi                                 ; 0ac158 89f0
-    call sub_abda0                               ; 0ac15a e841fcffff
+    call gus_env_rate                            ; 0ac15a e841fcffff
     mov ebx, eax                                 ; 0ac15f 89c3
     jmp loc_ac16d                                ; 0ac161 eb0a
 
@@ -899,8 +899,8 @@ loc_ac1f2:
     cmp edx, dword ptr [ebp - 0x24]              ; 0ac1f2 3b55dc
     je loc_ac673                                 ; 0ac1f5 0f8478040000
     mov eax, dword ptr [ebp - 0x2c]              ; 0ac1fb 8b45d4
-    mov edx, sub_ac050                           ; 0ac1fe ba50c00a00
-    call sub_b1cbc                               ; 0ac203 e8b45a0000
+    mov edx, gus_midi_channel_stop               ; 0ac1fe ba50c00a00
+    call gus_voice_alloc                         ; 0ac203 e8b45a0000
     mov edx, eax                                 ; 0ac208 89c2
     mov dword ptr [ebp - 0x28], eax              ; 0ac20a 8945d8
     cmp eax, -1                                  ; 0ac20d 83f8ff
@@ -980,7 +980,7 @@ loc_ac2ea:
     mov dword ptr [ecx], esi                     ; 0ac2ff 8931
     mov ax, word ptr [esi + 0x2e]                ; 0ac301 668b462e
     mov edx, dword ptr [esi + 0x10]              ; 0ac305 8b5610
-    call sub_abd60                               ; 0ac308 e853faffff
+    call gus_midi_frequency                      ; 0ac308 e853faffff
     mov word ptr [ecx + 8], ax                   ; 0ac30d 66894108
     mov eax, dword ptr [ebp - 0x10]              ; 0ac311 8b45f0
     cmp word ptr [eax + 2], 0x400                ; 0ac314 668178020004
@@ -1001,21 +1001,21 @@ loc_ac337:
     xor eax, eax                                 ; 0ac33b 31c0
     mov edx, dword ptr [ebp - 0x28]              ; 0ac33d 8b55d8
     mov ax, word ptr [word_d8770]                ; 0ac340 66a170870d00
-    call sub_aa200                               ; 0ac346 e8b5deffff
+    call outp                                    ; 0ac346 e8b5deffff
     xor eax, eax                                 ; 0ac34b 31c0
     mov edx, 1                                   ; 0ac34d ba01000000
     mov ax, word ptr [word_d8772]                ; 0ac352 66a172870d00
-    call sub_aa200                               ; 0ac358 e8a3deffff
+    call outp                                    ; 0ac358 e8a3deffff
     xor edx, edx                                 ; 0ac35d 31d2
     xor eax, eax                                 ; 0ac35f 31c0
     mov dx, word ptr [ecx + 0xa]                 ; 0ac361 668b510a
     mov ax, word ptr [word_d8774]                ; 0ac365 66a174870d00
     add edx, edx                                 ; 0ac36b 01d2
-    call sub_b19c7                               ; 0ac36d e855560000
+    call outpw                                   ; 0ac36d e855560000
     xor eax, eax                                 ; 0ac372 31c0
     mov edx, 0xc                                 ; 0ac374 ba0c000000
     mov ax, word ptr [word_d8772]                ; 0ac379 66a172870d00
-    call sub_aa200                               ; 0ac37f e87cdeffff
+    call outp                                    ; 0ac37f e87cdeffff
     mov eax, dword ptr [ebp - 0x10]              ; 0ac384 8b45f0
     cmp byte ptr [eax + 8], 0x10                 ; 0ac387 80780810
     je loc_ac39c                                 ; 0ac38b 740f
@@ -1031,7 +1031,7 @@ loc_ac39c:
     mov ax, word ptr [word_d8776]                ; 0ac3a0 66a176870d00
     mov dl, byte ptr [esi + 0x35]                ; 0ac3a6 8a5635
 loc_ac3a9:
-    call sub_aa200                               ; 0ac3a9 e852deffff
+    call outp                                    ; 0ac3a9 e852deffff
     mov byte ptr [ecx + 0x14], 0                 ; 0ac3ae c6411400
     mov byte ptr [ecx + 0x15], 0                 ; 0ac3b2 c6411500
     test byte ptr [esi + 0x48], 4                ; 0ac3b6 f6464804
@@ -1054,16 +1054,16 @@ loc_ac3d4:
     or bh, 0x40                                  ; 0ac3e4 80cf40
     mov ax, word ptr [word_d8772]                ; 0ac3e7 66a172870d00
     mov byte ptr [ecx + 0x14], bh                ; 0ac3ed 887914
-    call sub_aa200                               ; 0ac3f0 e80bdeffff
+    call outp                                    ; 0ac3f0 e80bdeffff
     xor eax, eax                                 ; 0ac3f5 31c0
     xor edx, edx                                 ; 0ac3f7 31d2
     mov ax, word ptr [word_d8774]                ; 0ac3f9 66a174870d00
     mov dx, word ptr [esi + 0x2a]                ; 0ac3ff 668b562a
-    call sub_b19c7                               ; 0ac403 e8bf550000
+    call outpw                                   ; 0ac403 e8bf550000
     xor eax, eax                                 ; 0ac408 31c0
     mov edx, 0xa                                 ; 0ac40a ba0a000000
     mov ax, word ptr [word_d8772]                ; 0ac40f 66a172870d00
-    call sub_aa200                               ; 0ac415 e8e6ddffff
+    call outp                                    ; 0ac415 e8e6ddffff
     xor eax, eax                                 ; 0ac41a 31c0
     xor edx, edx                                 ; 0ac41c 31d2
     mov ax, word ptr [word_d8774]                ; 0ac41e 66a174870d00
@@ -1074,80 +1074,80 @@ loc_ac42a:
     xor eax, eax                                 ; 0ac42a 31c0
     mov edx, 0xb                                 ; 0ac42c ba0b000000
     mov ax, word ptr [word_d8772]                ; 0ac431 66a172870d00
-    call sub_aa200                               ; 0ac437 e8c4ddffff
+    call outp                                    ; 0ac437 e8c4ddffff
     xor eax, eax                                 ; 0ac43c 31c0
     xor edx, edx                                 ; 0ac43e 31d2
     mov ax, word ptr [word_d8774]                ; 0ac440 66a174870d00
     mov dx, word ptr [esi + 0x1e]                ; 0ac446 668b561e
-    call sub_b19c7                               ; 0ac44a e878550000
+    call outpw                                   ; 0ac44a e878550000
     xor eax, eax                                 ; 0ac44f 31c0
     mov edx, 0xa                                 ; 0ac451 ba0a000000
     mov ax, word ptr [word_d8772]                ; 0ac456 66a172870d00
-    call sub_aa200                               ; 0ac45c e89fddffff
+    call outp                                    ; 0ac45c e89fddffff
     xor eax, eax                                 ; 0ac461 31c0
     xor edx, edx                                 ; 0ac463 31d2
     mov ax, word ptr [word_d8774]                ; 0ac465 66a174870d00
     mov dx, word ptr [esi + 0x20]                ; 0ac46b 668b5620
 loc_ac46f:
-    call sub_b19c7                               ; 0ac46f e853550000
+    call outpw                                   ; 0ac46f e853550000
     xor eax, eax                                 ; 0ac474 31c0
     mov edx, 3                                   ; 0ac476 ba03000000
     mov ax, word ptr [word_d8772]                ; 0ac47b 66a172870d00
-    call sub_aa200                               ; 0ac481 e87addffff
+    call outp                                    ; 0ac481 e87addffff
     xor eax, eax                                 ; 0ac486 31c0
     xor edx, edx                                 ; 0ac488 31d2
     mov ax, word ptr [word_d8774]                ; 0ac48a 66a174870d00
     mov dx, word ptr [esi + 0x22]                ; 0ac490 668b5622
-    call sub_b19c7                               ; 0ac494 e82e550000
+    call outpw                                   ; 0ac494 e82e550000
     xor eax, eax                                 ; 0ac499 31c0
     mov edx, 2                                   ; 0ac49b ba02000000
     mov ax, word ptr [word_d8772]                ; 0ac4a0 66a172870d00
-    call sub_aa200                               ; 0ac4a6 e855ddffff
+    call outp                                    ; 0ac4a6 e855ddffff
     xor eax, eax                                 ; 0ac4ab 31c0
     xor edx, edx                                 ; 0ac4ad 31d2
     mov ax, word ptr [word_d8774]                ; 0ac4af 66a174870d00
     mov dx, word ptr [esi + 0x24]                ; 0ac4b5 668b5624
-    call sub_b19c7                               ; 0ac4b9 e809550000
+    call outpw                                   ; 0ac4b9 e809550000
     xor eax, eax                                 ; 0ac4be 31c0
     mov edx, 5                                   ; 0ac4c0 ba05000000
     mov ax, word ptr [word_d8772]                ; 0ac4c5 66a172870d00
-    call sub_aa200                               ; 0ac4cb e830ddffff
+    call outp                                    ; 0ac4cb e830ddffff
     xor eax, eax                                 ; 0ac4d0 31c0
     xor edx, edx                                 ; 0ac4d2 31d2
     mov ax, word ptr [word_d8774]                ; 0ac4d4 66a174870d00
     mov dx, word ptr [esi + 0x26]                ; 0ac4da 668b5626
-    call sub_b19c7                               ; 0ac4de e8e4540000
+    call outpw                                   ; 0ac4de e8e4540000
     xor eax, eax                                 ; 0ac4e3 31c0
     mov edx, 4                                   ; 0ac4e5 ba04000000
     mov ax, word ptr [word_d8772]                ; 0ac4ea 66a172870d00
-    call sub_aa200                               ; 0ac4f0 e80bddffff
+    call outp                                    ; 0ac4f0 e80bddffff
     xor eax, eax                                 ; 0ac4f5 31c0
     xor edx, edx                                 ; 0ac4f7 31d2
     mov ax, word ptr [word_d8774]                ; 0ac4f9 66a174870d00
     mov dx, word ptr [esi + 0x28]                ; 0ac4ff 668b5628
-    call sub_b19c7                               ; 0ac503 e8bf540000
+    call outpw                                   ; 0ac503 e8bf540000
     xor eax, eax                                 ; 0ac508 31c0
     mov edx, 6                                   ; 0ac50a ba06000000
     mov ax, word ptr [word_d8772]                ; 0ac50f 66a172870d00
     mov byte ptr [ecx + 0x1b], 0                 ; 0ac515 c6411b00
-    call sub_aa200                               ; 0ac519 e8e2dcffff
+    call outp                                    ; 0ac519 e8e2dcffff
     xor eax, eax                                 ; 0ac51e 31c0
     xor edx, edx                                 ; 0ac520 31d2
     mov ax, word ptr [word_d8776]                ; 0ac522 66a176870d00
     mov dl, byte ptr [esi + 0x36]                ; 0ac528 8a5636
-    call sub_aa200                               ; 0ac52b e8d0dcffff
+    call outp                                    ; 0ac52b e8d0dcffff
     xor eax, eax                                 ; 0ac530 31c0
     mov edx, 7                                   ; 0ac532 ba07000000
     mov ax, word ptr [word_d8772]                ; 0ac537 66a172870d00
-    call sub_aa200                               ; 0ac53d e8bedcffff
+    call outp                                    ; 0ac53d e8bedcffff
     xor eax, eax                                 ; 0ac542 31c0
     mov edx, 5                                   ; 0ac544 ba05000000
     mov ax, word ptr [word_d8776]                ; 0ac549 66a176870d00
-    call sub_aa200                               ; 0ac54f e8acdcffff
+    call outp                                    ; 0ac54f e8acdcffff
     xor eax, eax                                 ; 0ac554 31c0
     mov edx, 8                                   ; 0ac556 ba08000000
     mov ax, word ptr [word_d8772]                ; 0ac55b 66a172870d00
-    call sub_aa200                               ; 0ac561 e89adcffff
+    call outp                                    ; 0ac561 e89adcffff
     xor edx, edx                                 ; 0ac566 31d2
     xor eax, eax                                 ; 0ac568 31c0
     mov dl, byte ptr [esi + 0x3c]                ; 0ac56a 8a563c
@@ -1166,7 +1166,7 @@ loc_ac589:
     mov byte ptr [ecx + 0x20], 0                 ; 0ac58f c6412000
     mov ax, word ptr [word_d8776]                ; 0ac593 66a176870d00
     mov byte ptr [ecx + 0x1f], dl                ; 0ac599 88511f
-    call sub_aa200                               ; 0ac59c e85fdcffff
+    call outp                                    ; 0ac59c e85fdcffff
     or byte ptr [ecx + 0x15], 0x20               ; 0ac5a1 80491520
     cmp byte ptr [esi + 0x47], 0                 ; 0ac5a5 807e4700
     jne loc_ac5b4                                ; 0ac5a9 7509
@@ -1177,14 +1177,14 @@ loc_ac5b4:
     mov eax, dword ptr [ebp - 0x28]              ; 0ac5b4 8b45d8
     mov edx, 1                                   ; 0ac5b7 ba01000000
     mov ebx, dword ptr [ebp + 8]                 ; 0ac5bc 8b5d08
-    call sub_abad8                               ; 0ac5bf e814f5ffff
+    call gus_midi_voice_volume                   ; 0ac5bf e814f5ffff
     mov ax, word ptr [word_f611a]                ; 0ac5c4 66a11a610f00
     mov edx, eax                                 ; 0ac5ca 89c2
     inc edx                                      ; 0ac5cc 42
     mov word ptr [word_f611a], dx                ; 0ac5cd 6689151a610f00
     test ax, ax                                  ; 0ac5d4 6685c0
     jne loc_ac5de                                ; 0ac5d7 7505
-    call sub_abab0                               ; 0ac5d9 e8d2f4ffff
+    call gus_midi_start_timer                    ; 0ac5d9 e8d2f4ffff
 loc_ac5de:
     cmp byte ptr [esi + 0x44], 0                 ; 0ac5de 807e4400
     jne loc_ac5ed                                ; 0ac5e2 7509
@@ -1194,40 +1194,40 @@ loc_ac5de:
 loc_ac5ed:
     mov eax, dword ptr [ebp - 0x28]              ; 0ac5ed 8b45d8
     mov edx, dword ptr [ebp + 8]                 ; 0ac5f0 8b5508
-    call sub_abc38                               ; 0ac5f3 e840f6ffff
+    call gus_midi_voice_pan                      ; 0ac5f3 e840f6ffff
 loc_ac5f8:
     mov edx, 0xd                                 ; 0ac5f8 ba0d000000
     xor eax, eax                                 ; 0ac5fd 31c0
     mov byte ptr [ecx + 0x13], 1                 ; 0ac5ff c6411301
     mov ax, word ptr [word_d8772]                ; 0ac603 66a172870d00
     mov byte ptr [ecx + 0x16], 0                 ; 0ac609 c6411600
-    call sub_aa200                               ; 0ac60d e8eedbffff
+    call outp                                    ; 0ac60d e8eedbffff
     xor eax, eax                                 ; 0ac612 31c0
     xor edx, edx                                 ; 0ac614 31d2
     mov ax, word ptr [word_d8776]                ; 0ac616 66a176870d00
     mov dl, byte ptr [ecx + 0x15]                ; 0ac61c 8a5115
-    call sub_aa200                               ; 0ac61f e8dcdbffff
-    call sub_b13a1                               ; 0ac624 e8784d0000
+    call outp                                    ; 0ac61f e8dcdbffff
+    call gus_delay                               ; 0ac624 e8784d0000
     xor eax, eax                                 ; 0ac629 31c0
     xor edx, edx                                 ; 0ac62b 31d2
     mov ax, word ptr [word_d8776]                ; 0ac62d 66a176870d00
     mov dl, byte ptr [ecx + 0x15]                ; 0ac633 8a5115
-    call sub_aa200                               ; 0ac636 e8c5dbffff
+    call outp                                    ; 0ac636 e8c5dbffff
     xor eax, eax                                 ; 0ac63b 31c0
     xor edx, edx                                 ; 0ac63d 31d2
     mov ax, word ptr [word_d8772]                ; 0ac63f 66a172870d00
-    call sub_aa200                               ; 0ac645 e8b6dbffff
+    call outp                                    ; 0ac645 e8b6dbffff
     xor eax, eax                                 ; 0ac64a 31c0
     xor edx, edx                                 ; 0ac64c 31d2
     mov ax, word ptr [word_d8776]                ; 0ac64e 66a176870d00
     mov dl, byte ptr [ecx + 0x14]                ; 0ac654 8a5114
-    call sub_aa200                               ; 0ac657 e8a4dbffff
-    call sub_b13a1                               ; 0ac65c e8404d0000
+    call outp                                    ; 0ac657 e8a4dbffff
+    call gus_delay                               ; 0ac65c e8404d0000
     xor eax, eax                                 ; 0ac661 31c0
     xor edx, edx                                 ; 0ac663 31d2
     mov ax, word ptr [word_d8776]                ; 0ac665 66a176870d00
     mov dl, byte ptr [ecx + 0x14]                ; 0ac66b 8a5114
-    call sub_aa200                               ; 0ac66e e88ddbffff
+    call outp                                    ; 0ac66e e88ddbffff
 loc_ac673:
     inc dword ptr [ebp - 0x18]                   ; 0ac673 ff45e8
     mov eax, dword ptr [ebp - 0x18]              ; 0ac676 8b45e8
@@ -1267,7 +1267,7 @@ loc_ac6cf:
 loc_ac6d0:
     cmp edx, dword ptr [ebp - 0x20]              ; 0ac6d0 3b55e0
     jl loc_ac686                                 ; 0ac6d3 7cb1
-    call sub_b1256                               ; 0ac6d5 e87c4b0000
+    call gus_irq_unlock                          ; 0ac6d5 e87c4b0000
     popf                                         ; 0ac6da 669d
 loc_ac6dc:
     lea esp, [ebp - 8]                           ; 0ac6dc 8d65f8
@@ -1279,10 +1279,10 @@ loc_ac6dc:
     db 0x8d, 0x40, 0x00 ; 0ac6e5 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_ac6e8  [0xac6e8, 1362 bytes, 378 instructions]
-; called by: sub_a0d99, sub_ac0cc, sub_acc3c
+; gus_midi_voice_start  [0xac6e8, 1362 bytes, 378 instructions]
+; called by: gus_patch_drv_send_midi, gus_midi_note_on, gus_midi_all_notes_off
 ; ====================================================================================================
-sub_ac6e8:
+gus_midi_voice_start:
     push ebp                                     ; 0ac6e8 55
     mov ebp, esp                                 ; 0ac6e9 89e5
     push ebx                                     ; 0ac6eb 53
@@ -1293,7 +1293,7 @@ sub_ac6e8:
     mov dword ptr [ebp - 0x1c], eax              ; 0ac6f2 8945e4
     pushf                                        ; 0ac6f5 669c
     cli                                          ; 0ac6f7 fa
-    call sub_b122f                               ; 0ac6f8 e8324b0000
+    call gus_irq_lock                            ; 0ac6f8 e8324b0000
     mov eax, edx                                 ; 0ac6fd 89d0
     shl eax, 4                                   ; 0ac6ff c1e004
     test byte ptr [eax + unk_f59f8], 1           ; 0ac702 f680f8590f0001
@@ -1342,7 +1342,7 @@ loc_ac766:
     add ebx, ecx                                 ; 0ac78a 01cb
     mov eax, ecx                                 ; 0ac78c 89c8
     add ebx, unk_f5bf8                           ; 0ac78e 81c3f85b0f00
-    call sub_b1e64                               ; 0ac794 e8cb560000
+    call gus_voice_add_ref                       ; 0ac794 e8cb560000
     mov al, byte ptr [ebx + 0x13]                ; 0ac799 8a4313
     test al, 1                                   ; 0ac79c a801
     je loc_acc20                                 ; 0ac79e 0f847c040000
@@ -1365,7 +1365,7 @@ loc_ac766:
     xor eax, eax                                 ; 0ac7e2 31c0
     mov edx, ecx                                 ; 0ac7e4 89ca
     mov ax, word ptr [word_d8770]                ; 0ac7e6 66a170870d00
-    call sub_aa200                               ; 0ac7ec e80fdaffff
+    call outp                                    ; 0ac7ec e80fdaffff
     mov dh, byte ptr [ebx + 0x14]                ; 0ac7f1 8a7314
     and dh, 0xd7                                 ; 0ac7f4 80e6d7
     mov al, dh                                   ; 0ac7f7 88f0
@@ -1378,7 +1378,7 @@ loc_ac766:
     xor eax, eax                                 ; 0ac809 31c0
     mov edx, 3                                   ; 0ac80b ba03000000
     mov ax, word ptr [word_d8772]                ; 0ac810 66a172870d00
-    call sub_aa200                               ; 0ac816 e8e5d9ffff
+    call outp                                    ; 0ac816 e8e5d9ffff
     mov eax, dword ptr [ebx]                     ; 0ac81b 8b03
     mov ax, word ptr [eax + 0x1e]                ; 0ac81d 668b401e
     and eax, 0xffff                              ; 0ac821 25ffff0000
@@ -1386,11 +1386,11 @@ loc_ac766:
     xor eax, eax                                 ; 0ac829 31c0
     mov edx, dword ptr [ebp - 0x18]              ; 0ac82b 8b55e8
     mov ax, word ptr [word_d8774]                ; 0ac82e 66a174870d00
-    call sub_b19c7                               ; 0ac834 e88e510000
+    call outpw                                   ; 0ac834 e88e510000
     xor eax, eax                                 ; 0ac839 31c0
     mov edx, 2                                   ; 0ac83b ba02000000
     mov ax, word ptr [word_d8772]                ; 0ac840 66a172870d00
-    call sub_aa200                               ; 0ac846 e8b5d9ffff
+    call outp                                    ; 0ac846 e8b5d9ffff
     mov eax, dword ptr [ebx]                     ; 0ac84b 8b03
     mov ax, word ptr [eax + 0x20]                ; 0ac84d 668b4020
     jmp loc_ac89b                                ; 0ac851 eb48
@@ -1399,7 +1399,7 @@ loc_ac853:
     xor eax, eax                                 ; 0ac853 31c0
     mov edx, 5                                   ; 0ac855 ba05000000
     mov ax, word ptr [word_d8772]                ; 0ac85a 66a172870d00
-    call sub_aa200                               ; 0ac860 e89bd9ffff
+    call outp                                    ; 0ac860 e89bd9ffff
     mov eax, dword ptr [ebx]                     ; 0ac865 8b03
     mov ax, word ptr [eax + 0x2a]                ; 0ac867 668b402a
     and eax, 0xffff                              ; 0ac86b 25ffff0000
@@ -1407,11 +1407,11 @@ loc_ac853:
     xor eax, eax                                 ; 0ac873 31c0
     mov edx, dword ptr [ebp - 0x18]              ; 0ac875 8b55e8
     mov ax, word ptr [word_d8774]                ; 0ac878 66a174870d00
-    call sub_b19c7                               ; 0ac87e e844510000
+    call outpw                                   ; 0ac87e e844510000
     xor eax, eax                                 ; 0ac883 31c0
     mov edx, 4                                   ; 0ac885 ba04000000
     mov ax, word ptr [word_d8772]                ; 0ac88a 66a172870d00
-    call sub_aa200                               ; 0ac890 e86bd9ffff
+    call outp                                    ; 0ac890 e86bd9ffff
     mov eax, dword ptr [ebx]                     ; 0ac895 8b03
     mov ax, word ptr [eax + 0x2c]                ; 0ac897 668b402c
 loc_ac89b:
@@ -1420,22 +1420,22 @@ loc_ac89b:
     xor eax, eax                                 ; 0ac8a3 31c0
     mov edx, dword ptr [ebp - 0x18]              ; 0ac8a5 8b55e8
     mov ax, word ptr [word_d8774]                ; 0ac8a8 66a174870d00
-    call sub_b19c7                               ; 0ac8ae e814510000
+    call outpw                                   ; 0ac8ae e814510000
     xor eax, eax                                 ; 0ac8b3 31c0
     xor edx, edx                                 ; 0ac8b5 31d2
     mov ax, word ptr [word_d8772]                ; 0ac8b7 66a172870d00
-    call sub_aa200                               ; 0ac8bd e83ed9ffff
+    call outp                                    ; 0ac8bd e83ed9ffff
     xor eax, eax                                 ; 0ac8c2 31c0
     xor edx, edx                                 ; 0ac8c4 31d2
     mov ax, word ptr [word_d8776]                ; 0ac8c6 66a176870d00
     mov dl, byte ptr [ebx + 0x14]                ; 0ac8cc 8a5314
-    call sub_aa200                               ; 0ac8cf e82cd9ffff
-    call sub_b13a1                               ; 0ac8d4 e8c84a0000
+    call outp                                    ; 0ac8cf e82cd9ffff
+    call gus_delay                               ; 0ac8d4 e8c84a0000
     xor eax, eax                                 ; 0ac8d9 31c0
     xor edx, edx                                 ; 0ac8db 31d2
     mov ax, word ptr [word_d8776]                ; 0ac8dd 66a176870d00
     mov dl, byte ptr [ebx + 0x14]                ; 0ac8e3 8a5314
-    call sub_aa200                               ; 0ac8e6 e815d9ffff
+    call outp                                    ; 0ac8e6 e815d9ffff
 loc_ac8eb:
     mov eax, dword ptr [ebx]                     ; 0ac8eb 8b03
     mov dh, byte ptr [eax + 0x48]                ; 0ac8ed 8a7048
@@ -1447,16 +1447,16 @@ loc_ac8fe:
     xor eax, eax                                 ; 0ac8fe 31c0
     mov edx, 0xd                                 ; 0ac900 ba0d000000
     mov ax, word ptr [word_d8772]                ; 0ac905 66a172870d00
-    call sub_aa200                               ; 0ac90b e8f0d8ffff
+    call outp                                    ; 0ac90b e8f0d8ffff
     xor eax, eax                                 ; 0ac910 31c0
     mov edx, 3                                   ; 0ac912 ba03000000
     mov ax, word ptr [word_d8776]                ; 0ac917 66a176870d00
-    call sub_aa200                               ; 0ac91d e8ded8ffff
-    call sub_b13a1                               ; 0ac922 e87a4a0000
+    call outp                                    ; 0ac91d e8ded8ffff
+    call gus_delay                               ; 0ac922 e87a4a0000
     xor eax, eax                                 ; 0ac927 31c0
     mov edx, 3                                   ; 0ac929 ba03000000
     mov ax, word ptr [word_d8776]                ; 0ac92e 66a176870d00
-    call sub_aa200                               ; 0ac934 e8c7d8ffff
+    call outp                                    ; 0ac934 e8c7d8ffff
     mov dh, byte ptr [ebx + 0x15]                ; 0ac939 8a7315
     mov byte ptr [ebx + 0x1b], 5                 ; 0ac93c c6431b05
     xor eax, eax                                 ; 0ac940 31c0
@@ -1467,10 +1467,10 @@ loc_ac8fe:
     and cl, 0xe7                                 ; 0ac950 80e1e7
     mov edx, 0x89                                ; 0ac953 ba89000000
     mov byte ptr [ebx + 0x15], cl                ; 0ac958 884b15
-    call sub_aa200                               ; 0ac95b e8a0d8ffff
+    call outp                                    ; 0ac95b e8a0d8ffff
     xor eax, eax                                 ; 0ac960 31c0
     mov ax, word ptr [word_d8774]                ; 0ac962 66a174870d00
-    call sub_b1951                               ; 0ac968 e8e44f0000
+    call inpw                                    ; 0ac968 e8e44f0000
     and eax, 0xffff                              ; 0ac96d 25ffff0000
     sar eax, 8                                   ; 0ac972 c1f808
     mov ch, byte ptr [ebx + 0x1e]                ; 0ac975 8a6b1e
@@ -1496,17 +1496,17 @@ loc_ac9a0:
     mov edx, 6                                   ; 0ac9a8 ba06000000
     mov ax, word ptr [word_d8772]                ; 0ac9ad 66a172870d00
     mov byte ptr [ebx + 0x1f], 5                 ; 0ac9b3 c6431f05
-    call sub_aa200                               ; 0ac9b7 e844d8ffff
+    call outp                                    ; 0ac9b7 e844d8ffff
     mov edx, dword ptr [ebx]                     ; 0ac9bc 8b13
     mov dl, byte ptr [edx + 0x3b]                ; 0ac9be 8a523b
     xor eax, eax                                 ; 0ac9c1 31c0
     and edx, 0xff                                ; 0ac9c3 81e2ff000000
     mov ax, word ptr [word_d8776]                ; 0ac9c9 66a176870d00
-    call sub_aa200                               ; 0ac9cf e82cd8ffff
+    call outp                                    ; 0ac9cf e82cd8ffff
     xor eax, eax                                 ; 0ac9d4 31c0
     mov edx, 7                                   ; 0ac9d6 ba07000000
     mov ax, word ptr [word_d8772]                ; 0ac9db 66a172870d00
-    call sub_aa200                               ; 0ac9e1 e81ad8ffff
+    call outp                                    ; 0ac9e1 e81ad8ffff
     xor eax, eax                                 ; 0ac9e6 31c0
     mov edx, 5                                   ; 0ac9e8 ba05000000
     jmp loc_acbda                                ; 0ac9ed e9e8010000
@@ -1517,20 +1517,20 @@ loc_ac9f2:
     xor eax, eax                                 ; 0ac9fb 31c0
     mov edx, ecx                                 ; 0ac9fd 89ca
     mov ax, word ptr [word_d8770]                ; 0ac9ff 66a170870d00
-    call sub_aa200                               ; 0aca05 e8f6d7ffff
+    call outp                                    ; 0aca05 e8f6d7ffff
     xor eax, eax                                 ; 0aca0a 31c0
     mov edx, 0xd                                 ; 0aca0c ba0d000000
     mov ax, word ptr [word_d8772]                ; 0aca11 66a172870d00
-    call sub_aa200                               ; 0aca17 e8e4d7ffff
+    call outp                                    ; 0aca17 e8e4d7ffff
     xor eax, eax                                 ; 0aca1c 31c0
     mov edx, 3                                   ; 0aca1e ba03000000
     mov ax, word ptr [word_d8776]                ; 0aca23 66a176870d00
-    call sub_aa200                               ; 0aca29 e8d2d7ffff
-    call sub_b13a1                               ; 0aca2e e86e490000
+    call outp                                    ; 0aca29 e8d2d7ffff
+    call gus_delay                               ; 0aca2e e86e490000
     xor eax, eax                                 ; 0aca33 31c0
     mov edx, 3                                   ; 0aca35 ba03000000
     mov ax, word ptr [word_d8776]                ; 0aca3a 66a176870d00
-    call sub_aa200                               ; 0aca40 e8bbd7ffff
+    call outp                                    ; 0aca40 e8bbd7ffff
     cmp byte ptr [ebx + 0x1b], 3                 ; 0aca45 807b1b03
     jae loc_aca4f                                ; 0aca49 7304
     mov byte ptr [ebx + 0x1b], 3                 ; 0aca4b c6431b03
@@ -1544,20 +1544,20 @@ loc_aca4f:
     and ch, 0xe7                                 ; 0aca61 80e5e7
     mov ax, word ptr [word_d8772]                ; 0aca64 66a172870d00
     mov byte ptr [ebx + 0x15], ch                ; 0aca6a 886b15
-    call sub_aa200                               ; 0aca6d e88ed7ffff
+    call outp                                    ; 0aca6d e88ed7ffff
     mov edx, dword ptr [ebx]                     ; 0aca72 8b13
     mov dl, byte ptr [edx + 0x39]                ; 0aca74 8a5239
     xor eax, eax                                 ; 0aca77 31c0
     and edx, 0xff                                ; 0aca79 81e2ff000000
     mov ax, word ptr [word_d8776]                ; 0aca7f 66a176870d00
-    call sub_aa200                               ; 0aca85 e876d7ffff
+    call outp                                    ; 0aca85 e876d7ffff
     xor eax, eax                                 ; 0aca8a 31c0
     mov edx, 0x89                                ; 0aca8c ba89000000
     mov ax, word ptr [word_d8772]                ; 0aca91 66a172870d00
-    call sub_aa200                               ; 0aca97 e864d7ffff
+    call outp                                    ; 0aca97 e864d7ffff
     xor eax, eax                                 ; 0aca9c 31c0
     mov ax, word ptr [word_d8774]                ; 0aca9e 66a174870d00
-    call sub_b1951                               ; 0acaa4 e8a84e0000
+    call inpw                                    ; 0acaa4 e8a84e0000
     mov word ptr [ebp - 0x14], ax                ; 0acaa9 668945ec
     shr ax, 8                                    ; 0acaad 66c1e808
     mov word ptr [ebp - 0x14], ax                ; 0acab1 668945ec
@@ -1588,16 +1588,16 @@ loc_acadb:
     mov ax, word ptr [word_d8772]                ; 0acaf7 66a172870d00
     mov byte ptr [ebx + 0x15], dl                ; 0acafd 885315
     mov edx, 7                                   ; 0acb00 ba07000000
-    call sub_aa200                               ; 0acb05 e8f6d6ffff
+    call outp                                    ; 0acb05 e8f6d6ffff
     xor edx, edx                                 ; 0acb0a 31d2
     xor eax, eax                                 ; 0acb0c 31c0
     mov dx, word ptr [ebp - 0x14]                ; 0acb0e 668b55ec
     mov ax, word ptr [word_d8776]                ; 0acb12 66a176870d00
-    call sub_aa200                               ; 0acb18 e8e3d6ffff
+    call outp                                    ; 0acb18 e8e3d6ffff
     xor eax, eax                                 ; 0acb1d 31c0
     mov edx, 8                                   ; 0acb1f ba08000000
     mov ax, word ptr [word_d8772]                ; 0acb24 66a172870d00
-    call sub_aa200                               ; 0acb2a e8d1d6ffff
+    call outp                                    ; 0acb2a e8d1d6ffff
     mov eax, dword ptr [ebx]                     ; 0acb2f 8b03
     mov al, byte ptr [eax + 0x3f]                ; 0acb31 8a403f
     xor edx, edx                                 ; 0acb34 31d2
@@ -1626,7 +1626,7 @@ loc_acb68:
     mov ax, word ptr [word_d8772]                ; 0acb70 66a172870d00
     mov byte ptr [ebx + 0x15], dh                ; 0acb76 887315
     mov edx, 7                                   ; 0acb79 ba07000000
-    call sub_aa200                               ; 0acb7e e87dd6ffff
+    call outp                                    ; 0acb7e e87dd6ffff
     mov edx, dword ptr [ebx]                     ; 0acb83 8b13
     mov dl, byte ptr [edx + 0x3f]                ; 0acb85 8a523f
     xor eax, eax                                 ; 0acb88 31c0
@@ -1646,39 +1646,39 @@ loc_acbac:
     mov ax, word ptr [word_d8776]                ; 0acbb0 66a176870d00
     mov dl, cl                                   ; 0acbb6 88ca
     mov byte ptr [ebx + 0x1f], cl                ; 0acbb8 884b1f
-    call sub_aa200                               ; 0acbbb e840d6ffff
+    call outp                                    ; 0acbbb e840d6ffff
     xor eax, eax                                 ; 0acbc0 31c0
     mov edx, 8                                   ; 0acbc2 ba08000000
     mov ax, word ptr [word_d8772]                ; 0acbc7 66a172870d00
-    call sub_aa200                               ; 0acbcd e82ed6ffff
+    call outp                                    ; 0acbcd e82ed6ffff
     xor edx, edx                                 ; 0acbd2 31d2
     xor eax, eax                                 ; 0acbd4 31c0
     mov dx, word ptr [ebp - 0x14]                ; 0acbd6 668b55ec
 loc_acbda:
     mov ax, word ptr [word_d8776]                ; 0acbda 66a176870d00
 loc_acbe0:
-    call sub_aa200                               ; 0acbe0 e81bd6ffff
+    call outp                                    ; 0acbe0 e81bd6ffff
     xor eax, eax                                 ; 0acbe5 31c0
     mov edx, 0xd                                 ; 0acbe7 ba0d000000
     mov ax, word ptr [word_d8772]                ; 0acbec 66a172870d00
-    call sub_aa200                               ; 0acbf2 e809d6ffff
+    call outp                                    ; 0acbf2 e809d6ffff
     xor eax, eax                                 ; 0acbf7 31c0
     xor edx, edx                                 ; 0acbf9 31d2
     mov ax, word ptr [word_d8776]                ; 0acbfb 66a176870d00
     mov dl, byte ptr [ebx + 0x15]                ; 0acc01 8a5315
-    call sub_aa200                               ; 0acc04 e8f7d5ffff
-    call sub_b13a1                               ; 0acc09 e893470000
+    call outp                                    ; 0acc04 e8f7d5ffff
+    call gus_delay                               ; 0acc09 e893470000
     xor eax, eax                                 ; 0acc0e 31c0
     xor edx, edx                                 ; 0acc10 31d2
     mov ax, word ptr [word_d8776]                ; 0acc12 66a176870d00
     mov dl, byte ptr [ebx + 0x15]                ; 0acc18 8a5315
-    call sub_aa200                               ; 0acc1b e8e0d5ffff
+    call outp                                    ; 0acc1b e8e0d5ffff
 loc_acc20:
     inc edi                                      ; 0acc20 47
     cmp edi, 4                                   ; 0acc21 83ff04
     jl loc_ac766                                 ; 0acc24 0f8c3cfbffff
 loc_acc2a:
-    call sub_b1256                               ; 0acc2a e827460000
+    call gus_irq_unlock                          ; 0acc2a e827460000
     popf                                         ; 0acc2f 669d
     lea esp, [ebp - 0x10]                        ; 0acc31 8d65f0
     pop edi                                      ; 0acc34 5f
@@ -1691,10 +1691,10 @@ loc_acc2a:
     db 0x8b, 0xc0 ; 0acc3a |..| (padding)
 
 ; ====================================================================================================
-; sub_acc3c  [0xacc3c, 132 bytes, 43 instructions]
-; called by: sub_af428
+; gus_midi_all_notes_off  [0xacc3c, 132 bytes, 43 instructions]
+; called by: gus_midi_controller
 ; ====================================================================================================
-sub_acc3c:
+gus_midi_all_notes_off:
     push ebp                                     ; 0acc3c 55
     mov ebp, esp                                 ; 0acc3d 89e5
     push ebx                                     ; 0acc3f 53
@@ -1702,7 +1702,7 @@ sub_acc3c:
     mov ecx, eax                                 ; 0acc41 89c1
     pushf                                        ; 0acc43 669c
     cli                                          ; 0acc45 fa
-    call sub_b122f                               ; 0acc46 e8e4450000
+    call gus_irq_lock                            ; 0acc46 e8e4450000
     mov eax, ecx                                 ; 0acc4b 89c8
     shl eax, 4                                   ; 0acc4d c1e004
     test edx, edx                                ; 0acc50 85d2
@@ -1729,7 +1729,7 @@ loc_acc70:
     mov al, byte ptr [eax + unk_f5979]           ; 0acc93 8a8079590f00
     mov dl, cl                                   ; 0acc99 88ca
     and eax, 0xff                                ; 0acc9b 25ff000000
-    call sub_ac6e8                               ; 0acca0 e843faffff
+    call gus_midi_voice_start                    ; 0acca0 e843faffff
 loc_acca5:
     inc ebx                                      ; 0acca5 43
 loc_acca6:
@@ -1738,7 +1738,7 @@ loc_acca6:
     cmp ebx, eax                                 ; 0accae 39c3
     jb loc_acc70                                 ; 0accb0 72be
 loc_accb2:
-    call sub_b1256                               ; 0accb2 e89f450000
+    call gus_irq_unlock                          ; 0accb2 e89f450000
     popf                                         ; 0accb7 669d
     lea esp, [ebp - 8]                           ; 0accb9 8d65f8
     pop ecx                                      ; 0accbc 59
@@ -1748,10 +1748,10 @@ loc_accb2:
 
 
 ; ====================================================================================================
-; sub_accc0  [0xaccc0, 150 bytes, 51 instructions]
-; called by: sub_ab180
+; gus_wave_callback  [0xaccc0, 150 bytes, 51 instructions]
+; called by: gus_midi_init
 ; ====================================================================================================
-sub_accc0:
+gus_wave_callback:
     push ebp                                     ; 0accc0 55
     mov ebp, esp                                 ; 0accc1 89e5
     push ebx                                     ; 0accc3 53
@@ -1770,30 +1770,30 @@ sub_accc0:
     mov ax, word ptr [word_d8770]                ; 0acce3 66a170870d00
     mov byte ptr [ecx + 0x14], dl                ; 0acce9 885114
     mov edx, ebx                                 ; 0accec 89da
-    call sub_aa200                               ; 0accee e80dd5ffff
+    call outp                                    ; 0accee e80dd5ffff
     xor eax, eax                                 ; 0accf3 31c0
     xor edx, edx                                 ; 0accf5 31d2
     mov ax, word ptr [word_d8772]                ; 0accf7 66a172870d00
-    call sub_aa200                               ; 0accfd e8fed4ffff
+    call outp                                    ; 0accfd e8fed4ffff
     xor eax, eax                                 ; 0acd02 31c0
     xor edx, edx                                 ; 0acd04 31d2
     mov ax, word ptr [word_d8776]                ; 0acd06 66a176870d00
     mov dl, byte ptr [ecx + 0x14]                ; 0acd0c 8a5114
-    call sub_aa200                               ; 0acd0f e8ecd4ffff
-    call sub_b13a1                               ; 0acd14 e888460000
+    call outp                                    ; 0acd0f e8ecd4ffff
+    call gus_delay                               ; 0acd14 e888460000
     xor eax, eax                                 ; 0acd19 31c0
     xor edx, edx                                 ; 0acd1b 31d2
     mov ax, word ptr [word_d8776]                ; 0acd1d 66a176870d00
     mov dl, byte ptr [ecx + 0x14]                ; 0acd23 8a5114
-    call sub_aa200                               ; 0acd26 e8d5d4ffff
+    call outp                                    ; 0acd26 e8d5d4ffff
     test byte ptr [ecx + 0x13], 8                ; 0acd2b f6411308
     je loc_acd45                                 ; 0acd2f 7414
     cmp byte ptr [ecx + 0x1b], 0                 ; 0acd31 80791b00
     je loc_acd45                                 ; 0acd35 740e
     mov eax, ebx                                 ; 0acd37 89d8
-    call sub_abe18                               ; 0acd39 e8daf0ffff
+    call gus_voice_stop_hw                       ; 0acd39 e8daf0ffff
     mov eax, ebx                                 ; 0acd3e 89d8
-    call sub_abf5c                               ; 0acd40 e817f2ffff
+    call gus_voice_release                       ; 0acd40 e817f2ffff
 loc_acd45:
     mov eax, 1                                   ; 0acd45 b801000000
     jmp loc_acd4e                                ; 0acd4a eb02
@@ -1811,10 +1811,11 @@ loc_acd4e:
     db 0x8b, 0xc0 ; 0acd56 |..| (padding)
 
 ; ====================================================================================================
-; sub_acd58  [0xacd58, 1030 bytes, 296 instructions]
-; called by: sub_ab180
+; gus_volume_callback  [0xacd58, 1030 bytes, 296 instructions]
+; envelope stages of the voices
+; called by: gus_midi_init
 ; ====================================================================================================
-sub_acd58:
+gus_volume_callback:
     push ebp                                     ; 0acd58 55
     mov ebp, esp                                 ; 0acd59 89e5
     push ebx                                     ; 0acd5b 53
@@ -1834,27 +1835,27 @@ sub_acd58:
     and cl, 0x5f                                 ; 0acd80 80e15f
     mov ax, word ptr [word_d8770]                ; 0acd83 66a170870d00
     mov byte ptr [ebx + 0x15], cl                ; 0acd89 884b15
-    call sub_aa200                               ; 0acd8c e86fd4ffff
+    call outp                                    ; 0acd8c e86fd4ffff
     xor eax, eax                                 ; 0acd91 31c0
     mov edx, 0xd                                 ; 0acd93 ba0d000000
     mov ax, word ptr [word_d8772]                ; 0acd98 66a172870d00
-    call sub_aa200                               ; 0acd9e e85dd4ffff
+    call outp                                    ; 0acd9e e85dd4ffff
     xor eax, eax                                 ; 0acda3 31c0
     mov edx, 3                                   ; 0acda5 ba03000000
     mov ax, word ptr [word_d8776]                ; 0acdaa 66a176870d00
-    call sub_aa200                               ; 0acdb0 e84bd4ffff
-    call sub_b13a1                               ; 0acdb5 e8e7450000
+    call outp                                    ; 0acdb0 e84bd4ffff
+    call gus_delay                               ; 0acdb5 e8e7450000
     xor eax, eax                                 ; 0acdba 31c0
     mov edx, 3                                   ; 0acdbc ba03000000
     mov ax, word ptr [word_d8776]                ; 0acdc1 66a176870d00
-    call sub_aa200                               ; 0acdc7 e834d4ffff
+    call outp                                    ; 0acdc7 e834d4ffff
     xor eax, eax                                 ; 0acdcc 31c0
     mov edx, 0x89                                ; 0acdce ba89000000
     mov ax, word ptr [word_d8772]                ; 0acdd3 66a172870d00
-    call sub_aa200                               ; 0acdd9 e822d4ffff
+    call outp                                    ; 0acdd9 e822d4ffff
     xor eax, eax                                 ; 0acdde 31c0
     mov ax, word ptr [word_d8774]                ; 0acde0 66a174870d00
-    call sub_b1951                               ; 0acde6 e8664b0000
+    call inpw                                    ; 0acde6 e8664b0000
     and eax, 0xffff                              ; 0acdeb 25ffff0000
     sar eax, 8                                   ; 0acdf0 c1f808
     mov ch, byte ptr [ebx + 0x16]                ; 0acdf3 8a6b16
@@ -1902,17 +1903,17 @@ loc_ace34:
     xor eax, eax                                 ; 0ace5d 31c0
     mov edx, 3                                   ; 0ace5f ba03000000
     mov ax, word ptr [word_d8772]                ; 0ace64 66a172870d00
-    call sub_aa200                               ; 0ace6a e891d3ffff
+    call outp                                    ; 0ace6a e891d3ffff
     mov edx, dword ptr [ebx]                     ; 0ace6f 8b13
     mov dx, word ptr [edx + 0x1e]                ; 0ace71 668b521e
     xor eax, eax                                 ; 0ace75 31c0
     and edx, 0xffff                              ; 0ace77 81e2ffff0000
     mov ax, word ptr [word_d8774]                ; 0ace7d 66a174870d00
-    call sub_b19c7                               ; 0ace83 e83f4b0000
+    call outpw                                   ; 0ace83 e83f4b0000
     xor eax, eax                                 ; 0ace88 31c0
     mov edx, 2                                   ; 0ace8a ba02000000
     mov ax, word ptr [word_d8772]                ; 0ace8f 66a172870d00
-    call sub_aa200                               ; 0ace95 e866d3ffff
+    call outp                                    ; 0ace95 e866d3ffff
     mov edx, dword ptr [ebx]                     ; 0ace9a 8b13
     mov dx, word ptr [edx + 0x20]                ; 0ace9c 668b5220
     jmp loc_acee5                                ; 0acea0 eb43
@@ -1921,34 +1922,34 @@ loc_acea2:
     xor eax, eax                                 ; 0acea2 31c0
     mov edx, 5                                   ; 0acea4 ba05000000
     mov ax, word ptr [word_d8772]                ; 0acea9 66a172870d00
-    call sub_aa200                               ; 0aceaf e84cd3ffff
+    call outp                                    ; 0aceaf e84cd3ffff
     mov edx, dword ptr [ebx]                     ; 0aceb4 8b13
     mov dx, word ptr [edx + 0x2a]                ; 0aceb6 668b522a
     xor eax, eax                                 ; 0aceba 31c0
     and edx, 0xffff                              ; 0acebc 81e2ffff0000
     mov ax, word ptr [word_d8774]                ; 0acec2 66a174870d00
-    call sub_b19c7                               ; 0acec8 e8fa4a0000
+    call outpw                                   ; 0acec8 e8fa4a0000
     xor eax, eax                                 ; 0acecd 31c0
     mov edx, 4                                   ; 0acecf ba04000000
     mov ax, word ptr [word_d8772]                ; 0aced4 66a172870d00
-    call sub_aa200                               ; 0aceda e821d3ffff
+    call outp                                    ; 0aceda e821d3ffff
     mov edx, dword ptr [ebx]                     ; 0acedf 8b13
     mov dx, word ptr [edx + 0x2c]                ; 0acee1 668b522c
 loc_acee5:
     xor eax, eax                                 ; 0acee5 31c0
     and edx, 0xffff                              ; 0acee7 81e2ffff0000
     mov ax, word ptr [word_d8774]                ; 0aceed 66a174870d00
-    call sub_b19c7                               ; 0acef3 e8cf4a0000
+    call outpw                                   ; 0acef3 e8cf4a0000
     xor eax, eax                                 ; 0acef8 31c0
     xor edx, edx                                 ; 0acefa 31d2
     mov ax, word ptr [word_d8772]                ; 0acefc 66a172870d00
-    call sub_aa200                               ; 0acf02 e8f9d2ffff
+    call outp                                    ; 0acf02 e8f9d2ffff
     xor eax, eax                                 ; 0acf07 31c0
     xor edx, edx                                 ; 0acf09 31d2
     mov ax, word ptr [word_d8776]                ; 0acf0b 66a176870d00
     mov dl, byte ptr [ebx + 0x14]                ; 0acf11 8a5314
-    call sub_aa200                               ; 0acf14 e8e7d2ffff
-    call sub_b13a1                               ; 0acf19 e883440000
+    call outp                                    ; 0acf14 e8e7d2ffff
+    call gus_delay                               ; 0acf19 e883440000
     xor eax, eax                                 ; 0acf1e 31c0
     xor edx, edx                                 ; 0acf20 31d2
     mov ax, word ptr [word_d8776]                ; 0acf22 66a176870d00
@@ -1988,10 +1989,10 @@ loc_acf8a:
     xor eax, eax                                 ; 0acf8a 31c0
     mov edx, 0x89                                ; 0acf8c ba89000000
     mov ax, word ptr [word_d8772]                ; 0acf91 66a172870d00
-    call sub_aa200                               ; 0acf97 e864d2ffff
+    call outp                                    ; 0acf97 e864d2ffff
     xor eax, eax                                 ; 0acf9c 31c0
     mov ax, word ptr [word_d8774]                ; 0acf9e 66a174870d00
-    call sub_b1951                               ; 0acfa4 e8a8490000
+    call inpw                                    ; 0acfa4 e8a8490000
     and eax, 0xffff                              ; 0acfa9 25ffff0000
     xor edx, edx                                 ; 0acfae 31d2
     sar eax, 4                                   ; 0acfb0 c1f804
@@ -2008,30 +2009,30 @@ loc_acfc9:
     xor eax, eax                                 ; 0acfc9 31c0
     mov edx, 6                                   ; 0acfcb ba06000000
     mov ax, word ptr [word_d8772]                ; 0acfd0 66a172870d00
-    call sub_aa200                               ; 0acfd6 e825d2ffff
+    call outp                                    ; 0acfd6 e825d2ffff
     xor eax, eax                                 ; 0acfdb 31c0
     xor edx, edx                                 ; 0acfdd 31d2
     mov ax, word ptr [word_d8776]                ; 0acfdf 66a176870d00
     mov dl, byte ptr [ebx + 0x10]                ; 0acfe5 8a5310
-    call sub_aa200                               ; 0acfe8 e813d2ffff
+    call outp                                    ; 0acfe8 e813d2ffff
     xor eax, eax                                 ; 0acfed 31c0
     mov edx, 7                                   ; 0acfef ba07000000
     mov ax, word ptr [word_d8772]                ; 0acff4 66a172870d00
-    call sub_aa200                               ; 0acffa e801d2ffff
+    call outp                                    ; 0acffa e801d2ffff
     xor eax, eax                                 ; 0acfff 31c0
     xor edx, edx                                 ; 0ad001 31d2
     mov ax, word ptr [word_d8776]                ; 0ad003 66a176870d00
     mov dl, byte ptr [ebx + 0xe]                 ; 0ad009 8a530e
-    call sub_aa200                               ; 0ad00c e8efd1ffff
+    call outp                                    ; 0ad00c e8efd1ffff
     xor eax, eax                                 ; 0ad011 31c0
     mov edx, 8                                   ; 0ad013 ba08000000
     mov ax, word ptr [word_d8772]                ; 0ad018 66a172870d00
-    call sub_aa200                               ; 0ad01e e8ddd1ffff
+    call outp                                    ; 0ad01e e8ddd1ffff
     xor eax, eax                                 ; 0ad023 31c0
     xor edx, edx                                 ; 0ad025 31d2
     mov ax, word ptr [word_d8776]                ; 0ad027 66a176870d00
     mov dl, byte ptr [ebx + 0xf]                 ; 0ad02d 8a530f
-    call sub_aa200                               ; 0ad030 e8cbd1ffff
+    call outp                                    ; 0ad030 e8cbd1ffff
     or byte ptr [ebx + 0x15], 0x18               ; 0ad035 804b1518
     jmp loc_ad10a                                ; 0ad039 e9cc000000
 
@@ -2042,13 +2043,13 @@ loc_ad03e:
     mov ax, word ptr [word_d8772]                ; 0ad046 66a172870d00
     mov byte ptr [ebx + 0x15], dl                ; 0ad04c 885315
     mov edx, 6                                   ; 0ad04f ba06000000
-    call sub_aa200                               ; 0ad054 e8a7d1ffff
+    call outp                                    ; 0ad054 e8a7d1ffff
     mov eax, dword ptr [ebx]                     ; 0ad059 8b03
     xor edx, edx                                 ; 0ad05b 31d2
     mov dl, byte ptr [ecx + eax + 0x36]          ; 0ad05d 8a540136
     xor eax, eax                                 ; 0ad061 31c0
     mov ax, word ptr [word_d8776]                ; 0ad063 66a176870d00
-    call sub_aa200                               ; 0ad069 e892d1ffff
+    call outp                                    ; 0ad069 e892d1ffff
     cmp byte ptr [ebp - 0x14], 0                 ; 0ad06e 807dec00
     je loc_ad07f                                 ; 0ad072 740b
     mov al, byte ptr [ebx + 0x1f]                ; 0ad074 8a431f
@@ -2097,29 +2098,29 @@ loc_ad0dd:
     mov ax, word ptr [word_d8772]                ; 0ad0ea 66a172870d00
     mov byte ptr [ebx + 0x15], ch                ; 0ad0f0 886b15
 loc_ad0f3:
-    call sub_aa200                               ; 0ad0f3 e808d1ffff
+    call outp                                    ; 0ad0f3 e808d1ffff
     xor edx, edx                                 ; 0ad0f8 31d2
     xor eax, eax                                 ; 0ad0fa 31c0
     mov dl, byte ptr [ebp - 0x1c]                ; 0ad0fc 8a55e4
     mov ax, word ptr [word_d8776]                ; 0ad0ff 66a176870d00
 loc_ad105:
-    call sub_aa200                               ; 0ad105 e8f6d0ffff
+    call outp                                    ; 0ad105 e8f6d0ffff
 loc_ad10a:
     xor eax, eax                                 ; 0ad10a 31c0
     mov edx, 0xd                                 ; 0ad10c ba0d000000
     mov ax, word ptr [word_d8772]                ; 0ad111 66a172870d00
-    call sub_aa200                               ; 0ad117 e8e4d0ffff
+    call outp                                    ; 0ad117 e8e4d0ffff
     xor eax, eax                                 ; 0ad11c 31c0
     xor edx, edx                                 ; 0ad11e 31d2
     mov ax, word ptr [word_d8776]                ; 0ad120 66a176870d00
     mov dl, byte ptr [ebx + 0x15]                ; 0ad126 8a5315
-    call sub_aa200                               ; 0ad129 e8d2d0ffff
-    call sub_b13a1                               ; 0ad12e e86e420000
+    call outp                                    ; 0ad129 e8d2d0ffff
+    call gus_delay                               ; 0ad12e e86e420000
     xor eax, eax                                 ; 0ad133 31c0
     xor edx, edx                                 ; 0ad135 31d2
     mov ax, word ptr [word_d8776]                ; 0ad137 66a176870d00
     mov dl, byte ptr [ebx + 0x15]                ; 0ad13d 8a5315
-    call sub_aa200                               ; 0ad140 e8bbd0ffff
+    call outp                                    ; 0ad140 e8bbd0ffff
     mov eax, 1                                   ; 0ad145 b801000000
     lea esp, [ebp - 0x10]                        ; 0ad14a 8d65f0
     pop esi                                      ; 0ad14d 5e
@@ -2142,10 +2143,10 @@ loc_ad153:
     db 0x8b, 0xc0 ; 0ad15e |..| (padding)
 
 ; ====================================================================================================
-; sub_ad160  [0xad160, 254 bytes, 102 instructions]
-; called by: sub_aa758
+; gus_voice_kill  [0xad160, 254 bytes, 102 instructions]
+; called by: gus_patch_download_wave
 ; ====================================================================================================
-sub_ad160:
+gus_voice_kill:
     push ebp                                     ; 0ad160 55
     mov ebp, esp                                 ; 0ad161 89e5
     push ebx                                     ; 0ad163 53
@@ -2158,7 +2159,7 @@ sub_ad160:
     pushf                                        ; 0ad16d 669c
     cli                                          ; 0ad16f fa
     mov ebx, unk_f5bf8                           ; 0ad170 bbf85b0f00
-    call sub_b122f                               ; 0ad175 e8b5400000
+    call gus_irq_lock                            ; 0ad175 e8b5400000
     mov dword ptr [ebp - 0x1c], ebx              ; 0ad17a 895de4
     xor ebx, ebx                                 ; 0ad17d 31db
     jmp loc_ad1d9                                ; 0ad17f eb58
@@ -2200,7 +2201,7 @@ loc_ad1c3:
     cmp eax, dword ptr [ebp - 0x28]              ; 0ad1c3 3b45d8
     je loc_ad1cf                                 ; 0ad1c6 7407
     mov eax, ebx                                 ; 0ad1c8 89d8
-    call sub_abe18                               ; 0ad1ca e849ecffff
+    call gus_voice_stop_hw                       ; 0ad1ca e849ecffff
 loc_ad1cf:
     mov esi, dword ptr [ebp - 0x1c]              ; 0ad1cf 8b75e4
     add esi, 0x21                                ; 0ad1d2 83c621
@@ -2251,7 +2252,7 @@ loc_ad231:
     cmp eax, dword ptr [ebp - 0x24]              ; 0ad231 3b45dc
     je loc_ad23d                                 ; 0ad234 7407
     mov eax, ebx                                 ; 0ad236 89d8
-    call sub_abf5c                               ; 0ad238 e81fedffff
+    call gus_voice_release                       ; 0ad238 e81fedffff
 loc_ad23d:
     inc ebx                                      ; 0ad23d 43
     add ecx, 0x21                                ; 0ad23e 83c121
@@ -2260,7 +2261,7 @@ loc_ad241:
     mov ax, word ptr [word_f79a0]                ; 0ad243 66a1a0790f00
     cmp ebx, eax                                 ; 0ad249 39c3
     jb loc_ad1ee                                 ; 0ad24b 72a1
-    call sub_b1256                               ; 0ad24d e804400000
+    call gus_irq_unlock                          ; 0ad24d e804400000
     popf                                         ; 0ad252 669d
     lea esp, [ebp - 0x14]                        ; 0ad254 8d65ec
     pop edi                                      ; 0ad257 5f
@@ -2274,10 +2275,10 @@ loc_ad241:
     db 0x8b, 0xc0 ; 0ad25e |..| (padding)
 
 ; ====================================================================================================
-; sub_ad260  [0xad260, 54 bytes, 26 instructions]
-; called by: sub_aa758
+; gus_patch_layer_info  [0xad260, 54 bytes, 26 instructions]
+; called by: gus_patch_download_wave
 ; ====================================================================================================
-sub_ad260:
+gus_patch_layer_info:
     push ebp                                     ; 0ad260 55
     mov ebp, esp                                 ; 0ad261 89e5
     push ebx                                     ; 0ad263 53
@@ -2311,10 +2312,10 @@ loc_ad286:
     db 0x8b, 0xc0 ; 0ad296 |..| (padding)
 
 ; ====================================================================================================
-; sub_ad298  [0xad298, 16 bytes, 7 instructions]
-; called by: sub_a0d99
+; gus_midi_program  [0xad298, 16 bytes, 7 instructions]
+; called by: gus_patch_drv_send_midi
 ; ====================================================================================================
-sub_ad298:
+gus_midi_program:
     push ebp                                     ; 0ad298 55
     mov ebp, esp                                 ; 0ad299 89e5
     shl edx, 4                                   ; 0ad29b c1e204
@@ -2325,10 +2326,10 @@ sub_ad298:
 
 
 ; ====================================================================================================
-; sub_ad2a8  [0xad2a8, 155 bytes, 53 instructions]
-; called by: sub_af428
+; gus_midi_pitch_bend  [0xad2a8, 155 bytes, 53 instructions]
+; called by: gus_midi_controller
 ; ====================================================================================================
-sub_ad2a8:
+gus_midi_pitch_bend:
     push ebp                                     ; 0ad2a8 55
     mov ebp, esp                                 ; 0ad2a9 89e5
     push ebx                                     ; 0ad2ab 53
@@ -2351,7 +2352,7 @@ loc_ad2cc:
     mov byte ptr [eax + unk_f5a00], bl           ; 0ad2d6 8898005a0f00
     pushf                                        ; 0ad2dc 669c
     cli                                          ; 0ad2de fa
-    call sub_b122f                               ; 0ad2df e84b3f0000
+    call gus_irq_lock                            ; 0ad2df e84b3f0000
     jmp loc_ad328                                ; 0ad2e4 eb42
 
 loc_ad2e6:
@@ -2363,15 +2364,15 @@ loc_ad2e6:
     xor eax, eax                                 ; 0ad2f4 31c0
     mov edx, ecx                                 ; 0ad2f6 89ca
     mov ax, word ptr [word_d8770]                ; 0ad2f8 66a170870d00
-    call sub_aa200                               ; 0ad2fe e8fdceffff
+    call outp                                    ; 0ad2fe e8fdceffff
     xor eax, eax                                 ; 0ad303 31c0
     mov edx, 0xc                                 ; 0ad305 ba0c000000
     mov ax, word ptr [word_d8772]                ; 0ad30a 66a172870d00
-    call sub_aa200                               ; 0ad310 e8ebceffff
+    call outp                                    ; 0ad310 e8ebceffff
     xor eax, eax                                 ; 0ad315 31c0
     mov edx, ebx                                 ; 0ad317 89da
     mov ax, word ptr [word_d8776]                ; 0ad319 66a176870d00
-    call sub_aa200                               ; 0ad31f e8dcceffff
+    call outp                                    ; 0ad31f e8dcceffff
 loc_ad324:
     inc ecx                                      ; 0ad324 41
     add esi, 0x21                                ; 0ad325 83c621
@@ -2380,7 +2381,7 @@ loc_ad328:
     mov ax, word ptr [word_f79a0]                ; 0ad32a 66a1a0790f00
     cmp ecx, eax                                 ; 0ad330 39c1
     jb loc_ad2e6                                 ; 0ad332 72b2
-    call sub_b1256                               ; 0ad334 e81d3f0000
+    call gus_irq_unlock                          ; 0ad334 e81d3f0000
     popf                                         ; 0ad339 669d
 loc_ad33b:
     lea esp, [ebp - 0xc]                         ; 0ad33b 8d65f4
@@ -2393,10 +2394,10 @@ loc_ad33b:
     db 0x90 ; 0ad343 |.| (padding)
 
 ; ====================================================================================================
-; sub_ad344  [0xad344, 117 bytes, 47 instructions]
-; called by: sub_af428
+; gus_midi_sustain_off  [0xad344, 117 bytes, 47 instructions]
+; called by: gus_midi_controller
 ; ====================================================================================================
-sub_ad344:
+gus_midi_sustain_off:
     push ebp                                     ; 0ad344 55
     mov ebp, esp                                 ; 0ad345 89e5
     push ebx                                     ; 0ad347 53
@@ -2405,7 +2406,7 @@ sub_ad344:
     mov ecx, eax                                 ; 0ad34a 89c1
     pushf                                        ; 0ad34c 669c
     cli                                          ; 0ad34e fa
-    call sub_b122f                               ; 0ad34f e8db3e0000
+    call gus_irq_lock                            ; 0ad34f e8db3e0000
     mov ebx, unk_f5bf8                           ; 0ad354 bbf85b0f00
     xor edx, edx                                 ; 0ad359 31d2
     jmp loc_ad373                                ; 0ad35b eb16
@@ -2416,7 +2417,7 @@ loc_ad35d:
     cmp cl, byte ptr [ebx + 0x1d]                ; 0ad363 3a4b1d
     jne loc_ad36f                                ; 0ad366 7507
     mov eax, edx                                 ; 0ad368 89d0
-    call sub_abe18                               ; 0ad36a e8a9eaffff
+    call gus_voice_stop_hw                       ; 0ad36a e8a9eaffff
 loc_ad36f:
     inc edx                                      ; 0ad36f 42
     add ebx, 0x21                                ; 0ad370 83c321
@@ -2435,7 +2436,7 @@ loc_ad388:
     cmp cl, byte ptr [ebx + 0x1d]                ; 0ad38e 3a4b1d
     jne loc_ad39a                                ; 0ad391 7507
     mov eax, edx                                 ; 0ad393 89d0
-    call sub_abf5c                               ; 0ad395 e8c2ebffff
+    call gus_voice_release                       ; 0ad395 e8c2ebffff
 loc_ad39a:
     inc edx                                      ; 0ad39a 42
     add ebx, 0x21                                ; 0ad39b 83c321
@@ -2444,7 +2445,7 @@ loc_ad39e:
     mov ax, word ptr [word_f79a0]                ; 0ad3a0 66a1a0790f00
     cmp edx, eax                                 ; 0ad3a6 39c2
     jb loc_ad388                                 ; 0ad3a8 72de
-    call sub_b1256                               ; 0ad3aa e8a73e0000
+    call gus_irq_unlock                          ; 0ad3aa e8a73e0000
     popf                                         ; 0ad3af 669d
     lea esp, [ebp - 0xc]                         ; 0ad3b1 8d65f4
     pop edx                                      ; 0ad3b4 5a
@@ -2456,10 +2457,10 @@ loc_ad39e:
     times 7 db 0 ; 0ad3b9 (padding)
 
 ; ====================================================================================================
-; sub_ad3c0  [0xad3c0, 57 bytes, 29 instructions]
-; called by: sub_ad434, sub_ad4dc, sub_ad610
+; gus_mem_write_header  [0xad3c0, 57 bytes, 29 instructions]
+; called by: gus_mem_init, gus_mem_alloc, gus_mem_free
 ; ====================================================================================================
-sub_ad3c0:
+gus_mem_write_header:
     push ebp                                     ; 0ad3c0 55
     mov ebp, esp                                 ; 0ad3c1 89e5
     push ebx                                     ; 0ad3c3 53
@@ -2468,7 +2469,7 @@ sub_ad3c0:
     mov ebx, eax                                 ; 0ad3c6 89c3
     pushf                                        ; 0ad3c8 669c
     cli                                          ; 0ad3ca fa
-    call sub_b122f                               ; 0ad3cb e85f3e0000
+    call gus_irq_lock                            ; 0ad3cb e85f3e0000
     mov esi, edx                                 ; 0ad3d0 89d6
     xor ecx, ecx                                 ; 0ad3d2 31c9
     jmp loc_ad3e5                                ; 0ad3d4 eb0f
@@ -2480,11 +2481,11 @@ loc_ad3d6:
     inc ecx                                      ; 0ad3db 41
     mov dl, byte ptr [esi - 1]                   ; 0ad3dc 8a56ff
     inc ebx                                      ; 0ad3df 43
-    call sub_b1f1c                               ; 0ad3e0 e8374b0000
+    call gus_poke                                ; 0ad3e0 e8374b0000
 loc_ad3e5:
     cmp ecx, 0xf                                 ; 0ad3e5 83f90f
     jb loc_ad3d6                                 ; 0ad3e8 72ec
-    call sub_b1256                               ; 0ad3ea e8673e0000
+    call gus_irq_unlock                          ; 0ad3ea e8673e0000
     popf                                         ; 0ad3ef 669d
     lea esp, [ebp - 0xc]                         ; 0ad3f1 8d65f4
     pop esi                                      ; 0ad3f4 5e
@@ -2496,10 +2497,10 @@ loc_ad3e5:
     db 0x8d, 0x40, 0x00 ; 0ad3f9 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_ad3fc  [0xad3fc, 53 bytes, 26 instructions]
-; called by: sub_ad4dc, sub_ad610, sub_ad6f4, sub_ad758
+; gus_mem_read_header  [0xad3fc, 53 bytes, 26 instructions]
+; called by: gus_mem_alloc, gus_mem_free, gus_mem_reset, gus_mem_avail
 ; ====================================================================================================
-sub_ad3fc:
+gus_mem_read_header:
     push ebp                                     ; 0ad3fc 55
     mov ebp, esp                                 ; 0ad3fd 89e5
     push ebx                                     ; 0ad3ff 53
@@ -2507,14 +2508,14 @@ sub_ad3fc:
     mov ebx, eax                                 ; 0ad401 89c3
     pushf                                        ; 0ad403 669c
     cli                                          ; 0ad405 fa
-    call sub_b122f                               ; 0ad406 e8243e0000
+    call gus_irq_lock                            ; 0ad406 e8243e0000
     mov ecx, edx                                 ; 0ad40b 89d1
     xor edx, edx                                 ; 0ad40d 31d2
     jmp loc_ad41e                                ; 0ad40f eb0d
 
 loc_ad411:
     mov eax, ebx                                 ; 0ad411 89d8
-    call sub_b1ea0                               ; 0ad413 e8884a0000
+    call gus_peek                                ; 0ad413 e8884a0000
     inc ecx                                      ; 0ad418 41
     inc edx                                      ; 0ad419 42
     inc ebx                                      ; 0ad41a 43
@@ -2522,7 +2523,7 @@ loc_ad411:
 loc_ad41e:
     cmp edx, 0xf                                 ; 0ad41e 83fa0f
     jb loc_ad411                                 ; 0ad421 72ee
-    call sub_b1256                               ; 0ad423 e82e3e0000
+    call gus_irq_unlock                          ; 0ad423 e82e3e0000
     popf                                         ; 0ad428 669d
     lea esp, [ebp - 8]                           ; 0ad42a 8d65f8
     pop ecx                                      ; 0ad42d 59
@@ -2533,10 +2534,11 @@ loc_ad41e:
     db 0x8d, 0x40, 0x00 ; 0ad431 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_ad434  [0xad434, 167 bytes, 56 instructions]
+; gus_mem_init  [0xad434, 167 bytes, 56 instructions]
+; probes the DRAM size, one free block
 ; address taken (function pointer)
 ; ====================================================================================================
-sub_ad434:
+gus_mem_init:
     push ebp                                     ; 0ad434 55
     mov ebp, esp                                 ; 0ad435 89e5
     push ebx                                     ; 0ad437 53
@@ -2552,7 +2554,7 @@ loc_ad450:
     mov edx, ebx                                 ; 0ad450 89da
     shl edx, 0x12                                ; 0ad452 c1e212
     mov eax, edx                                 ; 0ad455 89d0
-    call sub_b2074                               ; 0ad457 e8184c0000
+    call gus_dram_size                           ; 0ad457 e8184c0000
     test al, al                                  ; 0ad45c 84c0
     je loc_ad4a1                                 ; 0ad45e 7441
     mov eax, 1                                   ; 0ad460 b801000000
@@ -2572,7 +2574,7 @@ loc_ad450:
     xor cl, cl                                   ; 0ad494 30c9
     lea edx, [ebp - 0x20]                        ; 0ad496 8d55e0
     mov byte ptr [ebp - 0x12], cl                ; 0ad499 884dee
-    call sub_ad3c0                               ; 0ad49c e81fffffff
+    call gus_mem_write_header                    ; 0ad49c e81fffffff
 loc_ad4a1:
     inc ebx                                      ; 0ad4a1 43
     cmp ebx, 4                                   ; 0ad4a2 83fb04
@@ -2585,10 +2587,10 @@ loc_ad4a1:
 loc_ad4b8:
     mov eax, 0x1e                                ; 0ad4b8 b81e000000
     xor edx, edx                                 ; 0ad4bd 31d2
-    call sub_b1f1c                               ; 0ad4bf e8584a0000
+    call gus_poke                                ; 0ad4bf e8584a0000
     mov eax, 0x1f                                ; 0ad4c4 b81f000000
     xor edx, edx                                 ; 0ad4c9 31d2
-    call sub_b1f1c                               ; 0ad4cb e84c4a0000
+    call gus_poke                                ; 0ad4cb e84c4a0000
     xor eax, eax                                 ; 0ad4d0 31c0
 loc_ad4d2:
     lea esp, [ebp - 0x10]                        ; 0ad4d2 8d65f0
@@ -2602,10 +2604,10 @@ loc_ad4d2:
     db 0x90 ; 0ad4db |.| (padding)
 
 ; ====================================================================================================
-; sub_ad4dc  [0xad4dc, 305 bytes, 108 instructions]
-; called by: sub_a0288, sub_aa300
+; gus_mem_alloc  [0xad4dc, 305 bytes, 108 instructions]
+; called by: gus_open, gus_load_patch
 ; ====================================================================================================
-sub_ad4dc:
+gus_mem_alloc:
     push ebp                                     ; 0ad4dc 55
     mov ebp, esp                                 ; 0ad4dd 89e5
     push ebx                                     ; 0ad4df 53
@@ -2618,7 +2620,7 @@ sub_ad4dc:
     lea esi, [eax + 0x1f]                        ; 0ad4e9 8d701f
     pushf                                        ; 0ad4ec 669c
     cli                                          ; 0ad4ee fa
-    call sub_b122f                               ; 0ad4ef e83b3d0000
+    call gus_irq_lock                            ; 0ad4ef e83b3d0000
     xor edx, edx                                 ; 0ad4f4 31d2
     and esi, 0xffffe0                            ; 0ad4f6 81e6e0ffff00
     mov dword ptr [ebp - 0x18], edx              ; 0ad4fc 8955e8
@@ -2638,7 +2640,7 @@ loc_ad523:
     je loc_ad5ea                                 ; 0ad526 0f84be000000
     lea edx, [ebp - 0x38]                        ; 0ad52c 8d55c8
     mov eax, ebx                                 ; 0ad52f 89d8
-    call sub_ad3fc                               ; 0ad531 e8c6feffff
+    call gus_mem_read_header                     ; 0ad531 e8c6feffff
     mov ah, byte ptr [ebp - 0x2a]                ; 0ad536 8a65d6
     test ah, 1                                   ; 0ad539 f6c401
     jne loc_ad5e2                                ; 0ad53c 0f85a0000000
@@ -2654,8 +2656,8 @@ loc_ad523:
     jae loc_ad577                                ; 0ad55c 7319
     lea edx, [ebp - 0x38]                        ; 0ad55e 8d55c8
     mov eax, ebx                                 ; 0ad561 89d8
-    call sub_ad3c0                               ; 0ad563 e858feffff
-    call sub_b1256                               ; 0ad568 e8e93c0000
+    call gus_mem_write_header                    ; 0ad563 e858feffff
+    call gus_irq_unlock                          ; 0ad568 e8e93c0000
     popf                                         ; 0ad56d 669d
     lea eax, [ebx + 0x20]                        ; 0ad56f 8d4320
     jmp loc_ad603                                ; 0ad572 e98c000000
@@ -2674,23 +2676,23 @@ loc_ad577:
     mov eax, ebx                                 ; 0ad594 89d8
     lea edx, [ebp - 0x38]                        ; 0ad596 8d55c8
     mov dword ptr [ebp - 0x38], esi              ; 0ad599 8975c8
-    call sub_ad3c0                               ; 0ad59c e81ffeffff
+    call gus_mem_write_header                    ; 0ad59c e81ffeffff
     mov eax, dword ptr [ebp - 0x34]              ; 0ad5a1 8b45cc
     lea edx, [ebp - 0x28]                        ; 0ad5a4 8d55d8
-    call sub_ad3c0                               ; 0ad5a7 e814feffff
+    call gus_mem_write_header                    ; 0ad5a7 e814feffff
     mov esi, dword ptr [ebp - 0x24]              ; 0ad5ac 8b75dc
     cmp esi, -1                                  ; 0ad5af 83feff
     je loc_ad5ce                                 ; 0ad5b2 741a
     lea edx, [ebp - 0x28]                        ; 0ad5b4 8d55d8
     mov eax, esi                                 ; 0ad5b7 89f0
-    call sub_ad3fc                               ; 0ad5b9 e83efeffff
+    call gus_mem_read_header                     ; 0ad5b9 e83efeffff
     mov eax, dword ptr [ebp - 0x34]              ; 0ad5be 8b45cc
     lea edx, [ebp - 0x28]                        ; 0ad5c1 8d55d8
     mov dword ptr [ebp - 0x20], eax              ; 0ad5c4 8945e0
     mov eax, esi                                 ; 0ad5c7 89f0
-    call sub_ad3c0                               ; 0ad5c9 e8f2fdffff
+    call gus_mem_write_header                    ; 0ad5c9 e8f2fdffff
 loc_ad5ce:
-    call sub_b1256                               ; 0ad5ce e8833c0000
+    call gus_irq_unlock                          ; 0ad5ce e8833c0000
     popf                                         ; 0ad5d3 669d
     lea eax, [ebx + 0x20]                        ; 0ad5d5 8d4320
     lea esp, [ebp - 0x14]                        ; 0ad5d8 8d65ec
@@ -2712,7 +2714,7 @@ loc_ad5ea:
     mov dword ptr [ebp - 0x18], edi              ; 0ad5ee 897de8
     cmp edi, 4                                   ; 0ad5f1 83ff04
     jl loc_ad502                                 ; 0ad5f4 0f8c08ffffff
-    call sub_b1256                               ; 0ad5fa e8573c0000
+    call gus_irq_unlock                          ; 0ad5fa e8573c0000
     popf                                         ; 0ad5ff 669d
     xor eax, eax                                 ; 0ad601 31c0
 loc_ad603:
@@ -2728,10 +2730,10 @@ loc_ad603:
     db 0x8d, 0x40, 0x00 ; 0ad60d |.@.| (padding)
 
 ; ====================================================================================================
-; sub_ad610  [0xad610, 227 bytes, 81 instructions]
-; called by: sub_aa758
+; gus_mem_free  [0xad610, 227 bytes, 81 instructions]
+; called by: gus_patch_download_wave
 ; ====================================================================================================
-sub_ad610:
+gus_mem_free:
     push ebp                                     ; 0ad610 55
     mov ebp, esp                                 ; 0ad611 89e5
     push ebx                                     ; 0ad613 53
@@ -2744,15 +2746,15 @@ sub_ad610:
     lea ebx, [eax - 0x20]                        ; 0ad61f 8d58e0
     pushf                                        ; 0ad622 669c
     cli                                          ; 0ad624 fa
-    call sub_b122f                               ; 0ad625 e8053c0000
+    call gus_irq_lock                            ; 0ad625 e8053c0000
     mov eax, ebx                                 ; 0ad62a 89d8
-    call sub_ad3fc                               ; 0ad62c e8cbfdffff
+    call gus_mem_read_header                     ; 0ad62c e8cbfdffff
     mov edx, dword ptr [ebp - 0x18]              ; 0ad631 8b55e8
     cmp edx, -1                                  ; 0ad634 83faff
     je loc_ad68c                                 ; 0ad637 7453
     mov eax, edx                                 ; 0ad639 89d0
     lea edx, [ebp - 0x40]                        ; 0ad63b 8d55c0
-    call sub_ad3fc                               ; 0ad63e e8b9fdffff
+    call gus_mem_read_header                     ; 0ad63e e8b9fdffff
     test byte ptr [ebp - 0x32], 1                ; 0ad643 f645ce01
     jne loc_ad68c                                ; 0ad647 7543
     mov eax, dword ptr [ebp - 0x20]              ; 0ad649 8b45e0
@@ -2765,25 +2767,25 @@ sub_ad610:
     cmp eax, -1                                  ; 0ad65d 83f8ff
     je loc_ad678                                 ; 0ad660 7416
     lea edx, [ebp - 0x30]                        ; 0ad662 8d55d0
-    call sub_ad3fc                               ; 0ad665 e892fdffff
+    call gus_mem_read_header                     ; 0ad665 e892fdffff
     mov eax, dword ptr [ebp - 0x3c]              ; 0ad66a 8b45c4
     lea edx, [ebp - 0x30]                        ; 0ad66d 8d55d0
     mov dword ptr [ebp - 0x28], ebx              ; 0ad670 895dd8
-    call sub_ad3c0                               ; 0ad673 e848fdffff
+    call gus_mem_write_header                    ; 0ad673 e848fdffff
 loc_ad678:
     lea edx, [ebp - 0x40]                        ; 0ad678 8d55c0
     mov eax, ebx                                 ; 0ad67b 89d8
-    call sub_ad3c0                               ; 0ad67d e83efdffff
+    call gus_mem_write_header                    ; 0ad67d e83efdffff
     lea edx, [ebp - 0x20]                        ; 0ad682 8d55e0
     mov eax, ebx                                 ; 0ad685 89d8
-    call sub_ad3fc                               ; 0ad687 e870fdffff
+    call gus_mem_read_header                     ; 0ad687 e870fdffff
 loc_ad68c:
     mov edi, dword ptr [ebp - 0x1c]              ; 0ad68c 8b7de4
     cmp edi, -1                                  ; 0ad68f 83ffff
     je loc_ad6d0                                 ; 0ad692 743c
     lea edx, [ebp - 0x30]                        ; 0ad694 8d55d0
     mov eax, edi                                 ; 0ad697 89f8
-    call sub_ad3fc                               ; 0ad699 e85efdffff
+    call gus_mem_read_header                     ; 0ad699 e85efdffff
     test byte ptr [ebp - 0x22], 1                ; 0ad69e f645de01
     jne loc_ad6d0                                ; 0ad6a2 752c
     mov eax, dword ptr [ebp - 0x30]              ; 0ad6a4 8b45d0
@@ -2795,19 +2797,19 @@ loc_ad68c:
     cmp eax, -1                                  ; 0ad6b5 83f8ff
     je loc_ad6d0                                 ; 0ad6b8 7416
     lea edx, [ebp - 0x30]                        ; 0ad6ba 8d55d0
-    call sub_ad3fc                               ; 0ad6bd e83afdffff
+    call gus_mem_read_header                     ; 0ad6bd e83afdffff
     mov eax, dword ptr [ebp - 0x1c]              ; 0ad6c2 8b45e4
     lea edx, [ebp - 0x30]                        ; 0ad6c5 8d55d0
     mov dword ptr [ebp - 0x28], ebx              ; 0ad6c8 895dd8
-    call sub_ad3c0                               ; 0ad6cb e8f0fcffff
+    call gus_mem_write_header                    ; 0ad6cb e8f0fcffff
 loc_ad6d0:
     mov dh, byte ptr [ebp - 0x12]                ; 0ad6d0 8a75ee
     and dh, 0xfe                                 ; 0ad6d3 80e6fe
     mov eax, ebx                                 ; 0ad6d6 89d8
     mov byte ptr [ebp - 0x12], dh                ; 0ad6d8 8875ee
     lea edx, [ebp - 0x20]                        ; 0ad6db 8d55e0
-    call sub_ad3c0                               ; 0ad6de e8ddfcffff
-    call sub_b1256                               ; 0ad6e3 e86e3b0000
+    call gus_mem_write_header                    ; 0ad6de e8ddfcffff
+    call gus_irq_unlock                          ; 0ad6e3 e86e3b0000
     popf                                         ; 0ad6e8 669d
     lea esp, [ebp - 0x10]                        ; 0ad6ea 8d65f0
     pop edi                                      ; 0ad6ed 5f
@@ -2820,10 +2822,10 @@ loc_ad6d0:
     db 0x90 ; 0ad6f3 |.| (padding)
 
 ; ====================================================================================================
-; sub_ad6f4  [0xad6f4, 100 bytes, 43 instructions]
-; called by: sub_a0288
+; gus_mem_reset  [0xad6f4, 100 bytes, 43 instructions]
+; called by: gus_open
 ; ====================================================================================================
-sub_ad6f4:
+gus_mem_reset:
     push ebp                                     ; 0ad6f4 55
     mov ebp, esp                                 ; 0ad6f5 89e5
     push ebx                                     ; 0ad6f7 53
@@ -2833,7 +2835,7 @@ sub_ad6f4:
     sub esp, 0x10                                ; 0ad6fb 83ec10
     pushf                                        ; 0ad6fe 669c
     cli                                          ; 0ad700 fa
-    call sub_b122f                               ; 0ad701 e8293b0000
+    call gus_irq_lock                            ; 0ad701 e8293b0000
     xor esi, esi                                 ; 0ad706 31f6
     xor ebx, ebx                                 ; 0ad708 31db
 loc_ad70a:
@@ -2850,7 +2852,7 @@ loc_ad725:
     cmp eax, -1                                  ; 0ad725 83f8ff
     je loc_ad740                                 ; 0ad728 7416
     lea edx, [ebp - 0x20]                        ; 0ad72a 8d55e0
-    call sub_ad3fc                               ; 0ad72d e8cafcffff
+    call gus_mem_read_header                     ; 0ad72d e8cafcffff
     test byte ptr [ebp - 0x12], 1                ; 0ad732 f645ee01
     jne loc_ad73b                                ; 0ad736 7503
     add esi, dword ptr [ebp - 0x20]              ; 0ad738 0375e0
@@ -2862,7 +2864,7 @@ loc_ad740:
     inc ebx                                      ; 0ad740 43
     cmp ebx, 4                                   ; 0ad741 83fb04
     jl loc_ad70a                                 ; 0ad744 7cc4
-    call sub_b1256                               ; 0ad746 e80b3b0000
+    call gus_irq_unlock                          ; 0ad746 e80b3b0000
     popf                                         ; 0ad74b 669d
     mov eax, esi                                 ; 0ad74d 89f0
     lea esp, [ebp - 0x10]                        ; 0ad74f 8d65f0
@@ -2875,10 +2877,10 @@ loc_ad740:
 
 
 ; ====================================================================================================
-; sub_ad758  [0xad758, 116 bytes, 50 instructions]  <unreferenced>
+; gus_mem_avail  [0xad758, 116 bytes, 50 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_ad758:
+gus_mem_avail:
     push ebp                                     ; 0ad758 55
     mov ebp, esp                                 ; 0ad759 89e5
     push ebx                                     ; 0ad75b 53
@@ -2888,7 +2890,7 @@ sub_ad758:
     sub esp, 0x10                                ; 0ad75f 83ec10
     pushf                                        ; 0ad762 669c
     cli                                          ; 0ad764 fa
-    call sub_b122f                               ; 0ad765 e8c53a0000
+    call gus_irq_lock                            ; 0ad765 e8c53a0000
     xor esi, esi                                 ; 0ad76a 31f6
     xor ebx, ebx                                 ; 0ad76c 31db
 loc_ad76e:
@@ -2905,7 +2907,7 @@ loc_ad789:
     cmp eax, -1                                  ; 0ad789 83f8ff
     je loc_ad7aa                                 ; 0ad78c 741c
     lea edx, [ebp - 0x20]                        ; 0ad78e 8d55e0
-    call sub_ad3fc                               ; 0ad791 e866fcffff
+    call gus_mem_read_header                     ; 0ad791 e866fcffff
     test byte ptr [ebp - 0x12], 1                ; 0ad796 f645ee01
     jne loc_ad7a5                                ; 0ad79a 7509
     mov edx, dword ptr [ebp - 0x20]              ; 0ad79c 8b55e0
@@ -2920,7 +2922,7 @@ loc_ad7aa:
     inc ebx                                      ; 0ad7aa 43
     cmp ebx, 4                                   ; 0ad7ab 83fb04
     jl loc_ad76e                                 ; 0ad7ae 7cbe
-    call sub_b1256                               ; 0ad7b0 e8a13a0000
+    call gus_irq_unlock                          ; 0ad7b0 e8a13a0000
     popf                                         ; 0ad7b5 669d
     cmp esi, 0x20                                ; 0ad7b7 83fe20
     jbe loc_ad7c1                                ; 0ad7ba 7605
@@ -2940,10 +2942,10 @@ loc_ad7c3:
 
 
 ; ====================================================================================================
-; sub_ad7cc  [0xad7cc, 1226 bytes, 410 instructions]
-; called by: sub_adee9
+; gus_stream_convert_a  [0xad7cc, 1226 bytes, 410 instructions]
+; called by: gus_stream_fill
 ; ====================================================================================================
-sub_ad7cc:
+gus_stream_convert_a:
     push ebp                                     ; 0ad7cc 55
     mov ebp, esp                                 ; 0ad7cd 8bec
     add esp, -8                                  ; 0ad7cf 83c4f8
@@ -3361,10 +3363,10 @@ loc_adc90:
 
 
 ; ====================================================================================================
-; sub_adc96  [0xadc96, 594 bytes, 280 instructions]
-; called by: sub_adee9
+; gus_stream_convert_b  [0xadc96, 594 bytes, 280 instructions]
+; called by: gus_stream_fill
 ; ====================================================================================================
-sub_adc96:
+gus_stream_convert_b:
     cmp ecx, 0x100                               ; 0adc96 81f900010000
     jb loc_adec0                                 ; 0adc9c 0f821e020000
     xor eax, eax                                 ; 0adca2 33c0
@@ -3653,18 +3655,19 @@ loc_adee5:
 
 
 ; ====================================================================================================
-; sub_adee8  [0xadee8, 1 bytes, 1 instructions]
-; called by: sub_adee9
+; empty_func_adee8  [0xadee8, 1 bytes, 1 instructions]
+; called by: gus_stream_fill
 ; ====================================================================================================
-sub_adee8:
+empty_func_adee8:
     ret                                          ; 0adee8 c3
 
 
 ; ====================================================================================================
-; sub_adee9  [0xadee9, 2586 bytes, 617 instructions]
-; called by: sub_ae9eb
+; gus_stream_fill  [0xadee9, 2586 bytes, 617 instructions]
+; converts and downloads the next part of the digital stream
+; called by: gus_stream_tick
 ; ====================================================================================================
-sub_adee9:
+gus_stream_fill:
     push ebp                                     ; 0adee9 55
     mov ebp, esp                                 ; 0adeea 8bec
     add esp, -0x10                               ; 0adeec 83c4f0
@@ -3703,7 +3706,7 @@ loc_adf49:
 loc_adf5e:
     mov ebx, dword ptr [dword_d8494]             ; 0adf5e 8b1d94840d00
     mov ecx, dword ptr [dword_d8484]             ; 0adf64 8b0d84840d00
-    call sub_adc96                               ; 0adf6a e827fdffff
+    call gus_stream_convert_b                    ; 0adf6a e827fdffff
     cmp byte ptr [dword_d7b0c], 0                ; 0adf6f 803d0c7b0d0000
     je loc_ae1b7                                 ; 0adf76 0f843b020000
     cmp byte ptr [byte_d7b18], 0                 ; 0adf7c 803d187b0d0000
@@ -3726,7 +3729,7 @@ loc_adf5e:
     mov ebx, unk_d7b64                           ; 0adfcf bb647b0d00
     mov eax, dword ptr [dword_d8484]             ; 0adfd4 a184840d00
     push dword ptr [dword_d8494]                 ; 0adfd9 ff3594840d00
-    call sub_ad7cc                               ; 0adfdf e8e8f7ffff
+    call gus_stream_convert_a                    ; 0adfdf e8e8f7ffff
     add esp, 4                                   ; 0adfe4 83c404
 loc_adfe7:
     mov dword ptr [dword_d7b48], ecx             ; 0adfe7 890d487b0d00
@@ -3889,7 +3892,7 @@ loc_ae1b7:
     mov ebx, unk_d7dbc                           ; 0ae217 bbbc7d0d00
     mov eax, dword ptr [dword_d8484]             ; 0ae21c a184840d00
     push dword ptr [dword_d8494]                 ; 0ae221 ff3594840d00
-    call sub_ad7cc                               ; 0ae227 e8a0f5ffff
+    call gus_stream_convert_a                    ; 0ae227 e8a0f5ffff
     add esp, 4                                   ; 0ae22c 83c404
 loc_ae22f:
     mov dword ptr [dword_d7da0], ecx             ; 0ae22f 890da07d0d00
@@ -4052,7 +4055,7 @@ loc_ae3ff:
     mov ebx, unk_d8014                           ; 0ae45f bb14800d00
     mov eax, dword ptr [dword_d8484]             ; 0ae464 a184840d00
     push dword ptr [dword_d8494]                 ; 0ae469 ff3594840d00
-    call sub_ad7cc                               ; 0ae46f e858f3ffff
+    call gus_stream_convert_a                    ; 0ae46f e858f3ffff
     add esp, 4                                   ; 0ae474 83c404
 loc_ae477:
     mov dword ptr [dword_d7ff8], ecx             ; 0ae477 890df87f0d00
@@ -4215,7 +4218,7 @@ loc_ae647:
     mov ebx, unk_d826c                           ; 0ae6a7 bb6c820d00
     mov eax, dword ptr [dword_d8484]             ; 0ae6ac a184840d00
     push dword ptr [dword_d8494]                 ; 0ae6b1 ff3594840d00
-    call sub_ad7cc                               ; 0ae6b7 e810f1ffff
+    call gus_stream_convert_a                    ; 0ae6b7 e810f1ffff
     add esp, 4                                   ; 0ae6bc 83c404
 loc_ae6bf:
     mov dword ptr [dword_d8250], ecx             ; 0ae6bf 890d50820d00
@@ -4358,7 +4361,7 @@ loc_ae885:
 loc_ae88f:
     mov ebx, dword ptr [dword_d8494]             ; 0ae88f 8b1d94840d00
     mov ecx, dword ptr [dword_d8484]             ; 0ae895 8b0d84840d00
-    call sub_adee8                               ; 0ae89b e848f6ffff
+    call empty_func_adee8                        ; 0ae89b e848f6ffff
     mov eax, dword ptr [dword_d8494]             ; 0ae8a0 a194840d00
     mov dword ptr [dword_d84a8], eax             ; 0ae8a5 a3a8840d00
     mov dword ptr [dword_d84ac], eax             ; 0ae8aa a3ac840d00
@@ -4367,11 +4370,11 @@ loc_ae88f:
     mov esi, eax                                 ; 0ae8b7 8bf0
     movzx edx, byte ptr [esi]                    ; 0ae8b9 0fb616
     mov eax, dword ptr [dword_d84b8]             ; 0ae8bc a1b8840d00
-    call sub_b1f1c                               ; 0ae8c1 e856360000
+    call gus_poke                                ; 0ae8c1 e856360000
     movzx edx, byte ptr [esi + 1]                ; 0ae8c6 0fb65601
     mov eax, dword ptr [dword_d84b8]             ; 0ae8ca a1b8840d00
     inc eax                                      ; 0ae8cf 40
-    call sub_b1f1c                               ; 0ae8d0 e847360000
+    call gus_poke                                ; 0ae8d0 e847360000
     mov ebx, dword ptr [dword_d84b0]             ; 0ae8d5 8b1db0840d00
     jmp loc_ae8e3                                ; 0ae8db eb06
 
@@ -4383,7 +4386,7 @@ loc_ae8e3:
     mov eax, dword_d84a8                         ; 0ae8e9 b8a8840d00
     mov edx, dword ptr [dword_d8480]             ; 0ae8ee 8b1580840d00
     mov ecx, 0x41                                ; 0ae8f4 b941000000
-    call sub_b0d6c                               ; 0ae8f9 e86e240000
+    call gus_download                            ; 0ae8f9 e86e240000
 loc_ae8fe:
     pop ebx                                      ; 0ae8fe 5b
     pop edi                                      ; 0ae8ff 5f
@@ -4393,10 +4396,10 @@ loc_ae8fe:
 
 
 ; ====================================================================================================
-; sub_ae903  [0xae903, 232 bytes, 75 instructions]
-; called by: sub_aea23
+; gus_stream_wave_callback  [0xae903, 232 bytes, 75 instructions]
+; called by: gus_stream_open
 ; ====================================================================================================
-sub_ae903:
+gus_stream_wave_callback:
     cmp dword ptr [dword_d7af0], 0               ; 0ae903 833df07a0d0000
     je loc_ae9e8                                 ; 0ae90a 0f84d8000000
     cmp eax, dword ptr [dword_d849c]             ; 0ae910 3b059c840d00
@@ -4480,30 +4483,31 @@ loc_ae9e8:
 
 
 ; ====================================================================================================
-; sub_ae9eb  [0xae9eb, 56 bytes, 11 instructions]
-; called by: sub_a067b
+; gus_stream_tick  [0xae9eb, 56 bytes, 11 instructions]
+; called by: gus_drv_tick
 ; ====================================================================================================
-sub_ae9eb:
+gus_stream_tick:
     cmp dword ptr [dword_d7afc], 0               ; 0ae9eb 833dfc7a0d0000
     je loc_aea05                                 ; 0ae9f2 7411
     xor eax, eax                                 ; 0ae9f4 33c0
-    call sub_adee9                               ; 0ae9f6 e8eef4ffff
+    call gus_stream_fill                         ; 0ae9f6 e8eef4ffff
     mov dword ptr [dword_d7afc], 0               ; 0ae9fb c705fc7a0d000000..
 loc_aea05:
     cmp dword ptr [dword_d7b08], 0               ; 0aea05 833d087b0d0000
     je loc_aea22                                 ; 0aea0c 7414
     mov eax, 1                                   ; 0aea0e b801000000
-    call sub_adee9                               ; 0aea13 e8d1f4ffff
+    call gus_stream_fill                         ; 0aea13 e8d1f4ffff
     mov dword ptr [dword_d7b08], 0               ; 0aea18 c705087b0d000000..
 loc_aea22:
     ret                                          ; 0aea22 c3
 
 
 ; ====================================================================================================
-; sub_aea23  [0xaea23, 921 bytes, 260 instructions]
-; called by: sub_a0288
+; gus_stream_open  [0xaea23, 921 bytes, 260 instructions]
+; voices and DRAM buffer of the digital stream
+; called by: gus_open
 ; ====================================================================================================
-sub_aea23:
+gus_stream_open:
     push ebp                                     ; 0aea23 55
     mov ebp, esp                                 ; 0aea24 8bec
     push ebx                                     ; 0aea26 53
@@ -4590,22 +4594,22 @@ loc_aea68:
 loc_aeb45:
     xor edx, edx                                 ; 0aeb45 33d2
     mov eax, esi                                 ; 0aeb47 8bc6
-    call sub_b1f1c                               ; 0aeb49 e8ce330000
+    call gus_poke                                ; 0aeb49 e8ce330000
     inc esi                                      ; 0aeb4e 46
     cmp esi, dword ptr [dword_d84b8]             ; 0aeb4f 3b35b8840d00
     jbe loc_aeb45                                ; 0aeb55 76ee
     xor edx, edx                                 ; 0aeb57 33d2
     mov eax, esi                                 ; 0aeb59 8bc6
-    call sub_b1f1c                               ; 0aeb5b e8bc330000
-    mov eax, sub_ae903                           ; 0aeb60 b803e90a00
-    call sub_b14e4                               ; 0aeb65 e87a290000
+    call gus_poke                                ; 0aeb5b e8bc330000
+    mov eax, gus_stream_wave_callback            ; 0aeb60 b803e90a00
+    call gus_set_wave_callback                   ; 0aeb65 e87a290000
     xor eax, eax                                 ; 0aeb6a 33c0
     xor edx, edx                                 ; 0aeb6c 33d2
-    call sub_b1cbc                               ; 0aeb6e e849310000
+    call gus_voice_alloc                         ; 0aeb6e e849310000
     mov dword ptr [dword_d849c], eax             ; 0aeb73 a39c840d00
     xor eax, eax                                 ; 0aeb78 33c0
     xor edx, edx                                 ; 0aeb7a 33d2
-    call sub_b1cbc                               ; 0aeb7c e83b310000
+    call gus_voice_alloc                         ; 0aeb7c e83b310000
     mov dword ptr [dword_d84a0], eax             ; 0aeb81 a3a0840d00
     mov dx, word ptr [word_d8770]                ; 0aeb86 668b1570870d00
     mov al, byte ptr [dword_d849c]               ; 0aeb8d a09c840d00
@@ -4770,10 +4774,10 @@ loc_aeb45:
 
 
 ; ====================================================================================================
-; sub_aedbc  [0xaedbc, 152 bytes, 55 instructions]
-; called by: sub_a044d
+; gus_stream_close  [0xaedbc, 152 bytes, 55 instructions]
+; called by: gus_close
 ; ====================================================================================================
-sub_aedbc:
+gus_stream_close:
     pushfd                                       ; 0aedbc 9c
     cli                                          ; 0aedbd fa
     cmp dword ptr [dword_d7af0], 0               ; 0aedbe 833df07a0d0000
@@ -4833,10 +4837,10 @@ loc_aee52:
 
 
 ; ====================================================================================================
-; sub_aee54  [0xaee54, 186 bytes, 71 instructions]
-; called by: sub_a0886
+; gus_dig_play  [0xaee54, 186 bytes, 71 instructions]
+; called by: gus_play_sample
 ; ====================================================================================================
-sub_aee54:
+gus_dig_play:
     push ebp                                     ; 0aee54 55
     mov ebp, esp                                 ; 0aee55 8bec
     push ebx                                     ; 0aee57 53
@@ -4852,7 +4856,7 @@ sub_aee54:
     cmp eax, 0                                   ; 0aee72 83f800
     jne loc_aee86                                ; 0aee75 750f
     push dword ptr [ebp + 8]                     ; 0aee77 ff7508
-    call sub_aefa2                               ; 0aee7a e823010000
+    call gus_dig_stop                            ; 0aee7a e823010000
     pop eax                                      ; 0aee7f 58
     popfd                                        ; 0aee80 9d
     pop edi                                      ; 0aee81 5f
@@ -4864,18 +4868,18 @@ sub_aee54:
 loc_aee86:
     push dword ptr [ebp + 0x1c]                  ; 0aee86 ff751c
     push dword ptr [ebp + 8]                     ; 0aee89 ff7508
-    call sub_af076                               ; 0aee8c e8e5010000
+    call gus_dig_set_freq                        ; 0aee8c e8e5010000
     add sp, 8                                    ; 0aee91 6683c408
     push dword ptr [ebp + 0x20]                  ; 0aee95 ff7520
     push dword ptr [ebp + 8]                     ; 0aee98 ff7508
-    call sub_aefea                               ; 0aee9b e84a010000
+    call gus_dig_pan                             ; 0aee9b e84a010000
     add sp, 8                                    ; 0aeea0 6683c408
     push dword ptr [ebp + 0x18]                  ; 0aeea4 ff7518
     push dword ptr [ebp + 0x14]                  ; 0aeea7 ff7514
     push dword ptr [ebp + 0x10]                  ; 0aeeaa ff7510
     push dword ptr [ebp + 0xc]                   ; 0aeead ff750c
     push dword ptr [ebp + 8]                     ; 0aeeb0 ff7508
-    call sub_af0d5                               ; 0aeeb3 e81d020000
+    call gus_dig_set_sample                      ; 0aeeb3 e81d020000
     add sp, 0x14                                 ; 0aeeb8 6683c414
     xor eax, eax                                 ; 0aeebc 33c0
     mov byte ptr [esi + 0x4c], al                ; 0aeebe 88464c
@@ -4904,7 +4908,7 @@ loc_aeef5:
     push 0x7f                                    ; 0aeef5 6a7f
     push 0xff                                    ; 0aeef7 68ff000000
     push dword ptr [ebp + 8]                     ; 0aeefc ff7508
-    call sub_aef33                               ; 0aeeff e82f000000
+    call gus_dig_volume                          ; 0aeeff e82f000000
     add sp, 0xc                                  ; 0aef04 6683c40c
 loc_aef08:
     popfd                                        ; 0aef08 9d
@@ -4916,10 +4920,10 @@ loc_aef08:
 
 
 ; ====================================================================================================
-; sub_aef0e  [0xaef0e, 37 bytes, 17 instructions]
-; called by: sub_a067b, sub_a076e
+; gus_dig_voice_active  [0xaef0e, 37 bytes, 17 instructions]
+; called by: gus_drv_tick, gus_drv_control
 ; ====================================================================================================
-sub_aef0e:
+gus_dig_voice_active:
     push ebp                                     ; 0aef0e 55
     mov ebp, esp                                 ; 0aef0f 8bec
     push ecx                                     ; 0aef11 51
@@ -4943,10 +4947,10 @@ loc_aef2e:
 
 
 ; ====================================================================================================
-; sub_aef33  [0xaef33, 111 bytes, 35 instructions]
-; called by: sub_a0c5b, sub_aee54
+; gus_dig_volume  [0xaef33, 111 bytes, 35 instructions]
+; called by: gus_voice_volume, gus_dig_play
 ; ====================================================================================================
-sub_aef33:
+gus_dig_volume:
     push ebp                                     ; 0aef33 55
     mov ebp, esp                                 ; 0aef34 8bec
     push esi                                     ; 0aef36 56
@@ -4988,10 +4992,10 @@ loc_aef9f:
 
 
 ; ====================================================================================================
-; sub_aefa2  [0xaefa2, 39 bytes, 15 instructions]
-; called by: sub_a14af, sub_aee54
+; gus_dig_stop  [0xaefa2, 39 bytes, 15 instructions]
+; called by: gus_channel_notes_off, gus_dig_play
 ; ====================================================================================================
-sub_aefa2:
+gus_dig_stop:
     push ebp                                     ; 0aefa2 55
     mov ebp, esp                                 ; 0aefa3 8bec
     push esi                                     ; 0aefa5 56
@@ -5011,10 +5015,10 @@ loc_aefc6:
 
 
 ; ====================================================================================================
-; sub_aefc9  [0xaefc9, 33 bytes, 13 instructions]
-; called by: sub_a09b9
+; gus_dig_release  [0xaefc9, 33 bytes, 13 instructions]
+; called by: gus_voice_stop
 ; ====================================================================================================
-sub_aefc9:
+gus_dig_release:
     push ebp                                     ; 0aefc9 55
     mov ebp, esp                                 ; 0aefca 8bec
     push esi                                     ; 0aefcc 56
@@ -5032,10 +5036,10 @@ loc_aefe7:
 
 
 ; ====================================================================================================
-; sub_aefea  [0xaefea, 110 bytes, 42 instructions]
-; called by: sub_a076e, sub_a0d43, sub_aee54
+; gus_dig_pan  [0xaefea, 110 bytes, 42 instructions]
+; called by: gus_drv_control, gus_voice_controller, gus_dig_play
 ; ====================================================================================================
-sub_aefea:
+gus_dig_pan:
     push ebp                                     ; 0aefea 55
     mov ebp, esp                                 ; 0aefeb 8bec
     push esi                                     ; 0aefed 56
@@ -5083,10 +5087,10 @@ loc_af054:
 
 
 ; ====================================================================================================
-; sub_af058  [0xaf058, 30 bytes, 12 instructions]  <unreferenced>
+; gus_dig_unused  [0xaf058, 30 bytes, 12 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_af058:
+gus_dig_unused:
     push ebp                                     ; 0af058 55
     mov ebp, esp                                 ; 0af059 8bec
     push esi                                     ; 0af05b 56
@@ -5103,10 +5107,10 @@ loc_af073:
 
 
 ; ====================================================================================================
-; sub_af076  [0xaf076, 95 bytes, 34 instructions]
-; called by: sub_a0bac, sub_aee54
+; gus_dig_set_freq  [0xaf076, 95 bytes, 34 instructions]
+; called by: gus_voice_setup, gus_dig_play
 ; ====================================================================================================
-sub_af076:
+gus_dig_set_freq:
     push ebp                                     ; 0af076 55
     mov ebp, esp                                 ; 0af077 8bec
     push esi                                     ; 0af079 56
@@ -5148,10 +5152,10 @@ loc_af0d2:
 
 
 ; ====================================================================================================
-; sub_af0d5  [0xaf0d5, 61 bytes, 24 instructions]
-; called by: sub_a0bac, sub_aee54
+; gus_dig_set_sample  [0xaf0d5, 61 bytes, 24 instructions]
+; called by: gus_voice_setup, gus_dig_play
 ; ====================================================================================================
-sub_af0d5:
+gus_dig_set_sample:
     push ebp                                     ; 0af0d5 55
     mov ebp, esp                                 ; 0af0d6 8bec
     push esi                                     ; 0af0d8 56
@@ -5180,10 +5184,10 @@ loc_af10f:
 
 
 ; ====================================================================================================
-; sub_af112  [0xaf112, 134 bytes, 52 instructions]
-; called by: sub_a067b
+; gus_dig_update  [0xaf112, 134 bytes, 52 instructions]
+; called by: gus_drv_tick
 ; ====================================================================================================
-sub_af112:
+gus_dig_update:
     push ebp                                     ; 0af112 55
     mov ebp, esp                                 ; 0af113 8bec
     add esp, -4                                  ; 0af115 83c4fc
@@ -5244,20 +5248,20 @@ loc_af194:
 
 
 ; ====================================================================================================
-; sub_af198  [0xaf198, 12 bytes, 3 instructions]
-; called by: sub_a076e
+; gus_dig_get_voices  [0xaf198, 12 bytes, 3 instructions]
+; called by: gus_drv_control
 ; ====================================================================================================
-sub_af198:
+gus_dig_get_voices:
     mov eax, dword ptr [dword_d7afc]             ; 0af198 a1fc7a0d00
     or eax, dword ptr [dword_d7b08]              ; 0af19d 0b05087b0d00
     ret                                          ; 0af1a3 c3
 
 
 ; ====================================================================================================
-; sub_af1a4  [0xaf1a4, 31 bytes, 15 instructions]
-; called by: sub_a076e
+; gus_dig_get_rate  [0xaf1a4, 31 bytes, 15 instructions]
+; called by: gus_drv_control
 ; ====================================================================================================
-sub_af1a4:
+gus_dig_get_rate:
     push ebp                                     ; 0af1a4 55
     mov ebp, esp                                 ; 0af1a5 8bec
     push esi                                     ; 0af1a7 56
@@ -5279,10 +5283,11 @@ loc_af1be:
     times 13 db 0 ; 0af1c3 (padding)
 
 ; ====================================================================================================
-; sub_af1d0  [0xaf1d0, 258 bytes, 76 instructions]
-; called by: sub_a04b9, sub_a053c
+; gus_parse_ultrasnd  [0xaf1d0, 258 bytes, 76 instructions]
+; ULTRASND=port,dma,dma,irq,irq
+; called by: gus_probe, gus_drv_detect
 ; ====================================================================================================
-sub_af1d0:
+gus_parse_ultrasnd:
     push ebp                                     ; 0af1d0 55
     mov ebp, esp                                 ; 0af1d1 89e5
     push ebx                                     ; 0af1d3 53
@@ -5290,14 +5295,14 @@ sub_af1d0:
     push edx                                     ; 0af1d5 52
     mov ecx, eax                                 ; 0af1d6 89c1
     mov eax, dword ptr [off_d84cc]               ; 0af1d8 a1cc840d00
-    call sub_a6b87                               ; 0af1dd e8a579ffff
+    call getenv                                  ; 0af1dd e8a579ffff
     mov edx, eax                                 ; 0af1e2 89c2
     mov dword ptr [dword_f612c], eax             ; 0af1e4 a32c610f00
     test eax, eax                                ; 0af1e9 85c0
     je loc_af2ca                                 ; 0af1eb 0f84d9000000
     mov edx, dword_f612c                         ; 0af1f1 ba2c610f00
     mov ebx, 0x10                                ; 0af1f6 bb10000000
-    call sub_a6d24                               ; 0af1fb e8247bffff
+    call strtoul                                 ; 0af1fb e8247bffff
     mov word ptr [ecx + 2], ax                   ; 0af200 66894102
     mov eax, dword ptr [dword_f612c]             ; 0af204 a12c610f00
     cmp byte ptr [eax], 0x2c                     ; 0af209 80382c
@@ -5308,7 +5313,7 @@ loc_af214:
     mov edx, dword_f612c                         ; 0af214 ba2c610f00
     mov ebx, 0xa                                 ; 0af219 bb0a000000
     mov eax, dword ptr [dword_f612c]             ; 0af21e a12c610f00
-    call sub_a6d24                               ; 0af223 e8fc7affff
+    call strtoul                                 ; 0af223 e8fc7affff
     mov byte ptr [ecx + 7], al                   ; 0af228 884107
     mov eax, dword ptr [dword_f612c]             ; 0af22b a12c610f00
     cmp byte ptr [eax], 0x2c                     ; 0af230 80382c
@@ -5319,7 +5324,7 @@ loc_af23b:
     mov edx, dword_f612c                         ; 0af23b ba2c610f00
     mov ebx, 0xa                                 ; 0af240 bb0a000000
     mov eax, dword ptr [dword_f612c]             ; 0af245 a12c610f00
-    call sub_a6d24                               ; 0af24a e8d57affff
+    call strtoul                                 ; 0af24a e8d57affff
     mov byte ptr [ecx + 6], al                   ; 0af24f 884106
     mov eax, dword ptr [dword_f612c]             ; 0af252 a12c610f00
     cmp byte ptr [eax], 0x2c                     ; 0af257 80382c
@@ -5330,7 +5335,7 @@ loc_af262:
     mov edx, dword_f612c                         ; 0af262 ba2c610f00
     mov ebx, 0xa                                 ; 0af267 bb0a000000
     mov eax, dword ptr [dword_f612c]             ; 0af26c a12c610f00
-    call sub_a6d24                               ; 0af271 e8ae7affff
+    call strtoul                                 ; 0af271 e8ae7affff
     mov byte ptr [ecx + 4], al                   ; 0af276 884104
     mov eax, dword ptr [dword_f612c]             ; 0af279 a12c610f00
     cmp byte ptr [eax], 0x2c                     ; 0af27e 80382c
@@ -5341,7 +5346,7 @@ loc_af289:
     mov edx, dword_f612c                         ; 0af289 ba2c610f00
     mov ebx, 0xa                                 ; 0af28e bb0a000000
     mov eax, dword ptr [dword_f612c]             ; 0af293 a12c610f00
-    call sub_a6d24                               ; 0af298 e8877affff
+    call strtoul                                 ; 0af298 e8877affff
     mov dx, word ptr [ecx + 2]                   ; 0af29d 668b5102
     mov byte ptr [ecx + 5], al                   ; 0af2a1 884105
     test dx, dx                                  ; 0af2a4 6685d2
@@ -5370,10 +5375,10 @@ loc_af2ca:
     times 14 db 0 ; 0af2d2 (padding)
 
 ; ====================================================================================================
-; sub_af2e0  [0xaf2e0, 95 bytes, 34 instructions]
-; called by: sub_a04b9, sub_aab5c
+; gus_probe_port  [0xaf2e0, 95 bytes, 34 instructions]
+; called by: gus_probe, gus_open_card
 ; ====================================================================================================
-sub_af2e0:
+gus_probe_port:
     push ebp                                     ; 0af2e0 55
     mov ebp, esp                                 ; 0af2e1 89e5
     push ebx                                     ; 0af2e3 53
@@ -5386,17 +5391,17 @@ sub_af2e0:
     and ebx, 0xffff                              ; 0af2f0 81e3ffff0000
     mov edx, 0xaa                                ; 0af2f6 baaa000000
     mov eax, ebx                                 ; 0af2fb 89d8
-    call sub_aa200                               ; 0af2fd e8feaeffff
+    call outp                                    ; 0af2fd e8feaeffff
     and ecx, 0xffff                              ; 0af302 81e1ffff0000
     mov eax, ecx                                 ; 0af308 89c8
-    call sub_b128c                               ; 0af30a e87d1f0000
+    call inp                                     ; 0af30a e87d1f0000
     cmp eax, 0xaa                                ; 0af30f 3daa000000
     jne loc_af335                                ; 0af314 751f
     mov edx, 0x55                                ; 0af316 ba55000000
     mov eax, ebx                                 ; 0af31b 89d8
-    call sub_aa200                               ; 0af31d e8deaeffff
+    call outp                                    ; 0af31d e8deaeffff
     mov eax, ecx                                 ; 0af322 89c8
-    call sub_b128c                               ; 0af324 e8631f0000
+    call inp                                     ; 0af324 e8631f0000
     cmp eax, 0x55                                ; 0af329 83f855
     jne loc_af335                                ; 0af32c 7507
     mov eax, 1                                   ; 0af32e b801000000
@@ -5415,10 +5420,10 @@ loc_af337:
     db 0x00 ; 0af33f |.| (padding)
 
 ; ====================================================================================================
-; sub_af340  [0xaf340, 232 bytes, 83 instructions]
-; called by: sub_a0d99
+; gus_midi_note_off  [0xaf340, 232 bytes, 83 instructions]
+; called by: gus_patch_drv_send_midi
 ; ====================================================================================================
-sub_af340:
+gus_midi_note_off:
     push ebp                                     ; 0af340 55
     mov ebp, esp                                 ; 0af341 89e5
     push ecx                                     ; 0af343 51
@@ -5499,7 +5504,7 @@ loc_af412:
 loc_af417:
     mov eax, esi                                 ; 0af417 89f0
     mov edx, ebx                                 ; 0af419 89da
-    call sub_ab6d0                               ; 0af41b e8b0c2ffff
+    call gus_midi_voice_off                      ; 0af41b e8b0c2ffff
     lea esp, [ebp - 0xc]                         ; 0af420 8d65f4
     pop edi                                      ; 0af423 5f
     pop esi                                      ; 0af424 5e
@@ -5509,10 +5514,10 @@ loc_af417:
 
 
 ; ====================================================================================================
-; sub_af428  [0xaf428, 683 bytes, 236 instructions]
-; called by: sub_a0d99
+; gus_midi_controller  [0xaf428, 683 bytes, 236 instructions]
+; called by: gus_patch_drv_send_midi
 ; ====================================================================================================
-sub_af428:
+gus_midi_controller:
     push ebp                                     ; 0af428 55
     mov ebp, esp                                 ; 0af429 89e5
     push ecx                                     ; 0af42b 51
@@ -5610,7 +5615,7 @@ loc_af509:
     jne loc_af6cb                                ; 0af50c 0f85b9010000
     mov edx, ebx                                 ; 0af512 89da
     mov eax, ecx                                 ; 0af514 89c8
-    call sub_ab80c                               ; 0af516 e8f1c2ffff
+    call gus_midi_set_controller                 ; 0af516 e8f1c2ffff
     lea esp, [ebp - 0xc]                         ; 0af51b 8d65f4
     pop edi                                      ; 0af51e 5f
     pop esi                                      ; 0af51f 5e
@@ -5684,7 +5689,7 @@ loc_af5d3:
     idiv ebx                                     ; 0af5ee f7fb
     mov edx, eax                                 ; 0af5f0 89c2
     mov eax, ecx                                 ; 0af5f2 89c8
-    call sub_ab658                               ; 0af5f4 e85fc0ffff
+    call gus_midi_set_voices                     ; 0af5f4 e85fc0ffff
     lea esp, [ebp - 0xc]                         ; 0af5f9 8d65f4
     pop edi                                      ; 0af5fc 5f
     pop esi                                      ; 0af5fd 5e
@@ -5694,7 +5699,7 @@ loc_af5d3:
 
 loc_af601:
     mov edx, ecx                                 ; 0af601 89ca
-    call sub_ad2a8                               ; 0af603 e8a0dcffff
+    call gus_midi_pitch_bend                     ; 0af603 e8a0dcffff
     lea esp, [ebp - 0xc]                         ; 0af608 8d65f4
     pop edi                                      ; 0af60b 5f
     pop esi                                      ; 0af60c 5e
@@ -5712,7 +5717,7 @@ loc_af610:
     idiv ebx                                     ; 0af62b f7fb
     mov edx, eax                                 ; 0af62d 89c2
     mov eax, ecx                                 ; 0af62f 89c8
-    call sub_ab658                               ; 0af631 e822c0ffff
+    call gus_midi_set_voices                     ; 0af631 e822c0ffff
     lea esp, [ebp - 0xc]                         ; 0af636 8d65f4
     pop edi                                      ; 0af639 5f
     pop esi                                      ; 0af63a 5e
@@ -5726,7 +5731,7 @@ loc_af63e:
     xor edx, edx                                 ; 0af644 31d2
     mov dl, al                                   ; 0af646 88c2
     mov eax, ecx                                 ; 0af648 89c8
-    call sub_acc3c                               ; 0af64a e8edd5ffff
+    call gus_midi_all_notes_off                  ; 0af64a e8edd5ffff
     lea esp, [ebp - 0xc]                         ; 0af64f 8d65f4
     pop edi                                      ; 0af652 5f
     pop esi                                      ; 0af653 5e
@@ -5755,23 +5760,23 @@ loc_af665:
 loc_af673:
     mov eax, ecx                                 ; 0af673 89c8
     xor edx, edx                                 ; 0af675 31d2
-    call sub_acc3c                               ; 0af677 e8c0d5ffff
+    call gus_midi_all_notes_off                  ; 0af677 e8c0d5ffff
     mov eax, ecx                                 ; 0af67c 89c8
     xor edx, edx                                 ; 0af67e 31d2
     mov esi, 0x64                                ; 0af680 be64000000
-    call sub_ab80c                               ; 0af685 e882c1ffff
+    call gus_midi_set_controller                 ; 0af685 e882c1ffff
     mov edx, 0x400                               ; 0af68a ba00040000
     mov eax, ecx                                 ; 0af68f 89c8
     mov edi, 0x7f                                ; 0af691 bf7f000000
-    call sub_ab6d0                               ; 0af696 e835c0ffff
+    call gus_midi_voice_off                      ; 0af696 e835c0ffff
     mov eax, ecx                                 ; 0af69b 89c8
     mov edx, esi                                 ; 0af69d 89f2
     mov dword ptr [ebx + unk_d85d0], esi         ; 0af69f 89b3d0850d00
     mov dword ptr [ebx + unk_d8610], edi         ; 0af6a5 89bb10860d00
-    call sub_ab658                               ; 0af6ab e8a8bfffff
+    call gus_midi_set_voices                     ; 0af6ab e8a8bfffff
     mov edx, 0xffffffff                          ; 0af6b0 baffffffff
     mov eax, ecx                                 ; 0af6b5 89c8
-    call sub_ad2a8                               ; 0af6b7 e8ecdbffff
+    call gus_midi_pitch_bend                     ; 0af6b7 e8ecdbffff
     lea esp, [ebp - 0xc]                         ; 0af6bc 8d65f4
     pop edi                                      ; 0af6bf 5f
     pop esi                                      ; 0af6c0 5e
@@ -5781,7 +5786,7 @@ loc_af673:
 
 loc_af6c4:
     mov eax, ecx                                 ; 0af6c4 89c8
-    call sub_ad344                               ; 0af6c6 e879dcffff
+    call gus_midi_sustain_off                    ; 0af6c6 e879dcffff
 loc_af6cb:
     lea esp, [ebp - 0xc]                         ; 0af6cb 8d65f4
     pop edi                                      ; 0af6ce 5f
@@ -5792,10 +5797,11 @@ loc_af6cb:
 
 
 ; ====================================================================================================
-; sub_af6d3  [0xaf6d3, 212 bytes, 81 instructions]
+; __setenvp  [0xaf6d3, 212 bytes, 81 instructions]
+; copies the DOS environment into the environ array
 ; address taken (function pointer)
 ; ====================================================================================================
-sub_af6d3:
+__setenvp:
     push ebx                                     ; 0af6d3 53
     push ecx                                     ; 0af6d4 51
     push edx                                     ; 0af6d5 52
@@ -5833,7 +5839,7 @@ loc_af716:
     jne loc_af71f                                ; 0af718 7505
     mov eax, 1                                   ; 0af71a b801000000
 loc_af71f:
-    call sub_91984                               ; 0af71f e86022feff
+    call malloc                                  ; 0af71f e86022feff
     mov edx, eax                                 ; 0af724 89c2
     mov ebx, eax                                 ; 0af726 89c3
     test eax, eax                                ; 0af728 85c0
@@ -5842,7 +5848,7 @@ loc_af71f:
     shl eax, 2                                   ; 0af732 c1e002
     add eax, 4                                   ; 0af735 83c004
     add eax, ecx                                 ; 0af738 01c8
-    call sub_91984                               ; 0af73a e84522feff
+    call malloc                                  ; 0af73a e84522feff
     test eax, eax                                ; 0af73f 85c0
     je loc_af797                                 ; 0af741 7454
     mov dword ptr [dword_d5444], eax             ; 0af743 a344540d00
@@ -5881,7 +5887,7 @@ loc_af772:
 
 loc_af797:
     mov eax, edx                                 ; 0af797 89d0
-    call sub_91a67                               ; 0af799 e8c922feff
+    call free                                    ; 0af799 e8c922feff
 loc_af79e:
     pop fs                                       ; 0af79e 0fa1
     pop es                                       ; 0af7a0 07
@@ -5894,10 +5900,10 @@ loc_af79e:
 
 
 ; ====================================================================================================
-; sub_af7a7  [0xaf7a7, 15 bytes, 10 instructions]
-; called by: sub_af7b6, sub_af8ee
+; stpcpy  [0xaf7a7, 15 bytes, 10 instructions]
+; called by: __cenvarg, __ccmdline
 ; ====================================================================================================
-sub_af7a7:
+stpcpy:
     push ebx                                     ; 0af7a7 53
 loc_af7a8:
     mov bl, byte ptr [edx]                       ; 0af7a8 8a1a
@@ -5914,10 +5920,11 @@ loc_af7b4:
 
 
 ; ====================================================================================================
-; sub_af7b6  [0xaf7b6, 312 bytes, 105 instructions]
-; called by: sub_a1cf4
+; __cenvarg  [0xaf7b6, 312 bytes, 105 instructions]
+; environment and argument blocks of a spawn
+; called by: spawnve
 ; ====================================================================================================
-sub_af7b6:
+__cenvarg:
     push esi                                     ; 0af7b6 56
     push edi                                     ; 0af7b7 57
     enter 8, 0                                   ; 0af7b8 c8080000
@@ -5957,17 +5964,17 @@ loc_af7fc:
     mov dword ptr [ebp - 8], eax                 ; 0af804 8945f8
     mov eax, ebx                                 ; 0af807 89d8
     mov dword ptr [dword_d5674], 0x10            ; 0af809 c70574560d001000..
-    call sub_91984                               ; 0af813 e86c21feff
+    call malloc                                  ; 0af813 e86c21feff
     test eax, eax                                ; 0af818 85c0
     jne loc_af84d                                ; 0af81a 7531
     mov eax, ebx                                 ; 0af81c 89d8
-    call sub_91984                               ; 0af81e e86121feff
+    call malloc                                  ; 0af81e e86121feff
     test eax, eax                                ; 0af823 85c0
     jne loc_af84d                                ; 0af825 7526
     mov eax, 5                                   ; 0af827 b805000000
-    call sub_9878a                               ; 0af82c e8598ffeff
+    call __set_errno                             ; 0af82c e8598ffeff
     mov eax, 8                                   ; 0af831 b808000000
-    call sub_987ad                               ; 0af836 e8728ffeff
+    call __set_doserrno                          ; 0af836 e8728ffeff
     mov eax, dword ptr [ebp - 8]                 ; 0af83b 8b45f8
     mov dword ptr [dword_d5674], eax             ; 0af83e a374560d00
 loc_af843:
@@ -5989,7 +5996,7 @@ loc_af84d:
 
 loc_af86e:
     mov edx, dword ptr [ecx]                     ; 0af86e 8b11
-    call sub_af7a7                               ; 0af870 e832ffffff
+    call stpcpy                                  ; 0af870 e832ffffff
     inc eax                                      ; 0af875 40
     add ecx, 4                                   ; 0af876 83c104
 loc_af879:
@@ -6027,12 +6034,12 @@ loc_af8b2:
     cmp edx, 0x7e                                ; 0af8b2 83fa7e
     jbe loc_af8da                                ; 0af8b5 7623
     mov eax, 2                                   ; 0af8b7 b802000000
-    call sub_9878a                               ; 0af8bc e8c98efeff
+    call __set_errno                             ; 0af8bc e8c98efeff
     mov eax, 0xa                                 ; 0af8c1 b80a000000
-    call sub_987ad                               ; 0af8c6 e8e28efeff
+    call __set_doserrno                          ; 0af8c6 e8e28efeff
     mov eax, dword ptr [ebp - 4]                 ; 0af8cb 8b45fc
     mov eax, dword ptr [eax]                     ; 0af8ce 8b00
-    call sub_91a67                               ; 0af8d0 e89221feff
+    call free                                    ; 0af8d0 e89221feff
     jmp loc_af843                                ; 0af8d5 e969ffffff
 
 loc_af8da:
@@ -6048,10 +6055,10 @@ loc_af8e8:
 
 
 ; ====================================================================================================
-; sub_af8ee  [0xaf8ee, 85 bytes, 38 instructions]
-; called by: sub_a1cc1, sub_a1cf4
+; __ccmdline  [0xaf8ee, 85 bytes, 38 instructions]
+; called by: __spawn_with_args, spawnve
 ; ====================================================================================================
-sub_af8ee:
+__ccmdline:
     push esi                                     ; 0af8ee 56
     enter 4, 0                                   ; 0af8ef c8040000
     mov esi, edx                                 ; 0af8f3 89d6
@@ -6068,7 +6075,7 @@ loc_af8fd:
 loc_af90a:
     mov eax, ebx                                 ; 0af90a 89d8
     mov edx, dword ptr [esi]                     ; 0af90c 8b16
-    call sub_af7a7                               ; 0af90e e894feffff
+    call stpcpy                                  ; 0af90e e894feffff
     add esi, 4                                   ; 0af913 83c604
     mov edx, eax                                 ; 0af916 89c2
     mov ebx, eax                                 ; 0af918 89c3
@@ -6099,10 +6106,11 @@ loc_af931:
 
 
 ; ====================================================================================================
-; sub_af943  [0xaf943, 206 bytes, 70 instructions]  <dos_exec dos_kbhit int21h>
-; called by: sub_a1cc1
+; __dospawn  [0xaf943, 206 bytes, 70 instructions]  <dos_exec dos_kbhit int21h>
+; int 21h 4Bh
+; called by: __spawn_with_args
 ; ====================================================================================================
-sub_af943:
+__dospawn:
     push ebp                                     ; 0af943 55
     mov ebp, esp                                 ; 0af944 89e5
     push esi                                     ; 0af946 56
@@ -6167,7 +6175,7 @@ loc_af9bf:
 loc_af9fe:
     sbb edx, edx                                 ; 0af9fe 19d2
     movzx eax, ax                                ; 0afa00 0fb7c0
-    call sub_9a730                               ; 0afa03 e828adfeff
+    call __set_errno_dos_entry                   ; 0afa03 e828adfeff
     pop ds                                       ; 0afa08 1f
     pop es                                       ; 0afa09 07
     pop ebx                                      ; 0afa0a 5b
@@ -6180,10 +6188,10 @@ loc_af9fe:
 
 
 ; ====================================================================================================
-; sub_afa11  [0xafa11, 68 bytes, 35 instructions]
-; called by: sub_afa55
+; __fill_path_part  [0xafa11, 68 bytes, 35 instructions]
+; called by: __splitpath_drive
 ; ====================================================================================================
-sub_afa11:
+__fill_path_part:
     push esi                                     ; 0afa11 56
     push edi                                     ; 0afa12 57
     mov esi, ebx                                 ; 0afa13 89de
@@ -6225,10 +6233,10 @@ loc_afa31:
 
 
 ; ====================================================================================================
-; sub_afa55  [0xafa55, 137 bytes, 61 instructions]
-; called by: sub_a1cf4
+; __splitpath_drive  [0xafa55, 137 bytes, 61 instructions]
+; called by: spawnve
 ; ====================================================================================================
-sub_afa55:
+__splitpath_drive:
     push esi                                     ; 0afa55 56
     push edi                                     ; 0afa56 57
     push ebp                                     ; 0afa57 55
@@ -6283,7 +6291,7 @@ loc_afaa7:
 loc_afaab:
     mov eax, ecx                                 ; 0afaab 89c8
     mov ecx, ebp                                 ; 0afaad 89e9
-    call sub_afa11                               ; 0afaaf e85dffffff
+    call __fill_path_part                        ; 0afaaf e85dffffff
     mov edx, eax                                 ; 0afab4 89c2
     test edi, edi                                ; 0afab6 85ff
     jne loc_afabc                                ; 0afab8 7502
@@ -6292,12 +6300,12 @@ loc_afabc:
     mov eax, dword ptr [esp + 0x10]              ; 0afabc 8b442410
     mov ebx, ebp                                 ; 0afac0 89eb
     mov ecx, edi                                 ; 0afac2 89f9
-    call sub_afa11                               ; 0afac4 e848ffffff
+    call __fill_path_part                        ; 0afac4 e848ffffff
     mov edx, eax                                 ; 0afac9 89c2
     mov ebx, edi                                 ; 0afacb 89fb
     mov ecx, esi                                 ; 0afacd 89f1
     mov eax, dword ptr [esp + 0x14]              ; 0afacf 8b442414
-    call sub_afa11                               ; 0afad3 e839ffffff
+    call __fill_path_part                        ; 0afad3 e839ffffff
     pop ebp                                      ; 0afad8 5d
     pop edi                                      ; 0afad9 5f
     pop esi                                      ; 0afada 5e
@@ -6306,10 +6314,10 @@ loc_afabc:
     times 2 db 0 ; 0afade (padding)
 
 ; ====================================================================================================
-; sub_afae0  [0xafae0, 1538 bytes, 475 instructions]  <unreferenced>
+; draw_textured_triangle_b  [0xafae0, 1538 bytes, 475 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_afae0:
+draw_textured_triangle_b:
     push esi                                     ; 0afae0 56
     push edi                                     ; 0afae1 57
     push ebp                                     ; 0afae2 55
@@ -6321,7 +6329,7 @@ sub_afae0:
     push unk_f6138                               ; 0afaf4 6838610f00
     add eax, 0x10                                ; 0afaf9 83c010
     push eax                                     ; 0afafc 50
-    call sub_b72d4                               ; 0afafd e8d2770000
+    call texture_set                             ; 0afafd e8d2770000
     add esp, 8                                   ; 0afb02 83c408
     xor esi, esi                                 ; 0afb05 31f6
     xor edi, edi                                 ; 0afb07 31ff
@@ -6651,7 +6659,7 @@ loc_afea6:
     add eax, dword ptr [esp + 0x60]              ; 0afed5 03442460
     add ebx, dword ptr [eax]                     ; 0afed9 0318
     push ebx                                     ; 0afedb 53
-    call sub_b7420                               ; 0afedc e83f750000
+    call texture_span_wide                       ; 0afedc e83f750000
     add esp, 0xc                                 ; 0afee1 83c40c
 loc_afee4:
     add ebp, dword ptr [esp + 0x4c]              ; 0afee4 036c244c
@@ -6802,7 +6810,7 @@ loc_b007a:
     add eax, dword ptr [esp + 0x58]              ; 0b00a9 03442458
     add edx, dword ptr [eax]                     ; 0b00ad 0310
     push edx                                     ; 0b00af 52
-    call sub_b7420                               ; 0b00b0 e86b730000
+    call texture_span_wide                       ; 0b00b0 e86b730000
     add esp, 0xc                                 ; 0b00b5 83c40c
 loc_b00b8:
     add ebp, dword ptr [esp + 0x4c]              ; 0b00b8 036c244c
@@ -6825,10 +6833,10 @@ loc_b00db:
     times 2 db 0 ; 0b00e2 (padding)
 
 ; ====================================================================================================
-; sub_b00e4  [0xb00e4, 26 bytes, 16 instructions]
-; called by: sub_a2610
+; strrchr  [0xb00e4, 26 bytes, 16 instructions]
+; called by: find_file_ext
 ; ====================================================================================================
-sub_b00e4:
+strrchr:
     push ebx                                     ; 0b00e4 53
     push ecx                                     ; 0b00e5 51
     mov cl, dl                                   ; 0b00e6 88d1
@@ -6851,10 +6859,10 @@ loc_b00f0:
     times 2 db 0 ; 0b00fe (padding)
 
 ; ====================================================================================================
-; sub_b0100  [0xb0100, 40 bytes, 20 instructions]
+; read_le_n  [0xb0100, 40 bytes, 20 instructions]
 ; called by: shpi_from_compressed
 ; ====================================================================================================
-sub_b0100:
+read_le_n:
     push esi                                     ; 0b0100 56
     push edi                                     ; 0b0101 57
     mov edx, dword ptr [esp + 0xc]               ; 0b0102 8b54240c
@@ -6881,10 +6889,10 @@ loc_b0123:
 
 
 ; ====================================================================================================
-; sub_b0128  [0xb0128, 31 bytes, 14 instructions]  <unreferenced>
+; read_be_n_b0128  [0xb0128, 31 bytes, 14 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b0128:
+read_be_n_b0128:
     mov eax, dword ptr [esp + 4]                 ; 0b0128 8b442404
     mov edx, dword ptr [esp + 8]                 ; 0b012c 8b542408
     xor ebx, ebx                                 ; 0b0130 31db
@@ -6906,10 +6914,10 @@ loc_b0144:
     db 0x90 ; 0b0147 |.| (padding)
 
 ; ====================================================================================================
-; sub_b0148  [0xb0148, 38 bytes, 15 instructions]
+; write_le_n  [0xb0148, 38 bytes, 15 instructions]
 ; called by: shpi_from_compressed
 ; ====================================================================================================
-sub_b0148:
+write_le_n:
     sub esp, 4                                   ; 0b0148 83ec04
     mov eax, dword ptr [esp + 8]                 ; 0b014b 8b442408
     mov ebx, dword ptr [esp + 0xc]               ; 0b014f 8b5c240c
@@ -6931,10 +6939,10 @@ loc_b016a:
     db 0x8b, 0xc0 ; 0b016e |..| (padding)
 
 ; ====================================================================================================
-; sub_b0170  [0xb0170, 57 bytes, 22 instructions]  <unreferenced>
+; write_be_n  [0xb0170, 57 bytes, 22 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b0170:
+write_be_n:
     sub esp, 4                                   ; 0b0170 83ec04
     mov edx, dword ptr [esp + 8]                 ; 0b0173 8b542408
     mov ebx, dword ptr [esp + 0xc]               ; 0b0177 8b5c240c
@@ -6963,10 +6971,11 @@ loc_b01a3:
     times 7 db 0 ; 0b01a9 (padding)
 
 ; ====================================================================================================
-; sub_b01b0  [0xb01b0, 51 bytes, 22 instructions]
-; called by: sub_a2f40, sub_b01e4
+; putpixels_skip_ff  [0xb01b0, 51 bytes, 22 instructions]
+; the pixel writer of drawshape_alt: 0xff bytes are transparent
+; called by: drawshape_alt, drawshape2_alt
 ; ====================================================================================================
-sub_b01b0:
+putpixels_skip_ff:
     push esi                                     ; 0b01b0 56
     mov ecx, dword ptr [esp + 0x10]              ; 0b01b1 8b4c2410
     mov ebx, dword ptr [esp + 8]                 ; 0b01b5 8b5c2408
@@ -6999,10 +7008,10 @@ loc_b01e1:
     db 0x90 ; 0b01e3 |.| (padding)
 
 ; ====================================================================================================
-; sub_b01e4  [0xb01e4, 65 bytes, 19 instructions]
-; called by: sub_b0228, sub_b0244
+; drawshape2_alt  [0xb01e4, 65 bytes, 19 instructions]
+; called by: drawshape2_alt_home, drawshape2_alt_centered
 ; ====================================================================================================
-sub_b01e4:
+drawshape2_alt:
     mov edx, dword ptr [esp + 4]                 ; 0b01e4 8b542404
     mov ebx, dword ptr [esp + 8]                 ; 0b01e8 8b5c2408
     mov eax, dword ptr [esp + 0xc]               ; 0b01ec 8b44240c
@@ -7011,27 +7020,27 @@ sub_b01e4:
     push eax                                     ; 0b01f9 50
     push ebx                                     ; 0b01fa 53
     push edx                                     ; 0b01fb 52
-    call sub_b77f4                               ; 0b01fc e8f3750000
+    call drawshape2_alt_linear                   ; 0b01fc e8f3750000
     add esp, 0xc                                 ; 0b0201 83c40c
     ret                                          ; 0b0204 c3
 
 loc_b0205:
-    mov dword ptr [funcptr_d43e4], sub_b01b0     ; 0b0205 c705e4430d00b001..
+    mov dword ptr [funcptr_d43e4], putpixels_skip_ff ; 0b0205 c705e4430d00b001..
     push eax                                     ; 0b020f 50
     push ebx                                     ; 0b0210 53
     push edx                                     ; 0b0211 52
     call drawshape2                              ; 0b0212 e8c90efeff
     add esp, 0xc                                 ; 0b0217 83c40c
-    mov dword ptr [funcptr_d43e4], sub_b3abc     ; 0b021a c705e4430d00bc3a..
+    mov dword ptr [funcptr_d43e4], memmove_dwords ; 0b021a c705e4430d00bc3a..
     ret                                          ; 0b0224 c3
 
     db 0x8d, 0x40, 0x00 ; 0b0225 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_b0228  [0xb0228, 28 bytes, 11 instructions]  <unreferenced>
+; drawshape2_alt_home  [0xb0228, 28 bytes, 11 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b0228:
+drawshape2_alt_home:
     mov edx, dword ptr [esp + 4]                 ; 0b0228 8b542404
     mov eax, dword ptr [edx + 0xc]               ; 0b022c 8b420c
     sar eax, 0x10                                ; 0b022f c1f810
@@ -7040,16 +7049,16 @@ sub_b0228:
     sar eax, 0x10                                ; 0b0236 c1f810
     push eax                                     ; 0b0239 50
     push edx                                     ; 0b023a 52
-    call sub_b01e4                               ; 0b023b e8a4ffffff
+    call drawshape2_alt                          ; 0b023b e8a4ffffff
     add esp, 0xc                                 ; 0b0240 83c40c
     ret                                          ; 0b0243 c3
 
 
 ; ====================================================================================================
-; sub_b0244  [0xb0244, 40 bytes, 15 instructions]  <unreferenced>
+; drawshape2_alt_centered  [0xb0244, 40 bytes, 15 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b0244:
+drawshape2_alt_centered:
     mov edx, dword ptr [esp + 4]                 ; 0b0244 8b542404
     mov eax, dword ptr [edx + 8]                 ; 0b0248 8b4208
     sar eax, 0x10                                ; 0b024b c1f810
@@ -7062,16 +7071,17 @@ sub_b0244:
     sub ebx, eax                                 ; 0b025f 29c3
     push ebx                                     ; 0b0261 53
     push edx                                     ; 0b0262 52
-    call sub_b01e4                               ; 0b0263 e87cffffff
+    call drawshape2_alt                          ; 0b0263 e87cffffff
     add esp, 0xc                                 ; 0b0268 83c40c
     ret                                          ; 0b026b c3
 
 
 ; ====================================================================================================
-; sub_b026c  [0xb026c, 28 bytes, 15 instructions]
-; called by: sub_a30d0
+; translate_bytes  [0xb026c, 28 bytes, 15 instructions]
+; bytes through a 256 byte table
+; called by: shape_recolor
 ; ====================================================================================================
-sub_b026c:
+translate_bytes:
     push ebp                                     ; 0b026c 55
     mov ebp, esp                                 ; 0b026d 8bec
     push edi                                     ; 0b026f 57
@@ -7092,19 +7102,20 @@ loc_b0285:
 
 
 ; ====================================================================================================
-; sub_b0288  [0xb0288, 6 bytes, 2 instructions]  <unreferenced>
+; set_hook_d86c0  [0xb0288, 6 bytes, 2 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b0288:
+set_hook_d86c0:
     mov dword ptr [dword_d86c0], eax             ; 0b0288 a3c0860d00
     ret                                          ; 0b028d c3
 
 
 ; ====================================================================================================
-; sub_b028e  [0xb028e, 167 bytes, 71 instructions]
-; called by: sub_b0403
+; __cvt_exponent  [0xb028e, 167 bytes, 71 instructions]
+; the exponent part of %e
+; called by: __cvt_float
 ; ====================================================================================================
-sub_b028e:
+__cvt_exponent:
     push esi                                     ; 0b028e 56
     push edi                                     ; 0b028f 57
     push ebp                                     ; 0b0290 55
@@ -7191,10 +7202,11 @@ loc_b0333:
 
 
 ; ====================================================================================================
-; sub_b0335  [0xb0335, 99 bytes, 56 instructions]
-; called by: sub_b0403
+; __cvt_fixed  [0xb0335, 99 bytes, 56 instructions]
+; the digits of %f
+; called by: __cvt_float
 ; ====================================================================================================
-sub_b0335:
+__cvt_fixed:
     push esi                                     ; 0b0335 56
     mov esi, ebx                                 ; 0b0336 89de
     test ecx, ecx                                ; 0b0338 85c9
@@ -7264,10 +7276,10 @@ loc_b038d:
 
 
 ; ====================================================================================================
-; sub_b0398  [0xb0398, 107 bytes, 49 instructions]
-; called by: sub_b0403
+; __cvt_shift_digits  [0xb0398, 107 bytes, 49 instructions]
+; called by: __cvt_float
 ; ====================================================================================================
-sub_b0398:
+__cvt_shift_digits:
     push ebp                                     ; 0b0398 55
     mov ebp, esp                                 ; 0b0399 89e5
     push ecx                                     ; 0b039b 51
@@ -7326,10 +7338,11 @@ loc_b03fb:
 
 
 ; ====================================================================================================
-; sub_b0403  [0xb0403, 548 bytes, 217 instructions]
-; called by: sub_a313f
+; __cvt_float  [0xb0403, 548 bytes, 217 instructions]
+; formats a double for %e / %f / %g
+; called by: _EFG_Format
 ; ====================================================================================================
-sub_b0403:
+__cvt_float:
     push ebp                                     ; 0b0403 55
     mov ebp, esp                                 ; 0b0404 89e5
     push esi                                     ; 0b0406 56
@@ -7344,7 +7357,7 @@ sub_b0403:
     push ecx                                     ; 0b041b 51
     mov esi, dword ptr [edx]                     ; 0b041c 8b32
     push esi                                     ; 0b041e 56
-    call sub_b2220                               ; 0b041f e8fc1d0000
+    call __cvt_special                           ; 0b041f e8fc1d0000
     test eax, eax                                ; 0b0424 85c0
     je loc_b0444                                 ; 0b0426 741c
     mov eax, dword ptr [ebp - 0x14]              ; 0b0428 8b45ec
@@ -7388,8 +7401,8 @@ loc_b046a:
     push eax                                     ; 0b0479 50
     mov ecx, dword ptr [ebp - 0x30]              ; 0b047a 8b4dd0
     push ecx                                     ; 0b047d 51
-    call sub_b22a4                               ; 0b047e e8211e0000
-    call sub_961d0                               ; 0b0483 e8485dfeff
+    call __cvt_int_frac                          ; 0b047e e8211e0000
+    call fround                                  ; 0b0483 e8485dfeff
     fistp dword ptr [ebp - 0x18]                 ; 0b0488 db5de8
     mov esi, dword ptr [ebp - 0x18]              ; 0b048b 8b75e8
     cmp esi, -4                                  ; 0b048e 83fefc
@@ -7475,7 +7488,7 @@ loc_b0527:
     push eax                                     ; 0b0538 50
     mov edx, dword ptr [ebp - 0x28]              ; 0b0539 8b55d8
     push edx                                     ; 0b053c 52
-    call sub_b2321                               ; 0b053d e8df1d0000
+    call __pow10_scale                           ; 0b053d e8df1d0000
     fstp qword ptr [ebp - 0x28]                  ; 0b0542 dd5dd8
 loc_b0545:
     lea eax, [ebp - 0x44]                        ; 0b0545 8d45bc
@@ -7493,7 +7506,7 @@ loc_b0545:
     mov esi, dword ptr [ebp - 0x28]              ; 0b055c 8b75d8
     push esi                                     ; 0b055f 56
     mov edx, dword ptr [ebp - 0x14]              ; 0b0560 8b55ec
-    call sub_b2408                               ; 0b0563 e8a01e0000
+    call __cvt_digits                            ; 0b0563 e8a01e0000
     mov ebx, dword ptr [ebp - 0x20]              ; 0b0568 8b5de0
     lea eax, [edx + 1]                           ; 0b056b 8d4201
     test ebx, ebx                                ; 0b056e 85db
@@ -7514,7 +7527,7 @@ loc_b0582:
     mov eax, edx                                 ; 0b058b 89d0
     lea edx, [ebp - 0x44]                        ; 0b058d 8d55bc
     sub ecx, ebx                                 ; 0b0590 29d9
-    call sub_b0335                               ; 0b0592 e89efdffff
+    call __cvt_fixed                             ; 0b0592 e89efdffff
     mov ecx, dword ptr [ebp - 0x14]              ; 0b0597 8b4dec
     mov esi, eax                                 ; 0b059a 89c6
     mov ebx, eax                                 ; 0b059c 89c3
@@ -7544,7 +7557,7 @@ loc_b05ca:
     mov eax, edx                                 ; 0b05cf 89d0
     mov edx, dword ptr [ebp - 0x1c]              ; 0b05d1 8b55e4
     sub ecx, esi                                 ; 0b05d4 29f1
-    call sub_b028e                               ; 0b05d6 e8b3fcffff
+    call __cvt_exponent                          ; 0b05d6 e8b3fcffff
     add esi, eax                                 ; 0b05db 01c6
     jmp loc_b060a                                ; 0b05dd eb2b
 
@@ -7565,7 +7578,7 @@ loc_b05f7:
     mov ebx, dword ptr [ebp - 0x1c]              ; 0b05f7 8b5de4
     mov eax, edx                                 ; 0b05fa 89d0
     lea edx, [ebp - 0x44]                        ; 0b05fc 8d55bc
-    call sub_b0335                               ; 0b05ff e831fdffff
+    call __cvt_fixed                             ; 0b05ff e831fdffff
     mov edx, esi                                 ; 0b0604 89f2
     mov esi, eax                                 ; 0b0606 89c6
     sub esi, edx                                 ; 0b0608 29d6
@@ -7575,7 +7588,7 @@ loc_b060a:
     mov eax, dword ptr [ebp - 0x14]              ; 0b0612 8b45ec
     mov edx, esi                                 ; 0b0615 89f2
     mov ebx, edi                                 ; 0b0617 89fb
-    call sub_b0398                               ; 0b0619 e87afdffff
+    call __cvt_shift_digits                      ; 0b0619 e87afdffff
 loc_b061e:
     lea esp, [ebp - 8]                           ; 0b061e 8d65f8
     pop edi                                      ; 0b0621 5f
@@ -7585,10 +7598,10 @@ loc_b061e:
 
 
 ; ====================================================================================================
-; sub_b0627  [0xb0627, 425 bytes, 167 instructions]
-; called by: sub_a3264
+; __strtod  [0xb0627, 425 bytes, 167 instructions]
+; called by: __cnvs2d
 ; ====================================================================================================
-sub_b0627:
+__strtod:
     push ebp                                     ; 0b0627 55
     mov ebp, esp                                 ; 0b0628 89e5
     push ebx                                     ; 0b062a 53
@@ -7740,10 +7753,10 @@ loc_b073f:
     mov byte ptr [edx + ebp - 0x34], ah          ; 0b0741 88642acc
     lea eax, [ebp - 0x34]                        ; 0b0745 8d45cc
     lea edx, [ebp - 0x20]                        ; 0b0748 8d55e0
-    call sub_b267e                               ; 0b074b e82e1f0000
+    call __ZBuf2F                                ; 0b074b e82e1f0000
     cmp ebx, 0x134                               ; 0b0750 81fb34010000
     jle loc_b0781                                ; 0b0756 7e29
-    call sub_98796                               ; 0b0758 e83980feff
+    call __set_ERANGE                            ; 0b0758 e83980feff
     test cl, 1                                   ; 0b075d f6c101
     je loc_b076f                                 ; 0b0760 740d
     fld qword ptr [qword_c4ca0]                  ; 0b0762 dd05a04c0c00
@@ -7762,7 +7775,7 @@ loc_b0781:
     cmp ebx, 0xfffffebb                          ; 0b0781 81fbbbfeffff
     jge loc_b0798                                ; 0b0787 7d0f
     xor ebx, ebx                                 ; 0b0789 31db
-    call sub_98796                               ; 0b078b e80680feff
+    call __set_ERANGE                            ; 0b078b e80680feff
     mov dword ptr [ebp - 0x20], ebx              ; 0b0790 895de0
     mov dword ptr [ebp - 0x1c], ebx              ; 0b0793 895de4
     jmp loc_b07b6                                ; 0b0796 eb1e
@@ -7775,7 +7788,7 @@ loc_b0798:
     push eax                                     ; 0b07a0 50
     mov edx, dword ptr [ebp - 0x20]              ; 0b07a1 8b55e0
     push edx                                     ; 0b07a4 52
-    call sub_b2321                               ; 0b07a5 e8771b0000
+    call __pow10_scale                           ; 0b07a5 e8771b0000
     fstp qword ptr [ebp - 0x20]                  ; 0b07aa dd5de0
 loc_b07ad:
     test cl, 1                                   ; 0b07ad f6c101
@@ -7799,10 +7812,10 @@ loc_b07c4:
 
 
 ; ====================================================================================================
-; sub_b07d0  [0xb07d0, 137 bytes, 45 instructions]
-; called by: sub_b0c10, sub_b0c34
+; gus_dma_setup_channel  [0xb07d0, 137 bytes, 45 instructions]
+; called by: gus_dma_init_play, gus_dma_init_record
 ; ====================================================================================================
-sub_b07d0:
+gus_dma_setup_channel:
     push ebp                                     ; 0b07d0 55
     mov ebp, esp                                 ; 0b07d1 89e5
     push ebx                                     ; 0b07d3 53
@@ -7855,10 +7868,11 @@ loc_b083b:
     db 0x8d, 0x40, 0x00 ; 0b0859 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_b085c  [0xb085c, 288 bytes, 101 instructions]
-; called by: sub_b0e7c
+; gus_dma_program  [0xb085c, 288 bytes, 101 instructions]
+; the 8237 address, count and mode registers
+; called by: gus_dma_next_block
 ; ====================================================================================================
-sub_b085c:
+gus_dma_program:
     push ebp                                     ; 0b085c 55
     mov ebp, esp                                 ; 0b085d 89e5
     push esi                                     ; 0b085f 56
@@ -7914,50 +7928,50 @@ loc_b08d7:
     mov dl, byte ptr [ebx]                       ; 0b08dc 8a13
     xor eax, eax                                 ; 0b08de 31c0
     mov ax, word ptr [ebx + 9]                   ; 0b08e0 668b4309
-    call sub_aa200                               ; 0b08e4 e81799ffff
+    call outp                                    ; 0b08e4 e81799ffff
     xor edx, edx                                 ; 0b08e9 31d2
     xor eax, eax                                 ; 0b08eb 31c0
     mov dx, si                                   ; 0b08ed 6689f2
     mov ax, word ptr [ebx + 0xb]                 ; 0b08f0 668b430b
-    call sub_aa200                               ; 0b08f4 e80799ffff
+    call outp                                    ; 0b08f4 e80799ffff
     xor eax, eax                                 ; 0b08f9 31c0
     mov ax, word ptr [ebx + 0xd]                 ; 0b08fb 668b430d
     xor edx, edx                                 ; 0b08ff 31d2
-    call sub_aa200                               ; 0b0901 e8fa98ffff
+    call outp                                    ; 0b0901 e8fa98ffff
     xor edx, edx                                 ; 0b0906 31d2
     xor eax, eax                                 ; 0b0908 31c0
     mov dl, byte ptr [ebp - 0x10]                ; 0b090a 8a55f0
     mov ax, word ptr [ebx + 5]                   ; 0b090d 668b4305
-    call sub_aa200                               ; 0b0911 e8ea98ffff
+    call outp                                    ; 0b0911 e8ea98ffff
     xor edx, edx                                 ; 0b0916 31d2
     xor eax, eax                                 ; 0b0918 31c0
     mov dl, byte ptr [ebp - 8]                   ; 0b091a 8a55f8
     mov ax, word ptr [ebx + 5]                   ; 0b091d 668b4305
-    call sub_aa200                               ; 0b0921 e8da98ffff
+    call outp                                    ; 0b0921 e8da98ffff
     xor edx, edx                                 ; 0b0926 31d2
     xor eax, eax                                 ; 0b0928 31c0
     mov dx, cx                                   ; 0b092a 6689ca
     mov al, byte ptr [ebx + 2]                   ; 0b092d 8a4302
-    call sub_aa200                               ; 0b0930 e8cb98ffff
+    call outp                                    ; 0b0930 e8cb98ffff
     xor eax, eax                                 ; 0b0935 31c0
     mov ax, word ptr [ebx + 0xd]                 ; 0b0937 668b430d
     xor edx, edx                                 ; 0b093b 31d2
-    call sub_aa200                               ; 0b093d e8be98ffff
+    call outp                                    ; 0b093d e8be98ffff
     xor edx, edx                                 ; 0b0942 31d2
     xor eax, eax                                 ; 0b0944 31c0
     mov dl, byte ptr [ebp - 0xc]                 ; 0b0946 8a55f4
     mov ax, word ptr [ebx + 7]                   ; 0b0949 668b4307
-    call sub_aa200                               ; 0b094d e8ae98ffff
+    call outp                                    ; 0b094d e8ae98ffff
     xor edx, edx                                 ; 0b0952 31d2
     xor eax, eax                                 ; 0b0954 31c0
     mov dl, byte ptr [ebp - 0x14]                ; 0b0956 8a55ec
     mov ax, word ptr [ebx + 7]                   ; 0b0959 668b4307
-    call sub_aa200                               ; 0b095d e89e98ffff
+    call outp                                    ; 0b095d e89e98ffff
     xor edx, edx                                 ; 0b0962 31d2
     mov dl, byte ptr [ebx + 1]                   ; 0b0964 8a5301
     xor eax, eax                                 ; 0b0967 31c0
     mov ax, word ptr [ebx + 9]                   ; 0b0969 668b4309
-    call sub_aa200                               ; 0b096d e88e98ffff
+    call outp                                    ; 0b096d e88e98ffff
     popf                                         ; 0b0972 669d
     lea esp, [ebp - 4]                           ; 0b0974 8d65fc
     pop esi                                      ; 0b0977 5e
@@ -7966,10 +7980,10 @@ loc_b08d7:
 
 
 ; ====================================================================================================
-; sub_b097c  [0xb097c, 40 bytes, 16 instructions]
-; called by: sub_b103c
+; gus_dma_mask  [0xb097c, 40 bytes, 16 instructions]
+; called by: gus_dma_abort
 ; ====================================================================================================
-sub_b097c:
+gus_dma_mask:
     push ebp                                     ; 0b097c 55
     mov ebp, esp                                 ; 0b097d 89e5
     push edx                                     ; 0b097f 52
@@ -7981,7 +7995,7 @@ sub_b097c:
     mov dl, byte ptr [eax]                       ; 0b098e 8a10
     mov ax, word ptr [eax + 9]                   ; 0b0990 668b4009
     and eax, 0xffff                              ; 0b0994 25ffff0000
-    call sub_aa200                               ; 0b0999 e86298ffff
+    call outp                                    ; 0b0999 e86298ffff
     lea esp, [ebp - 4]                           ; 0b099e 8d65fc
     pop edx                                      ; 0b09a1 5a
     pop ebp                                      ; 0b09a2 5d
@@ -7989,10 +8003,10 @@ sub_b097c:
 
 
 ; ====================================================================================================
-; sub_b09a4  [0xb09a4, 109 bytes, 43 instructions]  <unreferenced>
+; gus_dma_count  [0xb09a4, 109 bytes, 43 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b09a4:
+gus_dma_count:
     push ebp                                     ; 0b09a4 55
     mov ebp, esp                                 ; 0b09a5 89e5
     push ebx                                     ; 0b09a7 53
@@ -8008,14 +8022,14 @@ sub_b09a4:
     xor eax, eax                                 ; 0b09bb 31c0
     mov ax, word ptr [ebx + 0xd]                 ; 0b09bd 668b430d
     xor edx, edx                                 ; 0b09c1 31d2
-    call sub_aa200                               ; 0b09c3 e83898ffff
+    call outp                                    ; 0b09c3 e83898ffff
     xor eax, eax                                 ; 0b09c8 31c0
     mov ax, word ptr [ebx + 7]                   ; 0b09ca 668b4307
-    call sub_b128c                               ; 0b09ce e8b9080000
+    call inp                                     ; 0b09ce e8b9080000
     mov edx, eax                                 ; 0b09d3 89c2
     xor eax, eax                                 ; 0b09d5 31c0
     mov ax, word ptr [ebx + 7]                   ; 0b09d7 668b4307
-    call sub_b128c                               ; 0b09db e8ac080000
+    call inp                                     ; 0b09db e8ac080000
     mov ecx, eax                                 ; 0b09e0 89c1
     popf                                         ; 0b09e2 669d
     mov al, cl                                   ; 0b09e4 88c8
@@ -8041,10 +8055,10 @@ loc_b0a09:
     db 0x8d, 0x40, 0x00 ; 0b0a11 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_b0a14  [0xb0a14, 44 bytes, 20 instructions]
-; called by: sub_aa210, sub_aa300
+; gus_file_read  [0xb0a14, 44 bytes, 20 instructions]
+; called by: gus_patch_check_header, gus_load_patch
 ; ====================================================================================================
-sub_b0a14:
+gus_file_read:
     push ebp                                     ; 0b0a14 55
     mov ebp, esp                                 ; 0b0a15 89e5
     push ecx                                     ; 0b0a17 51
@@ -8068,10 +8082,10 @@ sub_b0a14:
 
 
 ; ====================================================================================================
-; sub_b0a40  [0xb0a40, 28 bytes, 10 instructions]
-; called by: sub_aa210, sub_aa300
+; gus_file_close  [0xb0a40, 28 bytes, 10 instructions]
+; called by: gus_patch_check_header, gus_load_patch
 ; ====================================================================================================
-sub_b0a40:
+gus_file_close:
     push ebp                                     ; 0b0a40 55
     mov ebp, esp                                 ; 0b0a41 89e5
     call close                                   ; 0b0a43 e80a02feff
@@ -8086,10 +8100,10 @@ loc_b0a58:
 
 
 ; ====================================================================================================
-; sub_b0a5c  [0xb0a5c, 27 bytes, 13 instructions]
-; called by: sub_aa300
+; gus_file_seek  [0xb0a5c, 27 bytes, 13 instructions]
+; called by: gus_load_patch
 ; ====================================================================================================
-sub_b0a5c:
+gus_file_seek:
     push ebp                                     ; 0b0a5c 55
     mov ebp, esp                                 ; 0b0a5d 89e5
     call lseek                                   ; 0b0a5f e84402feff
@@ -8109,10 +8123,10 @@ loc_b0a71:
     db 0x90 ; 0b0a77 |.| (padding)
 
 ; ====================================================================================================
-; sub_b0a78  [0xb0a78, 44 bytes, 20 instructions]
-; called by: sub_aa210, sub_aa300
+; gus_file_open  [0xb0a78, 44 bytes, 20 instructions]
+; called by: gus_patch_check_header, gus_load_patch
 ; ====================================================================================================
-sub_b0a78:
+gus_file_open:
     push ebp                                     ; 0b0a78 55
     mov ebp, esp                                 ; 0b0a79 89e5
     push ebx                                     ; 0b0a7b 53
@@ -8139,36 +8153,36 @@ loc_b0a9d:
 
 
 ; ====================================================================================================
-; sub_b0aa4  [0xb0aa4, 12 bytes, 6 instructions]
-; called by: sub_b0abc, sub_b0b5c
+; gus_setvect  [0xb0aa4, 12 bytes, 6 instructions]
+; called by: gus_hook_irq, gus_unhook_irq
 ; ====================================================================================================
-sub_b0aa4:
+gus_setvect:
     push ebp                                     ; 0b0aa4 55
     mov ebp, esp                                 ; 0b0aa5 89e5
-    call sub_98ac8                               ; 0b0aa7 e81c80feff
+    call _dos_setvect                            ; 0b0aa7 e81c80feff
     mov esp, ebp                                 ; 0b0aac 89ec
     pop ebp                                      ; 0b0aae 5d
     ret                                          ; 0b0aaf c3
 
 
 ; ====================================================================================================
-; sub_b0ab0  [0xb0ab0, 12 bytes, 6 instructions]
-; called by: sub_b0abc
+; gus_getvect  [0xb0ab0, 12 bytes, 6 instructions]
+; called by: gus_hook_irq
 ; ====================================================================================================
-sub_b0ab0:
+gus_getvect:
     push ebp                                     ; 0b0ab0 55
     mov ebp, esp                                 ; 0b0ab1 89e5
-    call sub_98af3                               ; 0b0ab3 e83b80feff
+    call _dos_getvect                            ; 0b0ab3 e83b80feff
     mov esp, ebp                                 ; 0b0ab8 89ec
     pop ebp                                      ; 0b0aba 5d
     ret                                          ; 0b0abb c3
 
 
 ; ====================================================================================================
-; sub_b0abc  [0xb0abc, 158 bytes, 51 instructions]
-; called by: sub_aa8e0
+; gus_hook_irq  [0xb0abc, 158 bytes, 51 instructions]
+; called by: gus_hook_irqs
 ; ====================================================================================================
-sub_b0abc:
+gus_hook_irq:
     push ebp                                     ; 0b0abc 55
     mov ebp, esp                                 ; 0b0abd 89e5
     push edx                                     ; 0b0abf 52
@@ -8184,13 +8198,13 @@ sub_b0abc:
     cli                                          ; 0b0ad3 fa
     mov bx, word ptr [ecx*8 + unk_d86da]         ; 0b0ad4 668b1ccdda860d00
     mov eax, ebx                                 ; 0b0adc 89d8
-    call sub_b0ab0                               ; 0b0ade e8cdffffff
+    call gus_getvect                             ; 0b0ade e8cdffffff
     mov word ptr [ecx*8 + unk_d86e0], dx         ; 0b0ae3 668914cde0860d00
     mov dword ptr [ecx*8 + unk_d86dc], eax       ; 0b0aeb 8904cddc860d00
     mov eax, ebx                                 ; 0b0af2 89d8
     mov ecx, edi                                 ; 0b0af4 89f9
     mov ebx, esi                                 ; 0b0af6 89f3
-    call sub_b0aa4                               ; 0b0af8 e8a7ffffff
+    call gus_setvect                             ; 0b0af8 e8a7ffffff
     mov cl, byte ptr [ebp - 0x10]                ; 0b0afd 8a4df0
     mov dl, 1                                    ; 0b0b00 b201
     and cl, 7                                    ; 0b0b02 80e107
@@ -8200,7 +8214,7 @@ sub_b0abc:
     cmp ebx, 7                                   ; 0b0b0c 83fb07
     jg loc_b0b2f                                 ; 0b0b0f 7f1e
     mov eax, 0x21                                ; 0b0b11 b821000000
-    call sub_b128c                               ; 0b0b16 e871070000
+    call inp                                     ; 0b0b16 e871070000
     and eax, 0xff                                ; 0b0b1b 25ff000000
     and edx, 0xff                                ; 0b0b20 81e2ff000000
     and edx, eax                                 ; 0b0b26 21c2
@@ -8209,13 +8223,13 @@ sub_b0abc:
 
 loc_b0b2f:
     mov eax, 0xa1                                ; 0b0b2f b8a1000000
-    call sub_b128c                               ; 0b0b34 e853070000
+    call inp                                     ; 0b0b34 e853070000
     and eax, 0xff                                ; 0b0b39 25ff000000
     and edx, 0xff                                ; 0b0b3e 81e2ff000000
     and edx, eax                                 ; 0b0b44 21c2
     mov eax, 0xa1                                ; 0b0b46 b8a1000000
 loc_b0b4b:
-    call sub_aa200                               ; 0b0b4b e8b096ffff
+    call outp                                    ; 0b0b4b e8b096ffff
     popf                                         ; 0b0b50 669d
     lea esp, [ebp - 0xc]                         ; 0b0b52 8d65f4
     pop edi                                      ; 0b0b55 5f
@@ -8227,10 +8241,10 @@ loc_b0b4b:
     db 0x8b, 0xc0 ; 0b0b5a |..| (padding)
 
 ; ====================================================================================================
-; sub_b0b5c  [0xb0b5c, 133 bytes, 42 instructions]
-; called by: sub_aa8c0
+; gus_unhook_irq  [0xb0b5c, 133 bytes, 42 instructions]
+; called by: gus_unhook_irqs
 ; ====================================================================================================
-sub_b0b5c:
+gus_unhook_irq:
     push ebp                                     ; 0b0b5c 55
     mov ebp, esp                                 ; 0b0b5d 89e5
     push ebx                                     ; 0b0b5f 53
@@ -8248,7 +8262,7 @@ sub_b0b5c:
     cmp ebx, 7                                   ; 0b0b75 83fb07
     jg loc_b0b98                                 ; 0b0b78 7f1e
     mov eax, 0x21                                ; 0b0b7a b821000000
-    call sub_b128c                               ; 0b0b7f e808070000
+    call inp                                     ; 0b0b7f e808070000
     and eax, 0xff                                ; 0b0b84 25ff000000
     and edx, 0xff                                ; 0b0b89 81e2ff000000
     or edx, eax                                  ; 0b0b8f 09c2
@@ -8257,19 +8271,19 @@ sub_b0b5c:
 
 loc_b0b98:
     mov eax, 0xa1                                ; 0b0b98 b8a1000000
-    call sub_b128c                               ; 0b0b9d e8ea060000
+    call inp                                     ; 0b0b9d e8ea060000
     and eax, 0xff                                ; 0b0ba2 25ff000000
     and edx, 0xff                                ; 0b0ba7 81e2ff000000
     or edx, eax                                  ; 0b0bad 09c2
     mov eax, 0xa1                                ; 0b0baf b8a1000000
 loc_b0bb4:
-    call sub_aa200                               ; 0b0bb4 e84796ffff
+    call outp                                    ; 0b0bb4 e84796ffff
 loc_b0bb9:
     xor eax, eax                                 ; 0b0bb9 31c0
     mov cx, word ptr [ebx*8 + unk_d86e0]         ; 0b0bbb 668b0cdde0860d00
     mov ax, word ptr [ebx*8 + unk_d86da]         ; 0b0bc3 668b04ddda860d00
     mov ebx, dword ptr [ebx*8 + unk_d86dc]       ; 0b0bcb 8b1cdddc860d00
-    call sub_b0aa4                               ; 0b0bd2 e8cdfeffff
+    call gus_setvect                             ; 0b0bd2 e8cdfeffff
     popf                                         ; 0b0bd7 669d
     lea esp, [ebp - 0xc]                         ; 0b0bd9 8d65f4
     pop edx                                      ; 0b0bdc 5a
@@ -8281,10 +8295,10 @@ loc_b0bb9:
     db 0x8d, 0x40, 0x00 ; 0b0be1 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_b0be4  [0xb0be4, 43 bytes, 15 instructions]
-; called by: sub_b12a0, sub_b131c
+; pic_eoi  [0xb0be4, 43 bytes, 15 instructions]
+; called by: gus_gf1_irq_handler, gus_midi_irq_handler
 ; ====================================================================================================
-sub_b0be4:
+pic_eoi:
     push ebp                                     ; 0b0be4 55
     mov ebp, esp                                 ; 0b0be5 89e5
     push edx                                     ; 0b0be7 52
@@ -8292,11 +8306,11 @@ sub_b0be4:
     jbe loc_b0bfd                                ; 0b0bec 760f
     mov eax, 0xa0                                ; 0b0bee b8a0000000
     mov edx, 0x20                                ; 0b0bf3 ba20000000
-    call sub_aa200                               ; 0b0bf8 e80396ffff
+    call outp                                    ; 0b0bf8 e80396ffff
 loc_b0bfd:
     mov eax, 0x20                                ; 0b0bfd b820000000
     mov edx, eax                                 ; 0b0c02 89c2
-    call sub_aa200                               ; 0b0c04 e8f795ffff
+    call outp                                    ; 0b0c04 e8f795ffff
     lea esp, [ebp - 4]                           ; 0b0c09 8d65fc
     pop edx                                      ; 0b0c0c 5a
     pop ebp                                      ; 0b0c0d 5d
@@ -8305,10 +8319,10 @@ loc_b0bfd:
     db 0x00 ; 0b0c0f |.| (padding)
 
 ; ====================================================================================================
-; sub_b0c10  [0xb0c10, 34 bytes, 15 instructions]
-; called by: sub_b0c5c
+; gus_dma_init_play  [0xb0c10, 34 bytes, 15 instructions]
+; called by: gus_dma_init
 ; ====================================================================================================
-sub_b0c10:
+gus_dma_init_play:
     push ebp                                     ; 0b0c10 55
     mov ebp, esp                                 ; 0b0c11 89e5
     push edx                                     ; 0b0c13 52
@@ -8320,7 +8334,7 @@ sub_b0c10:
 
 loc_b0c23:
     xor eax, eax                                 ; 0b0c23 31c0
-    call sub_b07d0                               ; 0b0c25 e8a6fbffff
+    call gus_dma_setup_channel                   ; 0b0c25 e8a6fbffff
     xor al, al                                   ; 0b0c2a 30c0
 loc_b0c2c:
     lea esp, [ebp - 4]                           ; 0b0c2c 8d65fc
@@ -8331,10 +8345,10 @@ loc_b0c2c:
     db 0x8b, 0xc0 ; 0b0c32 |..| (padding)
 
 ; ====================================================================================================
-; sub_b0c34  [0xb0c34, 37 bytes, 15 instructions]
-; called by: sub_b0c5c
+; gus_dma_init_record  [0xb0c34, 37 bytes, 15 instructions]
+; called by: gus_dma_init
 ; ====================================================================================================
-sub_b0c34:
+gus_dma_init_record:
     push ebp                                     ; 0b0c34 55
     mov ebp, esp                                 ; 0b0c35 89e5
     push edx                                     ; 0b0c37 52
@@ -8346,7 +8360,7 @@ sub_b0c34:
 
 loc_b0c47:
     mov eax, 1                                   ; 0b0c47 b801000000
-    call sub_b07d0                               ; 0b0c4c e87ffbffff
+    call gus_dma_setup_channel                   ; 0b0c4c e87ffbffff
     xor al, al                                   ; 0b0c51 30c0
 loc_b0c53:
     lea esp, [ebp - 4]                           ; 0b0c53 8d65fc
@@ -8357,16 +8371,16 @@ loc_b0c53:
     db 0x8d, 0x40, 0x00 ; 0b0c59 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_b0c5c  [0xb0c5c, 92 bytes, 33 instructions]
+; gus_dma_init  [0xb0c5c, 92 bytes, 33 instructions]
 ; address taken (function pointer)
 ; ====================================================================================================
-sub_b0c5c:
+gus_dma_init:
     push ebp                                     ; 0b0c5c 55
     mov ebp, esp                                 ; 0b0c5d 89e5
     mov byte ptr [byte_d8ae4], 1                 ; 0b0c5f c605e48a0d0001
     xor eax, eax                                 ; 0b0c66 31c0
     mov al, byte ptr [byte_f79a4]                ; 0b0c68 a0a4790f00
-    call sub_b0c10                               ; 0b0c6d e89effffff
+    call gus_dma_init_play                       ; 0b0c6d e89effffff
     test al, al                                  ; 0b0c72 84c0
     je loc_b0c7f                                 ; 0b0c74 7409
     and eax, 0xff                                ; 0b0c76 25ff000000
@@ -8377,7 +8391,7 @@ sub_b0c5c:
 loc_b0c7f:
     xor eax, eax                                 ; 0b0c7f 31c0
     mov al, byte ptr [byte_f79a6]                ; 0b0c81 a0a6790f00
-    call sub_b0c34                               ; 0b0c86 e8a9ffffff
+    call gus_dma_init_record                     ; 0b0c86 e8a9ffffff
     test al, al                                  ; 0b0c8b 84c0
     je loc_b0c98                                 ; 0b0c8d 7409
     and eax, 0xff                                ; 0b0c8f 25ff000000
@@ -8386,8 +8400,8 @@ loc_b0c7f:
     ret                                          ; 0b0c97 c3
 
 loc_b0c98:
-    mov eax, sub_b0e7c                           ; 0b0c98 b87c0e0b00
-    call sub_b14ac                               ; 0b0c9d e80a080000
+    mov eax, gus_dma_next_block                  ; 0b0c98 b87c0e0b00
+    call gus_set_dma_callback                    ; 0b0c9d e80a080000
     test eax, eax                                ; 0b0ca2 85c0
     je loc_b0caf                                 ; 0b0ca4 7409
     mov eax, 8                                   ; 0b0ca6 b808000000
@@ -8403,10 +8417,10 @@ loc_b0caf:
 
 
 ; ====================================================================================================
-; sub_b0cb8  [0xb0cb8, 179 bytes, 52 instructions]
-; called by: sub_b0d6c
+; gus_dma_start  [0xb0cb8, 179 bytes, 52 instructions]
+; called by: gus_download
 ; ====================================================================================================
-sub_b0cb8:
+gus_dma_start:
     push ebp                                     ; 0b0cb8 55
     mov ebp, esp                                 ; 0b0cb9 89e5
     push esi                                     ; 0b0cbb 56
@@ -8431,7 +8445,7 @@ sub_b0cb8:
     cmp byte ptr [byte_f79a4], 4                 ; 0b0d00 803da4790f0004
     jb loc_b0d14                                 ; 0b0d07 720b
     mov eax, ebx                                 ; 0b0d09 89d8
-    call sub_b2720                               ; 0b0d0b e8101a0000
+    call gus_addr_16bit                          ; 0b0d0b e8101a0000
     mov cl, dl                                   ; 0b0d10 88d1
     mov ebx, eax                                 ; 0b0d12 89c3
 loc_b0d14:
@@ -8439,26 +8453,26 @@ loc_b0d14:
     mov edx, 0x42                                ; 0b0d16 ba42000000
     mov ax, word ptr [word_d8772]                ; 0b0d1b 66a172870d00
     shr ebx, 4                                   ; 0b0d21 c1eb04
-    call sub_aa200                               ; 0b0d24 e8d794ffff
+    call outp                                    ; 0b0d24 e8d794ffff
     xor eax, eax                                 ; 0b0d29 31c0
     xor edx, edx                                 ; 0b0d2b 31d2
     mov ax, word ptr [word_d8774]                ; 0b0d2d 66a174870d00
     mov dx, bx                                   ; 0b0d33 6689da
-    call sub_b19c7                               ; 0b0d36 e88c0c0000
+    call outpw                                   ; 0b0d36 e88c0c0000
     jmp loc_b0d4f                                ; 0b0d3b eb12
 
 loc_b0d3d:
     cmp byte ptr [byte_f79a6], 4                 ; 0b0d3d 803da6790f0004
     jb loc_b0d4f                                 ; 0b0d44 7209
     mov eax, ebx                                 ; 0b0d46 89d8
-    call sub_b2720                               ; 0b0d48 e8d3190000
+    call gus_addr_16bit                          ; 0b0d48 e8d3190000
     mov cl, dl                                   ; 0b0d4d 88d1
 loc_b0d4f:
     or cl, 0x21                                  ; 0b0d4f 80c921
     mov byte ptr [byte_f79c8], cl                ; 0b0d52 880dc8790f00
     xor eax, eax                                 ; 0b0d58 31c0
     mov ax, word ptr [ebp + 8]                   ; 0b0d5a 668b4508
-    call sub_b0e7c                               ; 0b0d5e e819010000
+    call gus_dma_next_block                      ; 0b0d5e e819010000
     lea esp, [ebp - 4]                           ; 0b0d63 8d65fc
     pop esi                                      ; 0b0d66 5e
     pop ebp                                      ; 0b0d67 5d
@@ -8467,10 +8481,11 @@ loc_b0d4f:
     db 0x90 ; 0b0d6b |.| (padding)
 
 ; ====================================================================================================
-; sub_b0d6c  [0xb0d6c, 271 bytes, 91 instructions]
-; called by: sub_aa300, sub_adee9
+; gus_download  [0xb0d6c, 271 bytes, 91 instructions]
+; DMA transfer to the card's DRAM
+; called by: gus_load_patch, gus_stream_fill
 ; ====================================================================================================
-sub_b0d6c:
+gus_download:
     push ebp                                     ; 0b0d6c 55
     mov ebp, esp                                 ; 0b0d6d 89e5
     push esi                                     ; 0b0d6f 56
@@ -8482,10 +8497,10 @@ sub_b0d6c:
     mov byte ptr [ebp - 0xc], cl                 ; 0b0d7c 884df4
     pushf                                        ; 0b0d7f 669c
     cli                                          ; 0b0d81 fa
-    call sub_b122f                               ; 0b0d82 e8a8040000
+    call gus_irq_lock                            ; 0b0d82 e8a8040000
     cmp dword ptr [dword_d8784], 0               ; 0b0d87 833d84870d0000
     je loc_b0da1                                 ; 0b0d8e 7411
-    call sub_b1256                               ; 0b0d90 e8c1040000
+    call gus_irq_unlock                          ; 0b0d90 e8c1040000
     popf                                         ; 0b0d95 669d
     mov eax, 7                                   ; 0b0d97 b807000000
     jmp loc_b0e72                                ; 0b0d9c e9d1000000
@@ -8514,7 +8529,7 @@ loc_b0dda:
     xor ecx, ecx                                 ; 0b0de3 31c9
     mov ebx, esi                                 ; 0b0de5 89f3
     mov cl, byte ptr [ebp - 0xc]                 ; 0b0de7 8a4df4
-    call sub_b1f9c                               ; 0b0dea e8ad110000
+    call gus_poke_block                          ; 0b0dea e8ad110000
 loc_b0def:
     mov dx, word ptr [word_f799e]                ; 0b0def 668b159e790f00
     or dl, 4                                     ; 0b0df6 80ca04
@@ -8543,7 +8558,7 @@ loc_b0e22:
     mov edx, dword ptr [ebp - 0x10]              ; 0b0e2f 8b55f0
     mov ebx, dword ptr [ebp - 0x18]              ; 0b0e32 8b5de8
     mov eax, edi                                 ; 0b0e35 89f8
-    call sub_b1f9c                               ; 0b0e37 e860110000
+    call gus_poke_block                          ; 0b0e37 e860110000
     mov ecx, dword ptr [ebp - 0x18]              ; 0b0e3c 8b4de8
     mov edx, dword ptr [ebp - 0x14]              ; 0b0e3f 8b55ec
     sub esi, ecx                                 ; 0b0e42 29ce
@@ -8562,9 +8577,9 @@ loc_b0e50:
     push eax                                     ; 0b0e5d 50
     mov cl, byte ptr [ebp - 0xc]                 ; 0b0e5e 8a4df4
     mov eax, dword ptr [ebp - 0x14]              ; 0b0e61 8b45ec
-    call sub_b0cb8                               ; 0b0e64 e84ffeffff
+    call gus_dma_start                           ; 0b0e64 e84ffeffff
 loc_b0e69:
-    call sub_b1256                               ; 0b0e69 e8e8030000
+    call gus_irq_unlock                          ; 0b0e69 e8e8030000
     popf                                         ; 0b0e6e 669d
     xor eax, eax                                 ; 0b0e70 31c0
 loc_b0e72:
@@ -8577,10 +8592,11 @@ loc_b0e72:
     db 0x90 ; 0b0e7b |.| (padding)
 
 ; ====================================================================================================
-; sub_b0e7c  [0xb0e7c, 300 bytes, 88 instructions]
-; called by: sub_b0c5c, sub_b0cb8
+; gus_dma_next_block  [0xb0e7c, 300 bytes, 88 instructions]
+; terminal count: starts the next block
+; called by: gus_dma_init, gus_dma_start
 ; ====================================================================================================
-sub_b0e7c:
+gus_dma_next_block:
     push ebp                                     ; 0b0e7c 55
     mov ebp, esp                                 ; 0b0e7d 89e5
     push ebx                                     ; 0b0e7f 53
@@ -8641,7 +8657,7 @@ loc_b0f10:
     mov bx, ax                                   ; 0b0f12 6689c3
     mov edx, dword ptr [dword_f79c0]             ; 0b0f15 8b15c0790f00
     xor eax, eax                                 ; 0b0f1b 31c0
-    call sub_b085c                               ; 0b0f1d e83af9ffff
+    call gus_dma_program                         ; 0b0f1d e83af9ffff
     xor eax, eax                                 ; 0b0f22 31c0
     mov edx, 0x41                                ; 0b0f24 ba41000000
     jmp loc_b0f59                                ; 0b0f29 eb2e
@@ -8655,18 +8671,18 @@ loc_b0f2b:
     mov edx, dword ptr [dword_f79c0]             ; 0b0f3d 8b15c0790f00
     mov eax, 1                                   ; 0b0f43 b801000000
     mov ebx, 0x44                                ; 0b0f48 bb44000000
-    call sub_b085c                               ; 0b0f4d e80af9ffff
+    call gus_dma_program                         ; 0b0f4d e80af9ffff
     xor eax, eax                                 ; 0b0f52 31c0
     mov edx, 0x49                                ; 0b0f54 ba49000000
 loc_b0f59:
     mov ax, word ptr [word_d8772]                ; 0b0f59 66a172870d00
-    call sub_aa200                               ; 0b0f5f e89c92ffff
+    call outp                                    ; 0b0f5f e89c92ffff
     xor edx, edx                                 ; 0b0f64 31d2
     mov dl, byte ptr [byte_f79c8]                ; 0b0f66 8a15c8790f00
     xor eax, eax                                 ; 0b0f6c 31c0
     mov ax, word ptr [word_d8776]                ; 0b0f6e 66a176870d00
-    call sub_aa200                               ; 0b0f74 e88792ffff
-    call sub_b13a1                               ; 0b0f79 e823040000
+    call outp                                    ; 0b0f74 e88792ffff
+    call gus_delay                               ; 0b0f79 e823040000
     popf                                         ; 0b0f7e 669d
     sub dword ptr [dword_f79bc], esi             ; 0b0f80 2935bc790f00
     add word ptr [word_f79b8], si                ; 0b0f86 660135b8790f00
@@ -8684,10 +8700,10 @@ loc_b0f9f:
 
 
 ; ====================================================================================================
-; sub_b0fa8  [0xb0fa8, 123 bytes, 44 instructions]
-; called by: sub_aa300
+; gus_dma_wait  [0xb0fa8, 123 bytes, 44 instructions]
+; called by: gus_load_patch
 ; ====================================================================================================
-sub_b0fa8:
+gus_dma_wait:
     push ebp                                     ; 0b0fa8 55
     mov ebp, esp                                 ; 0b0fa9 89e5
     push ebx                                     ; 0b0fab 53
@@ -8704,14 +8720,14 @@ loc_b0fb6:
     xor eax, eax                                 ; 0b0fc2 31c0
     cli                                          ; 0b0fc4 fa
     mov ax, word ptr [word_d8762]                ; 0b0fc5 66a162870d00
-    call sub_b128c                               ; 0b0fcb e8bc020000
+    call inp                                     ; 0b0fcb e8bc020000
     test al, 0x80                                ; 0b0fd0 a880
     jne loc_b0fe0                                ; 0b0fd2 750c
     mov bx, word ptr [word_f799e]                ; 0b0fd4 668b1d9e790f00
     test bl, 4                                   ; 0b0fdb f6c304
     je loc_b0fe6                                 ; 0b0fde 7406
 loc_b0fe0:
-    call sub_b16bc                               ; 0b0fe0 e8d7060000
+    call gus_gf1_irq_service                     ; 0b0fe0 e8d7060000
     cli                                          ; 0b0fe5 fa
 loc_b0fe6:
     mov cx, word ptr [word_f799e]                ; 0b0fe6 668b0d9e790f00
@@ -8721,7 +8737,7 @@ loc_b0fe6:
     jmp loc_b0fe0                                ; 0b0ffa ebe4
 
 loc_b0ffc:
-    call sub_b13a1                               ; 0b0ffc e8a0030000
+    call gus_delay                               ; 0b0ffc e8a0030000
     jmp loc_b0fb6                                ; 0b1001 ebb3
 
 loc_b1003:
@@ -8746,10 +8762,10 @@ loc_b101b:
     db 0x90 ; 0b1023 |.| (padding)
 
 ; ====================================================================================================
-; sub_b1024  [0xb1024, 22 bytes, 8 instructions]  <unreferenced>
+; gus_dma_idle  [0xb1024, 22 bytes, 8 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b1024:
+gus_dma_idle:
     push ebp                                     ; 0b1024 55
     mov ebp, esp                                 ; 0b1025 89e5
     cmp dword ptr [dword_d8784], 0               ; 0b1027 833d84870d0000
@@ -8762,10 +8778,10 @@ sub_b1024:
     db 0x8b, 0xc0 ; 0b103a |..| (padding)
 
 ; ====================================================================================================
-; sub_b103c  [0xb103c, 136 bytes, 39 instructions]  <unreferenced>
+; gus_dma_abort  [0xb103c, 136 bytes, 39 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b103c:
+gus_dma_abort:
     push ebp                                     ; 0b103c 55
     mov ebp, esp                                 ; 0b103d 89e5
     push ebx                                     ; 0b103f 53
@@ -8777,28 +8793,28 @@ sub_b103c:
     xor ebx, ebx                                 ; 0b104d 31db
     mov dword ptr [dword_d8784], ebx             ; 0b104f 891d84870d00
     xor eax, eax                                 ; 0b1055 31c0
-    call sub_b097c                               ; 0b1057 e820f9ffff
+    call gus_dma_mask                            ; 0b1057 e820f9ffff
     mov eax, 1                                   ; 0b105c b801000000
-    call sub_b097c                               ; 0b1061 e816f9ffff
+    call gus_dma_mask                            ; 0b1061 e816f9ffff
     and byte ptr [byte_f79c8], 0xde              ; 0b1066 8025c8790f00de
     xor eax, eax                                 ; 0b106d 31c0
     mov edx, 0x41                                ; 0b106f ba41000000
     mov ax, word ptr [word_d8772]                ; 0b1074 66a172870d00
-    call sub_aa200                               ; 0b107a e88191ffff
+    call outp                                    ; 0b107a e88191ffff
     xor edx, edx                                 ; 0b107f 31d2
     mov dl, byte ptr [byte_f79c8]                ; 0b1081 8a15c8790f00
     xor eax, eax                                 ; 0b1087 31c0
     mov ax, word ptr [word_d8776]                ; 0b1089 66a176870d00
-    call sub_aa200                               ; 0b108f e86c91ffff
+    call outp                                    ; 0b108f e86c91ffff
     xor eax, eax                                 ; 0b1094 31c0
     mov edx, 0x49                                ; 0b1096 ba49000000
     mov ax, word ptr [word_d8772]                ; 0b109b 66a172870d00
-    call sub_aa200                               ; 0b10a1 e85a91ffff
+    call outp                                    ; 0b10a1 e85a91ffff
     xor edx, edx                                 ; 0b10a6 31d2
     mov dl, byte ptr [byte_f79c8]                ; 0b10a8 8a15c8790f00
     xor eax, eax                                 ; 0b10ae 31c0
     mov ax, word ptr [word_d8776]                ; 0b10b0 66a176870d00
-    call sub_aa200                               ; 0b10b6 e84591ffff
+    call outp                                    ; 0b10b6 e84591ffff
 loc_b10bb:
     popf                                         ; 0b10bb 669d
     lea esp, [ebp - 8]                           ; 0b10bd 8d65f8
@@ -8810,10 +8826,11 @@ loc_b10bb:
     times 12 db 0 ; 0b10c4 (padding)
 
 ; ====================================================================================================
-; sub_b10d0  [0xb10d0, 331 bytes, 118 instructions]
-; called by: sub_aa300
+; gus_wave_addresses  [0xb10d0, 331 bytes, 118 instructions]
+; start / loop / end addresses of a wave (16 bit translated)
+; called by: gus_load_patch
 ; ====================================================================================================
-sub_b10d0:
+gus_wave_addresses:
     push ebp                                     ; 0b10d0 55
     mov ebp, esp                                 ; 0b10d1 89e5
     push ebx                                     ; 0b10d3 53
@@ -8822,13 +8839,13 @@ sub_b10d0:
     mov ebx, eax                                 ; 0b10d6 89c3
     pushf                                        ; 0b10d8 669c
     cli                                          ; 0b10da fa
-    call sub_b122f                               ; 0b10db e84f010000
+    call gus_irq_lock                            ; 0b10db e84f010000
     mov ah, byte ptr [ebx + 0x48]                ; 0b10e0 8a6348
     mov ecx, dword ptr [ebx + 0x14]              ; 0b10e3 8b4b14
     test ah, 1                                   ; 0b10e6 f6c401
     je loc_b10f6                                 ; 0b10e9 740b
     mov eax, ecx                                 ; 0b10eb 89c8
-    call sub_b2720                               ; 0b10ed e82e160000
+    call gus_addr_16bit                          ; 0b10ed e82e160000
     mov edx, eax                                 ; 0b10f2 89c2
     jmp loc_b10f8                                ; 0b10f4 eb02
 
@@ -8849,7 +8866,7 @@ loc_b10f8:
     test dl, 1                                   ; 0b1119 f6c201
     je loc_b1129                                 ; 0b111c 740b
     mov eax, ecx                                 ; 0b111e 89c8
-    call sub_b2720                               ; 0b1120 e8fb150000
+    call gus_addr_16bit                          ; 0b1120 e8fb150000
     mov edx, eax                                 ; 0b1125 89c2
     jmp loc_b112b                                ; 0b1127 eb02
 
@@ -8877,7 +8894,7 @@ loc_b112b:
     add eax, ecx                                 ; 0b1162 01c8
     test dh, 1                                   ; 0b1164 f6c601
     je loc_b116e                                 ; 0b1167 7405
-    call sub_b2720                               ; 0b1169 e8b2150000
+    call gus_addr_16bit                          ; 0b1169 e8b2150000
 loc_b116e:
     mov edx, eax                                 ; 0b116e 89c2
     mov eax, edx                                 ; 0b1170 89d0
@@ -8903,7 +8920,7 @@ loc_b116e:
     mov edx, dword ptr [ebx + 0x30]              ; 0b11a9 8b5330
     sub edx, 2                                   ; 0b11ac 83ea02
     add eax, edx                                 ; 0b11af 01d0
-    call sub_b2720                               ; 0b11b1 e86a150000
+    call gus_addr_16bit                          ; 0b11b1 e86a150000
     mov edx, eax                                 ; 0b11b6 89c2
     jmp loc_b11c0                                ; 0b11b8 eb06
 
@@ -8933,7 +8950,7 @@ loc_b11c0:
     xor edx, edx                                 ; 0b1202 31d2
     div ecx                                      ; 0b1204 f7f1
     mov word ptr [ebx + 0x2e], ax                ; 0b1206 6689432e
-    call sub_b1256                               ; 0b120a e847000000
+    call gus_irq_unlock                          ; 0b120a e847000000
     popf                                         ; 0b120f 669d
     xor eax, eax                                 ; 0b1211 31c0
     lea esp, [ebp - 0xc]                         ; 0b1213 8d65f4
@@ -8946,34 +8963,34 @@ loc_b11c0:
     db 0x00 ; 0b121b |.| (padding)
 
 ; ====================================================================================================
-; sub_b121c  [0xb121c, 19 bytes, 3 instructions]
-; called by: sub_aa910
+; gus_irq_lock_reset  [0xb121c, 19 bytes, 3 instructions]
+; called by: gus_init_hardware
 ; ====================================================================================================
-sub_b121c:
+gus_irq_lock_reset:
     mov word ptr [word_d8788], 0                 ; 0b121c 66c70588870d0000..
     mov word ptr [word_f79a2], 0                 ; 0b1225 66c705a2790f0000..
     ret                                          ; 0b122e c3
 
 
 ; ====================================================================================================
-; sub_b122f  [0xb122f, 8 bytes, 2 instructions]
-; called by: sub_aa758, sub_aa9c0, sub_ab244, sub_ab658, sub_ab6d0, sub_ab79c, sub_ab80c, sub_abd60, sub_abe18, sub_abf5c, sub_ac050, sub_ac0cc (+24 more)
+; gus_irq_lock  [0xb122f, 8 bytes, 2 instructions]
+; called by: gus_patch_download_wave, gus_reset_voices, gus_midi_voices_init, gus_midi_set_voices, gus_midi_voice_off, gus_midi_open_voices, gus_midi_set_controller, gus_midi_frequency, gus_voice_stop_hw, gus_voice_release, gus_midi_channel_stop, gus_midi_note_on (+24 more)
 ; ====================================================================================================
-sub_b122f:
+gus_irq_lock:
     inc word ptr [word_f79a2]                    ; 0b122f 66ff05a2790f00
     ret                                          ; 0b1236 c3
 
 
 ; ====================================================================================================
-; sub_b1237  [0xb1237, 30 bytes, 10 instructions]  <unreferenced>
+; gus_irq_try_lock  [0xb1237, 30 bytes, 10 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b1237:
+gus_irq_try_lock:
     pushf                                        ; 0b1237 669c
     cli                                          ; 0b1239 fa
     cmp word ptr [word_f79a2], 0                 ; 0b123a 66833da2790f0000
     jne loc_b1250                                ; 0b1242 750c
-    call sub_b122f                               ; 0b1244 e8e6ffffff
+    call gus_irq_lock                            ; 0b1244 e8e6ffffff
     mov eax, 1                                   ; 0b1249 b801000000
     jmp loc_b1252                                ; 0b124e eb02
 
@@ -8986,10 +9003,11 @@ loc_b1252:
     db 0xc3 ; 0b1255 |.| (unexplored)
 
 ; ====================================================================================================
-; sub_b1256  [0xb1256, 54 bytes, 20 instructions]
-; called by: sub_aa758, sub_aa9c0, sub_ab244, sub_ab658, sub_ab6d0, sub_ab79c, sub_ab80c, sub_abd60, sub_abe18, sub_abf5c, sub_ac050, sub_ac0cc (+23 more)
+; gus_irq_unlock  [0xb1256, 54 bytes, 20 instructions]
+; runs the interrupt work that arrived while locked
+; called by: gus_patch_download_wave, gus_reset_voices, gus_midi_voices_init, gus_midi_set_voices, gus_midi_voice_off, gus_midi_open_voices, gus_midi_set_controller, gus_midi_frequency, gus_voice_stop_hw, gus_voice_release, gus_midi_channel_stop, gus_midi_note_on (+23 more)
 ; ====================================================================================================
-sub_b1256:
+gus_irq_unlock:
     pushf                                        ; 0b1256 669c
     cli                                          ; 0b1258 fa
     dec word ptr [word_f79a2]                    ; 0b1259 66ff0da2790f00
@@ -9007,7 +9025,7 @@ loc_b126e:
     nop                                          ; 0b1279 90
     nop                                          ; 0b127a 90
     and byte ptr [word_f799e], 0xfd              ; 0b127b 80259e790f00fd
-    call sub_b16bc                               ; 0b1282 e835040000
+    call gus_gf1_irq_service                     ; 0b1282 e835040000
     jmp loc_b126e                                ; 0b1287 ebe5
 
 loc_b1289:
@@ -9016,10 +9034,10 @@ loc_b1289:
 
 
 ; ====================================================================================================
-; sub_b128c  [0xb128c, 8 bytes, 6 instructions]
-; called by: sub_aa7e0, sub_aa9c0, sub_abf5c, sub_af2e0, sub_b09a4, sub_b0abc, sub_b0b5c, sub_b0fa8, sub_b15f8, sub_b1680, sub_b16bc, sub_b1ea0
+; inp  [0xb128c, 8 bytes, 6 instructions]
+; called by: gus_stop_dma_timers, gus_reset_voices, gus_voice_release, gus_probe_port, gus_dma_count, gus_hook_irq, gus_unhook_irq, gus_dma_wait, gus_midi_irq_service, gus_midi_irq_poll, gus_gf1_irq_service, gus_peek
 ; ====================================================================================================
-sub_b128c:
+inp:
     push edx                                     ; 0b128c 52
     mov edx, eax                                 ; 0b128d 89c2
     sub eax, eax                                 ; 0b128f 29c0
@@ -9030,10 +9048,10 @@ sub_b128c:
     times 12 db 0 ; 0b1294 (padding)
 
 ; ====================================================================================================
-; sub_b12a0  [0xb12a0, 121 bytes, 34 instructions]
-; called by: sub_aa8e0
+; gus_gf1_irq_handler  [0xb12a0, 121 bytes, 34 instructions]
+; called by: gus_hook_irqs
 ; ====================================================================================================
-sub_b12a0:
+gus_gf1_irq_handler:
     pushal                                       ; 0b12a0 60
     push ds                                      ; 0b12a1 1e
     push es                                      ; 0b12a2 06
@@ -9041,11 +9059,11 @@ sub_b12a0:
     push gs                                      ; 0b12a5 0fa8
     mov ebp, esp                                 ; 0b12a7 89e5
     cld                                          ; 0b12a9 fc
-    call sub_902a0                               ; 0b12aa e8f1effdff
+    call empty_func_902a0                        ; 0b12aa e8f1effdff
     xor ah, ah                                   ; 0b12af 30e4
     mov al, byte ptr [byte_f79a8]                ; 0b12b1 a0a8790f00
     and eax, 0xffff                              ; 0b12b6 25ffff0000
-    call sub_b0be4                               ; 0b12bb e824f9ffff
+    call pic_eoi                                 ; 0b12bb e824f9ffff
     cmp word ptr [word_f79a2], 0                 ; 0b12c0 66833da2790f0000
     je loc_b12dd                                 ; 0b12c8 7413
     mov bx, word ptr [word_f799e]                ; 0b12ca 668b1d9e790f00
@@ -9060,7 +9078,7 @@ loc_b12dd:
     pop es                                       ; 0b12eb 07
 loc_b12ec:
     and word ptr [word_f799e], 0xfffd            ; 0b12ec 6683259e790f00fd
-    call sub_b16bc                               ; 0b12f4 e8c3030000
+    call gus_gf1_irq_service                     ; 0b12f4 e8c3030000
     test word ptr [word_f799e], 2                ; 0b12f9 66f7059e790f0002..
     jne loc_b12ec                                ; 0b1302 75e8
     mov ax, word ptr [word_f79a2]                ; 0b1304 66a1a2790f00
@@ -9076,10 +9094,10 @@ loc_b1311:
     db 0x8d, 0x40, 0x00 ; 0b1319 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_b131c  [0xb131c, 126 bytes, 37 instructions]
-; called by: sub_aa8e0
+; gus_midi_irq_handler  [0xb131c, 126 bytes, 37 instructions]
+; called by: gus_hook_irqs
 ; ====================================================================================================
-sub_b131c:
+gus_midi_irq_handler:
     pushal                                       ; 0b131c 60
     push ds                                      ; 0b131d 1e
     push es                                      ; 0b131e 06
@@ -9087,11 +9105,11 @@ sub_b131c:
     push gs                                      ; 0b1321 0fa8
     mov ebp, esp                                 ; 0b1323 89e5
     cld                                          ; 0b1325 fc
-    call sub_902a0                               ; 0b1326 e875effdff
+    call empty_func_902a0                        ; 0b1326 e875effdff
     xor ah, ah                                   ; 0b132b 30e4
     mov al, byte ptr [byte_f79a7]                ; 0b132d a0a7790f00
     and eax, 0xffff                              ; 0b1332 25ffff0000
-    call sub_b0be4                               ; 0b1337 e8a8f8ffff
+    call pic_eoi                                 ; 0b1337 e8a8f8ffff
     cmp dword ptr [dword_d87a0], 0               ; 0b133c 833da0870d0000
     je loc_b1358                                 ; 0b1343 7413
     mov dx, word ptr [word_f799e]                ; 0b1345 668b159e790f00
@@ -9108,7 +9126,7 @@ loc_b1365:
     mov bx, word ptr [word_f799e]                ; 0b1365 668b1d9e790f00
     and bl, 0xf7                                 ; 0b136c 80e3f7
     mov word ptr [word_f799e], bx                ; 0b136f 66891d9e790f00
-    call sub_b15f8                               ; 0b1376 e87d020000
+    call gus_midi_irq_service                    ; 0b1376 e87d020000
     mov cx, word ptr [word_f799e]                ; 0b137b 668b0d9e790f00
     test cl, 8                                   ; 0b1382 f6c108
     jne loc_b1365                                ; 0b1385 75de
@@ -9125,10 +9143,11 @@ loc_b1392:
     times 7 db 0 ; 0b139a (padding)
 
 ; ====================================================================================================
-; sub_b13a1  [0xb13a1, 20 bytes, 9 instructions]
-; called by: sub_aa9c0, sub_aae40, sub_ab244, sub_abe18, sub_abf5c, sub_ac0cc, sub_ac6e8, sub_accc0, sub_acd58, sub_b0e7c, sub_b0fa8
+; gus_delay  [0xb13a1, 20 bytes, 9 instructions]
+; reads the DRAM port a few times
+; called by: gus_reset_voices, gus_reset, gus_midi_voices_init, gus_voice_stop_hw, gus_voice_release, gus_midi_note_on, gus_midi_voice_start, gus_wave_callback, gus_volume_callback, gus_dma_next_block, gus_dma_wait
 ; ====================================================================================================
-sub_b13a1:
+gus_delay:
     push ecx                                     ; 0b13a1 51
     push edx                                     ; 0b13a2 52
     mov ecx, 0xa                                 ; 0b13a3 b90a000000
@@ -9142,11 +9161,12 @@ loc_b13af:
 
 
 ; ====================================================================================================
-; sub_b13b5  [0xb13b5, 71 bytes, 34 instructions]
-; called by: sub_aa910
+; gus_set_base_port  [0xb13b5, 71 bytes, 34 instructions]
+; 0x210..0x260
+; called by: gus_init_hardware
 ; blocks: b13b5-b13f2 b13f6-b13fe
 ; ====================================================================================================
-sub_b13b5:
+gus_set_base_port:
     push ebx                                     ; 0b13b5 53
     push ecx                                     ; 0b13b6 51
     push esi                                     ; 0b13b7 56
@@ -9191,10 +9211,10 @@ loc_b13fb:
     db 0x00 ; 0b13ff |.| (padding)
 
 ; ====================================================================================================
-; sub_b1400  [0xb1400, 90 bytes, 21 instructions]
-; called by: sub_aa910
+; gus_clear_callbacks  [0xb1400, 90 bytes, 21 instructions]
+; called by: gus_init_hardware
 ; ====================================================================================================
-sub_b1400:
+gus_clear_callbacks:
     push ebp                                     ; 0b1400 55
     mov ebp, esp                                 ; 0b1401 89e5
     push edx                                     ; 0b1403 52
@@ -9220,10 +9240,10 @@ sub_b1400:
     db 0x8b, 0xc0 ; 0b145a |..| (padding)
 
 ; ====================================================================================================
-; sub_b145c  [0xb145c, 37 bytes, 19 instructions]
-; called by: sub_b14ac, sub_b14e4, sub_b151c
+; gus_set_callback_pair  [0xb145c, 37 bytes, 19 instructions]
+; called by: gus_set_dma_callback, gus_set_wave_callback, gus_set_volume_callback
 ; ====================================================================================================
-sub_b145c:
+gus_set_callback_pair:
     push ebp                                     ; 0b145c 55
     mov ebp, esp                                 ; 0b145d 89e5
     push ebx                                     ; 0b145f 53
@@ -9251,10 +9271,10 @@ loc_b147b:
     db 0x8d, 0x40, 0x00 ; 0b1481 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_b1484  [0xb1484, 37 bytes, 19 instructions]
-; called by: sub_b1554, sub_b1598, sub_b15b8, sub_b15d8
+; gus_set_callback  [0xb1484, 37 bytes, 19 instructions]
+; called by: gus_set_timer_callback, gus_set_midi_xmit_callback, gus_set_midi_recv_callback, gus_set_record_callback
 ; ====================================================================================================
-sub_b1484:
+gus_set_callback:
     push ebp                                     ; 0b1484 55
     mov ebp, esp                                 ; 0b1485 89e5
     push ebx                                     ; 0b1487 53
@@ -9282,10 +9302,10 @@ loc_b14a3:
     db 0x8d, 0x40, 0x00 ; 0b14a9 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_b14ac  [0xb14ac, 55 bytes, 23 instructions]
-; called by: sub_b0c5c
+; gus_set_dma_callback  [0xb14ac, 55 bytes, 23 instructions]
+; called by: gus_dma_init
 ; ====================================================================================================
-sub_b14ac:
+gus_set_dma_callback:
     push ebp                                     ; 0b14ac 55
     mov ebp, esp                                 ; 0b14ad 89e5
     push ebx                                     ; 0b14af 53
@@ -9293,12 +9313,12 @@ sub_b14ac:
     mov ebx, eax                                 ; 0b14b1 89c3
     mov eax, dword_d87b0                         ; 0b14b3 b8b0870d00
     mov edx, ebx                                 ; 0b14b8 89da
-    call sub_b145c                               ; 0b14ba e89dffffff
+    call gus_set_callback_pair                   ; 0b14ba e89dffffff
     test eax, eax                                ; 0b14bf 85c0
     je loc_b14da                                 ; 0b14c1 7417
     mov eax, dword_d87b4                         ; 0b14c3 b8b4870d00
     mov edx, ebx                                 ; 0b14c8 89da
-    call sub_b145c                               ; 0b14ca e88dffffff
+    call gus_set_callback_pair                   ; 0b14ca e88dffffff
     test eax, eax                                ; 0b14cf 85c0
     je loc_b14da                                 ; 0b14d1 7407
     mov eax, 8                                   ; 0b14d3 b808000000
@@ -9316,10 +9336,10 @@ loc_b14dc:
     db 0x90 ; 0b14e3 |.| (padding)
 
 ; ====================================================================================================
-; sub_b14e4  [0xb14e4, 55 bytes, 23 instructions]
-; called by: sub_ab180, sub_aea23
+; gus_set_wave_callback  [0xb14e4, 55 bytes, 23 instructions]
+; called by: gus_midi_init, gus_stream_open
 ; ====================================================================================================
-sub_b14e4:
+gus_set_wave_callback:
     push ebp                                     ; 0b14e4 55
     mov ebp, esp                                 ; 0b14e5 89e5
     push ebx                                     ; 0b14e7 53
@@ -9327,12 +9347,12 @@ sub_b14e4:
     mov ebx, eax                                 ; 0b14e9 89c3
     mov eax, dword_d87b8                         ; 0b14eb b8b8870d00
     mov edx, ebx                                 ; 0b14f0 89da
-    call sub_b145c                               ; 0b14f2 e865ffffff
+    call gus_set_callback_pair                   ; 0b14f2 e865ffffff
     test eax, eax                                ; 0b14f7 85c0
     je loc_b1512                                 ; 0b14f9 7417
     mov eax, dword_d87bc                         ; 0b14fb b8bc870d00
     mov edx, ebx                                 ; 0b1500 89da
-    call sub_b145c                               ; 0b1502 e855ffffff
+    call gus_set_callback_pair                   ; 0b1502 e855ffffff
     test eax, eax                                ; 0b1507 85c0
     je loc_b1512                                 ; 0b1509 7407
     mov eax, 8                                   ; 0b150b b808000000
@@ -9350,10 +9370,10 @@ loc_b1514:
     db 0x90 ; 0b151b |.| (padding)
 
 ; ====================================================================================================
-; sub_b151c  [0xb151c, 55 bytes, 23 instructions]
-; called by: sub_ab180
+; gus_set_volume_callback  [0xb151c, 55 bytes, 23 instructions]
+; called by: gus_midi_init
 ; ====================================================================================================
-sub_b151c:
+gus_set_volume_callback:
     push ebp                                     ; 0b151c 55
     mov ebp, esp                                 ; 0b151d 89e5
     push ebx                                     ; 0b151f 53
@@ -9361,12 +9381,12 @@ sub_b151c:
     mov ebx, eax                                 ; 0b1521 89c3
     mov eax, dword_d87c0                         ; 0b1523 b8c0870d00
     mov edx, ebx                                 ; 0b1528 89da
-    call sub_b145c                               ; 0b152a e82dffffff
+    call gus_set_callback_pair                   ; 0b152a e82dffffff
     test eax, eax                                ; 0b152f 85c0
     je loc_b154a                                 ; 0b1531 7417
     mov eax, dword_d87c4                         ; 0b1533 b8c4870d00
     mov edx, ebx                                 ; 0b1538 89da
-    call sub_b145c                               ; 0b153a e81dffffff
+    call gus_set_callback_pair                   ; 0b153a e81dffffff
     test eax, eax                                ; 0b153f 85c0
     je loc_b154a                                 ; 0b1541 7407
     mov eax, 8                                   ; 0b1543 b808000000
@@ -9384,16 +9404,16 @@ loc_b154c:
     db 0x90 ; 0b1553 |.| (padding)
 
 ; ====================================================================================================
-; sub_b1554  [0xb1554, 68 bytes, 26 instructions]
-; called by: sub_b1a04, sub_b1ac8, sub_b1b8c, sub_b1bf8
+; gus_set_timer_callback  [0xb1554, 68 bytes, 26 instructions]
+; called by: gus_start_timer2, gus_start_timer1, gus_stop_timer1, gus_stop_timer2
 ; ====================================================================================================
-sub_b1554:
+gus_set_timer_callback:
     push ebp                                     ; 0b1554 55
     mov ebp, esp                                 ; 0b1555 89e5
     cmp eax, 1                                   ; 0b1557 83f801
     jne loc_b1573                                ; 0b155a 7517
     mov eax, dword_d87c8                         ; 0b155c b8c8870d00
-    call sub_b1484                               ; 0b1561 e81effffff
+    call gus_set_callback                        ; 0b1561 e81effffff
     test eax, eax                                ; 0b1566 85c0
     je loc_b1594                                 ; 0b1568 742a
     mov eax, 8                                   ; 0b156a b808000000
@@ -9405,7 +9425,7 @@ loc_b1573:
     cmp eax, 2                                   ; 0b1573 83f802
     jne loc_b158f                                ; 0b1576 7517
     mov eax, dword_d87cc                         ; 0b1578 b8cc870d00
-    call sub_b1484                               ; 0b157d e802ffffff
+    call gus_set_callback                        ; 0b157d e802ffffff
     test eax, eax                                ; 0b1582 85c0
     je loc_b1594                                 ; 0b1584 740e
     mov eax, 8                                   ; 0b1586 b808000000
@@ -9422,16 +9442,16 @@ loc_b1594:
 
 
 ; ====================================================================================================
-; sub_b1598  [0xb1598, 31 bytes, 13 instructions]  <unreferenced>
+; gus_set_midi_xmit_callback  [0xb1598, 31 bytes, 13 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b1598:
+gus_set_midi_xmit_callback:
     push ebp                                     ; 0b1598 55
     mov ebp, esp                                 ; 0b1599 89e5
     push edx                                     ; 0b159b 52
     mov edx, eax                                 ; 0b159c 89c2
     mov eax, dword_d87d4                         ; 0b159e b8d4870d00
-    call sub_b1484                               ; 0b15a3 e8dcfeffff
+    call gus_set_callback                        ; 0b15a3 e8dcfeffff
     test eax, eax                                ; 0b15a8 85c0
     je loc_b15b1                                 ; 0b15aa 7405
     mov eax, 8                                   ; 0b15ac b808000000
@@ -9444,16 +9464,16 @@ loc_b15b1:
     db 0x90 ; 0b15b7 |.| (padding)
 
 ; ====================================================================================================
-; sub_b15b8  [0xb15b8, 31 bytes, 13 instructions]  <unreferenced>
+; gus_set_midi_recv_callback  [0xb15b8, 31 bytes, 13 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b15b8:
+gus_set_midi_recv_callback:
     push ebp                                     ; 0b15b8 55
     mov ebp, esp                                 ; 0b15b9 89e5
     push edx                                     ; 0b15bb 52
     mov edx, eax                                 ; 0b15bc 89c2
     mov eax, dword_d87d0                         ; 0b15be b8d0870d00
-    call sub_b1484                               ; 0b15c3 e8bcfeffff
+    call gus_set_callback                        ; 0b15c3 e8bcfeffff
     test eax, eax                                ; 0b15c8 85c0
     je loc_b15d1                                 ; 0b15ca 7405
     mov eax, 8                                   ; 0b15cc b808000000
@@ -9466,16 +9486,16 @@ loc_b15d1:
     db 0x90 ; 0b15d7 |.| (padding)
 
 ; ====================================================================================================
-; sub_b15d8  [0xb15d8, 31 bytes, 13 instructions]  <unreferenced>
+; gus_set_record_callback  [0xb15d8, 31 bytes, 13 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b15d8:
+gus_set_record_callback:
     push ebp                                     ; 0b15d8 55
     mov ebp, esp                                 ; 0b15d9 89e5
     push edx                                     ; 0b15db 52
     mov edx, eax                                 ; 0b15dc 89c2
     mov eax, dword_d87ac                         ; 0b15de b8ac870d00
-    call sub_b1484                               ; 0b15e3 e89cfeffff
+    call gus_set_callback                        ; 0b15e3 e89cfeffff
     test eax, eax                                ; 0b15e8 85c0
     je loc_b15f1                                 ; 0b15ea 7405
     mov eax, 8                                   ; 0b15ec b808000000
@@ -9488,10 +9508,10 @@ loc_b15f1:
     db 0x90 ; 0b15f7 |.| (padding)
 
 ; ====================================================================================================
-; sub_b15f8  [0xb15f8, 134 bytes, 47 instructions]
-; called by: sub_b131c, sub_b1680
+; gus_midi_irq_service  [0xb15f8, 134 bytes, 47 instructions]
+; called by: gus_midi_irq_handler, gus_midi_irq_poll
 ; ====================================================================================================
-sub_b15f8:
+gus_midi_irq_service:
     push ebp                                     ; 0b15f8 55
     mov ebp, esp                                 ; 0b15f9 89e5
     push ebx                                     ; 0b15fb 53
@@ -9504,14 +9524,14 @@ sub_b15f8:
     inc dword ptr [dword_d87a8]                  ; 0b1605 ff05a8870d00
     xor eax, eax                                 ; 0b160b 31c0
     mov ax, word ptr [word_d8762]                ; 0b160d 66a162870d00
-    call sub_b128c                               ; 0b1613 e874fcffff
+    call inp                                     ; 0b1613 e874fcffff
     mov edx, eax                                 ; 0b1618 89c2
     mov dword ptr [ebp - 0x14], eax              ; 0b161a 8945ec
     test al, 3                                   ; 0b161d a803
     je loc_b166d                                 ; 0b161f 744c
     xor eax, eax                                 ; 0b1621 31c0
     mov ax, word ptr [word_d876c]                ; 0b1623 66a16c870d00
-    call sub_b128c                               ; 0b1629 e85efcffff
+    call inp                                     ; 0b1629 e85efcffff
     mov ebx, eax                                 ; 0b162e 89c3
     mov ecx, eax                                 ; 0b1630 89c1
     test dl, 1                                   ; 0b1632 f6c201
@@ -9524,7 +9544,7 @@ loc_b1646:
     je loc_b166d                                 ; 0b164a 7421
     xor eax, eax                                 ; 0b164c 31c0
     mov ax, word ptr [word_d876e]                ; 0b164e 66a16e870d00
-    call sub_b128c                               ; 0b1654 e833fcffff
+    call inp                                     ; 0b1654 e833fcffff
     mov edi, dword ptr [dword_d87d4]             ; 0b1659 8b3dd4870d00
     mov edx, eax                                 ; 0b165f 89c2
     test edi, edi                                ; 0b1661 85ff
@@ -9545,10 +9565,10 @@ loc_b166d:
     db 0x8b, 0xc0 ; 0b167e |..| (padding)
 
 ; ====================================================================================================
-; sub_b1680  [0xb1680, 60 bytes, 24 instructions]
-; called by: sub_b16bc
+; gus_midi_irq_poll  [0xb1680, 60 bytes, 24 instructions]
+; called by: gus_gf1_irq_service
 ; ====================================================================================================
-sub_b1680:
+gus_midi_irq_poll:
     push ebp                                     ; 0b1680 55
     mov ebp, esp                                 ; 0b1681 89e5
     push ebx                                     ; 0b1683 53
@@ -9556,7 +9576,7 @@ sub_b1680:
     xor eax, eax                                 ; 0b1685 31c0
     cli                                          ; 0b1687 fa
     mov ax, word ptr [word_d8762]                ; 0b1688 66a162870d00
-    call sub_b128c                               ; 0b168e e8f9fbffff
+    call inp                                     ; 0b168e e8f9fbffff
     mov ebx, eax                                 ; 0b1693 89c3
     mov edx, eax                                 ; 0b1695 89c2
     mov al, byte ptr [byte_f79a7]                ; 0b1697 a0a7790f00
@@ -9567,7 +9587,7 @@ sub_b1680:
 loc_b16a9:
     test dl, 3                                   ; 0b16a9 f6c203
     je loc_b16b3                                 ; 0b16ac 7405
-    call sub_b15f8                               ; 0b16ae e845ffffff
+    call gus_midi_irq_service                    ; 0b16ae e845ffffff
 loc_b16b3:
     mov eax, edx                                 ; 0b16b3 89d0
     lea esp, [ebp - 8]                           ; 0b16b5 8d65f8
@@ -9578,10 +9598,11 @@ loc_b16b3:
 
 
 ; ====================================================================================================
-; sub_b16bc  [0xb16bc, 661 bytes, 188 instructions]
-; called by: sub_b0fa8, sub_b1256, sub_b12a0
+; gus_gf1_irq_service  [0xb16bc, 661 bytes, 188 instructions]
+; DMA, timer, wave and volume interrupts
+; called by: gus_dma_wait, gus_irq_unlock, gus_gf1_irq_handler
 ; ====================================================================================================
-sub_b16bc:
+gus_gf1_irq_service:
     push ebp                                     ; 0b16bc 55
     mov ebp, esp                                 ; 0b16bd 89e5
     push ebx                                     ; 0b16bf 53
@@ -9596,7 +9617,7 @@ sub_b16bc:
     xor edi, edi                                 ; 0b16d4 31ff
     xor esi, esi                                 ; 0b16d6 31f6
 loc_b16d8:
-    call sub_b1680                               ; 0b16d8 e8a3ffffff
+    call gus_midi_irq_poll                       ; 0b16d8 e8a3ffffff
     mov ebx, eax                                 ; 0b16dd 89c3
     test eax, eax                                ; 0b16df 85c0
     jne loc_b16f3                                ; 0b16e1 7510
@@ -9613,10 +9634,10 @@ loc_b1706:
     xor eax, eax                                 ; 0b1706 31c0
     mov edx, 0x41                                ; 0b1708 ba41000000
     mov ax, word ptr [word_d8772]                ; 0b170d 66a172870d00
-    call sub_aa200                               ; 0b1713 e8e88affff
+    call outp                                    ; 0b1713 e8e88affff
     xor eax, eax                                 ; 0b1718 31c0
     mov ax, word ptr [word_d8776]                ; 0b171a 66a176870d00
-    call sub_b128c                               ; 0b1720 e867fbffff
+    call inp                                     ; 0b1720 e867fbffff
     test al, 0x40                                ; 0b1725 a840
     jne loc_b1735                                ; 0b1727 750c
     mov dx, word ptr [word_f799e]                ; 0b1729 668b159e790f00
@@ -9640,10 +9661,10 @@ loc_b1772:
     xor eax, eax                                 ; 0b1772 31c0
     mov edx, 0x49                                ; 0b1774 ba49000000
     mov ax, word ptr [word_d8772]                ; 0b1779 66a172870d00
-    call sub_aa200                               ; 0b177f e87c8affff
+    call outp                                    ; 0b177f e87c8affff
     xor eax, eax                                 ; 0b1784 31c0
     mov ax, word ptr [word_d8776]                ; 0b1786 66a176870d00
-    call sub_b128c                               ; 0b178c e8fbfaffff
+    call inp                                     ; 0b178c e8fbfaffff
     test al, 0x40                                ; 0b1791 a840
     je loc_b17b9                                 ; 0b1793 7424
     cmp dword ptr [dword_d87b0], 0               ; 0b1795 833db0870d0000
@@ -9661,16 +9682,16 @@ loc_b17b9:
     xor eax, eax                                 ; 0b17be 31c0
     mov edx, 0x45                                ; 0b17c0 ba45000000
     mov ax, word ptr [word_d8772]                ; 0b17c5 66a172870d00
-    call sub_aa200                               ; 0b17cb e8308affff
+    call outp                                    ; 0b17cb e8308affff
     xor eax, eax                                 ; 0b17d0 31c0
     mov edx, dword ptr [dword_f79d8]             ; 0b17d2 8b15d8790f00
     mov ax, word ptr [word_d8776]                ; 0b17d8 66a176870d00
     and dl, 0xfb                                 ; 0b17de 80e2fb
-    call sub_aa200                               ; 0b17e1 e81a8affff
+    call outp                                    ; 0b17e1 e81a8affff
     xor eax, eax                                 ; 0b17e6 31c0
     mov edx, dword ptr [dword_f79d8]             ; 0b17e8 8b15d8790f00
     mov ax, word ptr [word_d8776]                ; 0b17ee 66a176870d00
-    call sub_aa200                               ; 0b17f4 e8078affff
+    call outp                                    ; 0b17f4 e8078affff
     cmp dword ptr [dword_d87c8], 0               ; 0b17f9 833dc8870d0000
     je loc_b1813                                 ; 0b1800 7411
     call dword ptr [dword_d87c8]                 ; 0b1802 ff15c8870d00
@@ -9684,16 +9705,16 @@ loc_b1813:
     xor eax, eax                                 ; 0b1818 31c0
     mov edx, 0x45                                ; 0b181a ba45000000
     mov ax, word ptr [word_d8772]                ; 0b181f 66a172870d00
-    call sub_aa200                               ; 0b1825 e8d689ffff
+    call outp                                    ; 0b1825 e8d689ffff
     xor eax, eax                                 ; 0b182a 31c0
     mov edx, dword ptr [dword_f79d8]             ; 0b182c 8b15d8790f00
     mov ax, word ptr [word_d8776]                ; 0b1832 66a176870d00
     and dl, 0xf7                                 ; 0b1838 80e2f7
-    call sub_aa200                               ; 0b183b e8c089ffff
+    call outp                                    ; 0b183b e8c089ffff
     xor eax, eax                                 ; 0b1840 31c0
     mov edx, dword ptr [dword_f79d8]             ; 0b1842 8b15d8790f00
     mov ax, word ptr [word_d8776]                ; 0b1848 66a176870d00
-    call sub_aa200                               ; 0b184e e8ad89ffff
+    call outp                                    ; 0b184e e8ad89ffff
     cmp dword ptr [dword_d87cc], 0               ; 0b1853 833dcc870d0000
     je loc_b186e                                 ; 0b185a 7412
     call dword ptr [dword_d87cc]                 ; 0b185c ff15cc870d00
@@ -9709,10 +9730,10 @@ loc_b1877:
     xor eax, eax                                 ; 0b1878 31c0
     mov edx, 0x8f                                ; 0b187a ba8f000000
     mov ax, word ptr [word_d8772]                ; 0b187f 66a172870d00
-    call sub_aa200                               ; 0b1885 e87689ffff
+    call outp                                    ; 0b1885 e87689ffff
     xor eax, eax                                 ; 0b188a 31c0
     mov ax, word ptr [word_d8776]                ; 0b188c 66a176870d00
-    call sub_b128c                               ; 0b1892 e8f5f9ffff
+    call inp                                     ; 0b1892 e8f5f9ffff
     mov ch, al                                   ; 0b1897 88c5
     mov al, ch                                   ; 0b1899 88e8
     and al, 0xc0                                 ; 0b189b 24c0
@@ -9776,7 +9797,7 @@ loc_b1917:
 loc_b192c:
     or esi, ebx                                  ; 0b192c 09de
 loc_b192e:
-    call sub_b1680                               ; 0b192e e84dfdffff
+    call gus_midi_irq_poll                       ; 0b192e e84dfdffff
     jmp loc_b1877                                ; 0b1933 e93fffffff
 
 loc_b1938:
@@ -9794,10 +9815,10 @@ loc_b1938:
 
 
 ; ====================================================================================================
-; sub_b1951  [0xb1951, 9 bytes, 6 instructions]
-; called by: sub_aa9c0, sub_ab244, sub_abe18, sub_ac6e8, sub_acd58
+; inpw  [0xb1951, 9 bytes, 6 instructions]
+; called by: gus_reset_voices, gus_midi_voices_init, gus_voice_stop_hw, gus_midi_voice_start, gus_volume_callback
 ; ====================================================================================================
-sub_b1951:
+inpw:
     push edx                                     ; 0b1951 52
     mov edx, eax                                 ; 0b1952 89c2
     sub eax, eax                                 ; 0b1954 29c0
@@ -9808,10 +9829,10 @@ sub_b1951:
     times 2 db 0 ; 0b195a (padding)
 
 ; ====================================================================================================
-; sub_b195c  [0xb195c, 107 bytes, 58 instructions]
-; called by: sub_aab5c
+; gus_sort_irq_table  [0xb195c, 107 bytes, 58 instructions]
+; called by: gus_open_card
 ; ====================================================================================================
-sub_b195c:
+gus_sort_irq_table:
     push ebx                                     ; 0b195c 53
     push ecx                                     ; 0b195d 51
     push edx                                     ; 0b195e 52
@@ -9883,10 +9904,10 @@ loc_b19c1:
 
 
 ; ====================================================================================================
-; sub_b19c7  [0xb19c7, 11 bytes, 7 instructions]
-; called by: sub_aae40, sub_ab6d0, sub_ab974, sub_ac0cc, sub_ac6e8, sub_acd58, sub_b0cb8, sub_b1ea0, sub_b1f1c, sub_b1f9c
+; outpw  [0xb19c7, 11 bytes, 7 instructions]
+; called by: gus_reset, gus_midi_voice_off, gus_midi_timer_tick, gus_midi_note_on, gus_midi_voice_start, gus_volume_callback, gus_dma_start, gus_peek, gus_poke, gus_poke_block
 ; ====================================================================================================
-sub_b19c7:
+outpw:
     push ebx                                     ; 0b19c7 53
     mov ebx, edx                                 ; 0b19c8 89d3
     mov edx, eax                                 ; 0b19ca 89c2
@@ -9898,10 +9919,10 @@ sub_b19c7:
     times 14 db 0 ; 0b19d2 (padding)
 
 ; ====================================================================================================
-; sub_b19e0  [0xb19e0, 36 bytes, 14 instructions]
+; gus_timer_reset  [0xb19e0, 36 bytes, 14 instructions]
 ; address taken (function pointer)
 ; ====================================================================================================
-sub_b19e0:
+gus_timer_reset:
     push ebp                                     ; 0b19e0 55
     mov ebp, esp                                 ; 0b19e1 89e5
     push edx                                     ; 0b19e3 52
@@ -9919,10 +9940,10 @@ sub_b19e0:
 
 
 ; ====================================================================================================
-; sub_b1a04  [0xb1a04, 194 bytes, 55 instructions]
-; called by: sub_abab0
+; gus_start_timer2  [0xb1a04, 194 bytes, 55 instructions]
+; called by: gus_midi_start_timer
 ; ====================================================================================================
-sub_b1a04:
+gus_start_timer2:
     push ebp                                     ; 0b1a04 55
     mov ebp, esp                                 ; 0b1a05 89e5
     push ebx                                     ; 0b1a07 53
@@ -9931,14 +9952,14 @@ sub_b1a04:
     mov ecx, edx                                 ; 0b1a0b 89d1
     pushf                                        ; 0b1a0d 669c
     cli                                          ; 0b1a0f fa
-    call sub_b122f                               ; 0b1a10 e81af8ffff
+    call gus_irq_lock                            ; 0b1a10 e81af8ffff
     mov eax, 2                                   ; 0b1a15 b802000000
     mov edx, ebx                                 ; 0b1a1a 89da
-    call sub_b1554                               ; 0b1a1c e833fbffff
+    call gus_set_timer_callback                  ; 0b1a1c e833fbffff
     mov ebx, eax                                 ; 0b1a21 89c3
     test eax, eax                                ; 0b1a23 85c0
     je loc_b1a35                                 ; 0b1a25 740e
-    call sub_b1256                               ; 0b1a27 e82af8ffff
+    call gus_irq_unlock                          ; 0b1a27 e82af8ffff
     popf                                         ; 0b1a2c 669d
     mov eax, ebx                                 ; 0b1a2e 89d8
     jmp loc_b1abf                                ; 0b1a30 e98a000000
@@ -9946,33 +9967,33 @@ sub_b1a04:
 loc_b1a35:
     mov edx, 0x47                                ; 0b1a35 ba47000000
     mov ax, word ptr [word_d8772]                ; 0b1a3a 66a172870d00
-    call sub_aa200                               ; 0b1a40 e8bb87ffff
+    call outp                                    ; 0b1a40 e8bb87ffff
     xor eax, eax                                 ; 0b1a45 31c0
     mov edx, ecx                                 ; 0b1a47 89ca
     mov ax, word ptr [word_d8776]                ; 0b1a49 66a176870d00
-    call sub_aa200                               ; 0b1a4f e8ac87ffff
+    call outp                                    ; 0b1a4f e8ac87ffff
     or byte ptr [dword_f79d8], 8                 ; 0b1a54 800dd8790f0008
     xor eax, eax                                 ; 0b1a5b 31c0
     mov edx, 0x45                                ; 0b1a5d ba45000000
     mov ax, word ptr [word_d8772]                ; 0b1a62 66a172870d00
-    call sub_aa200                               ; 0b1a68 e89387ffff
+    call outp                                    ; 0b1a68 e89387ffff
     xor edx, edx                                 ; 0b1a6d 31d2
     xor eax, eax                                 ; 0b1a6f 31c0
     mov dl, byte ptr [dword_f79d8]               ; 0b1a71 8a15d8790f00
     mov ax, word ptr [word_d8776]                ; 0b1a77 66a176870d00
-    call sub_aa200                               ; 0b1a7d e87e87ffff
+    call outp                                    ; 0b1a7d e87e87ffff
     mov dl, byte ptr [dword_f79e8]               ; 0b1a82 8a15e8790f00
     xor eax, eax                                 ; 0b1a88 31c0
     or dl, 2                                     ; 0b1a8a 80ca02
     mov ax, word ptr [word_d8764]                ; 0b1a8d 66a164870d00
     mov byte ptr [dword_f79e8], dl               ; 0b1a93 8815e8790f00
     mov edx, 4                                   ; 0b1a99 ba04000000
-    call sub_aa200                               ; 0b1a9e e85d87ffff
+    call outp                                    ; 0b1a9e e85d87ffff
     xor eax, eax                                 ; 0b1aa3 31c0
     mov edx, dword ptr [dword_f79e8]             ; 0b1aa5 8b15e8790f00
     mov ax, word ptr [word_d8766]                ; 0b1aab 66a166870d00
-    call sub_aa200                               ; 0b1ab1 e84a87ffff
-    call sub_b1256                               ; 0b1ab6 e89bf7ffff
+    call outp                                    ; 0b1ab1 e84a87ffff
+    call gus_irq_unlock                          ; 0b1ab6 e89bf7ffff
     popf                                         ; 0b1abb 669d
     xor eax, eax                                 ; 0b1abd 31c0
 loc_b1abf:
@@ -9985,10 +10006,10 @@ loc_b1abf:
     db 0x8b, 0xc0 ; 0b1ac6 |..| (padding)
 
 ; ====================================================================================================
-; sub_b1ac8  [0xb1ac8, 194 bytes, 55 instructions]  <unreferenced>
+; gus_start_timer1  [0xb1ac8, 194 bytes, 55 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b1ac8:
+gus_start_timer1:
     push ebp                                     ; 0b1ac8 55
     mov ebp, esp                                 ; 0b1ac9 89e5
     push ebx                                     ; 0b1acb 53
@@ -9997,14 +10018,14 @@ sub_b1ac8:
     mov ecx, edx                                 ; 0b1acf 89d1
     pushf                                        ; 0b1ad1 669c
     cli                                          ; 0b1ad3 fa
-    call sub_b122f                               ; 0b1ad4 e856f7ffff
+    call gus_irq_lock                            ; 0b1ad4 e856f7ffff
     mov eax, 1                                   ; 0b1ad9 b801000000
     mov edx, ebx                                 ; 0b1ade 89da
-    call sub_b1554                               ; 0b1ae0 e86ffaffff
+    call gus_set_timer_callback                  ; 0b1ae0 e86ffaffff
     mov ebx, eax                                 ; 0b1ae5 89c3
     test eax, eax                                ; 0b1ae7 85c0
     je loc_b1af9                                 ; 0b1ae9 740e
-    call sub_b1256                               ; 0b1aeb e866f7ffff
+    call gus_irq_unlock                          ; 0b1aeb e866f7ffff
     popf                                         ; 0b1af0 669d
     mov eax, ebx                                 ; 0b1af2 89d8
     jmp loc_b1b83                                ; 0b1af4 e98a000000
@@ -10012,33 +10033,33 @@ sub_b1ac8:
 loc_b1af9:
     mov edx, 0x46                                ; 0b1af9 ba46000000
     mov ax, word ptr [word_d8772]                ; 0b1afe 66a172870d00
-    call sub_aa200                               ; 0b1b04 e8f786ffff
+    call outp                                    ; 0b1b04 e8f786ffff
     xor eax, eax                                 ; 0b1b09 31c0
     mov edx, ecx                                 ; 0b1b0b 89ca
     mov ax, word ptr [word_d8776]                ; 0b1b0d 66a176870d00
-    call sub_aa200                               ; 0b1b13 e8e886ffff
+    call outp                                    ; 0b1b13 e8e886ffff
     or byte ptr [dword_f79d8], 4                 ; 0b1b18 800dd8790f0004
     xor eax, eax                                 ; 0b1b1f 31c0
     mov edx, 0x45                                ; 0b1b21 ba45000000
     mov ax, word ptr [word_d8772]                ; 0b1b26 66a172870d00
-    call sub_aa200                               ; 0b1b2c e8cf86ffff
+    call outp                                    ; 0b1b2c e8cf86ffff
     xor edx, edx                                 ; 0b1b31 31d2
     xor eax, eax                                 ; 0b1b33 31c0
     mov dl, byte ptr [dword_f79d8]               ; 0b1b35 8a15d8790f00
     mov ax, word ptr [word_d8776]                ; 0b1b3b 66a176870d00
-    call sub_aa200                               ; 0b1b41 e8ba86ffff
+    call outp                                    ; 0b1b41 e8ba86ffff
     mov dl, byte ptr [dword_f79e8]               ; 0b1b46 8a15e8790f00
     xor eax, eax                                 ; 0b1b4c 31c0
     or dl, 1                                     ; 0b1b4e 80ca01
     mov ax, word ptr [word_d8764]                ; 0b1b51 66a164870d00
     mov byte ptr [dword_f79e8], dl               ; 0b1b57 8815e8790f00
     mov edx, 4                                   ; 0b1b5d ba04000000
-    call sub_aa200                               ; 0b1b62 e89986ffff
+    call outp                                    ; 0b1b62 e89986ffff
     xor eax, eax                                 ; 0b1b67 31c0
     mov edx, dword ptr [dword_f79e8]             ; 0b1b69 8b15e8790f00
     mov ax, word ptr [word_d8766]                ; 0b1b6f 66a166870d00
-    call sub_aa200                               ; 0b1b75 e88686ffff
-    call sub_b1256                               ; 0b1b7a e8d7f6ffff
+    call outp                                    ; 0b1b75 e88686ffff
+    call gus_irq_unlock                          ; 0b1b7a e8d7f6ffff
     popf                                         ; 0b1b7f 669d
     xor eax, eax                                 ; 0b1b81 31c0
 loc_b1b83:
@@ -10051,19 +10072,19 @@ loc_b1b83:
     db 0x8b, 0xc0 ; 0b1b8a |..| (padding)
 
 ; ====================================================================================================
-; sub_b1b8c  [0xb1b8c, 106 bytes, 30 instructions]  <unreferenced>
+; gus_stop_timer1  [0xb1b8c, 106 bytes, 30 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b1b8c:
+gus_stop_timer1:
     push ebp                                     ; 0b1b8c 55
     mov ebp, esp                                 ; 0b1b8d 89e5
     push edx                                     ; 0b1b8f 52
     pushf                                        ; 0b1b90 669c
     cli                                          ; 0b1b92 fa
-    call sub_b122f                               ; 0b1b93 e897f6ffff
+    call gus_irq_lock                            ; 0b1b93 e897f6ffff
     mov eax, 1                                   ; 0b1b98 b801000000
     xor edx, edx                                 ; 0b1b9d 31d2
-    call sub_b1554                               ; 0b1b9f e8b0f9ffff
+    call gus_set_timer_callback                  ; 0b1b9f e8b0f9ffff
     mov ah, byte ptr [dword_f79d8]               ; 0b1ba4 8a25d8790f00
     mov dl, byte ptr [dword_f79e8]               ; 0b1baa 8a15e8790f00
     and ah, 0xfb                                 ; 0b1bb0 80e4fb
@@ -10073,13 +10094,13 @@ sub_b1b8c:
     xor eax, eax                                 ; 0b1bc2 31c0
     mov edx, 0x45                                ; 0b1bc4 ba45000000
     mov ax, word ptr [word_d8772]                ; 0b1bc9 66a172870d00
-    call sub_aa200                               ; 0b1bcf e82c86ffff
+    call outp                                    ; 0b1bcf e82c86ffff
     xor edx, edx                                 ; 0b1bd4 31d2
     xor eax, eax                                 ; 0b1bd6 31c0
     mov dl, byte ptr [dword_f79d8]               ; 0b1bd8 8a15d8790f00
     mov ax, word ptr [word_d8776]                ; 0b1bde 66a176870d00
-    call sub_aa200                               ; 0b1be4 e81786ffff
-    call sub_b1256                               ; 0b1be9 e868f6ffff
+    call outp                                    ; 0b1be4 e81786ffff
+    call gus_irq_unlock                          ; 0b1be9 e868f6ffff
     popf                                         ; 0b1bee 669d
     lea esp, [ebp - 4]                           ; 0b1bf0 8d65fc
     pop edx                                      ; 0b1bf3 5a
@@ -10089,19 +10110,19 @@ sub_b1b8c:
     db 0x8b, 0xc0 ; 0b1bf6 |..| (padding)
 
 ; ====================================================================================================
-; sub_b1bf8  [0xb1bf8, 106 bytes, 30 instructions]
-; called by: sub_abacc
+; gus_stop_timer2  [0xb1bf8, 106 bytes, 30 instructions]
+; called by: gus_midi_stop_timer
 ; ====================================================================================================
-sub_b1bf8:
+gus_stop_timer2:
     push ebp                                     ; 0b1bf8 55
     mov ebp, esp                                 ; 0b1bf9 89e5
     push edx                                     ; 0b1bfb 52
     pushf                                        ; 0b1bfc 669c
     cli                                          ; 0b1bfe fa
-    call sub_b122f                               ; 0b1bff e82bf6ffff
+    call gus_irq_lock                            ; 0b1bff e82bf6ffff
     mov eax, 2                                   ; 0b1c04 b802000000
     xor edx, edx                                 ; 0b1c09 31d2
-    call sub_b1554                               ; 0b1c0b e844f9ffff
+    call gus_set_timer_callback                  ; 0b1c0b e844f9ffff
     mov ah, byte ptr [dword_f79d8]               ; 0b1c10 8a25d8790f00
     mov dl, byte ptr [dword_f79e8]               ; 0b1c16 8a15e8790f00
     and ah, 0xf7                                 ; 0b1c1c 80e4f7
@@ -10111,13 +10132,13 @@ sub_b1bf8:
     xor eax, eax                                 ; 0b1c2e 31c0
     mov edx, 0x45                                ; 0b1c30 ba45000000
     mov ax, word ptr [word_d8772]                ; 0b1c35 66a172870d00
-    call sub_aa200                               ; 0b1c3b e8c085ffff
+    call outp                                    ; 0b1c3b e8c085ffff
     xor edx, edx                                 ; 0b1c40 31d2
     xor eax, eax                                 ; 0b1c42 31c0
     mov dl, byte ptr [dword_f79d8]               ; 0b1c44 8a15d8790f00
     mov ax, word ptr [word_d8776]                ; 0b1c4a 66a176870d00
-    call sub_aa200                               ; 0b1c50 e8ab85ffff
-    call sub_b1256                               ; 0b1c55 e8fcf5ffff
+    call outp                                    ; 0b1c50 e8ab85ffff
+    call gus_irq_unlock                          ; 0b1c55 e8fcf5ffff
     popf                                         ; 0b1c5a 669d
     lea esp, [ebp - 4]                           ; 0b1c5c 8d65fc
     pop edx                                      ; 0b1c5f 5a
@@ -10127,10 +10148,10 @@ sub_b1bf8:
     times 14 db 0 ; 0b1c62 (padding)
 
 ; ====================================================================================================
-; sub_b1c70  [0xb1c70, 76 bytes, 28 instructions]
+; gus_voice_alloc_reset  [0xb1c70, 76 bytes, 28 instructions]
 ; address taken (function pointer)
 ; ====================================================================================================
-sub_b1c70:
+gus_voice_alloc_reset:
     push ebp                                     ; 0b1c70 55
     mov ebp, esp                                 ; 0b1c71 89e5
     push ebx                                     ; 0b1c73 53
@@ -10165,10 +10186,10 @@ loc_b1ca9:
 
 
 ; ====================================================================================================
-; sub_b1cbc  [0xb1cbc, 367 bytes, 107 instructions]
-; called by: sub_ac0cc, sub_aea23
+; gus_voice_alloc  [0xb1cbc, 367 bytes, 107 instructions]
+; called by: gus_midi_note_on, gus_stream_open
 ; ====================================================================================================
-sub_b1cbc:
+gus_voice_alloc:
     push ebp                                     ; 0b1cbc 55
     mov ebp, esp                                 ; 0b1cbd 89e5
     push ebx                                     ; 0b1cbf 53
@@ -10180,7 +10201,7 @@ sub_b1cbc:
     mov edi, edx                                 ; 0b1cc8 89d7
     pushf                                        ; 0b1cca 669c
     cli                                          ; 0b1ccc fa
-    call sub_b122f                               ; 0b1ccd e85df5ffff
+    call gus_irq_lock                            ; 0b1ccd e85df5ffff
     mov edx, 0xffffffff                          ; 0b1cd2 baffffffff
     mov ebx, 1                                   ; 0b1cd7 bb01000000
     mov dword ptr [ebp - 0x18], edx              ; 0b1cdc 8955e8
@@ -10208,7 +10229,7 @@ loc_b1ce9:
     inc edx                                      ; 0b1d2a 42
     mov dword ptr [eax*4 + unk_f7a00], edi       ; 0b1d2b 893c85007a0f00
     mov dword ptr [dword_d89dc], edx             ; 0b1d32 8915dc890d00
-    call sub_b1256                               ; 0b1d38 e819f5ffff
+    call gus_irq_unlock                          ; 0b1d38 e819f5ffff
     popf                                         ; 0b1d3d 669d
     mov eax, ebx                                 ; 0b1d3f 89d8
     jmp loc_b1e22                                ; 0b1d41 e9dc000000
@@ -10276,7 +10297,7 @@ loc_b1dd7:
     mov dword ptr [eax*4 + unk_f7a00], edi       ; 0b1e0c 893c85007a0f00
     mov dword ptr [dword_d89dc], ebx             ; 0b1e13 891ddc890d00
 loc_b1e19:
-    call sub_b1256                               ; 0b1e19 e838f4ffff
+    call gus_irq_unlock                          ; 0b1e19 e838f4ffff
     popf                                         ; 0b1e1e 669d
     mov eax, edx                                 ; 0b1e20 89d0
 loc_b1e22:
@@ -10291,10 +10312,10 @@ loc_b1e22:
     db 0x90 ; 0b1e2b |.| (padding)
 
 ; ====================================================================================================
-; sub_b1e2c  [0xb1e2c, 54 bytes, 22 instructions]
-; called by: sub_abf5c
+; gus_voice_free  [0xb1e2c, 54 bytes, 22 instructions]
+; called by: gus_voice_release
 ; ====================================================================================================
-sub_b1e2c:
+gus_voice_free:
     push ebp                                     ; 0b1e2c 55
     mov ebp, esp                                 ; 0b1e2d 89e5
     push ecx                                     ; 0b1e2f 51
@@ -10302,7 +10323,7 @@ sub_b1e2c:
     mov ecx, eax                                 ; 0b1e31 89c1
     pushf                                        ; 0b1e33 669c
     cli                                          ; 0b1e35 fa
-    call sub_b122f                               ; 0b1e36 e8f4f3ffff
+    call gus_irq_lock                            ; 0b1e36 e8f4f3ffff
     mov eax, 1                                   ; 0b1e3b b801000000
     shl eax, cl                                  ; 0b1e40 d3e0
     mov ecx, eax                                 ; 0b1e42 89c1
@@ -10310,7 +10331,7 @@ sub_b1e2c:
     not ecx                                      ; 0b1e4a f7d1
     and edx, ecx                                 ; 0b1e4c 21ca
     mov dword ptr [dword_f7b78], edx             ; 0b1e4e 8915787b0f00
-    call sub_b1256                               ; 0b1e54 e8fdf3ffff
+    call gus_irq_unlock                          ; 0b1e54 e8fdf3ffff
     popf                                         ; 0b1e59 669d
     lea esp, [ebp - 8]                           ; 0b1e5b 8d65f8
     pop edx                                      ; 0b1e5e 5a
@@ -10321,10 +10342,10 @@ sub_b1e2c:
     db 0x8b, 0xc0 ; 0b1e62 |..| (padding)
 
 ; ====================================================================================================
-; sub_b1e64  [0xb1e64, 49 bytes, 20 instructions]
-; called by: sub_ac6e8
+; gus_voice_add_ref  [0xb1e64, 49 bytes, 20 instructions]
+; called by: gus_midi_voice_start
 ; ====================================================================================================
-sub_b1e64:
+gus_voice_add_ref:
     push ebp                                     ; 0b1e64 55
     mov ebp, esp                                 ; 0b1e65 89e5
     push ebx                                     ; 0b1e67 53
@@ -10334,11 +10355,11 @@ sub_b1e64:
     pushf                                        ; 0b1e6d 669c
     cli                                          ; 0b1e6f fa
     mov edx, ecx                                 ; 0b1e70 89ca
-    call sub_b122f                               ; 0b1e72 e8b8f3ffff
+    call gus_irq_lock                            ; 0b1e72 e8b8f3ffff
     lea eax, [edx*4]                             ; 0b1e77 8d049500000000
     sub eax, edx                                 ; 0b1e7e 29d0
     add dword ptr [eax*4 + unk_f79fc], ebx       ; 0b1e80 011c85fc790f00
-    call sub_b1256                               ; 0b1e87 e8caf3ffff
+    call gus_irq_unlock                          ; 0b1e87 e8caf3ffff
     popf                                         ; 0b1e8c 669d
     lea esp, [ebp - 8]                           ; 0b1e8e 8d65f8
     pop ecx                                      ; 0b1e91 59
@@ -10349,10 +10370,11 @@ sub_b1e64:
     times 11 db 0 ; 0b1e95 (padding)
 
 ; ====================================================================================================
-; sub_b1ea0  [0xb1ea0, 123 bytes, 39 instructions]
-; called by: sub_ad3fc, sub_b2074
+; gus_peek  [0xb1ea0, 123 bytes, 39 instructions]
+; reads a byte of the card's DRAM
+; called by: gus_mem_read_header, gus_dram_size
 ; ====================================================================================================
-sub_b1ea0:
+gus_peek:
     push ebp                                     ; 0b1ea0 55
     mov ebp, esp                                 ; 0b1ea1 89e5
     push ebx                                     ; 0b1ea3 53
@@ -10360,31 +10382,31 @@ sub_b1ea0:
     mov ebx, eax                                 ; 0b1ea5 89c3
     pushf                                        ; 0b1ea7 669c
     cli                                          ; 0b1ea9 fa
-    call sub_b122f                               ; 0b1eaa e880f3ffff
+    call gus_irq_lock                            ; 0b1eaa e880f3ffff
     xor eax, eax                                 ; 0b1eaf 31c0
     mov edx, 0x43                                ; 0b1eb1 ba43000000
     mov ax, word ptr [word_d8772]                ; 0b1eb6 66a172870d00
-    call sub_aa200                               ; 0b1ebc e83f83ffff
+    call outp                                    ; 0b1ebc e83f83ffff
     xor eax, eax                                 ; 0b1ec1 31c0
     mov edx, ebx                                 ; 0b1ec3 89da
     mov ax, word ptr [word_d8774]                ; 0b1ec5 66a174870d00
-    call sub_b19c7                               ; 0b1ecb e8f7faffff
+    call outpw                                   ; 0b1ecb e8f7faffff
     shr ebx, 0x10                                ; 0b1ed0 c1eb10
     xor eax, eax                                 ; 0b1ed3 31c0
     mov edx, 0x44                                ; 0b1ed5 ba44000000
     mov ax, word ptr [word_d8772]                ; 0b1eda 66a172870d00
     and ebx, 0xff                                ; 0b1ee0 81e3ff000000
-    call sub_aa200                               ; 0b1ee6 e81583ffff
+    call outp                                    ; 0b1ee6 e81583ffff
     xor eax, eax                                 ; 0b1eeb 31c0
     xor edx, edx                                 ; 0b1eed 31d2
     mov ax, word ptr [word_d8776]                ; 0b1eef 66a176870d00
     mov dl, bl                                   ; 0b1ef5 88da
-    call sub_aa200                               ; 0b1ef7 e80483ffff
+    call outp                                    ; 0b1ef7 e80483ffff
     xor eax, eax                                 ; 0b1efc 31c0
     mov ax, word ptr [word_d8778]                ; 0b1efe 66a178870d00
-    call sub_b128c                               ; 0b1f04 e883f3ffff
+    call inp                                     ; 0b1f04 e883f3ffff
     mov ebx, eax                                 ; 0b1f09 89c3
-    call sub_b1256                               ; 0b1f0b e846f3ffff
+    call gus_irq_unlock                          ; 0b1f0b e846f3ffff
     popf                                         ; 0b1f10 669d
     mov al, bl                                   ; 0b1f12 88d8
     lea esp, [ebp - 8]                           ; 0b1f14 8d65f8
@@ -10396,10 +10418,10 @@ sub_b1ea0:
     db 0x90 ; 0b1f1b |.| (padding)
 
 ; ====================================================================================================
-; sub_b1f1c  [0xb1f1c, 125 bytes, 40 instructions]
-; called by: sub_ad3c0, sub_ad434, sub_adee9, sub_aea23, sub_b2074
+; gus_poke  [0xb1f1c, 125 bytes, 40 instructions]
+; called by: gus_mem_write_header, gus_mem_init, gus_stream_fill, gus_stream_open, gus_dram_size
 ; ====================================================================================================
-sub_b1f1c:
+gus_poke:
     push ebp                                     ; 0b1f1c 55
     mov ebp, esp                                 ; 0b1f1d 89e5
     push ebx                                     ; 0b1f1f 53
@@ -10408,32 +10430,32 @@ sub_b1f1c:
     mov cl, dl                                   ; 0b1f23 88d1
     pushf                                        ; 0b1f25 669c
     cli                                          ; 0b1f27 fa
-    call sub_b122f                               ; 0b1f28 e802f3ffff
+    call gus_irq_lock                            ; 0b1f28 e802f3ffff
     xor eax, eax                                 ; 0b1f2d 31c0
     mov edx, 0x43                                ; 0b1f2f ba43000000
     mov ax, word ptr [word_d8772]                ; 0b1f34 66a172870d00
-    call sub_aa200                               ; 0b1f3a e8c182ffff
+    call outp                                    ; 0b1f3a e8c182ffff
     xor eax, eax                                 ; 0b1f3f 31c0
     mov edx, ebx                                 ; 0b1f41 89da
     mov ax, word ptr [word_d8774]                ; 0b1f43 66a174870d00
-    call sub_b19c7                               ; 0b1f49 e879faffff
+    call outpw                                   ; 0b1f49 e879faffff
     shr ebx, 0x10                                ; 0b1f4e c1eb10
     xor eax, eax                                 ; 0b1f51 31c0
     mov edx, 0x44                                ; 0b1f53 ba44000000
     mov ax, word ptr [word_d8772]                ; 0b1f58 66a172870d00
     and ebx, 0xff                                ; 0b1f5e 81e3ff000000
-    call sub_aa200                               ; 0b1f64 e89782ffff
+    call outp                                    ; 0b1f64 e89782ffff
     xor eax, eax                                 ; 0b1f69 31c0
     xor edx, edx                                 ; 0b1f6b 31d2
     mov ax, word ptr [word_d8776]                ; 0b1f6d 66a176870d00
     mov dl, bl                                   ; 0b1f73 88da
-    call sub_aa200                               ; 0b1f75 e88682ffff
+    call outp                                    ; 0b1f75 e88682ffff
     xor eax, eax                                 ; 0b1f7a 31c0
     xor edx, edx                                 ; 0b1f7c 31d2
     mov ax, word ptr [word_d8778]                ; 0b1f7e 66a178870d00
     mov dl, cl                                   ; 0b1f84 88ca
-    call sub_aa200                               ; 0b1f86 e87582ffff
-    call sub_b1256                               ; 0b1f8b e8c6f2ffff
+    call outp                                    ; 0b1f86 e87582ffff
+    call gus_irq_unlock                          ; 0b1f8b e8c6f2ffff
     popf                                         ; 0b1f90 669d
     lea esp, [ebp - 8]                           ; 0b1f92 8d65f8
     pop ecx                                      ; 0b1f95 59
@@ -10444,10 +10466,10 @@ sub_b1f1c:
     db 0x8d, 0x40, 0x00 ; 0b1f99 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_b1f9c  [0xb1f9c, 216 bytes, 74 instructions]
-; called by: sub_b0d6c
+; gus_poke_block  [0xb1f9c, 216 bytes, 74 instructions]
+; called by: gus_download
 ; ====================================================================================================
-sub_b1f9c:
+gus_poke_block:
     push ebp                                     ; 0b1f9c 55
     mov ebp, esp                                 ; 0b1f9d 89e5
     push esi                                     ; 0b1f9f 56
@@ -10473,31 +10495,31 @@ loc_b1fc6:
     mov byte ptr [ebp - 0xc], al                 ; 0b1fc6 8845f4
     pushf                                        ; 0b1fc9 669c
     cli                                          ; 0b1fcb fa
-    call sub_b122f                               ; 0b1fcc e85ef2ffff
+    call gus_irq_lock                            ; 0b1fcc e85ef2ffff
 loc_b1fd1:
     test ebx, ebx                                ; 0b1fd1 85db
     je loc_b2067                                 ; 0b1fd3 0f848e000000
     xor eax, eax                                 ; 0b1fd9 31c0
     mov edx, 0x44                                ; 0b1fdb ba44000000
     mov ax, word ptr [word_d8772]                ; 0b1fe0 66a172870d00
-    call sub_aa200                               ; 0b1fe6 e81582ffff
+    call outp                                    ; 0b1fe6 e81582ffff
     xor edx, edx                                 ; 0b1feb 31d2
     xor eax, eax                                 ; 0b1fed 31c0
     mov dl, byte ptr [ebp - 0x14]                ; 0b1fef 8a55ec
     mov ax, word ptr [word_d8776]                ; 0b1ff2 66a176870d00
-    call sub_aa200                               ; 0b1ff8 e80382ffff
+    call outp                                    ; 0b1ff8 e80382ffff
     inc byte ptr [ebp - 0x14]                    ; 0b1ffd fe45ec
 loc_b2000:
     xor eax, eax                                 ; 0b2000 31c0
     mov edx, 0x43                                ; 0b2002 ba43000000
     mov ax, word ptr [word_d8772]                ; 0b2007 66a172870d00
-    call sub_aa200                               ; 0b200d e8ee81ffff
+    call outp                                    ; 0b200d e8ee81ffff
     xor eax, eax                                 ; 0b2012 31c0
     xor edx, edx                                 ; 0b2014 31d2
     mov ax, word ptr [word_d8774]                ; 0b2016 66a174870d00
     mov dx, cx                                   ; 0b201c 6689ca
     inc esi                                      ; 0b201f 46
-    call sub_b19c7                               ; 0b2020 e8a2f9ffff
+    call outpw                                   ; 0b2020 e8a2f9ffff
     mov ah, byte ptr [ebp - 0xc]                 ; 0b2025 8a65f4
     mov dl, byte ptr [ebp - 8]                   ; 0b2028 8a55f8
     mov al, byte ptr [esi - 1]                   ; 0b202b 8a46ff
@@ -10519,7 +10541,7 @@ loc_b2045:
     mov dl, al                                   ; 0b2047 88c2
     xor eax, eax                                 ; 0b2049 31c0
     mov ax, word ptr [word_d8778]                ; 0b204b 66a178870d00
-    call sub_aa200                               ; 0b2051 e8aa81ffff
+    call outp                                    ; 0b2051 e8aa81ffff
     dec ebx                                      ; 0b2056 4b
     je loc_b1fd1                                 ; 0b2057 0f8474ffffff
     test cx, cx                                  ; 0b205d 6685c9
@@ -10527,7 +10549,7 @@ loc_b2045:
     jmp loc_b1fd1                                ; 0b2062 e96affffff
 
 loc_b2067:
-    call sub_b1256                               ; 0b2067 e8eaf1ffff
+    call gus_irq_unlock                          ; 0b2067 e8eaf1ffff
     popf                                         ; 0b206c 669d
     lea esp, [ebp - 4]                           ; 0b206e 8d65fc
     pop esi                                      ; 0b2071 5e
@@ -10536,10 +10558,11 @@ loc_b2067:
 
 
 ; ====================================================================================================
-; sub_b2074  [0xb2074, 426 bytes, 173 instructions]
-; called by: sub_ad434
+; gus_dram_size  [0xb2074, 426 bytes, 173 instructions]
+; probes the 256K banks
+; called by: gus_mem_init
 ; ====================================================================================================
-sub_b2074:
+gus_dram_size:
     push ebp                                     ; 0b2074 55
     mov ebp, esp                                 ; 0b2075 89e5
     push ebx                                     ; 0b2077 53
@@ -10550,22 +10573,22 @@ sub_b2074:
     sub esp, 0x18                                ; 0b207c 83ec18
     mov ebx, eax                                 ; 0b207f 89c3
     mov ecx, eax                                 ; 0b2081 89c1
-    call sub_b1ea0                               ; 0b2083 e818feffff
+    call gus_peek                                ; 0b2083 e818feffff
     xor cl, 0x20                                 ; 0b2088 80f120
     mov byte ptr [ebp - 0x28], al                ; 0b208b 8845d8
     mov byte ptr [ebp - 0x1c], al                ; 0b208e 8845e4
     mov eax, ecx                                 ; 0b2091 89c8
     mov edx, 0x55                                ; 0b2093 ba55000000
-    call sub_b1ea0                               ; 0b2098 e803feffff
+    call gus_peek                                ; 0b2098 e803feffff
     mov byte ptr [ebp - 0x20], al                ; 0b209d 8845e0
     mov byte ptr [ebp - 0x18], al                ; 0b20a0 8845e8
     mov eax, ebx                                 ; 0b20a3 89d8
-    call sub_b1f1c                               ; 0b20a5 e872feffff
+    call gus_poke                                ; 0b20a5 e872feffff
     mov eax, ecx                                 ; 0b20aa 89c8
     xor edx, edx                                 ; 0b20ac 31d2
-    call sub_b1f1c                               ; 0b20ae e869feffff
+    call gus_poke                                ; 0b20ae e869feffff
     mov eax, ebx                                 ; 0b20b3 89d8
-    call sub_b1ea0                               ; 0b20b5 e8e6fdffff
+    call gus_peek                                ; 0b20b5 e8e6fdffff
     cmp al, 0x55                                 ; 0b20ba 3c55
     je loc_b20c5                                 ; 0b20bc 7407
     xor al, al                                   ; 0b20be 30c0
@@ -10574,12 +10597,12 @@ sub_b2074:
 loc_b20c5:
     mov eax, ebx                                 ; 0b20c5 89d8
     xor edx, edx                                 ; 0b20c7 31d2
-    call sub_b1f1c                               ; 0b20c9 e84efeffff
+    call gus_poke                                ; 0b20c9 e84efeffff
     mov edx, 0x55                                ; 0b20ce ba55000000
     mov eax, ecx                                 ; 0b20d3 89c8
-    call sub_b1f1c                               ; 0b20d5 e842feffff
+    call gus_poke                                ; 0b20d5 e842feffff
     mov eax, ebx                                 ; 0b20da 89d8
-    call sub_b1ea0                               ; 0b20dc e8bffdffff
+    call gus_peek                                ; 0b20dc e8bffdffff
     test al, al                                  ; 0b20e1 84c0
     je loc_b20f1                                 ; 0b20e3 740c
     xor al, al                                   ; 0b20e5 30c0
@@ -10595,12 +10618,12 @@ loc_b20c5:
 loc_b20f1:
     mov edx, 0xaa                                ; 0b20f1 baaa000000
     mov eax, ebx                                 ; 0b20f6 89d8
-    call sub_b1f1c                               ; 0b20f8 e81ffeffff
+    call gus_poke                                ; 0b20f8 e81ffeffff
     mov eax, ecx                                 ; 0b20fd 89c8
     xor edx, edx                                 ; 0b20ff 31d2
-    call sub_b1f1c                               ; 0b2101 e816feffff
+    call gus_poke                                ; 0b2101 e816feffff
     mov eax, ebx                                 ; 0b2106 89d8
-    call sub_b1ea0                               ; 0b2108 e893fdffff
+    call gus_peek                                ; 0b2108 e893fdffff
     cmp al, 0xaa                                 ; 0b210d 3caa
     je loc_b211d                                 ; 0b210f 740c
     xor al, al                                   ; 0b2111 30c0
@@ -10616,12 +10639,12 @@ loc_b20f1:
 loc_b211d:
     mov edx, 0xff                                ; 0b211d baff000000
     mov eax, ebx                                 ; 0b2122 89d8
-    call sub_b1f1c                               ; 0b2124 e8f3fdffff
+    call gus_poke                                ; 0b2124 e8f3fdffff
     mov eax, ecx                                 ; 0b2129 89c8
     xor edx, edx                                 ; 0b212b 31d2
-    call sub_b1f1c                               ; 0b212d e8eafdffff
+    call gus_poke                                ; 0b212d e8eafdffff
     mov eax, ebx                                 ; 0b2132 89d8
-    call sub_b1ea0                               ; 0b2134 e867fdffff
+    call gus_peek                                ; 0b2134 e867fdffff
     cmp al, 0xff                                 ; 0b2139 3cff
     je loc_b2149                                 ; 0b213b 740c
     xor al, al                                   ; 0b213d 30c0
@@ -10640,11 +10663,11 @@ loc_b2149:
     xor edx, edx                                 ; 0b2151 31d2
     mov eax, ebx                                 ; 0b2153 89d8
     mov dl, byte ptr [ebp - 0x28]                ; 0b2155 8a55d8
-    call sub_b1f1c                               ; 0b2158 e8bffdffff
+    call gus_poke                                ; 0b2158 e8bffdffff
     xor edx, edx                                 ; 0b215d 31d2
     mov eax, ecx                                 ; 0b215f 89c8
     mov dl, byte ptr [ebp - 0x20]                ; 0b2161 8a55e0
-    call sub_b1f1c                               ; 0b2164 e8b3fdffff
+    call gus_poke                                ; 0b2164 e8b3fdffff
     mov al, 1                                    ; 0b2169 b001
     lea esp, [ebp - 0x14]                        ; 0b216b 8d65ec
     pop edi                                      ; 0b216e 5f
@@ -10673,25 +10696,25 @@ loc_b2181:
     or esi, edx                                  ; 0b2197 09d6
     mov eax, esi                                 ; 0b2199 89f0
     mov edx, 0xaa                                ; 0b219b baaa000000
-    call sub_b1ea0                               ; 0b21a0 e8fbfcffff
+    call gus_peek                                ; 0b21a0 e8fbfcffff
     mov byte ptr [ebp - 0x24], al                ; 0b21a5 8845dc
     mov eax, esi                                 ; 0b21a8 89f0
-    call sub_b1f1c                               ; 0b21aa e86dfdffff
+    call gus_poke                                ; 0b21aa e86dfdffff
     mov eax, ecx                                 ; 0b21af 89c8
     xor edx, edx                                 ; 0b21b1 31d2
-    call sub_b1f1c                               ; 0b21b3 e864fdffff
+    call gus_poke                                ; 0b21b3 e864fdffff
     mov eax, ebx                                 ; 0b21b8 89d8
-    call sub_b1ea0                               ; 0b21ba e8e1fcffff
+    call gus_peek                                ; 0b21ba e8e1fcffff
     cmp al, 0xaa                                 ; 0b21bf 3caa
     jne loc_b21e7                                ; 0b21c1 7524
     xor edx, edx                                 ; 0b21c3 31d2
     mov eax, ebx                                 ; 0b21c5 89d8
     mov dl, byte ptr [ebp - 0x1c]                ; 0b21c7 8a55e4
-    call sub_b1f1c                               ; 0b21ca e84dfdffff
+    call gus_poke                                ; 0b21ca e84dfdffff
     xor edx, edx                                 ; 0b21cf 31d2
     mov eax, ecx                                 ; 0b21d1 89c8
     mov dl, byte ptr [ebp - 0x18]                ; 0b21d3 8a55e8
-    call sub_b1f1c                               ; 0b21d6 e841fdffff
+    call gus_poke                                ; 0b21d6 e841fdffff
     xor al, al                                   ; 0b21db 30c0
     lea esp, [ebp - 0x14]                        ; 0b21dd 8d65ec
     pop edi                                      ; 0b21e0 5f
@@ -10707,7 +10730,7 @@ loc_b21e7:
     mov eax, esi                                 ; 0b21e9 89f0
     mov dl, byte ptr [ebp - 0x24]                ; 0b21eb 8a55dc
     inc edi                                      ; 0b21ee 47
-    call sub_b1f1c                               ; 0b21ef e828fdffff
+    call gus_poke                                ; 0b21ef e828fdffff
 loc_b21f4:
     cmp di, 4                                    ; 0b21f4 6683ff04
     jne loc_b2181                                ; 0b21f8 7587
@@ -10715,11 +10738,11 @@ loc_b21fa:
     xor edx, edx                                 ; 0b21fa 31d2
     mov eax, ebx                                 ; 0b21fc 89d8
     mov dl, byte ptr [ebp - 0x1c]                ; 0b21fe 8a55e4
-    call sub_b1f1c                               ; 0b2201 e816fdffff
+    call gus_poke                                ; 0b2201 e816fdffff
     xor edx, edx                                 ; 0b2206 31d2
     mov eax, ecx                                 ; 0b2208 89c8
     mov dl, byte ptr [ebp - 0x18]                ; 0b220a 8a55e8
-    call sub_b1f1c                               ; 0b220d e80afdffff
+    call gus_poke                                ; 0b220d e80afdffff
     mov al, 2                                    ; 0b2212 b002
 loc_b2214:
     lea esp, [ebp - 0x14]                        ; 0b2214 8d65ec
@@ -10734,10 +10757,11 @@ loc_b2214:
     times 2 db 0 ; 0b221e (padding)
 
 ; ====================================================================================================
-; sub_b2220  [0xb2220, 132 bytes, 43 instructions]
-; called by: sub_b0403, sub_b2408
+; __cvt_special  [0xb2220, 132 bytes, 43 instructions]
+; infinity / NaN text of the float formatter
+; called by: __cvt_float, __cvt_digits
 ; ====================================================================================================
-sub_b2220:
+__cvt_special:
     push ebx                                     ; 0b2220 53
     push edx                                     ; 0b2221 52
     sub esp, 8                                   ; 0b2222 83ec08
@@ -10791,10 +10815,10 @@ loc_b229c:
 
 
 ; ====================================================================================================
-; sub_b22a4  [0xb22a4, 60 bytes, 28 instructions]
-; called by: sub_b0403
+; __cvt_int_frac  [0xb22a4, 60 bytes, 28 instructions]
+; called by: __cvt_float
 ; ====================================================================================================
-sub_b22a4:
+__cvt_int_frac:
     push ebp                                     ; 0b22a4 55
     mov ebp, esp                                 ; 0b22a5 89e5
     push eax                                     ; 0b22a7 50
@@ -10807,7 +10831,7 @@ sub_b22a4:
     push edx                                     ; 0b22b4 52
     mov ebx, dword ptr [ebp + 8]                 ; 0b22b5 8b5d08
     push ebx                                     ; 0b22b8 53
-    call sub_b27a0                               ; 0b22b9 e8e2040000
+    call modf                                    ; 0b22b9 e8e2040000
     fldz                                         ; 0b22be d9ee
     fcompp                                       ; 0b22c0 ded9
     fnstsw ax                                    ; 0b22c2 dfe0
@@ -10827,10 +10851,10 @@ loc_b22d3:
 
 
 ; ====================================================================================================
-; sub_b22e0  [0xb22e0, 57 bytes, 25 instructions]  <noreturn>
-; called by: sub_b2408, sub_b251b
+; __cvt_round_digits  [0xb22e0, 57 bytes, 25 instructions]  <noreturn>
+; called by: __cvt_digits, __cvt_digits_tail
 ; ====================================================================================================
-sub_b22e0:
+__cvt_round_digits:
     push ebp                                     ; 0b22e0 55
     mov ebp, esp                                 ; 0b22e1 89e5
     push ebx                                     ; 0b22e3 53
@@ -10848,21 +10872,21 @@ sub_b22e0:
     push edx                                     ; 0b22f9 52
     mov esi, dword ptr [ebp + 8]                 ; 0b22fa 8b7508
     push esi                                     ; 0b22fd 56
-    call sub_b2321                               ; 0b22fe e81e000000
+    call __pow10_scale                           ; 0b22fe e81e000000
     fstp qword ptr [ebp + 8]                     ; 0b2303 dd5d08
 loc_b2306:
     lea eax, [ebp + 8]                           ; 0b2306 8d4508
     mov edx, ebx                                 ; 0b2309 89da
-    call sub_b27f4                               ; 0b230b e8e4040000
+    call __Rnd2Int                               ; 0b230b e8e4040000
     mov eax, ecx                                 ; 0b2310 89c8
     mov edx, ebx                                 ; 0b2312 89da
-    call sub_b27ba                               ; 0b2314 e8a1040000        noreturn
+    call __cvt_stub                              ; 0b2314 e8a1040000        noreturn
 
 ; ====================================================================================================
-; sub_b2319  [0xb2319, 8 bytes, 6 instructions]  <unreferenced>
+; empty_func_b2319  [0xb2319, 8 bytes, 6 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b2319:
+empty_func_b2319:
     pop esi                                      ; 0b2319 5e
     pop edx                                      ; 0b231a 5a
     pop ecx                                      ; 0b231b 59
@@ -10872,10 +10896,11 @@ sub_b2319:
 
 
 ; ====================================================================================================
-; sub_b2321  [0xb2321, 231 bytes, 76 instructions]
-; called by: sub_b0403, sub_b0627, sub_b22e0
+; __pow10_scale  [0xb2321, 231 bytes, 76 instructions]
+; scales by a power of ten from the table c4ca8
+; called by: __cvt_float, __strtod, __cvt_round_digits
 ; ====================================================================================================
-sub_b2321:
+__pow10_scale:
     push eax                                     ; 0b2321 50
     push ebx                                     ; 0b2322 53
     push ecx                                     ; 0b2323 51
@@ -10970,10 +10995,11 @@ loc_b23f5:
 
 
 ; ====================================================================================================
-; sub_b2408  [0xb2408, 275 bytes, 107 instructions]
-; called by: sub_b0403
+; __cvt_digits  [0xb2408, 275 bytes, 107 instructions]
+; the decimal digits of a double
+; called by: __cvt_float
 ; ====================================================================================================
-sub_b2408:
+__cvt_digits:
     push ebp                                     ; 0b2408 55
     mov ebp, esp                                 ; 0b2409 89e5
     push ebx                                     ; 0b240b 53
@@ -10993,7 +11019,7 @@ sub_b2408:
     mov dword ptr [edi], 0                       ; 0b2427 c70700000000
     push eax                                     ; 0b242d 50
     mov dword ptr [ecx], 0                       ; 0b242e c70100000000
-    call sub_b2220                               ; 0b2434 e8e7fdffff
+    call __cvt_special                           ; 0b2434 e8e7fdffff
     test eax, eax                                ; 0b2439 85c0
     je loc_b2444                                 ; 0b243b 7407
     mov eax, edx                                 ; 0b243d 89d0
@@ -11028,7 +11054,7 @@ loc_b2487:
     push eax                                     ; 0b248b 50
     mov edx, dword ptr [ebp + 8]                 ; 0b248c 8b5508
     push edx                                     ; 0b248f 52
-    call sub_b2980                               ; 0b2490 e8eb040000
+    call frexp                                   ; 0b2490 e8eb040000
     mov edx, dword ptr [ecx]                     ; 0b2495 8b11
     fstp st(0)                                   ; 0b2497 ddd8
     test edx, edx                                ; 0b2499 85d2
@@ -11069,7 +11095,7 @@ loc_b24dd:
     push esi                                     ; 0b24e9 56
     mov eax, dword ptr [ebp + 8]                 ; 0b24ea 8b4508
     push eax                                     ; 0b24ed 50
-    call sub_b27a0                               ; 0b24ee e8ad020000
+    call modf                                    ; 0b24ee e8ad020000
     fldz                                         ; 0b24f3 d9ee
     fcompp                                       ; 0b24f5 ded9
     fnstsw ax                                    ; 0b24f7 dfe0
@@ -11089,13 +11115,13 @@ loc_b2507:
     mov eax, dword ptr [ebp + 8]                 ; 0b2510 8b4508
     push eax                                     ; 0b2513 50
     mov eax, dword ptr [ecx]                     ; 0b2514 8b01
-    call sub_b22e0                               ; 0b2516 e8c5fdffff        noreturn
+    call __cvt_round_digits                      ; 0b2516 e8c5fdffff        noreturn
 
 ; ====================================================================================================
-; sub_b251b  [0xb251b, 66 bytes, 26 instructions]  <unreferenced>
+; __cvt_digits_tail  [0xb251b, 66 bytes, 26 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b251b:
+__cvt_digits_tail:
     mov esi, eax                                 ; 0b251b 89c6
     test eax, eax                                ; 0b251d 85c0
     je loc_b2567                                 ; 0b251f 7446
@@ -11126,13 +11152,13 @@ loc_b2549:
     mov esi, dword ptr [ebp + 8]                 ; 0b2552 8b7508
     push esi                                     ; 0b2555 56
     mov eax, dword ptr [ecx]                     ; 0b2556 8b01
-    call sub_b22e0                               ; 0b2558 e883fdffff        noreturn
+    call __cvt_round_digits                      ; 0b2558 e883fdffff        noreturn
 
 ; ====================================================================================================
-; sub_b255d  [0xb255d, 145 bytes, 59 instructions]  <unreferenced>
+; __cvt_digits_int  [0xb255d, 145 bytes, 59 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b255d:
+__cvt_digits_int:
     test eax, eax                                ; 0b255d 85c0
     jle loc_b2567                                ; 0b255f 7e06
     mov eax, dword ptr [ecx]                     ; 0b2561 8b01
@@ -11175,7 +11201,7 @@ loc_b25b1:
     lea edx, [ebp - 0x40]                        ; 0b25b4 8d55c0
     mov edi, dword ptr [ebp + 0x20]              ; 0b25b7 8b7d20
     lea esi, [ebp - 0x40]                        ; 0b25ba 8d75c0
-    call sub_b285f                               ; 0b25bd e89d020000
+    call __Bin2String                            ; 0b25bd e89d020000
     push edi                                     ; 0b25c2 57
 loc_b25c3:
     mov al, byte ptr [esi]                       ; 0b25c3 8a06
@@ -11203,10 +11229,10 @@ loc_b25e2:
 
 
 ; ====================================================================================================
-; sub_b25ee  [0xb25ee, 144 bytes, 63 instructions]  <unreferenced>
+; __ModF  [0xb25ee, 144 bytes, 63 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b25ee:
+__ModF:
     push ebp                                     ; 0b25ee 55
     push esi                                     ; 0b25ef 56
     push edi                                     ; 0b25f0 57
@@ -11262,7 +11288,7 @@ loc_b264e:
     mov ebp, esi                                 ; 0b2658 89f5
     and edx, dword ptr [ebp + 4]                 ; 0b265a 235504
     and eax, dword ptr [ebp]                     ; 0b265d 234500
-    call sub_b26c9                               ; 0b2660 e864000000
+    call __Norm                                  ; 0b2660 e864000000
     pop esi                                      ; 0b2665 5e
     or edx, edx                                  ; 0b2666 09d2
     je loc_b2672                                 ; 0b2668 7408
@@ -11280,10 +11306,10 @@ loc_b2672:
 
 
 ; ====================================================================================================
-; sub_b267e  [0xb267e, 75 bytes, 40 instructions]
-; called by: sub_b0627
+; __ZBuf2F  [0xb267e, 75 bytes, 40 instructions]
+; called by: __strtod
 ; ====================================================================================================
-sub_b267e:
+__ZBuf2F:
     push ebp                                     ; 0b267e 55
     push esi                                     ; 0b267f 56
     push edi                                     ; 0b2680 57
@@ -11317,7 +11343,7 @@ loc_b268c:
 loc_b26b0:
     mov eax, ecx                                 ; 0b26b0 89c8
     mov edi, 0x43300000                          ; 0b26b2 bf00003043
-    call sub_b26c9                               ; 0b26b7 e80d000000
+    call __Norm                                  ; 0b26b7 e80d000000
     pop ebp                                      ; 0b26bc 5d
     mov dword ptr [ebp + 4], edx                 ; 0b26bd 895504
     mov dword ptr [ebp], eax                     ; 0b26c0 894500
@@ -11330,10 +11356,10 @@ loc_b26b0:
 
 
 ; ====================================================================================================
-; sub_b26c9  [0xb26c9, 81 bytes, 26 instructions]
-; called by: sub_b25ee, sub_b267e
+; __Norm  [0xb26c9, 81 bytes, 26 instructions]
+; called by: __ModF, __ZBuf2F
 ; ====================================================================================================
-sub_b26c9:
+__Norm:
     sub esi, esi                                 ; 0b26c9 29f6
     or esi, eax                                  ; 0b26cb 09c6
     or esi, edx                                  ; 0b26cd 09d6
@@ -11370,10 +11396,11 @@ loc_b2719:
     times 6 db 0 ; 0b271a (padding)
 
 ; ====================================================================================================
-; sub_b2720  [0xb2720, 27 bytes, 12 instructions]
-; called by: sub_b0cb8, sub_b10d0
+; gus_addr_16bit  [0xb2720, 27 bytes, 12 instructions]
+; DRAM address of a 16 bit sample (bank bits kept)
+; called by: gus_dma_start, gus_wave_addresses
 ; ====================================================================================================
-sub_b2720:
+gus_addr_16bit:
     push ebp                                     ; 0b2720 55
     mov ebp, esp                                 ; 0b2721 89e5
     push edx                                     ; 0b2723 52
@@ -11390,10 +11417,10 @@ sub_b2720:
     db 0x90 ; 0b273b |.| (padding)
 
 ; ====================================================================================================
-; sub_b273c  [0xb273c, 89 bytes, 38 instructions]  <unreferenced>
+; gus_addr_from_16bit  [0xb273c, 89 bytes, 38 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b273c:
+gus_addr_from_16bit:
     push ebp                                     ; 0b273c 55
     mov ebp, esp                                 ; 0b273d 89e5
     push ecx                                     ; 0b273f 51
@@ -11437,14 +11464,14 @@ loc_b278e:
     times 11 db 0 ; 0b2795 (padding)
 
 ; ====================================================================================================
-; sub_b27a0  [0xb27a0, 25 bytes, 10 instructions]
-; called by: sub_b22a4, sub_b2408
+; modf  [0xb27a0, 25 bytes, 10 instructions]
+; called by: __cvt_int_frac, __cvt_digits
 ; ====================================================================================================
-sub_b27a0:
+modf:
     push eax                                     ; 0b27a0 50
     fld qword ptr [esp + 8]                      ; 0b27a1 dd442408
     fld st(0)                                    ; 0b27a5 d9c0
-    call sub_961d0                               ; 0b27a7 e8243afeff
+    call fround                                  ; 0b27a7 e8243afeff
     fsub st(1), st(0)                            ; 0b27ac dce9
     mov eax, dword ptr [esp + 0x10]              ; 0b27ae 8b442410
     fstp qword ptr [eax]                         ; 0b27b2 dd18
@@ -11455,19 +11482,19 @@ sub_b27a0:
     db 0x00 ; 0b27b9 |.| (padding)
 
 ; ====================================================================================================
-; sub_b27ba  [0xb27ba, 7 bytes, 3 instructions]  <noreturn>
-; called by: sub_b22e0
+; __cvt_stub  [0xb27ba, 7 bytes, 3 instructions]  <noreturn>
+; called by: __cvt_round_digits
 ; ====================================================================================================
-sub_b27ba:
+__cvt_stub:
     push edi                                     ; 0b27ba 57
     push ecx                                     ; 0b27bb 51
-    call sub_b28c9                               ; 0b27bc e808010000        noreturn
+    call getpow10                                ; 0b27bc e808010000        noreturn
 
 ; ====================================================================================================
-; sub_b27c1  [0xb27c1, 51 bytes, 23 instructions]  <unreferenced>
+; __CmpBigInt  [0xb27c1, 51 bytes, 23 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b27c1:
+__CmpBigInt:
     inc eax                                      ; 0b27c1 40
     lea edi, [edi + eax*8]                       ; 0b27c2 8d3cc7
     mov ecx, dword ptr [edx]                     ; 0b27c5 8b0a
@@ -11502,10 +11529,10 @@ loc_b27f1:
 
 
 ; ====================================================================================================
-; sub_b27f4  [0xb27f4, 107 bytes, 48 instructions]
-; called by: sub_b22e0
+; __Rnd2Int  [0xb27f4, 107 bytes, 48 instructions]
+; called by: __cvt_round_digits
 ; ====================================================================================================
-sub_b27f4:
+__Rnd2Int:
     push ebx                                     ; 0b27f4 53
     push ecx                                     ; 0b27f5 51
     push edx                                     ; 0b27f6 52
@@ -11563,10 +11590,10 @@ loc_b2852:
 
 
 ; ====================================================================================================
-; sub_b285f  [0xb285f, 106 bytes, 55 instructions]
-; called by: sub_b255d
+; __Bin2String  [0xb285f, 106 bytes, 55 instructions]
+; called by: __cvt_digits_int
 ; ====================================================================================================
-sub_b285f:
+__Bin2String:
     push ebp                                     ; 0b285f 55
     push edi                                     ; 0b2860 57
     push ecx                                     ; 0b2861 51
@@ -11631,11 +11658,12 @@ loc_b28c3:
 
 
 ; ====================================================================================================
-; sub_b28c9  [0xb28c9, 5 bytes, 1 instructions]  <noreturn>
-; called by: sub_b27ba
+; getpow10  [0xb28c9, 5 bytes, 1 instructions]  <noreturn>
+; i64tos: power of ten of the big number conversion (exact Open Watcom signature)
+; called by: __cvt_stub
 ; ====================================================================================================
-sub_b28c9:
-    call sub_b297e                               ; 0b28c9 e8b0000000
+getpow10:
+    call empty_func_b297e                        ; 0b28c9 e8b0000000
     db 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00 ; 0b28ce |................| (unexplored)
     db 0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x64, 0x00, 0x00, 0x00 ; 0b28de |............d...| (unexplored)
     db 0x00, 0x00, 0x00, 0x00, 0xe8, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x27, 0x00, 0x00 ; 0b28ee |.............'..| (unexplored)
@@ -11649,19 +11677,19 @@ sub_b28c9:
     db 0x04, 0x23, 0xc7, 0x8a, 0x00, 0x00, 0xe8, 0x89, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff ; 0b296e |.#..............| (unexplored)
 
 ; ====================================================================================================
-; sub_b297e  [0xb297e, 2 bytes, 2 instructions]
-; called by: sub_b28c9
+; empty_func_b297e  [0xb297e, 2 bytes, 2 instructions]
+; called by: getpow10
 ; ====================================================================================================
-sub_b297e:
+empty_func_b297e:
     pop edi                                      ; 0b297e 5f
     ret                                          ; 0b297f c3
 
 
 ; ====================================================================================================
-; sub_b2980  [0xb2980, 111 bytes, 35 instructions]
-; called by: sub_b2408
+; frexp  [0xb2980, 111 bytes, 35 instructions]
+; called by: __cvt_digits
 ; ====================================================================================================
-sub_b2980:
+frexp:
     push eax                                     ; 0b2980 50
     push ebx                                     ; 0b2981 53
     push ecx                                     ; 0b2982 51
@@ -11703,10 +11731,11 @@ loc_b29dc:
     db 0x00 ; 0b29ef |.| (padding)
 
 ; ====================================================================================================
-; sub_b29f0  [0xb29f0, 171 bytes, 38 instructions]  <pic1_mask>
-; called by: sub_10712, ui_init
+; keyboard_install  [0xb29f0, 171 bytes, 38 instructions]  <pic1_mask>
+; hooks int 9 / int 16h, the key state table
+; called by: setup_controls, ui_init
 ; ====================================================================================================
-sub_b29f0:
+keyboard_install:
     cmp word ptr [word_d2d6e], 0                 ; 0b29f0 66833d6e2d0d0000
     jne loc_b2a9a                                ; 0b29f8 0f859c000000
     mov word ptr [word_d2d6e], ds                ; 0b29fe 668c1d6e2d0d00
@@ -11715,44 +11744,44 @@ sub_b29f0:
     or al, 3                                     ; 0b2a08 0c03
     out 0x21, al                                 ; 0b2a0a e621              port 0x21 (pic1_mask)
     mov ebx, 9                                   ; 0b2a0c bb09000000
-    call sub_9864c                               ; 0b2a11 e8365cfeff
+    call dos_getvect                             ; 0b2a11 e8365cfeff
     mov dword ptr [dword_d2d5c], eax             ; 0b2a16 a35c2d0d00
     mov word ptr [word_d2d60], dx                ; 0b2a1b 668915602d0d00
     mov ebx, 0x16                                ; 0b2a22 bb16000000
-    call sub_9864c                               ; 0b2a27 e8205cfeff
+    call dos_getvect                             ; 0b2a27 e8205cfeff
     mov dword ptr [dword_d2d62], eax             ; 0b2a2c a3622d0d00
     mov word ptr [word_d2d66], dx                ; 0b2a31 668915662d0d00
     mov ebx, 0x23                                ; 0b2a38 bb23000000
-    call sub_9864c                               ; 0b2a3d e80a5cfeff
+    call dos_getvect                             ; 0b2a3d e80a5cfeff
     mov dword ptr [dword_d2d68], eax             ; 0b2a42 a3682d0d00
     mov word ptr [word_d2d6c], dx                ; 0b2a47 6689156c2d0d00
     mov dx, cs                                   ; 0b2a4e 668cca
     mov ebx, 9                                   ; 0b2a51 bb09000000
-    mov eax, sub_b2b0a                           ; 0b2a56 b80a2b0b00
-    call sub_98664                               ; 0b2a5b e8045cfeff
+    mov eax, keyboard_irq_handler                ; 0b2a56 b80a2b0b00
+    call dos_setvect                             ; 0b2a5b e8045cfeff
     mov dx, cs                                   ; 0b2a60 668cca
     mov ebx, 0x16                                ; 0b2a63 bb16000000
     mov eax, unk_b2c01                           ; 0b2a68 b8012c0b00
     mov dx, cs                                   ; 0b2a6d 668cca
     mov ebx, 0x23                                ; 0b2a70 bb23000000
     mov eax, unk_b2c00                           ; 0b2a75 b8002c0b00
-    call sub_98664                               ; 0b2a7a e8e55bfeff
+    call dos_setvect                             ; 0b2a7a e8e55bfeff
     pop eax                                      ; 0b2a7f 58
     out 0x21, al                                 ; 0b2a80 e621              port 0x21 (pic1_mask)
-    mov ebx, sub_b2c4a                           ; 0b2a82 bb4a2c0b00
+    mov ebx, keyboard_int16_handler              ; 0b2a82 bb4a2c0b00
     mov dword ptr [funcptr_d2c84], ebx           ; 0b2a87 891d842c0d00
-    push sub_b2a9b                               ; 0b2a8d 689b2a0b00
-    call sub_b3454                               ; 0b2a92 e8bd090000
+    push keyboard_remove                         ; 0b2a8d 689b2a0b00
+    call atexit_wrap                             ; 0b2a92 e8bd090000
     add esp, 4                                   ; 0b2a97 83c404
 loc_b2a9a:
     ret                                          ; 0b2a9a c3
 
 
 ; ====================================================================================================
-; sub_b2a9b  [0xb2a9b, 111 bytes, 26 instructions]  <pic1_mask>
-; called by: sub_b29f0
+; keyboard_remove  [0xb2a9b, 111 bytes, 26 instructions]  <pic1_mask>
+; called by: keyboard_install
 ; ====================================================================================================
-sub_b2a9b:
+keyboard_remove:
     cmp word ptr [word_d2d6e], 0                 ; 0b2a9b 66833d6e2d0d0000
     je loc_b2b09                                 ; 0b2aa3 7464
     mov word ptr [word_d2d6e], 0                 ; 0b2aa5 66c7056e2d0d0000..
@@ -11764,18 +11793,18 @@ sub_b2a9b:
     mov ebx, 9                                   ; 0b2ab6 bb09000000
     mov eax, dword ptr [dword_d2d5c]             ; 0b2abb a15c2d0d00
     mov dx, word ptr [word_d2d60]                ; 0b2ac0 668b15602d0d00
-    call sub_98664                               ; 0b2ac7 e8985bfeff
+    call dos_setvect                             ; 0b2ac7 e8985bfeff
     mov ebx, 0x16                                ; 0b2acc bb16000000
     mov eax, dword ptr [dword_d2d62]             ; 0b2ad1 a1622d0d00
     mov dx, word ptr [word_d2d66]                ; 0b2ad6 668b15662d0d00
     mov ebx, 0x23                                ; 0b2add bb23000000
     mov eax, dword ptr [dword_d2d68]             ; 0b2ae2 a1682d0d00
     mov dx, word ptr [word_d2d6c]                ; 0b2ae7 668b156c2d0d00
-    call sub_98664                               ; 0b2aee e8715bfeff
+    call dos_setvect                             ; 0b2aee e8715bfeff
     and byte ptr [0x417], 0xf0                   ; 0b2af3 802517040000f0
     pop eax                                      ; 0b2afa 58
     out 0x21, al                                 ; 0b2afb e621              port 0x21 (pic1_mask)
-    mov ebx, sub_b2ccd                           ; 0b2afd bbcd2c0b00
+    mov ebx, bios_int16                          ; 0b2afd bbcd2c0b00
     mov dword ptr [funcptr_d2c84], ebx           ; 0b2b02 891d842c0d00
     popal                                        ; 0b2b08 61
 loc_b2b09:
@@ -11783,10 +11812,11 @@ loc_b2b09:
 
 
 ; ====================================================================================================
-; sub_b2b0a  [0xb2b0a, 235 bytes, 73 instructions]  <kbd_ctrl_speaker kbd_data pic1>
-; called by: sub_b29f0
+; keyboard_irq_handler  [0xb2b0a, 235 bytes, 73 instructions]  <kbd_ctrl_speaker kbd_data pic1>
+; reads port 60h, key down / up table, ring buffer
+; called by: keyboard_install
 ; ====================================================================================================
-sub_b2b0a:
+keyboard_irq_handler:
     push eax                                     ; 0b2b0a 50
     push ebx                                     ; 0b2b0b 53
     push ds                                      ; 0b2b0c 1e
@@ -11882,10 +11912,10 @@ loc_b2bed:
 
 
 ; ====================================================================================================
-; sub_b2bf5  [0xb2bf5, 11 bytes, 3 instructions]  <unreferenced>
+; keyboard_translate  [0xb2bf5, 11 bytes, 3 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b2bf5:
+keyboard_translate:
     test byte ptr [byte_d2d2f], 1                ; 0b2bf5 f6052f2d0d0001
     je loc_b2be5                                 ; 0b2bfc 74e7
     jmp loc_b2bdc                                ; 0b2bfe ebdc
@@ -11900,10 +11930,11 @@ unk_b2c01:
     db 0x07, 0x1f, 0x5d, 0x5f, 0x5e, 0x5a, 0x59, 0x5b, 0xcf ; 0b2c41 |..]_^ZY[.| (unexplored)
 
 ; ====================================================================================================
-; sub_b2c4a  [0xb2c4a, 116 bytes, 36 instructions]
-; called by: sub_b29f0
+; keyboard_int16_handler  [0xb2c4a, 116 bytes, 36 instructions]
+; BIOS read key served from the ring buffer
+; called by: keyboard_install
 ; ====================================================================================================
-sub_b2c4a:
+keyboard_int16_handler:
     cmp ah, 0                                    ; 0b2c4a 80fc00
     je loc_b2c85                                 ; 0b2c4d 7436
     cmp ah, 0x10                                 ; 0b2c4f 80fc10
@@ -11950,10 +11981,11 @@ loc_b2cac:
 
 
 ; ====================================================================================================
-; sub_b2cbe  [0xb2cbe, 15 bytes, 6 instructions]
-; called by: sub_1086a, scan_keyboard_control, sub_10c7f, sub_11161, sub_2fedf, sub_31250, sub_6bd69, sub_6eab5, database_dialog_box
+; key_down  [0xb2cbe, 15 bytes, 6 instructions]
+; the key state table entry of a scan code
+; called by: keyboard_direction, scan_keyboard_control, read_menu_buttons, wait_key_release, text_entry_dialog, dialog_pointer_loop, ui_poll_keyboard, dbedit_error_dialog_loop, database_dialog_box
 ; ====================================================================================================
-sub_b2cbe:
+key_down:
     push ebp                                     ; 0b2cbe 55
     mov ebp, esp                                 ; 0b2cbf 8bec
     mov ebx, dword ptr [ebp + 8]                 ; 0b2cc1 8b5d08
@@ -11963,10 +11995,10 @@ sub_b2cbe:
 
 
 ; ====================================================================================================
-; sub_b2ccd  [0xb2ccd, 9 bytes, 4 instructions]  <int16h>
-; called by: sub_b2a9b
+; bios_int16  [0xb2ccd, 9 bytes, 4 instructions]  <int16h>
+; called by: keyboard_remove
 ; ====================================================================================================
-sub_b2ccd:
+bios_int16:
     movzx eax, ax                                ; 0b2ccd 0fb7c0
     int 0x16                                     ; 0b2cd0 cd16              keyboard
     movzx eax, ax                                ; 0b2cd2 0fb7c0
@@ -11978,7 +12010,7 @@ sub_b2ccd:
 ; fatalerror  [0xb2cd8, 80 bytes, 19 instructions]
 ; restores the video mode, prints the message and exits
 ; annotations: external
-; called by: main, sub_106c8, check_disk_space, check_disk_space_for_game, sub_1b201, iff_parse, sub_1bbcc, sub_1befd, db_read_player, db_open_files, league_select_screen, league_name_prompt (+41 more)
+; called by: main, disk_free_bytes, check_disk_space, check_disk_space_for_game, cdstream_open_secondary, iff_parse, load_team_databases, begin_game_session, db_read_player, db_open_files, league_select_screen, league_name_prompt (+41 more)
 ; ====================================================================================================
 fatalerror:
     pop eax                                      ; 0b2cd8 58
@@ -12005,10 +12037,10 @@ loc_b2d11:
 
 
 ; ====================================================================================================
-; sub_b2d28  [0xb2d28, 13 bytes, 6 instructions]  <unreferenced>
+; mouse_set_handler  [0xb2d28, 13 bytes, 6 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b2d28:
+mouse_set_handler:
     push ebp                                     ; 0b2d28 55
     mov ebp, esp                                 ; 0b2d29 8bec
     mov eax, dword ptr [ebp + 8]                 ; 0b2d2b 8b4508
@@ -12019,10 +12051,11 @@ sub_b2d28:
     times 3 db 0 ; 0b2d35 (padding)
 
 ; ====================================================================================================
-; sub_b2d38  [0xb2d38, 60 bytes, 18 instructions]  <mouse_get_state>
+; mouse_read_buttons  [0xb2d38, 60 bytes, 18 instructions]  <mouse_get_state>
+; int 33h 3
 ; called by: readmouse
 ; ====================================================================================================
-sub_b2d38:
+mouse_read_buttons:
     xor eax, eax                                 ; 0b2d38 33c0
     dec dword ptr [dword_d3000]                  ; 0b2d3a ff0d00300d00
     jne loc_b2d57                                ; 0b2d40 7515
@@ -12047,10 +12080,11 @@ loc_b2d5e:
 
 
 ; ====================================================================================================
-; sub_b2d74  [0xb2d74, 32 bytes, 11 instructions]  <int33h>
+; mouse_set_sensitivity  [0xb2d74, 32 bytes, 11 instructions]  <int33h>
+; int 33h 1Ah
 ; called by: initmouse
 ; ====================================================================================================
-sub_b2d74:
+mouse_set_sensitivity:
     push ebp                                     ; 0b2d74 55
     mov ebp, esp                                 ; 0b2d75 8bec
     cmp dword ptr [dword_d3028], 0               ; 0b2d77 833d28300d0000
@@ -12066,10 +12100,10 @@ loc_b2d92:
 
 
 ; ====================================================================================================
-; sub_b2d94  [0xb2d94, 32 bytes, 11 instructions]  <int33h unreferenced>
+; mouse_set_sensitivity_b  [0xb2d94, 32 bytes, 11 instructions]  <int33h unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b2d94:
+mouse_set_sensitivity_b:
     push ebp                                     ; 0b2d94 55
     mov ebp, esp                                 ; 0b2d95 8bec
     cmp dword ptr [dword_d3028], 0               ; 0b2d97 833d28300d0000
@@ -12087,7 +12121,7 @@ loc_b2db2:
 ; ====================================================================================================
 ; setmousepos  [0xb2db4, 22 bytes, 8 instructions]
 ; annotations: external
-; called by: sub_10712, handle_hotkey, game_loop, play_game, reset_game_state, check_disk_space_for_game, pause_menu, run_menu, menu_page_a, menu_page_b, team_select_screen, league_name_entry (+25 more)
+; called by: setup_controls, handle_hotkey, game_loop, play_game, reset_game_state, check_disk_space_for_game, pause_menu, run_menu, menu_page_a, menu_page_b, team_select_screen, league_name_entry (+25 more)
 ; ====================================================================================================
 setmousepos:
     push ebp                                     ; 0b2db4 55
@@ -12104,7 +12138,7 @@ setmousepos:
 ; getmouse  [0xb2dca, 37 bytes, 13 instructions]
 ; getmouse(&buttons, &x, &y)
 ; annotations: external
-; called by: pause_menu, sub_1a5d4, exit_game_dialog, league_name_entry, sub_2fdd1, sub_303fb, calendar_screen, league_import_export_check, league_calendar_flow, sub_38386, team_info_screen, password_prompt (+38 more)
+; called by: pause_menu, pause_sports_desk_confirm, exit_game_dialog, league_name_entry, choose_db_or_org, listbox_dialog, calendar_screen, league_import_export_check, league_calendar_flow, team_info_confirm, team_info_screen, password_prompt (+38 more)
 ; ====================================================================================================
 getmouse:
     push ebp                                     ; 0b2dca 55
@@ -12123,10 +12157,10 @@ getmouse:
 
 
 ; ====================================================================================================
-; sub_b2def  [0xb2def, 22 bytes, 8 instructions]  <unreferenced>
+; mouse_set_x_limits  [0xb2def, 22 bytes, 8 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b2def:
+mouse_set_x_limits:
     push ebp                                     ; 0b2def 55
     mov ebp, esp                                 ; 0b2df0 8bec
     mov eax, dword ptr [ebp + 8]                 ; 0b2df2 8b4508
@@ -12138,10 +12172,10 @@ sub_b2def:
 
 
 ; ====================================================================================================
-; sub_b2e05  [0xb2e05, 22 bytes, 8 instructions]  <unreferenced>
+; mouse_set_y_limits  [0xb2e05, 22 bytes, 8 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b2e05:
+mouse_set_y_limits:
     push ebp                                     ; 0b2e05 55
     mov ebp, esp                                 ; 0b2e06 8bec
     mov eax, dword ptr [ebp + 8]                 ; 0b2e08 8b4508
@@ -12219,7 +12253,7 @@ loc_b2ec2:
     mov dword ptr [dword_d302c], ecx             ; 0b2ec8 890d2c300d00
     mov dword ptr [dword_d3030], edx             ; 0b2ece 891530300d00
     inc dword ptr [dword_d3000]                  ; 0b2ed4 ff0500300d00
-    call sub_b2d38                               ; 0b2eda e859feffff
+    call mouse_read_buttons                      ; 0b2eda e859feffff
     dec dword ptr [dword_d3000]                  ; 0b2edf ff0d00300d00
     mov dword ptr [dword_d3034], eax             ; 0b2ee5 a334300d00
 loc_b2eea:
@@ -12229,28 +12263,28 @@ loc_b2eea:
 
 
 ; ====================================================================================================
-; sub_b2ef6  [0xb2ef6, 7 bytes, 2 instructions]
+; mouse_lock  [0xb2ef6, 7 bytes, 2 instructions]
 ; called by: initmouse
 ; ====================================================================================================
-sub_b2ef6:
+mouse_lock:
     inc dword ptr [dword_d3038]                  ; 0b2ef6 ff0538300d00
     ret                                          ; 0b2efc c3
 
 
 ; ====================================================================================================
-; sub_b2efd  [0xb2efd, 7 bytes, 2 instructions]
+; mouse_unlock  [0xb2efd, 7 bytes, 2 instructions]
 ; called by: initmouse
 ; ====================================================================================================
-sub_b2efd:
+mouse_unlock:
     dec dword ptr [dword_d3038]                  ; 0b2efd ff0d38300d00
     ret                                          ; 0b2f03 c3
 
 
 ; ====================================================================================================
-; sub_b2f04  [0xb2f04, 30 bytes, 8 instructions]  <int33h>
+; mouse_restore_sensitivity  [0xb2f04, 30 bytes, 8 instructions]  <int33h>
 ; called by: initmouse
 ; ====================================================================================================
-sub_b2f04:
+mouse_restore_sensitivity:
     pushal                                       ; 0b2f04 60
     mov ax, 0x1a                                 ; 0b2f05 66b81a00
     mov bx, word ptr [word_d3004]                ; 0b2f09 668b1d04300d00
@@ -12265,7 +12299,7 @@ sub_b2f04:
 ; initmouse  [0xb2f22, 234 bytes, 45 instructions]  <int33h mouse_get_state mouse_reset>
 ; int 33h reset
 ; annotations: external
-; called by: main, sub_10712, ui_init
+; called by: main, setup_controls, ui_init
 ; ====================================================================================================
 initmouse:
     mov dword ptr [dword_d3028], 0               ; 0b2f22 c70528300d000000..
@@ -12304,13 +12338,13 @@ loc_b2f7c:
     push 0x40                                    ; 0b2fc6 6a40
     push 0x20                                    ; 0b2fc8 6a20
     push 0x20                                    ; 0b2fca 6a20
-    call sub_b2d74                               ; 0b2fcc e8a3fdffff
-    mov dword ptr [funcptr_d306c], sub_b2efd     ; 0b2fd1 c7056c300d00fd2e..
-    mov dword ptr [funcptr_d3070], sub_b2efd     ; 0b2fdb c70570300d00fd2e..
-    mov dword ptr [funcptr_d3074], sub_b2ef6     ; 0b2fe5 c70574300d00f62e..
+    call mouse_set_sensitivity                   ; 0b2fcc e8a3fdffff
+    mov dword ptr [funcptr_d306c], mouse_unlock  ; 0b2fd1 c7056c300d00fd2e..
+    mov dword ptr [funcptr_d3070], mouse_unlock  ; 0b2fdb c70570300d00fd2e..
+    mov dword ptr [funcptr_d3074], mouse_lock    ; 0b2fe5 c70574300d00f62e..
     mov dword ptr [mouse_update_callback], readmouse ; 0b2fef c70578300d00432e..
-    push sub_b2f04                               ; 0b2ff9 68042f0b00
-    call sub_b3454                               ; 0b2ffe e851040000
+    push mouse_restore_sensitivity               ; 0b2ff9 68042f0b00
+    call atexit_wrap                             ; 0b2ffe e851040000
     add esp, 0x20                                ; 0b3003 83c420
 loc_b3006:
     mov eax, dword ptr [dword_d3028]             ; 0b3006 a128300d00
@@ -12318,20 +12352,21 @@ loc_b3006:
 
 
 ; ====================================================================================================
-; sub_b300c  [0xb300c, 3 bytes, 2 instructions]
+; return_zero_b300c  [0xb300c, 3 bytes, 2 instructions]
 ; address taken (function pointer)
 ; ====================================================================================================
-sub_b300c:
+return_zero_b300c:
     xor eax, eax                                 ; 0b300c 33c0
     ret                                          ; 0b300e c3
 
     db 0x00 ; 0b300f |.| (padding)
 
 ; ====================================================================================================
-; sub_b3010  [0xb3010, 38 bytes, 24 instructions]
-; called by: sub_b3036
+; critical_error_handler  [0xb3010, 38 bytes, 24 instructions]
+; int 24h: calls the installed handler
+; called by: install_critical_error_handler
 ; ====================================================================================================
-sub_b3010:
+critical_error_handler:
     sti                                          ; 0b3010 fb
     push ebx                                     ; 0b3011 53
     push ecx                                     ; 0b3012 51
@@ -12343,7 +12378,7 @@ sub_b3010:
     push es                                      ; 0b3018 06
     push fs                                      ; 0b3019 0fa0
     push gs                                      ; 0b301b 0fa8
-    call sub_902a0                               ; 0b301d e87ed2fdff
+    call empty_func_902a0                        ; 0b301d e87ed2fdff
     call dword ptr cs:[dword_d3096]              ; 0b3022 2eff1596300d00
     pop gs                                       ; 0b3029 0fa9
     pop fs                                       ; 0b302b 0fa1
@@ -12359,10 +12394,10 @@ sub_b3010:
 
 
 ; ====================================================================================================
-; sub_b3036  [0xb3036, 85 bytes, 21 instructions]
+; install_critical_error_handler  [0xb3036, 85 bytes, 21 instructions]
 ; called by: main
 ; ====================================================================================================
-sub_b3036:
+install_critical_error_handler:
     push ebp                                     ; 0b3036 55
     mov ebp, esp                                 ; 0b3037 8bec
     mov eax, dword ptr [ebp + 8]                 ; 0b3039 8b4508
@@ -12372,15 +12407,15 @@ sub_b3036:
     cmp word ptr [word_d3094], 0                 ; 0b304a 66833d94300d0000
     jne loc_b3089                                ; 0b3052 7535
     mov ebx, 0x24                                ; 0b3054 bb24000000
-    call sub_9864c                               ; 0b3059 e8ee55feff
+    call dos_getvect                             ; 0b3059 e8ee55feff
     mov dword ptr [dword_d3090], eax             ; 0b305e a390300d00
     mov word ptr [word_d3094], dx                ; 0b3063 66891594300d00
     mov ebx, 0x24                                ; 0b306a bb24000000
     mov dx, cs                                   ; 0b306f 668cca
-    mov eax, sub_b3010                           ; 0b3072 b810300b00
-    call sub_98664                               ; 0b3077 e8e855feff
-    push sub_b308b                               ; 0b307c 688b300b00
-    call sub_b3454                               ; 0b3081 e8ce030000
+    mov eax, critical_error_handler              ; 0b3072 b810300b00
+    call dos_setvect                             ; 0b3077 e8e855feff
+    push remove_critical_error_handler           ; 0b307c 688b300b00
+    call atexit_wrap                             ; 0b3081 e8ce030000
     add esp, 4                                   ; 0b3086 83c404
 loc_b3089:
     leave                                        ; 0b3089 c9
@@ -12388,17 +12423,17 @@ loc_b3089:
 
 
 ; ====================================================================================================
-; sub_b308b  [0xb308b, 39 bytes, 10 instructions]
-; called by: sub_b3036
+; remove_critical_error_handler  [0xb308b, 39 bytes, 10 instructions]
+; called by: install_critical_error_handler
 ; ====================================================================================================
-sub_b308b:
+remove_critical_error_handler:
     pushal                                       ; 0b308b 60
     mov ebx, 0x24                                ; 0b308c bb24000000
     mov dx, word ptr [word_d3094]                ; 0b3091 668b1594300d00
     mov eax, dword ptr [dword_d3090]             ; 0b3098 a190300d00
     or dx, dx                                    ; 0b309d 660bd2
     je loc_b30b0                                 ; 0b30a0 740e
-    call sub_98664                               ; 0b30a2 e8bd55feff
+    call dos_setvect                             ; 0b30a2 e8bd55feff
     mov word ptr [word_d3094], 0                 ; 0b30a7 66c70594300d0000..
 loc_b30b0:
     popal                                        ; 0b30b0 61
@@ -12410,7 +12445,7 @@ loc_b30b0:
 ; locateshape  [0xb30b4, 7 bytes, 2 instructions]
 ; locateshape(bank, "NAME"): finds a shape by its 4 character tag in an SHPI bank
 ; annotations: external
-; called by: main, league_leaders_screen, awards_screen, load_effect_frames, load_rink_end_shapes, load_player_graphics, sub_13bb4, show_scoreboard, ea_sports_intro, intro_sequence, credits_screen, pause_menu (+76 more)
+; called by: main, league_leaders_screen, awards_screen, load_effect_frames, load_rink_end_shapes, load_player_graphics, load_highlight_assets, show_scoreboard, ea_sports_intro, intro_sequence, credits_screen, pause_menu (+76 more)
 ;   uses string "locateshape - '%-4.4s' SHAPE NOT FOUND\r\n"
 ; ====================================================================================================
 locateshape:
@@ -12421,7 +12456,7 @@ locateshape:
 ; ====================================================================================================
 ; locateshape_fast  [0xb30bb, 57 bytes, 22 instructions]
 ; locateshape() comparing the tag as one 32 bit word
-; called by: fill_sprite_frames, player_card_screen, goalie_card_screen, sub_90b50
+; called by: fill_sprite_frames, player_card_screen, goalie_card_screen, locateshapes_list
 ; ====================================================================================================
 locateshape_fast:
     xor ebx, ebx                                 ; 0b30bb 33db
@@ -12457,7 +12492,7 @@ loc_b30f1:
 ; joy_detect  [0xb30f4, 113 bytes, 42 instructions]  <joystick>
 ; probes the game port (201h) for joysticks
 ; annotations: external
-; called by: main, sub_6bcda
+; called by: main, ui_poll_joystick
 ; ====================================================================================================
 joy_detect:
     push ebp                                     ; 0b30f4 55
@@ -12512,10 +12547,11 @@ loc_b3156:
     times 3 db 0 ; 0b3165 (padding)
 
 ; ====================================================================================================
-; sub_b3168  [0xb3168, 627 bytes, 152 instructions]  <joystick>
-; called by: sub_b400b
+; joystick_read  [0xb3168, 627 bytes, 152 instructions]  <joystick>
+; port 201h: axes timing and buttons of both sticks
+; called by: getkey_any
 ; ====================================================================================================
-sub_b3168:
+joystick_read:
     mov byte ptr [byte_d4176], 0                 ; 0b3168 c60576410d0000
     test byte ptr [dword_d3040], 1               ; 0b316f f60540300d0001
     je loc_b33c7                                 ; 0b3176 0f844b020000
@@ -12725,10 +12761,11 @@ joy_init:
 
 
 ; ====================================================================================================
-; sub_b340b  [0xb340b, 22 bytes, 9 instructions]
+; joystick_direction  [0xb340b, 22 bytes, 9 instructions]
+; the 8 way direction of the stick bits
 ; called by: draw_sprites, replay_draw_frame, joystick_calibrate
 ; ====================================================================================================
-sub_b340b:
+joystick_direction:
     push ebp                                     ; 0b340b 55
     mov ebp, esp                                 ; 0b340c 8bec
     mov ebx, dword ptr [ebp + 8]                 ; 0b340e 8b5d08
@@ -12741,10 +12778,10 @@ sub_b340b:
 
 
 ; ====================================================================================================
-; sub_b3421  [0xb3421, 25 bytes, 7 instructions]  <unreferenced>
+; joystick_x_scaled  [0xb3421, 25 bytes, 7 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b3421:
+joystick_x_scaled:
     mov eax, dword ptr [dword_d416c]             ; 0b3421 a16c410d00
     sub eax, dword ptr [dword_d4177]             ; 0b3426 2b0577410d00
     jge loc_b3430                                ; 0b342c 7d02
@@ -12756,10 +12793,10 @@ loc_b3430:
 
 
 ; ====================================================================================================
-; sub_b343a  [0xb343a, 25 bytes, 7 instructions]  <unreferenced>
+; joystick_y_scaled  [0xb343a, 25 bytes, 7 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b343a:
+joystick_y_scaled:
     mov eax, dword ptr [dword_d4170]             ; 0b343a a170410d00
     sub eax, dword ptr [dword_d4193]             ; 0b343f 2b0593410d00
     jge loc_b3449                                ; 0b3445 7d02
@@ -12772,19 +12809,19 @@ loc_b3449:
     db 0x00 ; 0b3453 |.| (padding)
 
 ; ====================================================================================================
-; sub_b3454  [0xb3454, 9 bytes, 2 instructions]
-; called by: load_cfg_palette, inittimer, sound_timer_install, sub_b29f0, initmouse, sub_b3036, sub_b3e98
+; atexit_wrap  [0xb3454, 9 bytes, 2 instructions]
+; called by: load_cfg_palette, inittimer, sound_timer_install, keyboard_install, initmouse, install_critical_error_handler, save_video_state
 ; ====================================================================================================
-sub_b3454:
+atexit_wrap:
     mov eax, dword ptr [esp + 4]                 ; 0b3454 8b442404
-    jmp sub_99bf6                                ; 0b3458 e99967feff
+    jmp atexit                                   ; 0b3458 e99967feff
 
 
 ; ====================================================================================================
-; sub_b345d  [0xb345d, 7 bytes, 2 instructions]  <noreturn>
+; exit_wrap  [0xb345d, 7 bytes, 2 instructions]  <noreturn>
 ; address taken (function pointer)
 ; ====================================================================================================
-sub_b345d:
+exit_wrap:
     xor eax, eax                                 ; 0b345d 33c0
     call exit                                    ; 0b345f e8dba7fdff        noreturn
 
@@ -12792,7 +12829,7 @@ sub_b345d:
 ; joy_read  [0xb3464, 1002 bytes, 253 instructions]  <joystick>
 ; reads joystick axes and buttons through port 201h
 ; annotations: external
-; called by: sub_10c7f, sub_10dcd, sub_1600c, joystick_calibrate, sub_6bcda
+; called by: read_menu_buttons, control_timer_tick, intro_skip_pressed, joystick_calibrate, ui_poll_joystick
 ; ====================================================================================================
 joy_read:
     mov bl, byte ptr [dword_d3040]               ; 0b3464 8a1d40300d00
@@ -13122,10 +13159,10 @@ loc_b3845:
 
 
 ; ====================================================================================================
-; sub_b384e  [0xb384e, 48 bytes, 6 instructions]
+; joystick1_default_center  [0xb384e, 48 bytes, 6 instructions]
 ; called by: joystick_calibrate
 ; ====================================================================================================
-sub_b384e:
+joystick1_default_center:
     or byte ptr [dword_d3040], 1                 ; 0b384e 800d40300d0001
     mov dword ptr [dword_d4248], 0x50            ; 0b3855 c70548420d005000..
     mov dword ptr [dword_d424c], 0               ; 0b385f c7054c420d000000..
@@ -13135,10 +13172,10 @@ sub_b384e:
 
 
 ; ====================================================================================================
-; sub_b387e  [0xb387e, 48 bytes, 6 instructions]
+; joystick2_default_center  [0xb387e, 48 bytes, 6 instructions]
 ; called by: joystick_calibrate
 ; ====================================================================================================
-sub_b387e:
+joystick2_default_center:
     or byte ptr [dword_d3040], 2                 ; 0b387e 800d40300d0002
     mov dword ptr [dword_d4204], 0x50            ; 0b3885 c70504420d005000..
     mov dword ptr [dword_d4208], 0               ; 0b388f c70508420d000000..
@@ -13148,10 +13185,10 @@ sub_b387e:
 
 
 ; ====================================================================================================
-; sub_b38ae  [0xb38ae, 31 bytes, 10 instructions]  <unreferenced>
+; joystick1_x  [0xb38ae, 31 bytes, 10 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b38ae:
+joystick1_x:
     mov eax, dword ptr [dword_d423c]             ; 0b38ae a13c420d00
     sub eax, dword ptr [dword_d4248]             ; 0b38b3 2b0548420d00
     jge loc_b38bd                                ; 0b38b9 7d02
@@ -13166,10 +13203,10 @@ loc_b38bd:
 
 
 ; ====================================================================================================
-; sub_b38cd  [0xb38cd, 31 bytes, 10 instructions]  <unreferenced>
+; joystick1_y  [0xb38cd, 31 bytes, 10 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b38cd:
+joystick1_y:
     mov eax, dword ptr [dword_d4240]             ; 0b38cd a140420d00
     sub eax, dword ptr [dword_d4260]             ; 0b38d2 2b0560420d00
     jge loc_b38dc                                ; 0b38d8 7d02
@@ -13184,10 +13221,10 @@ loc_b38dc:
 
 
 ; ====================================================================================================
-; sub_b38ec  [0xb38ec, 31 bytes, 10 instructions]  <unreferenced>
+; joystick2_x  [0xb38ec, 31 bytes, 10 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b38ec:
+joystick2_x:
     mov eax, dword ptr [dword_d41fc]             ; 0b38ec a1fc410d00
     sub eax, dword ptr [dword_d4204]             ; 0b38f1 2b0504420d00
     jge loc_b38fb                                ; 0b38f7 7d02
@@ -13202,10 +13239,10 @@ loc_b38fb:
 
 
 ; ====================================================================================================
-; sub_b390b  [0xb390b, 31 bytes, 10 instructions]  <unreferenced>
+; joystick2_y  [0xb390b, 31 bytes, 10 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b390b:
+joystick2_y:
     mov eax, dword ptr [dword_d4200]             ; 0b390b a100420d00
     sub eax, dword ptr [dword_d421c]             ; 0b3910 2b051c420d00
     jge loc_b391a                                ; 0b3916 7d02
@@ -13224,7 +13261,7 @@ loc_b391a:
 ; clearclip  [0xb392c, 46 bytes, 15 instructions]
 ; fills the clip rectangle with a color
 ; annotations: external
-; called by: set_video_mode, awards_screen, ea_sports_intro, intro_sequence, credits_screen, sub_174d8, exit_game_dialog, exh_hub_stats, draw_team_logos, boxscore_screen, team_select_screen2, calendar_screen (+19 more)
+; called by: set_video_mode, awards_screen, ea_sports_intro, intro_sequence, credits_screen, draw_credit_line, exit_game_dialog, exh_hub_stats, draw_team_logos, boxscore_screen, team_select_screen2, calendar_screen (+19 more)
 ; ====================================================================================================
 clearclip:
     mov eax, dword ptr [esp + 4]                 ; 0b392c 8b442404
@@ -13249,7 +13286,7 @@ clearclip:
 ; getticks  [0xb395c, 6 bytes, 2 instructions]
 ; timer tick counter
 ; annotations: external
-; called by: league_leaders_screen, ea_sports_intro, sub_33e6a, cmv_play, sub_b3a48, sub_b400b
+; called by: league_leaders_screen, ea_sports_intro, wait_ticks_or_input, cmv_play, wait_key_ticks, getkey_any
 ; ====================================================================================================
 getticks:
     mov eax, dword ptr [dword_d2fdc]             ; 0b395c a1dc2f0d00
@@ -13257,10 +13294,10 @@ getticks:
 
 
 ; ====================================================================================================
-; sub_b3962  [0xb3962, 12 bytes, 4 instructions]
-; called by: sub_b400b
+; ticks_since  [0xb3962, 12 bytes, 4 instructions]
+; called by: getkey_any
 ; ====================================================================================================
-sub_b3962:
+ticks_since:
     mov ecx, dword ptr [esp + 4]                 ; 0b3962 8b4c2404
     mov eax, dword ptr [dword_d2fdc]             ; 0b3966 a1dc2f0d00
     sub eax, ecx                                 ; 0b396b 2bc1

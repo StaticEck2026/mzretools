@@ -652,7 +652,7 @@ static func cpu_line_change(sim: Sim) -> void:
 		team.goalie_request = (team.goalie_request & 0xff) | 0xff00
 		apply_line_change(sim, team)
 
-## sub_671e8 (F9 / F10): the user pulls the goalie or sends him back
+## hotkey_pull_goalie (F9 / F10): the user pulls the goalie or sends him back
 static func toggle_pull_goalie(sim: Sim, t: int) -> void:
 	if not sim.is_user_team(t):
 		return

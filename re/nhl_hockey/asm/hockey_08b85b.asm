@@ -11,10 +11,11 @@
 section code1 vstart=0x8b85b
 
 ; ====================================================================================================
-; sub_8b85b  [0x8b85b, 212 bytes, 52 instructions]
-; called by: frontend_main_menu, apply_settings, controller_menu, sub_7db67, playoff_tree_screen
+; setup_pause_menu_teams  [0x8b85b, 212 bytes, 52 instructions]
+; the line editor entries of the pause menu by the human teams
+; called by: frontend_main_menu, apply_settings, controller_menu, calendar_start_game, playoff_tree_screen
 ; ====================================================================================================
-sub_8b85b:
+setup_pause_menu_teams:
     push 0x10                                    ; 08b85b 6810000000
     call __CHK                                   ; 08b860 e8e7100000
     push edx                                     ; 08b865 52
@@ -26,7 +27,7 @@ sub_8b85b:
     mov eax, dword ptr [dword_c5413]             ; 08b875 a113540c00
     test eax, eax                                ; 08b87a 85c0
     jne loc_8b8a3                                ; 08b87c 7525
-    mov dword ptr [funcptr_cef43], sub_1a8aa     ; 08b87e c70543ef0c00aaa8..
+    mov dword ptr [funcptr_cef43], menu_edit_lines_home ; 08b87e c70543ef0c00aaa8..
     mov dword ptr [funcptr_cef63], eax           ; 08b888 a363ef0c00
     mov dword ptr [off_cede7], unk_cee4f         ; 08b88d c705e7ed0c004fee..
     xor edx, edx                                 ; 08b897 31d2
@@ -39,7 +40,7 @@ sub_8b85b:
 loc_8b8a3:
     xor edx, edx                                 ; 08b8a3 31d2
     mov dword ptr [funcptr_cef43], edx           ; 08b8a5 891543ef0c00
-    mov dword ptr [funcptr_cef63], sub_1a922     ; 08b8ab c70563ef0c0022a9..
+    mov dword ptr [funcptr_cef63], menu_edit_lines_away ; 08b8ab c70563ef0c0022a9..
     mov dword ptr [off_cede7], edx               ; 08b8b5 8915e7ed0c00
     jmp loc_8b921                                ; 08b8bb eb64
 
@@ -55,7 +56,7 @@ loc_8b8cf:
     jmp loc_8b8f3                                ; 08b8dd eb14
 
 loc_8b8df:
-    mov dword ptr [funcptr_cef43], sub_1a8aa     ; 08b8df c70543ef0c00aaa8..
+    mov dword ptr [funcptr_cef43], menu_edit_lines_home ; 08b8df c70543ef0c00aaa8..
     mov dword ptr [off_cede7], unk_cee4f         ; 08b8e9 c705e7ed0c004fee..
 loc_8b8f3:
     cmp dword ptr [dword_c5403], -2              ; 08b8f3 833d03540c00fe
@@ -72,7 +73,7 @@ loc_8b905:
     ret                                          ; 08b916 c3
 
 loc_8b917:
-    mov dword ptr [funcptr_cef63], sub_1a922     ; 08b917 c70563ef0c0022a9..
+    mov dword ptr [funcptr_cef63], menu_edit_lines_away ; 08b917 c70563ef0c0022a9..
 loc_8b921:
     mov dword ptr [off_cee07], unk_ceeaf         ; 08b921 c70507ee0c00afee..
     pop ebp                                      ; 08b92b 5d
@@ -82,10 +83,11 @@ loc_8b921:
 
 
 ; ====================================================================================================
-; sub_8b92f  [0x8b92f, 62 bytes, 17 instructions]
+; reload_mode_settings  [0x8b92f, 62 bytes, 17 instructions]
+; load_game_set of the exhibition / league / playoff settings
 ; called by: settings_menu, game_settings_menu, sound_settings_menu, controller_menu, locker_room_menu
 ; ====================================================================================================
-sub_8b92f:
+reload_mode_settings:
     push 4                                       ; 08b92f 6804000000
     call __CHK                                   ; 08b934 e813100000
     mov eax, dword ptr [dword_c53fb]             ; 08b939 a1fb530c00
@@ -113,10 +115,10 @@ loc_8b963:
 
 
 ; ====================================================================================================
-; sub_8b96d  [0x8b96d, 322 bytes, 120 instructions]
+; lines_remove_player  [0x8b96d, 322 bytes, 120 instructions]
 ; called by: team_edit_screen
 ; ====================================================================================================
-sub_8b96d:
+lines_remove_player:
     push 0xc                                     ; 08b96d 680c000000
     call __CHK                                   ; 08b972 e8d50f0000
     push ebx                                     ; 08b977 53
@@ -319,11 +321,11 @@ loc_8bae6:
     mov ebx, esi                                 ; 08bae6 89f3
     mov edx, 0x10                                ; 08bae8 ba10000000
     lea eax, [esp + 0x2250]                      ; 08baed 8d842450220000
-    call sub_9814a                               ; 08baf4 e851c60000
+    call fgets                                   ; 08baf4 e851c60000
     mov ebx, esi                                 ; 08baf9 89f3
     mov edx, 0x10                                ; 08bafb ba10000000
     lea eax, [esp + 0x2250]                      ; 08bb00 8d842450220000
-    call sub_9814a                               ; 08bb07 e83ec60000
+    call fgets                                   ; 08bb07 e83ec60000
     mov al, byte ptr [esp + 0x2250]              ; 08bb0c 8a842450220000
     mov byte ptr [aA_d2c68], al                  ; 08bb13 a2682c0d00        "a:"
     xor ah, ah                                   ; 08bb18 30e4
@@ -420,7 +422,7 @@ loc_8bc02:
 ; ====================================================================================================
 ; coach_clip_player  [0x8bc15, 710 bytes, 189 instructions]
 ; plays the coachcut clip%04d .cmv movies
-; called by: sub_1920f
+; called by: end_match_from_loop
 ;   uses string "coachcut"
 ;   uses string "scrn"
 ;   uses string "!pal"
@@ -513,7 +515,7 @@ loc_8bd20:
     test byte ptr [settings2], 1                 ; 08bd29 f60500540c0001
     je loc_8bd3e                                 ; 08bd30 740c
     mov edi, 1                                   ; 08bd32 bf01000000
-    call sub_8473a                               ; 08bd37 e8fe89ffff
+    call say_coachclp_int                        ; 08bd37 e8fe89ffff
     jmp loc_8bd40                                ; 08bd3c eb02
 
 loc_8bd3e:
@@ -524,7 +526,7 @@ loc_8bd40:
     xor eax, eax                                 ; 08bd47 31c0
     call fade_palette_to                         ; 08bd49 e84a58f8ff
     mov eax, 0xa                                 ; 08bd4e b80a000000
-    call sub_33e6a                               ; 08bd53 e81281faff
+    call wait_ticks_or_input                     ; 08bd53 e81281faff
     mov esi, eax                                 ; 08bd58 89c6
     test eax, eax                                ; 08bd5a 85c0
     jne loc_8be76                                ; 08bd5c 0f8514010000
@@ -557,7 +559,7 @@ loc_8bdab:
     test byte ptr [settings2], 1                 ; 08bdc0 f60500540c0001
     je loc_8bdd2                                 ; 08bdc7 7409
 loc_8bdc9:
-    call sub_836e4                               ; 08bdc9 e81679ffff
+    call speech_clip_pending                     ; 08bdc9 e81679ffff
     test eax, eax                                ; 08bdce 85c0
     jne loc_8bdc9                                ; 08bdd0 75f7
 loc_8bdd2:
@@ -580,9 +582,9 @@ loc_8bdd2:
     je loc_8be2d                                 ; 08be14 7417
     test byte ptr [settings2], 1                 ; 08be16 f60500540c0001
     je loc_8be2d                                 ; 08be1d 740e
-    call sub_8373e                               ; 08be1f e81a79ffff
+    call speech_stop_and_flush                   ; 08be1f e81a79ffff
 loc_8be24:
-    call sub_836e4                               ; 08be24 e8bb78ffff
+    call speech_clip_pending                     ; 08be24 e8bb78ffff
     test eax, eax                                ; 08be29 85c0
     jne loc_8be24                                ; 08be2b 75f7
 loc_8be2d:
@@ -629,7 +631,7 @@ loc_8be76:
 loc_8bebd:
     cmp edi, 1                                   ; 08bebd 83ff01
     jne loc_8bec7                                ; 08bec0 7505
-    call sub_8474e                               ; 08bec2 e88788ffff
+    call release_coachclp_int                    ; 08bec2 e88788ffff
 loc_8bec7:
     call ui_shutdown                             ; 08bec7 e8b0f5fdff
     mov eax, esi                                 ; 08becc 89f0
@@ -663,20 +665,20 @@ cmv_play:
     push 0x20                                    ; 08bf00 6a20
     push 0x2000                                  ; 08bf02 6800200000
     push 0x493e0                                 ; 08bf07 68e0930400
-    call sub_1b0f3                               ; 08bf0c e8e2f1f8ff
+    call cdstream_open                           ; 08bf0c e8e2f1f8ff
     add esp, 0xc                                 ; 08bf11 83c40c
     mov dword ptr [esp + 0x20], eax              ; 08bf14 89442420
     push esi                                     ; 08bf18 56
     push eax                                     ; 08bf19 50
-    call sub_1b1c2                               ; 08bf1a e8a3f2f8ff
+    call cdstream_set_handler                    ; 08bf1a e8a3f2f8ff
     add esp, 8                                   ; 08bf1f 83c408
-    call sub_1ac25                               ; 08bf22 e8feecf8ff
+    call cmv_alloc                               ; 08bf22 e8feecf8ff
     mov edi, eax                                 ; 08bf27 89c7
     push 0x96                                    ; 08bf29 6896000000
     call settimeout                              ; 08bf2e e8567a0200
     add esp, 4                                   ; 08bf33 83c404
 loc_8bf36:
-    call sub_b39a7                               ; 08bf36 e86c7a0200
+    call timeout_reached                         ; 08bf36 e86c7a0200
     test eax, eax                                ; 08bf3b 85c0
     jne loc_8bf46                                ; 08bf3d 7507
     call iff_parse                               ; 08bf3f e863f3f8ff
@@ -697,7 +699,7 @@ loc_8bf46:
 loc_8bf75:
     mov ebx, dword ptr [esp + 0x20]              ; 08bf75 8b5c2420
     push ebx                                     ; 08bf79 53
-    call sub_1b8ac                               ; 08bf7a e82df9f8ff
+    call iff_buffer_next_chunk                   ; 08bf7a e82df9f8ff
     mov edx, eax                                 ; 08bf7f 89c2
     add esp, 4                                   ; 08bf81 83c404
     mov dword ptr [esp + 4], eax                 ; 08bf84 89442404
@@ -709,7 +711,7 @@ loc_8bf75:
 loc_8bf94:
     test eax, eax                                ; 08bf94 85c0
     je loc_8c125                                 ; 08bf96 0f8489010000
-    call sub_16072                               ; 08bf9c e8d1a0f8ff
+    call read_be32_cmv                           ; 08bf9c e8d1a0f8ff
     mov dword ptr [esp + 8], eax                 ; 08bfa1 89442408
     cmp eax, 0x4d564966                          ; 08bfa5 3d6649564d
     jb loc_8bfbe                                 ; 08bfaa 7212
@@ -729,7 +731,7 @@ loc_8bfce:
     mov eax, dword ptr [esp + 0xc]               ; 08bfd7 8b44240c
     add dword ptr [esp + 0x2c], eax              ; 08bfdb 0144242c
     mov eax, edi                                 ; 08bfdf 89f8
-    call sub_1b002                               ; 08bfe1 e81cf0f8ff
+    call cmv_next_frame                          ; 08bfe1 e81cf0f8ff
     mov dword ptr [esp], eax                     ; 08bfe6 890424
     call getticks                                ; 08bfe9 e86e790200
     sub eax, dword ptr [esp + 0x24]              ; 08bfee 2b442424
@@ -769,7 +771,7 @@ loc_8c055:
     mov eax, edi                                 ; 08c055 89f8
     call cmv_load_palette                        ; 08c057 e8baecf8ff
     mov eax, edi                                 ; 08c05c 89f8
-    call sub_1b092                               ; 08c05e e82ff0f8ff
+    call cmv_field_00                            ; 08c05e e82ff0f8ff
     mov ebp, eax                                 ; 08c063 89c5
     mov dword ptr [esp + 0x10], eax              ; 08c065 89442410
     push 0                                       ; 08c069 6a00
@@ -782,18 +784,18 @@ loc_8c055:
     call fillrect                                ; 08c07f e89c4c0000
     add esp, 0x14                                ; 08c084 83c414
     mov eax, edi                                 ; 08c087 89f8
-    call sub_1b0e5                               ; 08c089 e857f0f8ff
+    call cmv_field_1c                            ; 08c089 e857f0f8ff
     push eax                                     ; 08c08e 50
     mov eax, edi                                 ; 08c08f 89f8
-    call sub_1b0d7                               ; 08c091 e841f0f8ff
+    call cmv_field_18                            ; 08c091 e841f0f8ff
     push eax                                     ; 08c096 50
     mov eax, edi                                 ; 08c097 89f8
-    call sub_1b0c9                               ; 08c099 e82bf0f8ff
+    call cmv_field_14                            ; 08c099 e82bf0f8ff
     push eax                                     ; 08c09e 50
     call setpalette                              ; 08c09f e8e48a0200
     add esp, 0xc                                 ; 08c0a4 83c40c
     mov eax, edi                                 ; 08c0a7 89f8
-    call sub_1b0bb                               ; 08c0a9 e80df0f8ff
+    call cmv_field_0c                            ; 08c0a9 e80df0f8ff
     mov ebx, eax                                 ; 08c0ae 89c3
     mov eax, 0x64                                ; 08c0b0 b864000000
     mov edx, eax                                 ; 08c0b5 89c2
@@ -813,7 +815,7 @@ loc_8c0d0:
     push ebx                                     ; 08c0d4 53
     mov ecx, dword ptr [esp + 0x24]              ; 08c0d5 8b4c2424
     push ecx                                     ; 08c0d9 51
-    call sub_1b92e                               ; 08c0da e84ff8f8ff
+    call iff_buffer_release_chunk                ; 08c0da e84ff8f8ff
     add esp, 8                                   ; 08c0df 83c408
     call iff_parse                               ; 08c0e2 e8c0f1f8ff
     cmp dword ptr [esp + 8], 0x4d564966          ; 08c0e7 817c24086649564d
@@ -829,12 +831,12 @@ loc_8c0d0:
     call settimeout                              ; 08c107 e87d780200
     add esp, 4                                   ; 08c10c 83c404
 loc_8c10f:
-    call sub_b39a7                               ; 08c10f e893780200
+    call timeout_reached                         ; 08c10f e893780200
     test eax, eax                                ; 08c114 85c0
     jne loc_8c12a                                ; 08c116 7512
     test esi, esi                                ; 08c118 85f6
     jne loc_8c12a                                ; 08c11a 750e
-    call sub_1600c                               ; 08c11c e8eb9ef8ff
+    call intro_skip_pressed                      ; 08c11c e8eb9ef8ff
     mov esi, eax                                 ; 08c121 89c6
     jmp loc_8c10f                                ; 08c123 ebea
 
@@ -843,7 +845,7 @@ loc_8c125:
 loc_8c12a:
     test esi, esi                                ; 08c12a 85f6
     jne loc_8c135                                ; 08c12c 7507
-    call sub_1600c                               ; 08c12e e8d99ef8ff
+    call intro_skip_pressed                      ; 08c12e e8d99ef8ff
     mov esi, eax                                 ; 08c133 89c6
 loc_8c135:
     test esi, esi                                ; 08c135 85f6
@@ -854,10 +856,10 @@ loc_8c135:
     jne loc_8bf75                                ; 08c145 0f852afeffff
 loc_8c14b:
     mov eax, edi                                 ; 08c14b 89f8
-    call sub_1acf1                               ; 08c14d e89febf8ff
+    call cmv_free                                ; 08c14d e89febf8ff
     mov edx, dword ptr [esp + 0x20]              ; 08c152 8b542420
     push edx                                     ; 08c156 52
-    call sub_1b18b                               ; 08c157 e82ff0f8ff
+    call cdstream_close                          ; 08c157 e82ff0f8ff
     add esp, 4                                   ; 08c15c 83c404
     cmp byte ptr [sound_enabled], 0              ; 08c15f 803d30240d0000
     je loc_8c1ad                                 ; 08c166 7445
@@ -873,7 +875,7 @@ loc_8c171:
     test eax, eax                                ; 08c187 85c0
     jne loc_8c199                                ; 08c189 750e
     mov eax, 0xa                                 ; 08c18b b80a000000
-    call sub_33e6a                               ; 08c190 e8d57cfaff
+    call wait_ticks_or_input                     ; 08c190 e8d57cfaff
     mov esi, eax                                 ; 08c195 89c6
     jmp loc_8c171                                ; 08c197 ebd8
 
@@ -893,10 +895,11 @@ loc_8c1ad:
 
 
 ; ====================================================================================================
-; sub_8c1b7  [0x8c1b7, 11 bytes, 3 instructions]  <unreferenced>
+; empty_func_8c1b7  [0x8c1b7, 11 bytes, 3 instructions]  <unreferenced>
+; empty function (compiled out debug hook)
 ; no references found
 ; ====================================================================================================
-sub_8c1b7:
+empty_func_8c1b7:
     push 4                                       ; 08c1b7 6804000000
     call __CHK                                   ; 08c1bc e88b070000
     ret                                          ; 08c1c1 c3
@@ -924,10 +927,11 @@ loc_8c1d5:
 
 
 ; ====================================================================================================
-; sub_8c1e2  [0x8c1e2, 21 bytes, 7 instructions]
+; setscreen_main  [0x8c1e2, 21 bytes, 7 instructions]
+; setscreen(the main screen descriptor dword_c73d4)
 ; called by: draw_score_digits, draw_line_indicator, instant_replay
 ; ====================================================================================================
-sub_8c1e2:
+setscreen_main:
     push 0x14                                    ; 08c1e2 6814000000
     call __CHK                                   ; 08c1e7 e860070000
     push ebx                                     ; 08c1ec 53
@@ -938,50 +942,55 @@ sub_8c1e2:
 
 
 ; ====================================================================================================
-; sub_8c1f7  [0x8c1f7, 11 bytes, 3 instructions]  <unreferenced>
+; empty_func_8c1f7  [0x8c1f7, 11 bytes, 3 instructions]  <unreferenced>
+; empty function
 ; no references found
 ; ====================================================================================================
-sub_8c1f7:
+empty_func_8c1f7:
     push 4                                       ; 08c1f7 6804000000
     call __CHK                                   ; 08c1fc e84b070000
     ret                                          ; 08c201 c3
 
 
 ; ====================================================================================================
-; sub_8c202  [0x8c202, 11 bytes, 3 instructions]  <unreferenced>
+; empty_func_8c202  [0x8c202, 11 bytes, 3 instructions]  <unreferenced>
+; empty function
 ; no references found
 ; ====================================================================================================
-sub_8c202:
+empty_func_8c202:
     push 4                                       ; 08c202 6804000000
     call __CHK                                   ; 08c207 e840070000
     ret                                          ; 08c20c c3
 
 
 ; ====================================================================================================
-; sub_8c20d  [0x8c20d, 11 bytes, 3 instructions]  <unreferenced>
+; empty_func_8c20d  [0x8c20d, 11 bytes, 3 instructions]  <unreferenced>
+; empty function
 ; no references found
 ; ====================================================================================================
-sub_8c20d:
+empty_func_8c20d:
     push 4                                       ; 08c20d 6804000000
     call __CHK                                   ; 08c212 e835070000
     ret                                          ; 08c217 c3
 
 
 ; ====================================================================================================
-; sub_8c218  [0x8c218, 11 bytes, 3 instructions]
-; called by: sub_7668d
+; empty_func_8c218  [0x8c218, 11 bytes, 3 instructions]
+; empty function (called by screen_update_rect)
+; called by: screen_update_rect
 ; ====================================================================================================
-sub_8c218:
+empty_func_8c218:
     push 4                                       ; 08c218 6804000000
     call __CHK                                   ; 08c21d e82a070000
     ret                                          ; 08c222 c3
 
 
 ; ====================================================================================================
-; sub_8c223  [0x8c223, 11 bytes, 3 instructions]  <unreferenced>
+; empty_func_8c223  [0x8c223, 11 bytes, 3 instructions]  <unreferenced>
+; empty function
 ; no references found
 ; ====================================================================================================
-sub_8c223:
+empty_func_8c223:
     push 4                                       ; 08c223 6804000000
     call __CHK                                   ; 08c228 e81f070000
     ret                                          ; 08c22d c3
@@ -1032,10 +1041,11 @@ randomrange:
     times 2 db 0 ; 08c28e (padding)
 
 ; ====================================================================================================
-; sub_8c290  [0x8c290, 223 bytes, 76 instructions]  <unreferenced vga_gc vga_gc_data vga_seq vga_seq_data>
+; vgax_latch_copy_wrap  [0x8c290, 223 bytes, 76 instructions]  <unreferenced vga_gc vga_gc_data vga_seq vga_seq_data>
+; Mode X latch copy (write mode 1) from the 176 row scroll buffer, rows wrap at 0xb0 (unused)
 ; no references found
 ; ====================================================================================================
-sub_8c290:
+vgax_latch_copy_wrap:
     push bp                                      ; 08c290 6655
     mov bp, sp                                   ; 08c292 668bec
     push ds                                      ; 08c295 1e
@@ -1118,10 +1128,11 @@ loc_8c353:
 
 
 ; ====================================================================================================
-; sub_8c36f  [0x8c36f, 122 bytes, 49 instructions]  <unreferenced vga_gc vga_gc_data vga_seq vga_seq_data>
+; vgax_latch_put_block  [0x8c36f, 122 bytes, 49 instructions]  <unreferenced vga_gc vga_gc_data vga_seq vga_seq_data>
+; Mode X latch copy of a linear block into a rectangle of the screen (unused)
 ; no references found
 ; ====================================================================================================
-sub_8c36f:
+vgax_latch_put_block:
     push bp                                      ; 08c36f 6655
     mov bp, sp                                   ; 08c371 668bec
     push ds                                      ; 08c374 1e
@@ -1175,10 +1186,11 @@ loc_8c3c7:
 
 
 ; ====================================================================================================
-; sub_8c3e9  [0x8c3e9, 122 bytes, 49 instructions]  <unreferenced vga_gc vga_gc_data vga_seq vga_seq_data>
+; vgax_latch_get_block  [0x8c3e9, 122 bytes, 49 instructions]  <unreferenced vga_gc vga_gc_data vga_seq vga_seq_data>
+; Mode X latch copy of a screen rectangle into a linear block (unused)
 ; no references found
 ; ====================================================================================================
-sub_8c3e9:
+vgax_latch_get_block:
     push bp                                      ; 08c3e9 6655
     mov bp, sp                                   ; 08c3eb 668bec
     push ds                                      ; 08c3ee 1e
@@ -1232,10 +1244,11 @@ loc_8c441:
 
 
 ; ====================================================================================================
-; sub_8c463  [0x8c463, 297 bytes, 122 instructions]  <unreferenced vga_gc vga_seq>
+; vgax_draw_tile  [0x8c463, 297 bytes, 122 instructions]  <unreferenced vga_gc vga_seq>
+; Mode X: copies an 8x8 rink tile (2 bytes a plane row, 96 byte rows), 0x1000 flips (unused)
 ; no references found
 ; ====================================================================================================
-sub_8c463:
+vgax_draw_tile:
     push bp                                      ; 08c463 6655
     mov bp, sp                                   ; 08c465 668bec
     push ds                                      ; 08c468 1e
@@ -1371,10 +1384,11 @@ loc_8c584:
 
 
 ; ====================================================================================================
-; sub_8c58c  [0x8c58c, 171 bytes, 62 instructions]  <unreferenced vga_attr vga_crtc vga_status>
+; vgax_flip_page  [0x8c58c, 171 bytes, 62 instructions]  <unreferenced vga_attr vga_crtc vga_status>
+; Mode X: toggles the display page, sets the CRTC start address and pel panning in the retrace
 ; no references found
 ; ====================================================================================================
-sub_8c58c:
+vgax_flip_page:
     push bp                                      ; 08c58c 6655
     mov bp, sp                                   ; 08c58e 668bec
     push di                                      ; 08c591 6657
@@ -1447,10 +1461,11 @@ loc_8c625:
 
 
 ; ====================================================================================================
-; sub_8c637  [0x8c637, 185 bytes, 79 instructions]  <unreferenced vga_gc vga_seq>
+; vgax_upload_planes  [0x8c637, 185 bytes, 79 instructions]  <unreferenced vga_gc vga_seq>
+; Mode X: writes a buffer plane by plane through the map mask
 ; no references found
 ; ====================================================================================================
-sub_8c637:
+vgax_upload_planes:
     push bp                                      ; 08c637 6655
     mov bp, sp                                   ; 08c639 668bec
     push ds                                      ; 08c63c 1e
@@ -1535,10 +1550,11 @@ loc_8c6b5:
 
 
 ; ====================================================================================================
-; sub_8c6f0  [0x8c6f0, 168 bytes, 63 instructions]  <unreferenced vga_gc vga_seq>
+; vgax_latch_copy_playfield  [0x8c6f0, 168 bytes, 63 instructions]  <unreferenced vga_gc vga_seq>
+; Mode X: copies the 176 x 82 byte playfield from the scroll buffer (wraps)
 ; no references found
 ; ====================================================================================================
-sub_8c6f0:
+vgax_latch_copy_playfield:
     push bp                                      ; 08c6f0 6655
     mov bp, sp                                   ; 08c6f2 668bec
     push ds                                      ; 08c6f5 1e
@@ -1607,10 +1623,11 @@ loc_8c770:
 
 
 ; ====================================================================================================
-; sub_8c798  [0x8c798, 93 bytes, 41 instructions]  <unreferenced vga_gc vga_gc_data vga_seq>
+; vgax_latch_copy_panel  [0x8c798, 93 bytes, 41 instructions]  <unreferenced vga_gc vga_gc_data vga_seq>
+; Mode X: latch copy of 0xa40 bytes
 ; no references found
 ; ====================================================================================================
-sub_8c798:
+vgax_latch_copy_panel:
     push bp                                      ; 08c798 6655
     mov bp, sp                                   ; 08c79a 668bec
     push ds                                      ; 08c79d 1e
@@ -1655,10 +1672,11 @@ sub_8c798:
 
 
 ; ====================================================================================================
-; sub_8c7f5  [0x8c7f5, 93 bytes, 41 instructions]  <unreferenced vga_gc vga_gc_data vga_seq>
+; vgax_latch_copy  [0x8c7f5, 93 bytes, 41 instructions]  <unreferenced vga_gc vga_gc_data vga_seq>
+; Mode X: latch copy of n bytes
 ; no references found
 ; ====================================================================================================
-sub_8c7f5:
+vgax_latch_copy:
     push bp                                      ; 08c7f5 6655
     mov bp, sp                                   ; 08c7f7 668bec
     push ds                                      ; 08c7fa 1e
@@ -1703,10 +1721,11 @@ sub_8c7f5:
 
 
 ; ====================================================================================================
-; sub_8c852  [0x8c852, 148 bytes, 56 instructions]  <unreferenced vga_gc vga_gc_data vga_seq vga_seq_data>
+; vgax_latch_copy_rect  [0x8c852, 148 bytes, 56 instructions]  <unreferenced vga_gc vga_gc_data vga_seq vga_seq_data>
+; Mode X: latch copy between two rectangles with the screen pitch
 ; no references found
 ; ====================================================================================================
-sub_8c852:
+vgax_latch_copy_rect:
     push bp                                      ; 08c852 6655
     mov bp, sp                                   ; 08c854 668bec
     push ds                                      ; 08c857 1e
@@ -1771,7 +1790,7 @@ loc_8c8bf:
 ; direction8  [0x8c8e8, 89 bytes, 39 instructions]
 ; 8-way direction index from a (dx, dy) vector
 ; annotations: external
-; called by: sub_109fc, setup_demo_faceoff, ai_ref_anthem, sub_492f9, ai_stanley_cup, ai_goalie, carrier_near_net_check, carrier_scan_opponents, ref_skate_to_point, ai_ref_pickup_puck, ai_ref_point_goal, ai_breakaway (+26 more)
+; called by: mouse_control, setup_demo_faceoff, ai_ref_anthem, three_stars_skate_to_spot, ai_stanley_cup, ai_goalie, carrier_near_net_check, carrier_scan_opponents, ref_skate_to_point, ai_ref_pickup_puck, ai_ref_point_goal, ai_breakaway (+26 more)
 ; ====================================================================================================
 direction8:
     push ebp                                     ; 08c8e8 55
@@ -1823,10 +1842,11 @@ loc_8c934:
     times 3 db 0 ; 08c941 (padding)
 
 ; ====================================================================================================
-; sub_8c944  [0x8c944, 8 bytes, 2 instructions]
+; save_ss_selector  [0x8c944, 8 bytes, 2 instructions]
+; keeps the SS selector (word_d2f44)
 ; address taken (function pointer)
 ; ====================================================================================================
-sub_8c944:
+save_ss_selector:
     mov word ptr [word_d2f44], ss                ; 08c944 668c15442f0d00
     ret                                          ; 08c94b c3
 
@@ -1835,7 +1855,7 @@ sub_8c944:
 ; __CHK  [0x8c94c, 16 bytes, 4 instructions]
 ; Watcom stack probe, every compiled function starts with 'push framesize; call __CHK'
 ; annotations: external conv:__regsafe
-; called by: sub_10010, sub_1002a, main, sub_106c8, sub_10712, set_video_mode, sub_10f6d, draw_player_number, draw_sprite_world, sub_11136, sub_11161, handle_hotkey (+1177 more)
+; called by: memheap_select, memheap_stats, main, disk_free_bytes, setup_controls, set_video_mode, leave_match_video, draw_player_number, draw_sprite_world, draw_rink_end, wait_key_release, handle_hotkey (+1177 more)
 ; ====================================================================================================
 __CHK:
     xchg dword ptr [esp + 4], eax                ; 08c94c 87442404
@@ -1871,22 +1891,23 @@ loc_8c970:
 ; __STKOVERFLOW  [0x8c97d, 15 bytes, 3 instructions]  <noreturn>
 ; prints "Stack Overflow!" and terminates
 ; annotations: external
-; called by: sub_96267
+; called by: write
 ;   uses string "Stack Overflow!\r\n"
 ; ====================================================================================================
 __STKOVERFLOW:
     mov eax, aStackOverflow                      ; 08c97d b8462f0d00        "Stack Overflow!\r\n"
     mov edx, 1                                   ; 08c982 ba01000000
-    call sub_98683                               ; 08c987 e8f7bc0000
+    call __fatal_runtime_error                   ; 08c987 e8f7bc0000
     times 4 db 0 ; 08c98c (padding)
 
 ; ====================================================================================================
-; sub_8c990  [0x8c990, 217 bytes, 66 instructions]
-; called by: sub_8ca6c, initmemman
+; memheap_create  [0x8c990, 217 bytes, 66 instructions]
+; a heap of a memory class: the LOW MEM and HIGH MEM sentinel blocks, alignment
+; called by: memheap_add_region, initmemman
 ;   uses string "LOW MEM"
 ;   uses string "HIGH MEM"
 ; ====================================================================================================
-sub_8c990:
+memheap_create:
     push esi                                     ; 08c990 56
     push edi                                     ; 08c991 57
     push ebp                                     ; 08c992 55
@@ -1917,7 +1938,7 @@ sub_8c990:
     push aLOWMEM                                 ; 08c9e2 68983b0c00        "LOW MEM"
     add eax, 4                                   ; 08c9e7 83c004
     push eax                                     ; 08c9ea 50
-    call sub_8e3e4                               ; 08c9eb e8f4190000
+    call memname_copy                            ; 08c9eb e8f4190000
     add esp, 0xc                                 ; 08c9f0 83c40c
     mov dword ptr [edi], ebp                     ; 08c9f3 892f
     mov dword ptr [edi + 0x14], 0                ; 08c9f5 c7471400000000
@@ -1933,7 +1954,7 @@ sub_8c990:
     push aHIGHMEM                                ; 08ca1f 68a03b0c00        "HIGH MEM"
     add eax, 4                                   ; 08ca24 83c004
     push eax                                     ; 08ca27 50
-    call sub_8e3e4                               ; 08ca28 e8b7190000
+    call memname_copy                            ; 08ca28 e8b7190000
     add esp, 0xc                                 ; 08ca2d 83c40c
     mov eax, dword ptr [esp + 0x18]              ; 08ca30 8b442418
     mov dword ptr [edi], eax                     ; 08ca34 8907
@@ -1957,10 +1978,11 @@ sub_8c990:
     db 0x8d, 0x40, 0x00 ; 08ca69 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8ca6c  [0x8ca6c, 136 bytes, 54 instructions]  <unreferenced>
+; memheap_add_region  [0x8ca6c, 136 bytes, 54 instructions]  <unreferenced>
+; adds a region to a memory class's heap
 ; no references found
 ; ====================================================================================================
-sub_8ca6c:
+memheap_add_region:
     push esi                                     ; 08ca6c 56
     push edi                                     ; 08ca6d 57
     push ebp                                     ; 08ca6e 55
@@ -1984,7 +2006,7 @@ sub_8ca6c:
     push ebp                                     ; 08caa7 55
     mov eax, dword ptr [esp + 0x28]              ; 08caa8 8b442428
     push eax                                     ; 08caac 50
-    call sub_8c990                               ; 08caad e8defeffff
+    call memheap_create                          ; 08caad e8defeffff
     add esp, 0x18                                ; 08cab2 83c418
     mov ecx, eax                                 ; 08cab5 89c1
     mov edx, dword ptr [esi + 4]                 ; 08cab7 8b5604
@@ -2021,12 +2043,13 @@ loc_8cae8:
 
 
 ; ====================================================================================================
-; sub_8caf4  [0x8caf4, 175 bytes, 57 instructions]
+; memheap_add_high_region  [0x8caf4, 175 bytes, 57 instructions]
+; a further region above the heap with a GAP block
 ; called by: initmemman
 ;   uses string "HIGH MEM"
 ;   uses string "GAP"
 ; ====================================================================================================
-sub_8caf4:
+memheap_add_high_region:
     push esi                                     ; 08caf4 56
     push edi                                     ; 08caf5 57
     push ebp                                     ; 08caf6 55
@@ -2051,7 +2074,7 @@ sub_8caf4:
     push aHIGHMEM                                ; 08cb32 68a03b0c00        "HIGH MEM"
     add eax, 4                                   ; 08cb37 83c004
     push eax                                     ; 08cb3a 50
-    call sub_8e3e4                               ; 08cb3b e8a4180000
+    call memname_copy                            ; 08cb3b e8a4180000
     add esp, 0xc                                 ; 08cb40 83c40c
     mov eax, dword ptr [esp + 0x18]              ; 08cb43 8b442418
     mov dword ptr [esi], eax                     ; 08cb47 8906
@@ -2066,7 +2089,7 @@ sub_8caf4:
     mov eax, dword ptr [edi + 4]                 ; 08cb70 8b4704
     add eax, 4                                   ; 08cb73 83c004
     push eax                                     ; 08cb76 50
-    call sub_8e3e4                               ; 08cb77 e868180000
+    call memname_copy                            ; 08cb77 e868180000
     add esp, 0xc                                 ; 08cb7c 83c40c
     mov eax, dword ptr [edi + 4]                 ; 08cb7f 8b4704
     mov dword ptr [eax + 0x20], esi              ; 08cb82 897020
@@ -2088,11 +2111,12 @@ sub_8caf4:
     db 0x90 ; 08cba3 |.| (padding)
 
 ; ====================================================================================================
-; sub_8cba4  [0x8cba4, 181 bytes, 63 instructions]  <unreferenced>
+; memheap_remove_region  [0x8cba4, 181 bytes, 63 instructions]  <unreferenced>
+; removes a region ("Release Memory Not Found")
 ; no references found
 ;   uses string "Release Memory Not Found\n"
 ; ====================================================================================================
-sub_8cba4:
+memheap_remove_region:
     push esi                                     ; 08cba4 56
     push edi                                     ; 08cba5 57
     push ebp                                     ; 08cba6 55
@@ -2149,7 +2173,7 @@ loc_8cc1d:
     mov dword ptr [eax + 0x24], esi              ; 08cc34 897024
 loc_8cc37:
     push eax                                     ; 08cc37 50
-    call sub_8db78                               ; 08cc38 e83b0f0000
+    call memblock_pool_free                      ; 08cc38 e83b0f0000
     add esp, 4                                   ; 08cc3d 83c404
     mov ebx, dword ptr [edi]                     ; 08cc40 8b1f
     cmp esi, ebx                                 ; 08cc42 39de
@@ -2167,10 +2191,11 @@ loc_8cc53:
     db 0x8d, 0x40, 0x00 ; 08cc59 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8cc5c  [0x8cc5c, 19 bytes, 5 instructions]  <unreferenced>
+; memman_set_hooks  [0x8cc5c, 19 bytes, 5 instructions]  <unreferenced>
+; sets the memory manager callbacks (dword_d2f60, dword_d2f5c)
 ; no references found
 ; ====================================================================================================
-sub_8cc5c:
+memman_set_hooks:
     mov eax, dword ptr [esp + 4]                 ; 08cc5c 8b442404
     mov dword ptr [dword_d2f60], eax             ; 08cc60 a3602f0d00
     mov eax, dword ptr [esp + 8]                 ; 08cc65 8b442408
@@ -2180,10 +2205,11 @@ sub_8cc5c:
     db 0x90 ; 08cc6f |.| (padding)
 
 ; ====================================================================================================
-; sub_8cc70  [0x8cc70, 26 bytes, 10 instructions]
-; called by: sub_83459, sub_96844, windowdef
+; reservemem_fatal  [0x8cc70, 26 bytes, 10 instructions]
+; reservemem_locked failing fatally, returns the handle
+; called by: speech_clips_init, mvi_open, windowdef
 ; ====================================================================================================
-sub_8cc70:
+reservemem_fatal:
     push 1                                       ; 08cc70 6a01
     mov edx, dword ptr [esp + 0x10]              ; 08cc72 8b542410
     push edx                                     ; 08cc76 52
@@ -2198,10 +2224,11 @@ sub_8cc70:
     db 0x8b, 0xc0 ; 08cc8a |..| (padding)
 
 ; ====================================================================================================
-; sub_8cc8c  [0x8cc8c, 26 bytes, 10 instructions]
-; called by: sub_9d090
+; reservemem_try  [0x8cc8c, 26 bytes, 10 instructions]
+; reservemem_locked returning 0 on failure
+; called by: save_screen_shape
 ; ====================================================================================================
-sub_8cc8c:
+reservemem_try:
     push 0                                       ; 08cc8c 6a00
     mov edx, dword ptr [esp + 0x10]              ; 08cc8e 8b542410
     push edx                                     ; 08cc92 52
@@ -2219,7 +2246,7 @@ sub_8cc8c:
 ; allocmem  [0x8cca8, 28 bytes, 11 instructions]
 ; allocmem(name, size, flags): reservemem() returning the data pointer
 ; annotations: external
-; called by: main, league_leaders_screen, awards_screen, sub_15b76, ea_sports_intro, credits_screen, sub_17dfc, sub_17edf, sub_17fbc, sub_1809f, sub_18182, sub_18265 (+106 more)
+; called by: main, league_leaders_screen, awards_screen, alloc_cup_banner, ea_sports_intro, credits_screen, team_stats_standings, team_stats_scoring, team_stats_defense, team_stats_penalty_killing, team_stats_power_play, team_stats_penalties (+106 more)
 ; ====================================================================================================
 allocmem:
     push 1                                       ; 08cca8 6a01
@@ -2236,10 +2263,11 @@ allocmem:
 
 
 ; ====================================================================================================
-; sub_8ccc4  [0x8ccc4, 28 bytes, 11 instructions]
-; called by: sub_1ac25, sub_96844
+; allocmem_try  [0x8ccc4, 28 bytes, 11 instructions]
+; allocmem returning 0 on failure
+; called by: cmv_alloc, mvi_open
 ; ====================================================================================================
-sub_8ccc4:
+allocmem_try:
     push 0                                       ; 08ccc4 6a00
     mov edx, dword ptr [esp + 0x10]              ; 08ccc6 8b542410
     push edx                                     ; 08ccca 52
@@ -2254,10 +2282,11 @@ sub_8ccc4:
 
 
 ; ====================================================================================================
-; sub_8cce0  [0x8cce0, 33 bytes, 14 instructions]  <unreferenced>
+; allocmem_flags  [0x8cce0, 33 bytes, 14 instructions]  <unreferenced>
+; allocmem with the failure mode as an argument
 ; no references found
 ; ====================================================================================================
-sub_8cce0:
+allocmem_flags:
     push esi                                     ; 08cce0 56
     mov edx, dword ptr [esp + 0x14]              ; 08cce1 8b542414
     push edx                                     ; 08cce5 52
@@ -2279,7 +2308,7 @@ sub_8cce0:
 ; reservemem_locked  [0x8cd04, 69 bytes, 27 instructions]
 ; reservemem() inside the memory manager lock
 ; annotations: external
-; called by: sub_8cc70, sub_8cc8c, allocmem, sub_8ccc4, sub_8cce0, sub_8e920, loadfile_auto, loadfile_packed
+; called by: reservemem_fatal, reservemem_try, allocmem, allocmem_try, allocmem_flags, loadfile_block, loadfile_auto, loadfile_packed
 ; ====================================================================================================
 reservemem_locked:
     push esi                                     ; 08cd04 56
@@ -2316,7 +2345,7 @@ reservemem_locked:
 ; reservemem  [0x8cd4c, 892 bytes, 301 instructions]
 ; allocates a named block ("reservemem - OUT OF MEMORY")
 ; annotations: external
-; called by: reservemem_locked, sub_8d604, find_loaded_file
+; called by: reservemem_locked, purgemem_class, find_loaded_file
 ;   uses string "reservemem - INVALID SIZE REQUESTED\nrequested: %ld available: %ld\n"
 ;   uses string "reservemem - OUT OF MEMORY\nrequested: %ld available: %ld\n"
 ;   uses string "reservemem - OUT OF MEMORY\nrequested: %ld available: %ld\n"
@@ -2335,7 +2364,7 @@ reservemem:
     push edi                                     ; 08cd6a 57
     call memman_unlock                           ; 08cd6b e874b90000
     add esp, 4                                   ; 08cd70 83c404
-    call sub_8dab8                               ; 08cd73 e8400d0000
+    call largest_free_locked                     ; 08cd73 e8400d0000
     push eax                                     ; 08cd78 50
     mov ebp, dword ptr [esp + 0x1c]              ; 08cd79 8b6c241c
     push ebp                                     ; 08cd7d 55
@@ -2355,7 +2384,7 @@ loc_8cd90:
     add esi, eax                                 ; 08cdae 01c6
     mov ebx, dword ptr [esp + 0x14]              ; 08cdb0 8b5c2414
     push ebx                                     ; 08cdb4 53
-    call sub_8e424                               ; 08cdb5 e86a160000
+    call path_basename                           ; 08cdb5 e86a160000
     add esp, 4                                   ; 08cdba 83c404
     mov dword ptr [esp + 0x14], eax              ; 08cdbd 89442414
     test byte ptr [esp + 0x1c], 0x40             ; 08cdc1 f644241c40
@@ -2389,7 +2418,7 @@ loc_8cdee:
     push ebp                                     ; 08ce0a 55
     mov ecx, dword ptr [esi + 4]                 ; 08ce0b 8b4e04
     push ecx                                     ; 08ce0e 51
-    call sub_8d844                               ; 08ce0f e8300a0000
+    call compactmem_down                         ; 08ce0f e8300a0000
     add esp, 8                                   ; 08ce14 83c408
 loc_8ce17:
     mov ebp, dword ptr [esi]                     ; 08ce17 8b2e
@@ -2450,7 +2479,7 @@ loc_8ce68:
     mov dword ptr [dword_d2f64], eax             ; 08ce98 a3642f0d00
     lea eax, [esi + 4]                           ; 08ce9d 8d4604
     push eax                                     ; 08cea0 50
-    call sub_8e3e4                               ; 08cea1 e83e150000
+    call memname_copy                            ; 08cea1 e83e150000
     add esp, 0xc                                 ; 08cea6 83c40c
     mov dword ptr [esi], ebp                     ; 08cea9 892e
     mov eax, dword ptr [edi + 0x24]              ; 08ceab 8b4724
@@ -2459,7 +2488,7 @@ loc_8ce68:
     mov eax, dword ptr [edi + 0x24]              ; 08ceb4 8b4724
     mov dword ptr [eax + 0x20], esi              ; 08ceb7 897020
     mov dword ptr [edi + 0x24], esi              ; 08ceba 897724
-    call sub_8da98                               ; 08cebd e8d60b0000
+    call largest_free_min                        ; 08cebd e8d60b0000
     mov eax, esi                                 ; 08cec2 89f0
     jmp loc_8d0c1                                ; 08cec4 e9f8010000
 
@@ -2487,7 +2516,7 @@ loc_8cee4:
 loc_8cefa:
     mov ebx, dword ptr [esp + 0x1c]              ; 08cefa 8b5c241c
     push ebx                                     ; 08cefe 53
-    call sub_8d604                               ; 08ceff e800070000
+    call purgemem_class                          ; 08ceff e800070000
     add esp, 4                                   ; 08cf04 83c404
     test eax, eax                                ; 08cf07 85c0
     jne loc_8ce17                                ; 08cf09 0f8508ffffff
@@ -2495,7 +2524,7 @@ loc_8cefa:
     push ecx                                     ; 08cf11 51
     mov edi, dword ptr [esi + 4]                 ; 08cf12 8b7e04
     push edi                                     ; 08cf15 57
-    call sub_8d844                               ; 08cf16 e829090000
+    call compactmem_down                         ; 08cf16 e829090000
     add esp, 8                                   ; 08cf1b 83c408
     test eax, eax                                ; 08cf1e 85c0
     jne loc_8ce17                                ; 08cf20 0f85f1feffff
@@ -2505,7 +2534,7 @@ loc_8cefa:
     push eax                                     ; 08cf36 50
     call memman_unlock                           ; 08cf37 e8a8b70000
     add esp, 4                                   ; 08cf3c 83c404
-    call sub_8dab8                               ; 08cf3f e8740b0000
+    call largest_free_locked                     ; 08cf3f e8740b0000
     push eax                                     ; 08cf44 50
     mov edx, dword ptr [esp + 0x1c]              ; 08cf45 8b54241c
     push edx                                     ; 08cf49 52
@@ -2518,7 +2547,7 @@ loc_8cf54:
     mov eax, dword ptr [esi + 4]                 ; 08cf59 8b4604
     push eax                                     ; 08cf5c 50
     push ebp                                     ; 08cf5d 55
-    call sub_8d990                               ; 08cf5e e82d0a0000
+    call compactmem_up                           ; 08cf5e e82d0a0000
     add esp, 8                                   ; 08cf63 83c408
 loc_8cf66:
     mov ebp, dword ptr [esi + 4]                 ; 08cf66 8b6e04
@@ -2583,7 +2612,7 @@ loc_8cfbd:
     mov dword ptr [dword_d2f64], eax             ; 08cfed a3642f0d00
     lea eax, [esi + 4]                           ; 08cff2 8d4604
     push eax                                     ; 08cff5 50
-    call sub_8e3e4                               ; 08cff6 e8e9130000
+    call memname_copy                            ; 08cff6 e8e9130000
     add esp, 0xc                                 ; 08cffb 83c40c
     mov eax, dword ptr [esp]                     ; 08cffe 8b0424
     sub ebp, eax                                 ; 08d001 29c5
@@ -2593,7 +2622,7 @@ loc_8cfbd:
     mov dword ptr [esi + 0x20], eax              ; 08d00b 894620
     mov dword ptr [eax + 0x24], esi              ; 08d00e 897024
     mov dword ptr [edi + 0x20], esi              ; 08d011 897720
-    call sub_8da98                               ; 08d014 e87f0a0000
+    call largest_free_min                        ; 08d014 e87f0a0000
     mov eax, esi                                 ; 08d019 89f0
     add esp, 4                                   ; 08d01b 83c404
     pop ebp                                      ; 08d01e 5d
@@ -2617,7 +2646,7 @@ loc_8d035:
 loc_8d03d:
     mov ecx, dword ptr [esp + 0x1c]              ; 08d03d 8b4c241c
     push ecx                                     ; 08d041 51
-    call sub_8d604                               ; 08d042 e8bd050000
+    call purgemem_class                          ; 08d042 e8bd050000
     add esp, 4                                   ; 08d047 83c404
     test eax, eax                                ; 08d04a 85c0
     jne loc_8cf66                                ; 08d04c 0f8514ffffff
@@ -2625,7 +2654,7 @@ loc_8d03d:
     push edi                                     ; 08d055 57
     mov ebp, dword ptr [esi]                     ; 08d056 8b2e
     push ebp                                     ; 08d058 55
-    call sub_8d990                               ; 08d059 e832090000
+    call compactmem_up                           ; 08d059 e832090000
     add esp, 8                                   ; 08d05e 83c408
     test eax, eax                                ; 08d061 85c0
     jne loc_8cf66                                ; 08d063 0f85fdfeffff
@@ -2635,7 +2664,7 @@ loc_8d03d:
     push edx                                     ; 08d076 52
     call memman_unlock                           ; 08d077 e868b60000
     add esp, 4                                   ; 08d07c 83c404
-    call sub_8dab8                               ; 08d07f e8340a0000
+    call largest_free_locked                     ; 08d07f e8340a0000
     push eax                                     ; 08d084 50
     mov ebx, dword ptr [esp + 0x1c]              ; 08d085 8b5c241c
     push ebx                                     ; 08d089 53
@@ -2666,10 +2695,11 @@ loc_8d0c1:
 
 
 ; ====================================================================================================
-; sub_8d0c8  [0x8d0c8, 33 bytes, 12 instructions]  <unreferenced>
+; resizemem_byname  [0x8d0c8, 33 bytes, 12 instructions]  <unreferenced>
+; resizemem of a block found by name
 ; no references found
 ; ====================================================================================================
-sub_8d0c8:
+resizemem_byname:
     mov edx, dword ptr [esp + 0xc]               ; 08d0c8 8b54240c
     push edx                                     ; 08d0cc 52
     mov ebx, dword ptr [esp + 0xc]               ; 08d0cd 8b5c240c
@@ -2686,10 +2716,11 @@ sub_8d0c8:
     db 0x8d, 0x40, 0x00 ; 08d0e9 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8d0ec  [0x8d0ec, 30 bytes, 11 instructions]  <unreferenced>
+; resizemem_byname_fatal  [0x8d0ec, 30 bytes, 11 instructions]  <unreferenced>
+; resizemem of a block found by name (fatal)
 ; no references found
 ; ====================================================================================================
-sub_8d0ec:
+resizemem_byname_fatal:
     push 1                                       ; 08d0ec 6a01
     mov edx, dword ptr [esp + 0xc]               ; 08d0ee 8b54240c
     push edx                                     ; 08d0f2 52
@@ -2705,10 +2736,11 @@ sub_8d0ec:
     db 0x8b, 0xc0 ; 08d10a |..| (padding)
 
 ; ====================================================================================================
-; sub_8d10c  [0x8d10c, 30 bytes, 11 instructions]  <unreferenced>
+; resizemem_byname_try  [0x8d10c, 30 bytes, 11 instructions]  <unreferenced>
+; resizemem of a block found by name (no error)
 ; no references found
 ; ====================================================================================================
-sub_8d10c:
+resizemem_byname_try:
     push 0                                       ; 08d10c 6a00
     mov edx, dword ptr [esp + 0xc]               ; 08d10e 8b54240c
     push edx                                     ; 08d112 52
@@ -2724,10 +2756,11 @@ sub_8d10c:
     db 0x8b, 0xc0 ; 08d12a |..| (padding)
 
 ; ====================================================================================================
-; sub_8d12c  [0x8d12c, 21 bytes, 8 instructions]  <unreferenced>
+; resizemem_fatal  [0x8d12c, 21 bytes, 8 instructions]  <unreferenced>
+; resizemem failing fatally
 ; no references found
 ; ====================================================================================================
-sub_8d12c:
+resizemem_fatal:
     push 1                                       ; 08d12c 6a01
     mov edx, dword ptr [esp + 0xc]               ; 08d12e 8b54240c
     push edx                                     ; 08d132 52
@@ -2740,10 +2773,11 @@ sub_8d12c:
     db 0x8d, 0x40, 0x00 ; 08d141 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8d144  [0x8d144, 21 bytes, 8 instructions]
+; resizemem_try  [0x8d144, 21 bytes, 8 instructions]
+; resizemem returning on failure
 ; called by: loadsound
 ; ====================================================================================================
-sub_8d144:
+resizemem_try:
     push 0                                       ; 08d144 6a00
     mov edx, dword ptr [esp + 0xc]               ; 08d146 8b54240c
     push edx                                     ; 08d14a 52
@@ -2758,7 +2792,7 @@ sub_8d144:
 ; ====================================================================================================
 ; resizemem  [0x8d15c, 324 bytes, 113 instructions]
 ; annotations: external
-; called by: sub_8d0c8, sub_8d0ec, sub_8d10c, sub_8d12c, sub_8d144, loadfile_packed
+; called by: resizemem_byname, resizemem_byname_fatal, resizemem_byname_try, resizemem_fatal, resizemem_try, loadfile_packed
 ;   uses string "resizemem - INVALID SIZE REQUESTED\nrequested: %ld available: %ld\n"
 ;   uses string "resizememblock - NO ROOM TO RESIZE\nrequested: %ld available: %ld\n"
 ; ====================================================================================================
@@ -2809,7 +2843,7 @@ loc_8d1cb:
     push edi                                     ; 08d1dc 57
     call memman_unlock                           ; 08d1dd e802b50000
     add esp, 4                                   ; 08d1e2 83c404
-    call sub_8dab8                               ; 08d1e5 e8ce080000
+    call largest_free_locked                     ; 08d1e5 e8ce080000
     push eax                                     ; 08d1ea 50
     mov ebp, dword ptr [esp + 0x18]              ; 08d1eb 8b6c2418
     push ebp                                     ; 08d1ef 55
@@ -2841,7 +2875,7 @@ loc_8d227:
     push eax                                     ; 08d230 50
     mov eax, dword ptr [edi + 4]                 ; 08d231 8b4704
     push eax                                     ; 08d234 50
-    call sub_8d844                               ; 08d235 e80a060000
+    call compactmem_down                         ; 08d235 e80a060000
     add esp, 8                                   ; 08d23a 83c408
     test eax, eax                                ; 08d23d 85c0
     jne loc_8d257                                ; 08d23f 7516
@@ -2851,7 +2885,7 @@ loc_8d241:
     push esi                                     ; 08d247 56
     mov edx, dword ptr [edi]                     ; 08d248 8b17
     push edx                                     ; 08d24a 52
-    call sub_8d990                               ; 08d24b e840070000
+    call compactmem_up                           ; 08d24b e840070000
     add esp, 8                                   ; 08d250 83c408
     test eax, eax                                ; 08d253 85c0
     je loc_8d271                                 ; 08d255 741a
@@ -2893,7 +2927,7 @@ loc_8d29a:
 ; findmemblock  [0x8d2a0, 56 bytes, 19 instructions]
 ; finds the block descriptor owning a data pointer
 ; annotations: external
-; called by: sub_8d0c8, sub_8d0ec, sub_8d10c, freemem, sub_8d344, sub_8d468, sub_8d494, sub_8dbc0
+; called by: resizemem_byname, resizemem_byname_fatal, resizemem_byname_try, freemem, releasemem_after_byname, setpurgeable_byname, setpurgeable_byname_prio, memblock_size_byname
 ;   uses string "findmemblock - BLOCK NOT FOUND (%p)\n"
 ; ====================================================================================================
 findmemblock:
@@ -2925,7 +2959,7 @@ loc_8d2b9:
 ; freemem  [0x8d2d8, 23 bytes, 8 instructions]
 ; frees the memory block owning a data pointer
 ; annotations: external
-; called by: league_leaders_screen, awards_screen, show_scoreboard, sub_15b76, ea_sports_intro, intro_sequence, credits_screen, sub_17dfc, sub_17edf, sub_17fbc, sub_1809f, sub_18182 (+173 more)
+; called by: league_leaders_screen, awards_screen, show_scoreboard, alloc_cup_banner, ea_sports_intro, intro_sequence, credits_screen, team_stats_standings, team_stats_scoring, team_stats_defense, team_stats_penalty_killing, team_stats_power_play (+173 more)
 ; ====================================================================================================
 freemem:
     mov edx, dword ptr [esp + 4]                 ; 08d2d8 8b542404
@@ -2943,7 +2977,7 @@ freemem:
 ; releasememblock  [0x8d2f0, 44 bytes, 13 instructions]
 ; releases a block descriptor (locked)
 ; annotations: external
-; called by: main, awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, exit_game_dialog, sub_1a9ac, team_select_screen, draw_team_logos, boxscore_screen, team_select_screen2 (+25 more)
+; called by: main, awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, exit_game_dialog, menu_penalty_summary, team_select_screen, draw_team_logos, boxscore_screen, team_select_screen2 (+25 more)
 ; ====================================================================================================
 releasememblock:
     mov edx, dword ptr [dword_edab0]             ; 08d2f0 8b15b0da0e00
@@ -2964,7 +2998,7 @@ releasememblock:
 ; ====================================================================================================
 ; releasemem  [0x8d31c, 37 bytes, 13 instructions]
 ; annotations: external
-; called by: releasememblock, sub_8d35c, sub_8d3d4, sub_8d604
+; called by: releasememblock, releasemem_after, purgemem, purgemem_class
 ; ====================================================================================================
 releasemem:
     mov eax, dword ptr [esp + 4]                 ; 08d31c 8b442404
@@ -2977,7 +3011,7 @@ releasemem:
     mov edx, dword ptr [eax + 0x24]              ; 08d331 8b5024
     mov dword ptr [ebx + 0x24], edx              ; 08d334 895324
     push eax                                     ; 08d337 50
-    call sub_8db78                               ; 08d338 e83b080000
+    call memblock_pool_free                      ; 08d338 e83b080000
     add esp, 4                                   ; 08d33d 83c404
 loc_8d340:
     ret                                          ; 08d340 c3
@@ -2985,26 +3019,28 @@ loc_8d340:
     db 0x8d, 0x40, 0x00 ; 08d341 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8d344  [0x8d344, 23 bytes, 8 instructions]  <unreferenced>
+; releasemem_after_byname  [0x8d344, 23 bytes, 8 instructions]  <unreferenced>
+; releases the blocks after a named block
 ; no references found
 ; ====================================================================================================
-sub_8d344:
+releasemem_after_byname:
     mov edx, dword ptr [esp + 4]                 ; 08d344 8b542404
     push edx                                     ; 08d348 52
     call findmemblock                            ; 08d349 e852ffffff
     add esp, 4                                   ; 08d34e 83c404
     push eax                                     ; 08d351 50
-    call sub_8d35c                               ; 08d352 e805000000
+    call releasemem_after                        ; 08d352 e805000000
     add esp, 4                                   ; 08d357 83c404
     ret                                          ; 08d35a c3
 
     db 0x90 ; 08d35b |.| (padding)
 
 ; ====================================================================================================
-; sub_8d35c  [0x8d35c, 67 bytes, 22 instructions]
-; called by: sub_8d344
+; releasemem_after  [0x8d35c, 67 bytes, 22 instructions]
+; releases every purgeable block after a block up to the next fixed one
+; called by: releasemem_after_byname
 ; ====================================================================================================
-sub_8d35c:
+releasemem_after:
     push esi                                     ; 08d35c 56
     mov edx, dword ptr [dword_edab0]             ; 08d35d 8b15b0da0e00
     push edx                                     ; 08d363 52
@@ -3033,10 +3069,11 @@ loc_8d38e:
     db 0x90 ; 08d39f |.| (padding)
 
 ; ====================================================================================================
-; sub_8d3a0  [0x8d3a0, 50 bytes, 17 instructions]  <unreferenced>
+; purgemem_locked  [0x8d3a0, 50 bytes, 17 instructions]  <unreferenced>
+; purges the oldest purgeable block of a priority (locked)
 ; no references found
 ; ====================================================================================================
-sub_8d3a0:
+purgemem_locked:
     push esi                                     ; 08d3a0 56
     mov edx, dword ptr [dword_edab0]             ; 08d3a1 8b15b0da0e00
     push edx                                     ; 08d3a7 52
@@ -3044,7 +3081,7 @@ sub_8d3a0:
     add esp, 4                                   ; 08d3ad 83c404
     mov ebx, dword ptr [esp + 8]                 ; 08d3b0 8b5c2408
     push ebx                                     ; 08d3b4 53
-    call sub_8d3d4                               ; 08d3b5 e81a000000
+    call purgemem                                ; 08d3b5 e81a000000
     mov esi, eax                                 ; 08d3ba 89c6
     add esp, 4                                   ; 08d3bc 83c404
     mov ecx, dword ptr [dword_edab0]             ; 08d3bf 8b0db0da0e00
@@ -3058,10 +3095,11 @@ sub_8d3a0:
     db 0x8b, 0xc0 ; 08d3d2 |..| (padding)
 
 ; ====================================================================================================
-; sub_8d3d4  [0x8d3d4, 148 bytes, 54 instructions]
-; called by: sub_8d3a0, sub_8d604
+; purgemem  [0x8d3d4, 148 bytes, 54 instructions]
+; releases the least recently used purgeable block of a memory class
+; called by: purgemem_locked, purgemem_class
 ; ====================================================================================================
-sub_8d3d4:
+purgemem:
     push esi                                     ; 08d3d4 56
     push edi                                     ; 08d3d5 57
     push ebp                                     ; 08d3d6 55
@@ -3125,40 +3163,43 @@ loc_8d45e:
 
 
 ; ====================================================================================================
-; sub_8d468  [0x8d468, 25 bytes, 9 instructions]  <unreferenced>
+; setpurgeable_byname  [0x8d468, 25 bytes, 9 instructions]  <unreferenced>
+; marks a named block purgeable (priority 1)
 ; no references found
 ; ====================================================================================================
-sub_8d468:
+setpurgeable_byname:
     push 1                                       ; 08d468 6a01
     mov edx, dword ptr [esp + 8]                 ; 08d46a 8b542408
     push edx                                     ; 08d46e 52
     call findmemblock                            ; 08d46f e82cfeffff
     add esp, 4                                   ; 08d474 83c404
     push eax                                     ; 08d477 50
-    call sub_8d4b0                               ; 08d478 e833000000
+    call setpurgeable_prio                       ; 08d478 e833000000
     add esp, 8                                   ; 08d47d 83c408
     ret                                          ; 08d480 c3
 
     db 0x8d, 0x40, 0x00 ; 08d481 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8d484  [0x8d484, 16 bytes, 6 instructions]
-; called by: sub_93e79
+; setpurgeable  [0x8d484, 16 bytes, 6 instructions]
+; marks a block purgeable (priority 1)
+; called by: debug_monitor_loop
 ; ====================================================================================================
-sub_8d484:
+setpurgeable:
     push 1                                       ; 08d484 6a01
     mov edx, dword ptr [esp + 8]                 ; 08d486 8b542408
     push edx                                     ; 08d48a 52
-    call sub_8d4b0                               ; 08d48b e820000000
+    call setpurgeable_prio                       ; 08d48b e820000000
     add esp, 8                                   ; 08d490 83c408
     ret                                          ; 08d493 c3
 
 
 ; ====================================================================================================
-; sub_8d494  [0x8d494, 28 bytes, 10 instructions]  <unreferenced>
+; setpurgeable_byname_prio  [0x8d494, 28 bytes, 10 instructions]  <unreferenced>
+; marks a named block purgeable with a priority
 ; no references found
 ; ====================================================================================================
-sub_8d494:
+setpurgeable_byname_prio:
     mov edx, dword ptr [esp + 8]                 ; 08d494 8b542408
     push edx                                     ; 08d498 52
     mov ebx, dword ptr [esp + 8]                 ; 08d499 8b5c2408
@@ -3166,16 +3207,17 @@ sub_8d494:
     call findmemblock                            ; 08d49e e8fdfdffff
     add esp, 4                                   ; 08d4a3 83c404
     push eax                                     ; 08d4a6 50
-    call sub_8d4b0                               ; 08d4a7 e804000000
+    call setpurgeable_prio                       ; 08d4a7 e804000000
     add esp, 8                                   ; 08d4ac 83c408
     ret                                          ; 08d4af c3
 
 
 ; ====================================================================================================
-; sub_8d4b0  [0x8d4b0, 55 bytes, 19 instructions]
-; called by: sub_8d468, sub_8d484, sub_8d494
+; setpurgeable_prio  [0x8d4b0, 55 bytes, 19 instructions]
+; marks a block purgeable (flag 8, priority bits 0..3)
+; called by: setpurgeable_byname, setpurgeable, setpurgeable_byname_prio
 ; ====================================================================================================
-sub_8d4b0:
+setpurgeable_prio:
     push esi                                     ; 08d4b0 56
     mov esi, dword ptr [esp + 8]                 ; 08d4b1 8b742408
     mov edx, dword ptr [dword_edab0]             ; 08d4b5 8b15b0da0e00
@@ -3199,10 +3241,11 @@ sub_8d4b0:
     db 0x90 ; 08d4e7 |.| (padding)
 
 ; ====================================================================================================
-; sub_8d4e8  [0x8d4e8, 96 bytes, 40 instructions]
-; called by: sub_8d548
+; findmemblock_name  [0x8d4e8, 96 bytes, 40 instructions]
+; finds a block by name in a memory class
+; called by: findmemblock_name_low
 ; ====================================================================================================
-sub_8d4e8:
+findmemblock_name:
     push esi                                     ; 08d4e8 56
     push edi                                     ; 08d4e9 57
     push ebp                                     ; 08d4ea 55
@@ -3216,7 +3259,7 @@ sub_8d4e8:
     add edi, eax                                 ; 08d509 01c7
     mov edx, dword ptr [esp + 0x10]              ; 08d50b 8b542410
     push edx                                     ; 08d50f 52
-    call sub_8e44c                               ; 08d510 e8370f0000
+    call path_basename_wrap                      ; 08d510 e8370f0000
     add esp, 4                                   ; 08d515 83c404
     mov ebp, eax                                 ; 08d518 89c5
     mov esi, dword ptr [edi]                     ; 08d51a 8b37
@@ -3227,7 +3270,7 @@ loc_8d521:
     lea eax, [esi + 4]                           ; 08d523 8d4604
     push eax                                     ; 08d526 50
     push ebp                                     ; 08d527 55
-    call sub_8e3f8                               ; 08d528 e8cb0e0000
+    call memname_compare                         ; 08d528 e8cb0e0000
     add esp, 0xc                                 ; 08d52d 83c40c
     test eax, eax                                ; 08d530 85c0
     jne loc_8d53a                                ; 08d532 7506
@@ -3250,23 +3293,25 @@ loc_8d542:
 
 
 ; ====================================================================================================
-; sub_8d548  [0x8d548, 16 bytes, 6 instructions]  <unreferenced>
+; findmemblock_name_low  [0x8d548, 16 bytes, 6 instructions]  <unreferenced>
+; finds a block by name in the first memory class
 ; no references found
 ; ====================================================================================================
-sub_8d548:
+findmemblock_name_low:
     push 0                                       ; 08d548 6a00
     mov edx, dword ptr [esp + 8]                 ; 08d54a 8b542408
     push edx                                     ; 08d54e 52
-    call sub_8d4e8                               ; 08d54f e894ffffff
+    call findmemblock_name                       ; 08d54f e894ffffff
     add esp, 8                                   ; 08d554 83c408
     ret                                          ; 08d557 c3
 
 
 ; ====================================================================================================
-; sub_8d558  [0x8d558, 102 bytes, 42 instructions]
-; called by: sub_8d5c0, find_loaded_file
+; findmemblock_purgeable  [0x8d558, 102 bytes, 42 instructions]
+; finds a purgeable block by name in a memory class
+; called by: findmemblock_purgeable_wrap, find_loaded_file
 ; ====================================================================================================
-sub_8d558:
+findmemblock_purgeable:
     push esi                                     ; 08d558 56
     push edi                                     ; 08d559 57
     push ebp                                     ; 08d55a 55
@@ -3280,7 +3325,7 @@ sub_8d558:
     add edi, eax                                 ; 08d579 01c7
     mov edx, dword ptr [esp + 0x10]              ; 08d57b 8b542410
     push edx                                     ; 08d57f 52
-    call sub_8e44c                               ; 08d580 e8c70e0000
+    call path_basename_wrap                      ; 08d580 e8c70e0000
     add esp, 4                                   ; 08d585 83c404
     mov ebp, eax                                 ; 08d588 89c5
     mov esi, dword ptr [edi]                     ; 08d58a 8b37
@@ -3291,7 +3336,7 @@ loc_8d591:
     lea eax, [esi + 4]                           ; 08d593 8d4604
     push eax                                     ; 08d596 50
     push ebp                                     ; 08d597 55
-    call sub_8e3f8                               ; 08d598 e85b0e0000
+    call memname_compare                         ; 08d598 e85b0e0000
     add esp, 0xc                                 ; 08d59d 83c40c
     test eax, eax                                ; 08d5a0 85c0
     jne loc_8d5b0                                ; 08d5a2 750c
@@ -3317,23 +3362,25 @@ loc_8d5b8:
     db 0x8b, 0xc0 ; 08d5be |..| (padding)
 
 ; ====================================================================================================
-; sub_8d5c0  [0x8d5c0, 16 bytes, 6 instructions]
+; findmemblock_purgeable_wrap  [0x8d5c0, 16 bytes, 6 instructions]
+; wrapper of findmemblock_purgeable
 ; called by: find_loaded_file
 ; ====================================================================================================
-sub_8d5c0:
+findmemblock_purgeable_wrap:
     push 0                                       ; 08d5c0 6a00
     mov edx, dword ptr [esp + 8]                 ; 08d5c2 8b542408
     push edx                                     ; 08d5c6 52
-    call sub_8d558                               ; 08d5c7 e88cffffff
+    call findmemblock_purgeable                  ; 08d5c7 e88cffffff
     add esp, 8                                   ; 08d5cc 83c408
     ret                                          ; 08d5cf c3
 
 
 ; ====================================================================================================
-; sub_8d5d0  [0x8d5d0, 50 bytes, 17 instructions]  <unreferenced>
+; purgemem_class_locked  [0x8d5d0, 50 bytes, 17 instructions]  <unreferenced>
+; purges a block of a memory class (locked)
 ; no references found
 ; ====================================================================================================
-sub_8d5d0:
+purgemem_class_locked:
     push esi                                     ; 08d5d0 56
     mov edx, dword ptr [dword_edab0]             ; 08d5d1 8b15b0da0e00
     push edx                                     ; 08d5d7 52
@@ -3341,7 +3388,7 @@ sub_8d5d0:
     add esp, 4                                   ; 08d5dd 83c404
     mov ebx, dword ptr [esp + 8]                 ; 08d5e0 8b5c2408
     push ebx                                     ; 08d5e4 53
-    call sub_8d604                               ; 08d5e5 e81a000000
+    call purgemem_class                          ; 08d5e5 e81a000000
     mov esi, eax                                 ; 08d5ea 89c6
     add esp, 4                                   ; 08d5ec 83c404
     mov ecx, dword ptr [dword_edab0]             ; 08d5ef 8b0db0da0e00
@@ -3355,10 +3402,11 @@ sub_8d5d0:
     db 0x8b, 0xc0 ; 08d602 |..| (padding)
 
 ; ====================================================================================================
-; sub_8d604  [0x8d604, 269 bytes, 103 instructions]
-; called by: reservemem, sub_8d5d0
+; purgemem_class  [0x8d604, 269 bytes, 103 instructions]
+; purges a purgeable block of a memory class, by the class's own purge order
+; called by: reservemem, purgemem_class_locked
 ; ====================================================================================================
-sub_8d604:
+purgemem_class:
     push esi                                     ; 08d604 56
     push edi                                     ; 08d605 57
     push ebp                                     ; 08d606 55
@@ -3375,7 +3423,7 @@ sub_8d604:
     cmp dword ptr [ebx + 0x10], 0                ; 08d62c 837b1000
     jne loc_8d640                                ; 08d630 750e
     push esi                                     ; 08d632 56
-    call sub_8d3d4                               ; 08d633 e89cfdffff
+    call purgemem                                ; 08d633 e89cfdffff
     add esp, 4                                   ; 08d638 83c404
     jmp loc_8d70a                                ; 08d63b e9ca000000
 
@@ -3439,7 +3487,7 @@ loc_8d6aa:
     test eax, eax                                ; 08d6c7 85c0
     jne loc_8d6d8                                ; 08d6c9 750d
     push edi                                     ; 08d6cb 57
-    call sub_8d604                               ; 08d6cc e833ffffff
+    call purgemem_class                          ; 08d6cc e833ffffff
     add esp, 4                                   ; 08d6d1 83c404
     test eax, eax                                ; 08d6d4 85c0
     jne loc_8d6aa                                ; 08d6d6 75d2
@@ -3453,7 +3501,7 @@ loc_8d6d8:
     push esi                                     ; 08d6e6 56
     mov edi, dword ptr [ebp]                     ; 08d6e7 8b7d00
     push edi                                     ; 08d6ea 57
-    call sub_b3abc                               ; 08d6eb e8cc630200
+    call memmove_dwords                          ; 08d6eb e8cc630200
     add esp, 0xc                                 ; 08d6f0 83c40c
     push ebp                                     ; 08d6f3 55
     call releasemem                              ; 08d6f4 e823fcffff
@@ -3477,10 +3525,11 @@ loc_8d70a:
     db 0x8d, 0x40, 0x00 ; 08d711 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8d714  [0x8d714, 20 bytes, 8 instructions]
-; called by: sub_92e40
+; find_loaded_file_data  [0x8d714, 20 bytes, 8 instructions]
+; the data pointer of an already loaded file, 0 if not loaded
+; called by: loadfile_to_buffer
 ; ====================================================================================================
-sub_8d714:
+find_loaded_file_data:
     mov edx, dword ptr [esp + 4]                 ; 08d714 8b542404
     push edx                                     ; 08d718 52
     call find_loaded_file                        ; 08d719 e80a000000
@@ -3495,7 +3544,7 @@ loc_8d727:
 ; ====================================================================================================
 ; find_loaded_file  [0x8d728, 228 bytes, 91 instructions]
 ; returns an already loaded copy of a file from the memory manager
-; called by: sub_8d714, sub_8e920, loadfile_auto, loadfile_packed
+; called by: find_loaded_file_data, loadfile_block, loadfile_auto, loadfile_packed
 ; ====================================================================================================
 find_loaded_file:
     push esi                                     ; 08d728 56
@@ -3504,7 +3553,7 @@ find_loaded_file:
     sub esp, 4                                   ; 08d72b 83ec04
     mov ebp, dword ptr [esp + 0x14]              ; 08d72e 8b6c2414
     push ebp                                     ; 08d732 55
-    call sub_8d5c0                               ; 08d733 e888feffff
+    call findmemblock_purgeable_wrap             ; 08d733 e888feffff
     mov edi, eax                                 ; 08d738 89c7
     add esp, 4                                   ; 08d73a 83c404
     test eax, eax                                ; 08d73d 85c0
@@ -3531,7 +3580,7 @@ find_loaded_file:
     push ebp                                     ; 08d776 55
     mov eax, dword ptr [edi]                     ; 08d777 8b07
     push eax                                     ; 08d779 50
-    call sub_b3abc                               ; 08d77a e83d630200
+    call memmove_dwords                          ; 08d77a e83d630200
     add esp, 0xc                                 ; 08d77f 83c40c
     push edi                                     ; 08d782 57
     call releasememblock                         ; 08d783 e868fbffff
@@ -3547,7 +3596,7 @@ loc_8d78f:
 loc_8d79e:
     push esi                                     ; 08d79e 56
     push ebp                                     ; 08d79f 55
-    call sub_8d558                               ; 08d7a0 e8b3fdffff
+    call findmemblock_purgeable                  ; 08d7a0 e8b3fdffff
     mov edi, eax                                 ; 08d7a5 89c7
     add esp, 8                                   ; 08d7a7 83c408
     test eax, eax                                ; 08d7aa 85c0
@@ -3570,7 +3619,7 @@ loc_8d79e:
     push ebp                                     ; 08d7d3 55
     mov eax, dword ptr [edi]                     ; 08d7d4 8b07
     push eax                                     ; 08d7d6 50
-    call sub_b3abc                               ; 08d7d7 e8e0620200
+    call memmove_dwords                          ; 08d7d7 e8e0620200
     add esp, 0xc                                 ; 08d7dc 83c40c
     mov edi, esi                                 ; 08d7df 89f7
     mov eax, edi                                 ; 08d7e1 89f8
@@ -3598,10 +3647,11 @@ loc_8d803:
 
 
 ; ====================================================================================================
-; sub_8d80c  [0x8d80c, 53 bytes, 18 instructions]  <unreferenced>
+; compactmem_down_locked  [0x8d80c, 53 bytes, 18 instructions]  <unreferenced>
+; compacts the heap towards the bottom (locked)
 ; no references found
 ; ====================================================================================================
-sub_8d80c:
+compactmem_down_locked:
     push esi                                     ; 08d80c 56
     mov edx, dword ptr [dword_edab0]             ; 08d80d 8b15b0da0e00
     push edx                                     ; 08d813 52
@@ -3612,7 +3662,7 @@ sub_8d80c:
     push ebx                                     ; 08d823 53
     mov ecx, dword ptr [eax + 4]                 ; 08d824 8b4804
     push ecx                                     ; 08d827 51
-    call sub_8d844                               ; 08d828 e817000000
+    call compactmem_down                         ; 08d828 e817000000
     add esp, 8                                   ; 08d82d 83c408
     mov esi, dword ptr [dword_edab0]             ; 08d830 8b35b0da0e00
     push esi                                     ; 08d836 56
@@ -3624,10 +3674,11 @@ sub_8d80c:
     db 0x8d, 0x40, 0x00 ; 08d841 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8d844  [0x8d844, 273 bytes, 101 instructions]
-; called by: reservemem, resizemem, sub_8d80c, sub_8dae4
+; compactmem_down  [0x8d844, 273 bytes, 101 instructions]
+; moves movable blocks down to close the gaps
+; called by: reservemem, resizemem, compactmem_down_locked, largest_free
 ; ====================================================================================================
-sub_8d844:
+compactmem_down:
     push esi                                     ; 08d844 56
     push edi                                     ; 08d845 57
     push ebp                                     ; 08d846 55
@@ -3697,7 +3748,7 @@ loc_8d8ab:
     push ebx                                     ; 08d8cf 53
     push eax                                     ; 08d8d0 50
     push edx                                     ; 08d8d1 52
-    call sub_b3abc                               ; 08d8d2 e8e5610200
+    call memmove_dwords                          ; 08d8d2 e8e5610200
     add esp, 0xc                                 ; 08d8d7 83c40c
     mov eax, dword ptr [esp]                     ; 08d8da 8b0424
     mov dword ptr [esi], eax                     ; 08d8dd 8906
@@ -3714,7 +3765,7 @@ loc_8d8ec:
     push ebx                                     ; 08d8fd 53
     push eax                                     ; 08d8fe 50
     push edx                                     ; 08d8ff 52
-    call sub_b3abc                               ; 08d900 e8b7610200
+    call memmove_dwords                          ; 08d900 e8b7610200
     add esp, 0xc                                 ; 08d905 83c40c
     mov eax, dword ptr [esp]                     ; 08d908 8b0424
     mov dword ptr [esi], eax                     ; 08d90b 8906
@@ -3752,10 +3803,11 @@ loc_8d94e:
     db 0x8d, 0x40, 0x00 ; 08d955 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8d958  [0x8d958, 53 bytes, 18 instructions]  <unreferenced>
+; compactmem_up_locked  [0x8d958, 53 bytes, 18 instructions]  <unreferenced>
+; compacts the heap towards the top (locked)
 ; no references found
 ; ====================================================================================================
-sub_8d958:
+compactmem_up_locked:
     push esi                                     ; 08d958 56
     mov edx, dword ptr [dword_edab0]             ; 08d959 8b15b0da0e00
     push edx                                     ; 08d95f 52
@@ -3766,7 +3818,7 @@ sub_8d958:
     push ebx                                     ; 08d970 53
     mov ecx, dword ptr [eax]                     ; 08d971 8b08
     push ecx                                     ; 08d973 51
-    call sub_8d990                               ; 08d974 e817000000
+    call compactmem_up                           ; 08d974 e817000000
     add esp, 8                                   ; 08d979 83c408
     mov esi, dword ptr [dword_edab0]             ; 08d97c 8b35b0da0e00
     push esi                                     ; 08d982 56
@@ -3778,10 +3830,11 @@ sub_8d958:
     db 0x8d, 0x40, 0x00 ; 08d98d |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8d990  [0x8d990, 263 bytes, 114 instructions]
-; called by: reservemem, resizemem, sub_8d958
+; compactmem_up  [0x8d990, 263 bytes, 114 instructions]
+; moves movable blocks up to close the gaps
+; called by: reservemem, resizemem, compactmem_up_locked
 ; ====================================================================================================
-sub_8d990:
+compactmem_up:
     push esi                                     ; 08d990 56
     push edi                                     ; 08d991 57
     push ebp                                     ; 08d992 55
@@ -3839,7 +3892,7 @@ loc_8d9e6:
     push ecx                                     ; 08d9ed 51
     push ebp                                     ; 08d9ee 55
     push ebx                                     ; 08d9ef 53
-    call sub_b3abc                               ; 08d9f0 e8c7600200
+    call memmove_dwords                          ; 08d9f0 e8c7600200
     add esp, 0xc                                 ; 08d9f5 83c40c
     mov dword ptr [esi], ebp                     ; 08d9f8 892e
     add ebp, dword ptr [esi + 0x10]              ; 08d9fa 036e10
@@ -3864,7 +3917,7 @@ loc_8da16:
     push ecx                                     ; 08da1d 51
     push ebp                                     ; 08da1e 55
     push ebx                                     ; 08da1f 53
-    call sub_b3abc                               ; 08da20 e897600200
+    call memmove_dwords                          ; 08da20 e897600200
     add esp, 0xc                                 ; 08da25 83c40c
     mov dword ptr [edi], ebp                     ; 08da28 892f
     mov edx, dword ptr [edi + 0x24]              ; 08da2a 8b5724
@@ -3916,14 +3969,15 @@ loc_8da8f:
     db 0x90 ; 08da97 |.| (padding)
 
 ; ====================================================================================================
-; sub_8da98  [0x8da98, 30 bytes, 12 instructions]
+; largest_free_min  [0x8da98, 30 bytes, 12 instructions]
+; tracks the smallest largest free block seen (low water mark)
 ; called by: reservemem
 ; ====================================================================================================
-sub_8da98:
+largest_free_min:
     push ebx                                     ; 08da98 53
     push ecx                                     ; 08da99 51
     push edx                                     ; 08da9a 52
-    call sub_8dae4                               ; 08da9b e844000000
+    call largest_free                            ; 08da9b e844000000
     cmp eax, dword ptr [dword_edab4]             ; 08daa0 3b05b4da0e00
     jge loc_8daad                                ; 08daa6 7d05
     mov dword ptr [dword_edab4], eax             ; 08daa8 a3b4da0e00
@@ -3937,16 +3991,17 @@ loc_8daad:
     db 0x8b, 0xc0 ; 08dab6 |..| (padding)
 
 ; ====================================================================================================
-; sub_8dab8  [0x8dab8, 42 bytes, 14 instructions]
-; called by: sub_1baf3, sub_212c6, loading_screen, load_cutscene_clip, reservemem, resizemem, sub_8db20, initmemman
+; largest_free_locked  [0x8dab8, 42 bytes, 14 instructions]
+; size of the largest free gap (locked)
+; called by: ensure_free_memory, calendar_free_if_low_mem, loading_screen, load_cutscene_clip, reservemem, resizemem, largest_free_paras, initmemman
 ; ====================================================================================================
-sub_8dab8:
+largest_free_locked:
     push esi                                     ; 08dab8 56
     mov edx, dword ptr [dword_edab0]             ; 08dab9 8b15b0da0e00
     push edx                                     ; 08dabf 52
     call memman_lock                             ; 08dac0 e8fbab0000
     add esp, 4                                   ; 08dac5 83c404
-    call sub_8dae4                               ; 08dac8 e817000000
+    call largest_free                            ; 08dac8 e817000000
     mov esi, eax                                 ; 08dacd 89c6
     mov ebx, dword ptr [dword_edab0]             ; 08dacf 8b1db0da0e00
     push ebx                                     ; 08dad5 53
@@ -3959,16 +4014,17 @@ sub_8dab8:
     db 0x8b, 0xc0 ; 08dae2 |..| (padding)
 
 ; ====================================================================================================
-; sub_8dae4  [0x8dae4, 58 bytes, 23 instructions]
-; called by: sub_8da98, sub_8dab8
+; largest_free  [0x8dae4, 58 bytes, 23 instructions]
+; compacts and returns the largest free gap
+; called by: largest_free_min, largest_free_locked
 ; ====================================================================================================
-sub_8dae4:
+largest_free:
     mov eax, dword ptr [off_d2f58]               ; 08dae4 a1582f0d00
     mov edx, dword ptr [eax]                     ; 08dae9 8b10
     push edx                                     ; 08daeb 52
     mov ebx, dword ptr [eax + 4]                 ; 08daec 8b5804
     push ebx                                     ; 08daef 53
-    call sub_8d844                               ; 08daf0 e84ffdffff
+    call compactmem_down                         ; 08daf0 e84ffdffff
     add esp, 8                                   ; 08daf5 83c408
     mov ebx, dword ptr [off_d2f58]               ; 08daf8 8b1d582f0d00
     mov ebx, dword ptr [ebx]                     ; 08dafe 8b1b
@@ -3992,21 +4048,23 @@ loc_8db12:
     db 0x8b, 0xc0 ; 08db1e |..| (padding)
 
 ; ====================================================================================================
-; sub_8db20  [0x8db20, 9 bytes, 3 instructions]  <unreferenced>
+; largest_free_paras  [0x8db20, 9 bytes, 3 instructions]  <unreferenced>
+; largest free gap in paragraphs
 ; no references found
 ; ====================================================================================================
-sub_8db20:
-    call sub_8dab8                               ; 08db20 e893ffffff
+largest_free_paras:
+    call largest_free_locked                     ; 08db20 e893ffffff
     sar eax, 4                                   ; 08db25 c1f804
     ret                                          ; 08db28 c3
 
     db 0x8d, 0x40, 0x00 ; 08db29 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8db2c  [0x8db2c, 32 bytes, 13 instructions]  <unreferenced>
+; total_free  [0x8db2c, 32 bytes, 13 instructions]  <unreferenced>
+; total size of the free blocks
 ; no references found
 ; ====================================================================================================
-sub_8db2c:
+total_free:
     mov eax, dword ptr [off_d2f58]               ; 08db2c a1582f0d00
     mov eax, dword ptr [eax]                     ; 08db31 8b00
     xor edx, edx                                 ; 08db33 31d2
@@ -4026,10 +4084,11 @@ loc_8db49:
 
 
 ; ====================================================================================================
-; sub_8db4c  [0x8db4c, 41 bytes, 15 instructions]
+; memblock_pool_init  [0x8db4c, 41 bytes, 15 instructions]
+; links the block descriptors of the pool (0x28 bytes each)
 ; called by: initmemman
 ; ====================================================================================================
-sub_8db4c:
+memblock_pool_init:
     mov eax, dword ptr [esp + 4]                 ; 08db4c 8b442404
     mov dword ptr [dword_edaac], eax             ; 08db50 a3acda0e00
     xor edx, edx                                 ; 08db55 31d2
@@ -4051,10 +4110,11 @@ loc_8db6d:
     db 0x8d, 0x40, 0x00 ; 08db75 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8db78  [0x8db78, 19 bytes, 5 instructions]
-; called by: sub_8cba4, releasemem
+; memblock_pool_free  [0x8db78, 19 bytes, 5 instructions]
+; returns a block descriptor to the pool
+; called by: memheap_remove_region, releasemem
 ; ====================================================================================================
-sub_8db78:
+memblock_pool_free:
     mov edx, dword ptr [esp + 4]                 ; 08db78 8b542404
     mov eax, dword ptr [dword_edaac]             ; 08db7c a1acda0e00
     mov dword ptr [edx + 0x20], eax              ; 08db81 894220
@@ -4066,7 +4126,7 @@ sub_8db78:
 ; ====================================================================================================
 ; getmemblock  [0x8db8c, 52 bytes, 13 instructions]
 ; annotations: external
-; called by: sub_8c990, sub_8caf4, reservemem
+; called by: memheap_create, memheap_add_high_region, reservemem
 ;   uses string "getmemblock - NO MEMORY BLOCKS LEFT\n"
 ; ====================================================================================================
 getmemblock:
@@ -4087,10 +4147,11 @@ loc_8dbb1:
 
 
 ; ====================================================================================================
-; sub_8dbc0  [0x8dbc0, 17 bytes, 6 instructions]
-; called by: load_rink, load_eavesa, sub_92e40
+; memblock_size_byname  [0x8dbc0, 17 bytes, 6 instructions]
+; size of a named block
+; called by: load_rink, load_eavesa, loadfile_to_buffer
 ; ====================================================================================================
-sub_8dbc0:
+memblock_size_byname:
     mov edx, dword ptr [esp + 4]                 ; 08dbc0 8b542404
     push edx                                     ; 08dbc4 52
     call findmemblock                            ; 08dbc5 e8d6f6ffff
@@ -4101,10 +4162,11 @@ sub_8dbc0:
     db 0x8d, 0x40, 0x00 ; 08dbd1 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8dbd4  [0x8dbd4, 7 bytes, 3 instructions]
-; called by: sub_83459, loadpatches, load_timbre_file, loadsound, sub_8fb24, playsample, savefileblocka, sub_96844, sub_96e7c, sub_9d090
+; memblock_ptr  [0x8dbd4, 7 bytes, 3 instructions]
+; the data pointer of a block handle
+; called by: speech_clips_init, loadpatches, load_timbre_file, loadsound, playsample_once, playsample, savefileblocka, mvi_open, mvi_next_frame, save_screen_shape
 ; ====================================================================================================
-sub_8dbd4:
+memblock_ptr:
     mov eax, dword ptr [esp + 4]                 ; 08dbd4 8b442404
     mov eax, dword ptr [eax]                     ; 08dbd8 8b00
     ret                                          ; 08dbda c3
@@ -4112,30 +4174,33 @@ sub_8dbd4:
     db 0x90 ; 08dbdb |.| (padding)
 
 ; ====================================================================================================
-; sub_8dbdc  [0x8dbdc, 8 bytes, 3 instructions]
+; memblock_size  [0x8dbdc, 8 bytes, 3 instructions]
+; the size of a block handle (+0x14)
 ; called by: loadpatches, loadsound, savefileblocka
 ; ====================================================================================================
-sub_8dbdc:
+memblock_size:
     mov eax, dword ptr [esp + 4]                 ; 08dbdc 8b442404
     mov eax, dword ptr [eax + 0x14]              ; 08dbe0 8b4014
     ret                                          ; 08dbe3 c3
 
 
 ; ====================================================================================================
-; sub_8dbe4  [0x8dbe4, 8 bytes, 3 instructions]  <unreferenced>
+; memblock_name  [0x8dbe4, 8 bytes, 3 instructions]  <unreferenced>
+; the name of a block handle (+4)
 ; no references found
 ; ====================================================================================================
-sub_8dbe4:
+memblock_name:
     mov eax, dword ptr [esp + 4]                 ; 08dbe4 8b442404
     add eax, 4                                   ; 08dbe8 83c004
     ret                                          ; 08dbeb c3
 
 
 ; ====================================================================================================
-; sub_8dbec  [0x8dbec, 8 bytes, 3 instructions]  <unreferenced>
+; memblock_flags  [0x8dbec, 8 bytes, 3 instructions]  <unreferenced>
+; the flags of a block handle (+0x18)
 ; no references found
 ; ====================================================================================================
-sub_8dbec:
+memblock_flags:
     mov eax, dword ptr [esp + 4]                 ; 08dbec 8b442404
     mov eax, dword ptr [eax + 0x18]              ; 08dbf0 8b4018
     ret                                          ; 08dbf3 c3
@@ -4207,7 +4272,7 @@ unk_8dc3e:
 ; exit  [0x8dc3f, 22 bytes, 6 instructions]  <noreturn>
 ; C exit(): runs atexit handlers and terminates
 ; annotations: external
-; called by: main, lines_teams_a, __CMain, sub_b345d
+; called by: main, lines_teams_a, __CMain, exit_wrap
 ; ====================================================================================================
 exit:
     push edx                                     ; 08dc3f 52
@@ -4218,10 +4283,11 @@ exit:
     call _exit                                   ; 08dc50 e802000000        noreturn
 
 ; ====================================================================================================
-; sub_8dc55  [0x8dc55, 2 bytes, 2 instructions]  <unreferenced>
+; empty_func_8dc55  [0x8dc55, 2 bytes, 2 instructions]  <unreferenced>
+; empty function
 ; no references found
 ; ====================================================================================================
-sub_8dc55:
+empty_func_8dc55:
     pop edx                                      ; 08dc55 5a
     ret                                          ; 08dc56 c3
 
@@ -4238,14 +4304,14 @@ _exit:
     call dword ptr [funcptr_d2f6c]               ; 08dc5a ff156c2f0d00
     call dword ptr [funcptr_d2f70]               ; 08dc60 ff15702f0d00
     mov eax, edx                                 ; 08dc66 89d0
-    jmp sub_90265                                ; 08dc68 e9f8250000
+    jmp __exit_tail                              ; 08dc68 e9f8250000
 
     db 0x00 ; 08dc6d |.| (padding)
 
 ; ====================================================================================================
 ; _dos_getdiskfree  [0x8dc6e, 45 bytes, 20 instructions]  <dos_disk_free>
 ; annotations: external
-; called by: main, sub_106c8, check_disk_space, check_disk_space_for_game, player_id_write, player_id_read, database_disk_check, create_player_menu, replay_save_highlight
+; called by: main, disk_free_bytes, check_disk_space, check_disk_space_for_game, player_id_write, player_id_read, database_disk_check, create_player_menu, replay_save_highlight
 ; ====================================================================================================
 _dos_getdiskfree:
     push edi                                     ; 08dc6e 57
@@ -4265,7 +4331,7 @@ _dos_getdiskfree:
     jmp loc_8dc97                                ; 08dc90 eb05
 
 loc_8dc92:
-    call sub_9879d                               ; 08dc92 e806ab0000
+    call __set_EINVAL                            ; 08dc92 e806ab0000
 loc_8dc97:
     pop ebx                                      ; 08dc97 5b
     pop ecx                                      ; 08dc98 59
@@ -4296,14 +4362,15 @@ int386:
     times 9 db 0 ; 08dcb7 (padding)
 
 ; ====================================================================================================
-; sub_8dcc0  [0x8dcc0, 54 bytes, 19 instructions]
+; dpmi_alloc_largest  [0x8dcc0, 54 bytes, 19 instructions]
+; allocates the largest DPMI block (from 64 MB down), returns its size
 ; called by: initmemman
 ; ====================================================================================================
-sub_8dcc0:
+dpmi_alloc_largest:
     mov edx, 0x4000000                           ; 08dcc0 ba00000004
 loc_8dcc5:
     mov eax, edx                                 ; 08dcc5 89d0
-    call sub_91984                               ; 08dcc7 e8b83c0000
+    call malloc                                  ; 08dcc7 e8b83c0000
     mov ebx, eax                                 ; 08dccc 89c3
     test eax, eax                                ; 08dcce 85c0
     jne loc_8dcd6                                ; 08dcd0 7504
@@ -4316,12 +4383,12 @@ loc_8dcd6:
 
 loc_8dcd9:
     mov edx, 0x4000000                           ; 08dcd9 ba00000004
-    call sub_98801                               ; 08dcde e81eab0000
+    call _expand                                 ; 08dcde e81eab0000
     mov eax, ebx                                 ; 08dce3 89d8
-    call sub_98a2b                               ; 08dce5 e841ad0000
+    call _msize                                  ; 08dce5 e841ad0000
     mov edx, eax                                 ; 08dcea 89c2
     mov eax, ebx                                 ; 08dcec 89d8
-    call sub_91a67                               ; 08dcee e8743d0000
+    call free                                    ; 08dcee e8743d0000
     mov eax, edx                                 ; 08dcf3 89d0
     ret                                          ; 08dcf5 c3
 
@@ -4331,7 +4398,7 @@ loc_8dcd9:
 ; initmemman  [0x8dcf8, 558 bytes, 156 instructions]
 ; EA memory manager initialisation
 ; annotations: external
-; called by: sub_8df28, sub_8df3c, initmem
+; called by: initmemman_size, initmemman_range, initmem
 ;   uses string "initmemman - INSUFFICIENT ROW TABLE SPACE\n"
 ; ====================================================================================================
 initmemman:
@@ -4341,13 +4408,13 @@ initmemman:
     sub esp, 0x40                                ; 08dcfb 83ec40
     mov esi, dword ptr [esp + 0x54]              ; 08dcfe 8b742454
     mov edi, dword ptr [esp + 0x58]              ; 08dd02 8b7c2458
-    call sub_986b0                               ; 08dd06 e8a5a90000
+    call memman_lock_init                        ; 08dd06 e8a5a90000
     mov dword ptr [dword_edab0], eax             ; 08dd0b a3b0da0e00
     push eax                                     ; 08dd10 50
     call memman_lock                             ; 08dd11 e8aaa90000
     add esp, 4                                   ; 08dd16 83c404
-    call sub_b3f50                               ; 08dd19 e832620200
-    call sub_8dcc0                               ; 08dd1e e89dffffff
+    call cpu_detect                              ; 08dd19 e832620200
+    call dpmi_alloc_largest                      ; 08dd1e e89dffffff
     mov edx, eax                                 ; 08dd23 89c2
     test esi, esi                                ; 08dd25 85f6
     jle loc_8dd2f                                ; 08dd27 7e06
@@ -4357,7 +4424,7 @@ initmemman:
 loc_8dd2f:
     and dl, 0xf0                                 ; 08dd2f 80e2f0
     mov eax, edx                                 ; 08dd32 89d0
-    call sub_91984                               ; 08dd34 e84b3c0000
+    call malloc                                  ; 08dd34 e84b3c0000
     mov dword ptr [dword_d2f80], eax             ; 08dd39 a3802f0d00
     add eax, edx                                 ; 08dd3e 01d0
     mov dword ptr [dword_d2f7c], eax             ; 08dd40 a37c2f0d00
@@ -4388,7 +4455,7 @@ loc_8dd71:
     push edx                                     ; 08ddae 52
     mov edx, dword ptr [dword_d2f80]             ; 08ddaf 8b15802f0d00
     push edx                                     ; 08ddb5 52
-    call sub_8db4c                               ; 08ddb6 e891fdffff
+    call memblock_pool_init                      ; 08ddb6 e891fdffff
     add esp, 8                                   ; 08ddbb 83c408
     push 0                                       ; 08ddbe 6a00
     push 8                                       ; 08ddc0 6a08
@@ -4399,7 +4466,7 @@ loc_8dd71:
     add eax, dword ptr [esp + 0x4c]              ; 08ddd0 0344244c
     push eax                                     ; 08ddd4 50
     push 0                                       ; 08ddd5 6a00
-    call sub_8c990                               ; 08ddd7 e8b4ebffff
+    call memheap_create                          ; 08ddd7 e8b4ebffff
     add esp, 0x18                                ; 08dddc 83c418
     test esi, esi                                ; 08dddf 85f6
     jne loc_8df06                                ; 08dde1 0f851f010000
@@ -4456,16 +4523,16 @@ loc_8ddf4:
     mov ax, word ptr [esp + 0xc]                 ; 08dea4 668b44240c
     mov dword ptr [esp + 0x38], eax              ; 08dea9 89442438
 loc_8dead:
-    call sub_8dcc0                               ; 08dead e80efeffff
+    call dpmi_alloc_largest                      ; 08dead e80efeffff
     mov edx, eax                                 ; 08deb2 89c2
     cmp eax, 0x2710                              ; 08deb4 3d10270000
     jl loc_8ded0                                 ; 08deb9 7c15
-    call sub_91984                               ; 08debb e8c43a0000
+    call malloc                                  ; 08debb e8c43a0000
     add edx, eax                                 ; 08dec0 01c2
     push edx                                     ; 08dec2 52
     push eax                                     ; 08dec3 50
     push 0                                       ; 08dec4 6a00
-    call sub_8caf4                               ; 08dec6 e829ecffff
+    call memheap_add_high_region                 ; 08dec6 e829ecffff
     add esp, 0xc                                 ; 08decb 83c40c
     jmp loc_8dead                                ; 08dece ebdd
 
@@ -4476,7 +4543,7 @@ loc_8ded0:
     push esi                                     ; 08ded6 56
     push ebp                                     ; 08ded7 55
     push 0                                       ; 08ded8 6a00
-    call sub_8caf4                               ; 08deda e815ecffff
+    call memheap_add_high_region                 ; 08deda e815ecffff
     add esp, 0xc                                 ; 08dedf 83c40c
     test edi, edi                                ; 08dee2 85ff
     je loc_8df06                                 ; 08dee4 7420
@@ -4492,7 +4559,7 @@ loc_8df06:
     push esi                                     ; 08df0c 56
     call memman_unlock                           ; 08df0d e8d2a70000
     add esp, 4                                   ; 08df12 83c404
-    call sub_8dab8                               ; 08df15 e89efbffff
+    call largest_free_locked                     ; 08df15 e89efbffff
     mov dword ptr [dword_edab4], eax             ; 08df1a a3b4da0e00
     add esp, 0x40                                ; 08df1f 83c440
     pop ebp                                      ; 08df22 5d
@@ -4503,10 +4570,11 @@ loc_8df06:
     db 0x8b, 0xc0 ; 08df26 |..| (padding)
 
 ; ====================================================================================================
-; sub_8df28  [0x8df28, 18 bytes, 7 instructions]  <unreferenced>
+; initmemman_size  [0x8df28, 18 bytes, 7 instructions]  <unreferenced>
+; initmemman with only a size
 ; no references found
 ; ====================================================================================================
-sub_8df28:
+initmemman_size:
     push 0                                       ; 08df28 6a00
     push 0                                       ; 08df2a 6a00
     mov edx, dword ptr [esp + 0xc]               ; 08df2c 8b54240c
@@ -4518,10 +4586,11 @@ sub_8df28:
     db 0x8b, 0xc0 ; 08df3a |..| (padding)
 
 ; ====================================================================================================
-; sub_8df3c  [0x8df3c, 21 bytes, 8 instructions]  <unreferenced>
+; initmemman_range  [0x8df3c, 21 bytes, 8 instructions]  <unreferenced>
+; initmemman with a size and a minimum
 ; no references found
 ; ====================================================================================================
-sub_8df3c:
+initmemman_range:
     push 0                                       ; 08df3c 6a00
     mov edx, dword ptr [esp + 0xc]               ; 08df3e 8b54240c
     push edx                                     ; 08df42 52
@@ -4570,7 +4639,7 @@ load_eavesa:
     push esi                                     ; 08df73 56
     mov esi, aEavesaCom                          ; 08df74 beb43d0c00        "eavesa.com"
     push esi                                     ; 08df79 56
-    call sub_98a40                               ; 08df7a e8c1aa0000
+    call file_exists                             ; 08df7a e8c1aa0000
     add esp, 4                                   ; 08df7f 83c404
     test eax, eax                                ; 08df82 85c0
     jne loc_8df8b                                ; 08df84 7505
@@ -4580,7 +4649,7 @@ loc_8df8b:
     push esi                                     ; 08df8d 56
     push esi                                     ; 08df8e 56
     push 0                                       ; 08df8f 6a00
-    call sub_98a81                               ; 08df91 e8ebaa0000
+    call spawnl                                  ; 08df91 e8ebaa0000
     add esp, 0x10                                ; 08df96 83c410
     mov dword ptr [dword_edcb8], eax             ; 08df99 a3b8dc0e00
     cmp eax, -1                                  ; 08df9e 83f8ff
@@ -4598,7 +4667,7 @@ loc_8dfb0:
     mov eax, aCEavesaDat                         ; 08dfc3 b8283e0c00        "c:\\eavesa.dat"
     call remove                                  ; 08dfc8 e88d4d0000
     push edx                                     ; 08dfcd 52
-    call sub_8dbc0                               ; 08dfce e8edfbffff
+    call memblock_size_byname                    ; 08dfce e8edfbffff
     add esp, 4                                   ; 08dfd3 83c404
     cmp eax, 0x41c                               ; 08dfd6 3d1c040000
     je loc_8dfea                                 ; 08dfdb 740d
@@ -4611,7 +4680,7 @@ loc_8dfea:
     mov ebx, 4                                   ; 08dff2 bb04000000
     mov edx, aVESA                               ; 08dff7 ba943e0c00        "VESA"
     mov eax, esi                                 ; 08dffc 89f0
-    call sub_98a9f                               ; 08dffe e89caa0000
+    call strncmp                                 ; 08dffe e89caa0000
     test eax, eax                                ; 08e003 85c0
     jne loc_8e011                                ; 08e005 750a
     mov dword ptr [dword_edcb8], 1               ; 08e007 c705b8dc0e000100..
@@ -4619,25 +4688,25 @@ loc_8e011:
     push 0x100                                   ; 08e011 6800010000
     push unk_edbb8                               ; 08e016 68b8db0e00
     push esi                                     ; 08e01b 56
-    call sub_b3abc                               ; 08e01c e89b5a0200
+    call memmove_dwords                          ; 08e01c e89b5a0200
     add esp, 0xc                                 ; 08e021 83c40c
     push 0x100                                   ; 08e024 6800010000
     push unk_edab8                               ; 08e029 68b8da0e00
     lea eax, [esi + 0x100]                       ; 08e02e 8d8600010000
     push eax                                     ; 08e034 50
-    call sub_b3abc                               ; 08e035 e8825a0200
+    call memmove_dwords                          ; 08e035 e8825a0200
     add esp, 0xc                                 ; 08e03a 83c40c
     push 0x1b                                    ; 08e03d 6a1b
     push byte_edcc0                              ; 08e03f 68c0dc0e00
     lea eax, [esi + 0x400]                       ; 08e044 8d8600040000
     push eax                                     ; 08e04a 50
-    call sub_b3abc                               ; 08e04b e86c5a0200
+    call memmove_dwords                          ; 08e04b e86c5a0200
     add esp, 0xc                                 ; 08e050 83c40c
     cmp word ptr [word_edbca], 4                 ; 08e053 66833dcadb0e0004
     jg loc_8e06c                                 ; 08e05b 7f0f
     push 0x1a                                    ; 08e05d 6a1a
     push byte_edcc1                              ; 08e05f 68c1dc0e00
-    call sub_b3fc2                               ; 08e064 e8595f0200
+    call memzero                                 ; 08e064 e8595f0200
     add esp, 8                                   ; 08e069 83c408
 loc_8e06c:
     push esi                                     ; 08e06c 56
@@ -4675,7 +4744,7 @@ initgraphics:
 loc_8e0a0:
     cmp dword ptr [dword_d3024], 0               ; 08e0a0 833d24300d0000
     jne loc_8e0ae                                ; 08e0a7 7505
-    call sub_b3e98                               ; 08e0a9 e8ea5d0200
+    call save_video_state                        ; 08e0a9 e8ea5d0200
 loc_8e0ae:
     cmp dword ptr [dword_d2f88], 0               ; 08e0ae 833d882f0d0000
     jne loc_8e0c6                                ; 08e0b5 750f
@@ -4811,7 +4880,7 @@ loc_8e24f:
     or ah, 1                                     ; 08e251 80cc01
 loc_8e254:
     push eax                                     ; 08e254 50
-    call sub_b5ea7                               ; 08e255 e84d7c0200
+    call vesa_set_mode                           ; 08e255 e84d7c0200
     mov edi, eax                                 ; 08e25a 89c7
     add esp, 4                                   ; 08e25c 83c404
 loc_8e25f:
@@ -4855,12 +4924,12 @@ loc_8e2a9:
     cmp dword ptr [dword_d3024], 8               ; 08e2a9 833d24300d0008
     jne loc_8e2bc                                ; 08e2b0 750a
     push 0                                       ; 08e2b2 6a00
-    call sub_b5e00                               ; 08e2b4 e8477b0200
+    call vesa_set_bank                           ; 08e2b4 e8477b0200
     add esp, 4                                   ; 08e2b9 83c404
 loc_8e2bc:
     mov esi, 0x13                                ; 08e2bc be13000000
     push esi                                     ; 08e2c1 56
-    call sub_b5eb8                               ; 08e2c2 e8f17b0200
+    call bios_set_mode                           ; 08e2c2 e8f17b0200
     add esp, 4                                   ; 08e2c7 83c404
     mov ecx, 0x140                               ; 08e2ca b940010000
     mov eax, 0xc8                                ; 08e2cf b8c8000000
@@ -4931,59 +5000,65 @@ loc_8e38c:
     db 0x00 ; 08e3bf |.| (padding)
 
 ; ====================================================================================================
-; sub_8e3c0  [0x8e3c0, 1 bytes, 1 instructions]
+; empty_func_8e3c0  [0x8e3c0, 1 bytes, 1 instructions]
+; empty function (called by load_player_graphics)
 ; called by: load_player_graphics
 ; ====================================================================================================
-sub_8e3c0:
+empty_func_8e3c0:
     ret                                          ; 08e3c0 c3
 
     db 0x8d, 0x40, 0x00 ; 08e3c1 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8e3c4  [0x8e3c4, 5 bytes, 2 instructions]
-; called by: sub_954c8, windowdef, sub_9d2e0
+; identity_8e3c4  [0x8e3c4, 5 bytes, 2 instructions]
+; returns its argument (a pointer conversion compiled to nothing)
+; called by: shpi_header_fields, windowdef, window_select
 ; ====================================================================================================
-sub_8e3c4:
+identity_8e3c4:
     mov eax, dword ptr [esp + 4]                 ; 08e3c4 8b442404
     ret                                          ; 08e3c8 c3
 
     db 0x8d, 0x40, 0x00 ; 08e3c9 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8e3cc  [0x8e3cc, 5 bytes, 2 instructions]
-; called by: sub_947d8, sub_95158, loadfile_packed
+; identity_8e3cc  [0x8e3cc, 5 bytes, 2 instructions]
+; returns its argument (a pointer conversion compiled to nothing)
+; called by: debug_memblock_info, debug_shapes, loadfile_packed
 ; ====================================================================================================
-sub_8e3cc:
+identity_8e3cc:
     mov eax, dword ptr [esp + 4]                 ; 08e3cc 8b442404
     ret                                          ; 08e3d0 c3
 
     db 0x8d, 0x40, 0x00 ; 08e3d1 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8e3d4  [0x8e3d4, 5 bytes, 2 instructions]
-; called by: sub_94b6c, sub_954c8, loadfile_packed
+; identity_8e3d4  [0x8e3d4, 5 bytes, 2 instructions]
+; returns its argument (a pointer conversion compiled to nothing)
+; called by: debug_hexdump, shpi_header_fields, loadfile_packed
 ; ====================================================================================================
-sub_8e3d4:
+identity_8e3d4:
     mov eax, dword ptr [esp + 4]                 ; 08e3d4 8b442404
     ret                                          ; 08e3d8 c3
 
     db 0x8d, 0x40, 0x00 ; 08e3d9 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8e3dc  [0x8e3dc, 5 bytes, 2 instructions]  <unreferenced>
+; identity_8e3dc  [0x8e3dc, 5 bytes, 2 instructions]  <unreferenced>
+; returns its argument (a pointer conversion compiled to nothing)
 ; no references found
 ; ====================================================================================================
-sub_8e3dc:
+identity_8e3dc:
     mov eax, dword ptr [esp + 4]                 ; 08e3dc 8b442404
     ret                                          ; 08e3e0 c3
 
     db 0x8d, 0x40, 0x00 ; 08e3e1 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8e3e4  [0x8e3e4, 17 bytes, 4 instructions]
-; called by: sub_8c990, sub_8caf4, reservemem
+; memname_copy  [0x8e3e4, 17 bytes, 4 instructions]
+; copies a block name (strncpy)
+; called by: memheap_create, memheap_add_high_region, reservemem
 ; ====================================================================================================
-sub_8e3e4:
+memname_copy:
     mov eax, dword ptr [esp + 4]                 ; 08e3e4 8b442404
     mov edx, dword ptr [esp + 8]                 ; 08e3e8 8b542408
     mov ebx, dword ptr [esp + 0xc]               ; 08e3ec 8b5c240c
@@ -4992,38 +5067,41 @@ sub_8e3e4:
     db 0x8d, 0x40, 0x00 ; 08e3f5 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8e3f8  [0x8e3f8, 17 bytes, 4 instructions]
-; called by: sub_8d4e8, sub_8d558
+; memname_compare  [0x8e3f8, 17 bytes, 4 instructions]
+; compares two block names (strnicmp)
+; called by: findmemblock_name, findmemblock_purgeable
 ; ====================================================================================================
-sub_8e3f8:
+memname_compare:
     mov eax, dword ptr [esp + 4]                 ; 08e3f8 8b442404
     mov edx, dword ptr [esp + 8]                 ; 08e3fc 8b542408
     mov ebx, dword ptr [esp + 0xc]               ; 08e400 8b5c240c
-    jmp sub_98a9f                                ; 08e404 e996a60000
+    jmp strncmp                                  ; 08e404 e996a60000
 
     db 0x8d, 0x40, 0x00 ; 08e409 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8e40c  [0x8e40c, 24 bytes, 9 instructions]  <unreferenced>
+; memcopy_swapped  [0x8e40c, 24 bytes, 9 instructions]  <unreferenced>
+; copies memory with the arguments as (dst, src) swapped
 ; no references found
 ; ====================================================================================================
-sub_8e40c:
+memcopy_swapped:
     mov edx, dword ptr [esp + 0xc]               ; 08e40c 8b54240c
     push edx                                     ; 08e410 52
     mov ebx, dword ptr [esp + 8]                 ; 08e411 8b5c2408
     push ebx                                     ; 08e415 53
     mov ecx, dword ptr [esp + 0x10]              ; 08e416 8b4c2410
     push ecx                                     ; 08e41a 51
-    call sub_b3abc                               ; 08e41b e89c560200
+    call memmove_dwords                          ; 08e41b e89c560200
     add esp, 0xc                                 ; 08e420 83c40c
     ret                                          ; 08e423 c3
 
 
 ; ====================================================================================================
-; sub_8e424  [0x8e424, 40 bytes, 17 instructions]
-; called by: reservemem, sub_8e44c
+; path_basename  [0x8e424, 40 bytes, 17 instructions]
+; the file name part of a path (after the last \ / or :)
+; called by: reservemem, path_basename_wrap
 ; ====================================================================================================
-sub_8e424:
+path_basename:
     mov eax, dword ptr [esp + 4]                 ; 08e424 8b442404
     mov edx, eax                                 ; 08e428 89c2
     cmp byte ptr [eax], 0                        ; 08e42a 803800
@@ -5048,23 +5126,25 @@ loc_8e449:
 
 
 ; ====================================================================================================
-; sub_8e44c  [0x8e44c, 14 bytes, 5 instructions]
-; called by: sub_8d4e8, sub_8d558
+; path_basename_wrap  [0x8e44c, 14 bytes, 5 instructions]
+; wrapper of path_basename
+; called by: findmemblock_name, findmemblock_purgeable
 ; ====================================================================================================
-sub_8e44c:
+path_basename_wrap:
     mov edx, dword ptr [esp + 4]                 ; 08e44c 8b542404
     push edx                                     ; 08e450 52
-    call sub_8e424                               ; 08e451 e8ceffffff
+    call path_basename                           ; 08e451 e8ceffffff
     add esp, 4                                   ; 08e456 83c404
     ret                                          ; 08e459 c3
 
     db 0x8b, 0xc0 ; 08e45a |..| (padding)
 
 ; ====================================================================================================
-; sub_8e45c  [0x8e45c, 100 bytes, 37 instructions]  <pic1>
+; timer_irq_handler  [0x8e45c, 100 bytes, 37 instructions]  <pic1>
+; IRQ 0 handler at 100 Hz: runs the registered timer callbacks, chains the BIOS handler every 5th tick
 ; called by: inittimer
 ; ====================================================================================================
-sub_8e45c:
+timer_irq_handler:
     pushal                                       ; 08e45c 60
     push ds                                      ; 08e45d 1e
     push es                                      ; 08e45e 06
@@ -5072,7 +5152,7 @@ sub_8e45c:
     push gs                                      ; 08e461 0fa8
     mov ebp, esp                                 ; 08e463 89e5
     cld                                          ; 08e465 fc
-    call sub_902a0                               ; 08e466 e8351e0000
+    call empty_func_902a0                        ; 08e466 e8351e0000
     inc dword ptr [dword_d2fdc]                  ; 08e46b ff05dc2f0d00
     xor edx, edx                                 ; 08e471 31d2
 loc_8e473:
@@ -5113,7 +5193,7 @@ loc_8e4b8:
 ; addtimer  [0x8e4c0, 55 bytes, 16 instructions]
 ; registers a timer callback ("addtimer - LIST FULL")
 ; annotations: external
-; called by: main, sub_1b0f3, loading_screen, ui_init, sub_8357a, sound_timer_install
+; called by: main, cdstream_open, loading_screen, ui_init, speech_init, sound_timer_install
 ;   uses string "addtimer - LIST FULL\n"
 ; ====================================================================================================
 addtimer:
@@ -5144,7 +5224,7 @@ loc_8e4e9:
 ; ====================================================================================================
 ; removetimer  [0x8e4f8, 45 bytes, 17 instructions]
 ; annotations: external
-; called by: sub_1b18b, wait_sprite_fade, ui_shutdown, sub_8363c, sound_shutdown
+; called by: cdstream_close, wait_sprite_fade, ui_shutdown, speech_shutdown, sound_shutdown
 ; ====================================================================================================
 removetimer:
     push esi                                     ; 08e4f8 56
@@ -5173,10 +5253,11 @@ loc_8e523:
     db 0x8d, 0x40, 0x00 ; 08e525 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8e528  [0x8e528, 25 bytes, 10 instructions]  <unreferenced>
+; timer_count  [0x8e528, 25 bytes, 10 instructions]  <unreferenced>
+; number of registered timer callbacks
 ; no references found
 ; ====================================================================================================
-sub_8e528:
+timer_count:
     xor edx, edx                                 ; 08e528 31d2
     xor eax, eax                                 ; 08e52a 31c0
 loc_8e52c:
@@ -5193,10 +5274,11 @@ loc_8e536:
     db 0x8d, 0x40, 0x00 ; 08e541 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8e544  [0x8e544, 14 bytes, 8 instructions]  <pic1_mask>
-; called by: sub_8e554, inittimer
+; pic_mask_timer_kbd  [0x8e544, 14 bytes, 8 instructions]  <pic1_mask>
+; masks IRQ 0 and 1 at the PIC
+; called by: restoretimer, inittimer
 ; ====================================================================================================
-sub_8e544:
+pic_mask_timer_kbd:
     push edx                                     ; 08e544 52
     mov edx, 0x21                                ; 08e545 ba21000000
     sub eax, eax                                 ; 08e54a 29c0
@@ -5209,10 +5291,11 @@ sub_8e544:
     db 0x8b, 0xc0 ; 08e552 |..| (padding)
 
 ; ====================================================================================================
-; sub_8e554  [0x8e554, 85 bytes, 25 instructions]  <pit_ch0>
+; restoretimer  [0x8e554, 85 bytes, 25 instructions]  <pit_ch0>
+; restores the BIOS timer vector and the 18.2 Hz rate
 ; called by: inittimer
 ; ====================================================================================================
-sub_8e554:
+restoretimer:
     push ebx                                     ; 08e554 53
     push ecx                                     ; 08e555 51
     push edx                                     ; 08e556 52
@@ -5221,11 +5304,11 @@ sub_8e554:
     cmp word ptr [word_d2fe8], 0                 ; 08e560 66833de82f0d0000
     je loc_8e5a5                                 ; 08e568 743b
 loc_8e56a:
-    call sub_8e544                               ; 08e56a e8d5ffffff
+    call pic_mask_timer_kbd                      ; 08e56a e8d5ffffff
     mov cx, word ptr [word_d2fe8]                ; 08e56f 668b0de82f0d00
     mov ebx, dword ptr [dword_d2fe4]             ; 08e576 8b1de42f0d00
     mov eax, 8                                   ; 08e57c b808000000
-    call sub_98ac8                               ; 08e581 e842a50000
+    call _dos_setvect                            ; 08e581 e842a50000
     xor al, al                                   ; 08e586 30c0
     mov edx, 0x40                                ; 08e588 ba40000000
     out dx, al                                   ; 08e58d ee                port 0x40 (pit_ch0)
@@ -5234,7 +5317,7 @@ loc_8e56a:
     mov word ptr [word_d2fe8], bx                ; 08e591 66891de82f0d00
     xor ebx, ebx                                 ; 08e598 31db
     mov dword ptr [dword_d2fe4], ebx             ; 08e59a 891de42f0d00
-    call sub_8e614                               ; 08e5a0 e86f000000
+    call pic_unmask_timer_kbd                    ; 08e5a0 e86f000000
 loc_8e5a5:
     pop edx                                      ; 08e5a5 5a
     pop ecx                                      ; 08e5a6 59
@@ -5259,9 +5342,9 @@ inittimer:
     jne loc_8e5a8                                ; 08e5c4 75e2
     cmp word ptr [word_d2fe8], 0                 ; 08e5c6 66833de82f0d0000
     jne loc_8e5a8                                ; 08e5ce 75d8
-    call sub_8e544                               ; 08e5d0 e86fffffff
+    call pic_mask_timer_kbd                      ; 08e5d0 e86fffffff
     mov eax, 8                                   ; 08e5d5 b808000000
-    call sub_98af3                               ; 08e5da e814a50000
+    call _dos_getvect                            ; 08e5da e814a50000
     mov word ptr [word_d2fe8], dx                ; 08e5df 668915e82f0d00
     mov dword ptr [dword_d2fe4], eax             ; 08e5e6 a3e42f0d00
     mov al, 0x9c                                 ; 08e5eb b09c
@@ -5270,18 +5353,19 @@ inittimer:
     mov al, 0x2e                                 ; 08e5f3 b02e
     out dx, al                                   ; 08e5f5 ee                port 0x40 (pit_ch0)
     mov ecx, cs                                  ; 08e5f6 8cc9
-    mov ebx, sub_8e45c                           ; 08e5f8 bb5ce40800
+    mov ebx, timer_irq_handler                   ; 08e5f8 bb5ce40800
     mov eax, 8                                   ; 08e5fd b808000000
-    call sub_98ac8                               ; 08e602 e8c1a40000
-    push sub_8e554                               ; 08e607 6854e50800
-    call sub_b3454                               ; 08e60c e8434e0200
+    call _dos_setvect                            ; 08e602 e8c1a40000
+    push restoretimer                            ; 08e607 6854e50800
+    call atexit_wrap                             ; 08e60c e8434e0200
     add esp, 4                                   ; 08e611 83c404
 
 ; ====================================================================================================
-; sub_8e614  [0x8e614, 14 bytes, 8 instructions]  <pic1_mask>
-; called by: sub_8e554
+; pic_unmask_timer_kbd  [0x8e614, 14 bytes, 8 instructions]  <pic1_mask>
+; unmasks IRQ 0 and 1 at the PIC
+; called by: restoretimer
 ; ====================================================================================================
-sub_8e614:
+pic_unmask_timer_kbd:
     push edx                                     ; 08e614 52
     mov edx, 0x21                                ; 08e615 ba21000000
     sub eax, eax                                 ; 08e61a 29c0
@@ -5294,10 +5378,11 @@ sub_8e614:
     db 0x8b, 0xc0 ; 08e622 |..| (padding)
 
 ; ====================================================================================================
-; sub_8e624  [0x8e624, 129 bytes, 46 instructions]
-; called by: sub_8e6a8, sub_8e6cc, sub_8e714, sub_8e738, sub_8e780
+; printstr_rect  [0x8e624, 129 bytes, 46 instructions]
+; prints a string with its bounding box (draw_quad_clipped with the box of the text)
+; called by: printstr_rect_at_cursor, printstr_rect_right, printstr2_rect_at_cursor, printstr2_rect_right, printstr_rect_wrap
 ; ====================================================================================================
-sub_8e624:
+printstr_rect:
     push esi                                     ; 08e624 56
     push edi                                     ; 08e625 57
     push ebp                                     ; 08e626 55
@@ -5309,7 +5394,7 @@ sub_8e624:
     push eax                                     ; 08e638 50
     mov edx, dword ptr [esp + 0x34]              ; 08e639 8b542434
     push edx                                     ; 08e63d 52
-    call sub_91fa4                               ; 08e63e e861390000
+    call fixmul16                                ; 08e63e e861390000
     mov esi, eax                                 ; 08e643 89c6
     add esp, 8                                   ; 08e645 83c408
     mov eax, dword ptr [ebp + 4]                 ; 08e648 8b4504
@@ -5317,7 +5402,7 @@ sub_8e624:
     push eax                                     ; 08e64e 50
     mov ebx, dword ptr [esp + 0x34]              ; 08e64f 8b5c2434
     push ebx                                     ; 08e653 53
-    call sub_91fa4                               ; 08e654 e84b390000
+    call fixmul16                                ; 08e654 e84b390000
     mov edx, eax                                 ; 08e659 89c2
     add esp, 8                                   ; 08e65b 83c408
     mov dword ptr [esp], edi                     ; 08e65e 893c24
@@ -5337,7 +5422,7 @@ sub_8e624:
     mov eax, esp                                 ; 08e692 89e0
     push eax                                     ; 08e694 50
     push ebp                                     ; 08e695 55
-    call sub_98b30                               ; 08e696 e895a40000
+    call draw_quad_clipped                       ; 08e696 e895a40000
     add esp, 8                                   ; 08e69b 83c408
     add esp, 0x20                                ; 08e69e 83c420
     pop ebp                                      ; 08e6a1 5d
@@ -5348,10 +5433,11 @@ sub_8e624:
     db 0x8d, 0x40, 0x00 ; 08e6a5 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8e6a8  [0x8e6a8, 33 bytes, 13 instructions]  <unreferenced>
+; printstr_rect_at_cursor  [0x8e6a8, 33 bytes, 13 instructions]  <unreferenced>
+; printstr_rect at the font's cursor position
 ; no references found
 ; ====================================================================================================
-sub_8e6a8:
+printstr_rect_at_cursor:
     mov edx, dword ptr [esp + 8]                 ; 08e6a8 8b542408
     mov eax, dword ptr [edx + 0xc]               ; 08e6ac 8b420c
     sar eax, 0x10                                ; 08e6af c1f810
@@ -5362,17 +5448,18 @@ sub_8e6a8:
     push edx                                     ; 08e6ba 52
     mov edx, dword ptr [esp + 0x10]              ; 08e6bb 8b542410
     push edx                                     ; 08e6bf 52
-    call sub_8e624                               ; 08e6c0 e85fffffff
+    call printstr_rect                           ; 08e6c0 e85fffffff
     add esp, 0x10                                ; 08e6c5 83c410
     ret                                          ; 08e6c8 c3
 
     db 0x8d, 0x40, 0x00 ; 08e6c9 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8e6cc  [0x8e6cc, 69 bytes, 29 instructions]  <unreferenced>
+; printstr_rect_right  [0x8e6cc, 69 bytes, 29 instructions]  <unreferenced>
+; printstr_rect right aligned
 ; no references found
 ; ====================================================================================================
-sub_8e6cc:
+printstr_rect_right:
     push esi                                     ; 08e6cc 56
     push edi                                     ; 08e6cd 57
     mov edi, dword ptr [esp + 0xc]               ; 08e6ce 8b7c240c
@@ -5381,7 +5468,7 @@ sub_8e6cc:
     sar eax, 0x10                                ; 08e6d9 c1f810
     push eax                                     ; 08e6dc 50
     push edi                                     ; 08e6dd 57
-    call sub_91fa4                               ; 08e6de e8c1380000
+    call fixmul16                                ; 08e6de e8c1380000
     add esp, 8                                   ; 08e6e3 83c408
     mov edx, dword ptr [esp + 0x18]              ; 08e6e6 8b542418
     sub edx, eax                                 ; 08e6ea 29c2
@@ -5390,14 +5477,14 @@ sub_8e6cc:
     sar eax, 0x10                                ; 08e6f0 c1f810
     push eax                                     ; 08e6f3 50
     push edi                                     ; 08e6f4 57
-    call sub_91fa4                               ; 08e6f5 e8aa380000
+    call fixmul16                                ; 08e6f5 e8aa380000
     add esp, 8                                   ; 08e6fa 83c408
     mov edx, dword ptr [esp + 0x18]              ; 08e6fd 8b542418
     sub edx, eax                                 ; 08e701 29c2
     push edx                                     ; 08e703 52
     push esi                                     ; 08e704 56
     push edi                                     ; 08e705 57
-    call sub_8e624                               ; 08e706 e819ffffff
+    call printstr_rect                           ; 08e706 e819ffffff
     add esp, 0x10                                ; 08e70b 83c410
     pop edi                                      ; 08e70e 5f
     pop esi                                      ; 08e70f 5e
@@ -5406,10 +5493,11 @@ sub_8e6cc:
     db 0x8d, 0x40, 0x00 ; 08e711 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8e714  [0x8e714, 33 bytes, 13 instructions]  <unreferenced>
+; printstr2_rect_at_cursor  [0x8e714, 33 bytes, 13 instructions]  <unreferenced>
+; printstr_rect at the font's cursor position (second font)
 ; no references found
 ; ====================================================================================================
-sub_8e714:
+printstr2_rect_at_cursor:
     mov edx, dword ptr [esp + 8]                 ; 08e714 8b542408
     mov eax, dword ptr [edx + 0xc]               ; 08e718 8b420c
     sar eax, 0x10                                ; 08e71b c1f810
@@ -5420,17 +5508,18 @@ sub_8e714:
     push edx                                     ; 08e726 52
     mov edx, dword ptr [esp + 0x10]              ; 08e727 8b542410
     push edx                                     ; 08e72b 52
-    call sub_8e624                               ; 08e72c e8f3feffff
+    call printstr_rect                           ; 08e72c e8f3feffff
     add esp, 0x10                                ; 08e731 83c410
     ret                                          ; 08e734 c3
 
     db 0x8d, 0x40, 0x00 ; 08e735 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8e738  [0x8e738, 69 bytes, 29 instructions]  <unreferenced>
+; printstr2_rect_right  [0x8e738, 69 bytes, 29 instructions]  <unreferenced>
+; printstr_rect right aligned (second font)
 ; no references found
 ; ====================================================================================================
-sub_8e738:
+printstr2_rect_right:
     push esi                                     ; 08e738 56
     push edi                                     ; 08e739 57
     mov edi, dword ptr [esp + 0xc]               ; 08e73a 8b7c240c
@@ -5439,7 +5528,7 @@ sub_8e738:
     sar eax, 0x10                                ; 08e745 c1f810
     push eax                                     ; 08e748 50
     push edi                                     ; 08e749 57
-    call sub_91fa4                               ; 08e74a e855380000
+    call fixmul16                                ; 08e74a e855380000
     add esp, 8                                   ; 08e74f 83c408
     mov edx, dword ptr [esp + 0x18]              ; 08e752 8b542418
     sub edx, eax                                 ; 08e756 29c2
@@ -5448,14 +5537,14 @@ sub_8e738:
     sar eax, 0x10                                ; 08e75c c1f810
     push eax                                     ; 08e75f 50
     push edi                                     ; 08e760 57
-    call sub_91fa4                               ; 08e761 e83e380000
+    call fixmul16                                ; 08e761 e83e380000
     add esp, 8                                   ; 08e766 83c408
     mov edx, dword ptr [esp + 0x18]              ; 08e769 8b542418
     sub edx, eax                                 ; 08e76d 29c2
     push edx                                     ; 08e76f 52
     push esi                                     ; 08e770 56
     push edi                                     ; 08e771 57
-    call sub_8e624                               ; 08e772 e8adfeffff
+    call printstr_rect                           ; 08e772 e8adfeffff
     add esp, 0x10                                ; 08e777 83c410
     pop edi                                      ; 08e77a 5f
     pop esi                                      ; 08e77b 5e
@@ -5464,10 +5553,11 @@ sub_8e738:
     db 0x8d, 0x40, 0x00 ; 08e77d |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8e780  [0x8e780, 31 bytes, 13 instructions]  <unreferenced>
+; printstr_rect_wrap  [0x8e780, 31 bytes, 13 instructions]  <unreferenced>
+; wrapper of printstr_rect
 ; no references found
 ; ====================================================================================================
-sub_8e780:
+printstr_rect_wrap:
     push esi                                     ; 08e780 56
     mov edx, dword ptr [esp + 0x14]              ; 08e781 8b542414
     push edx                                     ; 08e785 52
@@ -5477,7 +5567,7 @@ sub_8e780:
     push ecx                                     ; 08e78f 51
     mov esi, dword ptr [esp + 0x14]              ; 08e790 8b742414
     push esi                                     ; 08e794 56
-    call sub_8e624                               ; 08e795 e88afeffff
+    call printstr_rect                           ; 08e795 e88afeffff
     add esp, 0x10                                ; 08e79a 83c410
     pop esi                                      ; 08e79d 5e
     ret                                          ; 08e79e c3
@@ -5506,7 +5596,7 @@ subwindowdefadr:
     mov edi, eax                                 ; 08e7ba 89c7
     push 0x30                                    ; 08e7bc 6a30
     push eax                                     ; 08e7be 50
-    call sub_b3fc2                               ; 08e7bf e8fe570200
+    call memzero                                 ; 08e7bf e8fe570200
     add esp, 8                                   ; 08e7c4 83c408
     mov eax, dword ptr [esp + 0x1c]              ; 08e7c7 8b44241c
     mov dword ptr [esi + 0x20], eax              ; 08e7cb 894620
@@ -5525,7 +5615,7 @@ subwindowdefadr:
     add eax, dword ptr [esp + 0x14]              ; 08e7f3 03442414
     mov edx, dword ptr [esi]                     ; 08e7f7 8b16
     mov ebx, dword ptr [esp + 0x20]              ; 08e7f9 8b5c2420
-    call sub_98d20                               ; 08e7fd e81ea50000
+    call window_alloc_slot                       ; 08e7fd e81ea50000
     mov dword ptr [esi + 0x28], eax              ; 08e802 894628
     test eax, eax                                ; 08e805 85c0
     jne loc_8e816                                ; 08e807 750d
@@ -5541,10 +5631,11 @@ loc_8e816:
 
 
 ; ====================================================================================================
-; sub_8e81c  [0x8e81c, 7 bytes, 4 instructions]  <unreferenced>
+; loadfile_auto_try  [0x8e81c, 7 bytes, 4 instructions]  <unreferenced>
+; loadfile_auto without the fatal error
 ; no references found
 ; ====================================================================================================
-sub_8e81c:
+loadfile_auto_try:
     push ebp                                     ; 08e81c 55
     mov ebp, esp                                 ; 08e81d 8bec
     xor eax, eax                                 ; 08e81f 33c0
@@ -5552,10 +5643,11 @@ sub_8e81c:
 
 
 ; ====================================================================================================
-; sub_8e823  [0x8e823, 25 bytes, 10 instructions]  <unreferenced>
+; loadfile_auto_fatal  [0x8e823, 25 bytes, 10 instructions]  <unreferenced>
+; loadfile_auto failing fatally
 ; no references found
 ; ====================================================================================================
-sub_8e823:
+loadfile_auto_fatal:
     push ebp                                     ; 08e823 55
     mov ebp, esp                                 ; 08e824 8bec
     mov eax, 1                                   ; 08e826 b801000000
@@ -5583,10 +5675,11 @@ loadshapes:
 
 
 ; ====================================================================================================
-; sub_8e846  [0x8e846, 7 bytes, 4 instructions]  <unreferenced>
+; loadfile_auto_data_try  [0x8e846, 7 bytes, 4 instructions]  <unreferenced>
+; the data of loadfile_auto without the fatal error
 ; no references found
 ; ====================================================================================================
-sub_8e846:
+loadfile_auto_data_try:
     push ebp                                     ; 08e846 55
     mov ebp, esp                                 ; 08e847 8bec
     xor eax, eax                                 ; 08e849 33c0
@@ -5594,10 +5687,11 @@ sub_8e846:
 
 
 ; ====================================================================================================
-; sub_8e84d  [0x8e84d, 29 bytes, 13 instructions]  <unreferenced>
+; loadfile_auto_data  [0x8e84d, 29 bytes, 13 instructions]  <unreferenced>
+; the data of loadfile_auto
 ; no references found
 ; ====================================================================================================
-sub_8e84d:
+loadfile_auto_data:
     push ebp                                     ; 08e84d 55
     mov ebp, esp                                 ; 08e84e 8bec
     mov eax, dword ptr [ebp + 0x10]              ; 08e850 8b4510
@@ -5624,7 +5718,7 @@ aLocateshape44sSHAPENOTFO:
 ; loadfile  [0x8e8a0, 21 bytes, 8 instructions]
 ; loadfile(path, flags): loads a whole file (fonts .VFN, .PPV shape banks...) into memory
 ; annotations: external
-; called by: main, game_loop, play_game, load_effect_frames, load_sprite_banks, load_rink_end_shapes, load_player_graphics, sub_13bb4, show_scoreboard, load_scoreboard_shapes, exh_hub_standings, hub_standings (+25 more)
+; called by: main, game_loop, play_game, load_effect_frames, load_sprite_banks, load_rink_end_shapes, load_player_graphics, load_highlight_assets, show_scoreboard, load_scoreboard_shapes, exh_hub_standings, hub_standings (+25 more)
 ; ====================================================================================================
 loadfile:
     push 1                                       ; 08e8a0 6a01
@@ -5639,10 +5733,11 @@ loadfile:
     db 0x8d, 0x40, 0x00 ; 08e8b5 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8e8b8  [0x8e8b8, 21 bytes, 8 instructions]
-; called by: sub_59493, load_schedule_db, sub_891b2
+; loadfile_data  [0x8e8b8, 21 bytes, 8 instructions]
+; loads a file (or finds it loaded) and returns its data
+; called by: load_sound_data, load_schedule_db, load_schedule_file
 ; ====================================================================================================
-sub_8e8b8:
+loadfile_data:
     push 0                                       ; 08e8b8 6a00
     mov edx, dword ptr [esp + 0xc]               ; 08e8ba 8b54240c
     push edx                                     ; 08e8be 52
@@ -5657,7 +5752,7 @@ sub_8e8b8:
 ; ====================================================================================================
 ; loadfile_handle  [0x8e8d0, 30 bytes, 12 instructions]
 ; annotations: external
-; called by: loadfile, sub_8e8b8
+; called by: loadfile, loadfile_data
 ; ====================================================================================================
 loadfile_handle:
     mov edx, dword ptr [esp + 0xc]               ; 08e8d0 8b54240c
@@ -5666,7 +5761,7 @@ loadfile_handle:
     push ebx                                     ; 08e8d9 53
     mov ecx, dword ptr [esp + 0xc]               ; 08e8da 8b4c240c
     push ecx                                     ; 08e8de 51
-    call sub_8e920                               ; 08e8df e83c000000
+    call loadfile_block                          ; 08e8df e83c000000
     add esp, 0xc                                 ; 08e8e4 83c40c
     test eax, eax                                ; 08e8e7 85c0
     je loc_8e8ed                                 ; 08e8e9 7402
@@ -5677,42 +5772,45 @@ loc_8e8ed:
     db 0x8b, 0xc0 ; 08e8ee |..| (padding)
 
 ; ====================================================================================================
-; sub_8e8f0  [0x8e8f0, 21 bytes, 8 instructions]
-; called by: sub_96844
+; loadfile_fatal  [0x8e8f0, 21 bytes, 8 instructions]
+; loads a file into a memory block, fatal on failure
+; called by: mvi_open
 ; ====================================================================================================
-sub_8e8f0:
+loadfile_fatal:
     push 1                                       ; 08e8f0 6a01
     mov edx, dword ptr [esp + 0xc]               ; 08e8f2 8b54240c
     push edx                                     ; 08e8f6 52
     mov ebx, dword ptr [esp + 0xc]               ; 08e8f7 8b5c240c
     push ebx                                     ; 08e8fb 53
-    call sub_8e920                               ; 08e8fc e81f000000
+    call loadfile_block                          ; 08e8fc e81f000000
     add esp, 0xc                                 ; 08e901 83c40c
     ret                                          ; 08e904 c3
 
     db 0x8d, 0x40, 0x00 ; 08e905 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8e908  [0x8e908, 21 bytes, 8 instructions]
-; called by: sub_594b2
+; loadfile_try  [0x8e908, 21 bytes, 8 instructions]
+; loads a file into a memory block, 0 on failure
+; called by: load_sound_file_try
 ; ====================================================================================================
-sub_8e908:
+loadfile_try:
     push 0                                       ; 08e908 6a00
     mov edx, dword ptr [esp + 0xc]               ; 08e90a 8b54240c
     push edx                                     ; 08e90e 52
     mov ebx, dword ptr [esp + 0xc]               ; 08e90f 8b5c240c
     push ebx                                     ; 08e913 53
-    call sub_8e920                               ; 08e914 e807000000
+    call loadfile_block                          ; 08e914 e807000000
     add esp, 0xc                                 ; 08e919 83c40c
     ret                                          ; 08e91c c3
 
     db 0x8d, 0x40, 0x00 ; 08e91d |.@.| (padding)
 
 ; ====================================================================================================
-; sub_8e920  [0x8e920, 154 bytes, 62 instructions]
-; called by: loadfile_handle, sub_8e8f0, sub_8e908
+; loadfile_block  [0x8e920, 154 bytes, 62 instructions]
+; loads a file into a new memory block unless it is already loaded
+; called by: loadfile_handle, loadfile_fatal, loadfile_try
 ; ====================================================================================================
-sub_8e920:
+loadfile_block:
     push esi                                     ; 08e920 56
     push edi                                     ; 08e921 57
     sub esp, 0xc                                 ; 08e922 83ec0c
@@ -5768,7 +5866,7 @@ loc_8e991:
     push edx                                     ; 08e998 52
     mov ebx, dword ptr [esp + 8]                 ; 08e999 8b5c2408
     push ebx                                     ; 08e99d 53
-    call sub_b3c74                               ; 08e99e e8d1520200
+    call dos_read_blocks                         ; 08e99e e8d1520200
     add esp, 0xc                                 ; 08e9a3 83c40c
     mov ecx, dword ptr [esp]                     ; 08e9a6 8b0c24
     push ecx                                     ; 08e9a9 51
@@ -5786,7 +5884,7 @@ loc_8e9b4:
 ; ====================================================================================================
 ; settextpos  [0x8e9c0, 19 bytes, 5 instructions]
 ; annotations: external
-; called by: load_player_graphics, league_type_menu, league_dialog_box, sub_2c46b, sub_2fedf, sub_30209, team_roster_screen, line_editor_screen, draw_penalty_box_overlay, draw_message_box, joystick_calibrate, draw_menu_items (+39 more)
+; called by: load_player_graphics, league_type_menu, league_dialog_box, league_name_entry_draw, text_entry_dialog, listbox_item_colors, team_roster_screen, line_editor_screen, draw_penalty_box_overlay, draw_message_box, joystick_calibrate, draw_menu_items (+39 more)
 ; ====================================================================================================
 settextpos:
     mov eax, dword ptr [esp + 4]                 ; 08e9c0 8b442404
@@ -5800,7 +5898,7 @@ settextpos:
 ; ====================================================================================================
 ; settextxy  [0x8e9d4, 19 bytes, 5 instructions]
 ; annotations: external
-; called by: printstr_at, printstr2_at, sub_92cf0
+; called by: printstr_at, printstr2_at, printchar2_at
 ; ====================================================================================================
 settextxy:
     mov eax, dword ptr [esp + 4]                 ; 08e9d4 8b442404
@@ -5851,7 +5949,7 @@ setfontstate:
 ; setfont  [0x8ea18, 212 bytes, 61 instructions]
 ; selects a loaded .VFN font
 ; annotations: external
-; called by: main, sub_10f6d, game_loop, awards_screen, credits_screen, pause_menu, menu_go_to_replay, sub_1b982, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen (+28 more)
+; called by: main, leave_match_video, game_loop, awards_screen, credits_screen, pause_menu, menu_go_to_replay, free_match_resources, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen (+28 more)
 ; ====================================================================================================
 setfont:
     mov edx, dword ptr [esp + 4]                 ; 08ea18 8b542404
@@ -5925,10 +6023,11 @@ loc_8ead1:
 
 
 ; ====================================================================================================
-; sub_8eaec  [0x8eaec, 27 bytes, 15 instructions]  <dos_get_date>
-; called by: sub_93bd4, sub_96030
+; _dos_getdate  [0x8eaec, 27 bytes, 15 instructions]  <dos_get_date>
+; Watcom _dos_getdate (int 21h 2Ah)
+; called by: date_time_strings, date_time_strings2
 ; ====================================================================================================
-sub_8eaec:
+_dos_getdate:
     push edx                                     ; 08eaec 52
     push ecx                                     ; 08eaed 51
     push ebx                                     ; 08eaee 53
@@ -5949,7 +6048,7 @@ sub_8eaec:
 ; ====================================================================================================
 ; _dos_gettime  [0x8eb07, 26 bytes, 15 instructions]  <dos_get_time>
 ; annotations: external
-; called by: main, intro_sequence, sub_93bd4, sub_96030
+; called by: main, intro_sequence, date_time_strings, date_time_strings2
 ; ====================================================================================================
 _dos_gettime:
     push edx                                     ; 08eb07 52
@@ -5970,10 +6069,11 @@ _dos_gettime:
 
 
 ; ====================================================================================================
-; sub_8eb21  [0x8eb21, 6 bytes, 2 instructions]
+; rand_state  [0x8eb21, 6 bytes, 2 instructions]
+; address of the rand / srand seed
 ; called by: rand, srand
 ; ====================================================================================================
-sub_8eb21:
+rand_state:
     mov eax, unk_d41c8                           ; 08eb21 b8c8410d00
     ret                                          ; 08eb26 c3
 
@@ -5982,11 +6082,11 @@ sub_8eb21:
 ; rand  [0x8eb27, 36 bytes, 12 instructions]
 ; Watcom LCG rand(): seed * 0x41c64e6d + 0x3039
 ; annotations: external
-; called by: demo_game, credits_screen, sub_2f2b1, sub_2f3d7, league_db_load, sub_45282, playoff_setup_screen, play_speech, load_music_banks, coach_clip_player
+; called by: demo_game, credits_screen, league_scores_init, league_scores_advance, league_db_load, rand_below, playoff_setup_screen, play_speech, load_music_banks, coach_clip_player
 ; ====================================================================================================
 rand:
     push edx                                     ; 08eb27 52
-    call sub_8eb21                               ; 08eb28 e8f4ffffff
+    call rand_state                              ; 08eb28 e8f4ffffff
     test eax, eax                                ; 08eb2d 85c0
     je loc_8eb49                                 ; 08eb2f 7418
     imul edx, dword ptr [eax], 0x41c64e6d        ; 08eb31 69106d4ec641
@@ -6008,7 +6108,7 @@ loc_8eb49:
 srand:
     push edx                                     ; 08eb4b 52
     mov edx, eax                                 ; 08eb4c 89c2
-    call sub_8eb21                               ; 08eb4e e8ceffffff
+    call rand_state                              ; 08eb4e e8ceffffff
     test eax, eax                                ; 08eb53 85c0
     je loc_8eb59                                 ; 08eb55 7402
     mov dword ptr [eax], edx                     ; 08eb57 8910
@@ -6033,7 +6133,7 @@ sound_timer_install:
     cmp byte ptr [byte_d41cc], 0                 ; 08eb70 803dcc410d0000
     jne loc_8eb8d                                ; 08eb77 7514
     push sound_shutdown                          ; 08eb79 6893eb0800
-    call sub_b3454                               ; 08eb7e e8d1480200
+    call atexit_wrap                             ; 08eb7e e8d1480200
     add esp, 4                                   ; 08eb83 83c404
     mov byte ptr [byte_d41cc], 1                 ; 08eb86 c605cc410d0001
 loc_8eb8d:
@@ -6062,7 +6162,7 @@ sound_shutdown:
 loc_8ebab:
     xor eax, eax                                 ; 08ebab 31c0
     mov al, dl                                   ; 08ebad 88d0
-    call sub_971be                               ; 08ebaf e80a860000
+    call drv_reset                               ; 08ebaf e80a860000
 loc_8ebb4:
     dec edx                                      ; 08ebb4 4a
     test edx, edx                                ; 08ebb5 85d2
@@ -6078,7 +6178,7 @@ loc_8ebbb:
     cmp edx, 0xd                                 ; 08ebcf 83fa0d
     jl loc_8ebbb                                 ; 08ebd2 7ce7
     call unload_patches                          ; 08ebd4 e8f9010000
-    call sub_8ebe2                               ; 08ebd9 e804000000
+    call sound_reset_state                       ; 08ebd9 e804000000
     pop edx                                      ; 08ebde 5a
     pop ecx                                      ; 08ebdf 59
     pop ebx                                      ; 08ebe0 5b
@@ -6086,10 +6186,11 @@ loc_8ebbb:
 
 
 ; ====================================================================================================
-; sub_8ebe2  [0x8ebe2, 222 bytes, 73 instructions]
+; sound_reset_state  [0x8ebe2, 222 bytes, 73 instructions]
+; clears the track records, the note table, the timbre banks, the channel reservations and the songs
 ; called by: sound_shutdown
 ; ====================================================================================================
-sub_8ebe2:
+sound_reset_state:
     push ebx                                     ; 08ebe2 53
     push ecx                                     ; 08ebe3 51
     push edx                                     ; 08ebe4 52
@@ -6209,10 +6310,10 @@ loc_8ecde:
     mov ebx, esp                                 ; 08ecde 89e3
     mov edx, aSCN                                ; 08ece0 baa43f0c00        "SCN"
     mov eax, ecx                                 ; 08ece5 89c8
-    call sub_8fed2                               ; 08ece7 e8e6110000
+    call make_ext_path                           ; 08ece7 e8e6110000
     mov edx, esp                                 ; 08ecec 89e2
     mov eax, 1                                   ; 08ecee b801000000
-    call sub_594b2                               ; 08ecf3 e8baa7fcff
+    call load_sound_file_try                     ; 08ecf3 e8baa7fcff
     mov dword ptr [esp + 0x10], eax              ; 08ecf8 89442410
     test eax, eax                                ; 08ecfc 85c0
     jne loc_8ed0a                                ; 08ecfe 750a
@@ -6221,19 +6322,19 @@ loc_8ecde:
 
 loc_8ed0a:
     push eax                                     ; 08ed0a 50
-    call sub_8dbdc                               ; 08ed0b e8cceeffff
+    call memblock_size                           ; 08ed0b e8cceeffff
     add esp, 4                                   ; 08ed10 83c404
     push eax                                     ; 08ed13 50
     push byte_f23cc                              ; 08ed14 68cc230f00
     mov edx, dword ptr [esp + 0x18]              ; 08ed19 8b542418
     push edx                                     ; 08ed1d 52
-    call sub_8dbd4                               ; 08ed1e e8b1eeffff
+    call memblock_ptr                            ; 08ed1e e8b1eeffff
     add esp, 4                                   ; 08ed23 83c404
     push eax                                     ; 08ed26 50
-    call sub_b3abc                               ; 08ed27 e8904d0200
+    call memmove_dwords                          ; 08ed27 e8904d0200
     add esp, 0xc                                 ; 08ed2c 83c40c
     lea eax, [esp + 0x10]                        ; 08ed2f 8d442410
-    call sub_8ff3e                               ; 08ed33 e806120000
+    call releasememblock_clear                   ; 08ed33 e806120000
     xor eax, eax                                 ; 08ed38 31c0
     mov al, byte ptr [byte_f23cd]                ; 08ed3a a0cd230f00
     push eax                                     ; 08ed3f 50
@@ -6313,7 +6414,7 @@ unload_patches:
 loc_8ede2:
     mov edx, dword ptr [ecx*4 + unk_f2416]       ; 08ede2 8b148d16240f00
     mov eax, dword ptr [ecx*4 + unk_f23ee]       ; 08ede9 8b048dee230f00
-    call sub_8ef76                               ; 08edf0 e881010000
+    call unload_timbre_file                      ; 08edf0 e881010000
     xor esi, esi                                 ; 08edf5 31f6
     mov dword ptr [ecx*4 + unk_f23ee], esi       ; 08edf7 89348dee230f00
     mov dword ptr [ecx*4 + unk_f2416], esi       ; 08edfe 89348d16240f00
@@ -6324,7 +6425,7 @@ loc_8ee06:
     cmp ecx, eax                                 ; 08ee0d 39c1
     jl loc_8ede2                                 ; 08ee0f 7cd1
     mov eax, dword ptr [dword_f23ea]             ; 08ee11 a1ea230f00
-    call sub_8ee43                               ; 08ee16 e828000000
+    call freemem_handle                          ; 08ee16 e828000000
     xor edx, edx                                 ; 08ee1b 31d2
     mov dword ptr [dword_f23ea], edx             ; 08ee1d 8915ea230f00
     xor dl, dl                                   ; 08ee23 30d2
@@ -6345,20 +6446,21 @@ load_patch_file:
     push edx                                     ; 08ee2f 52
     mov edx, eax                                 ; 08ee30 89c2
     mov eax, 2                                   ; 08ee32 b802000000
-    call sub_59493                               ; 08ee37 e857a6fcff
+    call load_sound_data                         ; 08ee37 e857a6fcff
     mov dword ptr [snd_patch_bank], eax          ; 08ee3c a35cde0e00
     pop edx                                      ; 08ee41 5a
     ret                                          ; 08ee42 c3
 
 
 ; ====================================================================================================
-; sub_8ee43  [0x8ee43, 12 bytes, 5 instructions]
+; freemem_handle  [0x8ee43, 12 bytes, 5 instructions]
+; frees a memory block given by its handle
 ; called by: unload_patches
 ; ====================================================================================================
-sub_8ee43:
+freemem_handle:
     push eax                                     ; 08ee43 50
     mov eax, esp                                 ; 08ee44 89e0
-    call sub_8ff1e                               ; 08ee46 e8d3100000
+    call freemem_clear                           ; 08ee46 e8d3100000
     add esp, 4                                   ; 08ee4b 83c404
     ret                                          ; 08ee4e c3
 
@@ -6379,7 +6481,7 @@ load_timbre_file:
     mov dword ptr [edx], 0                       ; 08ee58 c70200000000
     mov edx, eax                                 ; 08ee5e 89c2
     mov eax, 3                                   ; 08ee60 b803000000
-    call sub_59493                               ; 08ee65 e829a6fcff
+    call load_sound_data                         ; 08ee65 e829a6fcff
     mov dword ptr [esp + 4], eax                 ; 08ee6a 89442404
     test eax, eax                                ; 08ee6e 85c0
     je loc_8ef47                                 ; 08ee70 0f84d1000000
@@ -6393,12 +6495,12 @@ loc_8ee8b:
     mov edx, 0x2e646967                          ; 08ee8b ba6769642e
 loc_8ee90:
     mov eax, dword ptr [esp + 4]                 ; 08ee90 8b442404
-    call sub_8fe89                               ; 08ee94 e8f00f0000
+    call bank_find_key                           ; 08ee94 e8f00f0000
     test eax, eax                                ; 08ee99 85c0
     je loc_8ef43                                 ; 08ee9b 0f84a2000000
     mov edx, eax                                 ; 08eea1 89c2
     mov eax, 4                                   ; 08eea3 b804000000
-    call sub_594b2                               ; 08eea8 e805a6fcff
+    call load_sound_file_try                     ; 08eea8 e805a6fcff
     mov edx, dword ptr [esp]                     ; 08eead 8b1424
     mov dword ptr [edx], eax                     ; 08eeb0 8902
     test eax, eax                                ; 08eeb2 85c0
@@ -6415,7 +6517,7 @@ loc_8ee90:
 loc_8eed5:
     mov edx, dword ptr [edi]                     ; 08eed5 8b17
     mov eax, dword ptr [esp + 4]                 ; 08eed7 8b442404
-    call sub_8fe89                               ; 08eedb e8a90f0000
+    call bank_find_key                           ; 08eedb e8a90f0000
     mov esi, eax                                 ; 08eee0 89c6
     cmp byte ptr [eax], 6                        ; 08eee2 803806
     jne loc_8ef2f                                ; 08eee5 7548
@@ -6426,16 +6528,16 @@ loc_8eed5:
 
 loc_8eef5:
     mov eax, dword ptr [eax + 2]                 ; 08eef5 8b4002
-    call sub_8ff7c                               ; 08eef8 e87f100000
+    call swap32                                  ; 08eef8 e87f100000
     mov ebp, eax                                 ; 08eefd 89c5
 loc_8eeff:
     mov eax, dword ptr [esp]                     ; 08eeff 8b0424
     mov edx, dword ptr [eax]                     ; 08ef02 8b10
     push edx                                     ; 08ef04 52
-    call sub_8dbd4                               ; 08ef05 e8caecffff
+    call memblock_ptr                            ; 08ef05 e8caecffff
     add esp, 4                                   ; 08ef0a 83c404
     mov edx, ebp                                 ; 08ef0d 89ea
-    call sub_8fe89                               ; 08ef0f e8750f0000
+    call bank_find_key                           ; 08ef0f e8750f0000
     test eax, eax                                ; 08ef14 85c0
     je loc_8ef2f                                 ; 08ef16 7417
     mov word ptr [esi + 0xa], 0                  ; 08ef18 66c7460a0000
@@ -6494,17 +6596,18 @@ loc_8ef6d:
 
 
 ; ====================================================================================================
-; sub_8ef76  [0x8ef76, 27 bytes, 9 instructions]
+; unload_timbre_file  [0x8ef76, 27 bytes, 9 instructions]
+; unregisters and frees a .TIM and its samples
 ; called by: unload_patches
 ; ====================================================================================================
-sub_8ef76:
+unload_timbre_file:
     push eax                                     ; 08ef76 50
     push edx                                     ; 08ef77 52
     call timbre_bank_remove                      ; 08ef78 e814000000
     lea eax, [esp + 4]                           ; 08ef7d 8d442404
-    call sub_8ff1e                               ; 08ef81 e8980f0000
+    call freemem_clear                           ; 08ef81 e8980f0000
     mov eax, esp                                 ; 08ef86 89e0
-    call sub_8ff3e                               ; 08ef88 e8b10f0000
+    call releasememblock_clear                   ; 08ef88 e8b10f0000
     add esp, 8                                   ; 08ef8d 83c408
     ret                                          ; 08ef90 c3
 
@@ -6512,7 +6615,7 @@ sub_8ef76:
 ; ====================================================================================================
 ; timbre_bank_remove  [0x8ef91, 42 bytes, 22 instructions]
 ; unregisters a .TIM
-; called by: sub_8ef76
+; called by: unload_timbre_file
 ; ====================================================================================================
 timbre_bank_remove:
     push ebx                                     ; 08ef91 53
@@ -6617,7 +6720,7 @@ loc_8f05c:
 loc_8f074:
     mov eax, dword ptr [ecx*4 + unk_ede34]       ; 08f074 8b048d34de0e00
     mov edx, dword ptr [esp + 4]                 ; 08f07b 8b542404
-    call sub_8fe89                               ; 08f07f e8050e0000
+    call bank_find_key                           ; 08f07f e8050e0000
     mov dword ptr [ebx + 0x10], eax              ; 08f084 894310
     test eax, eax                                ; 08f087 85c0
     je loc_8f0ab                                 ; 08f089 7420
@@ -6658,11 +6761,11 @@ loc_8f0cf:
 ; ====================================================================================================
 ; snd_patch_record  [0x8f0d7, 61 bytes, 24 instructions]
 ; record of a sound id in the loaded .PAT bank (256 byte id map at +2, 0x14 byte records from +0x102)
-; called by: bind_patch_timbres, snd_patch_timbre, snd_play_patch, kms_track_tick, sub_9e026, sub_9fc24, sub_a08d7
+; called by: bind_patch_timbres, snd_patch_timbre, snd_play_patch, kms_track_tick, adlib_voice_patch, sbdac_program, gus_program
 ; ====================================================================================================
 snd_patch_record:
     push ds                                      ; 08f0d7 1e
-    call sub_902a0                               ; 08f0d8 e8c3110000
+    call empty_func_902a0                        ; 08f0d8 e8c3110000
     mov edx, dword ptr [snd_patch_bank]          ; 08f0dd 8b155cde0e00
     test edx, edx                                ; 08f0e3 85d2
     jne loc_8f0eb                                ; 08f0e5 7504
@@ -6693,11 +6796,11 @@ loc_8f0eb:
 ; ====================================================================================================
 ; snd_patch_timbre  [0x8f114, 39 bytes, 15 instructions]
 ; the timbre pointer (+0x10) of a sound id's patch record
-; called by: sub_9d700, sub_9d858
+; called by: pcspk_note_on, pcspk_program
 ; ====================================================================================================
 snd_patch_timbre:
     push ds                                      ; 08f114 1e
-    call sub_902a0                               ; 08f115 e886110000
+    call empty_func_902a0                        ; 08f115 e886110000
     cmp dword ptr [snd_patch_bank], 0            ; 08f11a 833d5cde0e0000
     jne loc_8f127                                ; 08f121 7504
     xor eax, eax                                 ; 08f123 31c0
@@ -6763,25 +6866,25 @@ loc_8f19c:
     mov ebx, esp                                 ; 08f1a3 89e3
     mov edx, aKMS                                ; 08f1a5 bac83f0c00        "KMS"
     mov eax, ebp                                 ; 08f1aa 89e8
-    call sub_8fed2                               ; 08f1ac e8210d0000
+    call make_ext_path                           ; 08f1ac e8210d0000
     mov edx, esp                                 ; 08f1b1 89e2
     mov eax, 5                                   ; 08f1b3 b805000000
-    call sub_59493                               ; 08f1b8 e8d6a2fcff
+    call load_sound_data                         ; 08f1b8 e8d6a2fcff
     mov dword ptr [ecx + 4], eax                 ; 08f1bd 894104
     test eax, eax                                ; 08f1c0 85c0
     je loc_8f1f4                                 ; 08f1c2 7430
     mov ebx, esp                                 ; 08f1c4 89e3
     mov edx, aCFG                                ; 08f1c6 bacc3f0c00        "CFG"
     mov eax, ebp                                 ; 08f1cb 89e8
-    call sub_8fed2                               ; 08f1cd e8000d0000
+    call make_ext_path                           ; 08f1cd e8000d0000
     mov edx, esp                                 ; 08f1d2 89e2
     mov eax, 6                                   ; 08f1d4 b806000000
-    call sub_59493                               ; 08f1d9 e8b5a2fcff
+    call load_sound_data                         ; 08f1d9 e8b5a2fcff
     mov dword ptr [ecx + 8], eax                 ; 08f1de 894108
     test eax, eax                                ; 08f1e1 85c0
     jne loc_8f1f2                                ; 08f1e3 750d
     lea eax, [ecx + 4]                           ; 08f1e5 8d4104
-    call sub_8ff1e                               ; 08f1e8 e8310d0000
+    call freemem_clear                           ; 08f1e8 e8310d0000
     jmp loc_8f151                                ; 08f1ed e95fffffff
 
 loc_8f1f2:
@@ -6802,7 +6905,7 @@ loc_8f1f8:
 ; ====================================================================================================
 ; kms_unload  [0x8f1fe, 73 bytes, 26 instructions]
 ; stops a song and frees its KMS and CFG
-; called by: awards_screen, ea_sports_intro, credits_screen, boxscore_screen, team_select_screen2, sub_7dec8, load_sound_config, sound_shutdown
+; called by: awards_screen, ea_sports_intro, credits_screen, boxscore_screen, team_select_screen2, free_music_banks, load_sound_config, sound_shutdown
 ; ====================================================================================================
 kms_unload:
     push ebx                                     ; 08f1fe 53
@@ -6823,9 +6926,9 @@ kms_unload:
     mov ebx, unk_edcfc                           ; 08f225 bbfcdc0e00
     add ebx, edx                                 ; 08f22a 01d3
     lea eax, [ebx + 4]                           ; 08f22c 8d4304
-    call sub_8ff1e                               ; 08f22f e8ea0c0000
+    call freemem_clear                           ; 08f22f e8ea0c0000
     lea eax, [ebx + 8]                           ; 08f234 8d4308
-    call sub_8ff1e                               ; 08f237 e8e20c0000
+    call freemem_clear                           ; 08f237 e8e20c0000
     xor ebx, ebx                                 ; 08f23c 31db
     mov dword ptr [edx + unk_edcfc], ebx         ; 08f23e 899afcdc0e00
 loc_8f244:
@@ -6879,10 +6982,11 @@ kms_play:
 
 
 ; ====================================================================================================
-; sub_8f27a  [0x8f27a, 441 bytes, 133 instructions]
+; kms_start_unref  [0x8f27a, 441 bytes, 133 instructions]
+; kms_start for a song slot with a fade in (no caller)
 ; no references found
 ; ====================================================================================================
-sub_8f27a:
+kms_start_unref:
     mov ebx, eax                                 ; 08f27a 89c3
     shl eax, 2                                   ; 08f27c c1e002
     sub eax, ebx                                 ; 08f27f 29d8
@@ -6926,7 +7030,7 @@ loc_8f2f8:
     push 0                                       ; 08f2fe 6a00
     push 0x54                                    ; 08f300 6a54
     push esi                                     ; 08f302 56
-    call sub_b3fb0                               ; 08f303 e8a84c0200
+    call memset_fill                             ; 08f303 e8a84c0200
     add esp, 0xc                                 ; 08f308 83c40c
     mov al, byte ptr [esp + 0x1c]                ; 08f30b 8a44241c
     mov byte ptr [esi], al                       ; 08f30f 8806
@@ -7031,7 +7135,7 @@ loc_8f42b:
 ; ====================================================================================================
 ; kms_alloc_track  [0x8f433, 30 bytes, 13 instructions]
 ; a free 0x54 byte track record (24)
-; called by: sub_8f27a
+; called by: kms_start_unref
 ; ====================================================================================================
 kms_alloc_track:
     push edx                                     ; 08f433 52
@@ -7056,7 +7160,7 @@ loc_8f44f:
 ; ====================================================================================================
 ; kms_track_channel  [0x8f451, 62 bytes, 25 instructions]
 ; the first MIDI channel of a CFG channel mask
-; called by: sub_8f27a
+; called by: kms_start_unref
 ; ====================================================================================================
 kms_track_channel:
     push ebx                                     ; 08f451 53
@@ -7124,7 +7228,7 @@ kms_start:
     push ebx                                     ; 08f4af 53
     call kms_find_song                           ; 08f4b0 e892fdffff
     test eax, eax                                ; 08f4b5 85c0
-    jge sub_8f27a                                ; 08f4b7 0f8dbdfdffff
+    jge kms_start_unref                          ; 08f4b7 0f8dbdfdffff
 loc_8f4bd:
     xor eax, eax                                 ; 08f4bd 31c0
     jmp loc_8f42b                                ; 08f4bf e967ffffff
@@ -7279,7 +7383,7 @@ snd_play_sfx:
 ; ====================================================================================================
 ; sound_stopall  [0x8f633, 74 bytes, 25 instructions]
 ; annotations: external
-; called by: sub_10f6d, handle_hotkey, game_loop, three_stars_sequence, simulate_game_offscreen
+; called by: leave_match_video, handle_hotkey, game_loop, three_stars_sequence, simulate_game_offscreen
 ; ====================================================================================================
 sound_stopall:
     push ebx                                     ; 08f633 53
@@ -7428,7 +7532,7 @@ loc_8f7a2:
 ; ====================================================================================================
 ; kms_fade_out  [0x8f7ae, 96 bytes, 38 instructions]
 ; fades a song out over n timer ticks
-; called by: sub_59945
+; called by: stop_crowd_loop_fade
 ; ====================================================================================================
 kms_fade_out:
     push ebx                                     ; 08f7ae 53
@@ -7478,7 +7582,7 @@ loc_8f7fa:
 ; ====================================================================================================
 ; kms_finished  [0x8f80e, 56 bytes, 24 instructions]
 ; 1 when no track of the song runs any more
-; called by: sub_59945, stop_crowd_loop, sfx_set_volume
+; called by: stop_crowd_loop_fade, stop_crowd_loop, sfx_set_volume
 ; ====================================================================================================
 kms_finished:
     push ebx                                     ; 08f80e 53
@@ -7738,12 +7842,12 @@ loadsound:
     sub esp, 0x5c                                ; 08f995 83ec5c
     mov edx, eax                                 ; 08f998 89c2
     mov eax, 7                                   ; 08f99a b807000000
-    call sub_594b2                               ; 08f99f e80e9bfcff
+    call load_sound_file_try                     ; 08f99f e80e9bfcff
     mov dword ptr [esp + 0x54], eax              ; 08f9a4 89442454
     test eax, eax                                ; 08f9a8 85c0
     je loc_8faea                                 ; 08f9aa 0f843a010000
     push eax                                     ; 08f9b0 50
-    call sub_8dbd4                               ; 08f9b1 e81ee2ffff
+    call memblock_ptr                            ; 08f9b1 e81ee2ffff
     add esp, 4                                   ; 08f9b6 83c404
     mov edi, eax                                 ; 08f9b9 89c7
     xor dl, dl                                   ; 08f9bb 30d2
@@ -7756,12 +7860,12 @@ loadsound:
     lea ebx, [eax + 4]                           ; 08f9d1 8d5804
     mov edx, aVHDR                               ; 08f9d4 bad03f0c00        "VHDR"
     mov eax, ebx                                 ; 08f9d9 89d8
-    call sub_8faf2                               ; 08f9db e812010000
+    call iff_find_chunk                          ; 08f9db e812010000
     mov esi, eax                                 ; 08f9e0 89c6
     test eax, eax                                ; 08f9e2 85c0
     jge loc_8f9f6                                ; 08f9e4 7d10
     lea eax, [esp + 0x54]                        ; 08f9e6 8d442454
-    call sub_8ff3e                               ; 08f9ea e84f050000
+    call releasememblock_clear                   ; 08f9ea e84f050000
     xor eax, eax                                 ; 08f9ef 31c0
     jmp loc_8faea                                ; 08f9f1 e9f4000000
 
@@ -7771,19 +7875,19 @@ loc_8f9f6:
     lea edx, [esp + 0x30]                        ; 08f9fa 8d542430
     push edx                                     ; 08f9fe 52
     push eax                                     ; 08f9ff 50
-    call sub_b3abc                               ; 08fa00 e8b7400200
+    call memmove_dwords                          ; 08fa00 e8b7400200
     add esp, 0xc                                 ; 08fa05 83c40c
     add esi, 0x24                                ; 08fa08 83c624
     xor eax, eax                                 ; 08fa0b 31c0
     mov ax, word ptr [esp + 0x3c]                ; 08fa0d 668b44243c
-    call sub_8ff5e                               ; 08fa12 e847050000
+    call swap16                                  ; 08fa12 e847050000
     mov word ptr [esp + 0x46], ax                ; 08fa17 6689442446
     mov eax, dword ptr [esp + 0x30]              ; 08fa1c 8b442430
-    call sub_8ff7c                               ; 08fa20 e857050000
+    call swap32                                  ; 08fa20 e857050000
     mov edx, eax                                 ; 08fa25 89c2
     mov dword ptr [esp + 0x4c], eax              ; 08fa27 8944244c
     mov eax, dword ptr [esp + 0x34]              ; 08fa2b 8b442434
-    call sub_8ff7c                               ; 08fa2f e848050000
+    call swap32                                  ; 08fa2f e848050000
     mov dword ptr [esp + 0x50], eax              ; 08fa34 89442450
     add edx, eax                                 ; 08fa38 01c2
     mov dword ptr [esp + 0x48], edx              ; 08fa3a 89542448
@@ -7798,7 +7902,7 @@ loc_8fa46:
     lea edx, [esp + 4]                           ; 08fa50 8d542404
     push edx                                     ; 08fa54 52
     push eax                                     ; 08fa55 50
-    call sub_b3abc                               ; 08fa56 e861400200
+    call memmove_dwords                          ; 08fa56 e861400200
     add esp, 0xc                                 ; 08fa5b 83c40c
     mov esi, 0x2c                                ; 08fa5e be2c000000
     mov eax, dword ptr [esp + 0x18]              ; 08fa63 8b442418
@@ -7812,7 +7916,7 @@ loc_8fa46:
 loc_8fa83:
     mov ecx, dword ptr [esp + 0x54]              ; 08fa83 8b4c2454
     push ecx                                     ; 08fa87 51
-    call sub_8dbdc                               ; 08fa88 e84fe1ffff
+    call memblock_size                           ; 08fa88 e84fe1ffff
     add esp, 4                                   ; 08fa8d 83c404
     sub eax, esi                                 ; 08fa90 29f0
     push eax                                     ; 08fa92 50
@@ -7820,18 +7924,18 @@ loc_8fa83:
     push ebp                                     ; 08fa96 55
     lea eax, [edi + esi]                         ; 08fa97 8d0437
     push eax                                     ; 08fa9a 50
-    call sub_b3abc                               ; 08fa9b e81c400200
+    call memmove_dwords                          ; 08fa9b e81c400200
     add esp, 0xc                                 ; 08faa0 83c40c
     mov eax, dword ptr [esp + 0x54]              ; 08faa3 8b442454
     push eax                                     ; 08faa7 50
-    call sub_8dbdc                               ; 08faa8 e82fe1ffff
+    call memblock_size                           ; 08faa8 e82fe1ffff
     add esp, 4                                   ; 08faad 83c404
     sub eax, esi                                 ; 08fab0 29f0
     add eax, 0x10                                ; 08fab2 83c010
     push eax                                     ; 08fab5 50
     mov edx, dword ptr [esp + 0x58]              ; 08fab6 8b542458
     push edx                                     ; 08faba 52
-    call sub_8d144                               ; 08fabb e884d6ffff
+    call resizemem_try                           ; 08fabb e884d6ffff
     add esp, 8                                   ; 08fac0 83c408
     lea esi, [esp + 0x44]                        ; 08fac3 8d742444
     movsd dword ptr es:[edi], dword ptr [esi]    ; 08fac7 a5
@@ -7860,10 +7964,11 @@ loc_8faea:
 
 
 ; ====================================================================================================
-; sub_8faf2  [0x8faf2, 50 bytes, 25 instructions]
+; iff_find_chunk  [0x8faf2, 50 bytes, 25 instructions]
+; offset after a chunk tag in an IFF file (loadsound)
 ; called by: loadsound
 ; ====================================================================================================
-sub_8faf2:
+iff_find_chunk:
     push ebx                                     ; 08faf2 53
     push ecx                                     ; 08faf3 51
     push esi                                     ; 08faf4 56
@@ -7898,10 +8003,11 @@ loc_8fb1c:
 
 
 ; ====================================================================================================
-; sub_8fb24  [0x8fb24, 106 bytes, 45 instructions]  <unreferenced>
+; playsample_once  [0x8fb24, 106 bytes, 45 instructions]  <unreferenced>
+; plays a loaded sample once (playsample without loop)
 ; no references found
 ; ====================================================================================================
-sub_8fb24:
+playsample_once:
     push esi                                     ; 08fb24 56
     push edi                                     ; 08fb25 57
     push ebp                                     ; 08fb26 55
@@ -7917,7 +8023,7 @@ sub_8fb24:
     test eax, eax                                ; 08fb3e 85c0
     jl loc_8fb87                                 ; 08fb40 7c45
     push edi                                     ; 08fb42 57
-    call sub_8dbd4                               ; 08fb43 e88ce0ffff
+    call memblock_ptr                            ; 08fb43 e88ce0ffff
     add esp, 4                                   ; 08fb48 83c404
     mov edi, esi                                 ; 08fb4b 89f7
     mov edx, edi                                 ; 08fb4d 89fa
@@ -7973,7 +8079,7 @@ playsample:
     test eax, eax                                ; 08fba8 85c0
     jl loc_8fb87                                 ; 08fbaa 7cdb
     push edi                                     ; 08fbac 57
-    call sub_8dbd4                               ; 08fbad e822e0ffff
+    call memblock_ptr                            ; 08fbad e822e0ffff
     add esp, 4                                   ; 08fbb2 83c404
     mov edi, esi                                 ; 08fbb5 89f7
     mov edx, edi                                 ; 08fbb7 89fa
@@ -7999,10 +8105,11 @@ playsample:
 
 
 ; ====================================================================================================
-; sub_8fbe5  [0x8fbe5, 82 bytes, 36 instructions]
+; playsample_raw  [0x8fbe5, 82 bytes, 36 instructions]
+; plays raw sample data on a channel (the speech clips)
 ; called by: speech_timer
 ; ====================================================================================================
-sub_8fbe5:
+playsample_raw:
     push esi                                     ; 08fbe5 56
     push edi                                     ; 08fbe6 57
     push ebp                                     ; 08fbe7 55
@@ -8044,10 +8151,11 @@ loc_8fc31:
 
 
 ; ====================================================================================================
-; sub_8fc37  [0x8fc37, 83 bytes, 37 instructions]
+; playsample_raw_loop  [0x8fc37, 83 bytes, 37 instructions]
+; plays raw sample data on a channel, looped
 ; called by: speech_timer
 ; ====================================================================================================
-sub_8fc37:
+playsample_raw_loop:
     push esi                                     ; 08fc37 56
     push edi                                     ; 08fc38 57
     push ebp                                     ; 08fc39 55
@@ -8090,7 +8198,7 @@ sub_8fc37:
 ; ====================================================================================================
 ; sound_channel_status  [0x8fc8a, 34 bytes, 10 instructions]
 ; annotations: external
-; called by: main, awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, exit_game_dialog, sub_1a9ac, team_select_screen, draw_team_logos, boxscore_screen, team_select_screen2 (+19 more)
+; called by: main, awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, exit_game_dialog, menu_penalty_summary, team_select_screen, draw_team_logos, boxscore_screen, team_select_screen2 (+19 more)
 ; ====================================================================================================
 sound_channel_status:
     cmp eax, dword ptr [dword_d4f64]             ; 08fc8a 3b05644f0d00
@@ -8105,13 +8213,13 @@ loc_8fc9c:
     shl edx, 0x10                                ; 08fc9c c1e210
     add edx, 9                                   ; 08fc9f 83c209
     and eax, 0xff                                ; 08fca2 25ff000000
-    jmp sub_971f8                                ; 08fca7 e94c750000
+    jmp drv_control                              ; 08fca7 e94c750000
 
 
 ; ====================================================================================================
 ; sound_channel_stop  [0x8fcac, 51 bytes, 22 instructions]
 ; stops the sample of a sound channel (end of a fade)
-; called by: sub_8378c, sub_837a8, sound_fade, sound_timer_tick
+; called by: speech_stop_channel3, speech_stop_channels, sound_fade, sound_timer_tick
 ; ====================================================================================================
 sound_channel_stop:
     push ebx                                     ; 08fcac 53
@@ -8142,7 +8250,7 @@ loc_8fcdc:
 ; ====================================================================================================
 ; sound_fade  [0x8fcdf, 136 bytes, 48 instructions]
 ; annotations: external
-; called by: main, awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, exit_game_dialog, sub_1a9ac, team_select_screen, draw_team_logos, boxscore_screen, team_select_screen2 (+18 more)
+; called by: main, awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, exit_game_dialog, menu_penalty_summary, team_select_screen, draw_team_logos, boxscore_screen, team_select_screen2 (+18 more)
 ; ====================================================================================================
 sound_fade:
     push ecx                                     ; 08fcdf 51
@@ -8166,7 +8274,7 @@ loc_8fcf8:
     shl edx, 0x10                                ; 08fd03 c1e210
     add edx, 0xa                                 ; 08fd06 83c20a
     and eax, 0xff                                ; 08fd09 25ff000000
-    call sub_971f8                               ; 08fd0e e8e5740000
+    call drv_control                             ; 08fd0e e8e5740000
     mov ebp, eax                                 ; 08fd13 89c5
     shl eax, 0x18                                ; 08fd15 c1e018
     mov ebx, esi                                 ; 08fd18 89f3
@@ -8199,10 +8307,11 @@ loc_8fd5f:
 
 
 ; ====================================================================================================
-; sub_8fd67  [0x8fd67, 29 bytes, 12 instructions]  <unreferenced>
+; sound_driver_control_33  [0x8fd67, 29 bytes, 12 instructions]  <unreferenced>
+; status of a sound channel of a driver (drv_control with 0x33)
 ; no references found
 ; ====================================================================================================
-sub_8fd67:
+sound_driver_control_33:
     push ebx                                     ; 08fd67 53
     call drv_index                               ; 08fd68 e8f9730000
     mov ebx, eax                                 ; 08fd6d 89c3
@@ -8212,17 +8321,18 @@ sub_8fd67:
     add edx, 0x33                                ; 08fd76 83c233
     xor eax, eax                                 ; 08fd79 31c0
     mov al, bl                                   ; 08fd7b 88d8
-    call sub_971f8                               ; 08fd7d e876740000
+    call drv_control                             ; 08fd7d e876740000
 loc_8fd82:
     pop ebx                                      ; 08fd82 5b
     ret                                          ; 08fd83 c3
 
 
 ; ====================================================================================================
-; sub_8fd84  [0x8fd84, 46 bytes, 14 instructions]
+; snd_queue_program  [0x8fd84, 46 bytes, 14 instructions]
+; queues a program change for a channel
 ; called by: update_ambient_audio
 ; ====================================================================================================
-sub_8fd84:
+snd_queue_program:
     sub esp, 4                                   ; 08fd84 83ec04
     cmp eax, dword ptr [dword_d4f64]             ; 08fd87 3b05644f0d00
     jge loc_8fdae                                ; 08fd8d 7d1f
@@ -8241,10 +8351,11 @@ loc_8fdae:
 
 
 ; ====================================================================================================
-; sub_8fdb2  [0x8fdb2, 51 bytes, 15 instructions]
+; snd_queue_volume  [0x8fdb2, 51 bytes, 15 instructions]
+; queues controller 7 (volume) for a channel
 ; called by: update_ambient_audio, sound_pause_all
 ; ====================================================================================================
-sub_8fdb2:
+snd_queue_volume:
     sub esp, 4                                   ; 08fdb2 83ec04
     cmp eax, dword ptr [dword_d4f64]             ; 08fdb5 3b05644f0d00
     jge loc_8fde1                                ; 08fdbb 7d24
@@ -8264,10 +8375,11 @@ loc_8fde1:
 
 
 ; ====================================================================================================
-; sub_8fde5  [0x8fde5, 55 bytes, 17 instructions]
+; snd_queue_bend  [0x8fde5, 55 bytes, 17 instructions]
+; queues a pitch bend for a channel
 ; called by: update_ambient_audio
 ; ====================================================================================================
-sub_8fde5:
+snd_queue_bend:
     sub esp, 4                                   ; 08fde5 83ec04
     cmp eax, dword ptr [dword_d4f64]             ; 08fde8 3b05644f0d00
     jge loc_8fe18                                ; 08fdee 7d28
@@ -8289,10 +8401,11 @@ loc_8fe18:
 
 
 ; ====================================================================================================
-; sub_8fe1c  [0x8fe1c, 51 bytes, 15 instructions]
+; snd_queue_note_on  [0x8fe1c, 51 bytes, 15 instructions]
+; queues a note on (velocity 0x7f)
 ; called by: update_ambient_audio
 ; ====================================================================================================
-sub_8fe1c:
+snd_queue_note_on:
     sub esp, 4                                   ; 08fe1c 83ec04
     cmp eax, dword ptr [dword_d4f64]             ; 08fe1f 3b05644f0d00
     jge loc_8fe4b                                ; 08fe25 7d24
@@ -8312,10 +8425,11 @@ loc_8fe4b:
 
 
 ; ====================================================================================================
-; sub_8fe4f  [0x8fe4f, 52 bytes, 16 instructions]
+; snd_queue_note_off  [0x8fe4f, 52 bytes, 16 instructions]
+; queues a note off
 ; called by: update_ambient_audio, sound_pause_all
 ; ====================================================================================================
-sub_8fe4f:
+snd_queue_note_off:
     sub esp, 4                                   ; 08fe4f 83ec04
     cmp eax, dword ptr [dword_d4f64]             ; 08fe52 3b05644f0d00
     jge loc_8fe7f                                ; 08fe58 7d25
@@ -8336,19 +8450,21 @@ loc_8fe7f:
 
 
 ; ====================================================================================================
-; sub_8fe83  [0x8fe83, 6 bytes, 2 instructions]
+; set_byte_order  [0x8fe83, 6 bytes, 2 instructions]
+; byte_d41cd: the byte order of the sound bank keys
 ; called by: load_cfg_palette
 ; ====================================================================================================
-sub_8fe83:
+set_byte_order:
     mov byte ptr [byte_d41cd], al                ; 08fe83 a2cd410d00
     ret                                          ; 08fe88 c3
 
 
 ; ====================================================================================================
-; sub_8fe89  [0x8fe89, 73 bytes, 31 instructions]
+; bank_find_key  [0x8fe89, 73 bytes, 31 instructions]
+; the record of a 4 byte key in a keyed bank (.TIM / .DIG)
 ; called by: load_timbre_file, bind_patch_timbres
 ; ====================================================================================================
-sub_8fe89:
+bank_find_key:
     push ebx                                     ; 08fe89 53
     push ecx                                     ; 08fe8a 51
     push esi                                     ; 08fe8b 56
@@ -8388,10 +8504,11 @@ loc_8fec2:
 
 
 ; ====================================================================================================
-; sub_8fed2  [0x8fed2, 76 bytes, 23 instructions]
+; make_ext_path  [0x8fed2, 76 bytes, 23 instructions]
+; replaces the extension of a path (_splitpath / _makepath)
 ; called by: loadpatches, music_load_kms
 ; ====================================================================================================
-sub_8fed2:
+make_ext_path:
     push ecx                                     ; 08fed2 51
     push esi                                     ; 08fed3 56
     push edi                                     ; 08fed4 57
@@ -8403,13 +8520,13 @@ sub_8fed2:
     lea ecx, [esp + 0x8c]                        ; 08fee7 8d8c248c000000
     lea ebx, [esp + 4]                           ; 08feee 8d5c2404
     lea edx, [esp + 0xa8]                        ; 08fef2 8d9424a8000000
-    call sub_99a45                               ; 08fef9 e8479b0000
+    call _splitpath                              ; 08fef9 e8479b0000
     push edi                                     ; 08fefe 57
     lea ecx, [esp + 0x8c]                        ; 08feff 8d8c248c000000
     mov ebx, unk_c3fd5                           ; 08ff06 bbd53f0c00
     mov edx, ebx                                 ; 08ff0b 89da
     mov eax, esi                                 ; 08ff0d 89f0
-    call sub_99af4                               ; 08ff0f e8e09b0000
+    call _makepath                               ; 08ff0f e8e09b0000
     add esp, 0xb0                                ; 08ff14 81c4b0000000
     pop edi                                      ; 08ff1a 5f
     pop esi                                      ; 08ff1b 5e
@@ -8418,10 +8535,11 @@ sub_8fed2:
 
 
 ; ====================================================================================================
-; sub_8ff1e  [0x8ff1e, 32 bytes, 17 instructions]
-; called by: sub_8ee43, sub_8ef76, music_load_kms, kms_unload
+; freemem_clear  [0x8ff1e, 32 bytes, 17 instructions]
+; freemem and clear the pointer
+; called by: freemem_handle, unload_timbre_file, music_load_kms, kms_unload
 ; ====================================================================================================
-sub_8ff1e:
+freemem_clear:
     push ebx                                     ; 08ff1e 53
     push ecx                                     ; 08ff1f 51
     push edx                                     ; 08ff20 52
@@ -8443,10 +8561,11 @@ loc_8ff39:
 
 
 ; ====================================================================================================
-; sub_8ff3e  [0x8ff3e, 32 bytes, 17 instructions]
-; called by: loadpatches, sub_8ef76, loadsound
+; releasememblock_clear  [0x8ff3e, 32 bytes, 17 instructions]
+; releasememblock and clear the pointer
+; called by: loadpatches, unload_timbre_file, loadsound
 ; ====================================================================================================
-sub_8ff3e:
+releasememblock_clear:
     push ebx                                     ; 08ff3e 53
     push ecx                                     ; 08ff3f 51
     push edx                                     ; 08ff40 52
@@ -8468,10 +8587,11 @@ loc_8ff59:
 
 
 ; ====================================================================================================
-; sub_8ff5e  [0x8ff5e, 30 bytes, 12 instructions]
+; swap16  [0x8ff5e, 30 bytes, 12 instructions]
+; byte swaps a 16 bit value
 ; called by: loadsound
 ; ====================================================================================================
-sub_8ff5e:
+swap16:
     push edx                                     ; 08ff5e 52
     mov edx, eax                                 ; 08ff5f 89c2
     xor dh, ah                                   ; 08ff61 30e6
@@ -8487,10 +8607,11 @@ sub_8ff5e:
 
 
 ; ====================================================================================================
-; sub_8ff7c  [0x8ff7c, 52 bytes, 19 instructions]
+; swap32  [0x8ff7c, 52 bytes, 19 instructions]
+; byte swaps a 32 bit value
 ; called by: load_timbre_file, loadsound
 ; ====================================================================================================
-sub_8ff7c:
+swap32:
     push ebx                                     ; 08ff7c 53
     push edx                                     ; 08ff7d 52
     mov ebx, eax                                 ; 08ff7e 89c3
@@ -8516,7 +8637,7 @@ sub_8ff7c:
 ; getpalette  [0x8ffb0, 34 bytes, 16 instructions]  <vga_pel_data vga_pel_read>
 ; getpalette(first, count, rgb) through ports 3C7h/3C9h
 ; annotations: external
-; called by: main, sub_10f6d, handle_hotkey, game_loop, league_leaders_screen, awards_screen, sub_13e8f, sub_17a00, sub_17af3, sub_17be7, sub_17dfc, sub_17edf (+76 more)
+; called by: main, leave_match_video, handle_hotkey, game_loop, league_leaders_screen, awards_screen, play_match_from_start, stats_source_9394_season, stats_source_9394_playoffs, stats_source_league_season, team_stats_standings, team_stats_scoring (+76 more)
 ; ====================================================================================================
 getpalette:
     push ebp                                     ; 08ffb0 55
@@ -8741,24 +8862,26 @@ loc_9022e:
     mov dword ptr [dword_d4cdc], eax             ; 090249 a3dc4c0d00
     mov dword ptr [dword_d4ce0], esi             ; 09024e 8935e04c0d00
     mov eax, 0xff                                ; 090254 b8ff000000
-    call sub_99c82                               ; 090259 e8249a0000
+    call __InitRtns                              ; 090259 e8249a0000
     sub ebp, ebp                                 ; 09025e 29ed
     call __CMain                                 ; 090260 e8cd990000        noreturn
 
 ; ====================================================================================================
-; sub_90265  [0x90265, 2 bytes, 1 instructions]  <noreturn>
+; __exit_tail  [0x90265, 2 bytes, 1 instructions]  <noreturn>
+; tail of _exit: terminates through int 21h 4Ch (no return)
 ; called by: _exit
 ; ====================================================================================================
-sub_90265:
+__exit_tail:
     jmp loc_9028a                                ; 090265 eb23
 
 
 ; ====================================================================================================
-; sub_90267  [0x90267, 56 bytes, 25 instructions]  <dos_exit dos_open dos_write noreturn>
-; called by: sub_98683
+; __do_exit_with_msg  [0x90267, 56 bytes, 25 instructions]  <dos_exit dos_open dos_write noreturn>
+; Watcom startup: writes a message to "con" and exits (int 21h 3Dh/40h/4Ch)
+; called by: __fatal_runtime_error
 ;   uses string "con"
 ; ====================================================================================================
-sub_90267:
+__do_exit_with_msg:
     push edx                                     ; 090267 52
     push eax                                     ; 090268 50
     mov edx, aCon                                ; 090269 ba4a000900        "con"
@@ -8782,17 +8905,18 @@ loc_9028a:
     push eax                                     ; 09028a 50
     mov eax, 0                                   ; 09028b b800000000
     mov edx, 0xff                                ; 090290 baff000000
-    call sub_99ccd                               ; 090295 e8339a0000
+    call __FiniRtns                              ; 090295 e8339a0000
     pop eax                                      ; 09029a 58
     mov ah, 0x4c                                 ; 09029b b44c
     int 0x21                                     ; 09029d cd21              dos dos_exit
     db 0x90 ; 09029f |.| (padding)
 
 ; ====================================================================================================
-; sub_902a0  [0x902a0, 9 bytes, 2 instructions]
-; called by: sub_8e45c, snd_patch_record, snd_patch_timbre, sub_972ab, sub_972b8, sub_972c0, sub_972c8, sub_972d5, sub_972dd, sub_972e5, sub_9d698, sub_9d6e6 (+38 more)
+; empty_func_902a0  [0x902a0, 9 bytes, 2 instructions]
+; empty function (the sound layer calls it as a debug hook)
+; called by: timer_irq_handler, snd_patch_record, snd_patch_timbre, nulldrv_ret1, nulldrv_nop1, nulldrv_nop2, nulldrv_retm1, nulldrv_nop3, nulldrv_nop4, nulldrv_nop5, pcspk_drv_init, pcspk_drv_shutdown (+38 more)
 ; ====================================================================================================
-sub_902a0:
+empty_func_902a0:
     mov ds, word ptr cs:[word_90048]             ; 0902a0 662e8e1d48000900
     ret                                          ; 0902a8 c3
 
@@ -8802,7 +8926,7 @@ sub_902a0:
 ; _memset_fill  [0x902b0, 49 bytes, 24 instructions]
 ; byte fill helper of memset
 ; annotations: external
-; called by: fade_palette_to, load_award_stats, reset_game_state, intro_sequence, sub_1faa7, season_record_result, savegame_io, fade_palette, sub_7651b, initgraphics, memset, bitlz_decode
+; called by: fade_palette_to, load_award_stats, reset_game_state, intro_sequence, hub_build_remap, season_record_result, savegame_io, fade_palette, fade_palette_steps, initgraphics, memset, bitlz_decode
 ; ====================================================================================================
 _memset_fill:
     or ecx, ecx                                  ; 0902b0 09c9
@@ -8839,7 +8963,7 @@ loc_902e0:
 ; _memset_dwords  [0x902e7, 108 bytes, 48 instructions]
 ; aligned dword fill helper of memset
 ; annotations: external
-; called by: sub_41f64, league_db_load, sub_43644, sub_43757, sub_43e40, sub_443b6, sub_447a6, savegame_io, speech_reset, sub_87863, inittimer, _memset_fill
+; called by: league_update_standings, league_db_load, playoff_round1_done, playoff_make_round2, playoff_round2_done, playoff_round3_done, playoff_final_done, savegame_io, speech_reset, schedule_advance_round1, inittimer, _memset_fill
 ; ====================================================================================================
 _memset_dwords:
     or ecx, ecx                                  ; 0902e7 09c9
@@ -8904,7 +9028,7 @@ loc_90352:
 ; shapecount  [0x90354, 8 bytes, 3 instructions]
 ; number of entries in an SHPI bank (header +8)
 ; annotations: external
-; called by: game_loop, play_game, load_cutscene_clip, sub_95158, sub_a30f8
+; called by: game_loop, play_game, load_cutscene_clip, debug_shapes, shapes_recolor_all
 ; ====================================================================================================
 shapecount:
     mov ebx, dword ptr [esp + 4]                 ; 090354 8b5c2404
@@ -8916,7 +9040,7 @@ shapecount:
 ; getshape  [0x9035c, 23 bytes, 9 instructions]
 ; getshape(bank, index): pointer to entry (directory at +0x10, 8 bytes per entry)
 ; annotations: external
-; called by: game_loop, play_game, league_leaders_screen, sub_95158, debug_memshapes, sub_a30f8
+; called by: game_loop, play_game, league_leaders_screen, debug_shapes, debug_memshapes, shapes_recolor_all
 ; ====================================================================================================
 getshape:
     mov eax, dword ptr [esp + 4]                 ; 09035c 8b442404
@@ -8933,10 +9057,11 @@ loc_90370:
 
 
 ; ====================================================================================================
-; sub_90373  [0x90373, 31 bytes, 12 instructions]
-; called by: sub_95158, debug_memshapes, sub_a30f8
+; shape_offset  [0x90373, 31 bytes, 12 instructions]
+; offset of entry n of a shape bank directory (0 past the end)
+; called by: debug_shapes, debug_memshapes, shapes_recolor_all
 ; ====================================================================================================
-sub_90373:
+shape_offset:
     mov ebx, dword ptr [esp + 4]                 ; 090373 8b5c2404
     mov eax, dword ptr [esp + 8]                 ; 090377 8b442408
     mov edx, dword ptr [esp + 0xc]               ; 09037b 8b54240c
@@ -8956,7 +9081,7 @@ loc_9038d:
 ; ====================================================================================================
 ; strcpy  [0x90392, 31 bytes, 15 instructions]
 ; annotations: external
-; called by: play_game, league_leaders_screen, team_abbrev_lookup, make_path, sub_14368, sub_14442, export_stats_dialog, db_load_team_roster, sub_1c807, sub_1c852, sub_1cb7f, sub_1d518 (+60 more)
+; called by: play_game, league_leaders_screen, team_abbrev_lookup, make_path, delete_matching_files, delete_directory, export_stats_dialog, db_load_team_roster, gsummary_path, set_goalie_menu_labels, clear_goalie_menu_labels, set_league_menu_titles (+60 more)
 ; ====================================================================================================
 strcpy:
     push ecx                                     ; 090392 51
@@ -8981,7 +9106,7 @@ loc_903ae:
 ; ====================================================================================================
 ; strcat  [0x903b1, 55 bytes, 31 instructions]
 ; annotations: external
-; called by: play_game, league_leaders_screen, team_abbrev_lookup, make_path, sub_14368, sub_14442, export_stats_dialog, sub_1c807, sub_1ff86, player_card_screen, standings_screen, sub_29c75 (+37 more)
+; called by: play_game, league_leaders_screen, team_abbrev_lookup, make_path, delete_matching_files, delete_directory, export_stats_dialog, gsummary_path, stats_source_title, player_card_screen, standings_screen, format_team_name (+37 more)
 ; ====================================================================================================
 strcat:
     push ecx                                     ; 0903b1 51
@@ -9020,10 +9145,11 @@ loc_903e0:
 
 
 ; ====================================================================================================
-; sub_903e8  [0x903e8, 5 bytes, 1 instructions]
-; called by: play_game, sub_14368, sub_14442, league_select_screen, sub_7125c, playoff_tree_screen, sub_91dc4
+; remove_file  [0x903e8, 5 bytes, 1 instructions]
+; remove (int 21h 41h), errno on failure
+; called by: play_game, delete_matching_files, delete_directory, league_select_screen, dbedit_remove_temp_files, playoff_tree_screen, __doclose
 ; ====================================================================================================
-sub_903e8:
+remove_file:
     jmp remove                                   ; 0903e8 e96d290000
 
     times 3 db 0 ; 0903ed (padding)
@@ -9032,7 +9158,7 @@ sub_903e8:
 ; drawshape  [0x903f0, 555 bytes, 175 instructions]
 ; drawshape(shape, x, y): clipped transparent blit of an SHPI entry
 ; annotations: external
-; called by: credits_screen, pause_menu, run_menu, menu_page_a, menu_page_b, team_select_screen, draw_team_logos, league_name_entry, boxscore_screen, sub_303fb, sub_30f12, sub_31250 (+47 more)
+; called by: credits_screen, pause_menu, run_menu, menu_page_a, menu_page_b, team_select_screen, draw_team_logos, league_name_entry, boxscore_screen, listbox_dialog, restore_dialog_background, dialog_pointer_loop (+47 more)
 ; ====================================================================================================
 drawshape:
     push esi                                     ; 0903f0 56
@@ -9047,7 +9173,7 @@ drawshape:
     push ebx                                     ; 09040b 53
     push esi                                     ; 09040c 56
     push eax                                     ; 09040d 50
-    call sub_b5f0f                               ; 09040e e8fc5a0200
+    call vesa_drawshape                          ; 09040e e8fc5a0200
     add esp, 0xc                                 ; 090413 83c40c
     jmp loc_90614                                ; 090416 e9f9010000
 
@@ -9107,7 +9233,7 @@ loc_9049b:
     shr eax, 0x10                                ; 0904b6 c1e810
     mov dword ptr [esp + 0x10], eax              ; 0904b9 89442410
     push eax                                     ; 0904bd 50
-    call sub_b5e00                               ; 0904be e83d590200
+    call vesa_set_bank                           ; 0904be e83d590200
     add esp, 4                                   ; 0904c3 83c404
     and esi, 0xffff                              ; 0904c6 81e6ffff0000
     mov dword ptr [esp + 0xc], ebp               ; 0904cc 896c240c
@@ -9158,7 +9284,7 @@ loc_9053f:
     inc eax                                      ; 090558 40
     mov dword ptr [esp + 0x10], eax              ; 090559 89442410
     push eax                                     ; 09055d 50
-    call sub_b5e00                               ; 09055e e89d580200
+    call vesa_set_bank                           ; 09055e e89d580200
     add esp, 4                                   ; 090563 83c404
 loc_90566:
     mov eax, dword ptr [esp + 0x20]              ; 090566 8b442420
@@ -9183,7 +9309,7 @@ loc_90566:
     inc esi                                      ; 0905a4 46
     mov dword ptr [esp + 0x10], esi              ; 0905a5 89742410
     push esi                                     ; 0905a9 56
-    call sub_b5e00                               ; 0905aa e851580200
+    call vesa_set_bank                           ; 0905aa e851580200
     add esp, 4                                   ; 0905af 83c404
     push ebp                                     ; 0905b2 55
     mov edx, dword ptr [esp + 0x20]              ; 0905b3 8b542420
@@ -9214,7 +9340,7 @@ loc_905e0:
     inc ebp                                      ; 0905f9 45
     mov dword ptr [esp + 0x10], ebp              ; 0905fa 896c2410
     push ebp                                     ; 0905fe 55
-    call sub_b5e00                               ; 0905ff e8fc570200
+    call vesa_set_bank                           ; 0905ff e8fc570200
     add esp, 4                                   ; 090604 83c404
 loc_90607:
     dec dword ptr [esp + 0xc]                    ; 090607 ff4c240c
@@ -9234,7 +9360,7 @@ loc_90614:
 ; drawshape_home  [0x9061c, 28 bytes, 11 instructions]
 ; drawshape at the position stored in the shape header
 ; annotations: external
-; called by: league_leaders_screen, awards_screen, credits_screen, pause_menu, team_select_screen, draw_team_logos, frontend_main_menu, calendar_draw_games, free_agent_card, edit_lines_screen_a, coach_clip_player, sub_95158 (+1 more)
+; called by: league_leaders_screen, awards_screen, credits_screen, pause_menu, team_select_screen, draw_team_logos, frontend_main_menu, calendar_draw_games, free_agent_card, edit_lines_screen_a, coach_clip_player, debug_shapes (+1 more)
 ; ====================================================================================================
 drawshape_home:
     mov edx, dword ptr [esp + 4]                 ; 09061c 8b542404
@@ -9251,10 +9377,11 @@ drawshape_home:
 
 
 ; ====================================================================================================
-; sub_90638  [0x90638, 40 bytes, 15 instructions]  <unreferenced>
+; drawshape_centered  [0x90638, 40 bytes, 15 instructions]  <unreferenced>
+; drawshape with the shape's hotspot at the position
 ; no references found
 ; ====================================================================================================
-sub_90638:
+drawshape_centered:
     mov edx, dword ptr [esp + 4]                 ; 090638 8b542404
     mov eax, dword ptr [edx + 8]                 ; 09063c 8b4208
     sar eax, 0x10                                ; 09063f c1f810
@@ -9274,10 +9401,11 @@ loc_9065f:
 
 
 ; ====================================================================================================
-; sub_90660  [0x90660, 54 bytes, 22 instructions]
-; called by: sub_90698
+; xorcopy  [0x90660, 54 bytes, 22 instructions]
+; XORs a block onto another (the blit function of drawshape_xor)
+; called by: drawshape_xor
 ; ====================================================================================================
-sub_90660:
+xorcopy:
     mov edx, dword ptr [esp + 4]                 ; 090660 8b542404
     mov eax, dword ptr [esp + 8]                 ; 090664 8b442408
     mov ebx, dword ptr [esp + 0xc]               ; 090668 8b5c240c
@@ -9308,10 +9436,11 @@ loc_90688:
     db 0x8b, 0xc0 ; 090696 |..| (padding)
 
 ; ====================================================================================================
-; sub_90698  [0x90698, 65 bytes, 19 instructions]
-; called by: sub_906dc, sub_906f8
+; drawshape_xor  [0x90698, 65 bytes, 19 instructions]
+; drawshape XORing the pixels (VESA path: vesa_drawshape_xor)
+; called by: drawshape_xor_home, drawshape_xor_centered
 ; ====================================================================================================
-sub_90698:
+drawshape_xor:
     mov edx, dword ptr [esp + 4]                 ; 090698 8b542404
     mov ebx, dword ptr [esp + 8]                 ; 09069c 8b5c2408
     mov eax, dword ptr [esp + 0xc]               ; 0906a0 8b44240c
@@ -9320,27 +9449,28 @@ sub_90698:
     push eax                                     ; 0906ad 50
     push ebx                                     ; 0906ae 53
     push edx                                     ; 0906af 52
-    call sub_b608b                               ; 0906b0 e8d6590200
+    call vesa_drawshape_xor                      ; 0906b0 e8d6590200
     add esp, 0xc                                 ; 0906b5 83c40c
     ret                                          ; 0906b8 c3
 
 loc_906b9:
-    mov dword ptr [funcptr_d43e4], sub_90660     ; 0906b9 c705e4430d006006..
+    mov dword ptr [funcptr_d43e4], xorcopy       ; 0906b9 c705e4430d006006..
     push eax                                     ; 0906c3 50
     push ebx                                     ; 0906c4 53
     push edx                                     ; 0906c5 52
     call drawshape                               ; 0906c6 e825fdffff
     add esp, 0xc                                 ; 0906cb 83c40c
-    mov dword ptr [funcptr_d43e4], sub_b3abc     ; 0906ce c705e4430d00bc3a..
+    mov dword ptr [funcptr_d43e4], memmove_dwords ; 0906ce c705e4430d00bc3a..
     ret                                          ; 0906d8 c3
 
     db 0x8d, 0x40, 0x00 ; 0906d9 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_906dc  [0x906dc, 28 bytes, 11 instructions]  <unreferenced>
+; drawshape_xor_home  [0x906dc, 28 bytes, 11 instructions]  <unreferenced>
+; drawshape_xor at the shape's own position
 ; no references found
 ; ====================================================================================================
-sub_906dc:
+drawshape_xor_home:
     mov edx, dword ptr [esp + 4]                 ; 0906dc 8b542404
     mov eax, dword ptr [edx + 0xc]               ; 0906e0 8b420c
     sar eax, 0x10                                ; 0906e3 c1f810
@@ -9349,16 +9479,17 @@ sub_906dc:
     sar eax, 0x10                                ; 0906ea c1f810
     push eax                                     ; 0906ed 50
     push edx                                     ; 0906ee 52
-    call sub_90698                               ; 0906ef e8a4ffffff
+    call drawshape_xor                           ; 0906ef e8a4ffffff
     add esp, 0xc                                 ; 0906f4 83c40c
     ret                                          ; 0906f7 c3
 
 
 ; ====================================================================================================
-; sub_906f8  [0x906f8, 40 bytes, 15 instructions]  <unreferenced>
+; drawshape_xor_centered  [0x906f8, 40 bytes, 15 instructions]  <unreferenced>
+; drawshape_xor with the hotspot at the position
 ; no references found
 ; ====================================================================================================
-sub_906f8:
+drawshape_xor_centered:
     mov edx, dword ptr [esp + 4]                 ; 0906f8 8b542404
     mov eax, dword ptr [edx + 8]                 ; 0906fc 8b4208
     sar eax, 0x10                                ; 0906ff c1f810
@@ -9371,16 +9502,17 @@ sub_906f8:
     sub ebx, eax                                 ; 090713 29c3
     push ebx                                     ; 090715 53
     push edx                                     ; 090716 52
-    call sub_90698                               ; 090717 e87cffffff
+    call drawshape_xor                           ; 090717 e87cffffff
     add esp, 0xc                                 ; 09071c 83c40c
     ret                                          ; 09071f c3
 
 
 ; ====================================================================================================
-; sub_90720  [0x90720, 278 bytes, 98 instructions]
-; called by: sub_90838, sub_90854
+; drawshape_clip_trans  [0x90720, 278 bytes, 98 instructions]
+; drawshape with colour 0 transparent and clipping
+; called by: drawshape_clip_trans_home, drawshape_clip_trans_centered
 ; ====================================================================================================
-sub_90720:
+drawshape_clip_trans:
     push esi                                     ; 090720 56
     push edi                                     ; 090721 57
     push ebp                                     ; 090722 55
@@ -9393,7 +9525,7 @@ sub_90720:
     push esi                                     ; 09073b 56
     push edi                                     ; 09073c 57
     push eax                                     ; 09073d 50
-    call sub_b6217                               ; 09073e e8d45a0200
+    call vesa_drawshape_clip_trans               ; 09073e e8d45a0200
     add esp, 0xc                                 ; 090743 83c40c
     jmp loc_9082f                                ; 090746 e9e4000000
 
@@ -9476,7 +9608,7 @@ loc_90808:
     push ebp                                     ; 090818 55
     inc esi                                      ; 090819 46
     inc ebp                                      ; 09081a 45
-    call sub_b63ac                               ; 09081b e88c5b0200
+    call vesa_drawshape_clip_trans_split         ; 09081b e88c5b0200
     add esp, 0xc                                 ; 090820 83c40c
     jmp loc_90808                                ; 090823 ebe3
 
@@ -9495,10 +9627,11 @@ loc_9082f:
     db 0x8b, 0xc0 ; 090836 |..| (padding)
 
 ; ====================================================================================================
-; sub_90838  [0x90838, 28 bytes, 11 instructions]  <unreferenced>
+; drawshape_clip_trans_home  [0x90838, 28 bytes, 11 instructions]  <unreferenced>
+; drawshape_clip_trans at the shape's own position
 ; no references found
 ; ====================================================================================================
-sub_90838:
+drawshape_clip_trans_home:
     mov edx, dword ptr [esp + 4]                 ; 090838 8b542404
     mov eax, dword ptr [edx + 0xc]               ; 09083c 8b420c
     sar eax, 0x10                                ; 09083f c1f810
@@ -9507,16 +9640,17 @@ sub_90838:
     sar eax, 0x10                                ; 090846 c1f810
     push eax                                     ; 090849 50
     push edx                                     ; 09084a 52
-    call sub_90720                               ; 09084b e8d0feffff
+    call drawshape_clip_trans                    ; 09084b e8d0feffff
     add esp, 0xc                                 ; 090850 83c40c
     ret                                          ; 090853 c3
 
 
 ; ====================================================================================================
-; sub_90854  [0x90854, 40 bytes, 15 instructions]  <unreferenced>
+; drawshape_clip_trans_centered  [0x90854, 40 bytes, 15 instructions]  <unreferenced>
+; drawshape_clip_trans with the hotspot at the position
 ; no references found
 ; ====================================================================================================
-sub_90854:
+drawshape_clip_trans_centered:
     mov edx, dword ptr [esp + 4]                 ; 090854 8b542404
     mov eax, dword ptr [edx + 8]                 ; 090858 8b4208
     sar eax, 0x10                                ; 09085b c1f810
@@ -9529,16 +9663,17 @@ sub_90854:
     sub ebx, eax                                 ; 09086f 29c3
     push ebx                                     ; 090871 53
     push edx                                     ; 090872 52
-    call sub_90720                               ; 090873 e8a8feffff
+    call drawshape_clip_trans                    ; 090873 e8a8feffff
     add esp, 0xc                                 ; 090878 83c40c
     ret                                          ; 09087b c3
 
 
 ; ====================================================================================================
-; sub_9087c  [0x9087c, 285 bytes, 97 instructions]
-; called by: ea_sports_intro, sub_9099c, sub_909b8
+; drawshape_clip_opaque  [0x9087c, 285 bytes, 97 instructions]
+; drawshape copying every pixel with clipping
+; called by: ea_sports_intro, drawshape_clip_opaque_home, drawshape_clip_opaque_centered
 ; ====================================================================================================
-sub_9087c:
+drawshape_clip_opaque:
     push esi                                     ; 09087c 56
     push edi                                     ; 09087d 57
     push ebp                                     ; 09087e 55
@@ -9551,7 +9686,7 @@ sub_9087c:
     push esi                                     ; 090897 56
     push edi                                     ; 090898 57
     push eax                                     ; 090899 50
-    call sub_b6423                               ; 09089a e8845b0200
+    call vesa_drawshape_clip_opaque              ; 09089a e8845b0200
     add esp, 0xc                                 ; 09089f 83c40c
     add esp, 0x10                                ; 0908a2 83c410
     pop ebp                                      ; 0908a5 5d
@@ -9638,7 +9773,7 @@ loc_90972:
     push ebp                                     ; 090982 55
     inc esi                                      ; 090983 46
     inc ebp                                      ; 090984 45
-    call sub_b65b8                               ; 090985 e82e5c0200
+    call vesa_drawshape_clip_opaque_split        ; 090985 e82e5c0200
     add esp, 0xc                                 ; 09098a 83c40c
     jmp loc_90972                                ; 09098d ebe3
 
@@ -9650,10 +9785,11 @@ loc_9098f:
     db 0x8d, 0x40, 0x00 ; 090999 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_9099c  [0x9099c, 28 bytes, 11 instructions]  <unreferenced>
+; drawshape_clip_opaque_home  [0x9099c, 28 bytes, 11 instructions]  <unreferenced>
+; drawshape_clip_opaque at the shape's own position
 ; no references found
 ; ====================================================================================================
-sub_9099c:
+drawshape_clip_opaque_home:
     mov edx, dword ptr [esp + 4]                 ; 09099c 8b542404
     mov eax, dword ptr [edx + 0xc]               ; 0909a0 8b420c
     sar eax, 0x10                                ; 0909a3 c1f810
@@ -9662,16 +9798,17 @@ sub_9099c:
     sar eax, 0x10                                ; 0909aa c1f810
     push eax                                     ; 0909ad 50
     push edx                                     ; 0909ae 52
-    call sub_9087c                               ; 0909af e8c8feffff
+    call drawshape_clip_opaque                   ; 0909af e8c8feffff
     add esp, 0xc                                 ; 0909b4 83c40c
     ret                                          ; 0909b7 c3
 
 
 ; ====================================================================================================
-; sub_909b8  [0x909b8, 40 bytes, 15 instructions]  <unreferenced>
+; drawshape_clip_opaque_centered  [0x909b8, 40 bytes, 15 instructions]  <unreferenced>
+; drawshape_clip_opaque with the hotspot at the position
 ; no references found
 ; ====================================================================================================
-sub_909b8:
+drawshape_clip_opaque_centered:
     mov edx, dword ptr [esp + 4]                 ; 0909b8 8b542404
     mov eax, dword ptr [edx + 8]                 ; 0909bc 8b4208
     sar eax, 0x10                                ; 0909bf c1f810
@@ -9684,16 +9821,17 @@ sub_909b8:
     sub ebx, eax                                 ; 0909d3 29c3
     push ebx                                     ; 0909d5 53
     push edx                                     ; 0909d6 52
-    call sub_9087c                               ; 0909d7 e8a0feffff
+    call drawshape_clip_opaque                   ; 0909d7 e8a0feffff
     add esp, 0xc                                 ; 0909dc 83c40c
     ret                                          ; 0909df c3
 
 
 ; ====================================================================================================
-; sub_909e0  [0x909e0, 87 bytes, 41 instructions]
-; called by: league_leaders_screen, team_abbrev_lookup, team_stats_screen, sub_a6b87
+; strnicmp_ascii  [0x909e0, 87 bytes, 41 instructions]
+; compares n characters ignoring the case of A..Z
+; called by: league_leaders_screen, team_abbrev_lookup, team_stats_screen, getenv
 ; ====================================================================================================
-sub_909e0:
+strnicmp_ascii:
     push ecx                                     ; 0909e0 51
     sub esp, 4                                   ; 0909e1 83ec04
 loc_909e4:
@@ -9750,7 +9888,7 @@ loc_90a2e:
 ; textwidthn  [0x90a40, 129 bytes, 45 instructions]
 ; pixel width of the first n characters
 ; annotations: external
-; called by: sub_314b4, textwidth
+; called by: text_entry_draw_cursor, textwidth
 ; ====================================================================================================
 textwidthn:
     push esi                                     ; 090a40 56
@@ -9813,7 +9951,7 @@ loc_90abd:
 ; ====================================================================================================
 ; textwidth  [0x90ac4, 19 bytes, 6 instructions]
 ; annotations: external
-; called by: league_leaders_screen, credits_screen, sub_174d8, sub_17573, sub_1c852, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, standings_screen (+32 more)
+; called by: league_leaders_screen, credits_screen, draw_credit_line, print_centered_shadow, set_goalie_menu_labels, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, standings_screen (+32 more)
 ; ====================================================================================================
 textwidth:
     push 0x200                                   ; 090ac4 6800020000
@@ -9825,10 +9963,11 @@ textwidth:
 
 
 ; ====================================================================================================
-; sub_90ad7  [0x90ad7, 19 bytes, 11 instructions]
+; sprintf_putc  [0x90ad7, 19 bytes, 11 instructions]
+; output function of sprintf: stores a character and counts it
 ; called by: sprintf
 ; ====================================================================================================
-sub_90ad7:
+sprintf_putc:
     push ebx                                     ; 090ad7 53
     push ecx                                     ; 090ad8 51
     mov bl, dl                                   ; 090ad9 88d3
@@ -9845,7 +9984,7 @@ sub_90ad7:
 ; ====================================================================================================
 ; sprintf  [0x90aea, 48 bytes, 18 instructions]
 ; annotations: external
-; called by: league_leaders_screen, fill_sprite_frames, load_effect_frames, load_sprite_banks, load_player_graphics, sub_13bb4, check_disk_space_for_game, intro_sequence, sub_176ae, sub_176db, export_stats_dialog, pause_menu (+83 more)
+; called by: league_leaders_screen, fill_sprite_frames, load_effect_frames, load_sprite_banks, load_player_graphics, load_highlight_assets, check_disk_space_for_game, intro_sequence, print_textf, print_textf2, export_stats_dialog, pause_menu (+83 more)
 ; ====================================================================================================
 sprintf:
     push ebx                                     ; 090aea 53
@@ -9855,7 +9994,7 @@ sprintf:
     lea eax, [esp + 0x1c]                        ; 090af0 8d44241c
     mov edx, dword ptr [esp + 0x18]              ; 090af4 8b542418
     mov ebx, esp                                 ; 090af8 89e3
-    mov ecx, sub_90ad7                           ; 090afa b9d70a0900
+    mov ecx, sprintf_putc                        ; 090afa b9d70a0900
     mov dword ptr [esp], eax                     ; 090aff 890424
     mov eax, dword ptr [esp + 0x14]              ; 090b02 8b442414
     call __prtf                                  ; 090b06 e811920000
@@ -9872,7 +10011,7 @@ sprintf:
 ; ====================================================================================================
 ; memcpy  [0x90b20, 37 bytes, 23 instructions]
 ; annotations: external
-; called by: awards_screen, ea_sports_intro, intro_sequence, credits_screen, sub_17793, sub_1fdfe, exh_hub_sports_central, exh_hub_playoff_tree, exh_hub_league_calendar, sub_21c04, player_card_screen, goalie_card_screen (+19 more)
+; called by: awards_screen, ea_sports_intro, intro_sequence, credits_screen, text_capture_add, load_sfh_shapes, exh_hub_sports_central, exh_hub_playoff_tree, exh_hub_league_calendar, player_card_draw_photo, player_card_screen, goalie_card_screen (+19 more)
 ; ====================================================================================================
 memcpy:
     push ecx                                     ; 090b20 51
@@ -9902,10 +10041,11 @@ memcpy:
     times 11 db 0 ; 090b45 (padding)
 
 ; ====================================================================================================
-; sub_90b50  [0x90b50, 47 bytes, 21 instructions]  <unreferenced>
+; locateshapes_list  [0x90b50, 47 bytes, 21 instructions]  <unreferenced>
+; locates every 4 character tag of a list in a shape bank
 ; no references found
 ; ====================================================================================================
-sub_90b50:
+locateshapes_list:
     push esi                                     ; 090b50 56
     push edi                                     ; 090b51 57
     push ebp                                     ; 090b52 55
@@ -9967,7 +10107,7 @@ loc_90bab:
 ; ====================================================================================================
 ; _dos_findfirst  [0x90bb0, 29 bytes, 15 instructions]  <dos_findfirst dos_set_dta>
 ; annotations: external
-; called by: sub_14368, sub_14442, check_disk_space_for_game, sub_149bf, sub_1bbcc, db_open_files, scan_league_dirs, league_name_prompt, sub_3c3af, player_db_sync, load_league_list, new_league_dialog (+11 more)
+; called by: delete_matching_files, delete_directory, check_disk_space_for_game, db_file_sizes_kb, load_team_databases, db_open_files, scan_league_dirs, league_name_prompt, import_game_set, player_db_sync, load_league_list, new_league_dialog (+11 more)
 ; ====================================================================================================
 _dos_findfirst:
     push ecx                                     ; 090bb0 51
@@ -9980,9 +10120,9 @@ _dos_findfirst:
     pop edx                                      ; 090bba 5a
     mov ah, 0x4e                                 ; 090bbb b44e
     int 0x21                                     ; 090bbd cd21              dos dos_findfirst
-    call sub_9a716                               ; 090bbf e8529b0000
+    call __doserror                              ; 090bbf e8529b0000
     mov edx, ebx                                 ; 090bc4 89da
-    call sub_90bec                               ; 090bc6 e821000000
+    call _dos_findfirst_lfn                      ; 090bc6 e821000000
     pop ecx                                      ; 090bcb 59
     ret                                          ; 090bcc c3
 
@@ -9990,36 +10130,38 @@ _dos_findfirst:
 ; ====================================================================================================
 ; _dos_findnext  [0x90bcd, 28 bytes, 11 instructions]  <dos_findnext dos_set_dta>
 ; annotations: external
-; called by: sub_14368, sub_14442, scan_league_dirs, load_league_list, scan_database_files, highlights_screen
+; called by: delete_matching_files, delete_directory, scan_league_dirs, load_league_list, scan_database_files, highlights_screen
 ; ====================================================================================================
 _dos_findnext:
     push edx                                     ; 090bcd 52
     mov edx, eax                                 ; 090bce 89c2
     mov ah, 0x1a                                 ; 090bd0 b41a
     int 0x21                                     ; 090bd2 cd21              dos dos_set_dta
-    call sub_90c0f                               ; 090bd4 e836000000
+    call _dos_findnext_lfn                       ; 090bd4 e836000000
     mov ah, 0x4f                                 ; 090bd9 b44f
     int 0x21                                     ; 090bdb cd21              dos dos_findnext
-    call sub_9a716                               ; 090bdd e8349b0000
-    call sub_90bec                               ; 090be2 e805000000
+    call __doserror                              ; 090bdd e8349b0000
+    call _dos_findfirst_lfn                      ; 090be2 e805000000
     pop edx                                      ; 090be7 5a
     ret                                          ; 090be8 c3
 
 
 ; ====================================================================================================
-; sub_90be9  [0x90be9, 3 bytes, 2 instructions]  <unreferenced>
+; return_zero_90be9  [0x90be9, 3 bytes, 2 instructions]  <unreferenced>
+; returns 0
 ; no references found
 ; ====================================================================================================
-sub_90be9:
+return_zero_90be9:
     xor eax, eax                                 ; 090be9 31c0
     ret                                          ; 090beb c3
 
 
 ; ====================================================================================================
-; sub_90bec  [0x90bec, 35 bytes, 19 instructions]  <int21h>
+; _dos_findfirst_lfn  [0x90bec, 35 bytes, 19 instructions]  <int21h>
+; copies the 43 byte find block in (int 21h 2Fh, DOS version 9)
 ; called by: _dos_findfirst, _dos_findnext
 ; ====================================================================================================
-sub_90bec:
+_dos_findfirst_lfn:
     cmp byte ptr [byte_d4d06], 9                 ; 090bec 803d064d0d0009
     jne loc_90c0e                                ; 090bf3 7519
     push eax                                     ; 090bf5 50
@@ -10043,10 +10185,11 @@ loc_90c0e:
 
 
 ; ====================================================================================================
-; sub_90c0f  [0x90c0f, 35 bytes, 19 instructions]  <int21h>
+; _dos_findnext_lfn  [0x90c0f, 35 bytes, 19 instructions]  <int21h>
+; copies the 43 byte find block back (int 21h 2Fh)
 ; called by: _dos_findnext
 ; ====================================================================================================
-sub_90c0f:
+_dos_findnext_lfn:
     cmp byte ptr [byte_d4d06], 9                 ; 090c0f 803d064d0d0009
     jne loc_90c31                                ; 090c16 7519
     push eax                                     ; 090c18 50
@@ -10072,7 +10215,7 @@ loc_90c31:
 ; ====================================================================================================
 ; rmdir  [0x90c32, 31 bytes, 15 instructions]  <dos_rmdir>
 ; annotations: external
-; called by: sub_14442, database_disk_check, stanley_cup_tree_screen
+; called by: delete_directory, database_disk_check, stanley_cup_tree_screen
 ; ====================================================================================================
 rmdir:
     push edx                                     ; 090c32 52
@@ -10084,7 +10227,7 @@ rmdir:
     test eax, eax                                ; 090c3d 85c0
     jge loc_90c4d                                ; 090c3f 7d0c
     and eax, 0xffff                              ; 090c41 25ffff0000
-    call sub_9a735                               ; 090c46 e8ea9a0000
+    call __set_errno_dos                         ; 090c46 e8ea9a0000
     pop edx                                      ; 090c4b 5a
     ret                                          ; 090c4c c3
 
@@ -10098,29 +10241,30 @@ loc_90c4d:
 ; ====================================================================================================
 ; close  [0x90c52, 15 bytes, 7 instructions]  <dos_close>
 ; annotations: external
-; called by: file_close, sub_8363c, speech_load_bank, sub_b0a40
+; called by: file_close, speech_shutdown, speech_load_bank, gus_file_close
 ; ====================================================================================================
 close:
     push ebx                                     ; 090c52 53
     mov bx, ax                                   ; 090c53 6689c3
     mov ah, 0x3e                                 ; 090c56 b43e
     int 0x21                                     ; 090c58 cd21              dos dos_close
-    call sub_9a716                               ; 090c5a e8b79a0000
+    call __doserror                              ; 090c5a e8b79a0000
     pop ebx                                      ; 090c5f 5b
     ret                                          ; 090c60 c3
 
 
 ; ====================================================================================================
-; sub_90c61  [0x90c61, 16 bytes, 8 instructions]  <int21h unreferenced>
+; _dos_commit  [0x90c61, 16 bytes, 8 instructions]  <int21h unreferenced>
+; Watcom _dos_commit (int 21h 68h)
 ; no references found
 ; ====================================================================================================
-sub_90c61:
+_dos_commit:
     push ebx                                     ; 090c61 53
     mov bx, ax                                   ; 090c62 6689c3
     mov ah, 0x68                                 ; 090c65 b468
     clc                                          ; 090c67 f8
     int 0x21                                     ; 090c68 cd21              dos service 0x68
-    call sub_9a716                               ; 090c6a e8a79a0000
+    call __doserror                              ; 090c6a e8a79a0000
     pop ebx                                      ; 090c6f 5b
     ret                                          ; 090c70 c3
 
@@ -10128,7 +10272,7 @@ sub_90c61:
 ; ====================================================================================================
 ; open  [0x90c71, 15 bytes, 7 instructions]  <dos_open>
 ; annotations: external
-; called by: file_open_read, speech_load_bank, sub_b0a78
+; called by: file_open_read, speech_load_bank, gus_file_open
 ; ====================================================================================================
 open:
     xchg edx, eax                                ; 090c71 92
@@ -10137,14 +10281,14 @@ open:
     jb loc_90c7a                                 ; 090c76 7202
     mov dword ptr [ebx], eax                     ; 090c78 8903
 loc_90c7a:
-    call sub_9a716                               ; 090c7a e8979a0000
+    call __doserror                              ; 090c7a e8979a0000
     ret                                          ; 090c7f c3
 
 
 ; ====================================================================================================
 ; creat  [0x90c80, 20 bytes, 10 instructions]  <dos_create>
 ; annotations: external
-; called by: sub_14566
+; called by: file_create
 ; ====================================================================================================
 creat:
     push ecx                                     ; 090c80 51
@@ -10155,16 +10299,17 @@ creat:
     jb loc_90c8d                                 ; 090c89 7202
     mov dword ptr [ebx], eax                     ; 090c8b 8903
 loc_90c8d:
-    call sub_9a716                               ; 090c8d e8849a0000
+    call __doserror                              ; 090c8d e8849a0000
     pop ecx                                      ; 090c92 59
     ret                                          ; 090c93 c3
 
 
 ; ====================================================================================================
-; sub_90c94  [0x90c94, 20 bytes, 10 instructions]  <dos_create_new unreferenced>
+; _dos_creatnew  [0x90c94, 20 bytes, 10 instructions]  <dos_create_new unreferenced>
+; Watcom _dos_creatnew (int 21h 5Bh)
 ; no references found
 ; ====================================================================================================
-sub_90c94:
+_dos_creatnew:
     push ecx                                     ; 090c94 51
     mov ecx, edx                                 ; 090c95 89d1
     mov edx, eax                                 ; 090c97 89c2
@@ -10173,7 +10318,7 @@ sub_90c94:
     jb loc_90ca1                                 ; 090c9d 7202
     mov dword ptr [ebx], eax                     ; 090c9f 8903
 loc_90ca1:
-    call sub_9a716                               ; 090ca1 e8709a0000
+    call __doserror                              ; 090ca1 e8709a0000
     pop ecx                                      ; 090ca6 59
     ret                                          ; 090ca7 c3
 
@@ -10181,7 +10326,7 @@ loc_90ca1:
 ; ====================================================================================================
 ; lseek  [0x90ca8, 65 bytes, 26 instructions]  <dos_lseek>
 ; annotations: external
-; called by: file_read, file_write, sub_1bbcc, db_read_player, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, sub_61a8a, sub_61c22 (+14 more)
+; called by: file_read, file_write, load_team_databases, db_read_player, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, gsummary_append_record, gsummary_seek_last (+14 more)
 ; ====================================================================================================
 lseek:
     push ecx                                     ; 090ca8 51
@@ -10202,7 +10347,7 @@ lseek:
     test eax, eax                                ; 090ccb 85c0
     jge loc_90ce0                                ; 090ccd 7d11
     and eax, 0xffff                              ; 090ccf 25ffff0000
-    call sub_9a735                               ; 090cd4 e85c9a0000
+    call __set_errno_dos                         ; 090cd4 e85c9a0000
     mov eax, 0xffffffff                          ; 090cd9 b8ffffffff
     jmp loc_90ce3                                ; 090cde eb03
 
@@ -10219,7 +10364,7 @@ loc_90ce3:
 ; ====================================================================================================
 ; read_bytes  [0x90cea, 42 bytes, 17 instructions]  <int21h>
 ; read_bytes(fd, count, buffer)
-; called by: file_read, sub_1466b, read_be32, read_clip_name, speech_load_bank, speech_delta_decode, sub_83d78, sub_b0a14
+; called by: file_read, copy_file, read_be32, read_clip_name, speech_load_bank, speech_delta_decode, speech_clip_read, gus_file_read
 ; ====================================================================================================
 read_bytes:
     push 0x3f00                                  ; 090cea 68003f0000
@@ -10237,17 +10382,18 @@ loc_90cef:
     mov ebx, dword ptr [esp + 0xc]               ; 090d02 8b5c240c
     mov dword ptr [ebx], eax                     ; 090d06 8903
 loc_90d08:
-    call sub_9a716                               ; 090d08 e8099a0000
+    call __doserror                              ; 090d08 e8099a0000
     pop ds                                       ; 090d0d 1f
     add esp, 4                                   ; 090d0e 83c404
     ret 4                                        ; 090d11 c20400
 
 
 ; ====================================================================================================
-; sub_90d14  [0x90d14, 7 bytes, 2 instructions]
-; called by: file_write, sub_1466b
+; _dos_write  [0x90d14, 7 bytes, 2 instructions]
+; int 21h 40h write, the count into the result
+; called by: file_write, copy_file
 ; ====================================================================================================
-sub_90d14:
+_dos_write:
     push 0x4000                                  ; 090d14 6800400000
     jmp loc_90cef                                ; 090d19 ebd4
 
@@ -10257,7 +10403,7 @@ sub_90d14:
 ; fillrect  [0x90d20, 415 bytes, 131 instructions]
 ; fillrect(x, y, w, h, color)
 ; annotations: external
-; called by: draw_energy_bar, draw_line_box, sub_29d00, team_select_screen, league_dialog_box, sub_2c46b, draw_dialog_frame, sub_302b9, draw_penalty_box_overlay, draw_message_box, draw_box, highlight_menu_item (+20 more)
+; called by: draw_energy_bar, draw_line_box, draw_bevel_box, team_select_screen, league_dialog_box, league_name_entry_draw, draw_dialog_frame, listbox_draw_item, draw_penalty_box_overlay, draw_message_box, draw_box, highlight_menu_item (+20 more)
 ; ====================================================================================================
 fillrect:
     push esi                                     ; 090d20 56
@@ -10280,7 +10426,7 @@ fillrect:
     mov edi, dword ptr [esp + 0x34]              ; 090d52 8b7c2434
     push edi                                     ; 090d56 57
     push esi                                     ; 090d57 56
-    call sub_b6665                               ; 090d58 e808590200
+    call vesa_fillrect                           ; 090d58 e808590200
     add esp, 0x14                                ; 090d5d 83c414
     jmp loc_90eb8                                ; 090d60 e953010000
 
@@ -10296,7 +10442,7 @@ loc_90d65:
     shr eax, 0x10                                ; 090d85 c1e810
     mov dword ptr [esp + 8], eax                 ; 090d88 89442408
     push eax                                     ; 090d8c 50
-    call sub_b5e00                               ; 090d8d e86e500200
+    call vesa_set_bank                           ; 090d8d e86e500200
     add esp, 4                                   ; 090d92 83c404
     and esi, 0xffff                              ; 090d95 81e6ffff0000
     mov dword ptr [esp + 4], edi                 ; 090d9b 897c2404
@@ -10326,7 +10472,7 @@ loc_90dd9:
     mov eax, dword ptr [esp + 0x18]              ; 090ddf 8b442418
     add eax, esi                                 ; 090de3 01f0
     push eax                                     ; 090de5 50
-    call sub_b3fb0                               ; 090de6 e8c5310200
+    call memset_fill                             ; 090de6 e8c5310200
     add esp, 0xc                                 ; 090deb 83c40c
     add esi, dword ptr [esp + 0xc]               ; 090dee 0374240c
     dec edi                                      ; 090df2 4f
@@ -10341,7 +10487,7 @@ loc_90df5:
     inc eax                                      ; 090e12 40
     mov dword ptr [esp + 8], eax                 ; 090e13 89442408
     push eax                                     ; 090e17 50
-    call sub_b5e00                               ; 090e18 e8e34f0200
+    call vesa_set_bank                           ; 090e18 e8e34f0200
     add esp, 4                                   ; 090e1d 83c404
 loc_90e20:
     mov edi, dword ptr [esp + 0x2c]              ; 090e20 8b7c242c
@@ -10355,7 +10501,7 @@ loc_90e20:
     push ebp                                     ; 090e3b 55
     push edx                                     ; 090e3c 52
     push eax                                     ; 090e3d 50
-    call sub_b3fb0                               ; 090e3e e86d310200
+    call memset_fill                             ; 090e3e e86d310200
     add esp, 0xc                                 ; 090e43 83c40c
     mov esi, edi                                 ; 090e46 89fe
     and esi, 0xffff                              ; 090e48 81e6ffff0000
@@ -10363,13 +10509,13 @@ loc_90e20:
     inc ecx                                      ; 090e52 41
     mov dword ptr [esp + 8], ecx                 ; 090e53 894c2408
     push ecx                                     ; 090e57 51
-    call sub_b5e00                               ; 090e58 e8a34f0200
+    call vesa_set_bank                           ; 090e58 e8a34f0200
     add esp, 4                                   ; 090e5d 83c404
     push ebp                                     ; 090e60 55
     push esi                                     ; 090e61 56
     mov eax, dword ptr [esp + 0x18]              ; 090e62 8b442418
     push eax                                     ; 090e66 50
-    call sub_b3fb0                               ; 090e67 e844310200
+    call memset_fill                             ; 090e67 e844310200
     add esp, 0xc                                 ; 090e6c 83c40c
     jmp loc_90e82                                ; 090e6f eb11
 
@@ -10378,7 +10524,7 @@ loc_90e71:
     mov ebx, dword ptr [esp + 0x30]              ; 090e72 8b5c2430
     push ebx                                     ; 090e76 53
     push eax                                     ; 090e77 50
-    call sub_b3fb0                               ; 090e78 e833310200
+    call memset_fill                             ; 090e78 e833310200
     add esp, 0xc                                 ; 090e7d 83c40c
     mov esi, edi                                 ; 090e80 89fe
 loc_90e82:
@@ -10390,7 +10536,7 @@ loc_90e82:
     inc ebx                                      ; 090e97 43
     mov dword ptr [esp + 8], ebx                 ; 090e98 895c2408
     push ebx                                     ; 090e9c 53
-    call sub_b5e00                               ; 090e9d e85e4f0200
+    call vesa_set_bank                           ; 090e9d e85e4f0200
     add esp, 4                                   ; 090ea2 83c404
 loc_90ea5:
     dec dword ptr [esp + 4]                      ; 090ea5 ff4c2404
@@ -10408,10 +10554,11 @@ loc_90eb8:
     db 0x90 ; 090ebf |.| (padding)
 
 ; ====================================================================================================
-; sub_90ec0  [0x90ec0, 106 bytes, 41 instructions]
-; called by: sub_31599, draw_penalty_box_overlay, printstr2, sub_93000
+; fillrect_clipped  [0x90ec0, 106 bytes, 41 instructions]
+; fillrect clipped to the clip rectangle
+; called by: text_entry_draw, draw_penalty_box_overlay, printstr2, fillbox_corners
 ; ====================================================================================================
-sub_90ec0:
+fillrect_clipped:
     push esi                                     ; 090ec0 56
     mov esi, dword ptr [esp + 8]                 ; 090ec1 8b742408
     mov ecx, dword ptr [esp + 0xc]               ; 090ec5 8b4c240c
@@ -10463,23 +10610,24 @@ loc_90f29:
     db 0x8b, 0xc0 ; 090f2a |..| (padding)
 
 ; ====================================================================================================
-; sub_90f2c  [0x90f2c, 11 bytes, 6 instructions]
+; xorfill  [0x90f2c, 11 bytes, 6 instructions]
+; XORs n bytes with a colour (fillrect2's row function)
 ; called by: fillrect2
 ; ====================================================================================================
-sub_90f2c:
+xorfill:
     dec edx                                      ; 090f2c 4a
     cmp edx, -1                                  ; 090f2d 83faff
     je loc_90f29                                 ; 090f30 74f7
     xor byte ptr [eax], bl                       ; 090f32 3018
     inc eax                                      ; 090f34 40
-    jmp sub_90f2c                                ; 090f35 ebf5
+    jmp xorfill                                  ; 090f35 ebf5
 
     db 0x90 ; 090f37 |.| (padding)
 
 ; ====================================================================================================
 ; fillrect2  [0x90f38, 268 bytes, 85 instructions]
 ; annotations: external
-; called by: menu_page_a, menu_page_b, sub_6cf6f, sub_6dac3, sub_91044
+; called by: menu_page_a, menu_page_b, dbedit_draw_roster_column, dbedit_roster_click, fillrect2_clipped
 ; ====================================================================================================
 fillrect2:
     push esi                                     ; 090f38 56
@@ -10502,7 +10650,7 @@ fillrect2:
     push edx                                     ; 090f6d 52
     push edi                                     ; 090f6e 57
     push eax                                     ; 090f6f 50
-    call sub_b677d                               ; 090f70 e808580200
+    call vesa_fillrect2                          ; 090f70 e808580200
     add esp, 0x14                                ; 090f75 83c414
     jmp loc_9103d                                ; 090f78 e9c0000000
 
@@ -10518,7 +10666,7 @@ loc_90f7d:
     mov edi, esi                                 ; 090f9c 89f7
     shr edi, 0x10                                ; 090f9e c1ef10
     push edi                                     ; 090fa1 57
-    call sub_b5e00                               ; 090fa2 e8594e0200
+    call vesa_set_bank                           ; 090fa2 e8594e0200
     add esp, 4                                   ; 090fa7 83c404
     and esi, 0xffff                              ; 090faa 81e6ffff0000
     mov dword ptr [esp + 8], ebp                 ; 090fb0 896c2408
@@ -10535,24 +10683,24 @@ loc_90fc1:
     mov edx, 0x10000                             ; 090fd5 ba00000100
     sub edx, esi                                 ; 090fda 29f2
     mov ebx, ebp                                 ; 090fdc 89eb
-    call sub_90f2c                               ; 090fde e849ffffff
+    call xorfill                                 ; 090fde e849ffffff
     mov esi, ecx                                 ; 090fe3 89ce
     and esi, 0xffff                              ; 090fe5 81e6ffff0000
     inc edi                                      ; 090feb 47
     push edi                                     ; 090fec 57
-    call sub_b5e00                               ; 090fed e80e4e0200
+    call vesa_set_bank                           ; 090fed e80e4e0200
     add esp, 4                                   ; 090ff2 83c404
     mov ebx, ebp                                 ; 090ff5 89eb
     mov edx, esi                                 ; 090ff7 89f2
     mov eax, dword ptr [esp + 4]                 ; 090ff9 8b442404
-    call sub_90f2c                               ; 090ffd e82affffff
+    call xorfill                                 ; 090ffd e82affffff
     jmp loc_91015                                ; 091002 eb11
 
 loc_91004:
     xor ebx, ebx                                 ; 091004 31db
     mov bl, byte ptr [esp + 0x2c]                ; 091006 8a5c242c
     mov edx, dword ptr [esp + 0x24]              ; 09100a 8b542424
-    call sub_90f2c                               ; 09100e e819ffffff
+    call xorfill                                 ; 09100e e819ffffff
     mov esi, ecx                                 ; 091013 89ce
 loc_91015:
     add esi, dword ptr [esp]                     ; 091015 033424
@@ -10561,7 +10709,7 @@ loc_91015:
     and esi, 0xffff                              ; 091020 81e6ffff0000
     inc edi                                      ; 091026 47
     push edi                                     ; 091027 57
-    call sub_b5e00                               ; 091028 e8d34d0200
+    call vesa_set_bank                           ; 091028 e8d34d0200
     add esp, 4                                   ; 09102d 83c404
 loc_91030:
     mov eax, dword ptr [esp + 8]                 ; 091030 8b442408
@@ -10578,10 +10726,11 @@ loc_9103d:
 
 
 ; ====================================================================================================
-; sub_91044  [0x91044, 106 bytes, 41 instructions]
-; called by: sub_2785f, sub_314b4, sub_92f50
+; fillrect2_clipped  [0x91044, 106 bytes, 41 instructions]
+; fillrect2 clipped to the clip rectangle
+; called by: standings_highlight_row, text_entry_draw_cursor, xorbox
 ; ====================================================================================================
-sub_91044:
+fillrect2_clipped:
     push esi                                     ; 091044 56
     mov esi, dword ptr [esp + 8]                 ; 091045 8b742408
     mov ecx, dword ptr [esp + 0xc]               ; 091049 8b4c240c
@@ -10632,14 +10781,15 @@ loc_910ac:
     db 0x8b, 0xc0 ; 0910ae |..| (padding)
 
 ; ====================================================================================================
-; sub_910b0  [0x910b0, 47 bytes, 16 instructions]
+; clearscreen_default  [0x910b0, 47 bytes, 16 instructions]
+; clears a colour over the default screen, keeping the current screen descriptor
 ; called by: playoff_tree_screen, restorevideo, settextmode
 ; ====================================================================================================
-sub_910b0:
+clearscreen_default:
     sub esp, 0x60                                ; 0910b0 83ec60
     mov eax, esp                                 ; 0910b3 89e0
     push eax                                     ; 0910b5 50
-    call sub_b3a88                               ; 0910b6 e8cd290200
+    call save_screen_state                       ; 0910b6 e8cd290200
     add esp, 4                                   ; 0910bb 83c404
     call setdefaultscreen                        ; 0910be e8e53a0200
     mov edx, dword ptr [esp + 0x64]              ; 0910c3 8b542464
@@ -10648,7 +10798,7 @@ sub_910b0:
     add esp, 4                                   ; 0910cd 83c404
     mov eax, esp                                 ; 0910d0 89e0
     push eax                                     ; 0910d2 50
-    call sub_b3aa1                               ; 0910d3 e8c9290200
+    call restore_screen_state                    ; 0910d3 e8c9290200
     add esp, 4                                   ; 0910d8 83c404
     add esp, 0x60                                ; 0910db 83c460
     ret                                          ; 0910de c3
@@ -10658,7 +10808,7 @@ sub_910b0:
 ; ====================================================================================================
 ; drawshape2  [0x910e0, 313 bytes, 98 instructions]
 ; annotations: external
-; called by: league_select_screen, league_name_entry, loading_screen, joystick_calibrate, database_select_screen, sub_73703, draw_jerseys, save_game_dialog, cmv_play, drawshape2_home, sub_91238, drawshape2_remap (+3 more)
+; called by: league_select_screen, league_name_entry, loading_screen, joystick_calibrate, database_select_screen, menu_load_database, draw_jerseys, save_game_dialog, cmv_play, drawshape2_home, drawshape2_centered, drawshape2_remap (+3 more)
 ; ====================================================================================================
 drawshape2:
     push esi                                     ; 0910e0 56
@@ -10673,7 +10823,7 @@ drawshape2:
     push esi                                     ; 0910fb 56
     push edx                                     ; 0910fc 52
     push eax                                     ; 0910fd 50
-    call sub_b6887                               ; 0910fe e884570200
+    call vesa_drawshape2                         ; 0910fe e884570200
     add esp, 0xc                                 ; 091103 83c40c
     jmp loc_91212                                ; 091106 e907010000
 
@@ -10696,7 +10846,7 @@ loc_9110b:
     shr eax, 0x10                                ; 091140 c1e810
     mov dword ptr [esp + 0x14], eax              ; 091143 89442414
     push eax                                     ; 091147 50
-    call sub_b5e00                               ; 091148 e8b34c0200
+    call vesa_set_bank                           ; 091148 e8b34c0200
     add esp, 4                                   ; 09114d 83c404
     and esi, 0xffff                              ; 091150 81e6ffff0000
     mov dword ptr [esp + 8], ebp                 ; 091156 896c2408
@@ -10726,7 +10876,7 @@ loc_91165:
     inc eax                                      ; 0911aa 40
     mov dword ptr [esp + 0x14], eax              ; 0911ab 89442414
     push eax                                     ; 0911af 50
-    call sub_b5e00                               ; 0911b0 e84b4c0200
+    call vesa_set_bank                           ; 0911b0 e84b4c0200
     add esp, 4                                   ; 0911b5 83c404
     push ebp                                     ; 0911b8 55
     mov ebx, dword ptr [esp + 8]                 ; 0911b9 8b5c2408
@@ -10756,7 +10906,7 @@ loc_911e6:
     inc ebp                                      ; 0911fb 45
     mov dword ptr [esp + 0x14], ebp              ; 0911fc 896c2414
     push ebp                                     ; 091200 55
-    call sub_b5e00                               ; 091201 e8fa4b0200
+    call vesa_set_bank                           ; 091201 e8fa4b0200
     add esp, 4                                   ; 091206 83c404
 loc_91209:
     dec dword ptr [esp + 8]                      ; 091209 ff4c2408
@@ -10774,7 +10924,7 @@ loc_91212:
 ; ====================================================================================================
 ; drawshape2_home  [0x9121c, 28 bytes, 11 instructions]
 ; annotations: external
-; called by: ea_sports_intro, intro_sequence, team_roster_screen, joystick_calibrate, player_ratings_card, sub_6ed39, roster_screen, roster_table, stanley_cup_tree_screen
+; called by: ea_sports_intro, intro_sequence, team_roster_screen, joystick_calibrate, player_ratings_card, dbedit_show_errors, roster_screen, roster_table, stanley_cup_tree_screen
 ; ====================================================================================================
 drawshape2_home:
     mov edx, dword ptr [esp + 4]                 ; 09121c 8b542404
@@ -10791,10 +10941,11 @@ drawshape2_home:
 
 
 ; ====================================================================================================
-; sub_91238  [0x91238, 40 bytes, 15 instructions]  <unreferenced>
+; drawshape2_centered  [0x91238, 40 bytes, 15 instructions]  <unreferenced>
+; drawshape2 with the hotspot at the position
 ; no references found
 ; ====================================================================================================
-sub_91238:
+drawshape2_centered:
     mov edx, dword ptr [esp + 4]                 ; 091238 8b542404
     mov eax, dword ptr [edx + 8]                 ; 09123c 8b4208
     sar eax, 0x10                                ; 09123f c1f810
@@ -10813,10 +10964,11 @@ sub_91238:
 
 
 ; ====================================================================================================
-; sub_91260  [0x91260, 36 bytes, 16 instructions]
+; copy_skip_ff  [0x91260, 36 bytes, 16 instructions]
+; blit function copying every byte but 0xff (transparent remapped pixels)
 ; called by: drawshape2_remap, drawshape_remap
 ; ====================================================================================================
-sub_91260:
+copy_skip_ff:
     mov ebx, dword ptr [esp + 8]                 ; 091260 8b5c2408
     mov ecx, dword ptr [esp + 0xc]               ; 091264 8b4c240c
     mov edx, dword ptr [esp + 4]                 ; 091268 8b542404
@@ -10841,7 +10993,7 @@ loc_91283:
 ; ====================================================================================================
 ; drawshape2_remap  [0x91284, 65 bytes, 19 instructions]
 ; annotations: external
-; called by: ea_sports_intro, league_dialog_box, database_dialog, settings_screen_b, game_settings_dialog, sub_7c1ac, sub_8261c, save_game_dialog, sub_912c8, sub_912e4
+; called by: ea_sports_intro, league_dialog_box, database_dialog, settings_screen_b, game_settings_dialog, sound_settings_draw, sound_settings_load_shapes, save_game_dialog, drawshape2_remap_home, drawshape2_remap_centered
 ; ====================================================================================================
 drawshape2_remap:
     mov edx, dword ptr [esp + 4]                 ; 091284 8b542404
@@ -10852,27 +11004,28 @@ drawshape2_remap:
     push eax                                     ; 091299 50
     push ebx                                     ; 09129a 53
     push edx                                     ; 09129b 52
-    call sub_b693c                               ; 09129c e89b560200
+    call vesa_drawshape2_remap                   ; 09129c e89b560200
     add esp, 0xc                                 ; 0912a1 83c40c
     ret                                          ; 0912a4 c3
 
 loc_912a5:
-    mov dword ptr [funcptr_d43e4], sub_91260     ; 0912a5 c705e4430d006012..
+    mov dword ptr [funcptr_d43e4], copy_skip_ff  ; 0912a5 c705e4430d006012..
     push eax                                     ; 0912af 50
     push ebx                                     ; 0912b0 53
     push edx                                     ; 0912b1 52
     call drawshape2                              ; 0912b2 e829feffff
     add esp, 0xc                                 ; 0912b7 83c40c
-    mov dword ptr [funcptr_d43e4], sub_b3abc     ; 0912ba c705e4430d00bc3a..
+    mov dword ptr [funcptr_d43e4], memmove_dwords ; 0912ba c705e4430d00bc3a..
     ret                                          ; 0912c4 c3
 
     db 0x8d, 0x40, 0x00 ; 0912c5 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_912c8  [0x912c8, 28 bytes, 11 instructions]
+; drawshape2_remap_home  [0x912c8, 28 bytes, 11 instructions]
+; drawshape2_remap at the shape's own position
 ; called by: intro_sequence, locker_room_screen, draw_jerseys
 ; ====================================================================================================
-sub_912c8:
+drawshape2_remap_home:
     mov edx, dword ptr [esp + 4]                 ; 0912c8 8b542404
     mov eax, dword ptr [edx + 0xc]               ; 0912cc 8b420c
     sar eax, 0x10                                ; 0912cf c1f810
@@ -10887,10 +11040,11 @@ sub_912c8:
 
 
 ; ====================================================================================================
-; sub_912e4  [0x912e4, 40 bytes, 15 instructions]  <unreferenced>
+; drawshape2_remap_centered  [0x912e4, 40 bytes, 15 instructions]  <unreferenced>
+; drawshape2_remap with the hotspot at the position
 ; no references found
 ; ====================================================================================================
-sub_912e4:
+drawshape2_remap_centered:
     mov edx, dword ptr [esp + 4]                 ; 0912e4 8b542404
     mov eax, dword ptr [edx + 8]                 ; 0912e8 8b4208
     sar eax, 0x10                                ; 0912eb c1f810
@@ -10910,10 +11064,11 @@ sub_912e4:
     times 4 db 0 ; 09130c (padding)
 
 ; ====================================================================================================
-; sub_91310  [0x91310, 27 bytes, 9 instructions]  <unreferenced>
+; removewindow_release  [0x91310, 27 bytes, 9 instructions]  <unreferenced>
+; removes a window and releases its memory block handle
 ; no references found
 ; ====================================================================================================
-sub_91310:
+removewindow_release:
     mov edx, dword ptr [esp + 4]                 ; 091310 8b542404
     mov eax, dword ptr [edx]                     ; 091314 8b02
     mov eax, dword ptr [eax + 0x28]              ; 091316 8b4028
@@ -10927,10 +11082,11 @@ sub_91310:
     db 0x90 ; 09132b |.| (padding)
 
 ; ====================================================================================================
-; sub_9132c  [0x9132c, 25 bytes, 8 instructions]
-; called by: ea_sports_intro, sub_174d8, sub_1ac9a, sub_969a8, sub_981f8, sub_984d0
+; removewindow_free  [0x9132c, 25 bytes, 8 instructions]
+; removes a window and frees its memory
+; called by: ea_sports_intro, draw_credit_line, cmv_free_buffers, mvi_close, msgbox_yesno, msgbox
 ; ====================================================================================================
-sub_9132c:
+removewindow_free:
     mov edx, dword ptr [esp + 4]                 ; 09132c 8b542404
     mov eax, dword ptr [edx + 0x28]              ; 091330 8b4228
     sub eax, 8                                   ; 091333 83e808
@@ -10945,7 +11101,7 @@ sub_9132c:
 ; ====================================================================================================
 ; memset  [0x91350, 24 bytes, 12 instructions]
 ; annotations: external
-; called by: intro_sequence, sub_17711, sub_37d6a, league_control_dialog, team_info_screen, load_league_list, new_league_dialog, loading_screen, sub_6a3c0, joystick_calibrate, create_player_menu, sub_9afbe (+10 more)
+; called by: intro_sequence, text_capture_begin, team_grid_save_back, league_control_dialog, team_info_screen, load_league_list, new_league_dialog, loading_screen, zm_swap_lists, joystick_calibrate, create_player_menu, __allocfp (+10 more)
 ; ====================================================================================================
 memset:
     push eax                                     ; 091350 50
@@ -10967,7 +11123,7 @@ memset:
 ; drawshape_remap  [0x91370, 65 bytes, 19 instructions]
 ; drawshape through the color remap table
 ; annotations: external
-; called by: credits_screen, sub_174d8, pause_menu, run_menu, menu_page_a, menu_page_b, team_stats_screen, player_stats_screen, stats_table, standings_table, standings_screen, team_select_screen (+37 more)
+; called by: credits_screen, draw_credit_line, pause_menu, run_menu, menu_page_a, menu_page_b, team_stats_screen, player_stats_screen, stats_table, standings_table, standings_screen, team_select_screen (+37 more)
 ; ====================================================================================================
 drawshape_remap:
     mov edx, dword ptr [esp + 4]                 ; 091370 8b542404
@@ -10978,18 +11134,18 @@ drawshape_remap:
     push eax                                     ; 091385 50
     push ebx                                     ; 091386 53
     push edx                                     ; 091387 52
-    call sub_b69e4                               ; 091388 e857560200
+    call vesa_drawshape_remap                    ; 091388 e857560200
     add esp, 0xc                                 ; 09138d 83c40c
     ret                                          ; 091390 c3
 
 loc_91391:
-    mov dword ptr [funcptr_d43e4], sub_91260     ; 091391 c705e4430d006012..
+    mov dword ptr [funcptr_d43e4], copy_skip_ff  ; 091391 c705e4430d006012..
     push eax                                     ; 09139b 50
     push ebx                                     ; 09139c 53
     push edx                                     ; 09139d 52
     call drawshape                               ; 09139e e84df0ffff
     add esp, 0xc                                 ; 0913a3 83c40c
-    mov dword ptr [funcptr_d43e4], sub_b3abc     ; 0913a6 c705e4430d00bc3a..
+    mov dword ptr [funcptr_d43e4], memmove_dwords ; 0913a6 c705e4430d00bc3a..
     ret                                          ; 0913b0 c3
 
     db 0x8d, 0x40, 0x00 ; 0913b1 |.@.| (padding)
@@ -11042,7 +11198,7 @@ drawshape_remap_centered:
 ; grabshape  [0x91400, 312 bytes, 101 instructions]
 ; copies a screen rectangle into a shape buffer (used to save the background under the mouse pointer)
 ; annotations: external
-; called by: credits_screen, pause_menu, run_menu, menu_page_a, menu_page_b, team_select_screen, draw_team_logos, league_select_screen, league_name_entry, sub_303fb, save_dialog_background, sub_31250 (+42 more)
+; called by: credits_screen, pause_menu, run_menu, menu_page_a, menu_page_b, team_select_screen, draw_team_logos, league_select_screen, league_name_entry, listbox_dialog, save_dialog_background, dialog_pointer_loop (+42 more)
 ; ====================================================================================================
 grabshape:
     push esi                                     ; 091400 56
@@ -11057,7 +11213,7 @@ grabshape:
     push esi                                     ; 09141b 56
     push edx                                     ; 09141c 52
     push eax                                     ; 09141d 50
-    call sub_b6b3f                               ; 09141e e81c570200
+    call vesa_grabshape                          ; 09141e e81c570200
     add esp, 0xc                                 ; 091423 83c40c
     jmp loc_91531                                ; 091426 e906010000
 
@@ -11082,7 +11238,7 @@ loc_9142b:
     shr eax, 0x10                                ; 091468 c1e810
     mov dword ptr [esp + 0x14], eax              ; 09146b 89442414
     push eax                                     ; 09146f 50
-    call sub_b5e00                               ; 091470 e88b490200
+    call vesa_set_bank                           ; 091470 e88b490200
     add esp, 4                                   ; 091475 83c404
     and esi, 0xffff                              ; 091478 81e6ffff0000
     mov dword ptr [esp + 8], ebp                 ; 09147e 896c2408
@@ -11101,7 +11257,7 @@ loc_9148a:
     push ebp                                     ; 0914a8 55
     push edi                                     ; 0914a9 57
     push eax                                     ; 0914aa 50
-    call sub_b3abc                               ; 0914ab e80c260200
+    call memmove_dwords                          ; 0914ab e80c260200
     add esp, 0xc                                 ; 0914b0 83c40c
     add edi, ebp                                 ; 0914b3 01ef
     mov ebp, dword ptr [esp + 0x10]              ; 0914b5 8b6c2410
@@ -11110,13 +11266,13 @@ loc_9148a:
     inc eax                                      ; 0914c3 40
     mov dword ptr [esp + 0x14], eax              ; 0914c4 89442414
     push eax                                     ; 0914c8 50
-    call sub_b5e00                               ; 0914c9 e832490200
+    call vesa_set_bank                           ; 0914c9 e832490200
     add esp, 4                                   ; 0914ce 83c404
     push ebp                                     ; 0914d1 55
     push edi                                     ; 0914d2 57
     mov ebx, dword ptr [esp + 0xc]               ; 0914d3 8b5c240c
     push ebx                                     ; 0914d7 53
-    call sub_b3abc                               ; 0914d8 e8df250200
+    call memmove_dwords                          ; 0914d8 e8df250200
     add esp, 0xc                                 ; 0914dd 83c40c
     mov esi, ebp                                 ; 0914e0 89ee
     add edi, ebp                                 ; 0914e2 01ef
@@ -11127,7 +11283,7 @@ loc_914e6:
     push ecx                                     ; 0914ea 51
     push edi                                     ; 0914eb 57
     push eax                                     ; 0914ec 50
-    call sub_b3abc                               ; 0914ed e8ca250200
+    call memmove_dwords                          ; 0914ed e8ca250200
     add esp, 0xc                                 ; 0914f2 83c40c
     mov esi, dword ptr [esp + 0x10]              ; 0914f5 8b742410
     add edi, dword ptr [esp + 0xc]               ; 0914f9 037c240c
@@ -11140,7 +11296,7 @@ loc_914fd:
     inc ebp                                      ; 091512 45
     mov dword ptr [esp + 0x14], ebp              ; 091513 896c2414
     push ebp                                     ; 091517 55
-    call sub_b5e00                               ; 091518 e8e3480200
+    call vesa_set_bank                           ; 091518 e8e3480200
     add esp, 4                                   ; 09151d 83c404
 loc_91520:
     mov edx, dword ptr [esp + 8]                 ; 091520 8b542408
@@ -11157,10 +11313,11 @@ loc_91531:
 
 
 ; ====================================================================================================
-; sub_91538  [0x91538, 28 bytes, 11 instructions]
-; called by: sub_9d090
+; grabshape_home  [0x91538, 28 bytes, 11 instructions]
+; grabshape at the shape's own position
+; called by: save_screen_shape
 ; ====================================================================================================
-sub_91538:
+grabshape_home:
     mov edx, dword ptr [esp + 4]                 ; 091538 8b542404
     mov eax, dword ptr [edx + 0xc]               ; 09153c 8b420c
     sar eax, 0x10                                ; 09153f c1f810
@@ -11175,10 +11332,11 @@ sub_91538:
 
 
 ; ====================================================================================================
-; sub_91554  [0x91554, 40 bytes, 15 instructions]  <unreferenced>
+; grabshape_centered  [0x91554, 40 bytes, 15 instructions]  <unreferenced>
+; grabshape with the hotspot at the position
 ; no references found
 ; ====================================================================================================
-sub_91554:
+grabshape_centered:
     mov edx, dword ptr [esp + 4]                 ; 091554 8b542404
     mov eax, dword ptr [edx + 8]                 ; 091558 8b4208
     sar eax, 0x10                                ; 09155b c1f810
@@ -11388,7 +11546,7 @@ loc_917a4:
     push eax                                     ; 0917ad 50
     push ebp                                     ; 0917ae 55
     push esi                                     ; 0917af 56
-    call sub_b5d80                               ; 0917b0 e8cb450200
+    call putpixel_clip                           ; 0917b0 e8cb450200
     add esp, 0xc                                 ; 0917b5 83c40c
 loc_917b8:
     inc esi                                      ; 0917b8 46
@@ -11398,7 +11556,7 @@ loc_917b8:
     push edx                                     ; 0917c2 52
     push ebp                                     ; 0917c3 55
     push esi                                     ; 0917c4 56
-    call sub_b5d80                               ; 0917c5 e8b6450200
+    call putpixel_clip                           ; 0917c5 e8b6450200
     add esp, 0xc                                 ; 0917ca 83c40c
 loc_917cd:
     inc esi                                      ; 0917cd 46
@@ -11408,7 +11566,7 @@ loc_917cd:
     push ebx                                     ; 0917d7 53
     push ebp                                     ; 0917d8 55
     push esi                                     ; 0917d9 56
-    call sub_b5d80                               ; 0917da e8a1450200
+    call putpixel_clip                           ; 0917da e8a1450200
     add esp, 0xc                                 ; 0917df 83c40c
 loc_917e2:
     inc esi                                      ; 0917e2 46
@@ -11418,7 +11576,7 @@ loc_917e2:
     push ecx                                     ; 0917ec 51
     push ebp                                     ; 0917ed 55
     push esi                                     ; 0917ee 56
-    call sub_b5d80                               ; 0917ef e88c450200
+    call putpixel_clip                           ; 0917ef e88c450200
     add esp, 0xc                                 ; 0917f4 83c40c
 loc_917f7:
     inc esi                                      ; 0917f7 46
@@ -11428,7 +11586,7 @@ loc_917f7:
     push eax                                     ; 091801 50
     push ebp                                     ; 091802 55
     push esi                                     ; 091803 56
-    call sub_b5d80                               ; 091804 e877450200
+    call putpixel_clip                           ; 091804 e877450200
     add esp, 0xc                                 ; 091809 83c40c
 loc_9180c:
     inc esi                                      ; 09180c 46
@@ -11438,7 +11596,7 @@ loc_9180c:
     push edx                                     ; 091816 52
     push ebp                                     ; 091817 55
     push esi                                     ; 091818 56
-    call sub_b5d80                               ; 091819 e862450200
+    call putpixel_clip                           ; 091819 e862450200
     add esp, 0xc                                 ; 09181e 83c40c
 loc_91821:
     inc esi                                      ; 091821 46
@@ -11448,7 +11606,7 @@ loc_91821:
     push ebx                                     ; 09182b 53
     push ebp                                     ; 09182c 55
     push esi                                     ; 09182d 56
-    call sub_b5d80                               ; 09182e e84d450200
+    call putpixel_clip                           ; 09182e e84d450200
     add esp, 0xc                                 ; 091833 83c40c
 loc_91836:
     inc esi                                      ; 091836 46
@@ -11458,7 +11616,7 @@ loc_91836:
     push ecx                                     ; 091840 51
     push ebp                                     ; 091841 55
     push esi                                     ; 091842 56
-    call sub_b5d80                               ; 091843 e838450200
+    call putpixel_clip                           ; 091843 e838450200
     add esp, 0xc                                 ; 091848 83c40c
 loc_9184b:
     inc esi                                      ; 09184b 46
@@ -11506,7 +11664,7 @@ loc_918a9:
     push eax                                     ; 0918b4 50
     push ebp                                     ; 0918b5 55
     push esi                                     ; 0918b6 56
-    call sub_b5d80                               ; 0918b7 e8c4440200
+    call putpixel_clip                           ; 0918b7 e8c4440200
     add esp, 0xc                                 ; 0918bc 83c40c
 loc_918bf:
     inc esi                                      ; 0918bf 46
@@ -11519,7 +11677,7 @@ loc_918bf:
     push eax                                     ; 0918d0 50
     push ebp                                     ; 0918d1 55
     push esi                                     ; 0918d2 56
-    call sub_b5d80                               ; 0918d3 e8a8440200
+    call putpixel_clip                           ; 0918d3 e8a8440200
     add esp, 0xc                                 ; 0918d8 83c40c
 loc_918db:
     inc esi                                      ; 0918db 46
@@ -11550,7 +11708,7 @@ loc_918fb:
     push ebp                                     ; 09190c 55
     mov eax, dword ptr [esp + 0x2c]              ; 09190d 8b44242c
     push eax                                     ; 091911 50
-    call sub_b5d80                               ; 091912 e869440200
+    call putpixel_clip                           ; 091912 e869440200
     add esp, 0xc                                 ; 091917 83c40c
 loc_9191a:
     inc dword ptr [esp + 0x24]                   ; 09191a ff442424
@@ -11592,7 +11750,7 @@ loc_9195d:
 ; printstr_at  [0x91964, 32 bytes, 11 instructions]
 ; printstr_at(str, x, y)
 ; annotations: external
-; called by: sub_17573, print_text_at, sub_17636, sub_1fb1c, sub_1fb49, league_type_menu, sub_2c135, calendar_draw_games, draw_penalty_box_overlay, draw_message_box, joystick_calibrate, draw_item_text_dim (+19 more)
+; called by: print_centered_shadow, print_text_at, print_outlined, hub_printf_at, hub_printf_at2, league_type_menu, printstr_copy_at, calendar_draw_games, draw_penalty_box_overlay, draw_message_box, joystick_calibrate, draw_item_text_dim (+19 more)
 ; ====================================================================================================
 printstr_at:
     mov edx, dword ptr [esp + 0xc]               ; 091964 8b54240c
@@ -11609,10 +11767,11 @@ printstr_at:
 
 
 ; ====================================================================================================
-; sub_91984  [0x91984, 227 bytes, 84 instructions]
-; called by: sub_17711, sub_8dcc0, initmemman, sub_9afbe, sub_9b353, sub_a1cf4, sub_a2d27, sub_af6d3, sub_af7b6
+; malloc  [0x91984, 227 bytes, 84 instructions]
+; Watcom malloc (near heap: 4 byte granules, at least 12 bytes, grows the heap)
+; called by: text_capture_begin, dpmi_alloc_largest, initmemman, __allocfp, __ioalloc, spawnve, __InitFiles, __setenvp, __cenvarg
 ; ====================================================================================================
-sub_91984:
+malloc:
     push ebx                                     ; 091984 53
     push ecx                                     ; 091985 51
     push edx                                     ; 091986 52
@@ -11666,7 +11825,7 @@ loc_919e7:
     and edx, 0xffff                              ; 0919f1 81e2ffff0000
     mov eax, esi                                 ; 0919f7 89f0
     mov ebx, ecx                                 ; 0919f9 89cb
-    call sub_9a874                               ; 0919fb e8748e0000
+    call __MemAllocator                          ; 0919fb e8748e0000
     mov ebx, eax                                 ; 091a00 89c3
     test eax, eax                                ; 091a02 85c0
     jne loc_91a4e                                ; 091a04 7548
@@ -11683,12 +11842,12 @@ loc_91a1b:
     cmp byte ptr [esp], 0                        ; 091a1f 803c2400
     jne loc_91a30                                ; 091a23 750b
     mov eax, esi                                 ; 091a25 89f0
-    call sub_9adf2                               ; 091a27 e8c6930000
+    call __ExpandDGROUP                          ; 091a27 e8c6930000
     test eax, eax                                ; 091a2c 85c0
     jne loc_91a45                                ; 091a2e 7515
 loc_91a30:
     mov eax, esi                                 ; 091a30 89f0
-    call sub_9afad                               ; 091a32 e876950000
+    call return_zero_9afad                       ; 091a32 e876950000
     test eax, eax                                ; 091a37 85c0
     je loc_91a4e                                 ; 091a39 7413
     xor cl, cl                                   ; 091a3b 30c9
@@ -11718,10 +11877,11 @@ loc_91a58:
 
 
 ; ====================================================================================================
-; sub_91a67  [0x91a67, 94 bytes, 35 instructions]
-; called by: sub_17756, sub_8dcc0, sub_91dc4, sub_98839, sub_9aac4, sub_9ad43, sub_9adf2, sub_9b09f, sub_a1cf4, sub_af6d3, sub_af7b6
+; free  [0x91a67, 94 bytes, 35 instructions]
+; Watcom free
+; called by: text_capture_free, dpmi_alloc_largest, __doclose, __expand_block, _heapshrink_seg, __CreateNewNHeap, __ExpandDGROUP, __purgefp, spawnve, __setenvp, __cenvarg
 ; ====================================================================================================
-sub_91a67:
+free:
     push ebx                                     ; 091a67 53
     push ecx                                     ; 091a68 51
     push edx                                     ; 091a69 52
@@ -11747,7 +11907,7 @@ loc_91a87:
     and edx, 0xffff                              ; 091a8e 81e2ffff0000
     mov eax, ebx                                 ; 091a94 89d8
     mov ebx, ecx                                 ; 091a96 89cb
-    call sub_9a91c                               ; 091a98 e87f8e0000
+    call __MemFree                               ; 091a98 e87f8e0000
     cmp ecx, dword ptr [dword_d43ec]             ; 091a9d 3b0dec430d00
     je loc_91ab8                                 ; 091aa3 7413
     mov ebp, dword ptr [dword_d43f0]             ; 091aa5 8b2df0430d00
@@ -11768,7 +11928,7 @@ loc_91ab8:
 ; ====================================================================================================
 ; strlen  [0x91ac5, 25 bytes, 17 instructions]
 ; annotations: external
-; called by: sub_17793, sub_1ff86, sub_29c75, sub_314b4, sub_31599, sub_3a597, format_player_name, sub_6cefb, sub_6f159, create_player_menu, database_dialog_box, sub_8faf2 (+2 more)
+; called by: text_capture_add, stats_source_title, format_team_name, text_entry_draw_cursor, text_entry_draw, password_scramble, format_player_name, dbedit_draw_team_title, player_name_normalize, create_player_menu, database_dialog_box, iff_find_chunk (+2 more)
 ; ====================================================================================================
 strlen:
     push ecx                                     ; 091ac5 51
@@ -11791,10 +11951,11 @@ strlen:
 
 
 ; ====================================================================================================
-; sub_91ade  [0x91ade, 180 bytes, 69 instructions]
-; called by: sub_91b92
+; __open_flags  [0x91ade, 180 bytes, 69 instructions]
+; Watcom fopen mode string -> open flags (r w a + b t)
+; called by: __doopen
 ; ====================================================================================================
-sub_91ade:
+__open_flags:
     push ebx                                     ; 091ade 53
     push ecx                                     ; 091adf 51
     push edx                                     ; 091ae0 52
@@ -11803,7 +11964,7 @@ sub_91ade:
     xor eax, eax                                 ; 091ae6 31c0
     mov al, byte ptr [edx]                       ; 091ae8 8a02
     xor ebx, ebx                                 ; 091aea 31db
-    call sub_9afb0                               ; 091aec e8bf940000
+    call tolower                                 ; 091aec e8bf940000
     mov byte ptr [esp], al                       ; 091af1 880424
     cmp al, 0x72                                 ; 091af4 3c72
     je loc_91b11                                 ; 091af6 7419
@@ -11812,7 +11973,7 @@ sub_91ade:
     cmp al, 0x61                                 ; 091afc 3c61
     je loc_91b11                                 ; 091afe 7411
     mov eax, 9                                   ; 091b00 b809000000
-    call sub_9878a                               ; 091b05 e8806c0000
+    call __set_errno                             ; 091b05 e8806c0000
     xor eax, eax                                 ; 091b0a 31c0
     jmp loc_91b8b                                ; 091b0c e97a000000
 
@@ -11885,22 +12046,23 @@ loc_91b8b:
 
 
 ; ====================================================================================================
-; sub_91b92  [0x91b92, 200 bytes, 71 instructions]
-; called by: sub_91c5a, sub_91ce7
+; __doopen  [0x91b92, 200 bytes, 71 instructions]
+; Watcom __doopen: opens the file of a stream
+; called by: _fsopen, freopen
 ; ====================================================================================================
-sub_91b92:
+__doopen:
     push esi                                     ; 091b92 56
     push edi                                     ; 091b93 57
     mov esi, eax                                 ; 091b94 89c6
     and byte ptr [ecx + 0xc], 0xfc               ; 091b96 80610cfc
     mov eax, edx                                 ; 091b9a 89d0
-    call sub_91ade                               ; 091b9c e83dffffff
+    call __open_flags                            ; 091b9c e83dffffff
     mov edi, dword ptr [ecx + 0xc]               ; 091ba1 8b790c
     or edi, eax                                  ; 091ba4 09c7
     xor eax, eax                                 ; 091ba6 31c0
     mov dword ptr [ecx + 0xc], edi               ; 091ba8 89790c
     mov al, byte ptr [edx]                       ; 091bab 8a02
-    call sub_9afb0                               ; 091bad e8fe930000
+    call tolower                                 ; 091bad e8fe930000
     mov dl, al                                   ; 091bb2 88c2
     cmp al, 0x72                                 ; 091bb4 3c72
     jne loc_91bd9                                ; 091bb6 7521
@@ -11947,13 +12109,13 @@ loc_91c06:
     push ebx                                     ; 091c06 53
     push eax                                     ; 091c07 50
     push esi                                     ; 091c08 56
-    call sub_9208c                               ; 091c09 e87e040000
+    call _sopen                                  ; 091c09 e87e040000
     add esp, 0x10                                ; 091c0e 83c410
     mov dword ptr [ecx + 0x10], eax              ; 091c11 894110
     cmp dword ptr [ecx + 0x10], -1               ; 091c14 837910ff
     jne loc_91c26                                ; 091c18 750c
     mov eax, ecx                                 ; 091c1a 89c8
-    call sub_9b066                               ; 091c1c e845940000
+    call __freefp                                ; 091c1c e845940000
     xor eax, eax                                 ; 091c21 31c0
     pop edi                                      ; 091c23 5f
     pop esi                                      ; 091c24 5e
@@ -11968,10 +12130,10 @@ loc_91c26:
     mov ebx, 2                                   ; 091c40 bb02000000
     mov eax, ecx                                 ; 091c45 89c8
     xor edx, edx                                 ; 091c47 31d2
-    call sub_9b0ff                               ; 091c49 e8b1940000
+    call fseek                                   ; 091c49 e8b1940000
 loc_91c4e:
     mov eax, ecx                                 ; 091c4e 89c8
-    call sub_9b1fb                               ; 091c50 e8a6950000
+    call __chktty                                ; 091c50 e8a6950000
     mov eax, ecx                                 ; 091c55 89c8
     pop edi                                      ; 091c57 5f
     pop esi                                      ; 091c58 5e
@@ -11979,20 +12141,21 @@ loc_91c4e:
 
 
 ; ====================================================================================================
-; sub_91c5a  [0x91c5a, 27 bytes, 13 instructions]
+; _fsopen  [0x91c5a, 27 bytes, 13 instructions]
+; Watcom _fsopen: a free stream and __doopen
 ; called by: fopen
 ; ====================================================================================================
-sub_91c5a:
+_fsopen:
     push ecx                                     ; 091c5a 51
     push esi                                     ; 091c5b 56
     mov esi, eax                                 ; 091c5c 89c6
     xor eax, eax                                 ; 091c5e 31c0
-    call sub_9afbe                               ; 091c60 e859930000
+    call __allocfp                               ; 091c60 e859930000
     mov ecx, eax                                 ; 091c65 89c1
     test eax, eax                                ; 091c67 85c0
     je loc_91c72                                 ; 091c69 7407
     mov eax, esi                                 ; 091c6b 89f0
-    call sub_91b92                               ; 091c6d e820ffffff
+    call __doopen                                ; 091c6d e820ffffff
 loc_91c72:
     pop esi                                      ; 091c72 5e
     pop ecx                                      ; 091c73 59
@@ -12007,16 +12170,17 @@ loc_91c72:
 fopen:
     push ebx                                     ; 091c75 53
     xor ebx, ebx                                 ; 091c76 31db
-    call sub_91c5a                               ; 091c78 e8ddffffff
+    call _fsopen                                 ; 091c78 e8ddffffff
     pop ebx                                      ; 091c7d 5b
     ret                                          ; 091c7e c3
 
 
 ; ====================================================================================================
-; sub_91c7f  [0x91c7f, 104 bytes, 43 instructions]
-; called by: sub_91ce7
+; freopen_close  [0x91c7f, 104 bytes, 43 instructions]
+; finds a stream in the stream list and closes it (freopen)
+; called by: freopen
 ; ====================================================================================================
-sub_91c7f:
+freopen_close:
     push ebx                                     ; 091c7f 53
     push ecx                                     ; 091c80 51
     push edx                                     ; 091c81 52
@@ -12032,7 +12196,7 @@ loc_91c89:
     je loc_91ca6                                 ; 091c98 740c
     mov eax, edx                                 ; 091c9a 89d0
     mov edx, 1                                   ; 091c9c ba01000000
-    call sub_91dc4                               ; 091ca1 e81e010000
+    call __doclose                               ; 091ca1 e81e010000
 loc_91ca6:
     mov eax, ebx                                 ; 091ca6 89d8
     pop edx                                      ; 091ca8 5a
@@ -12065,7 +12229,7 @@ loc_91cd3:
 
 loc_91cd7:
     mov eax, 4                                   ; 091cd7 b804000000
-    call sub_9878a                               ; 091cdc e8a96a0000
+    call __set_errno                             ; 091cdc e8a96a0000
     xor eax, eax                                 ; 091ce1 31c0
     pop edx                                      ; 091ce3 5a
     pop ecx                                      ; 091ce4 59
@@ -12074,22 +12238,23 @@ loc_91cd7:
 
 
 ; ====================================================================================================
-; sub_91ce7  [0x91ce7, 36 bytes, 15 instructions]  <unreferenced>
+; freopen  [0x91ce7, 36 bytes, 15 instructions]  <unreferenced>
+; Watcom freopen
 ; no references found
 ; ====================================================================================================
-sub_91ce7:
+freopen:
     push ecx                                     ; 091ce7 51
     push esi                                     ; 091ce8 56
     mov esi, eax                                 ; 091ce9 89c6
     mov eax, ebx                                 ; 091ceb 89d8
-    call sub_91c7f                               ; 091ced e88dffffff
+    call freopen_close                           ; 091ced e88dffffff
     mov ecx, eax                                 ; 091cf2 89c1
     test eax, eax                                ; 091cf4 85c0
     je loc_91d08                                 ; 091cf6 7410
     and dword ptr [eax + 0xc], 0x4000            ; 091cf8 81600c00400000
     mov eax, esi                                 ; 091cff 89f0
     xor ebx, ebx                                 ; 091d01 31db
-    call sub_91b92                               ; 091d03 e88afeffff
+    call __doopen                                ; 091d03 e88afeffff
 loc_91d08:
     pop esi                                      ; 091d08 5e
     pop ecx                                      ; 091d09 59
@@ -12099,7 +12264,7 @@ loc_91d08:
 ; ====================================================================================================
 ; fclose  [0x91d0b, 47 bytes, 21 instructions]
 ; annotations: external
-; called by: export_stats_dialog, load_cfg_palette, write_stats_table, load_sound_config, load_nhl_cfg, debug_openlog, sub_93a40, debug_memmap, debug_memshapes
+; called by: export_stats_dialog, load_cfg_palette, write_stats_table, load_sound_config, load_nhl_cfg, debug_openlog, debug_closelog, debug_memmap, debug_memshapes
 ; ====================================================================================================
 fclose:
     push ebx                                     ; 091d0b 53
@@ -12124,33 +12289,35 @@ loc_91d20:
 loc_91d2b:
     mov edx, 1                                   ; 091d2b ba01000000
     mov eax, ebx                                 ; 091d30 89d8
-    call sub_91d3a                               ; 091d32 e803000000
+    call __shutdown_stream                       ; 091d32 e803000000
     pop edx                                      ; 091d37 5a
     pop ebx                                      ; 091d38 5b
     ret                                          ; 091d39 c3
 
 
 ; ====================================================================================================
-; sub_91d3a  [0x91d3a, 21 bytes, 9 instructions]
-; called by: fclose, sub_a2db0
+; __shutdown_stream  [0x91d3a, 21 bytes, 9 instructions]
+; closes a stream and frees it (fclose)
+; called by: fclose, __closeall_streams
 ; ====================================================================================================
-sub_91d3a:
+__shutdown_stream:
     push ebx                                     ; 091d3a 53
     mov ebx, eax                                 ; 091d3b 89c3
-    call sub_91dc4                               ; 091d3d e882000000
+    call __doclose                               ; 091d3d e882000000
     mov edx, eax                                 ; 091d42 89c2
     mov eax, ebx                                 ; 091d44 89d8
-    call sub_9b066                               ; 091d46 e81b930000
+    call __freefp                                ; 091d46 e81b930000
     mov eax, edx                                 ; 091d4b 89d0
     pop ebx                                      ; 091d4d 5b
     ret                                          ; 091d4e c3
 
 
 ; ====================================================================================================
-; sub_91d4f  [0x91d4f, 12 bytes, 5 instructions]
-; called by: sub_91d5b
+; __hex_digit  [0x91d4f, 12 bytes, 5 instructions]
+; a nibble as a lower case hex digit
+; called by: __MkTmpFile
 ; ====================================================================================================
-sub_91d4f:
+__hex_digit:
     add eax, 0x30                                ; 091d4f 83c030
     cmp eax, 0x39                                ; 091d52 83f839
     jle loc_91d5a                                ; 091d55 7e03
@@ -12160,17 +12327,18 @@ loc_91d5a:
 
 
 ; ====================================================================================================
-; sub_91d5b  [0x91d5b, 105 bytes, 40 instructions]
-; called by: sub_91dc4
+; __MkTmpFile  [0x91d5b, 105 bytes, 40 instructions]
+; the name of a temporary file ("t" + hex digits)
+; called by: __doclose
 ; ====================================================================================================
-sub_91d5b:
+__MkTmpFile:
     push ebx                                     ; 091d5b 53
     push ecx                                     ; 091d5c 51
     push esi                                     ; 091d5d 56
     push edi                                     ; 091d5e 57
     mov ecx, eax                                 ; 091d5f 89c1
     mov edi, edx                                 ; 091d61 89d7
-    call sub_9b22c                               ; 091d63 e8c4940000
+    call __get_tmpfile_seed                      ; 091d63 e8c4940000
     mov edx, 4                                   ; 091d68 ba04000000
     mov ebx, eax                                 ; 091d6d 89c3
     mov esi, ecx                                 ; 091d6f 89ce
@@ -12179,7 +12347,7 @@ sub_91d5b:
 loc_91d76:
     mov eax, ebx                                 ; 091d76 89d8
     and eax, 0xf                                 ; 091d78 83e00f
-    call sub_91d4f                               ; 091d7b e8cfffffff
+    call __hex_digit                             ; 091d7b e8cfffffff
     mov byte ptr [edx], al                       ; 091d80 8802
     dec edx                                      ; 091d82 4a
     shr ebx, 4                                   ; 091d83 c1eb04
@@ -12189,11 +12357,11 @@ loc_91d76:
     sar eax, 4                                   ; 091d8c c1f804
     and eax, 0xf                                 ; 091d8f 83e00f
     mov byte ptr [ecx + 5], 0x5f                 ; 091d92 c641055f
-    call sub_91d4f                               ; 091d96 e8b4ffffff
+    call __hex_digit                             ; 091d96 e8b4ffffff
     mov byte ptr [ecx + 6], al                   ; 091d9b 884106
     mov eax, edi                                 ; 091d9e 89f8
     and eax, 0xf                                 ; 091da0 83e00f
-    call sub_91d4f                               ; 091da3 e8a7ffffff
+    call __hex_digit                             ; 091da3 e8a7ffffff
     mov byte ptr [ecx + 8], 0x2e                 ; 091da8 c641082e
     mov byte ptr [ecx + 9], 0x74                 ; 091dac c6410974
     mov byte ptr [ecx + 0xa], 0x6d               ; 091db0 c6410a6d
@@ -12208,10 +12376,11 @@ loc_91d76:
 
 
 ; ====================================================================================================
-; sub_91dc4  [0x91dc4, 137 bytes, 51 instructions]
-; called by: sub_91c7f, sub_91d3a
+; __doclose  [0x91dc4, 137 bytes, 51 instructions]
+; Watcom __doclose: flushes, repositions, closes and removes a temporary file
+; called by: freopen_close, __shutdown_stream
 ; ====================================================================================================
-sub_91dc4:
+__doclose:
     push ebx                                     ; 091dc4 53
     push ecx                                     ; 091dc5 51
     push esi                                     ; 091dc6 56
@@ -12230,11 +12399,11 @@ loc_91ddc:
     test ah, 0x10                                ; 091de1 f6c410
     je loc_91def                                 ; 091de4 7409
     mov eax, ecx                                 ; 091de6 89c8
-    call sub_9b232                               ; 091de8 e845940000
+    call __flush                                 ; 091de8 e845940000
     mov esi, eax                                 ; 091ded 89c6
 loc_91def:
     mov eax, ecx                                 ; 091def 89c8
-    call sub_9b2f1                               ; 091df1 e8fb940000
+    call ftell                                   ; 091df1 e8fb940000
     mov edx, eax                                 ; 091df6 89c2
     cmp eax, -1                                  ; 091df8 83f8ff
     je loc_91e07                                 ; 091dfb 740a
@@ -12245,13 +12414,13 @@ loc_91e07:
     test edi, edi                                ; 091e07 85ff
     je loc_91e15                                 ; 091e09 740a
     mov eax, dword ptr [ecx + 0x10]              ; 091e0b 8b4110
-    call sub_9b321                               ; 091e0e e80e950000
+    call __close_stream_handle                   ; 091e0e e80e950000
     or esi, eax                                  ; 091e13 09c6
 loc_91e15:
     test byte ptr [ecx + 0xc], 8                 ; 091e15 f6410c08
     je loc_91e2a                                 ; 091e19 740f
     mov eax, dword ptr [ecx + 8]                 ; 091e1b 8b4108
-    call sub_91a67                               ; 091e1e e844fcffff
+    call free                                    ; 091e1e e844fcffff
     mov dword ptr [ecx + 8], 0                   ; 091e23 c7410800000000
 loc_91e2a:
     test byte ptr [ecx + 0xd], 8                 ; 091e2a f6410d08
@@ -12259,9 +12428,9 @@ loc_91e2a:
     xor edx, edx                                 ; 091e30 31d2
     mov eax, esp                                 ; 091e32 89e0
     mov dl, byte ptr [ecx + 0x19]                ; 091e34 8a5119
-    call sub_91d5b                               ; 091e37 e81fffffff
+    call __MkTmpFile                             ; 091e37 e81fffffff
     mov eax, esp                                 ; 091e3c 89e0
-    call sub_903e8                               ; 091e3e e8a5e5ffff
+    call remove_file                             ; 091e3e e8a5e5ffff
 loc_91e43:
     mov eax, esi                                 ; 091e43 89f0
     add esp, 0x10                                ; 091e45 83c410
@@ -12275,7 +12444,7 @@ loc_91e43:
 ; ====================================================================================================
 ; strncpy  [0x91e4d, 37 bytes, 23 instructions]
 ; annotations: external
-; called by: export_stats_dialog, sub_17a00, sub_17af3, sub_17be7, sub_1c852, set_menu_mode, sub_1ff86, enter_league, apply_settings, load_league_list, locker_room_menu, speech_load_bank (+6 more)
+; called by: export_stats_dialog, stats_source_9394_season, stats_source_9394_playoffs, stats_source_league_season, set_goalie_menu_labels, set_menu_mode, stats_source_title, enter_league, apply_settings, load_league_list, locker_room_menu, speech_load_bank (+6 more)
 ; ====================================================================================================
 strncpy:
     push ecx                                     ; 091e4d 51
@@ -12310,10 +12479,11 @@ loc_91e6d:
 
 
 ; ====================================================================================================
-; sub_91e72  [0x91e72, 129 bytes, 58 instructions]
-; called by: export_stats_dialog, sub_93ad8, sub_9621d
+; fputs  [0x91e72, 129 bytes, 58 instructions]
+; Watcom fputs
+; called by: export_stats_dialog, debug_printf_log, perror
 ; ====================================================================================================
-sub_91e72:
+fputs:
     push ebx                                     ; 091e72 53
     push ecx                                     ; 091e73 51
     push esi                                     ; 091e74 56
@@ -12324,7 +12494,7 @@ sub_91e72:
     cmp dword ptr [edx + 8], 0                   ; 091e7b 837a0800
     jne loc_91e88                                ; 091e7f 7507
     mov eax, ebx                                 ; 091e81 89d8
-    call sub_9b353                               ; 091e83 e8cb940000
+    call __ioalloc                               ; 091e83 e8cb940000
 loc_91e88:
     mov ah, byte ptr [ebx + 0xd]                 ; 091e88 8a630d
     xor edi, edi                                 ; 091e8b 31ff
@@ -12347,7 +12517,7 @@ loc_91eab:
     je loc_91ec2                                 ; 091eb1 740f
     mov edx, ebx                                 ; 091eb3 89da
     inc ecx                                      ; 091eb5 41
-    call sub_9b3ca                               ; 091eb6 e80f950000
+    call fputc                                   ; 091eb6 e80f950000
     cmp eax, -1                                  ; 091ebb 83f8ff
     jne loc_91eab                                ; 091ebe 75eb
     mov esi, eax                                 ; 091ec0 89c6
@@ -12363,7 +12533,7 @@ loc_91ec2:
     test esi, esi                                ; 091ed6 85f6
     jne loc_91ee3                                ; 091ed8 7509
     mov eax, ebx                                 ; 091eda 89d8
-    call sub_9b232                               ; 091edc e851930000
+    call __flush                                 ; 091edc e851930000
     mov esi, eax                                 ; 091ee1 89c6
 loc_91ee3:
     test esi, esi                                ; 091ee3 85f6
@@ -12384,7 +12554,7 @@ loc_91eeb:
 ; ====================================================================================================
 ; strcmp  [0x91f00, 161 bytes, 67 instructions]
 ; annotations: external
-; called by: sub_17ce0, sub_17d6e, playoff_round_screen, sub_2beea, league_control_dialog, team_info_screen, password_prompt, sub_3a49e, pinfo_find_player, sub_3fef0, sub_6d78b, sub_71690 (+3 more)
+; called by: stats_source_league_season_playoffs, stats_source_league_playoffs, playoff_round_screen, cmp_name_strings, league_control_dialog, team_info_screen, password_prompt, master_password_prompt, pinfo_find_player, cmp_player_names, cmp_key_names, dbedit_find_player_by_name (+3 more)
 ; ====================================================================================================
 strcmp:
     push ebx                                     ; 091f00 53
@@ -12463,10 +12633,11 @@ loc_91f9a:
     times 3 db 0 ; 091fa1 (padding)
 
 ; ====================================================================================================
-; sub_91fa4  [0x91fa4, 21 bytes, 6 instructions]
-; called by: sub_1b0f3, iff_parse, sub_8e624, sub_8e6cc, sub_8e738, unpackfile, sub_9e5c9, sub_9e85b, sub_9ebd5
+; fixmul16  [0x91fa4, 21 bytes, 6 instructions]
+; 16.16 fixed point multiplication, rounded
+; called by: cdstream_open, iff_parse, printstr_rect, printstr_rect_right, printstr2_rect_right, unpackfile, adlib_env_update, adlib_voice_modulate, adlib_voice_output
 ; ====================================================================================================
-sub_91fa4:
+fixmul16:
     mov eax, dword ptr [esp + 4]                 ; 091fa4 8b442404
     imul dword ptr [esp + 8]                     ; 091fa8 f76c2408
     add eax, 0x7fff                              ; 091fac 05ff7f0000
@@ -12477,10 +12648,11 @@ sub_91fa4:
     times 3 db 0 ; 091fb9 (padding)
 
 ; ====================================================================================================
-; sub_91fbc  [0x91fbc, 30 bytes, 19 instructions]
-; called by: sub_1fdfe
+; memcmp  [0x91fbc, 30 bytes, 19 instructions]
+; Watcom memcmp
+; called by: load_sfh_shapes
 ; ====================================================================================================
-sub_91fbc:
+memcmp:
     push ecx                                     ; 091fbc 51
     push esi                                     ; 091fbd 56
     push edi                                     ; 091fbe 57
@@ -12508,7 +12680,7 @@ loc_91fd5:
 ; drawshape_trans  [0x91fe0, 65 bytes, 19 instructions]
 ; drawshape with the translucency pixel handler
 ; annotations: external
-; called by: sub_21c04, line_editor_screen, edit_lines_screen, edit_lines_screen2, draw_lines_screen, settings_dialog, sub_7aaaa, settings_menu, locker_room_menu, sub_92024, sub_92040
+; called by: player_card_draw_photo, line_editor_screen, edit_lines_screen, edit_lines_screen2, draw_lines_screen, settings_dialog, settings_draw_buttons, settings_menu, locker_room_menu, drawshape_trans_home, drawshape_trans_centered
 ; ====================================================================================================
 drawshape_trans:
     mov edx, dword ptr [esp + 4]                 ; 091fe0 8b542404
@@ -12519,27 +12691,28 @@ drawshape_trans:
     push eax                                     ; 091ff5 50
     push ebx                                     ; 091ff6 53
     push edx                                     ; 091ff7 52
-    call sub_b6be5                               ; 091ff8 e8e84b0200
+    call vesa_drawshape_trans                    ; 091ff8 e8e84b0200
     add esp, 0xc                                 ; 091ffd 83c40c
     ret                                          ; 092000 c3
 
 loc_92001:
-    mov dword ptr [funcptr_d43e4], sub_931d0     ; 092001 c705e4430d00d031..
+    mov dword ptr [funcptr_d43e4], copy_remap_skip ; 092001 c705e4430d00d031..
     push eax                                     ; 09200b 50
     push ebx                                     ; 09200c 53
     push edx                                     ; 09200d 52
     call drawshape                               ; 09200e e8dde3ffff
     add esp, 0xc                                 ; 092013 83c40c
-    mov dword ptr [funcptr_d43e4], sub_b3abc     ; 092016 c705e4430d00bc3a..
+    mov dword ptr [funcptr_d43e4], memmove_dwords ; 092016 c705e4430d00bc3a..
     ret                                          ; 092020 c3
 
     db 0x8d, 0x40, 0x00 ; 092021 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_92024  [0x92024, 28 bytes, 11 instructions]  <unreferenced>
+; drawshape_trans_home  [0x92024, 28 bytes, 11 instructions]  <unreferenced>
+; drawshape_trans at the shape's own position
 ; no references found
 ; ====================================================================================================
-sub_92024:
+drawshape_trans_home:
     mov edx, dword ptr [esp + 4]                 ; 092024 8b542404
     mov eax, dword ptr [edx + 0xc]               ; 092028 8b420c
     sar eax, 0x10                                ; 09202b c1f810
@@ -12554,10 +12727,11 @@ sub_92024:
 
 
 ; ====================================================================================================
-; sub_92040  [0x92040, 40 bytes, 15 instructions]  <unreferenced>
+; drawshape_trans_centered  [0x92040, 40 bytes, 15 instructions]  <unreferenced>
+; drawshape_trans with the hotspot at the position
 ; no references found
 ; ====================================================================================================
-sub_92040:
+drawshape_trans_centered:
     mov edx, dword ptr [esp + 4]                 ; 092040 8b542404
     mov eax, dword ptr [edx + 8]                 ; 092044 8b4208
     sar eax, 0x10                                ; 092047 c1f810
@@ -12576,10 +12750,11 @@ sub_92040:
 
 
 ; ====================================================================================================
-; sub_92068  [0x92068, 36 bytes, 16 instructions]
+; c_open  [0x92068, 36 bytes, 16 instructions]
+; Watcom open(path, mode, permissions) without sharing flags
 ; called by: player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, edit_lines_keys, lines_teams_a, lines_teams_b
 ; ====================================================================================================
-sub_92068:
+c_open:
     push ebx                                     ; 092068 53
     push edx                                     ; 092069 52
     lea eax, [esp + 0x14]                        ; 09206a 8d442414
@@ -12591,7 +12766,7 @@ sub_92068:
     push edx                                     ; 09207b 52
     mov ebx, dword ptr [esp + 0x18]              ; 09207c 8b5c2418
     push ebx                                     ; 092080 53
-    call sub_9208c                               ; 092081 e806000000
+    call _sopen                                  ; 092081 e806000000
     add esp, 0x10                                ; 092086 83c410
     pop edx                                      ; 092089 5a
     pop ebx                                      ; 09208a 5b
@@ -12599,10 +12774,11 @@ sub_92068:
 
 
 ; ====================================================================================================
-; sub_9208c  [0x9208c, 453 bytes, 159 instructions]  <dos_close dos_create dos_open dos_write>
-; called by: sub_91b92, sub_92068
+; _sopen  [0x9208c, 453 bytes, 159 instructions]  <dos_close dos_create dos_open dos_write>
+; Watcom sopen: int 21h 3Dh / 3Ch, truncation, append, the handle's io mode
+; called by: __doopen, c_open
 ; ====================================================================================================
-sub_9208c:
+_sopen:
     push ebx                                     ; 09208c 53
     push ecx                                     ; 09208d 51
     push edx                                     ; 09208e 52
@@ -12641,7 +12817,7 @@ loc_920d3:
     cmp edi, -1                                  ; 0920e0 83ffff
     je loc_9214d                                 ; 0920e3 7468
     mov eax, edi                                 ; 0920e5 89f8
-    call sub_9b710                               ; 0920e7 e824960000
+    call isatty                                  ; 0920e7 e824960000
     test eax, eax                                ; 0920ec 85c0
     jne loc_9214d                                ; 0920ee 755d
     test byte ptr [esp + 0x29], 4                ; 0920f0 f644242904
@@ -12652,7 +12828,7 @@ loc_920d3:
     rcl eax, 1                                   ; 0920fd d1d0
     ror eax, 1                                   ; 0920ff d1c8
     mov eax, 7                                   ; 092101 b807000000
-    call sub_9878a                               ; 092106 e87f660000
+    call __set_errno                             ; 092106 e87f660000
     mov eax, 0xffffffff                          ; 09210b b8ffffffff
     jmp loc_92248                                ; 092110 e933010000
 
@@ -12677,7 +12853,7 @@ loc_92115:
 loc_9213c:
     xor eax, eax                                 ; 09213c 31c0
     mov ax, word ptr [esp + 4]                   ; 09213e 668b442404
-    call sub_9a735                               ; 092143 e8ed850000
+    call __set_errno_dos                         ; 092143 e8ed850000
     jmp loc_92248                                ; 092148 e9fb000000
 
 loc_9214d:
@@ -12732,11 +12908,11 @@ loc_92189:
     mov di, word ptr [esp + 4]                   ; 0921d6 668b7c2404
 loc_921db:
     mov eax, edi                                 ; 0921db 89f8
-    call sub_9b72e                               ; 0921dd e84c950000
+    call __GetIOMode                             ; 0921dd e84c950000
     and al, 0x3c                                 ; 0921e2 243c
     mov edx, eax                                 ; 0921e4 89c2
     mov eax, edi                                 ; 0921e6 89f8
-    call sub_9b710                               ; 0921e8 e823950000
+    call isatty                                  ; 0921e8 e823950000
     test eax, eax                                ; 0921ed 85c0
     je loc_921f4                                 ; 0921ef 7403
     or dh, 0x20                                  ; 0921f1 80ce20
@@ -12774,7 +12950,7 @@ loc_9223d:
     mov edx, eax                                 ; 09223d 89c2
 loc_9223f:
     mov eax, edi                                 ; 09223f 89f8
-    call sub_9b783                               ; 092241 e83d950000
+    call __SetIOMode                             ; 092241 e83d950000
     mov eax, edi                                 ; 092246 89f8
 loc_92248:
     add esp, 0xc                                 ; 092248 83c40c
@@ -12787,22 +12963,23 @@ loc_92248:
 
 
 ; ====================================================================================================
-; sub_92251  [0x92251, 101 bytes, 46 instructions]  <dos_ioctl unreferenced>
+; setmode  [0x92251, 101 bytes, 46 instructions]  <dos_ioctl unreferenced>
+; Watcom setmode: text / binary mode of a handle, raw mode for devices (int 21h 44h)
 ; no references found
 ; ====================================================================================================
-sub_92251:
+setmode:
     push ebx                                     ; 092251 53
     push ecx                                     ; 092252 51
     push edx                                     ; 092253 52
     push esi                                     ; 092254 56
     sub esp, 4                                   ; 092255 83ec04
     mov esi, eax                                 ; 092258 89c6
-    call sub_9b72e                               ; 09225a e8cf940000
+    call __GetIOMode                             ; 09225a e8cf940000
     or al, 0x40                                  ; 09225f 0c40
     mov ebx, eax                                 ; 092261 89c3
     mov eax, esi                                 ; 092263 89f0
     mov edx, ebx                                 ; 092265 89da
-    call sub_9b783                               ; 092267 e817950000
+    call __SetIOMode                             ; 092267 e817950000
     test bh, 0x20                                ; 09226c f6c720
     je loc_922ac                                 ; 09226f 743b
     mov ebx, esi                                 ; 092271 89f3
@@ -12817,7 +12994,7 @@ sub_92251:
 loc_92284:
     xor eax, eax                                 ; 092284 31c0
     mov ax, word ptr [esp]                       ; 092286 668b0424
-    call sub_9a735                               ; 09228a e8a6840000
+    call __set_errno_dos                         ; 09228a e8a6840000
     jmp loc_922ae                                ; 09228f eb1d
 
 loc_92291:
@@ -12858,14 +13035,14 @@ read:
     push eax                                     ; 0922bd 50
     mov ebp, edx                                 ; 0922be 89d5
     mov ecx, ebx                                 ; 0922c0 89d9
-    call sub_9b72e                               ; 0922c2 e867940000
+    call __GetIOMode                             ; 0922c2 e867940000
     mov edx, eax                                 ; 0922c7 89c2
     mov dword ptr [esp + 0xc], eax               ; 0922c9 8944240c
     test eax, eax                                ; 0922cd 85c0
     jne loc_922e5                                ; 0922cf 7514
     mov eax, 4                                   ; 0922d1 b804000000
 loc_922d6:
-    call sub_9878a                               ; 0922d6 e8af640000
+    call __set_errno                             ; 0922d6 e8af640000
     mov eax, 0xffffffff                          ; 0922db b8ffffffff
     jmp loc_923c1                                ; 0922e0 e9dc000000
 
@@ -12891,7 +13068,7 @@ loc_922f0:
     xor eax, eax                                 ; 09230f 31c0
     mov ax, si                                   ; 092311 6689f0
 loc_92314:
-    call sub_9a735                               ; 092314 e81c840000
+    call __set_errno_dos                         ; 092314 e81c840000
     jmp loc_923c1                                ; 092319 e9a3000000
 
 loc_9231e:
@@ -12975,18 +13152,20 @@ loc_923c1:
 
 
 ; ====================================================================================================
-; sub_923c9  [0x923c9, 5 bytes, 1 instructions]
+; _close  [0x923c9, 5 bytes, 1 instructions]
+; Watcom close: int 21h 3Eh and clears the handle's io mode
 ; called by: player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, edit_lines_keys, lines_teams_a, lines_teams_b
 ; ====================================================================================================
-sub_923c9:
-    jmp sub_9b321                                ; 0923c9 e9538f0000
+_close:
+    jmp __close_stream_handle                    ; 0923c9 e9538f0000
 
 
 ; ====================================================================================================
-; sub_923ce  [0x923ce, 38 bytes, 22 instructions]
-; called by: sub_9244c
+; __qsort_swap  [0x923ce, 38 bytes, 22 instructions]
+; qsort: exchanges two elements (dwords, then bytes)
+; called by: qsort
 ; ====================================================================================================
-sub_923ce:
+__qsort_swap:
     push es                                      ; 0923ce 06
     push ds                                      ; 0923cf 1e
     pop es                                       ; 0923d0 07
@@ -13016,10 +13195,11 @@ loc_923f2:
 
 
 ; ====================================================================================================
-; sub_923f4  [0x923f4, 88 bytes, 44 instructions]
-; called by: sub_9244c
+; __qsort_med3  [0x923f4, 88 bytes, 44 instructions]
+; qsort: median of three
+; called by: qsort
 ; ====================================================================================================
-sub_923f4:
+__qsort_med3:
     push esi                                     ; 0923f4 56
     push edi                                     ; 0923f5 57
     push es                                      ; 0923f6 06
@@ -13074,10 +13254,11 @@ loc_92443:
 
 
 ; ====================================================================================================
-; sub_9244c  [0x9244c, 1085 bytes, 338 instructions]
+; qsort  [0x9244c, 1085 bytes, 338 instructions]
+; Watcom qsort
 ; called by: team_stats_screen, player_stats_screen, stats_table, standings_table, scan_league_dirs, line_editor, compute_three_stars, scan_database_files, roster_table, edit_lines_screen_b, highlights_screen
 ; ====================================================================================================
-sub_9244c:
+qsort:
     push esi                                     ; 09244c 56
     push edi                                     ; 09244d 57
     push es                                      ; 09244e 06
@@ -13135,7 +13316,7 @@ loc_924de:
     je loc_924f3                                 ; 0924e2 740f
     mov ecx, dword ptr [ebp - 0x150]             ; 0924e4 8b8db0feffff
     mov esi, ebx                                 ; 0924ea 89de
-    call sub_923ce                               ; 0924ec e8ddfeffff
+    call __qsort_swap                            ; 0924ec e8ddfeffff
     jmp loc_924fb                                ; 0924f1 eb08
 
 loc_924f3:
@@ -13207,7 +13388,7 @@ loc_9255f:
     add ebx, eax                                 ; 0925d3 01c3
     mov eax, dword ptr [ebp - 0x148]             ; 0925d5 8b85b8feffff
     add edx, dword ptr [ebp - 0x20]              ; 0925db 0355e0
-    call sub_923f4                               ; 0925de e811feffff
+    call __qsort_med3                            ; 0925de e811feffff
     mov ebx, dword ptr [ebp - 0x20]              ; 0925e3 8b5de0
     mov ecx, dword ptr [ebp - 0x14]              ; 0925e6 8b4dec
     mov dword ptr [ebp - 0x30], eax              ; 0925e9 8945d0
@@ -13215,7 +13396,7 @@ loc_9255f:
     mov eax, edi                                 ; 0925ee 89f8
     add ebx, edi                                 ; 0925f0 01fb
     sub eax, dword ptr [ebp - 0x20]              ; 0925f2 2b45e0
-    call sub_923f4                               ; 0925f5 e8fafdffff
+    call __qsort_med3                            ; 0925f5 e8fafdffff
     mov ecx, dword ptr [ebp - 0x14]              ; 0925fa 8b4dec
     mov edi, eax                                 ; 0925fd 89c7
     mov edx, esi                                 ; 0925ff 89f2
@@ -13223,14 +13404,14 @@ loc_9255f:
     mov eax, esi                                 ; 092603 89f0
     sub edx, dword ptr [ebp - 0x20]              ; 092605 2b55e0
     sub eax, dword ptr [ebp - 0x40]              ; 092608 2b45c0
-    call sub_923f4                               ; 09260b e8e4fdffff
+    call __qsort_med3                            ; 09260b e8e4fdffff
     mov esi, eax                                 ; 092610 89c6
 loc_92612:
     mov eax, dword ptr [ebp - 0x30]              ; 092612 8b45d0
     mov ecx, dword ptr [ebp - 0x14]              ; 092615 8b4dec
     mov edx, edi                                 ; 092618 89fa
     mov ebx, esi                                 ; 09261a 89f3
-    call sub_923f4                               ; 09261c e8d3fdffff
+    call __qsort_med3                            ; 09261c e8d3fdffff
     mov edi, eax                                 ; 092621 89c7
 loc_92623:
     cmp dword ptr [ebp - 0x1c], 0                ; 092623 837de400
@@ -13240,7 +13421,7 @@ loc_92623:
     je loc_92643                                 ; 092632 740f
     mov ecx, dword ptr [ebp - 0x150]             ; 092634 8b8db0feffff
     mov esi, eax                                 ; 09263a 89c6
-    call sub_923ce                               ; 09263c e88dfdffff
+    call __qsort_swap                            ; 09263c e88dfdffff
     jmp loc_9265e                                ; 092641 eb1b
 
 loc_92643:
@@ -13279,7 +13460,7 @@ loc_9267e:
     mov esi, dword ptr [ebp - 0xc]               ; 092697 8b75f4
     mov ecx, dword ptr [ebp - 0x150]             ; 09269a 8b8db0feffff
     mov edi, ebx                                 ; 0926a0 89df
-    call sub_923ce                               ; 0926a2 e827fdffff
+    call __qsort_swap                            ; 0926a2 e827fdffff
     jmp loc_926b7                                ; 0926a7 eb0e
 
 loc_926a9:
@@ -13310,7 +13491,7 @@ loc_926c8:
     mov esi, dword ptr [ebp - 4]                 ; 0926e2 8b75fc
     mov edi, dword ptr [ebp - 8]                 ; 0926e5 8b7df8
     mov ecx, dword ptr [ebp - 0x150]             ; 0926e8 8b8db0feffff
-    call sub_923ce                               ; 0926ee e8dbfcffff
+    call __qsort_swap                            ; 0926ee e8dbfcffff
     jmp loc_92709                                ; 0926f3 eb14
 
 loc_926f5:
@@ -13338,7 +13519,7 @@ loc_9271d:
     mov edi, dword ptr [ebp - 4]                 ; 092728 8b7dfc
     mov ecx, dword ptr [ebp - 0x150]             ; 09272b 8b8db0feffff
     mov esi, ebx                                 ; 092731 89de
-    call sub_923ce                               ; 092733 e896fcffff
+    call __qsort_swap                            ; 092733 e896fcffff
     jmp loc_92748                                ; 092738 eb0e
 
 loc_9273a:
@@ -13482,7 +13663,7 @@ loc_9287b:
 ; ====================================================================================================
 ; printstr2  [0x92890, 1085 bytes, 358 instructions]
 ; annotations: external
-; called by: printstr2_at, sub_92cf0
+; called by: printstr2_at, printchar2_at
 ; ====================================================================================================
 printstr2:
     push esi                                     ; 092890 56
@@ -13647,7 +13828,7 @@ loc_92a6a:
     push ebp                                     ; 092a7e 55
     mov ecx, dword ptr [esp + 0x2c]              ; 092a7f 8b4c242c
     push ecx                                     ; 092a83 51
-    call sub_90ec0                               ; 092a84 e837e4ffff
+    call fillrect_clipped                        ; 092a84 e837e4ffff
     add esp, 0x14                                ; 092a89 83c414
     mov eax, dword ptr [esp + 0x38]              ; 092a8c 8b442438
     add eax, 7                                   ; 092a90 83c007
@@ -13680,7 +13861,7 @@ loc_92ad9:
     push eax                                     ; 092ae2 50
     push ebp                                     ; 092ae3 55
     push esi                                     ; 092ae4 56
-    call sub_b5d80                               ; 092ae5 e896320200
+    call putpixel_clip                           ; 092ae5 e896320200
     add esp, 0xc                                 ; 092aea 83c40c
 loc_92aed:
     inc esi                                      ; 092aed 46
@@ -13690,7 +13871,7 @@ loc_92aed:
     push edx                                     ; 092af7 52
     push ebp                                     ; 092af8 55
     push esi                                     ; 092af9 56
-    call sub_b5d80                               ; 092afa e881320200
+    call putpixel_clip                           ; 092afa e881320200
     add esp, 0xc                                 ; 092aff 83c40c
 loc_92b02:
     inc esi                                      ; 092b02 46
@@ -13700,7 +13881,7 @@ loc_92b02:
     push ebx                                     ; 092b0c 53
     push ebp                                     ; 092b0d 55
     push esi                                     ; 092b0e 56
-    call sub_b5d80                               ; 092b0f e86c320200
+    call putpixel_clip                           ; 092b0f e86c320200
     add esp, 0xc                                 ; 092b14 83c40c
 loc_92b17:
     inc esi                                      ; 092b17 46
@@ -13710,7 +13891,7 @@ loc_92b17:
     push ecx                                     ; 092b21 51
     push ebp                                     ; 092b22 55
     push esi                                     ; 092b23 56
-    call sub_b5d80                               ; 092b24 e857320200
+    call putpixel_clip                           ; 092b24 e857320200
     add esp, 0xc                                 ; 092b29 83c40c
 loc_92b2c:
     inc esi                                      ; 092b2c 46
@@ -13720,7 +13901,7 @@ loc_92b2c:
     push eax                                     ; 092b36 50
     push ebp                                     ; 092b37 55
     push esi                                     ; 092b38 56
-    call sub_b5d80                               ; 092b39 e842320200
+    call putpixel_clip                           ; 092b39 e842320200
     add esp, 0xc                                 ; 092b3e 83c40c
 loc_92b41:
     inc esi                                      ; 092b41 46
@@ -13730,7 +13911,7 @@ loc_92b41:
     push edx                                     ; 092b4b 52
     push ebp                                     ; 092b4c 55
     push esi                                     ; 092b4d 56
-    call sub_b5d80                               ; 092b4e e82d320200
+    call putpixel_clip                           ; 092b4e e82d320200
     add esp, 0xc                                 ; 092b53 83c40c
 loc_92b56:
     inc esi                                      ; 092b56 46
@@ -13740,7 +13921,7 @@ loc_92b56:
     push ebx                                     ; 092b60 53
     push ebp                                     ; 092b61 55
     push esi                                     ; 092b62 56
-    call sub_b5d80                               ; 092b63 e818320200
+    call putpixel_clip                           ; 092b63 e818320200
     add esp, 0xc                                 ; 092b68 83c40c
 loc_92b6b:
     inc esi                                      ; 092b6b 46
@@ -13750,7 +13931,7 @@ loc_92b6b:
     push ecx                                     ; 092b75 51
     push ebp                                     ; 092b76 55
     push esi                                     ; 092b77 56
-    call sub_b5d80                               ; 092b78 e803320200
+    call putpixel_clip                           ; 092b78 e803320200
     add esp, 0xc                                 ; 092b7d 83c40c
 loc_92b80:
     inc esi                                      ; 092b80 46
@@ -13773,7 +13954,7 @@ loc_92b9b:
     push ebp                                     ; 092ba6 55
     mov ecx, dword ptr [esp + 0x2c]              ; 092ba7 8b4c242c
     push ecx                                     ; 092bab 51
-    call sub_90ec0                               ; 092bac e80fe3ffff
+    call fillrect_clipped                        ; 092bac e80fe3ffff
     add esp, 0x14                                ; 092bb1 83c414
     mov eax, dword ptr [esp + 0x38]              ; 092bb4 8b442438
     inc eax                                      ; 092bb8 40
@@ -13808,7 +13989,7 @@ loc_92bf7:
     push eax                                     ; 092c02 50
     push ebp                                     ; 092c03 55
     push esi                                     ; 092c04 56
-    call sub_b5d80                               ; 092c05 e876310200
+    call putpixel_clip                           ; 092c05 e876310200
     add esp, 0xc                                 ; 092c0a 83c40c
 loc_92c0d:
     inc esi                                      ; 092c0d 46
@@ -13821,7 +14002,7 @@ loc_92c0d:
     push eax                                     ; 092c1e 50
     push ebp                                     ; 092c1f 55
     push esi                                     ; 092c20 56
-    call sub_b5d80                               ; 092c21 e85a310200
+    call putpixel_clip                           ; 092c21 e85a310200
     add esp, 0xc                                 ; 092c26 83c40c
 loc_92c29:
     inc esi                                      ; 092c29 46
@@ -13844,7 +14025,7 @@ loc_92c3d:
     push ebp                                     ; 092c48 55
     mov eax, dword ptr [esp + 0x2c]              ; 092c49 8b44242c
     push eax                                     ; 092c4d 50
-    call sub_90ec0                               ; 092c4e e86de2ffff
+    call fillrect_clipped                        ; 092c4e e86de2ffff
     add esp, 0x14                                ; 092c53 83c414
 loc_92c56:
     mov eax, dword ptr [esp + 0x20]              ; 092c56 8b442420
@@ -13877,7 +14058,7 @@ loc_92c86:
     push ebp                                     ; 092c97 55
     mov eax, dword ptr [esp + 0x30]              ; 092c98 8b442430
     push eax                                     ; 092c9c 50
-    call sub_b5d80                               ; 092c9d e8de300200
+    call putpixel_clip                           ; 092c9d e8de300200
     add esp, 0xc                                 ; 092ca2 83c40c
 loc_92ca5:
     inc dword ptr [esp + 0x28]                   ; 092ca5 ff442428
@@ -13907,7 +14088,7 @@ loc_92cc6:
 ; ====================================================================================================
 ; printstr2_at  [0x92cd0, 32 bytes, 11 instructions]
 ; annotations: external
-; called by: league_type_menu, sub_31599, sub_6b910, database_type_menu, save_game_dialog, printf_at, sub_94188, sub_948e4, sub_9c890
+; called by: league_type_menu, text_entry_draw, printstr2_copy_at, database_type_menu, save_game_dialog, printf_at, debug_memlist, debug_memblock_window, printstr2_centered
 ; ====================================================================================================
 printstr2_at:
     mov edx, dword ptr [esp + 0xc]               ; 092cd0 8b54240c
@@ -13924,10 +14105,11 @@ printstr2_at:
 
 
 ; ====================================================================================================
-; sub_92cf0  [0x92cf0, 49 bytes, 17 instructions]  <unreferenced>
+; printchar2_at  [0x92cf0, 49 bytes, 17 instructions]  <unreferenced>
+; prints one character with printstr2 at a position
 ; no references found
 ; ====================================================================================================
-sub_92cf0:
+printchar2_at:
     sub esp, 4                                   ; 092cf0 83ec04
     mov edx, dword ptr [esp + 0x10]              ; 092cf3 8b542410
     push edx                                     ; 092cf7 52
@@ -13951,7 +14133,7 @@ sub_92cf0:
 ; stricmp  [0x92d21, 57 bytes, 28 instructions]
 ; case insensitive compare
 ; annotations: external
-; called by: league_name_prompt, team_info_screen, player_id_write, player_id_read, league_player_sync, sub_7fc5c, load_nhl_cfg, loadfile_auto, sub_a1cf4
+; called by: league_name_prompt, team_info_screen, player_id_write, player_id_read, league_player_sync, team_abbrev_index, load_nhl_cfg, loadfile_auto, spawnve
 ; ====================================================================================================
 stricmp:
     push ebx                                     ; 092d21 53
@@ -13992,7 +14174,7 @@ loc_92d4c:
 ; ====================================================================================================
 ; remove  [0x92d5a, 31 bytes, 15 instructions]  <dos_delete>
 ; annotations: external
-; called by: league_name_prompt, load_eavesa, sub_903e8
+; called by: league_name_prompt, load_eavesa, remove_file
 ; ====================================================================================================
 remove:
     push edx                                     ; 092d5a 52
@@ -14004,7 +14186,7 @@ remove:
     test eax, eax                                ; 092d65 85c0
     jge loc_92d75                                ; 092d67 7d0c
     and eax, 0xffff                              ; 092d69 25ffff0000
-    call sub_9a735                               ; 092d6e e8c2790000
+    call __set_errno_dos                         ; 092d6e e8c2790000
     pop edx                                      ; 092d73 5a
     ret                                          ; 092d74 c3
 
@@ -14016,10 +14198,11 @@ loc_92d75:
     times 3 db 0 ; 092d79 (padding)
 
 ; ====================================================================================================
-; sub_92d7c  [0x92d7c, 87 bytes, 37 instructions]
-; called by: sub_2fedf, database_dialog_box
+; atoi  [0x92d7c, 87 bytes, 37 instructions]
+; Watcom atoi
+; called by: text_entry_dialog, database_dialog_box
 ; ====================================================================================================
-sub_92d7c:
+atoi:
     push ebx                                     ; 092d7c 53
     push ecx                                     ; 092d7d 51
     push edx                                     ; 092d7e 52
@@ -14072,7 +14255,7 @@ loc_92dcd:
 ; ====================================================================================================
 ; filesize  [0x92de0, 16 bytes, 6 instructions]
 ; annotations: external
-; called by: load_rink, sub_41cc4, sub_6c19b, player_temp_file, sub_7345b, highlights_screen, broadcast_booth_screen, load_schedule_db, playoff_results_screen, season_standings_db, sub_89223
+; called by: load_rink, league_play_day, dbedit_load_databases, player_temp_file, database_load_set, highlights_screen, broadcast_booth_screen, load_schedule_db, playoff_results_screen, season_standings_db, save_schedule_db
 ; ====================================================================================================
 filesize:
     push 1                                       ; 092de0 6a01
@@ -14084,10 +14267,11 @@ filesize:
 
 
 ; ====================================================================================================
-; sub_92df0  [0x92df0, 16 bytes, 6 instructions]  <unreferenced>
+; filesize_handle_start  [0x92df0, 16 bytes, 6 instructions]  <unreferenced>
+; filesize_handle from the start
 ; no references found
 ; ====================================================================================================
-sub_92df0:
+filesize_handle_start:
     push 0                                       ; 092df0 6a00
     mov edx, dword ptr [esp + 8]                 ; 092df2 8b542408
     push edx                                     ; 092df6 52
@@ -14099,7 +14283,7 @@ sub_92df0:
 ; ====================================================================================================
 ; filesize_handle  [0x92e00, 56 bytes, 20 instructions]
 ; annotations: external
-; called by: filesize, sub_92df0
+; called by: filesize, filesize_handle_start
 ; ====================================================================================================
 filesize_handle:
     sub esp, 0xc                                 ; 092e00 83ec0c
@@ -14126,28 +14310,29 @@ filesize_handle:
     times 8 db 0 ; 092e38 (padding)
 
 ; ====================================================================================================
-; sub_92e40  [0x92e40, 137 bytes, 54 instructions]
-; called by: sub_92ecc, sub_92ee4
+; loadfile_to_buffer  [0x92e40, 137 bytes, 54 instructions]
+; reads a file into a given buffer (or copies it from a loaded block), returns its size
+; called by: loadfile_to_buffer_fatal, loadfile_to_buffer_try
 ; ====================================================================================================
-sub_92e40:
+loadfile_to_buffer:
     push esi                                     ; 092e40 56
     push edi                                     ; 092e41 57
     sub esp, 0xc                                 ; 092e42 83ec0c
     mov edi, dword ptr [esp + 0x1c]              ; 092e45 8b7c241c
     mov edx, dword ptr [esp + 0x18]              ; 092e49 8b542418
     push edx                                     ; 092e4d 52
-    call sub_8d714                               ; 092e4e e8c1a8ffff
+    call find_loaded_file_data                   ; 092e4e e8c1a8ffff
     mov esi, eax                                 ; 092e53 89c6
     add esp, 4                                   ; 092e55 83c404
     test eax, eax                                ; 092e58 85c0
     je loc_92e7b                                 ; 092e5a 741f
     push eax                                     ; 092e5c 50
-    call sub_8dbc0                               ; 092e5d e85eadffff
+    call memblock_size_byname                    ; 092e5d e85eadffff
     add esp, 4                                   ; 092e62 83c404
     push eax                                     ; 092e65 50
     push edi                                     ; 092e66 57
     push esi                                     ; 092e67 56
-    call sub_b3abc                               ; 092e68 e84f0c0200
+    call memmove_dwords                          ; 092e68 e84f0c0200
     add esp, 0xc                                 ; 092e6d 83c40c
     push esi                                     ; 092e70 56
     call freemem                                 ; 092e71 e862a4ffff
@@ -14174,7 +14359,7 @@ loc_92e7b:
     push edi                                     ; 092ea5 57
     mov eax, dword ptr [esp + 8]                 ; 092ea6 8b442408
     push eax                                     ; 092eaa 50
-    call sub_b3c74                               ; 092eab e8c40d0200
+    call dos_read_blocks                         ; 092eab e8c40d0200
     add esp, 0xc                                 ; 092eb0 83c40c
     mov edx, dword ptr [esp]                     ; 092eb3 8b1424
     push edx                                     ; 092eb6 52
@@ -14191,32 +14376,34 @@ loc_92ec1:
     db 0x8d, 0x40, 0x00 ; 092ec9 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_92ecc  [0x92ecc, 21 bytes, 8 instructions]  <unreferenced>
+; loadfile_to_buffer_fatal  [0x92ecc, 21 bytes, 8 instructions]  <unreferenced>
+; loadfile_to_buffer failing fatally
 ; no references found
 ; ====================================================================================================
-sub_92ecc:
+loadfile_to_buffer_fatal:
     push 1                                       ; 092ecc 6a01
     mov edx, dword ptr [esp + 0xc]               ; 092ece 8b54240c
     push edx                                     ; 092ed2 52
     mov ebx, dword ptr [esp + 0xc]               ; 092ed3 8b5c240c
     push ebx                                     ; 092ed7 53
-    call sub_92e40                               ; 092ed8 e863ffffff
+    call loadfile_to_buffer                      ; 092ed8 e863ffffff
     add esp, 0xc                                 ; 092edd 83c40c
     ret                                          ; 092ee0 c3
 
     db 0x8d, 0x40, 0x00 ; 092ee1 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_92ee4  [0x92ee4, 21 bytes, 8 instructions]
+; loadfile_to_buffer_try  [0x92ee4, 21 bytes, 8 instructions]
+; loadfile_to_buffer returning 0 on failure
 ; called by: load_rink
 ; ====================================================================================================
-sub_92ee4:
+loadfile_to_buffer_try:
     push 0                                       ; 092ee4 6a00
     mov edx, dword ptr [esp + 0xc]               ; 092ee6 8b54240c
     push edx                                     ; 092eea 52
     mov ebx, dword ptr [esp + 0xc]               ; 092eeb 8b5c240c
     push ebx                                     ; 092eef 53
-    call sub_92e40                               ; 092ef0 e84bffffff
+    call loadfile_to_buffer                      ; 092ef0 e84bffffff
     add esp, 0xc                                 ; 092ef5 83c40c
     ret                                          ; 092ef8 c3
 
@@ -14224,7 +14411,7 @@ sub_92ee4:
 ; ====================================================================================================
 ; strcspn  [0x92ef9, 73 bytes, 30 instructions]
 ; annotations: external
-; called by: league_import_export_check, league_calendar_flow, league_merge_warning, league_merge_check, pinfo_find_player, player_db_sync, select_team_dialog, load_league_info, select_human_team_dialog, select_human_control_dialog, sub_40f4e, sub_41171 (+1 more)
+; called by: league_import_export_check, league_calendar_flow, league_merge_warning, league_merge_check, pinfo_find_player, player_db_sync, select_team_dialog, load_league_info, select_human_team_dialog, select_human_control_dialog, league_settings_flow, format_from_league (+1 more)
 ; ====================================================================================================
 strcspn:
     push esi                                     ; 092ef9 56
@@ -14234,7 +14421,7 @@ strcspn:
     mov esi, eax                                 ; 092f00 89c6
     mov eax, esp                                 ; 092f02 89e0
     mov edx, ds                                  ; 092f04 8cda
-    call sub_9b798                               ; 092f06 e88d880000
+    call __fsetbits                              ; 092f06 e88d880000
     xor ebx, ebx                                 ; 092f0b 31db
     jmp loc_92f31                                ; 092f0d eb22
 
@@ -14265,10 +14452,11 @@ loc_92f3a:
     times 14 db 0 ; 092f42 (padding)
 
 ; ====================================================================================================
-; sub_92f50  [0x92f50, 167 bytes, 70 instructions]
-; called by: sub_37ea6, sub_89b69, debug_palette
+; xorbox  [0x92f50, 167 bytes, 70 instructions]
+; XOR filled rectangle between two corners (clipped)
+; called by: team_grid_highlight, playoff_tree_highlight, debug_palette
 ; ====================================================================================================
-sub_92f50:
+xorbox:
     push esi                                     ; 092f50 56
     push edi                                     ; 092f51 57
     push ebp                                     ; 092f52 55
@@ -14305,7 +14493,7 @@ loc_92f89:
     push ecx                                     ; 092f9e 51
     push edi                                     ; 092f9f 57
     push esi                                     ; 092fa0 56
-    call sub_91044                               ; 092fa1 e89ee0ffff
+    call fillrect2_clipped                       ; 092fa1 e89ee0ffff
     add esp, 0x14                                ; 092fa6 83c414
     mov eax, dword ptr [esp + 0x28]              ; 092fa9 8b442428
     push eax                                     ; 092fad 50
@@ -14315,7 +14503,7 @@ loc_92f89:
     inc edi                                      ; 092fb5 47
     push edi                                     ; 092fb6 57
     push ebp                                     ; 092fb7 55
-    call sub_91044                               ; 092fb8 e887e0ffff
+    call fillrect2_clipped                       ; 092fb8 e887e0ffff
     add esp, 0x14                                ; 092fbd 83c414
     mov ebx, dword ptr [esp + 0x28]              ; 092fc0 8b5c2428
     push ebx                                     ; 092fc4 53
@@ -14324,7 +14512,7 @@ loc_92f89:
     push 1                                       ; 092fca 6a01
     push edi                                     ; 092fcc 57
     push esi                                     ; 092fcd 56
-    call sub_91044                               ; 092fce e871e0ffff
+    call fillrect2_clipped                       ; 092fce e871e0ffff
     add esp, 0x14                                ; 092fd3 83c414
     mov edi, dword ptr [esp + 0x28]              ; 092fd6 8b7c2428
     push edi                                     ; 092fda 57
@@ -14334,7 +14522,7 @@ loc_92f89:
     mov eax, dword ptr [esp + 0x30]              ; 092fe2 8b442430
     push eax                                     ; 092fe6 50
     push esi                                     ; 092fe7 56
-    call sub_91044                               ; 092fe8 e857e0ffff
+    call fillrect2_clipped                       ; 092fe8 e857e0ffff
     add esp, 0x14                                ; 092fed 83c414
     add esp, 8                                   ; 092ff0 83c408
     pop ebp                                      ; 092ff3 5d
@@ -14345,10 +14533,11 @@ loc_92f89:
     times 9 db 0 ; 092ff7 (padding)
 
 ; ====================================================================================================
-; sub_93000  [0x93000, 167 bytes, 70 instructions]
-; called by: sub_37ea6, replay_save_dialog, sub_948e4, sub_981f8
+; fillbox_corners  [0x93000, 167 bytes, 70 instructions]
+; filled rectangle between two corners (clipped)
+; called by: team_grid_highlight, replay_save_dialog, debug_memblock_window, msgbox_yesno
 ; ====================================================================================================
-sub_93000:
+fillbox_corners:
     push esi                                     ; 093000 56
     push edi                                     ; 093001 57
     push ebp                                     ; 093002 55
@@ -14385,7 +14574,7 @@ loc_93039:
     push ecx                                     ; 09304e 51
     push edi                                     ; 09304f 57
     push esi                                     ; 093050 56
-    call sub_90ec0                               ; 093051 e86adeffff
+    call fillrect_clipped                        ; 093051 e86adeffff
     add esp, 0x14                                ; 093056 83c414
     mov eax, dword ptr [esp + 0x28]              ; 093059 8b442428
     push eax                                     ; 09305d 50
@@ -14395,7 +14584,7 @@ loc_93039:
     inc edi                                      ; 093065 47
     push edi                                     ; 093066 57
     push ebp                                     ; 093067 55
-    call sub_90ec0                               ; 093068 e853deffff
+    call fillrect_clipped                        ; 093068 e853deffff
     add esp, 0x14                                ; 09306d 83c414
     mov ebx, dword ptr [esp + 0x28]              ; 093070 8b5c2428
     push ebx                                     ; 093074 53
@@ -14404,7 +14593,7 @@ loc_93039:
     push 1                                       ; 09307a 6a01
     push edi                                     ; 09307c 57
     push esi                                     ; 09307d 56
-    call sub_90ec0                               ; 09307e e83ddeffff
+    call fillrect_clipped                        ; 09307e e83ddeffff
     add esp, 0x14                                ; 093083 83c414
     mov edi, dword ptr [esp + 0x28]              ; 093086 8b7c2428
     push edi                                     ; 09308a 57
@@ -14414,7 +14603,7 @@ loc_93039:
     mov eax, dword ptr [esp + 0x30]              ; 093092 8b442430
     push eax                                     ; 093096 50
     push esi                                     ; 093097 56
-    call sub_90ec0                               ; 093098 e823deffff
+    call fillrect_clipped                        ; 093098 e823deffff
     add esp, 0x14                                ; 09309d 83c414
     add esp, 8                                   ; 0930a0 83c408
     pop ebp                                      ; 0930a3 5d
@@ -14426,7 +14615,7 @@ loc_93039:
 ; ====================================================================================================
 ; mkdir  [0x930a7, 31 bytes, 15 instructions]  <dos_mkdir>
 ; annotations: external
-; called by: sub_3c3af, player_db_sync, new_league_dialog, new_database_dialog, stanley_cup_tree_screen
+; called by: import_game_set, player_db_sync, new_league_dialog, new_database_dialog, stanley_cup_tree_screen
 ; ====================================================================================================
 mkdir:
     push edx                                     ; 0930a7 52
@@ -14438,7 +14627,7 @@ mkdir:
     test eax, eax                                ; 0930b2 85c0
     jge loc_930c2                                ; 0930b4 7d0c
     and eax, 0xffff                              ; 0930b6 25ffff0000
-    call sub_9a735                               ; 0930bb e875760000
+    call __set_errno_dos                         ; 0930bb e875760000
     pop edx                                      ; 0930c0 5a
     ret                                          ; 0930c1 c3
 
@@ -14449,10 +14638,11 @@ loc_930c2:
 
 
 ; ====================================================================================================
-; sub_930c6  [0x930c6, 78 bytes, 34 instructions]
-; called by: sub_9311c
+; __fscanf_getc  [0x930c6, 78 bytes, 34 instructions]
+; fscanf input: next character of the stream (\r and ^Z handled)
+; called by: vfscanf
 ; ====================================================================================================
-sub_930c6:
+__fscanf_getc:
     push ebx                                     ; 0930c6 53
     push ecx                                     ; 0930c7 51
     push edx                                     ; 0930c8 52
@@ -14470,7 +14660,7 @@ sub_930c6:
     jne loc_930f2                                ; 0930e6 750a
 loc_930e8:
     mov eax, dword ptr [edx + 8]                 ; 0930e8 8b4208
-    call sub_9b833                               ; 0930eb e843870000
+    call fgetc                                   ; 0930eb e843870000
     jmp loc_93103                                ; 0930f0 eb11
 
 loc_930f2:
@@ -14495,29 +14685,31 @@ loc_9310e:
 
 
 ; ====================================================================================================
-; sub_93114  [0x93114, 8 bytes, 2 instructions]
-; called by: sub_9311c
+; __fscanf_ungetc  [0x93114, 8 bytes, 2 instructions]
+; fscanf input: puts a character back
+; called by: vfscanf
 ; ====================================================================================================
-sub_93114:
+__fscanf_ungetc:
     mov edx, dword ptr [edx + 8]                 ; 093114 8b5208
-    jmp sub_9b996                                ; 093117 e97a880000
+    jmp ungetc                                   ; 093117 e97a880000
 
 
 ; ====================================================================================================
-; sub_9311c  [0x9311c, 39 bytes, 14 instructions]
+; vfscanf  [0x9311c, 39 bytes, 14 instructions]
+; Watcom vfscanf through __scnf with the stream callbacks
 ; called by: fscanf
 ; ====================================================================================================
-sub_9311c:
+vfscanf:
     push ecx                                     ; 09311c 51
     push esi                                     ; 09311d 56
     sub esp, 0x14                                ; 09311e 83ec14
-    mov ecx, sub_930c6                           ; 093121 b9c6300900
-    mov esi, sub_93114                           ; 093126 be14310900
+    mov ecx, __fscanf_getc                       ; 093121 b9c6300900
+    mov esi, __fscanf_ungetc                     ; 093126 be14310900
     mov dword ptr [esp + 8], eax                 ; 09312b 89442408
     mov eax, esp                                 ; 09312f 89e0
     mov dword ptr [esp], ecx                     ; 093131 890c24
     mov dword ptr [esp + 4], esi                 ; 093134 89742404
-    call sub_9ba18                               ; 093138 e8db880000
+    call __scnf                                  ; 093138 e8db880000
     add esp, 0x14                                ; 09313d 83c414
     pop esi                                      ; 093140 5e
     pop ecx                                      ; 093141 59
@@ -14538,7 +14730,7 @@ fscanf:
     mov edx, dword ptr [esp + 0x14]              ; 093150 8b542414
     mov dword ptr [esp], ebx                     ; 093154 891c24
     mov ebx, esp                                 ; 093157 89e3
-    call sub_9311c                               ; 093159 e8beffffff
+    call vfscanf                                 ; 093159 e8beffffff
     add esp, 4                                   ; 09315e 83c404
     pop edx                                      ; 093161 5a
     pop ebx                                      ; 093162 5b
@@ -14550,7 +14742,7 @@ fscanf:
 ; printf_at  [0x93170, 86 bytes, 19 instructions]
 ; printf_at(x, y, fmt, ...)
 ; annotations: external
-; called by: sub_3e7b3, team_roster_screen, sub_948e4, sub_95158, sub_95548, debug_palette, sub_95ecc, fatalerror
+; called by: line_editor_draw_entry, team_roster_screen, debug_memblock_window, debug_shapes, debug_shape_info, debug_palette, debug_palette_labels, fatalerror
 ; ====================================================================================================
 printf_at:
     sub esp, 0x104                               ; 093170 81ec04010000
@@ -14576,10 +14768,11 @@ printf_at:
     times 10 db 0 ; 0931c6 (padding)
 
 ; ====================================================================================================
-; sub_931d0  [0x931d0, 44 bytes, 18 instructions]
+; copy_remap_skip  [0x931d0, 44 bytes, 18 instructions]
+; blit function remapping through the colour table, skipping 0xff results
 ; called by: drawshape_trans, drawshape2_trans
 ; ====================================================================================================
-sub_931d0:
+copy_remap_skip:
     mov ebx, dword ptr [esp + 8]                 ; 0931d0 8b5c2408
     mov ecx, dword ptr [esp + 0xc]               ; 0931d4 8b4c240c
     mov edx, dword ptr [esp + 4]                 ; 0931d8 8b542404
@@ -14606,7 +14799,7 @@ loc_931fb:
 ; ====================================================================================================
 ; drawshape2_trans  [0x931fc, 65 bytes, 19 instructions]
 ; annotations: external
-; called by: team_roster_screen, line_editor_screen, edit_lines_screen, sub_75046, edit_lines_screen2, sub_78366, settings_dialog, controller_dialog, sub_93240, sub_9325c
+; called by: team_roster_screen, line_editor_screen, edit_lines_screen, lines_draw_scratch_list, edit_lines_screen2, lines_draw_list, settings_dialog, controller_dialog, drawshape2_trans_home, drawshape2_trans_centered
 ; ====================================================================================================
 drawshape2_trans:
     mov edx, dword ptr [esp + 4]                 ; 0931fc 8b542404
@@ -14617,27 +14810,28 @@ drawshape2_trans:
     push eax                                     ; 093211 50
     push ebx                                     ; 093212 53
     push edx                                     ; 093213 52
-    call sub_b6d47                               ; 093214 e82e3b0200
+    call vesa_drawshape2_trans                   ; 093214 e82e3b0200
     add esp, 0xc                                 ; 093219 83c40c
     ret                                          ; 09321c c3
 
 loc_9321d:
-    mov dword ptr [funcptr_d43e4], sub_931d0     ; 09321d c705e4430d00d031..
+    mov dword ptr [funcptr_d43e4], copy_remap_skip ; 09321d c705e4430d00d031..
     push eax                                     ; 093227 50
     push ebx                                     ; 093228 53
     push edx                                     ; 093229 52
     call drawshape2                              ; 09322a e8b1deffff
     add esp, 0xc                                 ; 09322f 83c40c
-    mov dword ptr [funcptr_d43e4], sub_b3abc     ; 093232 c705e4430d00bc3a..
+    mov dword ptr [funcptr_d43e4], memmove_dwords ; 093232 c705e4430d00bc3a..
     ret                                          ; 09323c c3
 
     db 0x8d, 0x40, 0x00 ; 09323d |.@.| (padding)
 
 ; ====================================================================================================
-; sub_93240  [0x93240, 28 bytes, 11 instructions]  <unreferenced>
+; drawshape2_trans_home  [0x93240, 28 bytes, 11 instructions]  <unreferenced>
+; drawshape2_trans at the shape's own position
 ; no references found
 ; ====================================================================================================
-sub_93240:
+drawshape2_trans_home:
     mov edx, dword ptr [esp + 4]                 ; 093240 8b542404
     mov eax, dword ptr [edx + 0xc]               ; 093244 8b420c
     sar eax, 0x10                                ; 093247 c1f810
@@ -14652,10 +14846,11 @@ sub_93240:
 
 
 ; ====================================================================================================
-; sub_9325c  [0x9325c, 40 bytes, 15 instructions]  <unreferenced>
+; drawshape2_trans_centered  [0x9325c, 40 bytes, 15 instructions]  <unreferenced>
+; drawshape2_trans with the hotspot at the position
 ; no references found
 ; ====================================================================================================
-sub_9325c:
+drawshape2_trans_centered:
     mov edx, dword ptr [esp + 4]                 ; 09325c 8b542404
     mov eax, dword ptr [edx + 8]                 ; 093260 8b4208
     sar eax, 0x10                                ; 093263 c1f810
@@ -14674,16 +14869,17 @@ sub_9325c:
 
 
 ; ====================================================================================================
-; sub_93284  [0x93284, 68 bytes, 28 instructions]
-; called by: statistics_menu, sub_7fc5c
+; _strcspn  [0x93284, 68 bytes, 28 instructions]
+; Watcom strcspn (near character set)
+; called by: statistics_menu, team_abbrev_index
 ; ====================================================================================================
-sub_93284:
+_strcspn:
     push ebx                                     ; 093284 53
     push ecx                                     ; 093285 51
     sub esp, 0x20                                ; 093286 83ec20
     mov ebx, eax                                 ; 093289 89c3
     mov eax, esp                                 ; 09328b 89e0
-    call sub_9b7f5                               ; 09328d e863850000
+    call __setbits                               ; 09328d e863850000
     xor ecx, ecx                                 ; 093292 31c9
     jmp loc_932b8                                ; 093294 eb22
 
@@ -14717,7 +14913,7 @@ loc_932c0:
 ; savefile  [0x932d0, 26 bytes, 10 instructions]
 ; savefile(name, buffer, size)
 ; annotations: external
-; called by: sub_41cc4, schedule_screen, sub_44899, schedule_screen2, database_disk_check, sub_6c96c, load_schedule_db, playoff_results_screen, season_standings_db, sub_89223
+; called by: league_play_day, schedule_screen, playoff_advance, schedule_screen2, database_disk_check, dbedit_save_databases, load_schedule_db, playoff_results_screen, season_standings_db, save_schedule_db
 ; ====================================================================================================
 savefile:
     push 1                                       ; 0932d0 6a01
@@ -14734,10 +14930,11 @@ savefile:
     db 0x8b, 0xc0 ; 0932ea |..| (padding)
 
 ; ====================================================================================================
-; sub_932ec  [0x932ec, 26 bytes, 10 instructions]
-; called by: sub_9d090
+; savefileblock_try  [0x932ec, 26 bytes, 10 instructions]
+; savefileblock without the fatal error
+; called by: save_screen_shape
 ; ====================================================================================================
-sub_932ec:
+savefileblock_try:
     push 0                                       ; 0932ec 6a00
     mov edx, dword ptr [esp + 0x10]              ; 0932ee 8b542410
     push edx                                     ; 0932f2 52
@@ -14754,7 +14951,7 @@ sub_932ec:
 ; ====================================================================================================
 ; savefileblock  [0x93308, 51 bytes, 17 instructions]
 ; annotations: external
-; called by: savefile, sub_932ec
+; called by: savefile, savefileblock_try
 ; ====================================================================================================
 savefileblock:
     sub esp, 0x28                                ; 093308 83ec28
@@ -14778,10 +14975,11 @@ savefileblock:
     db 0x90 ; 09333b |.| (padding)
 
 ; ====================================================================================================
-; sub_9333c  [0x9333c, 21 bytes, 8 instructions]  <unreferenced>
+; savefileblocka_fatal  [0x9333c, 21 bytes, 8 instructions]  <unreferenced>
+; savefileblocka failing fatally
 ; no references found
 ; ====================================================================================================
-sub_9333c:
+savefileblocka_fatal:
     push 1                                       ; 09333c 6a01
     mov edx, dword ptr [esp + 0xc]               ; 09333e 8b54240c
     push edx                                     ; 093342 52
@@ -14794,10 +14992,11 @@ sub_9333c:
     db 0x8d, 0x40, 0x00 ; 093351 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_93354  [0x93354, 21 bytes, 8 instructions]  <unreferenced>
+; savefileblocka_try  [0x93354, 21 bytes, 8 instructions]  <unreferenced>
+; savefileblocka without the fatal error
 ; no references found
 ; ====================================================================================================
-sub_93354:
+savefileblocka_try:
     push 0                                       ; 093354 6a00
     mov edx, dword ptr [esp + 0xc]               ; 093356 8b54240c
     push edx                                     ; 09335a 52
@@ -14812,7 +15011,7 @@ sub_93354:
 ; ====================================================================================================
 ; savefileblocka  [0x9336c, 131 bytes, 50 instructions]
 ; annotations: external
-; called by: savefileblock, sub_9333c, sub_93354
+; called by: savefileblock, savefileblocka_fatal, savefileblocka_try
 ;   uses string "savefileblocka - OPEN FAILED FOR FILE <%s>\n"
 ; ====================================================================================================
 savefileblocka:
@@ -14822,11 +15021,11 @@ savefileblocka:
     sub esp, 0xc                                 ; 09336f 83ec0c
     mov esi, dword ptr [esp + 0x20]              ; 093372 8b742420
     push esi                                     ; 093376 56
-    call sub_8dbdc                               ; 093377 e860a8ffff
+    call memblock_size                           ; 093377 e860a8ffff
     mov edi, eax                                 ; 09337c 89c7
     add esp, 4                                   ; 09337e 83c404
     push esi                                     ; 093381 56
-    call sub_8dbd4                               ; 093382 e84da8ffff
+    call memblock_ptr                            ; 093382 e84da8ffff
     mov esi, eax                                 ; 093387 89c6
     add esp, 4                                   ; 093389 83c404
     mov eax, esp                                 ; 09338c 89e0
@@ -14837,7 +15036,7 @@ savefileblocka:
     push eax                                     ; 093398 50
     mov edx, dword ptr [esp + 0x28]              ; 093399 8b542428
     push edx                                     ; 09339d 52
-    call sub_b3b44                               ; 09339e e8a1070200
+    call dos_create_try                          ; 09339e e8a1070200
     add esp, 0x10                                ; 0933a3 83c410
     mov ebx, dword ptr [esp + 8]                 ; 0933a6 8b5c2408
     test ebx, ebx                                ; 0933aa 85db
@@ -14857,7 +15056,7 @@ loc_933cb:
     push edi                                     ; 0933cb 57
     push esi                                     ; 0933cc 56
     push ebx                                     ; 0933cd 53
-    call sub_b3c70                               ; 0933ce e89d080200
+    call dos_write_blocks                        ; 0933ce e89d080200
     add esp, 0xc                                 ; 0933d3 83c40c
     mov esi, dword ptr [esp + 8]                 ; 0933d6 8b742408
     push esi                                     ; 0933da 56
@@ -14886,10 +15085,11 @@ imul32:
 
 
 ; ====================================================================================================
-; sub_933fb  [0x933fb, 11 bytes, 4 instructions]  <unreferenced>
+; umul64  [0x933fb, 11 bytes, 4 instructions]  <unreferenced>
+; 32 x 32 -> 64 bit unsigned multiplication
 ; no references found
 ; ====================================================================================================
-sub_933fb:
+umul64:
     mov eax, dword ptr [esp + 4]                 ; 0933fb 8b442404
     mov edx, dword ptr [esp + 8]                 ; 0933ff 8b542408
     mul edx                                      ; 093403 f7e2
@@ -14897,10 +15097,11 @@ sub_933fb:
 
 
 ; ====================================================================================================
-; sub_93406  [0x93406, 12 bytes, 5 instructions]  <unreferenced>
+; idiv32  [0x93406, 12 bytes, 5 instructions]  <unreferenced>
+; signed division
 ; no references found
 ; ====================================================================================================
-sub_93406:
+idiv32:
     mov eax, dword ptr [esp + 4]                 ; 093406 8b442404
     cdq                                          ; 09340a 99
     mov ebx, dword ptr [esp + 8]                 ; 09340b 8b5c2408
@@ -14909,10 +15110,11 @@ sub_93406:
 
 
 ; ====================================================================================================
-; sub_93412  [0x93412, 13 bytes, 5 instructions]  <unreferenced>
+; udiv32  [0x93412, 13 bytes, 5 instructions]  <unreferenced>
+; unsigned division
 ; no references found
 ; ====================================================================================================
-sub_93412:
+udiv32:
     mov eax, dword ptr [esp + 4]                 ; 093412 8b442404
     xor edx, edx                                 ; 093416 33d2
     mov ebx, dword ptr [esp + 8]                 ; 093418 8b5c2408
@@ -14921,10 +15123,11 @@ sub_93412:
 
 
 ; ====================================================================================================
-; sub_9341f  [0x9341f, 12 bytes, 5 instructions]  <unreferenced>
+; idiv32_2  [0x9341f, 12 bytes, 5 instructions]  <unreferenced>
+; signed division (second copy)
 ; no references found
 ; ====================================================================================================
-sub_9341f:
+idiv32_2:
     mov eax, dword ptr [esp + 4]                 ; 09341f 8b442404
     cdq                                          ; 093423 99
     mov ebx, dword ptr [esp + 8]                 ; 093424 8b5c2408
@@ -14933,10 +15136,11 @@ sub_9341f:
 
 
 ; ====================================================================================================
-; sub_9342b  [0x9342b, 16 bytes, 6 instructions]  <unreferenced>
+; fixdiv20  [0x9342b, 16 bytes, 6 instructions]  <unreferenced>
+; (a << 32) / b >> 12
 ; no references found
 ; ====================================================================================================
-sub_9342b:
+fixdiv20:
     mov edx, dword ptr [esp + 4]                 ; 09342b 8b542404
     xor eax, eax                                 ; 09342f 33c0
     mov ebx, dword ptr [esp + 8]                 ; 093431 8b5c2408
@@ -14946,10 +15150,11 @@ sub_9342b:
 
 
 ; ====================================================================================================
-; sub_9343b  [0x9343b, 17 bytes, 6 instructions]  <unreferenced>
+; muldiv32  [0x9343b, 17 bytes, 6 instructions]  <unreferenced>
+; a * b / c with a 64 bit product
 ; no references found
 ; ====================================================================================================
-sub_9343b:
+muldiv32:
     mov eax, dword ptr [esp + 4]                 ; 09343b 8b442404
     mov edx, dword ptr [esp + 8]                 ; 09343f 8b542408
     mov ebx, dword ptr [esp + 0xc]               ; 093443 8b5c240c
@@ -14959,10 +15164,11 @@ sub_9343b:
 
 
 ; ====================================================================================================
-; sub_9344c  [0x9344c, 15 bytes, 5 instructions]  <unreferenced>
+; udiv64_32  [0x9344c, 15 bytes, 5 instructions]  <unreferenced>
+; 64 / 32 bit unsigned division
 ; no references found
 ; ====================================================================================================
-sub_9344c:
+udiv64_32:
     mov eax, dword ptr [esp + 4]                 ; 09344c 8b442404
     mov edx, dword ptr [esp + 8]                 ; 093450 8b542408
     mov ebx, dword ptr [esp + 0xc]               ; 093454 8b5c240c
@@ -14971,10 +15177,11 @@ sub_9344c:
 
 
 ; ====================================================================================================
-; sub_9345b  [0x9345b, 19 bytes, 6 instructions]  <unreferenced>
+; reciprocal32  [0x9345b, 19 bytes, 6 instructions]  <unreferenced>
+; 2^32 / a
 ; no references found
 ; ====================================================================================================
-sub_9345b:
+reciprocal32:
     mov eax, dword ptr [esp + 4]                 ; 09345b 8b442404
     mov ebx, eax                                 ; 09345f 8bd8
     mov edx, 1                                   ; 093461 ba01000000
@@ -15086,10 +15293,11 @@ loc_934f2:
     times 14 db 0 ; 093532 (padding)
 
 ; ====================================================================================================
-; sub_93540  [0x93540, 150 bytes, 57 instructions]
-; called by: draw_sprites, sub_644a8, sub_6455f, replay_seek_frames, replay_draw_frame
+; shellsort_by_key  [0x93540, 150 bytes, 57 instructions]
+; Shell sort of (key, value) pairs by key, descending (the sprite draw order)
+; called by: draw_sprites, sort_line_candidates, sort_line_candidates_skaters, replay_seek_frames, replay_draw_frame
 ; ====================================================================================================
-sub_93540:
+shellsort_by_key:
     push esi                                     ; 093540 56
     push edi                                     ; 093541 57
     push ebp                                     ; 093542 55
@@ -15157,10 +15365,11 @@ loc_935cf:
     times 10 db 0 ; 0935d6 (padding)
 
 ; ====================================================================================================
-; sub_935e0  [0x935e0, 73 bytes, 15 instructions]
-; called by: dump_stats_log, write_stats_table, sub_94188, sub_94e34, sub_95158, sub_95548, sub_96690, unpackfile
+; debug_printf  [0x935e0, 73 bytes, 15 instructions]
+; printf to the debug monitor (monochrome text screen) when debugging is on
+; called by: dump_stats_log, write_stats_table, debug_memlist, debug_hexdump_rows, debug_shapes, debug_shape_info, mvi_print_info, unpackfile
 ; ====================================================================================================
-sub_935e0:
+debug_printf:
     sub esp, 0x104                               ; 0935e0 81ec04010000
     cmp dword ptr [dword_d4534], 2               ; 0935e6 833d34450d0002
     jl loc_93622                                 ; 0935ed 7c33
@@ -15173,7 +15382,7 @@ sub_935e0:
     xor ebx, ebx                                 ; 093612 31db
     mov dword ptr [esp + 0x100], ebx             ; 093614 899c2400010000
     mov eax, esp                                 ; 09361b 89e0
-    call sub_936c0                               ; 09361d e89e000000
+    call debug_puts                              ; 09361d e89e000000
 loc_93622:
     add esp, 0x104                               ; 093622 81c404010000
     ret                                          ; 093628 c3
@@ -15181,10 +15390,11 @@ loc_93622:
     db 0x8d, 0x40, 0x00 ; 093629 |.@.| (padding)
 
 ; ====================================================================================================
-; sub_9362c  [0x9362c, 128 bytes, 33 instructions]
-; called by: sub_94188
+; debug_printf_at  [0x9362c, 128 bytes, 33 instructions]
+; debug_printf at a row and column of the 80 x 25 monitor
+; called by: debug_memlist
 ; ====================================================================================================
-sub_9362c:
+debug_printf_at:
     push esi                                     ; 09362c 56
     sub esp, 0x104                               ; 09362d 81ec04010000
     mov ebx, dword ptr [esp + 0x10c]             ; 093633 8b9c240c010000
@@ -15215,7 +15425,7 @@ loc_93671:
     xor esi, esi                                 ; 093694 31f6
     mov dword ptr [esp + 0x100], esi             ; 093696 89b42400010000
     mov eax, esp                                 ; 09369d 89e0
-    call sub_936c0                               ; 09369f e81c000000
+    call debug_puts                              ; 09369f e81c000000
 loc_936a4:
     add esp, 0x104                               ; 0936a4 81c404010000
     pop esi                                      ; 0936aa 5e
@@ -15229,10 +15439,11 @@ jpt_936ac:
     dd loc_93818                                 ; 0936bc
 
 ; ====================================================================================================
-; sub_936c0  [0x936c0, 387 bytes, 145 instructions]
-; called by: sub_935e0, sub_9362c, sub_93ad8
+; debug_puts  [0x936c0, 387 bytes, 145 instructions]
+; writes a string to the debug monitor (tabs, new lines, scrolling)
+; called by: debug_printf, debug_printf_at, debug_printf_log
 ; ====================================================================================================
-sub_936c0:
+debug_puts:
     push ebx                                     ; 0936c0 53
     push ecx                                     ; 0936c1 51
     push edx                                     ; 0936c2 52
@@ -15260,7 +15471,7 @@ loc_936e8:
     xor eax, eax                                 ; 0936ee 31c0
     mov al, byte ptr [esi]                       ; 0936f0 8a06
     push eax                                     ; 0936f2 50
-    call sub_93908                               ; 0936f3 e810020000
+    call debug_set_attr                          ; 0936f3 e810020000
     add esp, 4                                   ; 0936f8 83c404
     xor bh, bh                                   ; 0936fb 30ff
     mov byte ptr [esp], bh                       ; 0936fd 883c24
@@ -15271,7 +15482,7 @@ loc_93705:
     mov byte ptr [esp], al                       ; 093707 880424
     cmp al, 0x20                                 ; 09370a 3c20
     jb loc_9374e                                 ; 09370c 7240
-    call sub_93844                               ; 09370e e831010000
+    call debug_scroll                            ; 09370e e831010000
     xor dh, dh                                   ; 093713 30f6
     mov dl, byte ptr [byte_d4545]                ; 093715 8a1545450d00
     shl edx, 8                                   ; 09371b c1e208
@@ -15356,7 +15567,7 @@ loc_937e5:
     mov dword ptr [dword_d4540], eax             ; 0937e6 a340450d00
     imul eax, ecx                                ; 0937eb 0fafc1
     mov dword ptr [dword_d4540], eax             ; 0937ee a340450d00
-    call sub_93844                               ; 0937f3 e84c000000
+    call debug_scroll                            ; 0937f3 e84c000000
     inc esi                                      ; 0937f8 46
     inc edi                                      ; 0937f9 47
     cmp edi, ebp                                 ; 0937fa 39ef
@@ -15377,7 +15588,7 @@ loc_9380c:
     jmp loc_9382a                                ; 093816 eb12
 
 loc_93818:
-    call sub_938c8                               ; 093818 e8ab000000
+    call debug_clear                             ; 093818 e8ab000000
     xor eax, eax                                 ; 09381d 31c0
     mov al, byte ptr [byte_d4544]                ; 09381f a044450d00
     imul eax, eax, 0xa0                          ; 093824 69c0a0000000
@@ -15401,10 +15612,11 @@ loc_93839:
     db 0x90 ; 093843 |.| (padding)
 
 ; ====================================================================================================
-; sub_93844  [0x93844, 129 bytes, 39 instructions]
-; called by: sub_936c0
+; debug_scroll  [0x93844, 129 bytes, 39 instructions]
+; scrolls the debug monitor below its top row
+; called by: debug_puts
 ; ====================================================================================================
-sub_93844:
+debug_scroll:
     push ebx                                     ; 093844 53
     push ecx                                     ; 093845 51
     push edx                                     ; 093846 52
@@ -15431,13 +15643,13 @@ sub_93844:
     shl eax, 5                                   ; 093891 c1e005
     add eax, ebx                                 ; 093894 01d8
     push eax                                     ; 093896 50
-    call sub_b3abc                               ; 093897 e820020200
+    call memmove_dwords                          ; 093897 e820020200
     add esp, 0xc                                 ; 09389c 83c40c
     push 0xa0                                    ; 09389f 68a0000000
     mov eax, dword ptr [dword_d453c]             ; 0938a4 a13c450d00
     add eax, 0xf00                               ; 0938a9 05000f0000
     push eax                                     ; 0938ae 50
-    call sub_b3fc2                               ; 0938af e80e070200
+    call memzero                                 ; 0938af e80e070200
     add esp, 8                                   ; 0938b4 83c408
     mov dword ptr [dword_d4540], 0xf00           ; 0938b7 c70540450d00000f..
 loc_938c1:

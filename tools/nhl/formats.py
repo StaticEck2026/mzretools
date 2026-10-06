@@ -3,7 +3,7 @@
 # Readers for the asset formats of EA Sports NHL Hockey (DOS, 1994), derived from the loaders in
 # HOCKEY.EXE (see re/nhl_hockey/FORMATS.md for the routine each format was taken from).
 #
-#   RefPack       EA's LZ77 variant with the 10FB/11FB signature (unpack @0x97eb8, sub_97ce0)
+#   RefPack       EA's LZ77 variant with the 10FB/11FB signature (unpack @0x97eb8, refpack_decode)
 #   SHPI          shape banks: .fsh/.qfs/.PPV/.iff screens (loadshapes, locateshape, drawshape)
 #   VFN           bitmap fonts (setfont, printstr)
 #   8SVX / WAV    sound samples (loadsound)
@@ -85,7 +85,7 @@ def refpack_decompress(data):
     return bytes(out)
 
 def delta_decompress(data):
-    '''Pack codes 0x60/0x62/0x66: running byte sum ("delta") encoding (sub_97bb8)'''
+    '''Pack codes 0x60/0x62/0x66: running byte sum ("delta") encoding (delta_decode)'''
     hdr = (data[0] << 8) | data[1]
     pos = 2
     if hdr == 0x62fb:
@@ -124,7 +124,7 @@ def unpack(data):
 # ----------------------------------------------------------------------------------------------
 
 def rle_decode(raw, count):
-    '''Pixel stream of the sprite frames (blit_sprite -> sub_b4cd8): a count byte c followed by
+    '''Pixel stream of the sprite frames (blit_sprite -> blit_rle_frame): a count byte c followed by
     c > 0: one colour byte repeated c times (0xff = c transparent pixels, the blitter skips them),
     c >= 0x80 (negative): -c literal colour bytes, c == 0: end of the frame.'''
     out = bytearray()
@@ -304,7 +304,7 @@ class SoundBank:
     sample in PCFF001.DIG (whose keys are those ids), +0x14 u32 length, +0x18 / +0x1c loop start /
     end (0 = none). The Sound Blaster driver mixes at 11025 Hz and steps through a sample by the
     note (unity at note 60): a sample plays at 11025 * 2^(transpose / 12) Hz, whatever rate its
-    timbre names (sub_8ee4f overwrites +0x12 with 11025).'''
+    timbre names (load_timbre_file overwrites +0x12 with 11025).'''
     PAT_RECORDS = 0x102
     MIX_RATE = 11025
 
@@ -501,7 +501,7 @@ def write_wav(path, sample):
         f.write(hdr + b'data' + struct.pack('<I', len(pcm)) + pcm)
 
 # ----------------------------------------------------------------------------------------------
-# VIV speech bank (speech_load_bank @0x83897, sub_83bf3, bytepair_decode @0x97a38) - verified
+# VIV speech bank (speech_load_bank @0x83897, speech_delta_decode, bytepair_decode @0x97a38) - verified
 # ----------------------------------------------------------------------------------------------
 
 def read_viv_index(data):

@@ -11,10 +11,10 @@
 section code1 vstart=0xb3981
 
 ; ====================================================================================================
-; sub_b3981  [0xb3981, 8 bytes, 3 instructions]  <unreferenced>
+; ticks_reset  [0xb3981, 8 bytes, 3 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b3981:
+ticks_reset:
     xor eax, eax                                 ; 0b3981 33c0
     mov dword ptr [dword_d2fdc], eax             ; 0b3983 a3dc2f0d00
     ret                                          ; 0b3988 c3
@@ -24,7 +24,7 @@ sub_b3981:
 ; settimeout  [0xb3989, 16 bytes, 4 instructions]
 ; settimeout(ticks)
 ; annotations: external
-; called by: set_video_mode, ea_sports_intro, intro_sequence, team_select_screen2, sub_3170d, loading_screen, wait_sprite_fade, sequence_loop, fade_ambient_audio, replay_menu, load_sound_config, broadcast_booth_screen (+4 more)
+; called by: set_video_mode, ea_sports_intro, intro_sequence, team_select_screen2, text_entry_loop, loading_screen, wait_sprite_fade, sequence_loop, fade_ambient_audio, replay_menu, load_sound_config, broadcast_booth_screen (+4 more)
 ; ====================================================================================================
 settimeout:
     mov eax, dword ptr [esp + 4]                 ; 0b3989 8b442404
@@ -47,10 +47,10 @@ waittimeout:
 
 
 ; ====================================================================================================
-; sub_b39a7  [0xb39a7, 16 bytes, 5 instructions]
-; called by: ea_sports_intro, sub_3170d, cmv_play, sub_b3a2f
+; timeout_reached  [0xb39a7, 16 bytes, 5 instructions]
+; called by: ea_sports_intro, text_entry_loop, cmv_play, wait_input_or_timeout
 ; ====================================================================================================
-sub_b39a7:
+timeout_reached:
     mov ebx, dword ptr [dword_d2fdc]             ; 0b39a7 8b1ddc2f0d00
     sub ebx, dword ptr [dword_d4294]             ; 0b39ad 2b1d94420d00
     sbb eax, eax                                 ; 0b39b3 1bc0
@@ -59,10 +59,10 @@ sub_b39a7:
 
 
 ; ====================================================================================================
-; sub_b39b7  [0xb39b7, 23 bytes, 7 instructions]  <unreferenced>
+; spin_wait  [0xb39b7, 23 bytes, 7 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b39b7:
+spin_wait:
     mov eax, dword ptr [esp + 4]                 ; 0b39b7 8b442404
     mov ebx, dword ptr [dword_d2fdc]             ; 0b39bb 8b1ddc2f0d00
     add eax, ebx                                 ; 0b39c1 03c3
@@ -75,10 +75,11 @@ loc_b39c3:
     times 2 db 0 ; 0b39ce (padding)
 
 ; ====================================================================================================
-; sub_b39d0  [0xb39d0, 29 bytes, 11 instructions]
-; called by: joystick_calibrate, sub_94b6c, debug_palette, sub_981f8, flushkeys, sub_b3fec, sub_b3ff7, sub_b400b, sub_b40bf
+; key_poll  [0xb39d0, 29 bytes, 11 instructions]
+; the key of the BIOS keyboard hook, 0 when none
+; called by: joystick_calibrate, debug_hexdump, debug_palette, msgbox_yesno, flushkeys, getkey_joystick, getkey_translate, getkey_any, key_poll_translate
 ; ====================================================================================================
-sub_b39d0:
+key_poll:
     mov ah, 1                                    ; 0b39d0 b401
     call dword ptr [funcptr_d2c84]               ; 0b39d2 ff15842c0d00
     jne loc_b39de                                ; 0b39d8 7504
@@ -98,17 +99,17 @@ loc_b39ec:
 ; ====================================================================================================
 ; getkey  [0xb39ed, 6 bytes, 1 instructions]
 ; annotations: external
-; called by: sub_11161, sub_1600c, sub_3170d, dump_stats_log, sub_6bd69, sub_b3a48
+; called by: wait_key_release, intro_skip_pressed, text_entry_loop, dump_stats_log, ui_poll_keyboard, wait_key_ticks
 ; ====================================================================================================
 getkey:
     jmp dword ptr [funcptr_d42a0]                ; 0b39ed ff25a0420d00
 
 
 ; ====================================================================================================
-; sub_b39f3  [0xb39f3, 21 bytes, 9 instructions]  <unreferenced>
+; key_poll_b  [0xb39f3, 21 bytes, 9 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b39f3:
+key_poll_b:
     mov ah, 1                                    ; 0b39f3 b401
     call dword ptr [funcptr_d2c84]               ; 0b39f5 ff15842c0d00
     jne loc_b3a01                                ; 0b39fb 7504
@@ -124,20 +125,20 @@ loc_b3a07:
 
 
 ; ====================================================================================================
-; sub_b3a08  [0xb3a08, 10 bytes, 3 instructions]  <unreferenced>
+; set_input_hook  [0xb3a08, 10 bytes, 3 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b3a08:
+set_input_hook:
     mov eax, dword ptr [esp + 4]                 ; 0b3a08 8b442404
     mov dword ptr [funcptr_d42a0], eax           ; 0b3a0c a3a0420d00
     ret                                          ; 0b3a11 c3
 
 
 ; ====================================================================================================
-; sub_b3a12  [0xb3a12, 6 bytes, 2 instructions]  <unreferenced>
+; get_input_hook  [0xb3a12, 6 bytes, 2 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b3a12:
+get_input_hook:
     mov eax, dword ptr [funcptr_d42a0]           ; 0b3a12 a1a0420d00
     ret                                          ; 0b3a17 c3
 
@@ -157,36 +158,36 @@ waitkey:
 ; ====================================================================================================
 ; flushkeys  [0xb3a24, 11 bytes, 4 instructions]
 ; annotations: external
-; called by: sub_11161, sub_96164, sub_96170
+; called by: wait_key_release, flushkeys_wrap, debug_wait_key_loop
 ; ====================================================================================================
 flushkeys:
-    call sub_b39d0                               ; 0b3a24 e8a7ffffff
+    call key_poll                                ; 0b3a24 e8a7ffffff
     or ax, ax                                    ; 0b3a29 660bc0
     jne flushkeys                                ; 0b3a2c 75f6
     ret                                          ; 0b3a2e c3
 
 
 ; ====================================================================================================
-; sub_b3a2f  [0xb3a2f, 25 bytes, 8 instructions]  <unreferenced>
+; wait_input_or_timeout  [0xb3a2f, 25 bytes, 8 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b3a2f:
+wait_input_or_timeout:
     call dword ptr [funcptr_d42a0]               ; 0b3a2f ff15a0420d00
     or ax, ax                                    ; 0b3a35 660bc0
     jne loc_b3a47                                ; 0b3a38 750d
-    call sub_b39a7                               ; 0b3a3a e868ffffff
+    call timeout_reached                         ; 0b3a3a e868ffffff
     or ax, ax                                    ; 0b3a3f 660bc0
-    je sub_b3a2f                                 ; 0b3a42 74eb
+    je wait_input_or_timeout                     ; 0b3a42 74eb
     xor ax, ax                                   ; 0b3a44 6633c0
 loc_b3a47:
     ret                                          ; 0b3a47 c3
 
 
 ; ====================================================================================================
-; sub_b3a48  [0xb3a48, 42 bytes, 16 instructions]  <unreferenced>
+; wait_key_ticks  [0xb3a48, 42 bytes, 16 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b3a48:
+wait_key_ticks:
     push ebp                                     ; 0b3a48 55
     mov ebp, esp                                 ; 0b3a49 8bec
     add esp, -4                                  ; 0b3a4b 83c4fc
@@ -208,10 +209,11 @@ loc_b3a70:
 
 
 ; ====================================================================================================
-; sub_b3a72  [0xb3a72, 21 bytes, 19 instructions]  <bios_shift_state unreferenced>
+; bios_shift_flags  [0xb3a72, 21 bytes, 19 instructions]  <bios_shift_state unreferenced>
+; int 16h 2
 ; no references found
 ; ====================================================================================================
-sub_b3a72:
+bios_shift_flags:
     push ebx                                     ; 0b3a72 53
     push ecx                                     ; 0b3a73 51
     push edx                                     ; 0b3a74 52
@@ -235,10 +237,11 @@ sub_b3a72:
     db 0x00 ; 0b3a87 |.| (padding)
 
 ; ====================================================================================================
-; sub_b3a88  [0xb3a88, 25 bytes, 13 instructions]
-; called by: sub_174d8, sub_910b0, sub_93cb8, sub_96620, sub_981f8, sub_984d0, sub_9d090
+; save_screen_state  [0xb3a88, 25 bytes, 13 instructions]
+; copies the 0x60 byte screen / clip state at d30a4
+; called by: draw_credit_line, clearscreen_default, debug_monitor, drawshape_clip_save_window, msgbox_yesno, msgbox, save_screen_shape
 ; ====================================================================================================
-sub_b3a88:
+save_screen_state:
     push ebp                                     ; 0b3a88 55
     mov ebp, esp                                 ; 0b3a89 8bec
     push esi                                     ; 0b3a8b 56
@@ -255,10 +258,10 @@ sub_b3a88:
 
 
 ; ====================================================================================================
-; sub_b3aa1  [0xb3aa1, 25 bytes, 13 instructions]
-; called by: sub_174d8, sub_910b0, sub_93e79, sub_96620, sub_981f8, sub_984d0, sub_9d090
+; restore_screen_state  [0xb3aa1, 25 bytes, 13 instructions]
+; called by: draw_credit_line, clearscreen_default, debug_monitor_loop, drawshape_clip_save_window, msgbox_yesno, msgbox, save_screen_shape
 ; ====================================================================================================
-sub_b3aa1:
+restore_screen_state:
     push ebp                                     ; 0b3aa1 55
     mov ebp, esp                                 ; 0b3aa2 8bec
     push esi                                     ; 0b3aa4 56
@@ -276,10 +279,10 @@ sub_b3aa1:
     times 2 db 0 ; 0b3aba (padding)
 
 ; ====================================================================================================
-; sub_b3abc  [0xb3abc, 68 bytes, 33 instructions]
-; called by: sub_1b002, iff_parse, sub_8d604, find_loaded_file, sub_8d844, sub_8d990, load_eavesa, sub_8e40c, loadpatches, loadsound, sub_90698, drawshape2_remap (+13 more)
+; memmove_dwords  [0xb3abc, 68 bytes, 33 instructions]
+; called by: cmv_next_frame, iff_parse, purgemem_class, find_loaded_file, compactmem_down, compactmem_up, load_eavesa, memcopy_swapped, loadpatches, loadsound, drawshape_xor, drawshape2_remap (+13 more)
 ; ====================================================================================================
-sub_b3abc:
+memmove_dwords:
     push ebp                                     ; 0b3abc 55
     mov ebp, esp                                 ; 0b3abd 8bec
     push esi                                     ; 0b3abf 56
@@ -318,10 +321,10 @@ loc_b3adf:
 
 
 ; ====================================================================================================
-; sub_b3b00  [0xb3b00, 25 bytes, 14 instructions]  <int21h>
-; called by: sub_b3b5a, seekhandle
+; dos_lseek  [0xb3b00, 25 bytes, 14 instructions]  <int21h>
+; called by: dos_open_fatal, seekhandle
 ; ====================================================================================================
-sub_b3b00:
+dos_lseek:
     push ecx                                     ; 0b3b00 51
     push edx                                     ; 0b3b01 52
     mov ecx, edx                                 ; 0b3b02 8bca
@@ -341,7 +344,7 @@ sub_b3b00:
 ; ====================================================================================================
 ; openhandle  [0xb3b19, 21 bytes, 7 instructions]
 ; annotations: external
-; called by: sub_8e920, filesize_handle, sub_92e40, loadfile_packed
+; called by: loadfile_block, filesize_handle, loadfile_to_buffer, loadfile_packed
 ; ====================================================================================================
 openhandle:
     push ebp                                     ; 0b3b19 55
@@ -354,10 +357,10 @@ openhandle:
 
 
 ; ====================================================================================================
-; sub_b3b2e  [0xb3b2e, 22 bytes, 6 instructions]
-; called by: sub_98a40
+; dos_open_try  [0xb3b2e, 22 bytes, 6 instructions]
+; called by: file_exists
 ; ====================================================================================================
-sub_b3b2e:
+dos_open_try:
     push ebp                                     ; 0b3b2e 55
     mov ebp, esp                                 ; 0b3b2f 8bec
     add esp, -8                                  ; 0b3b31 83c4f8
@@ -367,10 +370,10 @@ sub_b3b2e:
 
 
 ; ====================================================================================================
-; sub_b3b44  [0xb3b44, 22 bytes, 6 instructions]
+; dos_create_try  [0xb3b44, 22 bytes, 6 instructions]
 ; called by: savefileblocka
 ; ====================================================================================================
-sub_b3b44:
+dos_create_try:
     push ebp                                     ; 0b3b44 55
     mov ebp, esp                                 ; 0b3b45 8bec
     add esp, -8                                  ; 0b3b47 83c4f8
@@ -380,11 +383,12 @@ sub_b3b44:
 
 
 ; ====================================================================================================
-; sub_b3b5a  [0xb3b5a, 262 bytes, 87 instructions]  <dos_read int21h>
-; called by: iff_parse, sub_96844
+; dos_open_fatal  [0xb3b5a, 262 bytes, 87 instructions]  <dos_read int21h>
+; "openhandle - %s FILE ERROR"
+; called by: iff_parse, mvi_open
 ;   uses string "openhandle - %s FILE ERROR\r"
 ; ====================================================================================================
-sub_b3b5a:
+dos_open_fatal:
     push ebp                                     ; 0b3b5a 55
     mov ebp, esp                                 ; 0b3b5b 8bec
     add esp, -8                                  ; 0b3b5d 83c4f8
@@ -403,7 +407,7 @@ loc_b3b6e:
     mov ebx, eax                                 ; 0b3b88 8bd8
     mov eax, 0x4202                              ; 0b3b8a b802420000
     xor edx, edx                                 ; 0b3b8f 33d2
-    call sub_b3b00                               ; 0b3b91 e86affffff
+    call dos_lseek                               ; 0b3b91 e86affffff
     jb loc_b3bb9                                 ; 0b3b96 7221
     mov ebx, dword ptr [ebp + 0x14]              ; 0b3b98 8b5d14
     mov dword ptr [ebx], eax                     ; 0b3b9b 8903
@@ -411,7 +415,7 @@ loc_b3b6e:
     mov ebx, dword ptr [ebx]                     ; 0b3ba0 8b1b
     mov eax, 0x4200                              ; 0b3ba2 b800420000
     xor edx, edx                                 ; 0b3ba7 33d2
-    call sub_b3b00                               ; 0b3ba9 e852ffffff
+    call dos_lseek                               ; 0b3ba9 e852ffffff
     jb loc_b3bb9                                 ; 0b3bae 7209
     mov ebx, dword ptr [ebp + 0x10]              ; 0b3bb0 8b5d10
     xor eax, eax                                 ; 0b3bb3 33c0
@@ -454,7 +458,7 @@ loc_b3bee:
     mov eax, 0x4200                              ; 0b3c18 b800420000
     mov ebx, dword ptr [ebp + 0xc]               ; 0b3c1d 8b5d0c
     mov ebx, dword ptr [ebx]                     ; 0b3c20 8b1b
-    call sub_b3b00                               ; 0b3c22 e8d9feffff
+    call dos_lseek                               ; 0b3c22 e8d9feffff
     jb loc_b3c2b                                 ; 0b3c27 7202
     leave                                        ; 0b3c29 c9
     ret                                          ; 0b3c2a c3
@@ -484,7 +488,7 @@ loc_b3c53:
 ; ====================================================================================================
 ; closehandle  [0xb3c60, 16 bytes, 9 instructions]  <dos_close>
 ; annotations: external
-; called by: sub_1b18b, iff_parse, sub_8e920, filesize_handle, sub_92e40, savefileblocka, sub_96844, sub_969a8, sub_98a40, loadfile_packed, sub_b3b5a
+; called by: cdstream_close, iff_parse, loadfile_block, filesize_handle, loadfile_to_buffer, savefileblocka, mvi_open, mvi_close, file_exists, loadfile_packed, dos_open_fatal
 ; ====================================================================================================
 closehandle:
     push ebp                                     ; 0b3c60 55
@@ -500,19 +504,21 @@ loc_b3c6e:
 
 
 ; ====================================================================================================
-; sub_b3c70  [0xb3c70, 4 bytes, 2 instructions]
+; dos_write_blocks  [0xb3c70, 4 bytes, 2 instructions]
+; int 21h 40h in 16K blocks
 ; called by: savefileblocka
 ; ====================================================================================================
-sub_b3c70:
+dos_write_blocks:
     mov ah, 0x40                                 ; 0b3c70 b440
     jmp loc_b3c76                                ; 0b3c72 eb02
 
 
 ; ====================================================================================================
-; sub_b3c74  [0xb3c74, 63 bytes, 23 instructions]  <int21h>
-; called by: iff_parse, sub_8e920, sub_92e40, sub_96844, sub_96e7c, packed_read, loadfile_packed
+; dos_read_blocks  [0xb3c74, 63 bytes, 23 instructions]  <int21h>
+; int 21h 3Fh in 16K blocks
+; called by: iff_parse, loadfile_block, loadfile_to_buffer, mvi_open, mvi_next_frame, packed_read, loadfile_packed
 ; ====================================================================================================
-sub_b3c74:
+dos_read_blocks:
     mov ah, 0x3f                                 ; 0b3c74 b43f
 loc_b3c76:
     push ebp                                     ; 0b3c76 55
@@ -547,7 +553,7 @@ loc_b3cb1:
 ; ====================================================================================================
 ; seekhandle  [0xb3cb3, 21 bytes, 8 instructions]
 ; annotations: external
-; called by: iff_parse, sub_96844, sub_96a10, packed_read
+; called by: iff_parse, mvi_open, mvi_rewind, packed_read
 ; ====================================================================================================
 seekhandle:
     push ebp                                     ; 0b3cb3 55
@@ -555,16 +561,16 @@ seekhandle:
     mov ebx, dword ptr [ebp + 8]                 ; 0b3cb6 8b5d08
     mov eax, 0x4200                              ; 0b3cb9 b800420000
     mov edx, dword ptr [ebp + 0xc]               ; 0b3cbe 8b550c
-    call sub_b3b00                               ; 0b3cc1 e83afeffff
+    call dos_lseek                               ; 0b3cc1 e83afeffff
     leave                                        ; 0b3cc6 c9
     ret                                          ; 0b3cc7 c3
 
 
 ; ====================================================================================================
-; sub_b3cc8  [0xb3cc8, 98 bytes, 38 instructions]  <dos_findfirst dos_set_dta>
-; called by: load_league_settings, load_league_info, sub_93b34, sub_960ac
+; dos_findfirst_dta  [0xb3cc8, 98 bytes, 38 instructions]  <dos_findfirst dos_set_dta>
+; called by: load_league_settings, load_league_info, debug_unique_logname, debug_unique_filename
 ; ====================================================================================================
-sub_b3cc8:
+dos_findfirst_dta:
     push ebp                                     ; 0b3cc8 55
     mov ebp, esp                                 ; 0b3cc9 8bec
     push esi                                     ; 0b3ccb 56
@@ -613,10 +619,10 @@ loc_b3d26:
 
 
 ; ====================================================================================================
-; sub_b3d2a  [0xb3d2a, 22 bytes, 11 instructions]  <dos_findnext dos_set_dta unreferenced>
+; dos_findnext_dta  [0xb3d2a, 22 bytes, 11 instructions]  <dos_findnext dos_set_dta unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b3d2a:
+dos_findnext_dta:
     push ebp                                     ; 0b3d2a 55
     mov ebp, esp                                 ; 0b3d2b 8bec
     push esi                                     ; 0b3d2d 56
@@ -631,10 +637,10 @@ sub_b3d2a:
 
 
 ; ====================================================================================================
-; sub_b3d40  [0xb3d40, 6 bytes, 2 instructions]  <unreferenced>
+; timer_count2  [0xb3d40, 6 bytes, 2 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b3d40:
+timer_count2:
     mov eax, dword ptr [dword_d2fe0]             ; 0b3d40 a1e02f0d00
     ret                                          ; 0b3d45 c3
 
@@ -642,7 +648,7 @@ sub_b3d40:
 ; ====================================================================================================
 ; settimeout2  [0xb3d46, 16 bytes, 4 instructions]
 ; annotations: external
-; called by: sub_3170d
+; called by: text_entry_loop
 ; ====================================================================================================
 settimeout2:
     mov eax, dword ptr [esp + 4]                 ; 0b3d46 8b442404
@@ -652,20 +658,20 @@ settimeout2:
 
 
 ; ====================================================================================================
-; sub_b3d56  [0xb3d56, 14 bytes, 4 instructions]  <unreferenced>
+; timer_wait  [0xb3d56, 14 bytes, 4 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b3d56:
+timer_wait:
     mov eax, dword ptr [dword_d2fe0]             ; 0b3d56 a1e02f0d00
     sub eax, dword ptr [dword_d4530]             ; 0b3d5b 2b0530450d00
-    js sub_b3d56                                 ; 0b3d61 78f3
+    js timer_wait                                ; 0b3d61 78f3
     ret                                          ; 0b3d63 c3
 
 
 ; ====================================================================================================
 ; timeout2_expired  [0xb3d64, 16 bytes, 5 instructions]
 ; annotations: external
-; called by: sub_3170d
+; called by: text_entry_loop
 ; ====================================================================================================
 timeout2_expired:
     mov ebx, dword ptr [dword_d2fe0]             ; 0b3d64 8b1de02f0d00
@@ -676,10 +682,10 @@ timeout2_expired:
 
 
 ; ====================================================================================================
-; sub_b3d74  [0xb3d74, 29 bytes, 11 instructions]
-; called by: sub_984d0
+; spin_wait_b  [0xb3d74, 29 bytes, 11 instructions]
+; called by: msgbox
 ; ====================================================================================================
-sub_b3d74:
+spin_wait_b:
     push ebp                                     ; 0b3d74 55
     mov ebp, esp                                 ; 0b3d75 8bec
     add esp, -4                                  ; 0b3d77 83c4fc
@@ -705,7 +711,7 @@ approx_distance:
     mov ebp, esp                                 ; 0b3d95 8bec
     push dword ptr [ebp + 8]                     ; 0b3d97 ff7508
     push dword ptr [ebp + 0xc]                   ; 0b3d9a ff750c
-    call sub_b49c0                               ; 0b3d9d e81e0c0000
+    call vector_octant                           ; 0b3d9d e81e0c0000
     add esp, 8                                   ; 0b3da2 83c408
     or eax, eax                                  ; 0b3da5 0bc0
     jge loc_b3dab                                ; 0b3da7 7d02
@@ -719,7 +725,7 @@ loc_b3db9:
     cmp eax, 0x80                                ; 0b3db9 3d80000000
     jg loc_b3ddd                                 ; 0b3dbe 7f1d
     push eax                                     ; 0b3dc0 50
-    call sub_b4a66                               ; 0b3dc1 e8a00c0000
+    call cos_lookup                              ; 0b3dc1 e8a00c0000
     add esp, 4                                   ; 0b3dc6 83c404
     mov ebx, eax                                 ; 0b3dc9 8bd8
     mov eax, dword ptr [ebp + 8]                 ; 0b3dcb 8b4508
@@ -735,7 +741,7 @@ loc_b3dd4:
 
 loc_b3ddd:
     push eax                                     ; 0b3ddd 50
-    call sub_b4a60                               ; 0b3dde e87d0c0000
+    call sin_lookup                              ; 0b3dde e87d0c0000
     add esp, 4                                   ; 0b3de3 83c404
     mov ebx, eax                                 ; 0b3de6 8bd8
     mov eax, dword ptr [ebp + 0xc]               ; 0b3de8 8b450c
@@ -752,10 +758,10 @@ loc_b3df1:
     times 2 db 0 ; 0b3dfa (padding)
 
 ; ====================================================================================================
-; sub_b3dfc  [0xb3dfc, 78 bytes, 14 instructions]  <unreferenced>
+; dump_registers  [0xb3dfc, 78 bytes, 14 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b3dfc:
+dump_registers:
     mov dword ptr [dword_d4f2c], ebx             ; 0b3dfc 891d2c4f0d00
     mov dword ptr [dword_d4f30], ecx             ; 0b3e02 890d304f0d00
     mov dword ptr [dword_d4f34], edx             ; 0b3e08 8915344f0d00
@@ -795,10 +801,11 @@ fatal_dumpregs:
 
 
 ; ====================================================================================================
-; sub_b3e98  [0xb3e98, 64 bytes, 15 instructions]  <bios_get_video_mode>
+; save_video_state  [0xb3e98, 64 bytes, 15 instructions]  <bios_get_video_mode>
+; BIOS mode, rows, columns
 ; called by: initgraphics
 ; ====================================================================================================
-sub_b3e98:
+save_video_state:
     cmp byte ptr [byte_d4f44], 0                 ; 0b3e98 803d444f0d0000
     jne loc_b3ed7                                ; 0b3e9f 7536
     mov ah, 0xf                                  ; 0b3ea1 b40f
@@ -811,7 +818,7 @@ sub_b3e98:
     mov al, byte ptr [0x484]                     ; 0b3ec0 a084040000
     mov byte ptr [byte_d4f48], al                ; 0b3ec5 a2484f0d00
     push restorevideo                            ; 0b3eca 68d83e0b00
-    call sub_b3454                               ; 0b3ecf e880f5ffff
+    call atexit_wrap                             ; 0b3ecf e880f5ffff
     add esp, 4                                   ; 0b3ed4 83c404
 loc_b3ed7:
     ret                                          ; 0b3ed7 c3
@@ -820,7 +827,7 @@ loc_b3ed7:
 ; ====================================================================================================
 ; restorevideo  [0xb3ed8, 117 bytes, 33 instructions]  <int10h>
 ; annotations: external
-; called by: fatalerror, sub_b3e98
+; called by: fatalerror, save_video_state
 ; ====================================================================================================
 restorevideo:
     pushal                                       ; 0b3ed8 60
@@ -849,7 +856,7 @@ loc_b3f23:
     cmp al, 0x30                                 ; 0b3f2f 3c30
     jne loc_b3f3d                                ; 0b3f31 750a
     push 0                                       ; 0b3f33 6a00
-    call sub_910b0                               ; 0b3f35 e876d1fdff
+    call clearscreen_default                     ; 0b3f35 e876d1fdff
     add esp, 4                                   ; 0b3f3a 83c404
 loc_b3f3d:
     mov ah, 0xb                                  ; 0b3f3d b40b
@@ -863,10 +870,11 @@ loc_b3f4b:
     times 3 db 0 ; 0b3f4d (padding)
 
 ; ====================================================================================================
-; sub_b3f50  [0xb3f50, 95 bytes, 32 instructions]
+; cpu_detect  [0xb3f50, 95 bytes, 32 instructions]
+; 286 / 386 / 486 flags tests, protected mode bit
 ; called by: initmemman
 ; ====================================================================================================
-sub_b3f50:
+cpu_detect:
     pushf                                        ; 0b3f50 669c
     mov dword ptr [dword_d305c], 1               ; 0b3f52 c7055c300d000100..
     pushf                                        ; 0b3f5c 669c
@@ -904,10 +912,10 @@ loc_b3fac:
     db 0x00 ; 0b3faf |.| (padding)
 
 ; ====================================================================================================
-; sub_b3fb0  [0xb3fb0, 18 bytes, 8 instructions]
-; called by: sub_8f27a, fillrect
+; memset_fill  [0xb3fb0, 18 bytes, 8 instructions]
+; called by: kms_start_unref, fillrect
 ; ====================================================================================================
-sub_b3fb0:
+memset_fill:
     push ebp                                     ; 0b3fb0 55
     mov ebp, esp                                 ; 0b3fb1 8bec
     push edi                                     ; 0b3fb3 57
@@ -919,10 +927,10 @@ sub_b3fb0:
 
 
 ; ====================================================================================================
-; sub_b3fc2  [0xb3fc2, 29 bytes, 15 instructions]
-; called by: load_eavesa, subwindowdefadr, sub_93844, windowdef
+; memzero  [0xb3fc2, 29 bytes, 15 instructions]
+; called by: load_eavesa, subwindowdefadr, debug_scroll, windowdef
 ; ====================================================================================================
-sub_b3fc2:
+memzero:
     push ebp                                     ; 0b3fc2 55
     mov ebp, esp                                 ; 0b3fc3 8bec
     push edi                                     ; 0b3fc5 57
@@ -943,50 +951,51 @@ loc_b3fc8:
     db 0x00 ; 0b3fdf |.| (padding)
 
 ; ====================================================================================================
-; sub_b3fe0  [0xb3fe0, 11 bytes, 2 instructions]  <unreferenced>
+; clear_input_state  [0xb3fe0, 11 bytes, 2 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b3fe0:
+clear_input_state:
     mov dword ptr [dword_d4fa0], 0               ; 0b3fe0 c705a04f0d000000..
     ret                                          ; 0b3fea c3
 
     db 0x00 ; 0b3feb |.| (padding)
 
 ; ====================================================================================================
-; sub_b3fec  [0xb3fec, 11 bytes, 4 instructions]  <unreferenced>
+; getkey_joystick  [0xb3fec, 11 bytes, 4 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b3fec:
-    call sub_b39d0                               ; 0b3fec e8dff9ffff
+getkey_joystick:
+    call key_poll                                ; 0b3fec e8dff9ffff
     or ax, ax                                    ; 0b3ff1 660bc0
     je loc_b402b                                 ; 0b3ff4 7435
     ret                                          ; 0b3ff6 c3
 
 
 ; ====================================================================================================
-; sub_b3ff7  [0xb3ff7, 20 bytes, 7 instructions]  <unreferenced>
+; getkey_translate  [0xb3ff7, 20 bytes, 7 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b3ff7:
-    call sub_b39d0                               ; 0b3ff7 e8d4f9ffff
+getkey_translate:
+    call key_poll                                ; 0b3ff7 e8d4f9ffff
     or ax, ax                                    ; 0b3ffc 660bc0
     je loc_b402b                                 ; 0b3fff 742a
     push eax                                     ; 0b4001 50
-    call sub_b4aa4                               ; 0b4002 e89d0a0000
+    call key_repeat_filter                       ; 0b4002 e89d0a0000
     add esp, 4                                   ; 0b4007 83c404
     ret                                          ; 0b400a c3
 
 
 ; ====================================================================================================
-; sub_b400b  [0xb400b, 180 bytes, 46 instructions]  <unreferenced>
+; getkey_any  [0xb400b, 180 bytes, 46 instructions]  <unreferenced>
+; keyboard, mouse and joystick
 ; no references found
 ; ====================================================================================================
-sub_b400b:
-    call sub_b39d0                               ; 0b400b e8c0f9ffff
+getkey_any:
+    call key_poll                                ; 0b400b e8c0f9ffff
     or ax, ax                                    ; 0b4010 660bc0
     je loc_b401f                                 ; 0b4013 740a
     push eax                                     ; 0b4015 50
-    call sub_b4aa4                               ; 0b4016 e8890a0000
+    call key_repeat_filter                       ; 0b4016 e8890a0000
     add esp, 4                                   ; 0b401b 83c404
     ret                                          ; 0b401e c3
 
@@ -995,7 +1004,7 @@ loc_b401f:
     shl ax, 4                                    ; 0b4025 66c1e004
     jne loc_b4030                                ; 0b4029 7505
 loc_b402b:
-    call sub_b3168                               ; 0b402b e838f1ffff
+    call joystick_read                           ; 0b402b e838f1ffff
 loc_b4030:
     mov bx, ax                                   ; 0b4030 668bd8
     test ax, 0x30                                ; 0b4033 66a93000
@@ -1017,7 +1026,7 @@ loc_b4057:
 
 loc_b405b:
     push dword ptr [dword_d4feb]                 ; 0b405b ff35eb4f0d00
-    call sub_b3962                               ; 0b4061 e8fcf8ffff
+    call ticks_since                             ; 0b4061 e8fcf8ffff
     add esp, 4                                   ; 0b4066 83c404
     cmp ax, word ptr [word_d4fe9]                ; 0b4069 663b05e94f0d00
     jl loc_b4057                                 ; 0b4070 7ce5
@@ -1046,15 +1055,15 @@ loc_b40b0:
 
 
 ; ====================================================================================================
-; sub_b40bf  [0xb40bf, 19 bytes, 7 instructions]
-; called by: sub_93c88
+; key_poll_translate  [0xb40bf, 19 bytes, 7 instructions]
+; called by: getkey_upper
 ; ====================================================================================================
-sub_b40bf:
-    call sub_b39d0                               ; 0b40bf e80cf9ffff
+key_poll_translate:
+    call key_poll                                ; 0b40bf e80cf9ffff
     or eax, eax                                  ; 0b40c4 0bc0
     je loc_b40d1                                 ; 0b40c6 7409
     push eax                                     ; 0b40c8 50
-    call sub_b4aa4                               ; 0b40c9 e8d6090000
+    call key_repeat_filter                       ; 0b40c9 e8d6090000
     add esp, 4                                   ; 0b40ce 83c404
 loc_b40d1:
     ret                                          ; 0b40d1 c3
@@ -1062,10 +1071,10 @@ loc_b40d1:
     times 2 db 0 ; 0b40d2 (padding)
 
 ; ====================================================================================================
-; sub_b40d4  [0xb40d4, 14 bytes, 7 instructions]  <unreferenced>
+; clip_line_b  [0xb40d4, 14 bytes, 7 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b40d4:
+clip_line_b:
     push ebp                                     ; 0b40d4 55
     mov ebp, esp                                 ; 0b40d5 8bec
     add esp, -8                                  ; 0b40d7 83c4f8
@@ -1076,10 +1085,11 @@ sub_b40d4:
 
 
 ; ====================================================================================================
-; sub_b40e2  [0xb40e2, 2269 bytes, 678 instructions]
-; called by: sub_b4fac
+; clip_line  [0xb40e2, 2269 bytes, 678 instructions]
+; clips a line to the clip rectangle (outcodes)
+; called by: drawline
 ; ====================================================================================================
-sub_b40e2:
+clip_line:
     push ebp                                     ; 0b40e2 55
     mov ebp, esp                                 ; 0b40e3 8bec
     add esp, -8                                  ; 0b40e5 83c4f8
@@ -1999,10 +2009,10 @@ loc_b49ba:
     db 0x00 ; 0b49bf |.| (padding)
 
 ; ====================================================================================================
-; sub_b49c0  [0xb49c0, 160 bytes, 50 instructions]
+; vector_octant  [0xb49c0, 160 bytes, 50 instructions]
 ; called by: approx_distance
 ; ====================================================================================================
-sub_b49c0:
+vector_octant:
     push ebp                                     ; 0b49c0 55
     mov ebp, esp                                 ; 0b49c1 8bec
     xor ebx, ebx                                 ; 0b49c3 33db
@@ -2087,19 +2097,19 @@ loc_b4a57:
 
 
 ; ====================================================================================================
-; sub_b4a60  [0xb4a60, 6 bytes, 2 instructions]
-; called by: sub_9e5c9, approx_distance
+; sin_lookup  [0xb4a60, 6 bytes, 2 instructions]
+; called by: adlib_env_update, approx_distance
 ; ====================================================================================================
-sub_b4a60:
+sin_lookup:
     mov eax, dword ptr [esp + 4]                 ; 0b4a60 8b442404
     jmp loc_b4a6c                                ; 0b4a64 eb06
 
 
 ; ====================================================================================================
-; sub_b4a66  [0xb4a66, 60 bytes, 20 instructions]
+; cos_lookup  [0xb4a66, 60 bytes, 20 instructions]
 ; called by: approx_distance
 ; ====================================================================================================
-sub_b4a66:
+cos_lookup:
     mov eax, dword ptr [esp + 4]                 ; 0b4a66 8b442404
     inc ah                                       ; 0b4a6a fec4
 loc_b4a6c:
@@ -2131,10 +2141,10 @@ loc_b4a96:
     times 2 db 0 ; 0b4aa2 (padding)
 
 ; ====================================================================================================
-; sub_b4aa4  [0xb4aa4, 89 bytes, 31 instructions]
-; called by: sub_b3ff7, sub_b400b, sub_b40bf
+; key_repeat_filter  [0xb4aa4, 89 bytes, 31 instructions]
+; called by: getkey_translate, getkey_any, key_poll_translate
 ; ====================================================================================================
-sub_b4aa4:
+key_repeat_filter:
     push ebp                                     ; 0b4aa4 55
     mov ebp, esp                                 ; 0b4aa5 8bec
     dec dword ptr [dword_d5562]                  ; 0b4aa7 ff0d62550d00
@@ -2175,10 +2185,10 @@ loc_b4af2:
 
 
 ; ====================================================================================================
-; sub_b4afd  [0xb4afd, 81 bytes, 30 instructions]  <unreferenced>
+; scancode_to_ascii  [0xb4afd, 81 bytes, 30 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b4afd:
+scancode_to_ascii:
     push ebp                                     ; 0b4afd 55
     mov ebp, esp                                 ; 0b4afe 8bec
     mov eax, dword ptr [ebp + 0xc]               ; 0b4b00 8b450c
@@ -2220,10 +2230,10 @@ loc_b4b3b:
 
 
 ; ====================================================================================================
-; sub_b4b4e  [0xb4b4e, 7 bytes, 4 instructions]  <unreferenced>
+; key_release  [0xb4b4e, 7 bytes, 4 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b4b4e:
+key_release:
     push ebp                                     ; 0b4b4e 55
     mov ebp, esp                                 ; 0b4b4f 8bec
     xor eax, eax                                 ; 0b4b51 33c0
@@ -2239,7 +2249,7 @@ sub_b4b4e:
 ; ====================================================================================================
 settextmode:
     push 0                                       ; 0b4b58 6a00
-    call sub_910b0                               ; 0b4b5a e851c5fdff
+    call clearscreen_default                     ; 0b4b5a e851c5fdff
     add esp, 4                                   ; 0b4b5f 83c404
     and byte ptr [0x410], 0xcf                   ; 0b4b62 802510040000cf
     or byte ptr [0x410], 0x10                    ; 0b4b69 800d1004000010
@@ -2256,7 +2266,7 @@ settextmode:
 ; setpalette  [0xb4b88, 31 bytes, 17 instructions]  <vga_pel_write>
 ; setpalette(first, count, rgb) through ports 3C8h/3C9h
 ; annotations: external
-; called by: set_video_mode, sub_11550, ea_sports_intro, intro_sequence, exh_hub_stats, sub_21c04, standings_screen, team_select_screen2, league_calendar_flow, sub_3b8b0, load_cfg_palette, jersey_number_dialog (+20 more)
+; called by: set_video_mode, setpalette_vsync, ea_sports_intro, intro_sequence, exh_hub_stats, player_card_draw_photo, standings_screen, team_select_screen2, league_calendar_flow, league_merge_and_update, load_cfg_palette, jersey_number_dialog (+20 more)
 ; ====================================================================================================
 setpalette:
     push ebp                                     ; 0b4b88 55
@@ -2337,10 +2347,10 @@ loc_b4c04:
     db 0x00 ; 0b4c27 |.| (padding)
 
 ; ====================================================================================================
-; sub_b4c28  [0xb4c28, 11 bytes, 2 instructions]
+; timeout_default  [0xb4c28, 11 bytes, 2 instructions]
 ; no references found
 ; ====================================================================================================
-sub_b4c28:
+timeout_default:
     mov dword ptr [dword_d429c], 0x2710          ; 0b4c28 c7059c420d001027..
     ret                                          ; 0b4c32 c3
 
@@ -2360,12 +2370,12 @@ loc_b4c48:
     in al, dx                                    ; 0b4c48 ec                port 0x3da (vga_status)
     test al, 8                                   ; 0b4c49 a808
     loopne loc_b4c48                             ; 0b4c4b e0fb
-    jecxz sub_b4c28                              ; 0b4c4d e3d9
+    jecxz timeout_default                        ; 0b4c4d e3d9
 loc_b4c4f:
     in al, dx                                    ; 0b4c4f ec                port 0x3da (vga_status)
     test al, 8                                   ; 0b4c50 a808
     loope loc_b4c4f                              ; 0b4c52 e1fb
-    jecxz sub_b4c28                              ; 0b4c54 e3d2
+    jecxz timeout_default                        ; 0b4c54 e3d2
 loc_b4c56:
     mov dword ptr [dword_d429c], 0x186a0         ; 0b4c56 c7059c420d00a086..
     ret                                          ; 0b4c60 c3
@@ -2383,12 +2393,12 @@ loc_b4c6b:
     in al, dx                                    ; 0b4c6b ec                port 0x3da (vga_status)
     test al, 8                                   ; 0b4c6c a808
     loopne loc_b4c6b                             ; 0b4c6e e0fb
-    jecxz sub_b4c28                              ; 0b4c70 e3b6
+    jecxz timeout_default                        ; 0b4c70 e3b6
 loc_b4c72:
     in al, dx                                    ; 0b4c72 ec                port 0x3da (vga_status)
     test al, 8                                   ; 0b4c73 a808
     loope loc_b4c72                              ; 0b4c75 e1fb
-    jecxz sub_b4c28                              ; 0b4c77 e3af
+    jecxz timeout_default                        ; 0b4c77 e3af
     mov dword ptr [dword_d429c], 0x186a0         ; 0b4c79 c7059c420d00a086..
     ret                                          ; 0b4c83 c3
 
@@ -2396,7 +2406,7 @@ loc_b4c72:
 ; ====================================================================================================
 ; waitvbl_end  [0xb4c84, 35 bytes, 12 instructions]  <vga_status>
 ; annotations: external
-; called by: sub_11550, sub_76614
+; called by: setpalette_vsync, setpalette_vsync_b
 ; ====================================================================================================
 waitvbl_end:
     mov dx, 0x3da                                ; 0b4c84 66bada03
@@ -2405,21 +2415,22 @@ loc_b4c8e:
     in al, dx                                    ; 0b4c8e ec                port 0x3da (vga_status)
     test al, 8                                   ; 0b4c8f a808
     loope loc_b4c8e                              ; 0b4c91 e1fb
-    jecxz sub_b4c28                              ; 0b4c93 e393
+    jecxz timeout_default                        ; 0b4c93 e393
 loc_b4c95:
     in al, dx                                    ; 0b4c95 ec                port 0x3da (vga_status)
     test al, 8                                   ; 0b4c96 a808
     loopne loc_b4c95                             ; 0b4c98 e0fb
-    jecxz sub_b4c28                              ; 0b4c9a e38c
+    jecxz timeout_default                        ; 0b4c9a e38c
     mov dword ptr [dword_d429c], 0x186a0         ; 0b4c9c c7059c420d00a086..
     ret                                          ; 0b4ca6 c3
 
 
 ; ====================================================================================================
-; sub_b4ca7  [0xb4ca7, 10 bytes, 4 instructions]  <unreferenced vga_status>
+; vga_in_vretrace  [0xb4ca7, 10 bytes, 4 instructions]  <unreferenced vga_status>
+; port 3DAh bit 3
 ; no references found
 ; ====================================================================================================
-sub_b4ca7:
+vga_in_vretrace:
     mov dx, 0x3da                                ; 0b4ca7 66bada03
     in al, dx                                    ; 0b4cab ec                port 0x3da (vga_status)
     and ax, 8                                    ; 0b4cac 6683e008
@@ -2428,10 +2439,10 @@ sub_b4ca7:
     times 3 db 0 ; 0b4cb1 (padding)
 
 ; ====================================================================================================
-; sub_b4cb4  [0xb4cb4, 36 bytes, 16 instructions]  <unreferenced>
+; blit_rle_frame_centered  [0xb4cb4, 36 bytes, 16 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b4cb4:
+blit_rle_frame_centered:
     push ebp                                     ; 0b4cb4 55
     mov ebp, esp                                 ; 0b4cb5 8bec
     add esp, -0x20                               ; 0b4cb7 83c4e0
@@ -2588,7 +2599,7 @@ loc_b4dad:
 ; setremaptable  [0xb4dd4, 24 bytes, 12 instructions]
 ; installs a 256 byte color remap table
 ; annotations: external
-; called by: show_scoreboard, blit_sprite, sub_1faa7, sub_21c04, calendar_screen, team_info_screen, team_roster_screen, line_editor_screen, edit_lines_screen, sub_75046, edit_lines_screen2, sub_78366 (+5 more)
+; called by: show_scoreboard, blit_sprite, hub_build_remap, player_card_draw_photo, calendar_screen, team_info_screen, team_roster_screen, line_editor_screen, edit_lines_screen, lines_draw_scratch_list, edit_lines_screen2, lines_draw_list (+5 more)
 ; ====================================================================================================
 setremaptable:
     push ebp                                     ; 0b4dd4 55
@@ -2606,10 +2617,10 @@ setremaptable:
 
 
 ; ====================================================================================================
-; sub_b4dec  [0xb4dec, 24 bytes, 12 instructions]  <unreferenced>
+; getremaptable  [0xb4dec, 24 bytes, 12 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b4dec:
+getremaptable:
     push ebp                                     ; 0b4dec 55
     mov ebp, esp                                 ; 0b4ded 8bec
     push esi                                     ; 0b4def 56
@@ -2625,10 +2636,10 @@ sub_b4dec:
 
 
 ; ====================================================================================================
-; sub_b4e04  [0xb4e04, 40 bytes, 19 instructions]  <unreferenced>
+; setremaprange  [0xb4e04, 40 bytes, 19 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b4e04:
+setremaprange:
     push ebp                                     ; 0b4e04 55
     mov ebp, esp                                 ; 0b4e05 8bec
     push esi                                     ; 0b4e07 56
@@ -2654,10 +2665,10 @@ loc_b4e23:
 
 
 ; ====================================================================================================
-; sub_b4e2c  [0xb4e2c, 36 bytes, 16 instructions]  <unreferenced>
+; blit_rle_remap_centered  [0xb4e2c, 36 bytes, 16 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b4e2c:
+blit_rle_remap_centered:
     push ebp                                     ; 0b4e2c 55
     mov ebp, esp                                 ; 0b4e2d 8bec
     add esp, -0x20                               ; 0b4e2f 83c4e0
@@ -2677,10 +2688,11 @@ sub_b4e2c:
 
 
 ; ====================================================================================================
-; sub_b4e50  [0xb4e50, 26 bytes, 12 instructions]
+; blit_rle_remap  [0xb4e50, 26 bytes, 12 instructions]
+; blit_rle_frame through the remap table
 ; called by: show_scoreboard, blit_sprite
 ; ====================================================================================================
-sub_b4e50:
+blit_rle_remap:
     push ebp                                     ; 0b4e50 55
     mov ebp, esp                                 ; 0b4e51 8bec
     add esp, -0x20                               ; 0b4e53 83c4e0
@@ -2696,10 +2708,10 @@ sub_b4e50:
 
 
 ; ====================================================================================================
-; sub_b4e6a  [0xb4e6a, 259 bytes, 99 instructions]  <unreferenced>
+; blit_rle_remap_home  [0xb4e6a, 259 bytes, 99 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b4e6a:
+blit_rle_remap_home:
     push ebp                                     ; 0b4e6a 55
     mov ebp, esp                                 ; 0b4e6b 8bec
     add esp, -0x20                               ; 0b4e6d 83c4e0
@@ -2824,7 +2836,7 @@ loc_b4f40:
 ; setscreen  [0xb4f70, 25 bytes, 9 instructions]
 ; selects a drawing surface (12 dword context at 0xd30a4)
 ; annotations: external
-; called by: ea_sports_intro, sub_174d8, boxscore_screen, load_rink, team_roster_screen, line_editor, sub_6a106, sub_6a166, begin_frame, player_ratings_card, sub_6ec95, free_agent_card (+7 more)
+; called by: ea_sports_intro, draw_credit_line, boxscore_screen, load_rink, team_roster_screen, line_editor, zm_select_hidden_window, zm_select_background_window, begin_frame, player_ratings_card, dbedit_errors_screen, free_agent_card (+7 more)
 ; ====================================================================================================
 setscreen:
     mov edx, edi                                 ; 0b4f70 8bd7
@@ -2842,7 +2854,7 @@ setscreen:
 ; ====================================================================================================
 ; windowdefp  [0xb4f8c, 26 bytes, 10 instructions]
 ; annotations: external
-; called by: ea_sports_intro, sub_174d8, cmv_load_palette, boxscore_screen, load_rink, statistics_menu, database_screen, sub_966e4, sub_981f8, sub_984d0
+; called by: ea_sports_intro, draw_credit_line, cmv_load_palette, boxscore_screen, load_rink, statistics_menu, database_screen, mvi_open_windows, msgbox_yesno, msgbox
 ; ====================================================================================================
 windowdefp:
     mov eax, dword ptr [esp + 4]                 ; 0b4f8c 8b442404
@@ -2859,10 +2871,11 @@ windowdefp:
     db 0xe9, 0xf5, 0x57, 0xfe, 0xff, 0x00 ; 0b4fa6 |..W...| (unexplored)
 
 ; ====================================================================================================
-; sub_b4fac  [0xb4fac, 60 bytes, 23 instructions]
-; called by: sub_18e43, sub_29d00, team_select_screen, league_dialog_box, sub_2c46b, draw_dialog_frame, calendar_draw_games, sub_6a2c7, draw_box, player_ratings_card, database_dialog, sub_72ac6 (+10 more)
+; drawline  [0xb4fac, 60 bytes, 23 instructions]
+; clip_line then draw_line_aa
+; called by: draw_box_frame, draw_bevel_box, team_select_screen, league_dialog_box, league_name_entry_draw, draw_dialog_frame, calendar_draw_games, draw_rect_outline, draw_box, player_ratings_card, database_dialog, database_select_draw (+10 more)
 ; ====================================================================================================
-sub_b4fac:
+drawline:
     push ebp                                     ; 0b4fac 55
     mov ebp, esp                                 ; 0b4fad 8bec
     add esp, -0x38                               ; 0b4faf 83c4c8
@@ -2872,7 +2885,7 @@ sub_b4fac:
     push dword ptr [ebp + 0x10]                  ; 0b4fb9 ff7510
     push dword ptr [ebp + 0xc]                   ; 0b4fbc ff750c
     push dword ptr [ebp + 8]                     ; 0b4fbf ff7508
-    call sub_b40e2                               ; 0b4fc2 e81bf1ffff
+    call clip_line                               ; 0b4fc2 e81bf1ffff
     add esp, 0x14                                ; 0b4fc7 83c414
     or eax, eax                                  ; 0b4fca 0bc0
     jne loc_b4fe6                                ; 0b4fcc 7518
@@ -2882,7 +2895,7 @@ sub_b4fac:
     mov eax, dword ptr [ebp + 0x18]              ; 0b4fd7 8b4518
     mov dword ptr [ebx + 0x1c], eax              ; 0b4fda 89431c
     push ebx                                     ; 0b4fdd 53
-    call sub_9b498                               ; 0b4fde e8b564feff
+    call draw_line_aa                            ; 0b4fde e8b564feff
     add esp, 4                                   ; 0b4fe3 83c404
 loc_b4fe6:
     leave                                        ; 0b4fe6 c9
@@ -2890,10 +2903,10 @@ loc_b4fe6:
 
 
 ; ====================================================================================================
-; sub_b4fe8  [0xb4fe8, 36 bytes, 16 instructions]  <unreferenced>
+; blit_rle_clip_centered  [0xb4fe8, 36 bytes, 16 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b4fe8:
+blit_rle_clip_centered:
     push ebp                                     ; 0b4fe8 55
     mov ebp, esp                                 ; 0b4fe9 8bec
     add esp, -0x20                               ; 0b4feb 83c4e0
@@ -2913,10 +2926,11 @@ sub_b4fe8:
 
 
 ; ====================================================================================================
-; sub_b500c  [0xb500c, 26 bytes, 12 instructions]
+; blit_rle_clip  [0xb500c, 26 bytes, 12 instructions]
+; blit_rle_frame clipped to the clip rectangle
 ; called by: blit_sprite, draw_penalty_box_overlay, replay_control_loop, replay_menu
 ; ====================================================================================================
-sub_b500c:
+blit_rle_clip:
     push ebp                                     ; 0b500c 55
     mov ebp, esp                                 ; 0b500d 8bec
     add esp, -0x20                               ; 0b500f 83c4e0
@@ -2932,10 +2946,10 @@ sub_b500c:
 
 
 ; ====================================================================================================
-; sub_b5026  [0xb5026, 615 bytes, 246 instructions]  <unreferenced>
+; blit_rle_clip_home  [0xb5026, 615 bytes, 246 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b5026:
+blit_rle_clip_home:
     push ebp                                     ; 0b5026 55
     mov ebp, esp                                 ; 0b5027 8bec
     add esp, -0x20                               ; 0b5029 83c4e0
@@ -3242,10 +3256,10 @@ loc_b5284:
     times 3 db 0 ; 0b528d (padding)
 
 ; ====================================================================================================
-; sub_b5290  [0xb5290, 36 bytes, 16 instructions]  <unreferenced>
+; blit_rle_remap_clip_centered  [0xb5290, 36 bytes, 16 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b5290:
+blit_rle_remap_clip_centered:
     push ebp                                     ; 0b5290 55
     mov ebp, esp                                 ; 0b5291 8bec
     add esp, -0x20                               ; 0b5293 83c4e0
@@ -3265,10 +3279,10 @@ sub_b5290:
 
 
 ; ====================================================================================================
-; sub_b52b4  [0xb52b4, 26 bytes, 12 instructions]
+; blit_rle_remap_clip  [0xb52b4, 26 bytes, 12 instructions]
 ; called by: blit_sprite
 ; ====================================================================================================
-sub_b52b4:
+blit_rle_remap_clip:
     push ebp                                     ; 0b52b4 55
     mov ebp, esp                                 ; 0b52b5 8bec
     add esp, -0x20                               ; 0b52b7 83c4e0
@@ -3284,10 +3298,10 @@ sub_b52b4:
 
 
 ; ====================================================================================================
-; sub_b52ce  [0xb52ce, 653 bytes, 258 instructions]  <unreferenced>
+; blit_rle_remap_clip_home  [0xb52ce, 653 bytes, 258 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b52ce:
+blit_rle_remap_clip_home:
     push ebp                                     ; 0b52ce 55
     mov ebp, esp                                 ; 0b52cf 8bec
     add esp, -0x20                               ; 0b52d1 83c4e0
@@ -3608,10 +3622,10 @@ loc_b5552:
     db 0x00 ; 0b555b |.| (padding)
 
 ; ====================================================================================================
-; sub_b555c  [0xb555c, 40 bytes, 17 instructions]  <unreferenced>
+; blit_rle_flip_centered  [0xb555c, 40 bytes, 17 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b555c:
+blit_rle_flip_centered:
     push ebp                                     ; 0b555c 55
     mov ebp, esp                                 ; 0b555d 8bec
     add esp, -0x20                               ; 0b555f 83c4e0
@@ -3632,10 +3646,11 @@ sub_b555c:
 
 
 ; ====================================================================================================
-; sub_b5584  [0xb5584, 26 bytes, 12 instructions]
+; blit_rle_flip  [0xb5584, 26 bytes, 12 instructions]
+; blit_rle_frame mirrored left to right
 ; called by: blit_sprite
 ; ====================================================================================================
-sub_b5584:
+blit_rle_flip:
     push ebp                                     ; 0b5584 55
     mov ebp, esp                                 ; 0b5585 8bec
     add esp, -0x20                               ; 0b5587 83c4e0
@@ -3651,10 +3666,10 @@ sub_b5584:
 
 
 ; ====================================================================================================
-; sub_b559e  [0xb559e, 242 bytes, 100 instructions]  <unreferenced>
+; blit_rle_flip_home  [0xb559e, 242 bytes, 100 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b559e:
+blit_rle_flip_home:
     push ebp                                     ; 0b559e 55
     mov ebp, esp                                 ; 0b559f 8bec
     add esp, -0x20                               ; 0b55a1 83c4e0
@@ -3776,10 +3791,10 @@ loc_b566a:
 
 
 ; ====================================================================================================
-; sub_b5690  [0xb5690, 40 bytes, 17 instructions]  <unreferenced>
+; blit_rle_flip_clip_centered  [0xb5690, 40 bytes, 17 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b5690:
+blit_rle_flip_clip_centered:
     push ebp                                     ; 0b5690 55
     mov ebp, esp                                 ; 0b5691 8bec
     add esp, -0x20                               ; 0b5693 83c4e0
@@ -3800,10 +3815,10 @@ sub_b5690:
 
 
 ; ====================================================================================================
-; sub_b56b8  [0xb56b8, 26 bytes, 12 instructions]
+; blit_rle_flip_clip  [0xb56b8, 26 bytes, 12 instructions]
 ; called by: blit_sprite
 ; ====================================================================================================
-sub_b56b8:
+blit_rle_flip_clip:
     push ebp                                     ; 0b56b8 55
     mov ebp, esp                                 ; 0b56b9 8bec
     add esp, -0x20                               ; 0b56bb 83c4e0
@@ -3819,10 +3834,10 @@ sub_b56b8:
 
 
 ; ====================================================================================================
-; sub_b56d2  [0xb56d2, 632 bytes, 261 instructions]  <unreferenced>
+; blit_rle_flip_clip_home  [0xb56d2, 632 bytes, 261 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b56d2:
+blit_rle_flip_clip_home:
     push ebp                                     ; 0b56d2 55
     mov ebp, esp                                 ; 0b56d3 8bec
     add esp, -0x20                               ; 0b56d5 83c4e0
@@ -4146,10 +4161,10 @@ loc_b5941:
     times 2 db 0 ; 0b594a (padding)
 
 ; ====================================================================================================
-; sub_b594c  [0xb594c, 40 bytes, 17 instructions]  <unreferenced>
+; blit_rle_flip_remap_centered  [0xb594c, 40 bytes, 17 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b594c:
+blit_rle_flip_remap_centered:
     push ebp                                     ; 0b594c 55
     mov ebp, esp                                 ; 0b594d 8bec
     add esp, -0x20                               ; 0b594f 83c4e0
@@ -4170,10 +4185,10 @@ sub_b594c:
 
 
 ; ====================================================================================================
-; sub_b5974  [0xb5974, 26 bytes, 12 instructions]
+; blit_rle_flip_remap  [0xb5974, 26 bytes, 12 instructions]
 ; called by: blit_sprite
 ; ====================================================================================================
-sub_b5974:
+blit_rle_flip_remap:
     push ebp                                     ; 0b5974 55
     mov ebp, esp                                 ; 0b5975 8bec
     add esp, -0x20                               ; 0b5977 83c4e0
@@ -4189,10 +4204,10 @@ sub_b5974:
 
 
 ; ====================================================================================================
-; sub_b598e  [0xb598e, 272 bytes, 106 instructions]  <unreferenced>
+; blit_rle_flip_remap_home  [0xb598e, 272 bytes, 106 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b598e:
+blit_rle_flip_remap_home:
     push ebp                                     ; 0b598e 55
     mov ebp, esp                                 ; 0b598f 8bec
     add esp, -0x20                               ; 0b5991 83c4e0
@@ -4321,10 +4336,10 @@ loc_b5a6f:
     times 2 db 0 ; 0b5a9e (padding)
 
 ; ====================================================================================================
-; sub_b5aa0  [0xb5aa0, 40 bytes, 17 instructions]  <unreferenced>
+; blit_rle_flip_remap_clip_centered  [0xb5aa0, 40 bytes, 17 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b5aa0:
+blit_rle_flip_remap_clip_centered:
     push ebp                                     ; 0b5aa0 55
     mov ebp, esp                                 ; 0b5aa1 8bec
     add esp, -0x20                               ; 0b5aa3 83c4e0
@@ -4345,10 +4360,10 @@ sub_b5aa0:
 
 
 ; ====================================================================================================
-; sub_b5ac8  [0xb5ac8, 26 bytes, 12 instructions]
+; blit_rle_flip_remap_clip  [0xb5ac8, 26 bytes, 12 instructions]
 ; called by: blit_sprite
 ; ====================================================================================================
-sub_b5ac8:
+blit_rle_flip_remap_clip:
     push ebp                                     ; 0b5ac8 55
     mov ebp, esp                                 ; 0b5ac9 8bec
     add esp, -0x20                               ; 0b5acb 83c4e0
@@ -4364,10 +4379,10 @@ sub_b5ac8:
 
 
 ; ====================================================================================================
-; sub_b5ae2  [0xb5ae2, 670 bytes, 269 instructions]  <unreferenced>
+; blit_rle_flip_remap_clip_home  [0xb5ae2, 670 bytes, 269 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b5ae2:
+blit_rle_flip_remap_clip_home:
     push ebp                                     ; 0b5ae2 55
     mov ebp, esp                                 ; 0b5ae3 8bec
     add esp, -0x20                               ; 0b5ae5 83c4e0
@@ -4698,10 +4713,10 @@ loc_b5d77:
 
 
 ; ====================================================================================================
-; sub_b5d80  [0xb5d80, 45 bytes, 12 instructions]
-; called by: sub_65ca8, printstr, printstr2
+; putpixel_clip  [0xb5d80, 45 bytes, 12 instructions]
+; called by: draw_stipple_rect, printstr, printstr2
 ; ====================================================================================================
-sub_b5d80:
+putpixel_clip:
     mov eax, dword ptr [esp + 4]                 ; 0b5d80 8b442404
     mov edx, dword ptr [esp + 8]                 ; 0b5d84 8b542408
     mov ebx, dword ptr [esp + 0xc]               ; 0b5d88 8b5c240c
@@ -4721,7 +4736,7 @@ loc_b5dac:
 ; ====================================================================================================
 ; putpixel  [0xb5db0, 77 bytes, 21 instructions]
 ; annotations: external
-; called by: sub_29d00, player_ratings_card, sub_78be7, replay_menu, replay_save_dialog, sub_80682, sub_9b498
+; called by: draw_bevel_box, player_ratings_card, draw_bevel_box_b, replay_menu, replay_save_dialog, draw_bevel_box_c, draw_line_aa
 ; blocks: b5db0-b5dd6 b5dd8-b5dfd
 ; ====================================================================================================
 putpixel:
@@ -4739,7 +4754,7 @@ loc_b5dbc:
 
     db 0x90 ; 0b5dd7 |.| (padding)
 loc_b5dd8:
-    call sub_b5e04                               ; 0b5dd8 e827000000
+    call vesa_set_bank_al                        ; 0b5dd8 e827000000
     mov byte ptr [edx], bl                       ; 0b5ddd 881a
     ret                                          ; 0b5ddf c3
 
@@ -4756,17 +4771,18 @@ loc_b5de0:
     times 2 db 0 ; 0b5dfe (padding)
 
 ; ====================================================================================================
-; sub_b5e00  [0xb5e00, 4 bytes, 1 instructions]
-; called by: initgraphics, drawshape, fillrect, fillrect2, drawshape2, grabshape, sub_96440
+; vesa_set_bank  [0xb5e00, 4 bytes, 1 instructions]
+; called by: initgraphics, drawshape, fillrect, fillrect2, drawshape2, grabshape, drawshape_clip_save
 ; ====================================================================================================
-sub_b5e00:
+vesa_set_bank:
     mov eax, dword ptr [esp + 4]                 ; 0b5e00 8b442404
 
 ; ====================================================================================================
-; sub_b5e04  [0xb5e04, 163 bytes, 71 instructions]  <port1ce vesa_bank_switch>
-; called by: putpixel, sub_b63ac, sub_b65b8
+; vesa_set_bank_al  [0xb5e04, 163 bytes, 71 instructions]  <port1ce vesa_bank_switch>
+; int 10h 4F05h
+; called by: putpixel, vesa_drawshape_clip_trans_split, vesa_drawshape_clip_opaque_split
 ; ====================================================================================================
-sub_b5e04:
+vesa_set_bank_al:
     cmp al, byte ptr [byte_d4f54]                ; 0b5e04 3a05544f0d00
     je loc_b5e49                                 ; 0b5e0a 743d
     mov byte ptr [byte_d4f54], al                ; 0b5e0c a2544f0d00
@@ -4853,10 +4869,11 @@ loc_b5e76:
 
 
 ; ====================================================================================================
-; sub_b5ea7  [0xb5ea7, 17 bytes, 10 instructions]  <vesa_set_mode>
+; vesa_set_mode  [0xb5ea7, 17 bytes, 10 instructions]  <vesa_set_mode>
+; int 10h 4F02h
 ; called by: initgraphics
 ; ====================================================================================================
-sub_b5ea7:
+vesa_set_mode:
     mov ebx, dword ptr [esp + 4]                 ; 0b5ea7 8b5c2404
     mov ax, 0x4f02                               ; 0b5eab 66b8024f
     push ebp                                     ; 0b5eaf 55
@@ -4870,10 +4887,10 @@ sub_b5ea7:
 
 
 ; ====================================================================================================
-; sub_b5eb8  [0xb5eb8, 13 bytes, 9 instructions]  <int10h>
+; bios_set_mode  [0xb5eb8, 13 bytes, 9 instructions]  <int10h>
 ; called by: initgraphics
 ; ====================================================================================================
-sub_b5eb8:
+bios_set_mode:
     mov eax, dword ptr [esp + 4]                 ; 0b5eb8 8b442404
     push ebp                                     ; 0b5ebc 55
     push esi                                     ; 0b5ebd 56
@@ -4886,10 +4903,11 @@ sub_b5eb8:
 
 
 ; ====================================================================================================
-; sub_b5ec5  [0xb5ec5, 17 bytes, 7 instructions]  <int10h unreferenced>
+; vesa_set_display_start  [0xb5ec5, 17 bytes, 7 instructions]  <int10h unreferenced>
+; int 10h 4F07h
 ; no references found
 ; ====================================================================================================
-sub_b5ec5:
+vesa_set_display_start:
     push ecx                                     ; 0b5ec5 51
     mov ecx, eax                                 ; 0b5ec6 8bc8
     mov eax, 0x4f07                              ; 0b5ec8 b8074f0000
@@ -4900,10 +4918,10 @@ sub_b5ec5:
 
 
 ; ====================================================================================================
-; sub_b5ed6  [0xb5ed6, 16 bytes, 7 instructions]  <unreferenced vesa_bank_switch>
+; vesa_get_bank  [0xb5ed6, 16 bytes, 7 instructions]  <unreferenced vesa_bank_switch>
 ; no references found
 ; ====================================================================================================
-sub_b5ed6:
+vesa_get_bank:
     push ecx                                     ; 0b5ed6 51
     movzx ebx, al                                ; 0b5ed7 0fb6d8
     movzx edx, dx                                ; 0b5eda 0fb7d2
@@ -4915,10 +4933,10 @@ sub_b5ed6:
     times 2 db 0 ; 0b5ee6 (padding)
 
 ; ====================================================================================================
-; sub_b5ee8  [0xb5ee8, 39 bytes, 15 instructions]  <unreferenced>
+; vesa_drawshape_centered  [0xb5ee8, 39 bytes, 15 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b5ee8:
+vesa_drawshape_centered:
     push ebp                                     ; 0b5ee8 55
     mov ebp, esp                                 ; 0b5ee9 8bec
     add esp, -0x1c                               ; 0b5eeb 83c4e4
@@ -4937,10 +4955,11 @@ sub_b5ee8:
 
 
 ; ====================================================================================================
-; sub_b5f0f  [0xb5f0f, 25 bytes, 11 instructions]
+; vesa_drawshape  [0xb5f0f, 25 bytes, 11 instructions]
+; drawshape on the banked VESA screen
 ; called by: drawshape
 ; ====================================================================================================
-sub_b5f0f:
+vesa_drawshape:
     push ebp                                     ; 0b5f0f 55
     mov ebp, esp                                 ; 0b5f10 8bec
     add esp, -0x1c                               ; 0b5f12 83c4e4
@@ -4955,10 +4974,10 @@ sub_b5f0f:
 
 
 ; ====================================================================================================
-; sub_b5f28  [0xb5f28, 314 bytes, 129 instructions]  <unreferenced>
+; vesa_drawshape_home  [0xb5f28, 314 bytes, 129 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b5f28:
+vesa_drawshape_home:
     push ebp                                     ; 0b5f28 55
     mov ebp, esp                                 ; 0b5f29 8bec
     add esp, -0x1c                               ; 0b5f2b 83c4e4
@@ -5108,10 +5127,10 @@ loc_b6055:
     times 2 db 0 ; 0b6062 (padding)
 
 ; ====================================================================================================
-; sub_b6064  [0xb6064, 39 bytes, 15 instructions]  <unreferenced>
+; vesa_drawshape_xor_centered  [0xb6064, 39 bytes, 15 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b6064:
+vesa_drawshape_xor_centered:
     push ebp                                     ; 0b6064 55
     mov ebp, esp                                 ; 0b6065 8bec
     add esp, -0x1c                               ; 0b6067 83c4e4
@@ -5130,10 +5149,10 @@ sub_b6064:
 
 
 ; ====================================================================================================
-; sub_b608b  [0xb608b, 25 bytes, 11 instructions]
-; called by: sub_90698
+; vesa_drawshape_xor  [0xb608b, 25 bytes, 11 instructions]
+; called by: drawshape_xor
 ; ====================================================================================================
-sub_b608b:
+vesa_drawshape_xor:
     push ebp                                     ; 0b608b 55
     mov ebp, esp                                 ; 0b608c 8bec
     add esp, -0x1c                               ; 0b608e 83c4e4
@@ -5148,10 +5167,10 @@ sub_b608b:
 
 
 ; ====================================================================================================
-; sub_b60a4  [0xb60a4, 330 bytes, 135 instructions]  <unreferenced>
+; vesa_drawshape_xor_home  [0xb60a4, 330 bytes, 135 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b60a4:
+vesa_drawshape_xor_home:
     push ebp                                     ; 0b60a4 55
     mov ebp, esp                                 ; 0b60a5 8bec
     add esp, -0x1c                               ; 0b60a7 83c4e4
@@ -5310,10 +5329,10 @@ loc_b61df:
     times 2 db 0 ; 0b61ee (padding)
 
 ; ====================================================================================================
-; sub_b61f0  [0xb61f0, 39 bytes, 15 instructions]  <unreferenced>
+; vesa_drawshape_clip_trans_centered  [0xb61f0, 39 bytes, 15 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b61f0:
+vesa_drawshape_clip_trans_centered:
     push ebp                                     ; 0b61f0 55
     mov ebp, esp                                 ; 0b61f1 8bec
     add esp, -0x1c                               ; 0b61f3 83c4e4
@@ -5332,10 +5351,10 @@ sub_b61f0:
 
 
 ; ====================================================================================================
-; sub_b6217  [0xb6217, 25 bytes, 11 instructions]
-; called by: sub_90720
+; vesa_drawshape_clip_trans  [0xb6217, 25 bytes, 11 instructions]
+; called by: drawshape_clip_trans
 ; ====================================================================================================
-sub_b6217:
+vesa_drawshape_clip_trans:
     push ebp                                     ; 0b6217 55
     mov ebp, esp                                 ; 0b6218 8bec
     add esp, -0x1c                               ; 0b621a 83c4e4
@@ -5350,10 +5369,10 @@ sub_b6217:
 
 
 ; ====================================================================================================
-; sub_b6230  [0xb6230, 330 bytes, 135 instructions]  <unreferenced>
+; vesa_drawshape_clip_trans_home  [0xb6230, 330 bytes, 135 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b6230:
+vesa_drawshape_clip_trans_home:
     push ebp                                     ; 0b6230 55
     mov ebp, esp                                 ; 0b6231 8bec
     add esp, -0x1c                               ; 0b6233 83c4e4
@@ -5512,10 +5531,10 @@ loc_b636b:
     times 2 db 0 ; 0b637a (padding)
 
 ; ====================================================================================================
-; sub_b637c  [0xb637c, 45 bytes, 12 instructions]  <unreferenced>
+; vesa_drawshape_clip_trans_split_centered  [0xb637c, 45 bytes, 12 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b637c:
+vesa_drawshape_clip_trans_split_centered:
     mov eax, dword ptr [esp + 4]                 ; 0b637c 8b442404
     mov edx, dword ptr [esp + 8]                 ; 0b6380 8b542408
     mov ebx, dword ptr [esp + 0xc]               ; 0b6384 8b5c240c
@@ -5533,11 +5552,12 @@ loc_b63a8:
     db 0x2e, 0xc0, 0x8b ; 0b63a9 |...| (unexplored)
 
 ; ====================================================================================================
-; sub_b63ac  [0xb63ac, 77 bytes, 21 instructions]
-; called by: sub_90720
+; vesa_drawshape_clip_trans_split  [0xb63ac, 77 bytes, 21 instructions]
+; a shape crossing a bank boundary
+; called by: drawshape_clip_trans
 ; blocks: b63ac-b63d2 b63d4-b63f9
 ; ====================================================================================================
-sub_b63ac:
+vesa_drawshape_clip_trans_split:
     mov eax, dword ptr [esp + 4]                 ; 0b63ac 8b442404
     mov edx, dword ptr [esp + 8]                 ; 0b63b0 8b542408
     mov ebx, dword ptr [esp + 0xc]               ; 0b63b4 8b5c240c
@@ -5552,7 +5572,7 @@ loc_b63b8:
 
     db 0x90 ; 0b63d3 |.| (padding)
 loc_b63d4:
-    call sub_b5e04                               ; 0b63d4 e82bfaffff
+    call vesa_set_bank_al                        ; 0b63d4 e82bfaffff
     and byte ptr [edx], bl                       ; 0b63d9 201a
     ret                                          ; 0b63db c3
 
@@ -5569,10 +5589,10 @@ loc_b63dc:
     times 2 db 0 ; 0b63fa (padding)
 
 ; ====================================================================================================
-; sub_b63fc  [0xb63fc, 39 bytes, 15 instructions]  <unreferenced>
+; vesa_drawshape_clip_opaque_centered  [0xb63fc, 39 bytes, 15 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b63fc:
+vesa_drawshape_clip_opaque_centered:
     push ebp                                     ; 0b63fc 55
     mov ebp, esp                                 ; 0b63fd 8bec
     add esp, -0x1c                               ; 0b63ff 83c4e4
@@ -5591,10 +5611,10 @@ sub_b63fc:
 
 
 ; ====================================================================================================
-; sub_b6423  [0xb6423, 25 bytes, 11 instructions]
-; called by: sub_9087c
+; vesa_drawshape_clip_opaque  [0xb6423, 25 bytes, 11 instructions]
+; called by: drawshape_clip_opaque
 ; ====================================================================================================
-sub_b6423:
+vesa_drawshape_clip_opaque:
     push ebp                                     ; 0b6423 55
     mov ebp, esp                                 ; 0b6424 8bec
     add esp, -0x1c                               ; 0b6426 83c4e4
@@ -5609,10 +5629,10 @@ sub_b6423:
 
 
 ; ====================================================================================================
-; sub_b643c  [0xb643c, 330 bytes, 135 instructions]  <unreferenced>
+; vesa_drawshape_clip_opaque_home  [0xb643c, 330 bytes, 135 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b643c:
+vesa_drawshape_clip_opaque_home:
     push ebp                                     ; 0b643c 55
     mov ebp, esp                                 ; 0b643d 8bec
     add esp, -0x1c                               ; 0b643f 83c4e4
@@ -5771,10 +5791,10 @@ loc_b6577:
     times 2 db 0 ; 0b6586 (padding)
 
 ; ====================================================================================================
-; sub_b6588  [0xb6588, 45 bytes, 12 instructions]  <unreferenced>
+; vesa_drawshape_clip_opaque_split_centered  [0xb6588, 45 bytes, 12 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b6588:
+vesa_drawshape_clip_opaque_split_centered:
     mov eax, dword ptr [esp + 4]                 ; 0b6588 8b442404
     mov edx, dword ptr [esp + 8]                 ; 0b658c 8b542408
     mov ebx, dword ptr [esp + 0xc]               ; 0b6590 8b5c240c
@@ -5792,11 +5812,11 @@ loc_b65b4:
     db 0x2e, 0xc0, 0x8b ; 0b65b5 |...| (unexplored)
 
 ; ====================================================================================================
-; sub_b65b8  [0xb65b8, 77 bytes, 21 instructions]
-; called by: sub_9087c
+; vesa_drawshape_clip_opaque_split  [0xb65b8, 77 bytes, 21 instructions]
+; called by: drawshape_clip_opaque
 ; blocks: b65b8-b65de b65e0-b6605
 ; ====================================================================================================
-sub_b65b8:
+vesa_drawshape_clip_opaque_split:
     mov eax, dword ptr [esp + 4]                 ; 0b65b8 8b442404
     mov edx, dword ptr [esp + 8]                 ; 0b65bc 8b542408
     mov ebx, dword ptr [esp + 0xc]               ; 0b65c0 8b5c240c
@@ -5811,7 +5831,7 @@ loc_b65c4:
 
     db 0x90 ; 0b65df |.| (padding)
 loc_b65e0:
-    call sub_b5e04                               ; 0b65e0 e81ff8ffff
+    call vesa_set_bank_al                        ; 0b65e0 e81ff8ffff
     or byte ptr [edx], bl                        ; 0b65e5 081a
     ret                                          ; 0b65e7 c3
 
@@ -5828,10 +5848,10 @@ loc_b65e8:
     times 2 db 0 ; 0b6606 (padding)
 
 ; ====================================================================================================
-; sub_b6608  [0xb6608, 93 bytes, 34 instructions]  <unreferenced>
+; vesa_fillrect_b  [0xb6608, 93 bytes, 34 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b6608:
+vesa_fillrect_b:
     push ebp                                     ; 0b6608 55
     mov ebp, esp                                 ; 0b6609 8bec
     push edi                                     ; 0b660b 57
@@ -5874,10 +5894,10 @@ loc_b6662:
 
 
 ; ====================================================================================================
-; sub_b6665  [0xb6665, 184 bytes, 76 instructions]
+; vesa_fillrect  [0xb6665, 184 bytes, 76 instructions]
 ; called by: fillrect
 ; ====================================================================================================
-sub_b6665:
+vesa_fillrect:
     push ebp                                     ; 0b6665 55
     mov ebp, esp                                 ; 0b6666 8bec
     push edi                                     ; 0b6668 57
@@ -5979,10 +5999,10 @@ loc_b671a:
     times 3 db 0 ; 0b671d (padding)
 
 ; ====================================================================================================
-; sub_b6720  [0xb6720, 93 bytes, 34 instructions]  <unreferenced>
+; vesa_fillrect2_b  [0xb6720, 93 bytes, 34 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b6720:
+vesa_fillrect2_b:
     push ebp                                     ; 0b6720 55
     mov ebp, esp                                 ; 0b6721 8bec
     push edi                                     ; 0b6723 57
@@ -6025,10 +6045,10 @@ loc_b677a:
 
 
 ; ====================================================================================================
-; sub_b677d  [0xb677d, 224 bytes, 91 instructions]
+; vesa_fillrect2  [0xb677d, 224 bytes, 91 instructions]
 ; called by: fillrect2
 ; ====================================================================================================
-sub_b677d:
+vesa_fillrect2:
     push ebp                                     ; 0b677d 55
     mov ebp, esp                                 ; 0b677e 8bec
     push edi                                     ; 0b6780 57
@@ -6155,10 +6175,10 @@ loc_b685a:
     times 3 db 0 ; 0b685d (padding)
 
 ; ====================================================================================================
-; sub_b6860  [0xb6860, 39 bytes, 15 instructions]  <unreferenced>
+; vesa_drawshape2_centered  [0xb6860, 39 bytes, 15 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b6860:
+vesa_drawshape2_centered:
     push ebp                                     ; 0b6860 55
     mov ebp, esp                                 ; 0b6861 8bec
     add esp, -0x1c                               ; 0b6863 83c4e4
@@ -6177,10 +6197,10 @@ sub_b6860:
 
 
 ; ====================================================================================================
-; sub_b6887  [0xb6887, 25 bytes, 11 instructions]
+; vesa_drawshape2  [0xb6887, 25 bytes, 11 instructions]
 ; called by: drawshape2
 ; ====================================================================================================
-sub_b6887:
+vesa_drawshape2:
     push ebp                                     ; 0b6887 55
     mov ebp, esp                                 ; 0b6888 8bec
     add esp, -0x1c                               ; 0b688a 83c4e4
@@ -6195,10 +6215,10 @@ sub_b6887:
 
 
 ; ====================================================================================================
-; sub_b68a0  [0xb68a0, 117 bytes, 54 instructions]  <unreferenced>
+; vesa_drawshape2_home  [0xb68a0, 117 bytes, 54 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b68a0:
+vesa_drawshape2_home:
     push ebp                                     ; 0b68a0 55
     mov ebp, esp                                 ; 0b68a1 8bec
     add esp, -0x1c                               ; 0b68a3 83c4e4
@@ -6265,10 +6285,10 @@ loc_b690b:
     times 3 db 0 ; 0b6915 (padding)
 
 ; ====================================================================================================
-; sub_b6918  [0xb6918, 36 bytes, 16 instructions]  <unreferenced>
+; vesa_drawshape2_remap_centered  [0xb6918, 36 bytes, 16 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b6918:
+vesa_drawshape2_remap_centered:
     push ebp                                     ; 0b6918 55
     mov ebp, esp                                 ; 0b6919 8bec
     add esp, -0x14                               ; 0b691b 83c4ec
@@ -6288,10 +6308,10 @@ sub_b6918:
 
 
 ; ====================================================================================================
-; sub_b693c  [0xb693c, 26 bytes, 12 instructions]
+; vesa_drawshape2_remap  [0xb693c, 26 bytes, 12 instructions]
 ; called by: drawshape2_remap
 ; ====================================================================================================
-sub_b693c:
+vesa_drawshape2_remap:
     push ebp                                     ; 0b693c 55
     mov ebp, esp                                 ; 0b693d 8bec
     add esp, -0x14                               ; 0b693f 83c4ec
@@ -6307,10 +6327,10 @@ sub_b693c:
 
 
 ; ====================================================================================================
-; sub_b6956  [0xb6956, 105 bytes, 43 instructions]  <unreferenced>
+; vesa_drawshape2_remap_home  [0xb6956, 105 bytes, 43 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b6956:
+vesa_drawshape2_remap_home:
     push ebp                                     ; 0b6956 55
     mov ebp, esp                                 ; 0b6957 8bec
     add esp, -0x14                               ; 0b6959 83c4ec
@@ -6364,10 +6384,10 @@ loc_b69b3:
     db 0x00 ; 0b69bf |.| (padding)
 
 ; ====================================================================================================
-; sub_b69c0  [0xb69c0, 36 bytes, 16 instructions]  <unreferenced>
+; vesa_drawshape_remap_centered  [0xb69c0, 36 bytes, 16 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b69c0:
+vesa_drawshape_remap_centered:
     push ebp                                     ; 0b69c0 55
     mov ebp, esp                                 ; 0b69c1 8bec
     add esp, -0x1c                               ; 0b69c3 83c4e4
@@ -6387,10 +6407,10 @@ sub_b69c0:
 
 
 ; ====================================================================================================
-; sub_b69e4  [0xb69e4, 26 bytes, 12 instructions]
+; vesa_drawshape_remap  [0xb69e4, 26 bytes, 12 instructions]
 ; called by: drawshape_remap
 ; ====================================================================================================
-sub_b69e4:
+vesa_drawshape_remap:
     push ebp                                     ; 0b69e4 55
     mov ebp, esp                                 ; 0b69e5 8bec
     add esp, -0x1c                               ; 0b69e7 83c4e4
@@ -6406,10 +6426,10 @@ sub_b69e4:
 
 
 ; ====================================================================================================
-; sub_b69fe  [0xb69fe, 280 bytes, 111 instructions]  <unreferenced>
+; vesa_drawshape_remap_home  [0xb69fe, 280 bytes, 111 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b69fe:
+vesa_drawshape_remap_home:
     push ebp                                     ; 0b69fe 55
     mov ebp, esp                                 ; 0b69ff 8bec
     add esp, -0x18                               ; 0b6a01 83c4e8
@@ -6540,10 +6560,10 @@ loc_b6b10:
     times 2 db 0 ; 0b6b16 (padding)
 
 ; ====================================================================================================
-; sub_b6b18  [0xb6b18, 39 bytes, 15 instructions]  <unreferenced>
+; vesa_grabshape_centered  [0xb6b18, 39 bytes, 15 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b6b18:
+vesa_grabshape_centered:
     push ebp                                     ; 0b6b18 55
     mov ebp, esp                                 ; 0b6b19 8bec
     add esp, -0xc                                ; 0b6b1b 83c4f4
@@ -6562,10 +6582,10 @@ sub_b6b18:
 
 
 ; ====================================================================================================
-; sub_b6b3f  [0xb6b3f, 33 bytes, 13 instructions]
+; vesa_grabshape  [0xb6b3f, 33 bytes, 13 instructions]
 ; called by: grabshape
 ; ====================================================================================================
-sub_b6b3f:
+vesa_grabshape:
     push ebp                                     ; 0b6b3f 55
     mov ebp, esp                                 ; 0b6b40 8bec
     add esp, -0xc                                ; 0b6b42 83c4f4
@@ -6582,10 +6602,10 @@ sub_b6b3f:
 
 
 ; ====================================================================================================
-; sub_b6b60  [0xb6b60, 93 bytes, 36 instructions]  <unreferenced>
+; vesa_grabshape_home  [0xb6b60, 93 bytes, 36 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b6b60:
+vesa_grabshape_home:
     push ebp                                     ; 0b6b60 55
     mov ebp, esp                                 ; 0b6b61 8bec
     add esp, -0xc                                ; 0b6b63 83c4f4
@@ -6631,10 +6651,10 @@ loc_b6bae:
     times 3 db 0 ; 0b6bbd (padding)
 
 ; ====================================================================================================
-; sub_b6bc0  [0xb6bc0, 37 bytes, 17 instructions]  <unreferenced>
+; vesa_drawshape_trans_centered  [0xb6bc0, 37 bytes, 17 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b6bc0:
+vesa_drawshape_trans_centered:
     push ebp                                     ; 0b6bc0 55
     mov ebp, esp                                 ; 0b6bc1 8bec
     add esp, -0x1c                               ; 0b6bc3 83c4e4
@@ -6655,10 +6675,10 @@ sub_b6bc0:
 
 
 ; ====================================================================================================
-; sub_b6be5  [0xb6be5, 27 bytes, 13 instructions]
+; vesa_drawshape_trans  [0xb6be5, 27 bytes, 13 instructions]
 ; called by: drawshape_trans
 ; ====================================================================================================
-sub_b6be5:
+vesa_drawshape_trans:
     push ebp                                     ; 0b6be5 55
     mov ebp, esp                                 ; 0b6be6 8bec
     add esp, -0x1c                               ; 0b6be8 83c4e4
@@ -6675,10 +6695,10 @@ sub_b6be5:
 
 
 ; ====================================================================================================
-; sub_b6c00  [0xb6c00, 291 bytes, 116 instructions]  <unreferenced>
+; vesa_drawshape_trans_home  [0xb6c00, 291 bytes, 116 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b6c00:
+vesa_drawshape_trans_home:
     push ebp                                     ; 0b6c00 55
     mov ebp, esp                                 ; 0b6c01 8bec
     add esp, -0x18                               ; 0b6c03 83c4e8
@@ -6814,10 +6834,10 @@ loc_b6d1c:
     db 0x00 ; 0b6d23 |.| (padding)
 
 ; ====================================================================================================
-; sub_b6d24  [0xb6d24, 35 bytes, 15 instructions]  <unreferenced>
+; vesa_drawshape2_trans_centered  [0xb6d24, 35 bytes, 15 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b6d24:
+vesa_drawshape2_trans_centered:
     push ebp                                     ; 0b6d24 55
     mov ebp, esp                                 ; 0b6d25 8bec
     add esp, -0x14                               ; 0b6d27 83c4ec
@@ -6836,10 +6856,10 @@ sub_b6d24:
 
 
 ; ====================================================================================================
-; sub_b6d47  [0xb6d47, 25 bytes, 11 instructions]
+; vesa_drawshape2_trans  [0xb6d47, 25 bytes, 11 instructions]
 ; called by: drawshape2_trans
 ; ====================================================================================================
-sub_b6d47:
+vesa_drawshape2_trans:
     push ebp                                     ; 0b6d47 55
     mov ebp, esp                                 ; 0b6d48 8bec
     add esp, -0x14                               ; 0b6d4a 83c4ec
@@ -6854,10 +6874,10 @@ sub_b6d47:
 
 
 ; ====================================================================================================
-; sub_b6d60  [0xb6d60, 109 bytes, 42 instructions]  <unreferenced>
+; vesa_drawshape2_trans_home  [0xb6d60, 109 bytes, 42 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b6d60:
+vesa_drawshape2_trans_home:
     push ebp                                     ; 0b6d60 55
     mov ebp, esp                                 ; 0b6d61 8bec
     add esp, -0x14                               ; 0b6d63 83c4ec
@@ -6910,10 +6930,10 @@ loc_b6dc2:
     times 3 db 0 ; 0b6dcd (padding)
 
 ; ====================================================================================================
-; sub_b6dd0  [0xb6dd0, 39 bytes, 15 instructions]  <unreferenced>
+; vesa_drawshape_clip_save_centered  [0xb6dd0, 39 bytes, 15 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b6dd0:
+vesa_drawshape_clip_save_centered:
     push ebp                                     ; 0b6dd0 55
     mov ebp, esp                                 ; 0b6dd1 8bec
     add esp, -0x1c                               ; 0b6dd3 83c4e4
@@ -6932,10 +6952,10 @@ sub_b6dd0:
 
 
 ; ====================================================================================================
-; sub_b6df7  [0xb6df7, 33 bytes, 13 instructions]
-; called by: sub_96440
+; vesa_drawshape_clip_save  [0xb6df7, 33 bytes, 13 instructions]
+; called by: drawshape_clip_save
 ; ====================================================================================================
-sub_b6df7:
+vesa_drawshape_clip_save:
     push ebp                                     ; 0b6df7 55
     mov ebp, esp                                 ; 0b6df8 8bec
     add esp, -0x1c                               ; 0b6dfa 83c4e4
@@ -6952,10 +6972,10 @@ sub_b6df7:
 
 
 ; ====================================================================================================
-; sub_b6e18  [0xb6e18, 364 bytes, 141 instructions]  <unreferenced>
+; vesa_drawshape_clip_save_home  [0xb6e18, 364 bytes, 141 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b6e18:
+vesa_drawshape_clip_save_home:
     push ebp                                     ; 0b6e18 55
     mov ebp, esp                                 ; 0b6e19 8bec
     add esp, -0x1c                               ; 0b6e1b 83c4e4
@@ -7122,10 +7142,11 @@ loc_b6f78:
 
 
 ; ====================================================================================================
-; sub_b6f84  [0xb6f84, 118 bytes, 39 instructions]
-; called by: sub_981f8, sub_984d0, sub_a1840
+; window_setclip  [0xb6f84, 118 bytes, 39 instructions]
+; clip rectangle of a window (the screen's when it is the current one)
+; called by: msgbox_yesno, msgbox, window_clip_full
 ; ====================================================================================================
-sub_b6f84:
+window_setclip:
     push ebp                                     ; 0b6f84 55
     mov ebp, esp                                 ; 0b6f85 8bec
     push esi                                     ; 0b6f87 56
@@ -7171,30 +7192,30 @@ loc_b6fb7:
     times 2 db 0 ; 0b6ffa (padding)
 
 ; ====================================================================================================
-; sub_b6ffc  [0xb6ffc, 9 bytes, 3 instructions]
-; called by: sub_98b30, sub_98bec
+; shape_width  [0xb6ffc, 9 bytes, 3 instructions]
+; called by: draw_quad_clipped, draw_poly_indexed
 ; ====================================================================================================
-sub_b6ffc:
+shape_width:
     mov ebx, dword ptr [esp + 4]                 ; 0b6ffc 8b5c2404
     movsx eax, word ptr [ebx + 4]                ; 0b7000 0fbf4304
     ret                                          ; 0b7004 c3
 
 
 ; ====================================================================================================
-; sub_b7005  [0xb7005, 9 bytes, 3 instructions]
-; called by: sub_98b30, sub_98bec
+; shape_height  [0xb7005, 9 bytes, 3 instructions]
+; called by: draw_quad_clipped, draw_poly_indexed
 ; ====================================================================================================
-sub_b7005:
+shape_height:
     mov ebx, dword ptr [esp + 4]                 ; 0b7005 8b5c2404
     movsx eax, word ptr [ebx + 6]                ; 0b7009 0fbf4306
     ret                                          ; 0b700d c3
 
 
 ; ====================================================================================================
-; sub_b700e  [0xb700e, 62 bytes, 25 instructions]  <unreferenced>
+; shape_packed_size  [0xb700e, 62 bytes, 25 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b700e:
+shape_packed_size:
     mov ebx, dword ptr [esp + 4]                 ; 0b700e 8b5c2404
     mov al, byte ptr [ebx]                       ; 0b7012 8a03
     or al, al                                    ; 0b7014 0ac0
@@ -7228,10 +7249,11 @@ loc_b7045:
 
 
 ; ====================================================================================================
-; sub_b704c  [0xb704c, 458 bytes, 154 instructions]
-; called by: sub_9b498
+; draw_line_octant  [0xb704c, 458 bytes, 154 instructions]
+; jumps to the line loop of the octant
+; called by: draw_line_aa
 ; ====================================================================================================
-sub_b704c:
+draw_line_octant:
     push ebp                                     ; 0b704c 55
     mov ebp, esp                                 ; 0b704d 8bec
     add esp, -0x10                               ; 0b704f 83c4f0
@@ -7436,10 +7458,11 @@ loc_b7210:
     times 2 db 0 ; 0b7216 (padding)
 
 ; ====================================================================================================
-; sub_b7218  [0xb7218, 188 bytes, 93 instructions]
+; shape_unpack  [0xb7218, 188 bytes, 93 instructions]
+; decompresses a packed shape into a buffer
 ; called by: unpackfile
 ; ====================================================================================================
-sub_b7218:
+shape_unpack:
     push ebp                                     ; 0b7218 55
     mov ebp, esp                                 ; 0b7219 8bec
     add esp, -4                                  ; 0b721b 83c4fc
@@ -7557,10 +7580,10 @@ loc_b72cf:
 
 
 ; ====================================================================================================
-; sub_b72d4  [0xb72d4, 21 bytes, 8 instructions]
-; called by: sub_a2000, sub_afae0
+; texture_set  [0xb72d4, 21 bytes, 8 instructions]
+; called by: draw_textured_triangle, draw_textured_triangle_b
 ; ====================================================================================================
-sub_b72d4:
+texture_set:
     push ebp                                     ; 0b72d4 55
     mov ebp, esp                                 ; 0b72d5 8bec
     mov eax, dword ptr [ebp + 8]                 ; 0b72d7 8b4508
@@ -7572,10 +7595,10 @@ sub_b72d4:
 
 
 ; ====================================================================================================
-; sub_b72e9  [0xb72e9, 53 bytes, 22 instructions]
-; called by: sub_a2000
+; texture_span  [0xb72e9, 53 bytes, 22 instructions]
+; called by: draw_textured_triangle
 ; ====================================================================================================
-sub_b72e9:
+texture_span:
     push ebp                                     ; 0b72e9 55
     mov ebp, esp                                 ; 0b72ea 8bec
     push esi                                     ; 0b72ec 56
@@ -7603,10 +7626,10 @@ loc_b7314:
 
 
 ; ====================================================================================================
-; sub_b731e  [0xb731e, 57 bytes, 22 instructions]  <unreferenced>
+; texture_span_b  [0xb731e, 57 bytes, 22 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b731e:
+texture_span_b:
     push ebp                                     ; 0b731e 55
     mov ebp, esp                                 ; 0b731f 8bec
     push esi                                     ; 0b7321 56
@@ -7633,10 +7656,10 @@ loc_b7340:
 
 
 ; ====================================================================================================
-; sub_b7357  [0xb7357, 61 bytes, 24 instructions]  <unreferenced>
+; texture_span_c  [0xb7357, 61 bytes, 24 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b7357:
+texture_span_c:
     push ebp                                     ; 0b7357 55
     mov ebp, esp                                 ; 0b7358 8bec
     push esi                                     ; 0b735a 56
@@ -7666,10 +7689,10 @@ loc_b738a:
 
 
 ; ====================================================================================================
-; sub_b7394  [0xb7394, 67 bytes, 27 instructions]  <unreferenced>
+; texture_span_d  [0xb7394, 67 bytes, 27 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b7394:
+texture_span_d:
     push ebp                                     ; 0b7394 55
     mov ebp, esp                                 ; 0b7395 8bec
     push esi                                     ; 0b7397 56
@@ -7703,10 +7726,10 @@ loc_b73cd:
 
 
 ; ====================================================================================================
-; sub_b73d7  [0xb73d7, 73 bytes, 28 instructions]  <unreferenced>
+; texture_span_e  [0xb73d7, 73 bytes, 28 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b73d7:
+texture_span_e:
     push ebp                                     ; 0b73d7 55
     mov ebp, esp                                 ; 0b73d8 8bec
     push esi                                     ; 0b73da 56
@@ -7741,10 +7764,10 @@ loc_b7416:
 
 
 ; ====================================================================================================
-; sub_b7420  [0xb7420, 499 bytes, 151 instructions]
-; called by: sub_afae0
+; texture_span_wide  [0xb7420, 499 bytes, 151 instructions]
+; called by: draw_textured_triangle_b
 ; ====================================================================================================
-sub_b7420:
+texture_span_wide:
     push ebp                                     ; 0b7420 55
     mov ebp, esp                                 ; 0b7421 8bec
     push esi                                     ; 0b7423 56
@@ -7944,10 +7967,10 @@ loc_b7603:
     db 0x00 ; 0b7613 |.| (padding)
 
 ; ====================================================================================================
-; sub_b7614  [0xb7614, 39 bytes, 15 instructions]  <unreferenced>
+; drawshape_alt_linear_centered  [0xb7614, 39 bytes, 15 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b7614:
+drawshape_alt_linear_centered:
     push ebp                                     ; 0b7614 55
     mov ebp, esp                                 ; 0b7615 8bec
     add esp, -0x18                               ; 0b7617 83c4e8
@@ -7966,10 +7989,10 @@ sub_b7614:
 
 
 ; ====================================================================================================
-; sub_b763b  [0xb763b, 25 bytes, 11 instructions]
-; called by: sub_a2f40
+; drawshape_alt_linear  [0xb763b, 25 bytes, 11 instructions]
+; called by: drawshape_alt
 ; ====================================================================================================
-sub_b763b:
+drawshape_alt_linear:
     push ebp                                     ; 0b763b 55
     mov ebp, esp                                 ; 0b763c 8bec
     add esp, -0x18                               ; 0b763e 83c4e8
@@ -7984,10 +8007,10 @@ sub_b763b:
 
 
 ; ====================================================================================================
-; sub_b7654  [0xb7654, 289 bytes, 112 instructions]  <unreferenced>
+; drawshape_alt_linear_home  [0xb7654, 289 bytes, 112 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b7654:
+drawshape_alt_linear_home:
     push ebp                                     ; 0b7654 55
     mov ebp, esp                                 ; 0b7655 8bec
     add esp, -0x18                               ; 0b7657 83c4e8
@@ -8121,10 +8144,10 @@ loc_b7771:
     times 3 db 0 ; 0b7775 (padding)
 
 ; ====================================================================================================
-; sub_b7778  [0xb7778, 24 bytes, 12 instructions]  <unreferenced>
+; setremaptable2  [0xb7778, 24 bytes, 12 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b7778:
+setremaptable2:
     push ebp                                     ; 0b7778 55
     mov ebp, esp                                 ; 0b7779 8bec
     push esi                                     ; 0b777b 56
@@ -8140,10 +8163,10 @@ sub_b7778:
 
 
 ; ====================================================================================================
-; sub_b7790  [0xb7790, 24 bytes, 12 instructions]  <unreferenced>
+; getremaptable2  [0xb7790, 24 bytes, 12 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b7790:
+getremaptable2:
     push ebp                                     ; 0b7790 55
     mov ebp, esp                                 ; 0b7791 8bec
     push esi                                     ; 0b7793 56
@@ -8159,10 +8182,10 @@ sub_b7790:
 
 
 ; ====================================================================================================
-; sub_b77a8  [0xb77a8, 39 bytes, 18 instructions]  <unreferenced>
+; setremaprange2  [0xb77a8, 39 bytes, 18 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b77a8:
+setremaprange2:
     push ebp                                     ; 0b77a8 55
     mov ebp, esp                                 ; 0b77a9 8bec
     push esi                                     ; 0b77ab 56
@@ -8185,10 +8208,10 @@ sub_b77a8:
     db 0x00 ; 0b77cf |.| (padding)
 
 ; ====================================================================================================
-; sub_b77d0  [0xb77d0, 36 bytes, 16 instructions]  <unreferenced>
+; drawshape2_alt_linear_centered  [0xb77d0, 36 bytes, 16 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b77d0:
+drawshape2_alt_linear_centered:
     push ebp                                     ; 0b77d0 55
     mov ebp, esp                                 ; 0b77d1 8bec
     add esp, -0x14                               ; 0b77d3 83c4ec
@@ -8208,10 +8231,10 @@ sub_b77d0:
 
 
 ; ====================================================================================================
-; sub_b77f4  [0xb77f4, 26 bytes, 12 instructions]
-; called by: sub_b01e4
+; drawshape2_alt_linear  [0xb77f4, 26 bytes, 12 instructions]
+; called by: drawshape2_alt
 ; ====================================================================================================
-sub_b77f4:
+drawshape2_alt_linear:
     push ebp                                     ; 0b77f4 55
     mov ebp, esp                                 ; 0b77f5 8bec
     add esp, -0x14                               ; 0b77f7 83c4ec
@@ -8227,10 +8250,10 @@ sub_b77f4:
 
 
 ; ====================================================================================================
-; sub_b780e  [0xb780e, 120 bytes, 50 instructions]  <unreferenced>
+; drawshape2_alt_linear_home  [0xb780e, 120 bytes, 50 instructions]  <unreferenced>
 ; no references found
 ; ====================================================================================================
-sub_b780e:
+drawshape2_alt_linear_home:
     push ebp                                     ; 0b780e 55
     mov ebp, esp                                 ; 0b780f 8bec
     add esp, -0x14                               ; 0b7811 83c4ec

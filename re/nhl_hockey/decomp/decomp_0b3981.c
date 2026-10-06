@@ -3,10 +3,10 @@
 #include "prototypes.h"
 
 // ================================================================================================
-// sub_b3981 @ 0xb3981 [__watcall]
+// ticks_reset @ 0xb3981 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b3981(void)
+void __watcall ticks_reset(void)
 
 {
   dword_d2fdc = 0;
@@ -40,10 +40,10 @@ void __watcall waittimeout(void)
 
 
 // ================================================================================================
-// sub_b39a7 @ 0xb39a7 [__watcall]
+// timeout_reached @ 0xb39a7 [__watcall]
 // ================================================================================================
 
-bool __watcall sub_b39a7(void)
+bool __watcall timeout_reached(void)
 
 {
   return dword_d4294 <= dword_d2fdc;
@@ -51,10 +51,10 @@ bool __watcall sub_b39a7(void)
 
 
 // ================================================================================================
-// sub_b39b7 @ 0xb39b7 [__cdecl]
+// spin_wait @ 0xb39b7 [__cdecl]
 // ================================================================================================
 
-void sub_b39b7(int param_1)
+void spin_wait(int param_1)
 
 {
   do {
@@ -64,10 +64,10 @@ void sub_b39b7(int param_1)
 
 
 // ================================================================================================
-// sub_b39d0 @ 0xb39d0 [__watcall]
+// key_poll @ 0xb39d0 [__watcall]
 // ================================================================================================
 
-ushort __watcall sub_b39d0(void)
+ushort __watcall key_poll(void)
 
 {
   ushort uVar1;
@@ -100,10 +100,10 @@ void __watcall getkey(void)
 
 
 // ================================================================================================
-// sub_b39f3 @ 0xb39f3 [__watcall]
+// key_poll_b @ 0xb39f3 [__watcall]
 // ================================================================================================
 
-ushort __watcall sub_b39f3(void)
+ushort __watcall key_poll_b(void)
 
 {
   ushort uVar1;
@@ -121,10 +121,10 @@ ushort __watcall sub_b39f3(void)
 
 
 // ================================================================================================
-// sub_b3a08 @ 0xb3a08 [__cdecl]
+// set_input_hook @ 0xb3a08 [__cdecl]
 // ================================================================================================
 
-void sub_b3a08(undefined *param_1)
+void set_input_hook(undefined *param_1)
 
 {
   funcptr_d42a0 = param_1;
@@ -133,10 +133,10 @@ void sub_b3a08(undefined *param_1)
 
 
 // ================================================================================================
-// sub_b3a12 @ 0xb3a12 [__watcall]
+// get_input_hook @ 0xb3a12 [__watcall]
 // ================================================================================================
 
-undefined * __watcall sub_b3a12(void)
+undefined * __watcall get_input_hook(void)
 
 {
   return funcptr_d42a0;
@@ -169,17 +169,17 @@ void __watcall flushkeys(void)
   short sVar1;
   
   do {
-    sVar1 = sub_b39d0();
+    sVar1 = key_poll();
   } while (sVar1 != 0);
   return;
 }
 
 
 // ================================================================================================
-// sub_b3a2f @ 0xb3a2f [__watcall]
+// wait_input_or_timeout @ 0xb3a2f [__watcall]
 // ================================================================================================
 
-short __watcall sub_b3a2f(void)
+short __watcall wait_input_or_timeout(void)
 
 {
   short sVar1;
@@ -189,17 +189,17 @@ short __watcall sub_b3a2f(void)
     if (sVar1 != 0) {
       return sVar1;
     }
-    sVar1 = sub_b39a7();
+    sVar1 = timeout_reached();
   } while (sVar1 == 0);
   return 0;
 }
 
 
 // ================================================================================================
-// sub_b3a48 @ 0xb3a48 [__watcall]
+// wait_key_ticks @ 0xb3a48 [__watcall]
 // ================================================================================================
 
-int __watcall sub_b3a48(void)
+int __watcall wait_key_ticks(void)
 
 {
   int iVar1;
@@ -219,10 +219,10 @@ int __watcall sub_b3a48(void)
 
 
 // ================================================================================================
-// sub_b3a72 @ 0xb3a72 [__watcall]
+// bios_shift_flags @ 0xb3a72 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b3a72(void)
+void __watcall bios_shift_flags(void)
 
 {
   code *pcVar1;
@@ -234,10 +234,10 @@ void __watcall sub_b3a72(void)
 
 
 // ================================================================================================
-// sub_b3a88 @ 0xb3a88 [__cdecl]
+// save_screen_state @ 0xb3a88 [__cdecl]
 // ================================================================================================
 
-void sub_b3a88(undefined4 *param_1)
+void save_screen_state(undefined4 *param_1)
 
 {
   int iVar1;
@@ -254,10 +254,10 @@ void sub_b3a88(undefined4 *param_1)
 
 
 // ================================================================================================
-// sub_b3aa1 @ 0xb3aa1 [__cdecl]
+// restore_screen_state @ 0xb3aa1 [__cdecl]
 // ================================================================================================
 
-void sub_b3aa1(undefined4 *param_1)
+void restore_screen_state(undefined4 *param_1)
 
 {
   int iVar1;
@@ -274,10 +274,10 @@ void sub_b3aa1(undefined4 *param_1)
 
 
 // ================================================================================================
-// sub_b3abc @ 0xb3abc [__cdecl]
+// memmove_dwords @ 0xb3abc [__cdecl]
 // ================================================================================================
 
-void sub_b3abc(undefined4 *param_1,undefined4 *param_2,uint param_3)
+void memmove_dwords(undefined4 *param_1,undefined4 *param_2,uint param_3)
 
 {
   uint uVar1;
@@ -318,10 +318,10 @@ void sub_b3abc(undefined4 *param_1,undefined4 *param_2,uint param_3)
 
 
 // ================================================================================================
-// sub_b3b00 @ 0xb3b00 [__watcall]
+// dos_lseek @ 0xb3b00 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sub_b3b00(void)
+undefined8 __watcall dos_lseek(void)
 
 {
   code *pcVar1;
@@ -357,11 +357,11 @@ void openhandle(undefined4 param_1,undefined4 *param_2,int *param_3,undefined4 *
   if (!bVar5) {
     *param_2 = uVar2;
     bVar5 = false;
-    uVar2 = sub_b3b00(0x4202,0,uVar2);
+    uVar2 = dos_lseek(0x4202,0,uVar2);
     if (!bVar5) {
       *param_4 = uVar2;
       bVar5 = false;
-      sub_b3b00(0x4200,0,*param_2);
+      dos_lseek(0x4200,0,*param_2);
       if (!bVar5) {
         *param_3 = 0;
         return;
@@ -394,7 +394,7 @@ void openhandle(undefined4 param_1,undefined4 *param_2,int *param_3,undefined4 *
         *param_4 = *dword_d4440;
         uVar2 = *param_2;
         *(undefined4 *)((int)piVar4 + -4) = 0xb3c27;
-        sub_b3b00(0x4200,iVar3,uVar2);
+        dos_lseek(0x4200,iVar3,uVar2);
         if (!bVar5) {
           return;
         }
@@ -426,10 +426,10 @@ LAB_000b3c2b:
 
 
 // ================================================================================================
-// sub_b3b2e @ 0xb3b2e [__cdecl]
+// dos_open_try @ 0xb3b2e [__cdecl]
 // ================================================================================================
 
-void sub_b3b2e(undefined4 param_1,undefined4 *param_2,int *param_3,undefined4 *param_4)
+void dos_open_try(undefined4 param_1,undefined4 *param_2,int *param_3,undefined4 *param_4)
 
 {
   code *pcVar1;
@@ -447,11 +447,11 @@ void sub_b3b2e(undefined4 param_1,undefined4 *param_2,int *param_3,undefined4 *p
   if (!bVar5) {
     *param_2 = uVar2;
     bVar5 = false;
-    uVar2 = sub_b3b00(0x4202,0,uVar2);
+    uVar2 = dos_lseek(0x4202,0,uVar2);
     if (!bVar5) {
       *param_4 = uVar2;
       bVar5 = false;
-      sub_b3b00(0x4200,0,*param_2);
+      dos_lseek(0x4200,0,*param_2);
       if (!bVar5) {
         *param_3 = 0;
         return;
@@ -484,7 +484,7 @@ void sub_b3b2e(undefined4 param_1,undefined4 *param_2,int *param_3,undefined4 *p
         *param_4 = *dword_d4440;
         uVar2 = *param_2;
         *(undefined4 *)((int)piVar4 + -4) = 0xb3c27;
-        sub_b3b00(0x4200,iVar3,uVar2);
+        dos_lseek(0x4200,iVar3,uVar2);
         if (!bVar5) {
           return;
         }
@@ -516,10 +516,10 @@ LAB_000b3c2b:
 
 
 // ================================================================================================
-// sub_b3b44 @ 0xb3b44 [__cdecl]
+// dos_create_try @ 0xb3b44 [__cdecl]
 // ================================================================================================
 
-void sub_b3b44(undefined4 param_1,undefined4 *param_2,int *param_3,undefined4 *param_4)
+void dos_create_try(undefined4 param_1,undefined4 *param_2,int *param_3,undefined4 *param_4)
 
 {
   code *pcVar1;
@@ -537,11 +537,11 @@ void sub_b3b44(undefined4 param_1,undefined4 *param_2,int *param_3,undefined4 *p
   if (!bVar5) {
     *param_2 = uVar2;
     bVar5 = false;
-    uVar2 = sub_b3b00(0x4202,0,uVar2);
+    uVar2 = dos_lseek(0x4202,0,uVar2);
     if (!bVar5) {
       *param_4 = uVar2;
       bVar5 = false;
-      sub_b3b00(0x4200,0,*param_2);
+      dos_lseek(0x4200,0,*param_2);
       if (!bVar5) {
         *param_3 = 0;
         return;
@@ -574,7 +574,7 @@ void sub_b3b44(undefined4 param_1,undefined4 *param_2,int *param_3,undefined4 *p
         *param_4 = *dword_d4440;
         uVar2 = *param_2;
         *(undefined4 *)((int)piVar4 + -4) = 0xb3c27;
-        sub_b3b00(0x4200,iVar3,uVar2);
+        dos_lseek(0x4200,iVar3,uVar2);
         if (!bVar5) {
           return;
         }
@@ -606,10 +606,10 @@ LAB_000b3c2b:
 
 
 // ================================================================================================
-// sub_b3b5a @ 0xb3b5a [__cdecl]
+// dos_open_fatal @ 0xb3b5a [__cdecl]
 // ================================================================================================
 
-void sub_b3b5a(undefined4 param_1,undefined4 *param_2,int *param_3,undefined4 *param_4)
+void dos_open_fatal(undefined4 param_1,undefined4 *param_2,int *param_3,undefined4 *param_4)
 
 {
   code *pcVar1;
@@ -627,11 +627,11 @@ void sub_b3b5a(undefined4 param_1,undefined4 *param_2,int *param_3,undefined4 *p
   if (!bVar5) {
     *param_2 = uVar2;
     bVar5 = false;
-    uVar2 = sub_b3b00(0x4202,0,uVar2);
+    uVar2 = dos_lseek(0x4202,0,uVar2);
     if (!bVar5) {
       *param_4 = uVar2;
       bVar5 = false;
-      sub_b3b00(0x4200,0,*param_2);
+      dos_lseek(0x4200,0,*param_2);
       if (!bVar5) {
         *param_3 = 0;
         return;
@@ -664,7 +664,7 @@ void sub_b3b5a(undefined4 param_1,undefined4 *param_2,int *param_3,undefined4 *p
         *param_4 = *dword_d4440;
         uVar2 = *param_2;
         *(undefined4 *)((int)piVar4 + -4) = 0xb3c27;
-        sub_b3b00(0x4200,iVar3,uVar2);
+        dos_lseek(0x4200,iVar3,uVar2);
         if (!bVar5) {
           return;
         }
@@ -713,10 +713,10 @@ void closehandle(int param_1)
 
 
 // ================================================================================================
-// sub_b3c70 @ 0xb3c70 [__cdecl]
+// dos_write_blocks @ 0xb3c70 [__cdecl]
 // ================================================================================================
 
-undefined4 sub_b3c70(undefined4 param_1,undefined4 param_2,uint param_3)
+undefined4 dos_write_blocks(undefined4 param_1,undefined4 param_2,uint param_3)
 
 {
   uint uVar1;
@@ -741,10 +741,10 @@ undefined4 sub_b3c70(undefined4 param_1,undefined4 param_2,uint param_3)
 
 
 // ================================================================================================
-// sub_b3c74 @ 0xb3c74 [__cdecl]
+// dos_read_blocks @ 0xb3c74 [__cdecl]
 // ================================================================================================
 
-undefined4 sub_b3c74(undefined4 param_1,undefined4 param_2,uint param_3)
+undefined4 dos_read_blocks(undefined4 param_1,undefined4 param_2,uint param_3)
 
 {
   uint uVar1;
@@ -775,16 +775,16 @@ undefined4 sub_b3c74(undefined4 param_1,undefined4 param_2,uint param_3)
 void seekhandle(undefined4 param_1,undefined4 param_2)
 
 {
-  sub_b3b00(0x4200,param_2,param_1);
+  dos_lseek(0x4200,param_2,param_1);
   return;
 }
 
 
 // ================================================================================================
-// sub_b3cc8 @ 0xb3cc8 [__cdecl]
+// dos_findfirst_dta @ 0xb3cc8 [__cdecl]
 // ================================================================================================
 
-undefined1 * sub_b3cc8(char *param_1)
+undefined1 * dos_findfirst_dta(char *param_1)
 
 {
   char cVar1;
@@ -833,10 +833,10 @@ undefined1 * sub_b3cc8(char *param_1)
 
 
 // ================================================================================================
-// sub_b3d2a @ 0xb3d2a [__watcall]
+// dos_findnext_dta @ 0xb3d2a [__watcall]
 // ================================================================================================
 
-undefined1 * __watcall sub_b3d2a(void)
+undefined1 * __watcall dos_findnext_dta(void)
 
 {
   code *pcVar1;
@@ -867,10 +867,10 @@ undefined1 * __watcall sub_b3d2a(void)
 
 
 // ================================================================================================
-// sub_b3d40 @ 0xb3d40 [__watcall]
+// timer_count2 @ 0xb3d40 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sub_b3d40(void)
+undefined4 __watcall timer_count2(void)
 
 {
   return dword_d2fe0;
@@ -890,10 +890,10 @@ void settimeout2(int param_1)
 
 
 // ================================================================================================
-// sub_b3d56 @ 0xb3d56 [__watcall]
+// timer_wait @ 0xb3d56 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b3d56(void)
+void __watcall timer_wait(void)
 
 {
   do {
@@ -914,10 +914,10 @@ bool __watcall timeout2_expired(void)
 
 
 // ================================================================================================
-// sub_b3d74 @ 0xb3d74 [__cdecl]
+// spin_wait_b @ 0xb3d74 [__cdecl]
 // ================================================================================================
 
-void sub_b3d74(int param_1)
+void spin_wait_b(int param_1)
 
 {
   do {
@@ -936,7 +936,7 @@ uint approx_distance(int param_1,int param_2)
   int iVar1;
   uint uVar2;
   
-  iVar1 = sub_b49c0(param_2,param_1);
+  iVar1 = vector_octant(param_2,param_1);
   if (iVar1 < 0) {
     iVar1 = -iVar1;
   }
@@ -944,13 +944,13 @@ uint approx_distance(int param_1,int param_2)
     iVar1 = 0x200 - iVar1;
   }
   if (iVar1 < 0x81) {
-    uVar2 = sub_b4a66(iVar1);
+    uVar2 = cos_lookup(iVar1);
     if (param_1 < 0) {
       param_1 = -param_1;
     }
     return (uint)(param_1 << 0x10) / uVar2;
   }
-  uVar2 = sub_b4a60(iVar1);
+  uVar2 = sin_lookup(iVar1);
   if (param_2 < 0) {
     param_2 = -param_2;
   }
@@ -959,11 +959,11 @@ uint approx_distance(int param_1,int param_2)
 
 
 // ================================================================================================
-// sub_b3dfc @ 0xb3dfc [__watcall]
+// dump_registers @ 0xb3dfc [__watcall]
 // ================================================================================================
 
 void __watcall
-sub_b3dfc(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX,
+dump_registers(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX,
          char *param_5,char *param_6)
 
 {
@@ -1007,12 +1007,12 @@ fatal_dumpregs(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,unde
 
 
 // ================================================================================================
-// sub_b3e98 @ 0xb3e98 [__watcall]
+// save_video_state @ 0xb3e98 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __watcall sub_b3e98(void)
+void __watcall save_video_state(void)
 
 {
   code *pcVar1;
@@ -1023,7 +1023,7 @@ void __watcall sub_b3e98(void)
     byte_d4f45 = DAT_00000410;
     word_d4f46 = _DAT_0000044a;
     byte_d4f48 = DAT_00000484;
-    sub_b3454();
+    atexit_wrap();
   }
   return;
 }
@@ -1057,7 +1057,7 @@ undefined8 __watcall restorevideo(void)
     if ((byte_d4f45 & 0x30) == 0x30) {
       *(undefined4 *)(puVar2 + -4) = 0;
       *(undefined4 *)(puVar2 + -8) = 0xb3f3a;
-      sub_910b0();
+      clearscreen_default();
     }
     pcVar1 = (code *)swi(0x10);
     (*pcVar1)();
@@ -1069,10 +1069,10 @@ undefined8 __watcall restorevideo(void)
 
 
 // ================================================================================================
-// sub_b3f50 @ 0xb3f50 [__watcall]
+// cpu_detect @ 0xb3f50 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b3f50(void)
+void __watcall cpu_detect(void)
 
 {
   ushort *puVar1;
@@ -1139,10 +1139,10 @@ void __watcall sub_b3f50(void)
 
 
 // ================================================================================================
-// sub_b3fb0 @ 0xb3fb0 [__cdecl]
+// memset_fill @ 0xb3fb0 [__cdecl]
 // ================================================================================================
 
-void sub_b3fb0(undefined4 *param_1,uint param_2,undefined param_3)
+void memset_fill(undefined4 *param_1,uint param_2,undefined param_3)
 
 {
   uint uVar1;
@@ -1160,10 +1160,10 @@ void sub_b3fb0(undefined4 *param_1,uint param_2,undefined param_3)
 
 
 // ================================================================================================
-// sub_b3fc2 @ 0xb3fc2 [__cdecl]
+// memzero @ 0xb3fc2 [__cdecl]
 // ================================================================================================
 
-void sub_b3fc2(undefined4 *param_1,uint param_2)
+void memzero(undefined4 *param_1,uint param_2)
 
 {
   uint uVar1;
@@ -1181,10 +1181,10 @@ void sub_b3fc2(undefined4 *param_1,uint param_2)
 
 
 // ================================================================================================
-// sub_b3fe0 @ 0xb3fe0 [__watcall]
+// clear_input_state @ 0xb3fe0 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b3fe0(void)
+void __watcall clear_input_state(void)
 
 {
   dword_d4fa0 = 0;
@@ -1193,21 +1193,21 @@ void __watcall sub_b3fe0(void)
 
 
 // ================================================================================================
-// sub_b3fec @ 0xb3fec [__watcall]
+// getkey_joystick @ 0xb3fec [__watcall]
 // ================================================================================================
 
-short __watcall sub_b3fec(void)
+short __watcall getkey_joystick(void)
 
 {
   char cVar1;
   short sVar2;
   uint uVar3;
   
-  sVar2 = sub_b39d0();
+  sVar2 = key_poll();
   if (sVar2 != 0) {
     return sVar2;
   }
-  uVar3 = sub_b3168();
+  uVar3 = joystick_read();
   cVar1 = byte_d4fe8;
   if ((uVar3 & 0x30) == 0) {
     sVar2 = (short)*(undefined4 *)(&unk_d4fa4 + (uVar3 & 0xf) * 2);
@@ -1217,7 +1217,7 @@ short __watcall sub_b3fec(void)
   }
   if (sVar2 == word_d4fe4) {
     if (sVar2 != 0) {
-      sVar2 = sub_b3962(dword_d4feb);
+      sVar2 = ticks_since(dword_d4feb);
       if (word_d4fe9 <= sVar2) {
         word_d4fe9 = 0xf;
 LAB_000b409f:
@@ -1243,10 +1243,10 @@ LAB_000b409f:
 
 
 // ================================================================================================
-// sub_b3ff7 @ 0xb3ff7 [__watcall]
+// getkey_translate @ 0xb3ff7 [__watcall]
 // ================================================================================================
 
-short __watcall sub_b3ff7(void)
+short __watcall getkey_translate(void)
 
 {
   char cVar1;
@@ -1254,12 +1254,12 @@ short __watcall sub_b3ff7(void)
   undefined4 uVar3;
   uint uVar4;
   
-  uVar3 = sub_b39d0();
+  uVar3 = key_poll();
   if ((short)uVar3 != 0) {
-    sVar2 = sub_b4aa4(uVar3);
+    sVar2 = key_repeat_filter(uVar3);
     return sVar2;
   }
-  uVar4 = sub_b3168();
+  uVar4 = joystick_read();
   cVar1 = byte_d4fe8;
   if ((uVar4 & 0x30) == 0) {
     sVar2 = (short)*(undefined4 *)(&unk_d4fa4 + (uVar4 & 0xf) * 2);
@@ -1269,7 +1269,7 @@ short __watcall sub_b3ff7(void)
   }
   if (sVar2 == word_d4fe4) {
     if (sVar2 != 0) {
-      sVar2 = sub_b3962(dword_d4feb);
+      sVar2 = ticks_since(dword_d4feb);
       if (word_d4fe9 <= sVar2) {
         word_d4fe9 = 0xf;
 LAB_000b409f:
@@ -1295,10 +1295,10 @@ LAB_000b409f:
 
 
 // ================================================================================================
-// sub_b400b @ 0xb400b [__watcall]
+// getkey_any @ 0xb400b [__watcall]
 // ================================================================================================
 
-short __watcall sub_b400b(void)
+short __watcall getkey_any(void)
 
 {
   char cVar1;
@@ -1306,15 +1306,15 @@ short __watcall sub_b400b(void)
   undefined4 uVar3;
   uint uVar4;
   
-  uVar3 = sub_b39d0();
+  uVar3 = key_poll();
   if ((short)uVar3 != 0) {
-    sVar2 = sub_b4aa4(uVar3);
+    sVar2 = key_repeat_filter(uVar3);
     return sVar2;
   }
   sVar2 = (*(code *)mouse_update_callback)();
   uVar4 = (uint)(ushort)(sVar2 << 4);
   if ((ushort)(sVar2 << 4) == 0) {
-    uVar4 = sub_b3168();
+    uVar4 = joystick_read();
   }
   cVar1 = byte_d4fe8;
   if ((uVar4 & 0x30) == 0) {
@@ -1325,7 +1325,7 @@ short __watcall sub_b400b(void)
   }
   if (sVar2 == word_d4fe4) {
     if (sVar2 != 0) {
-      sVar2 = sub_b3962(dword_d4feb);
+      sVar2 = ticks_since(dword_d4feb);
       if (word_d4fe9 <= sVar2) {
         word_d4fe9 = 0xf;
 LAB_000b409f:
@@ -1351,24 +1351,24 @@ LAB_000b409f:
 
 
 // ================================================================================================
-// sub_b40bf @ 0xb40bf [__watcall]
+// key_poll_translate @ 0xb40bf [__watcall]
 // ================================================================================================
 
-void __watcall sub_b40bf(void)
+void __watcall key_poll_translate(void)
 
 {
   int iVar1;
   
-  iVar1 = sub_b39d0();
+  iVar1 = key_poll();
   if (iVar1 != 0) {
-    sub_b4aa4(iVar1);
+    key_repeat_filter(iVar1);
   }
   return;
 }
 
 
 // ================================================================================================
-// sub_b40d4 @ 0xb40d4 [__watcall]
+// clip_line_b @ 0xb40d4 [__watcall]
 // ================================================================================================
 
 /* WARNING: Removing unreachable block (ram,0x000b484d) */
@@ -1417,7 +1417,7 @@ void __watcall sub_b40bf(void)
 /* WARNING: Removing unreachable block (ram,0x000b465b) */
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-undefined4 __watcall sub_b40d4(void)
+undefined4 __watcall clip_line_b(void)
 
 {
   undefined4 uVar1;
@@ -1597,13 +1597,13 @@ LAB_000b4246:
 
 
 // ================================================================================================
-// sub_b40e2 @ 0xb40e2 [__cdecl]
+// clip_line @ 0xb40e2 [__cdecl]
 // ================================================================================================
 
 /* WARNING: Removing unreachable block (ram,0x000b4870) */
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-uint sub_b40e2(int param_1,int param_2,int param_3,int param_4,undefined4 *param_5)
+uint clip_line(int param_1,int param_2,int param_3,int param_4,undefined4 *param_5)
 
 {
   int iVar1;
@@ -1887,10 +1887,10 @@ LAB_000b4246:
 
 
 // ================================================================================================
-// sub_b49c0 @ 0xb49c0 [__cdecl]
+// vector_octant @ 0xb49c0 [__cdecl]
 // ================================================================================================
 
-void sub_b49c0(int param_1,int param_2)
+void vector_octant(int param_1,int param_2)
 
 {
   uint uVar1;
@@ -1921,10 +1921,10 @@ void sub_b49c0(int param_1,int param_2)
 
 
 // ================================================================================================
-// sub_b4a60 @ 0xb4a60 [__cdecl]
+// sin_lookup @ 0xb4a60 [__cdecl]
 // ================================================================================================
 
-undefined * sub_b4a60(ushort param_1)
+undefined * sin_lookup(ushort param_1)
 
 {
   char cVar2;
@@ -1947,10 +1947,10 @@ undefined * sub_b4a60(ushort param_1)
 
 
 // ================================================================================================
-// sub_b4a66 @ 0xb4a66 [__cdecl]
+// cos_lookup @ 0xb4a66 [__cdecl]
 // ================================================================================================
 
-undefined * sub_b4a66(undefined4 param_1)
+undefined * cos_lookup(undefined4 param_1)
 
 {
   ushort uVar1;
@@ -1974,10 +1974,10 @@ undefined * sub_b4a66(undefined4 param_1)
 
 
 // ================================================================================================
-// sub_b4aa4 @ 0xb4aa4 [__cdecl]
+// key_repeat_filter @ 0xb4aa4 [__cdecl]
 // ================================================================================================
 
-uint sub_b4aa4(uint param_1)
+uint key_repeat_filter(uint param_1)
 
 {
   byte bVar1;
@@ -2010,10 +2010,10 @@ uint sub_b4aa4(uint param_1)
 
 
 // ================================================================================================
-// sub_b4afd @ 0xb4afd [__watcall]
+// scancode_to_ascii @ 0xb4afd [__watcall]
 // ================================================================================================
 
-void __watcall sub_b4afd(void)
+void __watcall scancode_to_ascii(void)
 
 {
   char cVar1;
@@ -2055,10 +2055,10 @@ LAB_000b4b20:
 
 
 // ================================================================================================
-// sub_b4b4e @ 0xb4b4e [__watcall]
+// key_release @ 0xb4b4e [__watcall]
 // ================================================================================================
 
-void __watcall sub_b4b4e(void)
+void __watcall key_release(void)
 
 {
   uint uVar1;
@@ -2087,7 +2087,7 @@ void __watcall settextmode(void)
 {
   code *pcVar1;
   
-  sub_910b0(0);
+  clearscreen_default(0);
   DAT_00000410 = DAT_00000410 & 0xcf;
   DAT_00000410 = DAT_00000410 | 0x10;
   pcVar1 = (code *)swi(0x10);
@@ -2172,10 +2172,10 @@ void setclip(int param_1,int param_2,int param_3,int param_4)
 
 
 // ================================================================================================
-// sub_b4c28 @ 0xb4c28 [__watcall]
+// timeout_default @ 0xb4c28 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b4c28(void)
+void __watcall timeout_default(void)
 
 {
   dword_d429c = 10000;
@@ -2274,10 +2274,10 @@ void __watcall waitvbl_end(void)
 
 
 // ================================================================================================
-// sub_b4ca7 @ 0xb4ca7 [__watcall]
+// vga_in_vretrace @ 0xb4ca7 [__watcall]
 // ================================================================================================
 
-byte __watcall sub_b4ca7(void)
+byte __watcall vga_in_vretrace(void)
 
 {
   byte bVar1;
@@ -2288,10 +2288,10 @@ byte __watcall sub_b4ca7(void)
 
 
 // ================================================================================================
-// sub_b4cb4 @ 0xb4cb4 [__watcall]
+// blit_rle_frame_centered @ 0xb4cb4 [__watcall]
 // ================================================================================================
 
-byte __watcall sub_b4cb4(void)
+byte __watcall blit_rle_frame_centered(void)
 
 {
   byte bVar1;
@@ -2595,10 +2595,10 @@ void setremaptable(undefined4 *param_1)
 
 
 // ================================================================================================
-// sub_b4dec @ 0xb4dec [__watcall]
+// getremaptable @ 0xb4dec [__watcall]
 // ================================================================================================
 
-void __watcall sub_b4dec(void)
+void __watcall getremaptable(void)
 
 {
   int iVar1;
@@ -2616,10 +2616,10 @@ void __watcall sub_b4dec(void)
 
 
 // ================================================================================================
-// sub_b4e04 @ 0xb4e04 [__watcall]
+// setremaprange @ 0xb4e04 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b4e04(void)
+void __watcall setremaprange(void)
 
 {
   undefined4 *puVar1;
@@ -2644,10 +2644,10 @@ void __watcall sub_b4e04(void)
 
 
 // ================================================================================================
-// sub_b4e2c @ 0xb4e2c [__watcall]
+// blit_rle_remap_centered @ 0xb4e2c [__watcall]
 // ================================================================================================
 
-byte __watcall sub_b4e2c(void)
+byte __watcall blit_rle_remap_centered(void)
 
 {
   byte bVar1;
@@ -2753,10 +2753,10 @@ LAB_000b4f2a:
 
 
 // ================================================================================================
-// sub_b4e50 @ 0xb4e50 [__cdecl]
+// blit_rle_remap @ 0xb4e50 [__cdecl]
 // ================================================================================================
 
-byte sub_b4e50(int param_1,int param_2,int param_3)
+byte blit_rle_remap(int param_1,int param_2,int param_3)
 
 {
   byte bVar1;
@@ -2856,10 +2856,10 @@ LAB_000b4f2a:
 
 
 // ================================================================================================
-// sub_b4e6a @ 0xb4e6a [__watcall]
+// blit_rle_remap_home @ 0xb4e6a [__watcall]
 // ================================================================================================
 
-byte __watcall sub_b4e6a(void)
+byte __watcall blit_rle_remap_home(void)
 
 {
   byte bVar1;
@@ -2996,10 +2996,10 @@ undefined4 windowdefp(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 
 // ================================================================================================
-// sub_b4fac @ 0xb4fac [__cdecl]
+// drawline @ 0xb4fac [__cdecl]
 // ================================================================================================
 
-void sub_b4fac(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,
+void drawline(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,
               undefined4 param_5)
 
 {
@@ -3008,20 +3008,20 @@ void sub_b4fac(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefine
   int local_24;
   undefined4 local_20;
   
-  iVar1 = sub_b40e2(param_1,param_2,param_3,param_4,local_3c);
+  iVar1 = clip_line(param_1,param_2,param_3,param_4,local_3c);
   if ((iVar1 == 0) && (0 < local_24)) {
     local_20 = param_5;
-    sub_9b498(local_3c);
+    draw_line_aa(local_3c);
   }
   return;
 }
 
 
 // ================================================================================================
-// sub_b4fe8 @ 0xb4fe8 [__watcall]
+// blit_rle_clip_centered @ 0xb4fe8 [__watcall]
 // ================================================================================================
 
-uint __watcall sub_b4fe8(void)
+uint __watcall blit_rle_clip_centered(void)
 
 {
   byte bVar1;
@@ -3355,10 +3355,10 @@ code_r0x000b4da9:
 
 
 // ================================================================================================
-// sub_b500c @ 0xb500c [__cdecl]
+// blit_rle_clip @ 0xb500c [__cdecl]
 // ================================================================================================
 
-uint sub_b500c(int param_1,int param_2,int param_3)
+uint blit_rle_clip(int param_1,int param_2,int param_3)
 
 {
   byte bVar1;
@@ -3686,10 +3686,10 @@ code_r0x000b4da9:
 
 
 // ================================================================================================
-// sub_b5026 @ 0xb5026 [__watcall]
+// blit_rle_clip_home @ 0xb5026 [__watcall]
 // ================================================================================================
 
-uint __watcall sub_b5026(void)
+uint __watcall blit_rle_clip_home(void)
 
 {
   byte bVar1;
@@ -4021,10 +4021,10 @@ code_r0x000b4da9:
 
 
 // ================================================================================================
-// sub_b5290 @ 0xb5290 [__watcall]
+// blit_rle_remap_clip_centered @ 0xb5290 [__watcall]
 // ================================================================================================
 
-uint __watcall sub_b5290(void)
+uint __watcall blit_rle_remap_clip_centered(void)
 
 {
   byte bVar1;
@@ -4376,10 +4376,10 @@ LAB_000b4f2a:
 
 
 // ================================================================================================
-// sub_b52b4 @ 0xb52b4 [__watcall]
+// blit_rle_remap_clip @ 0xb52b4 [__watcall]
 // ================================================================================================
 
-uint __watcall sub_b52b4(void)
+uint __watcall blit_rle_remap_clip(void)
 
 {
   byte bVar1;
@@ -4728,10 +4728,10 @@ LAB_000b4f2a:
 
 
 // ================================================================================================
-// sub_b52ce @ 0xb52ce [__watcall]
+// blit_rle_remap_clip_home @ 0xb52ce [__watcall]
 // ================================================================================================
 
-uint __watcall sub_b52ce(void)
+uint __watcall blit_rle_remap_clip_home(void)
 
 {
   byte bVar1;
@@ -5081,10 +5081,10 @@ LAB_000b4f2a:
 
 
 // ================================================================================================
-// sub_b555c @ 0xb555c [__watcall]
+// blit_rle_flip_centered @ 0xb555c [__watcall]
 // ================================================================================================
 
-byte __watcall sub_b555c(void)
+byte __watcall blit_rle_flip_centered(void)
 
 {
   int iVar1;
@@ -5191,10 +5191,10 @@ LAB_000b565e:
 
 
 // ================================================================================================
-// sub_b5584 @ 0xb5584 [__watcall]
+// blit_rle_flip @ 0xb5584 [__watcall]
 // ================================================================================================
 
-byte __watcall sub_b5584(void)
+byte __watcall blit_rle_flip(void)
 
 {
   byte bVar1;
@@ -5298,10 +5298,10 @@ LAB_000b565e:
 
 
 // ================================================================================================
-// sub_b559e @ 0xb559e [__watcall]
+// blit_rle_flip_home @ 0xb559e [__watcall]
 // ================================================================================================
 
-byte __watcall sub_b559e(void)
+byte __watcall blit_rle_flip_home(void)
 
 {
   int iVar1;
@@ -5404,10 +5404,10 @@ LAB_000b565e:
 
 
 // ================================================================================================
-// sub_b5690 @ 0xb5690 [__watcall]
+// blit_rle_flip_clip_centered @ 0xb5690 [__watcall]
 // ================================================================================================
 
-uint __watcall sub_b5690(void)
+uint __watcall blit_rle_flip_clip_centered(void)
 
 {
   byte bVar1;
@@ -5757,10 +5757,10 @@ LAB_000b565e:
 
 
 // ================================================================================================
-// sub_b56b8 @ 0xb56b8 [__watcall]
+// blit_rle_flip_clip @ 0xb56b8 [__watcall]
 // ================================================================================================
 
-uint __watcall sub_b56b8(void)
+uint __watcall blit_rle_flip_clip(void)
 
 {
   byte bVar1;
@@ -6108,10 +6108,10 @@ LAB_000b565e:
 
 
 // ================================================================================================
-// sub_b56d2 @ 0xb56d2 [__watcall]
+// blit_rle_flip_clip_home @ 0xb56d2 [__watcall]
 // ================================================================================================
 
-uint __watcall sub_b56d2(void)
+uint __watcall blit_rle_flip_clip_home(void)
 
 {
   byte bVar1;
@@ -6458,10 +6458,10 @@ LAB_000b565e:
 
 
 // ================================================================================================
-// sub_b594c @ 0xb594c [__watcall]
+// blit_rle_flip_remap_centered @ 0xb594c [__watcall]
 // ================================================================================================
 
-byte __watcall sub_b594c(void)
+byte __watcall blit_rle_flip_remap_centered(void)
 
 {
   int iVar1;
@@ -6569,10 +6569,10 @@ LAB_000b5a57:
 
 
 // ================================================================================================
-// sub_b5974 @ 0xb5974 [__watcall]
+// blit_rle_flip_remap @ 0xb5974 [__watcall]
 // ================================================================================================
 
-byte __watcall sub_b5974(void)
+byte __watcall blit_rle_flip_remap(void)
 
 {
   byte bVar1;
@@ -6677,10 +6677,10 @@ LAB_000b5a57:
 
 
 // ================================================================================================
-// sub_b598e @ 0xb598e [__watcall]
+// blit_rle_flip_remap_home @ 0xb598e [__watcall]
 // ================================================================================================
 
-byte __watcall sub_b598e(void)
+byte __watcall blit_rle_flip_remap_home(void)
 
 {
   int iVar1;
@@ -6784,10 +6784,10 @@ LAB_000b5a57:
 
 
 // ================================================================================================
-// sub_b5aa0 @ 0xb5aa0 [__watcall]
+// blit_rle_flip_remap_clip_centered @ 0xb5aa0 [__watcall]
 // ================================================================================================
 
-uint __watcall sub_b5aa0(void)
+uint __watcall blit_rle_flip_remap_clip_centered(void)
 
 {
   byte bVar1;
@@ -7143,10 +7143,10 @@ LAB_000b5a57:
 
 
 // ================================================================================================
-// sub_b5ac8 @ 0xb5ac8 [__watcall]
+// blit_rle_flip_remap_clip @ 0xb5ac8 [__watcall]
 // ================================================================================================
 
-uint __watcall sub_b5ac8(void)
+uint __watcall blit_rle_flip_remap_clip(void)
 
 {
   byte bVar1;
@@ -7500,10 +7500,10 @@ LAB_000b5a57:
 
 
 // ================================================================================================
-// sub_b5ae2 @ 0xb5ae2 [__watcall]
+// blit_rle_flip_remap_clip_home @ 0xb5ae2 [__watcall]
 // ================================================================================================
 
-uint __watcall sub_b5ae2(void)
+uint __watcall blit_rle_flip_remap_clip_home(void)
 
 {
   byte bVar1;
@@ -7856,10 +7856,10 @@ LAB_000b5a57:
 
 
 // ================================================================================================
-// sub_b5d80 @ 0xb5d80 [__cdecl]
+// putpixel_clip @ 0xb5d80 [__cdecl]
 // ================================================================================================
 
-void sub_b5d80(int param_1,int param_2,undefined param_3)
+void putpixel_clip(int param_1,int param_2,undefined param_3)
 
 {
   undefined *extraout_EDX;
@@ -7876,7 +7876,7 @@ void sub_b5d80(int param_1,int param_2,undefined param_3)
     *(undefined *)((param_1 + (&unk_d3104)[param_2] & 0xffffU) + dword_d30d0) = param_3;
     return;
   }
-  sub_b5e04();
+  vesa_set_bank_al();
   *extraout_EDX = param_3;
   return;
 }
@@ -7899,17 +7899,17 @@ void putpixel(int param_1,int param_2,undefined param_3)
     *(undefined *)((param_1 + (&unk_d3104)[param_2] & 0xffffU) + dword_d30d0) = param_3;
     return;
   }
-  sub_b5e04();
+  vesa_set_bank_al();
   *extraout_EDX = param_3;
   return;
 }
 
 
 // ================================================================================================
-// sub_b5e00 @ 0xb5e00 [__cdecl]
+// vesa_set_bank @ 0xb5e00 [__cdecl]
 // ================================================================================================
 
-void sub_b5e00(char param_1)
+void vesa_set_bank(char param_1)
 
 {
   if (param_1 != byte_d4f54) {
@@ -7924,10 +7924,10 @@ void sub_b5e00(char param_1)
 
 
 // ================================================================================================
-// sub_b5e04 @ 0xb5e04 [__watcall]
+// vesa_set_bank_al @ 0xb5e04 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b5e04(char param_1)
+void __watcall vesa_set_bank_al(char param_1)
 
 {
   if (param_1 != byte_d4f54) {
@@ -7942,10 +7942,10 @@ void __watcall sub_b5e04(char param_1)
 
 
 // ================================================================================================
-// sub_b5ea7 @ 0xb5ea7 [__watcall]
+// vesa_set_mode @ 0xb5ea7 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b5ea7(void)
+void __watcall vesa_set_mode(void)
 
 {
   code *pcVar1;
@@ -7957,10 +7957,10 @@ void __watcall sub_b5ea7(void)
 
 
 // ================================================================================================
-// sub_b5eb8 @ 0xb5eb8 [__cdecl]
+// bios_set_mode @ 0xb5eb8 [__cdecl]
 // ================================================================================================
 
-void sub_b5eb8(void)
+void bios_set_mode(void)
 
 {
   code *pcVar1;
@@ -7972,10 +7972,10 @@ void sub_b5eb8(void)
 
 
 // ================================================================================================
-// sub_b5ec5 @ 0xb5ec5 [__watcall]
+// vesa_set_display_start @ 0xb5ec5 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b5ec5(void)
+void __watcall vesa_set_display_start(void)
 
 {
   code *pcVar1;
@@ -7987,10 +7987,10 @@ void __watcall sub_b5ec5(void)
 
 
 // ================================================================================================
-// sub_b5ed6 @ 0xb5ed6 [__watcall]
+// vesa_get_bank @ 0xb5ed6 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b5ed6(void)
+void __watcall vesa_get_bank(void)
 
 {
   code *pcVar1;
@@ -8002,10 +8002,10 @@ void __watcall sub_b5ed6(void)
 
 
 // ================================================================================================
-// sub_b5ee8 @ 0xb5ee8 [__watcall]
+// vesa_drawshape_centered @ 0xb5ee8 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b5ee8(void)
+void __watcall vesa_drawshape_centered(void)
 
 {
   bool bVar1;
@@ -8135,10 +8135,10 @@ LAB_000b5feb:
 
 
 // ================================================================================================
-// sub_b5f0f @ 0xb5f0f [__cdecl]
+// vesa_drawshape @ 0xb5f0f [__cdecl]
 // ================================================================================================
 
-void sub_b5f0f(int param_1,int param_2,int param_3)
+void vesa_drawshape(int param_1,int param_2,int param_3)
 
 {
   bool bVar1;
@@ -8261,10 +8261,10 @@ LAB_000b5feb:
 
 
 // ================================================================================================
-// sub_b5f28 @ 0xb5f28 [__watcall]
+// vesa_drawshape_home @ 0xb5f28 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b5f28(void)
+void __watcall vesa_drawshape_home(void)
 
 {
   bool bVar1;
@@ -8392,10 +8392,10 @@ LAB_000b5feb:
 
 
 // ================================================================================================
-// sub_b6064 @ 0xb6064 [__watcall]
+// vesa_drawshape_xor_centered @ 0xb6064 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b6064(void)
+void __watcall vesa_drawshape_xor_centered(void)
 
 {
   bool bVar1;
@@ -8523,10 +8523,10 @@ LAB_000b6167:
 
 
 // ================================================================================================
-// sub_b608b @ 0xb608b [__cdecl]
+// vesa_drawshape_xor @ 0xb608b [__cdecl]
 // ================================================================================================
 
-void sub_b608b(int param_1,int param_2,int param_3)
+void vesa_drawshape_xor(int param_1,int param_2,int param_3)
 
 {
   bool bVar1;
@@ -8647,10 +8647,10 @@ LAB_000b6167:
 
 
 // ================================================================================================
-// sub_b60a4 @ 0xb60a4 [__watcall]
+// vesa_drawshape_xor_home @ 0xb60a4 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b60a4(void)
+void __watcall vesa_drawshape_xor_home(void)
 
 {
   bool bVar1;
@@ -8775,10 +8775,10 @@ LAB_000b6167:
 
 
 // ================================================================================================
-// sub_b61f0 @ 0xb61f0 [__watcall]
+// vesa_drawshape_clip_trans_centered @ 0xb61f0 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b61f0(void)
+void __watcall vesa_drawshape_clip_trans_centered(void)
 
 {
   bool bVar1;
@@ -8906,10 +8906,10 @@ LAB_000b62f3:
 
 
 // ================================================================================================
-// sub_b6217 @ 0xb6217 [__cdecl]
+// vesa_drawshape_clip_trans @ 0xb6217 [__cdecl]
 // ================================================================================================
 
-void sub_b6217(int param_1,int param_2,int param_3)
+void vesa_drawshape_clip_trans(int param_1,int param_2,int param_3)
 
 {
   bool bVar1;
@@ -9030,10 +9030,10 @@ LAB_000b62f3:
 
 
 // ================================================================================================
-// sub_b6230 @ 0xb6230 [__watcall]
+// vesa_drawshape_clip_trans_home @ 0xb6230 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b6230(void)
+void __watcall vesa_drawshape_clip_trans_home(void)
 
 {
   bool bVar1;
@@ -9158,10 +9158,10 @@ LAB_000b62f3:
 
 
 // ================================================================================================
-// sub_b637c @ 0xb637c [__cdecl]
+// vesa_drawshape_clip_trans_split_centered @ 0xb637c [__cdecl]
 // ================================================================================================
 
-void sub_b637c(int param_1,int param_2,byte param_3)
+void vesa_drawshape_clip_trans_split_centered(int param_1,int param_2,byte param_3)
 
 {
   byte *pbVar1;
@@ -9181,17 +9181,17 @@ void sub_b637c(int param_1,int param_2,byte param_3)
     *pbVar1 = *pbVar1 & param_3;
     return;
   }
-  sub_b5e04();
+  vesa_set_bank_al();
   *extraout_EDX = *extraout_EDX & param_3;
   return;
 }
 
 
 // ================================================================================================
-// sub_b63ac @ 0xb63ac [__cdecl]
+// vesa_drawshape_clip_trans_split @ 0xb63ac [__cdecl]
 // ================================================================================================
 
-void sub_b63ac(int param_1,int param_2,byte param_3)
+void vesa_drawshape_clip_trans_split(int param_1,int param_2,byte param_3)
 
 {
   byte *pbVar1;
@@ -9207,17 +9207,17 @@ void sub_b63ac(int param_1,int param_2,byte param_3)
     *pbVar1 = *pbVar1 & param_3;
     return;
   }
-  sub_b5e04();
+  vesa_set_bank_al();
   *extraout_EDX = *extraout_EDX & param_3;
   return;
 }
 
 
 // ================================================================================================
-// sub_b63fc @ 0xb63fc [__watcall]
+// vesa_drawshape_clip_opaque_centered @ 0xb63fc [__watcall]
 // ================================================================================================
 
-void __watcall sub_b63fc(void)
+void __watcall vesa_drawshape_clip_opaque_centered(void)
 
 {
   bool bVar1;
@@ -9345,10 +9345,10 @@ LAB_000b64ff:
 
 
 // ================================================================================================
-// sub_b6423 @ 0xb6423 [__cdecl]
+// vesa_drawshape_clip_opaque @ 0xb6423 [__cdecl]
 // ================================================================================================
 
-void sub_b6423(int param_1,int param_2,int param_3)
+void vesa_drawshape_clip_opaque(int param_1,int param_2,int param_3)
 
 {
   bool bVar1;
@@ -9469,10 +9469,10 @@ LAB_000b64ff:
 
 
 // ================================================================================================
-// sub_b643c @ 0xb643c [__watcall]
+// vesa_drawshape_clip_opaque_home @ 0xb643c [__watcall]
 // ================================================================================================
 
-void __watcall sub_b643c(void)
+void __watcall vesa_drawshape_clip_opaque_home(void)
 
 {
   bool bVar1;
@@ -9597,10 +9597,10 @@ LAB_000b64ff:
 
 
 // ================================================================================================
-// sub_b6588 @ 0xb6588 [__cdecl]
+// vesa_drawshape_clip_opaque_split_centered @ 0xb6588 [__cdecl]
 // ================================================================================================
 
-void sub_b6588(int param_1,int param_2,byte param_3)
+void vesa_drawshape_clip_opaque_split_centered(int param_1,int param_2,byte param_3)
 
 {
   byte *pbVar1;
@@ -9620,17 +9620,17 @@ void sub_b6588(int param_1,int param_2,byte param_3)
     *pbVar1 = *pbVar1 | param_3;
     return;
   }
-  sub_b5e04();
+  vesa_set_bank_al();
   *extraout_EDX = *extraout_EDX | param_3;
   return;
 }
 
 
 // ================================================================================================
-// sub_b65b8 @ 0xb65b8 [__cdecl]
+// vesa_drawshape_clip_opaque_split @ 0xb65b8 [__cdecl]
 // ================================================================================================
 
-void sub_b65b8(int param_1,int param_2,byte param_3)
+void vesa_drawshape_clip_opaque_split(int param_1,int param_2,byte param_3)
 
 {
   byte *pbVar1;
@@ -9646,19 +9646,19 @@ void sub_b65b8(int param_1,int param_2,byte param_3)
     *pbVar1 = *pbVar1 | param_3;
     return;
   }
-  sub_b5e04();
+  vesa_set_bank_al();
   *extraout_EDX = *extraout_EDX | param_3;
   return;
 }
 
 
 // ================================================================================================
-// sub_b6608 @ 0xb6608 [__watcall]
+// vesa_fillrect_b @ 0xb6608 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __watcall sub_b6608(void)
+void __watcall vesa_fillrect_b(void)
 
 {
   bool bVar1;
@@ -9784,10 +9784,10 @@ void __watcall sub_b6608(void)
 
 
 // ================================================================================================
-// sub_b6665 @ 0xb6665 [__cdecl]
+// vesa_fillrect @ 0xb6665 [__cdecl]
 // ================================================================================================
 
-void sub_b6665(int param_1,int param_2,uint param_3,uint param_4,undefined param_5)
+void vesa_fillrect(int param_1,int param_2,uint param_3,uint param_4,undefined param_5)
 
 {
   bool bVar1;
@@ -9880,12 +9880,12 @@ void sub_b6665(int param_1,int param_2,uint param_3,uint param_4,undefined param
 
 
 // ================================================================================================
-// sub_b6720 @ 0xb6720 [__watcall]
+// vesa_fillrect2_b @ 0xb6720 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __watcall sub_b6720(void)
+void __watcall vesa_fillrect2_b(void)
 
 {
   bool bVar1;
@@ -10015,10 +10015,10 @@ void __watcall sub_b6720(void)
 
 
 // ================================================================================================
-// sub_b677d @ 0xb677d [__cdecl]
+// vesa_fillrect2 @ 0xb677d [__cdecl]
 // ================================================================================================
 
-void sub_b677d(int param_1,int param_2,uint param_3,uint param_4,byte param_5)
+void vesa_fillrect2(int param_1,int param_2,uint param_3,uint param_4,byte param_5)
 
 {
   bool bVar1;
@@ -10115,10 +10115,10 @@ void sub_b677d(int param_1,int param_2,uint param_3,uint param_4,byte param_5)
 
 
 // ================================================================================================
-// sub_b6860 @ 0xb6860 [__watcall]
+// vesa_drawshape2_centered @ 0xb6860 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b6860(void)
+void __watcall vesa_drawshape2_centered(void)
 
 {
   bool bVar1;
@@ -10191,10 +10191,10 @@ void __watcall sub_b6860(void)
 
 
 // ================================================================================================
-// sub_b6887 @ 0xb6887 [__cdecl]
+// vesa_drawshape2 @ 0xb6887 [__cdecl]
 // ================================================================================================
 
-void sub_b6887(int param_1,int param_2,int param_3)
+void vesa_drawshape2(int param_1,int param_2,int param_3)
 
 {
   bool bVar1;
@@ -10261,10 +10261,10 @@ void sub_b6887(int param_1,int param_2,int param_3)
 
 
 // ================================================================================================
-// sub_b68a0 @ 0xb68a0 [__watcall]
+// vesa_drawshape2_home @ 0xb68a0 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b68a0(void)
+void __watcall vesa_drawshape2_home(void)
 
 {
   bool bVar1;
@@ -10334,10 +10334,10 @@ void __watcall sub_b68a0(void)
 
 
 // ================================================================================================
-// sub_b6918 @ 0xb6918 [__watcall]
+// vesa_drawshape2_remap_centered @ 0xb6918 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b6918(void)
+void __watcall vesa_drawshape2_remap_centered(void)
 
 {
   int iVar1;
@@ -10384,10 +10384,10 @@ void __watcall sub_b6918(void)
 
 
 // ================================================================================================
-// sub_b693c @ 0xb693c [__cdecl]
+// vesa_drawshape2_remap @ 0xb693c [__cdecl]
 // ================================================================================================
 
-void sub_b693c(int param_1,int param_2,int param_3)
+void vesa_drawshape2_remap(int param_1,int param_2,int param_3)
 
 {
   int iVar1;
@@ -10428,10 +10428,10 @@ void sub_b693c(int param_1,int param_2,int param_3)
 
 
 // ================================================================================================
-// sub_b6956 @ 0xb6956 [__watcall]
+// vesa_drawshape2_remap_home @ 0xb6956 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b6956(void)
+void __watcall vesa_drawshape2_remap_home(void)
 
 {
   int iVar1;
@@ -10474,10 +10474,10 @@ void __watcall sub_b6956(void)
 
 
 // ================================================================================================
-// sub_b69c0 @ 0xb69c0 [__watcall]
+// vesa_drawshape_remap_centered @ 0xb69c0 [__watcall]
 // ================================================================================================
 
-int __watcall sub_b69c0(void)
+int __watcall vesa_drawshape_remap_centered(void)
 
 {
   char *pcVar1;
@@ -10587,10 +10587,10 @@ LAB_000b6ac3:
 
 
 // ================================================================================================
-// sub_b69e4 @ 0xb69e4 [__cdecl]
+// vesa_drawshape_remap @ 0xb69e4 [__cdecl]
 // ================================================================================================
 
-int sub_b69e4(int param_1,int param_2,int param_3)
+int vesa_drawshape_remap(int param_1,int param_2,int param_3)
 
 {
   int iVar1;
@@ -10694,10 +10694,10 @@ LAB_000b6ac3:
 
 
 // ================================================================================================
-// sub_b69fe @ 0xb69fe [__watcall]
+// vesa_drawshape_remap_home @ 0xb69fe [__watcall]
 // ================================================================================================
 
-int __watcall sub_b69fe(void)
+int __watcall vesa_drawshape_remap_home(void)
 
 {
   char *pcVar1;
@@ -10805,10 +10805,10 @@ LAB_000b6ac3:
 
 
 // ================================================================================================
-// sub_b6b18 @ 0xb6b18 [__watcall]
+// vesa_grabshape_centered @ 0xb6b18 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b6b18(void)
+void __watcall vesa_grabshape_centered(void)
 
 {
   short sVar1;
@@ -10851,10 +10851,10 @@ void __watcall sub_b6b18(void)
 
 
 // ================================================================================================
-// sub_b6b3f @ 0xb6b3f [__cdecl]
+// vesa_grabshape @ 0xb6b3f [__cdecl]
 // ================================================================================================
 
-void sub_b6b3f(int param_1,int param_2,int param_3)
+void vesa_grabshape(int param_1,int param_2,int param_3)
 
 {
   short sVar1;
@@ -10894,10 +10894,10 @@ void sub_b6b3f(int param_1,int param_2,int param_3)
 
 
 // ================================================================================================
-// sub_b6b60 @ 0xb6b60 [__watcall]
+// vesa_grabshape_home @ 0xb6b60 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b6b60(void)
+void __watcall vesa_grabshape_home(void)
 
 {
   short sVar1;
@@ -10938,10 +10938,10 @@ void __watcall sub_b6b60(void)
 
 
 // ================================================================================================
-// sub_b6bc0 @ 0xb6bc0 [__watcall]
+// vesa_drawshape_trans_centered @ 0xb6bc0 [__watcall]
 // ================================================================================================
 
-int __watcall sub_b6bc0(void)
+int __watcall vesa_drawshape_trans_centered(void)
 
 {
   undefined *puVar1;
@@ -11054,10 +11054,10 @@ LAB_000b6cc7:
 
 
 // ================================================================================================
-// sub_b6be5 @ 0xb6be5 [__cdecl]
+// vesa_drawshape_trans @ 0xb6be5 [__cdecl]
 // ================================================================================================
 
-int sub_b6be5(int param_1,int param_2,uint param_3)
+int vesa_drawshape_trans(int param_1,int param_2,uint param_3)
 
 {
   int iVar1;
@@ -11164,10 +11164,10 @@ LAB_000b6cc7:
 
 
 // ================================================================================================
-// sub_b6c00 @ 0xb6c00 [__watcall]
+// vesa_drawshape_trans_home @ 0xb6c00 [__watcall]
 // ================================================================================================
 
-int __watcall sub_b6c00(void)
+int __watcall vesa_drawshape_trans_home(void)
 
 {
   undefined *puVar1;
@@ -11278,10 +11278,10 @@ LAB_000b6cc7:
 
 
 // ================================================================================================
-// sub_b6d24 @ 0xb6d24 [__watcall]
+// vesa_drawshape2_trans_centered @ 0xb6d24 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b6d24(void)
+void __watcall vesa_drawshape2_trans_centered(void)
 
 {
   int iVar1;
@@ -11329,10 +11329,10 @@ void __watcall sub_b6d24(void)
 
 
 // ================================================================================================
-// sub_b6d47 @ 0xb6d47 [__cdecl]
+// vesa_drawshape2_trans @ 0xb6d47 [__cdecl]
 // ================================================================================================
 
-void sub_b6d47(int param_1,int param_2,int param_3)
+void vesa_drawshape2_trans(int param_1,int param_2,int param_3)
 
 {
   int iVar1;
@@ -11374,10 +11374,10 @@ void sub_b6d47(int param_1,int param_2,int param_3)
 
 
 // ================================================================================================
-// sub_b6d60 @ 0xb6d60 [__watcall]
+// vesa_drawshape2_trans_home @ 0xb6d60 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b6d60(void)
+void __watcall vesa_drawshape2_trans_home(void)
 
 {
   int iVar1;
@@ -11421,12 +11421,12 @@ void __watcall sub_b6d60(void)
 
 
 // ================================================================================================
-// sub_b6dd0 @ 0xb6dd0 [__watcall]
+// vesa_drawshape_clip_save_centered @ 0xb6dd0 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __watcall sub_b6dd0(void)
+void __watcall vesa_drawshape_clip_save_centered(void)
 
 {
   bool bVar1;
@@ -11596,12 +11596,12 @@ void __watcall sub_b6dd0(void)
 
 
 // ================================================================================================
-// sub_b6df7 @ 0xb6df7 [__cdecl]
+// vesa_drawshape_clip_save @ 0xb6df7 [__cdecl]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void sub_b6df7(int param_1,int param_2,int param_3)
+void vesa_drawshape_clip_save(int param_1,int param_2,int param_3)
 
 {
   bool bVar1;
@@ -11766,12 +11766,12 @@ void sub_b6df7(int param_1,int param_2,int param_3)
 
 
 // ================================================================================================
-// sub_b6e18 @ 0xb6e18 [__watcall]
+// vesa_drawshape_clip_save_home @ 0xb6e18 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __watcall sub_b6e18(void)
+void __watcall vesa_drawshape_clip_save_home(void)
 
 {
   bool bVar1;
@@ -11939,12 +11939,12 @@ void __watcall sub_b6e18(void)
 
 
 // ================================================================================================
-// sub_b6f84 @ 0xb6f84 [__cdecl]
+// window_setclip @ 0xb6f84 [__cdecl]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void sub_b6f84(int param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,
+void window_setclip(int param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,
               undefined4 param_5)
 
 {
@@ -11974,10 +11974,10 @@ void sub_b6f84(int param_1,undefined4 param_2,undefined4 param_3,undefined4 para
 
 
 // ================================================================================================
-// sub_b6ffc @ 0xb6ffc [__watcall]
+// shape_width @ 0xb6ffc [__watcall]
 // ================================================================================================
 
-int __watcall sub_b6ffc(void)
+int __watcall shape_width(void)
 
 {
   int in_stack_00000004;
@@ -11987,10 +11987,10 @@ int __watcall sub_b6ffc(void)
 
 
 // ================================================================================================
-// sub_b7005 @ 0xb7005 [__watcall]
+// shape_height @ 0xb7005 [__watcall]
 // ================================================================================================
 
-int __watcall sub_b7005(void)
+int __watcall shape_height(void)
 
 {
   int in_stack_00000004;
@@ -12000,10 +12000,10 @@ int __watcall sub_b7005(void)
 
 
 // ================================================================================================
-// sub_b700e @ 0xb700e [__cdecl]
+// shape_packed_size @ 0xb700e [__cdecl]
 // ================================================================================================
 
-char * sub_b700e(char *param_1)
+char * shape_packed_size(char *param_1)
 
 {
   char cVar1;
@@ -12030,10 +12030,10 @@ LAB_000b7045:
 
 
 // ================================================================================================
-// sub_b704c @ 0xb704c [__cdecl]
+// draw_line_octant @ 0xb704c [__cdecl]
 // ================================================================================================
 
-void sub_b704c(int param_1)
+void draw_line_octant(int param_1)
 
 {
                     /* WARNING: Could not recover jumptable at 0x000b7087. Too many branches */
@@ -12044,10 +12044,10 @@ void sub_b704c(int param_1)
 
 
 // ================================================================================================
-// sub_b7218 @ 0xb7218 [__cdecl]
+// shape_unpack @ 0xb7218 [__cdecl]
 // ================================================================================================
 
-void sub_b7218(byte *param_1,byte *param_2,int param_3)
+void shape_unpack(byte *param_1,byte *param_2,int param_3)
 
 {
   byte bVar1;
@@ -12149,10 +12149,10 @@ LAB_000b7277:
 
 
 // ================================================================================================
-// sub_b72d4 @ 0xb72d4 [__cdecl]
+// texture_set @ 0xb72d4 [__cdecl]
 // ================================================================================================
 
-void sub_b72d4(undefined4 param_1,undefined4 param_2)
+void texture_set(undefined4 param_1,undefined4 param_2)
 
 {
   dword_d86bc = param_1;
@@ -12162,10 +12162,10 @@ void sub_b72d4(undefined4 param_1,undefined4 param_2)
 
 
 // ================================================================================================
-// sub_b72e9 @ 0xb72e9 [__cdecl]
+// texture_span @ 0xb72e9 [__cdecl]
 // ================================================================================================
 
-void sub_b72e9(int param_1,int param_2,int param_3)
+void texture_span(int param_1,int param_2,int param_3)
 
 {
   char cVar1;
@@ -12189,10 +12189,10 @@ void sub_b72e9(int param_1,int param_2,int param_3)
 
 
 // ================================================================================================
-// sub_b731e @ 0xb731e [__watcall]
+// texture_span_b @ 0xb731e [__watcall]
 // ================================================================================================
 
-void __watcall sub_b731e(void)
+void __watcall texture_span_b(void)
 
 {
   int *piVar1;
@@ -12215,10 +12215,10 @@ void __watcall sub_b731e(void)
 
 
 // ================================================================================================
-// sub_b7357 @ 0xb7357 [__watcall]
+// texture_span_c @ 0xb7357 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b7357(void)
+void __watcall texture_span_c(void)
 
 {
   char cVar1;
@@ -12245,10 +12245,10 @@ void __watcall sub_b7357(void)
 
 
 // ================================================================================================
-// sub_b7394 @ 0xb7394 [__watcall]
+// texture_span_d @ 0xb7394 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b7394(void)
+void __watcall texture_span_d(void)
 
 {
   byte bVar1;
@@ -12278,10 +12278,10 @@ void __watcall sub_b7394(void)
 
 
 // ================================================================================================
-// sub_b73d7 @ 0xb73d7 [__watcall]
+// texture_span_e @ 0xb73d7 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b73d7(void)
+void __watcall texture_span_e(void)
 
 {
   byte bVar1;
@@ -12311,10 +12311,10 @@ void __watcall sub_b73d7(void)
 
 
 // ================================================================================================
-// sub_b7420 @ 0xb7420 [__cdecl]
+// texture_span_wide @ 0xb7420 [__cdecl]
 // ================================================================================================
 
-void sub_b7420(int param_1,int param_2,uint param_3)
+void texture_span_wide(int param_1,int param_2,uint param_3)
 
 {
   uint uVar1;
@@ -12469,10 +12469,10 @@ switchD_000b74a3_caseD_1e:
 
 
 // ================================================================================================
-// sub_b7614 @ 0xb7614 [__watcall]
+// drawshape_alt_linear_centered @ 0xb7614 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b7614(void)
+void __watcall drawshape_alt_linear_centered(void)
 
 {
   byte *pbVar1;
@@ -12578,10 +12578,10 @@ LAB_000b7717:
 
 
 // ================================================================================================
-// sub_b763b @ 0xb763b [__cdecl]
+// drawshape_alt_linear @ 0xb763b [__cdecl]
 // ================================================================================================
 
-void sub_b763b(int param_1,int param_2,int param_3)
+void drawshape_alt_linear(int param_1,int param_2,int param_3)
 
 {
   int iVar1;
@@ -12681,10 +12681,10 @@ LAB_000b7717:
 
 
 // ================================================================================================
-// sub_b7654 @ 0xb7654 [__watcall]
+// drawshape_alt_linear_home @ 0xb7654 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b7654(void)
+void __watcall drawshape_alt_linear_home(void)
 
 {
   byte *pbVar1;
@@ -12788,10 +12788,10 @@ LAB_000b7717:
 
 
 // ================================================================================================
-// sub_b7778 @ 0xb7778 [__watcall]
+// setremaptable2 @ 0xb7778 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b7778(void)
+void __watcall setremaptable2(void)
 
 {
   int iVar1;
@@ -12809,10 +12809,10 @@ void __watcall sub_b7778(void)
 
 
 // ================================================================================================
-// sub_b7790 @ 0xb7790 [__watcall]
+// getremaptable2 @ 0xb7790 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b7790(void)
+void __watcall getremaptable2(void)
 
 {
   int iVar1;
@@ -12830,10 +12830,10 @@ void __watcall sub_b7790(void)
 
 
 // ================================================================================================
-// sub_b77a8 @ 0xb77a8 [__watcall]
+// setremaprange2 @ 0xb77a8 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b77a8(void)
+void __watcall setremaprange2(void)
 
 {
   uint uVar1;
@@ -12859,10 +12859,10 @@ void __watcall sub_b77a8(void)
 
 
 // ================================================================================================
-// sub_b77d0 @ 0xb77d0 [__watcall]
+// drawshape2_alt_linear_centered @ 0xb77d0 [__watcall]
 // ================================================================================================
 
-void __watcall sub_b77d0(void)
+void __watcall drawshape2_alt_linear_centered(void)
 
 {
   int iVar1;
@@ -12916,10 +12916,10 @@ void __watcall sub_b77d0(void)
 
 
 // ================================================================================================
-// sub_b77f4 @ 0xb77f4 [__cdecl]
+// drawshape2_alt_linear @ 0xb77f4 [__cdecl]
 // ================================================================================================
 
-void sub_b77f4(int param_1,int param_2,int param_3)
+void drawshape2_alt_linear(int param_1,int param_2,int param_3)
 
 {
   int iVar1;
@@ -12967,10 +12967,10 @@ void sub_b77f4(int param_1,int param_2,int param_3)
 
 
 // ================================================================================================
-// sub_b780e @ 0xb780e [__watcall]
+// drawshape2_alt_linear_home @ 0xb780e [__watcall]
 // ================================================================================================
 
-void __watcall sub_b780e(void)
+void __watcall drawshape2_alt_linear_home(void)
 
 {
   int iVar1;
