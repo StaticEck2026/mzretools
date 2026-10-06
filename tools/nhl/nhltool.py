@@ -24,7 +24,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from formats import (ShapeBank, Font, load_sample, write_wav, read_viv_index, viv_clip, render_tile_map, read_kms,  # noqa: E402
                      write_png, unpack, pack_code, PackError, game_palette, mirrored_remap, SoundBank,
-                     write_wav_pcm8, place_tile_map)
+                     write_wav_pcm8, place_tile_map, team_abbreviations, read_schedule, read_gsummary,
+                     read_nhl_cfg, SCHEDULE_GAMES)
 
 def read(path):
     with open(path, 'rb') as f:
@@ -237,6 +238,45 @@ def cmd_kms(args):
                 elif code != 0xe7:
                     print(f"  {step:6d} 0x{code:02x} {a} {b}")
 
+def _teams_near(path):
+    d = os.path.dirname(os.path.abspath(path))
+    for n in ('TEAMS.DB', 'teams.db'):
+        if os.path.exists(os.path.join(d, n)):
+            return team_abbreviations(read(os.path.join(d, n)))
+    return [str(i) for i in range(28)]
+
+def cmd_schedule(args):
+    '''Lists the games of schedule.db / LSSCHED.DB'''
+    teams = _teams_near(args.file)
+    played, games = read_schedule(read(args.file))
+    print(f"{played} games played, {len(games)} records")
+    for i, (m, d, h, a, hg, ag) in enumerate(games):
+        if (m == 0 or m == 0xff) and not args.all:
+            continue
+        if h >= len(teams) or a >= len(teams):
+            print(f"{i:4d} (empty)")
+            continue
+        k = i - SCHEDULE_GAMES
+        part = f'series {k // 7 + 1:2d} game {k % 7 + 1}' if k >= 0 else 'season'
+        score = f"{hg}-{ag}" if hg != 0xff else '-'
+        print(f"{i:4d} {part:17s} {m:2d}/{d:02d} {teams[h]:>4s} - {teams[a]:<4s} {score}")
+
+def cmd_gsummary(args):
+    '''Lists the events of gsummary.db'''
+    teams = _teams_near(args.file)
+    header, events, trailer = read_gsummary(read(args.file))
+    print(f"{teams[header['home']]} - {teams[header['away']]} ({header['month']}/{header['day']}), "
+          f"{header['records']} records; goals {trailer['home_goals']}-{trailer['away_goals']}, "
+          f"shots {trailer['home_shots']}-{trailer['away_shots']}")
+    for e in events:
+        print(' ', e)
+
+def cmd_cfg(args):
+    '''Shows NHL.CFG'''
+    c = read_nhl_cfg(read(args.file).decode('latin-1'))
+    print(f"sound card {c['sound_card']} ({c['sound_card_name']}), CD drive {c['cd_drive']}, "
+          f"{len(c['installed'])} files installed")
+
 def main():
     ap = argparse.ArgumentParser(description='NHL Hockey (DOS) asset tool')
     sub = ap.add_subparsers(dest='cmd', required=True)
@@ -256,6 +296,9 @@ def main():
     p.add_argument('--away', type=int, default=4); p.set_defaults(fn=cmd_rinkfull)
     p = sub.add_parser('dig'); p.add_argument('gamedir'); p.add_argument('outdir'); p.set_defaults(fn=cmd_dig)
     p = sub.add_parser('kms'); p.add_argument('file'); p.add_argument('--events', action='store_true'); p.set_defaults(fn=cmd_kms)
+    p = sub.add_parser('schedule'); p.add_argument('file'); p.add_argument('--all', action='store_true'); p.set_defaults(fn=cmd_schedule)
+    p = sub.add_parser('gsummary'); p.add_argument('file'); p.set_defaults(fn=cmd_gsummary)
+    p = sub.add_parser('cfg'); p.add_argument('file'); p.set_defaults(fn=cmd_cfg)
     args = ap.parse_args()
     args.fn(args)
 

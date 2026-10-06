@@ -845,3 +845,77 @@ def write_png(path, width, height, pixels, palette=None, transparent=None):
     ihdr = struct.pack('>IIBBBBB', width, height, 8, color_type, 0, 0, 0)
     with open(path, 'wb') as f:
         f.write(b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', ihdr) + extra + chunk(b'IDAT', zlib.compress(bytes(raw), 9)) + chunk(b'IEND', b''))
+
+# ----------------------------------------------------------------------------------------------
+# League files: schedule, game summary, configuration (verified against SCHEDULE.DB, LSSCHED.DB,
+# GSUMMARY.DB and NHL.CFG of the installation)
+# ----------------------------------------------------------------------------------------------
+
+def team_abbreviations(teams_db):
+    '''the abbreviations of the 28 records of TEAMS.DB (0x2e8 bytes each, +0 five characters)'''
+    return [teams_db[i:i + 5].split(b'\0')[0].decode('latin-1').strip()
+            for i in range(0, len(teams_db) - 0x2e7, 0x2e8)]
+
+SCHEDULE_GAMES = 1092          # 26 teams x 84 games / 2 (league_calendar_flow plays games 0..0x443)
+SCHEDULE_PLAYOFF_GAMES = 105    # the play-off slots from offset 0x199a (schedule_screen, playoff_make_*)
+
+def read_schedule(data):
+    '''schedule.db / LSSCHED.DB: u16 the number of games played (league_calendar_flow), then 6 byte
+    games (db_read_record2, schedule_write_record): month, day, home team, away team, home goals, away
+    goals (0xff = not played). Records 0..1091 are the season, 1092.. the play-offs: 15 series of 7 game
+    slots (8 first round series, 4, 2, the final), all 0xff for the games a series did not need
+    (LSSCHED.DB holds the 90 games of the '93-'94 play-offs).'''
+    played = struct.unpack_from('<H', data, 0)[0]
+    games = [tuple(data[p:p + 6]) for p in range(2, len(data) - 5, 6)]
+    return played, games
+
+GSUMMARY_GOAL, GSUMMARY_PENALTY, GSUMMARY_INJURY = 1, 2, 3
+
+def read_gsummary(data):
+    '''gsummary.db, the events of the game being played (begin_game_session, gsummary_*): an 11 byte
+    header (+1 month, +2 day of a league game, 0 otherwise, +3 home team, +4 away team, +5 u16 records
+    written), 11 byte events, and an 11 byte trailer
+    rewritten behind each new event (+1 home goals, +2 home shots, +3 away goals, +4 away shots).
+    Events (announce_goal, record_penalty, announce_injury):
+      1 goal:    team, scorer, assist 1, assist 2 (0xff none), flags (2 short-handed, 4 power play),
+                 period, minutes, seconds, the goalie in the scorer's net, the goalie beaten
+      2 penalty: team, player, infraction (0 = first of the penalty names), severity, period, minutes, seconds
+      3 injury:  team, player, injury, period, minutes, seconds
+    Players are roster indices of the team (0..27), times are elapsed in the period.'''
+    if len(data) < 22:
+        raise ValueError('gsummary.db too short')
+    head = data[:11]
+    header = {'month': head[1], 'day': head[2], 'home': head[3], 'away': head[4],
+              'records': struct.unpack_from('<H', head, 5)[0]}
+    tail = data[-11:]
+    trailer = {'state': tail[0], 'home_goals': tail[1], 'home_shots': tail[2], 'away_goals': tail[3],
+               'away_shots': tail[4]}
+    events = []
+    for p in range(11, len(data) - 11, 11):
+        r = data[p:p + 11]
+        if r[0] == GSUMMARY_GOAL:
+            events.append({'type': 'goal', 'team': r[1], 'scorer': r[2],
+                           'assists': [a for a in (r[3], r[4]) if a != 0xff],
+                           'short_handed': bool(r[5] & 2), 'power_play': bool(r[5] & 4),
+                           'period': r[6], 'time': (r[7], r[8]), 'goalies': (r[9], r[10])})
+        elif r[0] == GSUMMARY_PENALTY:
+            events.append({'type': 'penalty', 'team': r[1], 'player': r[2], 'infraction': r[3],
+                           'severity': r[4], 'period': r[5], 'time': (r[6], r[7])})
+        elif r[0] == GSUMMARY_INJURY:
+            events.append({'type': 'injury', 'team': r[1], 'player': r[2], 'injury': r[3],
+                           'period': r[4], 'time': (r[5], r[6])})
+        else:
+            events.append({'type': r[0], 'raw': bytes(r)})
+    return header, events, trailer
+
+SOUND_CARDS = ('none', 'PC speaker', 'AdLib', 'Sound Blaster', 'Roland MT-32', 'Gravis UltraSound')
+
+def read_nhl_cfg(text):
+    '''NHL.CFG (load_nhl_cfg, load_cfg_palette, load_sound_config): line 1 the sound card ("%04x", an
+    index into the table at 0xd243a: none, PC speaker, AdLib, Sound Blaster, MT-32, UltraSound; the game
+    rewrites it when the card changes), line 2 the CD drive letter (ALLFILES.TXT is read from there), then
+    the files installed on the hard disk; every other file of ALLFILES.TXT is read from the CD.'''
+    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    card = int(lines[0], 16)
+    return {'sound_card': card, 'sound_card_name': SOUND_CARDS[card] if card < len(SOUND_CARDS) else '?',
+            'cd_drive': lines[1] if len(lines) > 1 else '', 'installed': lines[2:]}
