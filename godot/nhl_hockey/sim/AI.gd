@@ -1567,7 +1567,7 @@ static func puck_faceoff2(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.timer_b -= 1
 		var at_start := sim.period == 0 and sim.clock_sub == 0 and sim.clock_seconds == sim.period_length
-		var wait := e.timer_b > 0 and not sim.skip_wait and not at_start
+		var wait := e.timer_b > 0 and not sim.skip_wait and not sim.injury_stoppage and not at_start
 		if wait:
 			if sim.ref_phase >= 0:
 				return
@@ -1580,7 +1580,10 @@ static func puck_faceoff2(sim: Sim, e: Entity) -> void:
 			if not all:
 				return
 		e.flags &= ~Entity.F_STATE_ENTERED
+		# a cut to the faceoff when the wait was skipped or after an injury
+		sim.fade_in = sim.skip_wait or sim.injury_stoppage
 		sim.skip_wait = false
+		sim.injury_stoppage = false
 		sim.ref_phase = -1
 		sim.whistle_timer = 0
 		sim.penalty_box_mode = false
@@ -1817,10 +1820,8 @@ static func penalty_box(sim: Sim, e: Entity) -> void:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		e.flags2 |= Entity.F2_UNSELECTABLE
 		e.want_dir = 8
-		var seat := 0
-		for i in team.penalties.size():
-			if team.penalties[i][2] == e.slot:
-				seat = mini(i, 2)
+		# the next free seat: the players already sitting in the box (penalized_count)
+		var seat := mini(sim.box_count[team.index] & 0xf, 2)
 		var side := 0xb if (e.flags & Entity.F_PLAYER2) else -0xb
 		e.target_y = (seat + 3) * side
 		e.target_x = 0xa0
@@ -1852,13 +1853,16 @@ static func penalty_box(sim: Sim, e: Entity) -> void:
 			e.facing = 2
 			Anim.set_animation(e, Anim.FACEOFF)
 			e.flags2 &= ~Entity.F2_PENALIZED
+			if team.skaters_on_ice > 4:
+				team.skaters_on_ice -= 1
 			e.set_state(Entity.State.DOOR_OPEN)
 
 ## ai_door_open (0x4affb): in the box: off the ice until the penalty expires
-static func door_open(_sim: Sim, e: Entity) -> void:
+static func door_open(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_BUSY:
 		return
 	if e.line_slot >= 0:
+		sim.box_count[e.team] += 1          # sits down (drawn as frame 0x17e in the box)
 		e.line_slot = (e.line_slot & 0xff) | ~0xff      # high byte 0xff: hidden, still a skater slot
 		e.frame = -1
 		e.vx = 0
@@ -1871,7 +1875,8 @@ static func exit_penalty_box(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags = (e.flags & ~(Entity.F_STATE_ENTERED | Entity.F_USER)) | Entity.F_ARRIVED
 		e.flags2 |= Entity.F2_UNSELECTABLE
-		var seat := mini(sim.team_of(e).penalties.size(), 2)
+		sim.box_count[e.team] = maxi(0, sim.box_count[e.team] - 1)
+		var seat := mini(sim.box_count[e.team], 2)
 		var side := 0xb if (e.flags & Entity.F_PLAYER2) else -0xb
 		e.set_pos(0x9e, (seat + 3) * side)
 		e.vx = 0
@@ -1895,7 +1900,7 @@ static func exit_penalty_box(sim: Sim, e: Entity) -> void:
 
 ## ai_ref_faceoff (0x4dff7): stands at the dot facing the centres
 static func ref_faceoff(sim: Sim, e: Entity) -> void:
-	if e.flags & Entity.F_BUSY:
+	if e.flags & Entity.F_BUSY or sim.injury_stoppage or (sim.clock_seconds == 0 and sim.clock_sub == 0):
 		return
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
@@ -1990,7 +1995,8 @@ static func ref_pickup(sim: Sim, e: Entity) -> void:
 		Anim.set_animation(e, Anim.REF_GLIDE)
 		return
 	var puck := sim.puck
-	if not sim.infractions.is_empty() and not sim.infractions[sim.infractions.size() - 1][2]:
+	if not sim.infractions.is_empty():
+		# more calls to signal (penalty_box_update runs again with ref_phase -1)
 		Anim.set_animation(e, Anim.REF_GLIDE)
 		sim.ref_phase = -1
 		return
@@ -1998,7 +2004,7 @@ static func ref_pickup(sim: Sim, e: Entity) -> void:
 		e.set_state(Entity.State.REF_GET_NEW_PUCK)
 		return
 	if e.flags & Entity.F_STATE_ENTERED:
-		if (sim.clock_seconds == 0 and sim.clock_sub == 0) or sim.game_over:
+		if sim.injury_stoppage or (sim.clock_seconds == 0 and sim.clock_sub == 0) or sim.game_over:
 			sim.ref_phase = -1
 			sim.puck.set_state(Entity.State.PUCK_FACEOFF)
 			e.set_state(Entity.State.REF_FACEOFF)
@@ -2156,7 +2162,7 @@ static func ref_get_new_puck(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_BUSY:
 		return
 	if e.flags & Entity.F_STATE_ENTERED:
-		if (sim.clock_seconds == 0 and sim.clock_sub == 0) or sim.game_over:
+		if sim.injury_stoppage or (sim.clock_seconds == 0 and sim.clock_sub == 0) or sim.game_over:
 			sim.ref_phase = -1
 			sim.puck.set_state(Entity.State.PUCK_FACEOFF)
 			e.set_state(Entity.State.REF_FACEOFF)

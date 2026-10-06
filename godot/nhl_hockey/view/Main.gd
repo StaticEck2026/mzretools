@@ -5,10 +5,17 @@ extends Node2D
 ## With the original game files (GameFiles.game_dir) the real rink, sprites, team colours, HUD
 ## shapes and sound effects are used, otherwise coloured placeholders.
 ##
+## The match starts with the national anthem (a button skips it) and ends with the three stars and
+## the pause screen of the finished game. In-game keys of handle_hotkey: Esc the pause screen
+## (pause_menu), R the instant replay (instant_replay), Tab the jersey numbers of every player
+## (show_names), S the sound effects, M the music, F1-F8 the lines, F9 / F10 the goalies.
+##
 ## Environment variables for the headless tooling: NHL_HOME / NHL_AWAY (team indices 0..27,
 ## default Boston against Detroit), NHL_USER1 / NHL_USER2 (the team each user controls: 0 none,
 ## 1 home, 2 away; default user 1 home, no user 2), NHL_SCREENSHOT=path (save the view after NHL_SCREENSHOT_STEPS
-## simulation steps and quit), NHL_FAST_STEPS (simulation steps to run before the first frame).
+## simulation steps and quit; NHL_SCREENSHOT_MODE=replay / pause shows the instant replay or the
+## pause screen first), NHL_FAST_STEPS (simulation steps to run before the first frame),
+## NHL_ANTHEM=0/1 (the anthem before the game; off for screenshots unless set).
 
 const VIEW_W := 320
 const VIEW_H := 168
@@ -37,6 +44,20 @@ var assets_ok := false
 var sounds: Sounds
 var sfx_players: Array[AudioStreamPlayer] = []
 var crowd_player: AudioStreamPlayer
+var sfx_on := true                    # option_flags 0x80 (S)
+var music_on := true                  # option_flags 0x40 (M)
+var show_names := false               # show_names (Tab)
+
+enum Mode { MATCH, REPLAY, PAUSED }
+var mode := Mode.MATCH
+var panel_view: PanelView
+var vcr: VcrView
+var pause_menu: PauseMenu
+var box_sprites: Array[Sprite2D] = []   # the players sitting in the penalty boxes (frame 0x17e)
+var tick_acc := 0.0                   # 100 Hz timer ticks of the replay speed
+var replay_from_menu := false
+var end_shown := false
+var anthem := true
 
 var home_team := 0
 var away_team := 4
@@ -76,9 +97,36 @@ func _ready() -> void:
 	overlay.z_index = 50
 	overlay.draw.connect(_draw_numbers)
 	world.add_child(overlay)
+	for i in 6:
+		var b := Sprite2D.new()
+		b.centered = false
+		b.visible = false
+		world.add_child(b)
+		box_sprites.append(b)
+	var fonts := _fonts()
+	# the scoreboard, the info panel and the replay panel are drawn over the sprites
+	var ui := CanvasLayer.new()
+	ui.layer = 5
+	add_child(ui)
 	hud = Hud.new()
-	add_child(hud)
-	hud.setup(sim, palette, _bank("scrbrd1"), _fonts())
+	ui.add_child(hud)
+	hud.setup(sim, palette, _bank("scrbrd1"), fonts)
+	panel_view = PanelView.new()
+	ui.add_child(panel_view)
+	panel_view.setup(sim, palette, fonts, _bank)
+	hud.panel_view = panel_view
+	vcr = VcrView.new()
+	ui.add_child(vcr)
+	vcr.setup(sim.replay, _bank("gadget5"), palette)
+	var layer := CanvasLayer.new()
+	layer.layer = 10
+	add_child(layer)
+	pause_menu = PauseMenu.new()
+	layer.add_child(pause_menu)
+	pause_menu.setup(sim, fonts.get("s1", null), _bank)
+	pause_menu.chosen.connect(_on_menu)
+	if anthem:
+		Ceremonies.begin_anthem(sim)
 	var fast := int(OS.get_environment("NHL_FAST_STEPS"))
 	for i in fast:
 		sim.step(8, 8, 0, 0)
@@ -105,22 +153,175 @@ func _read_settings() -> void:
 	shot_path = OS.get_environment("NHL_SCREENSHOT")
 	if OS.has_environment("NHL_SCREENSHOT_STEPS"):
 		shot_steps = int(OS.get_environment("NHL_SCREENSHOT_STEPS"))
+	anthem = shot_path == ""
+	if OS.has_environment("NHL_ANTHEM"):
+		anthem = OS.get_environment("NHL_ANTHEM") == "1"
 
-func _physics_process(_delta: float) -> void:
-	if Input.is_action_just_pressed("pause"):
-		get_tree().paused = not get_tree().paused
+func _physics_process(delta: float) -> void:
+	tick_acc += delta * 100.0
+	var ticks := int(tick_acc)
+	tick_acc -= ticks
+	match mode:
+		Mode.PAUSED:
+			_pause_input()
+			return
+		Mode.REPLAY:
+			_replay_step(ticks)
+			return
+	if Input.is_action_just_pressed("pause") and not sim.match_over:
+		_open_pause(false)
+		return
+	if Input.is_action_just_pressed("replay") and not sim.intro and not sim.stars_running and sim.replay.frame_count() > 0:
+		_start_replay(false)
+		return
 	_hotkeys()
 	var c := controls.step()
 	sim.step(c[0], c[1], c[2], c[3])
 	steps_done += 1
 	_play_queued_sfx()
 	_update_view()
+	if sim.match_over and not end_shown and shot_path == "":
+		# three_stars_sequence is over: the pause screen of the finished game (pause_menu(2))
+		end_shown = true
+		_open_pause(true)
 	if shot_path != "" and steps_done >= shot_steps and not shot_taken:
 		shot_taken = true
+		match OS.get_environment("NHL_SCREENSHOT_MODE"):
+			"replay":
+				# the replay, 3 seconds after the oldest frame, following the puck carrier
+				_start_replay(false)
+				sim.replay.press(Replay.B_PLAY, 1)
+				sim.replay.seek(90, false, sim)
+				sim.replay.follow = maxi(sim.replay.frame.puck_carrier, -1) if sim.replay.frame.puck_carrier < 12 else -1
+				_update_view()
+			"pause":
+				_open_pause(false)
+				pause_menu.open_menu = 1
+				pause_menu.queue_redraw()
 		_screenshot()
 
-## handle_hotkey: F1-F4 lines of player 1, F5-F8 lines of player 2, F9 / F10 pull the goalie
+# --------------------------------------------------------------------------------------------
+# pause screen (pause_menu) and instant replay (instant_replay)
+# --------------------------------------------------------------------------------------------
+
+func _open_pause(after_game: bool) -> void:
+	mode = Mode.PAUSED
+	pause_menu.open(after_game)
+	_stop_sounds()
+
+func _pause_input() -> void:
+	var dir := -1
+	if Input.is_action_just_pressed("p1_up"):
+		dir = 0
+	elif Input.is_action_just_pressed("p1_down"):
+		dir = 4
+	elif Input.is_action_just_pressed("p1_left"):
+		dir = 6
+	elif Input.is_action_just_pressed("p1_right"):
+		dir = 2
+	var select := Input.is_action_just_pressed("p1_a") or Input.is_action_just_pressed("ui_accept")
+	var back := Input.is_action_just_pressed("pause") or Input.is_action_just_pressed("p1_b")
+	if dir >= 0 or select or back:
+		pause_menu.input(dir, select, back)
+
+func _on_menu(action: String) -> void:
+	match action:
+		"back":
+			pause_menu.close()
+			mode = Mode.MATCH
+		"exit":
+			get_tree().quit()
+		"replay":
+			pause_menu.close()
+			_start_replay(true)
+
+func _start_replay(from_menu: bool) -> void:
+	replay_from_menu = from_menu
+	mode = Mode.REPLAY
+	_stop_sounds()
+	sim.replay.begin_playback()
+	vcr.selected = Replay.B_PLAY
+	vcr.visible = true
+	hud.visible = false
+	panel_view.visible = false
+	_update_view()
+
+func _end_replay() -> void:
+	vcr.visible = false
+	hud.visible = true
+	panel_view.visible = true
+	sim.last_sfx = -1
+	sim.replay.held_sfx = -1
+	_stop_sounds()
+	if replay_from_menu and not end_shown:
+		mode = Mode.PAUSED
+		pause_menu.visible = true
+	elif end_shown:
+		mode = Mode.PAUSED
+		pause_menu.visible = true
+	else:
+		mode = Mode.MATCH
+	_update_view()
+
+## replay_control_loop: a held button (mouse on the panel, or the keyboard selection with A)
+## repeats every frame; a click on the ice picks the camera
+func _replay_step(ticks: int) -> void:
+	var r := sim.replay
+	var button := -1
+	if Input.is_action_just_pressed("p1_left"):
+		vcr.selected = Replay.BUTTONS[vcr.selected][4]
+	elif Input.is_action_just_pressed("p1_right"):
+		vcr.selected = Replay.BUTTONS[vcr.selected][5]
+	if Input.is_action_pressed("p1_a") or Input.is_action_pressed("ui_accept"):
+		button = vcr.selected
+	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		var m := get_viewport().get_mouse_position()
+		if m.y >= VcrView.Y:
+			var b := VcrView.button_at(int(m.x), int(m.y))
+			if b >= 0:
+				button = b
+				vcr.selected = b
+	if Input.is_action_just_pressed("pause") or Input.is_action_just_pressed("replay"):
+		button = Replay.B_EXIT
+	if button == Replay.B_MENU:
+		button = -1          # replay_menu (save a highlight) belongs to the front end
+	var speed: Variant = r.press(button, ticks)
+	if speed == null:
+		_end_replay()
+		return
+	var n := r.advance(int(speed))
+	r.seek(n, (r.mode & 0x3f) == Replay.MODE_PLAY, sim)
+	_play_queued_sfx()
+	_update_view()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var pos: Vector2 = get_viewport().get_mouse_position()
+		if mode == Mode.PAUSED:
+			pause_menu.click(pos)
+		elif mode == Mode.REPLAY and pos.y < VcrView.Y:
+			# the rink: follow the sprite there or look at the spot
+			var origin := _view_origin()
+			sim.replay.click(int(pos.x) + origin.x - WORLD_X, WORLD_Y - (int(pos.y) + origin.y))
+
+func _stop_sounds() -> void:
+	for p in sfx_players:
+		p.stop()
+	sim.sfx_queue.clear()
+
+## handle_hotkey: F1-F4 lines of player 1, F5-F8 lines of player 2, F9 / F10 pull the goalie,
+## Tab the numbers of every player, S the sound effects, M the music (the crowd loop)
 func _hotkeys() -> void:
+	if Input.is_action_just_pressed("toggle_names"):
+		show_names = not show_names
+	if Input.is_action_just_pressed("toggle_sfx"):
+		sfx_on = not sfx_on
+		if not sfx_on:
+			_stop_sounds()
+	if Input.is_action_just_pressed("toggle_music"):
+		music_on = not music_on
+		if crowd_player != null:
+			crowd_player.stream_paused = not music_on
 	for p in 2:
 		var team := (sim.user1_team if p == 0 else sim.user2_team) - 1
 		if team < 0:
@@ -144,7 +345,7 @@ func _screenshot() -> void:
 
 ## play_sfx of the original queues sound ids; update_ambient_audio keeps the crowd loop running
 func _play_queued_sfx() -> void:
-	if sounds == null:
+	if sounds == null or not sfx_on:
 		sim.sfx_queue.clear()
 		return
 	for id in sim.sfx_queue:
@@ -165,29 +366,50 @@ func _play_queued_sfx() -> void:
 			p.play()
 	sim.sfx_queue.clear()
 	if crowd_player != null:
-		crowd_player.volume_db = linear_to_db(clampf(0.15 + sim.crowd_noise / 4000.0, 0.0, 1.0))
+		var crowd := sim.crowd_noise
+		if mode == Mode.REPLAY and sim.replay.frame != null:
+			crowd = sim.replay.frame.crowd
+		crowd_player.volume_db = linear_to_db(clampf(0.15 + crowd / 4000.0, 0.0, 1.0))
 
 # --------------------------------------------------------------------------------------------
 # view
 # --------------------------------------------------------------------------------------------
 
+## the drawn scene: the simulation, or the frame of the replay
+func _scene() -> Dictionary:
+	if mode == Mode.REPLAY and sim.replay.frame != null:
+		var f: ReplayFrame = sim.replay.frame
+		return {"entities": f.entities, "u1": f.user1_slot, "u2": f.user2_slot, "carrier": f.puck_carrier,
+			"blocked": false, "box": f.box_count, "follow": sim.replay.follow}
+	return {"entities": sim.entities, "u1": sim.user1_slot, "u2": sim.user2_slot, "carrier": sim.puck_carrier,
+		"blocked": sim.controls_blocked, "box": sim.box_count, "follow": -1}
+
+func _view_origin() -> Vector2i:
+	if mode == Mode.REPLAY and sim.replay.frame != null:
+		var cam := sim.replay.camera()
+		return Vector2i(clampi(cam.x + 0x20, 0, 0x40), clampi(0xec - cam.y, 0, 0x1a8))
+	return sim.view_origin()
+
 func _update_view() -> void:
-	var origin := sim.view_origin()
+	var scene := _scene()
+	var ents: Array = scene["entities"]
+	var carrier: int = scene["carrier"]
+	var origin := _view_origin()
 	world.position = Vector2(-origin.x, -origin.y)
-	for i in sim.entities.size():
-		var e := sim.entities[i]
-		var visible := e.on_ice() or e.slot == Entity.Slot.PUCK or e.slot == Entity.Slot.NET_TOP or e.slot == Entity.Slot.NET_BOTTOM
+	for i in ents.size():
+		var e = ents[i]
+		var visible: bool = e.on_ice() or e.slot == Entity.Slot.PUCK or e.slot == Entity.Slot.NET_TOP or e.slot == Entity.Slot.NET_BOTTOM
 		if e.slot == Entity.Slot.SHADOW:
 			visible = false
-		if e.slot == Entity.Slot.PUCK and (e.zi < 0 or sim.puck_carrier == Entity.Slot.REFEREE):
+		if e.slot == Entity.Slot.PUCK and (e.zi < 0 or carrier == Entity.Slot.REFEREE):
 			visible = false      # in the referee's hand
-		var sx := e.xi + WORLD_X
-		var sy := WORLD_Y - e.yi - (e.zi * 3) / 2
+		var sx: int = e.xi + WORLD_X
+		var sy: int = WORLD_Y - e.yi - (e.zi * 3) / 2
 		var spr := sprites[i]
 		var ph := placeholders[i]
 		if assets_ok and e.frame >= 0 and frames.has(e.frame):
-			var mirrored := (e.flags4 & Entity.F4_MIRROR) != 0 and e.slot < 12
-			var team := _remap_team(e)
+			var mirrored: bool = (e.flags4 & Entity.F4_MIRROR) != 0 and e.slot < 12
+			var team := _remap_team(e.slot)
 			var shape: Shpi.Shape = frames[e.frame]
 			spr.texture = _texture(e.frame, team, mirrored)
 			spr.flip_h = mirrored
@@ -202,28 +424,47 @@ func _update_view() -> void:
 			ph.position = Vector2(sx, sy)
 			ph.z_index = WORLD_Y - e.yi
 			ph.visible = visible and not (assets_ok and e.slot < 12)
-	_update_markers()
+	_update_box(scene["box"])
+	_update_markers(scene)
 	overlay.queue_redraw()
 
+## draw_sprites: the players sitting in the boxes, frame 0x17e at (0xb3, -(n + 3) * 0xb) for the
+## home team and (0xb3, (n + 3) * 0xb) for the visitors, up to three each
+func _update_box(counts: Array) -> void:
+	for t in 2:
+		for n in 3:
+			var b := box_sprites[t * 3 + n]
+			if not assets_ok or n >= counts[t] or not frames.has(0x17e):
+				b.visible = false
+				continue
+			var shape: Shpi.Shape = frames[0x17e]
+			var y := (n + 3) * 0xb * (1 if t == 1 else -1)
+			b.texture = _texture(0x17e, t, false)
+			b.offset = Vector2(-shape.center_x, -shape.center_y)
+			b.position = Vector2(0xb3 + WORLD_X, WORLD_Y - y)
+			b.z_index = WORLD_Y - y
+			b.visible = true
+
 ## blit_sprite is called with the team of the entity (slot > 5 = away table), -1 for no remap
-func _remap_team(e: Entity) -> int:
-	if e.slot < 6:
+func _remap_team(slot: int) -> int:
+	if slot < 6:
 		return 0
-	if e.slot < 12:
+	if slot < 12:
 		return 1
 	return -1
 
 ## draw_sprites: the frames under the controlled players and the puck carrier
-func _update_markers() -> void:
-	var slots := [sim.user1_slot, sim.user2_slot, sim.puck_carrier]
+func _update_markers(scene: Dictionary) -> void:
+	var ents: Array = scene["entities"]
+	var slots := [scene["u1"], scene["u2"], scene["carrier"]]
 	for k in 3:
 		var m := markers[k]
 		var slot: int = slots[k]
 		var frame: int = Tables.marker_frames[k] if Tables.marker_frames.size() > k else -1
-		if not assets_ok or slot < 0 or slot >= 12 or sim.controls_blocked or not frames.has(frame):
+		if not assets_ok or slot < 0 or slot >= 12 or scene["blocked"] or not frames.has(frame):
 			m.visible = false
 			continue
-		var e := sim.entities[slot]
+		var e = ents[slot]
 		var shape: Shpi.Shape = frames[frame]
 		m.texture = _texture(frame, 0, false)
 		m.offset = Vector2(-shape.center_x, -shape.center_y)
@@ -231,19 +472,24 @@ func _update_markers() -> void:
 		m.z_index = WORLD_Y - e.yi - 1
 		m.visible = true
 
-## draw_player_number: the jersey number below the skates in the NUMSHP digits, with the position
-## letter for the controlled players and the carrier
+## draw_player_number: the jersey number below the skates in the NUMSHP digits with the position
+## letter for the controlled players and the carrier (in a replay also the followed player); the
+## others only with show_names (Tab), without the letter
 func _draw_numbers() -> void:
 	if not assets_ok or digit_shapes.size() < 10:
 		return
+	var scene := _scene()
+	var ents: Array = scene["entities"]
 	for i in 12:
-		var e := sim.entities[i]
+		var e = ents[i]
 		if e.line_slot < 0 or e.frame < 0:
 			continue
-		var with_letter := i == sim.user1_slot or i == sim.user2_slot or i == sim.puck_carrier
-		var x := e.xi + WORLD_X - (4 if with_letter else 0)
-		var y := WORLD_Y - e.yi + (15 if with_letter else 13)
-		var number := e.number
+		var with_letter: bool = i == scene["u1"] or i == scene["u2"] or i == scene["carrier"] or i == scene["follow"]
+		if not with_letter and not show_names:
+			continue
+		var x: int = e.xi + WORLD_X - (4 if with_letter else 0)
+		var y: int = WORLD_Y - e.yi + (15 if with_letter else 13)
+		var number: int = e.number
 		if number >= 10:
 			_draw_digit(digit_shapes[(number / 10) % 10], x - 3, y)
 			x += 4
@@ -297,7 +543,7 @@ func _bank(name: String) -> Shpi:
 
 func _fonts() -> Dictionary:
 	var out := {}
-	for n in ["scor2b", "scor3b", "hilight", "wittle06"]:
+	for n in ["scor2b", "scor3b", "hilight", "wittle06", "s1"]:
 		var data := GameFiles.read(n + ".vfn")
 		if not data.is_empty():
 			out[n] = Vfn.parse(data)

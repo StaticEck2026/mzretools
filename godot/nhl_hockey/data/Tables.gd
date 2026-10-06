@@ -45,6 +45,7 @@ static var line_rotation: Array = []              # [group * 8 + line]: lines of
 static var clip_scripts: Array = []              # scoreboard clips: [count, frame, frame, ...]
 static var clip_frame_steps: Array = []           # steps per clip frame
 static var clip_closes: Array = []                # the panel closes after the clip
+static var announcer_ppv_names: PackedStringArray  # the clip files (FANOM, GOAL, CLAP ...) of InfoPanel.CLIP_*
 static var penalty_names: PackedStringArray       # show_penalty: name per penalty (type - 9)
 static var anthem_country: Array = []             # init_match: 0 Canada, 1 USA per team
 static var anthem_length: Array = []              # steps of the anthem per country
@@ -113,6 +114,7 @@ static func load_tables() -> void:
 	clip_scripts = _ints(t["clip_scripts"])
 	clip_frame_steps = _ints(t["clip_frame_steps"])
 	clip_closes = _ints(t["clip_closes"])
+	announcer_ppv_names = PackedStringArray(t["announcer_ppv_names"])
 	penalty_names = PackedStringArray(t["penalty_names"])
 	anthem_country = _ints(t["anthem_country"])
 	anthem_length = _ints(t["anthem_length"])

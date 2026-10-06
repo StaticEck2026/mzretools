@@ -3,8 +3,8 @@ class_name Ceremonies
 ## match_sequence, ai_anthem, ai_ref_anthem), the end of a period and of the game (setup_faceoff,
 ## end_of_period), the Stanley Cup presentation (ai_puck_give_cup, ai_get_cup, ai_stanley_cup), the
 ## goal celebration (ai_celebrate_goal) and the three stars (three_stars_sequence 0x48f0b,
-## compute_three_stars, compare_player_stats, ai_ref_three_stars, ai_three_stars). The announcer
-## clips the original waits for (dword_cbebe) are not modelled: the sequences only run on steps.
+## compute_three_stars, compare_player_stats, ai_ref_three_stars, ai_three_stars). The info panel
+## and its clips (InfoPanel) pace the referee like in the original.
 
 const ANTHEM_STEPS := 0x708          # init_match: dword_e9b04 = 30 seconds
 const STARS_STEPS := 12000           # three_stars_sequence
@@ -467,6 +467,7 @@ static func begin_three_stars(sim: Sim) -> void:
 	sim.ref_infraction = 0
 	sim.whistle_timer = 0
 	sim.penalty_box_mode = false
+	sim.box_count = [0, 0]
 	sim.infractions.clear()
 	sim.period_over = false
 	sim.intermission_camera = false

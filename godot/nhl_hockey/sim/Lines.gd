@@ -667,6 +667,23 @@ static func toggle_pull_goalie(sim: Sim, t: int) -> void:
 		team.goalie_request = (w | 0xfff0) & 0xffff
 	apply_line_change(sim, team)
 
+## sub_672f9, the goalie choice of the pause menu (Home / Visiting Team Goalie): goalie 0 or 1 of
+## the line table, or -1 for none (the extra attacker). A goalie change during a delayed call
+## against the other team (game_flags 8, play running) gives the extra attacker at once.
+static func choose_goalie(sim: Sim, t: int, choice: int) -> void:
+	if not sim.is_user_team(t):
+		return
+	var team := sim.teams[t]
+	var before := team.goalie_request
+	if choice < 0:
+		team.goalie_request = (team.goalie_request | 0xfff0) & 0xffff
+	else:
+		team.goalie_request = choice
+		if not sim.play_stopped and sim.delayed_call and sim.puck_carrier >= 0 and (1 if sim.puck_carrier < 6 else 0) != t:
+			team.goalie_request = (team.goalie_request & 0xff) | 0xff00
+	if (Entity.to_s16(team.goalie_request) >= 0 or Entity.to_s16(before) >= 0) and before != team.goalie_request:
+		apply_line_change(sim, team)
+
 ## regenerate_energy (0x5bd36 in sim_game_state): players on the bench recover 8 per tick
 static func regenerate_energy(sim: Sim) -> void:
 	if not sim.opt_line_changes:

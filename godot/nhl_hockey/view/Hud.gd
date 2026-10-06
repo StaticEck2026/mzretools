@@ -26,6 +26,7 @@ var font_hud: Vfn                # HILIGHT
 var font_small_hud: Vfn          # WITTLE06
 var text_cache: Dictionary = {}
 var assets_ok := false
+var panel_view: PanelView        # the dithered score font
 
 func setup(s: Sim, pal: GamePalette, scrbrd: Shpi, fonts: Dictionary) -> void:
 	sim = s
@@ -166,37 +167,32 @@ func _draw_period() -> void:
 	if tex != null:
 		draw_texture(tex, Vector2(160 - tex.get_width() / 2, HUD_Y + 19))
 
-## draw_message_box: box with the message of the stoppage at (12, 149) of the view
+## draw_message_box (0x66fe2): the message (word_cbec8, set by queue_infraction from
+## infraction_priority, the goalie hotkeys and the offside warning) in a box at (12, 149) of the
+## view: colour 0x10 with the dotted colour 9, a 4 pixel black frame, the dithered score font
 func _draw_message() -> void:
-	if sim.game_over:
-		return
-	var msg := sim.message       # PULL GOALIE / RETURN GOALIE / OFFSIDE warning / PENALTY SHOT
-	if msg < 0 and sim.play_stopped:
-		match sim.ref_infraction:
-			Rules.INF_ICING: msg = 5
-			Rules.INF_OFFSIDE: msg = 4
-			Rules.INF_TWO_LINE: msg = 3
-			Rules.INF_PENALTY_SHOT: msg = 7
-			_:
-				if sim.ref_infraction >= 9 and sim.ref_infraction <= 25:
-					msg = 6
-				elif sim.faceoff_pending:
-					msg = 2
+	var msg := sim.message
 	if msg < 0 or msg >= Tables.message_strings.size():
 		return
 	var text := Tables.message_strings[msg]
-	# the original prints with SCOR3B (shadow) and SCOR2B (face); their glyph encoding is not
-	# decoded yet (see FORMATS.md), so the 6 pixel WITTLE06 font stands in
-	var face := _text(font_small_hud, text, palette.colors[0x27])
-	if face == null:
+	var tex: Texture2D = panel_view.score_texture(text) if panel_view != null else null
+	if tex == null:
+		tex = _text(font_small_hud, text, palette.colors[0x27])
+	if tex == null:
 		return
-	var w := face.get_width() + 4
-	var x := 12
-	var y := 149
-	draw_rect(Rect2(x - 4, y - 4, w + 8, 9 + 8), Color.BLACK)
-	draw_rect(Rect2(x, y, w, 9), palette.colors[0x10])
-	draw_rect(Rect2(x, y, w, 9), palette.colors[9], false)
-	draw_texture(face, Vector2(x + 2, y + 2))
+	var x := 0xc
+	var y := 0x95
+	var w := tex.get_width() + 4
+	var h := 0x9e - 0x95
+	draw_rect(Rect2(x, y, w, h), palette.colors[0x10])
+	for yy in range(y + 1, y + h, 2):
+		for xx in range(x, x + w, 2):
+			draw_rect(Rect2(xx, yy, 1, 1), palette.colors[9])
+	draw_rect(Rect2(x - 4, y - 4, w + 8, 4), Color.BLACK)
+	draw_rect(Rect2(x - 4, y, 4, 9), Color.BLACK)
+	draw_rect(Rect2(x + w, y, 4, 9), Color.BLACK)
+	draw_rect(Rect2(x - 4, y + h, w + 8, 4), Color.BLACK)
+	draw_texture(tex, Vector2(x + 2, y + 1))
 
 func _text(font: Vfn, s: String, color: Color) -> Texture2D:
 	if font == null:

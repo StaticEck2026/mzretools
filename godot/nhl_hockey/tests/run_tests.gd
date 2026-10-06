@@ -383,6 +383,7 @@ func asset_tests() -> void:
 		line_change_tests(bos, det)
 		match_rules_tests(bos, det)
 		ceremony_tests(bos, det)
+		replay_tests(bos, det)
 	# sound effects: 30 digital samples, the goal horn (0x9c) is the 7 second sample
 	var snd := Sounds.load_bank(gf.read_raw("pcff001.pat"), gf.read_raw("pcff001.tim"), gf.read_raw("pcff001.dig"))
 	if snd == null or snd.sample_count != 30 or snd.timbre_count != 30:
@@ -609,6 +610,13 @@ func match_rules_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 			fail("the thrown out player is still dressed (status %d)" % sim.teams[0].entity_of[roster])
 		else:
 			print("game misconduct: roster %d out, dressed %s" % [roster, str(_dressed(sim, 0))])
+	# the message box: ICING for 0x50 frames, a penalty's PENALTY until it is handed out
+	sim = Sim.new()
+	sim.set_teams(bos, det)
+	run_until_play(sim, 1200)
+	Rules.maybe_queue_infraction(sim, sim.entities[2], Rules.INF_ICING)
+	if sim.message != 5 or sim.message_timer != 0x50:
+		fail("icing message %d / %d" % [sim.message, sim.message_timer])
 	# an injury: out for the period (or the game), back in the next period
 	sim = Sim.new()
 	sim.set_teams(bos, det)
@@ -616,9 +624,23 @@ func match_rules_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 	var hurt := sim.entities[2]
 	sim.last_impact = 5
 	PuckLogic.injure_player(sim, hurt)
+	Rules.queue_infraction(sim, sim.entities[8], Rules.INF_INJURY)
 	if sim.teams[0].entity_of[hurt.roster_idx] != -3 or (hurt.flags2 & Entity.F2_UNSELECTABLE) == 0:
 		fail("a light injury keeps the player out for the period (status %d)" % sim.teams[0].entity_of[hurt.roster_idx])
 	else:
+		# the whistle: a 0x140 step stoppage, then a cut to the faceoff without the referee's walk
+		sim.step(8, 8, 0, 0)
+		if sim.stoppage_timer < 0x13e or not sim.injury_stoppage:
+			fail("injury stoppage timer %d" % sim.stoppage_timer)
+		var cut := false
+		for i in 1200:
+			sim.step(8, 8, 0, 0)
+			if sim.fade_in:
+				cut = true
+			if not sim.play_stopped:
+				break
+		if not cut or sim.play_stopped or sim.injury_stoppage:
+			fail("no cut to the faceoff after the injury (stopped %s)" % sim.play_stopped)
 		var hr := hurt.roster_idx
 		sim.start_period(1)
 		if sim.teams[0].entity_of[hr] == -3:
@@ -774,3 +796,55 @@ func _dressed(sim: Sim, t: int) -> Array:
 			out.append(e.roster_idx)
 	out.sort()
 	return out
+
+## the instant replay: a frame every second step into the 300 frame ring, the newest frame
+## matches the simulation, seeking stops at both ends, sounds come back when playing forward
+func replay_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
+	var sim := Sim.new()
+	sim.set_teams(bos, det)
+	run_until_play(sim, 1200)
+	var r := sim.replay
+	var before := r.frame_count()
+	for i in 40:
+		sim.step(8, 8, 0, 0)
+	if sim.play_stopped:
+		print("replay test: the play stopped early")
+	var grown := r.frame_count() - before
+	if grown < 15 or grown > 21:
+		fail("replay: %d frames for 40 steps" % grown)
+	if r.half != 0:
+		sim.step(8, 8, 0, 0)      # the frame is written on every second step
+	var f := r.decode(r.buffer_start())
+	for i in 17:
+		var e: Entity = sim.entities[i]
+		var g: ReplayFrame.Sprite = f.entities[i]
+		if g.xi != e.xi or g.yi != e.yi or g.frame != (e.frame if e.frame >= 0 else -1):
+			fail("replay frame of entity %d: %d,%d frame %d, sim %d,%d frame %d" % [i, g.xi, g.yi, g.frame, e.xi, e.yi, e.frame])
+			break
+	if f.camera_y != sim.camera_y or f.user1_slot != sim.user1_slot or f.entities[3].number != sim.entities[3].number:
+		fail("replay frame header: camera %d user %d" % [f.camera_y, f.user1_slot])
+	# a sound effect is recorded and played again when the replay runs forward
+	sim.play_sfx(0x9c)
+	sim.step(8, 8, 0, 0)
+	sim.step(8, 8, 0, 0)
+	r.begin_playback()
+	sim.sfx_queue.clear()
+	var n := 0
+	while r.seek(1, true, sim) != -1 and n < 400:
+		n += 1
+	if not sim.sfx_queue.has(0x9c):
+		fail("replay: the goal horn was not replayed (%s)" % str(sim.sfx_queue))
+	if r.seek(-1000, false, sim) != -1 or r.read != 0:
+		fail("replay: seeking back stops at the oldest frame (%d)" % r.read)
+	# VCR: play advances 0.3 frames per tick, rewind four times as fast
+	r.press(Replay.B_PLAY, 10)
+	if r.advance(10) != 3:
+		fail("replay speed")
+	# the ring wraps after 300 frames
+	for i in 700:
+		sim.step(8, 8, 0, 0)
+	if not r.wrapped and sim.play_stopped == false:
+		fail("replay: the ring did not wrap")
+	if r.wrapped and r.frame_count() != Replay.FRAMES:
+		fail("replay: %d frames in a full ring" % r.frame_count())
+	print("replay: %d frames, wrapped %s" % [r.frame_count(), r.wrapped])

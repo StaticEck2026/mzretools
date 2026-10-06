@@ -1351,6 +1351,7 @@ static func injure_player(sim: Sim, e: Entity) -> void:
 		team.entity_of[e.roster_idx] = -4 if for_game else -3
 		if not for_game:
 			team.injured.append(e.roster_idx)
+	sim.injury_stoppage = true
 	sim.injury_report = [team.index, e.roster_idx, for_game]
 	InfoPanel.announce_injury(sim, team.index, e.roster_idx, for_game)
 

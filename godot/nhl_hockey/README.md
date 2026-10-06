@@ -18,8 +18,15 @@ NHL_HOME=5 NHL_AWAY=9 NHL_FAST_STEPS=600 NHL_SCREENSHOT=out.png godot --path god
 ```
 
 Controls (player 1, home team): arrows skate, Alt = A (pass / switch player), Space = B (shoot / body
-check), Ctrl = C (hook, poke check), Esc pauses. At the faceoff hold a direction and press A when the
-puck drops.
+check), Ctrl = C (hook, poke check). Player 2 (`NHL_USER2`): I J K L skate, U = A, O = B, P = C. At the
+faceoff hold a direction and press A when the puck drops. A or B skips the anthem.
+
+Hotkeys of the original (`handle_hotkey`): Esc the pause screen (Back to Game, Exit, the goalie choice,
+Go To Replay), R the instant replay, Tab the numbers of every player, S the sound effects, M the crowd and
+music, F1-F4 / F5-F8 the lines of player 1 / 2, F9 / F10 pull or return the goalie. In the replay the
+mouse works the VCR panel (rewind, step back, pause, step forward, play, fast forward, the recorded
+camera, exit) and a click on the ice follows that player; with the keyboard Left / Right select a button,
+A holds it, Esc or R leaves.
 
 Team indices (`NHL_HOME`, `NHL_AWAY`, or `match/home` and `match/away` in `user://settings.cfg`): 0 BOS, 1 BUF,
 2 CGY, 3 CHI, 4 DET, 5 EDM, 6 HFD, 7 LA, 8 DAL, 9 MTL, 10 NJ, 11 NYI, 12 NYR, 13 OTT, 14 PHI, 15 PIT, 16 QUE,

@@ -97,6 +97,8 @@ static func update_stoppage(sim: Sim) -> void:
 				sim.faceoff_timer = 0x1c20
 				if sim.ref_phase >= 0:
 					sim.ref_phase = (sim.ref_phase & 0xff) - 0x100   # high byte 0xff
+				if sim.message_timer == 0:
+					sim.message = -1
 				break
 
 ## ref_announce (0x62ea2): the referee signals the call (ai_ref_call_penalty) or points at the
@@ -134,7 +136,7 @@ static func penalty_box_update(sim: Sim) -> void:
 		var e: Entity = sim.entities[inf[1]]
 		if not inf[2]:
 			# a delayed call or a player still on his way to the box
-			if e.line_slot >= 0 and e.state() != Entity.State.PENALTY_BOX:
+			if e.line_slot >= 0:
 				return
 			e.flags2 &= ~Entity.F2_PENALIZED
 			sim.infractions.pop_back()
@@ -253,7 +255,21 @@ static func penalty_expired(sim: Sim, team: Team, idx: int) -> void:
 	e.set_state(Entity.State.EXIT_PENALTY_BOX)
 
 ## goal_ends_penalty (0x63d69): a power play goal releases the first minor of the conceding team
+## The goal also wipes the queued calls: everything but the majors, the misconducts and the minors
+## of the scoring team (all of them when the overtime goal ended the game).
 static func goal_ends_penalty(sim: Sim, conceding: Team, scoring: Team) -> void:
+	var ended := sim.period == 3 and sim.teams[0].goals != sim.teams[1].goals
+	var kept: Array = []
+	for inf: Array in sim.infractions:
+		var pen: int = Tables.infraction_is_penalty[inf[0]]
+		var keep := not ended and (pen == -1 or pen == 5 or (pen == 2 and sim.same_team(inf[1], scoring.first_slot)))
+		if keep:
+			kept.append(inf)
+		elif inf[1] < 12:
+			sim.entities[inf[1]].flags2 &= ~Entity.F2_PENALIZED
+	sim.infractions = kept
+	if sim.infractions.is_empty() and sim.message == 6:
+		sim.message = -1
 	if conceding.skaters_on_ice >= scoring.skaters_on_ice:
 		return
 	for i in conceding.penalties.size():
@@ -275,6 +291,8 @@ static func process_infractions(sim: Sim) -> void:
 				start_stoppage(sim, i)
 			elif sim.puck_carrier >= 0 and sim.same_team(inf[1], sim.puck_carrier):
 				sim.whistle_timer = 0x28
+				if sim.message != -1:
+					sim.message_timer = 0x50
 				start_stoppage(sim, i)
 			else:
 				if not sim.delayed_call:
@@ -285,9 +303,15 @@ static func process_infractions(sim: Sim) -> void:
 			var dur := Tables.stoppage_duration[type] << 5
 			if sim.stoppage_timer < dur:
 				sim.stoppage_timer = dur
-			var delay := Tables.announce_delay[type] * 0x20
-			if sim.announce_timer < delay:
-				sim.announce_timer = delay
+			if sim.injury_stoppage:
+				sim.stoppage_timer = 0x140
+			var delay := Tables.announce_delay[type]
+			if sim.penalty_shot_setup and type == INF_PENALTY_SHOT_END:
+				# after the penalty shot (byte_c9111 / byte_c9146)
+				sim.stoppage_timer = Tables.stoppage_duration[13] << 5
+				delay = Tables.announce_delay[4]
+			if sim.announce_timer < delay * 0x20:
+				sim.announce_timer = delay * 0x20
 
 ## start_stoppage (0x63fb2): whistle; the faceoff spot follows from the event
 static func start_stoppage(sim: Sim, idx: int) -> void:
@@ -342,6 +366,13 @@ static func start_stoppage(sim: Sim, idx: int) -> void:
 static func queue_infraction(sim: Sim, e: Entity, type: int) -> void:
 	if sim.infractions.size() >= 0x20 or sim.penalty_box_mode:
 		return
+	# the message box shows the most important call (infraction_priority = message id); the
+	# PENALTY message stays until the penalty is handed out
+	var prio: int = Tables.infraction_priority[type]
+	if not sim.penalty_shot_setup and sim.message < prio:
+		sim.message = prio
+		if prio != -1 and prio != 6:
+			sim.message_timer = 0x50
 	if type > INF_ICING:
 		sim.add_crowd(400, 800)
 		if e.flags & Entity.F_PLAYER2:

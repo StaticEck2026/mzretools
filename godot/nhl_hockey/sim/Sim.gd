@@ -90,6 +90,12 @@ var period_over := false
 var stoppage_timer: int = -1
 var whistle_timer: int = 0
 var announce_timer: int = -1        # word_cc0b0
+var box_count := [0, 0]            # penalized_count / byte_e9abb: players sitting in each penalty box
+var last_sfx := -1                 # crowd_noise low word: the last play_sfx id (recorded by the replay)
+var replay_disabled := false       # game_flags 0x10: nothing is recorded
+var replay := Replay.new()
+var injury_stoppage := false       # dword_cbec6: a player was hurt; the faceoff follows without the referee's walk
+var fade_in := false               # word_cbec4: the view cuts (fades in) to the next scene
 var penalty_box_mode := false      # word_c90de: a penalty is being handed out (no new calls)
 var speech_busy := false           # speech_busy(): the announcer is talking (set by the audio layer)
 var ref_phase: int = -1             # dword_c90d4: 0 = referee called, 1 = collecting, -1 = ready
@@ -128,6 +134,7 @@ var crowd_noise: int = 300
 var excitement: int = 0
 var step_count: int = 0
 var sfx_queue: PackedInt32Array = PackedInt32Array()
+var music_cues: Array = []         # play_sfx 0xaa on sound device 4 (sub_8f270)
 var seed: int = 0xabcd4321           # dword_c9100: state of randomrange (demo_game reseeds it from rand(), init_match adds the team numbers)
 var puck_in_net := false            # byte_c90ba
 # line changes (Lines.gd)
@@ -206,6 +213,7 @@ func new_game() -> void:
 	for i in 12:
 		entities[i].roster_idx = -1
 		entities[i].line_slot = -1
+	replay.reset()
 	start_period(0)
 
 ## new period: dress the default lines, everyone to the centre faceoff
@@ -239,6 +247,11 @@ func start_period(p: int, switch_ends: bool = true) -> void:
 			if team.entity_of[r] == -3:
 				team.entity_of[r] = -2
 		team.injured.clear()
+		# count_penalized: the players with time left in the box
+		box_count[t] = 0
+		for pen: Array in team.penalties:
+			if pen[1] > 0:
+				box_count[t] += 1
 		if p == 1:
 			Lines.adjust_strategy(self, t)       # time_announcements: strategy review in the 2nd period
 		for i in 6:
@@ -277,6 +290,7 @@ func start_period(p: int, switch_ends: bool = true) -> void:
 	stoppage_timer = -1
 	ref_phase = -1
 	penalty_box_mode = false
+	injury_stoppage = false
 	user1_slot = -1
 	user2_slot = -1
 	assign_users()
@@ -480,8 +494,35 @@ func random(n: int) -> int:
 	seed = (lo * 0xe62d + (mid << 16) + 1) & 0xffffffff
 	return ((((seed >> 8) & 0xffff) * (n & 0xffff)) >> 16)
 
+## play_sfx (0x59884): remembers the id for the replay; while the announcer talks only the goal
+## horn plays; the digital devices 4 and 8 leave out 0xa0 / 0xa1; 0x7d is a cheer of the crowd;
+## the end of period horn 0x90 plays sample 0x91 (device 4: both)
 func play_sfx(id: int) -> void:
+	last_sfx = id
+	if speech_busy and not (id == 0x9c and not replay_disabled):
+		return
+	if (sound_device == 8 or sound_device == 4) and (id == 0xa0 or id == 0xa1):
+		return
+	if id == 0x7d:
+		crowd_noise += 500
+		return
+	if sound_device == 4 and id == 0xaa:
+		music_cues.append(id)
+		return
+	if id == 0x90:
+		if sound_device == 4:
+			sfx_queue.append(0x90)
+		id = 0x91
 	sfx_queue.append(id)
+
+## the effect records for the replay frame (10 frame nibble bytes, 20 id bytes)
+func effect_record_bytes() -> PackedByteArray:
+	var out := PackedByteArray()
+	out.resize(30)
+	out.fill(0xff)
+	for i in 10:
+		out[i] = 0
+	return out
 
 func add_crowd(amount: int, cap: int) -> void:
 	if crowd_noise < cap + 1:
@@ -552,6 +593,7 @@ func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) ->
 		puck.y = (-0x104 if puck.yi < 0 else 0x108) * 0x10000
 		puck.frame = 0x18a
 	update_camera()
+	replay.record(self)
 
 ## first loop of sim_update_players: distance/direction of every skater to the puck and the nearest
 ## skater of each team (team.nearest_slot)
