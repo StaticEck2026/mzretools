@@ -1,6 +1,6 @@
 class_name Crowd
-## The animated figures around the ice and on the benches (start_crowd_sound 0x614c2,
-## play_crowd_chant 0x61576, the record part of update_effects 0x615a2, drawn by
+## The animated figures around the ice and on the benches (start_crowd_figure 0x614c2,
+## bench_cheer 0x61576, the record part of update_effects 0x615a2, drawn by
 ## draw_nets_and_effects 0x61862). Twenty records (unk_dee94, 12 bytes each): 0..16 random fans and
 ## photographers of the 0x85 spots, 17 the same (or one of the two figures 0x85 / 0x86 that come
 ## out during a stoppage), 18 / 19 the home and away bench (0x89.. / 0x9a.. at random, 0x87 / 0x88
@@ -35,7 +35,7 @@ static func reset(sim: Sim) -> void:
 	sim.crowd_busy = PackedByteArray()
 	sim.crowd_busy.resize(0xab)
 
-## start_crowd_sound (0x614c2): record `index` shows the figure of spot `id`
+## start_crowd_figure (0x614c2): record `index` shows the figure of spot `id`
 static func start(sim: Sim, index: int, id: int) -> void:
 	var r: Record = sim.crowd[index]
 	var spot: Array = Tables.crowd_spots[id]
@@ -49,7 +49,7 @@ static func start(sim: Sim, index: int, id: int) -> void:
 	r.timer = 0xc
 	r.counter = 1
 
-## play_crowd_chant (0x61576): the bench of team t cheers
+## bench_cheer (0x61576): the bench of team t cheers
 static func bench_cheer(sim: Sim, t: int) -> void:
 	if t == 0:
 		start(sim, HOME_BENCH, 0x87)

@@ -306,6 +306,8 @@ static func next_period(sim: Sim) -> void:
 		p = 3
 	sim.infractions.clear()
 	sim.start_period(p, switch)
+	# game_loop: the scoreboard of the intermission with the organ
+	InfoPanel.music(sim, 0)
 
 # --------------------------------------------------------------------------------------------
 # goal celebration and the Stanley Cup

@@ -110,43 +110,111 @@ of the view, fill colour 0x10, border 9, text in `SCOR3B.VFN` (colour 0x25) with
 ```
 
 1 bpp glyphs are rows of `ceil(width/8)` bytes, most significant bit first; set bits are drawn in the current text
-colour (`settextpos(color, shadow)`). This decodes `HILIGHT`, `WITTLE06`, `TEENY05`, `MINIFO05`, `EASN`,
-`LINEDIT`, the large menu fonts and the glyph metrics of every font; the 9 byte glyphs of `SCOR2B`/`SCOR3B`
-(the message box fonts) are not plain 1 bpp rows and are not decoded yet.
+colour (`settextpos(color, shadow)`). This decodes every font of the game (`HILIGHT`, `WITTLE06`, `TEENY05`,
+`MINIFO05`, `EASN`, `LINEDIT`, the large menu fonts). `SCOR3B` and `SCOR2B`, the message box fonts, are plain
+1 bpp rows as well: the two complementary checkerboard halves of one dithered font, drawn on top of each other in
+the colours 0x25 and 0x27.
 
 ## Sound (`loadsound`, `playsample`)
 
 IFF **8SVX** (`FORM....8SVX`, `VHDR` with the sample rate at +12, signed 8 bit `BODY`) or RIFF WAV with a 0x2c
-byte header, converted to signed by XOR 0x80. `playsample(sample, rate, channel, volume)`. The `.IFF` files of
-the installation (`MAINDESK.IFF`, `PAUSE.IFF`, `TONIGHTS.IFF`...) are such 22050 Hz samples: the music loops of
-the menu screens.
+byte header, converted to signed by XOR 0x80. `loadsound` keeps a 16 byte header (rate, total length = one shot +
+repeat, loop) before the body; `playsample(sample, driver, channel, volume)` hands the driver half of each length
+(`drv_play_sample`). The menu loops of the installation (`MAINDESK.IFF`, `PAUSE.IFF` for the pause screen when the
+music is on, `TONIGHTS.IFF`, `GAMESUM.IFF`, `SCOUTING.IFF`) declare 22050 Hz and twice as many samples as their
+bodies hold bytes; the bytes are not plain PCM (their energy sits above 1 kHz and they read like 4 bit codes, the
+silence of the lead in is `0x78` repeated). Neither the loader, the Sound Blaster driver nor the installer expands
+them, so the coding of these files is still unidentified; the port does not play them.
+
+### Sound drivers and patch banks (`load_sound_config`, `loadpatches` 0x8ecc0)
+
+The `.BGP` files are the sound card drivers, 16 bit MZ images packed with the byte pair code (`bytepair_decode`):
+`YM30` the Adlib FM driver, `SB30` the Sound Blaster (FM through the OPL2 plus software mixed digital voices at
+11025 Hz), `MT30` the Roland MT-32, `PC30` the speaker, `NL30` none. A `.SCN` file (`SBDAC`, `ADLIB`, `MT32`,
+`MT32SBDA`, `PCBEEP`) names the patch file and the timbre files of the card: byte +1 the patch file number, +3 the
+number of timbre files and their numbers at +0x14 (`%0.3sFF%03d.PAT/.TIM`): the Sound Blaster loads `PCFF001.PAT`
+with `PCFF000.TIM` (FM) and `PCFF001.TIM` (digital), the Adlib `PCFF004.PAT` with `PCFF000.TIM` and `PCFF002.TIM`.
+
+```
+.PAT  +0 u16, +2 u8[256] sound / program id -> record index (0 = none, except id 0), records of 0x14 bytes from
+      +0x102: +0 type (0 FM timbre, 1 digital timbre), +1 timbre program, +2 u16 voice mask (0x1ff: any of the 9
+      FM voices), +6 voices at most, +7 s8 transpose, +8 s8 fine tune (F-number units), +0xa pitch bend range in
+      semitones, +0xc priority (<< 4), +0xe note length of a sound effect (x 6 ticks, 0 = 0xa0 ticks), +0xf driver
+      class (bind_patch_timbres turns it into the index of the loaded driver), +0x10 the timbre pointer once loaded
+.TIM  +0 u32 file size, +4 u16 n, n 4 byte keys (0x80, type, 0, program; the last one 0xffffffff), n u32 offsets
+      relative to the data at 6 + 8 n (the same keyed layout as the .DIG)
+      FM timbre (PCFF000.TIM, 144 of 80 bytes): +2..+0xe the OPL2 registers carrier 20/40/60/80/E0, modulator
+      20/40/60/80/E0, C0, A0, B0; the driver's own modulation: +0x10 control of an envelope (+0x12 delay, +0x14
+      start, +0x16/+0x18 attack step and peak, +0x1a/+0x1c decay step and floor, +0x1e sustain step, +0x20
+      release step), +0x22 control of an LFO (+0x24 delay, +0x26 end, +0x28 depth, +0x2a clamp, +0x2c depth per
+      modulation wheel, +0x2e rate: a 16 bit phase step a tick through a quarter sine), +0x32 control of a step
+      sequence (+0x34 delay, +0x36 steps, +0x37 ticks a step, +0x38 length, +0x3a values), +0x4a ticks the voice
+      stays after its note off. Controls (YM30 sub_1c6): 1 note offset, 2 F-number offset, 3 volume, 5 LFO depth,
+      7 pitch bend, 8 LFO rate, 9 modulator level
+      digital timbre (PCFF001.TIM, 30 of 32 bytes): +0 6, +2 the 4 byte id of the sample in the .DIG, +0x14 u32
+      length, +0x18 / +0x1c u32 loop start / end (0 = none); load_timbre_file writes the sample pointer to +0xc and 11025
+      to +0x12
+.DIG  +0 u16 0x7ff1, +2 u16 4, +4 u16 n (30), n 4 byte sample ids (sorted), n u32 offsets relative to the data at
+      6 + 8 n, signed 8 bit PCM
+```
+
+The FM driver (YM30, and the FM half of SB30) receives MIDI messages. A note gets the patch's transpose; channel 9
+plays the drum patch note + 0x5c at note 60. The frequency is block = note / 12 with the F-number table
+86, 91, 96, 102, 108, 114, 121, 128, 136, 144, 153, 162 (171, ... for the bends) of DS:0x117 (note 60: F-number 86
+in block 5, 130.4 Hz before the operators' multipliers) plus the fine tune. The velocity (table DS:0x15f, 0.63..1)
+times the channel volume (controller 7, table DS:0x19f) scales the carrier's attenuation as 63 - (63 - TL) * gain,
+the modulator's too with additive synthesis. Controllers 1 (modulation, LFO depth), 7, 10 (pan), 0x40 (sustain),
+0x7b (all off); the pitch bend spans the patch's range. Every 100 Hz timer tick the driver runs the timbre's
+envelope, LFO and sequence and writes the registers. The digital half of SB30 mixes its voices at 11025 Hz (DSP
+time constant for 0x2b11, command 0x14) and steps through a sample by the note: the table at DS:0x1f6 holds
+2^((note - 60) / 12) in 4.12 fixed point, so a sample plays at 11025 * 2^(transpose / 12) Hz whatever its
+recording rate (the post, 0xac, is a 22050 Hz recording).
 
 ### Sound effects of the match (`play_sfx`, `snd_play_sfx`, `snd_play_patch`)
 
-`play_sfx(id)` hands a sound id to the EA sound driver, which plays it as a MIDI event: ids >= 0x80 are
-percussion notes on channel 9 (note = id - 0x74), ids < 0x80 program changes on the channels 12..15 with note
-0x24. The driver resolves the id through the bank of the sound card (`PCFF001.PAT/.TIM/.DIG` for the digital
-drivers, `%0.3sFF%03d.PAT/.TIM` per driver name):
+`play_sfx(id)` (0x59884) passes the id to `snd_play_patch` unless the announcer is speaking (the goal horn 0x9c
+always plays); 0x7d only raises the crowd noise, 0x90 plays 0x91. The driver plays it as a MIDI event: ids
+>= 0x80 are drum notes on channel 9 (note id - 0x74, + 24 on the way to the driver: the driver's drum patch is the
+id), ids < 0x80 program changes on the channels 12..15 at note 0x24; the note ends after the record's length.
+The digital records hold 33 effects, `nhltool.py dig GAMEDIR OUT` exports them as `sfx_<id>.wav`. Ids used by the
+game code: 0x7d/0x7e crowd loops (`update_ambient_audio`, volume from `crowd_noise`), 0x91 period horn, 0x97 one
+minute warning, 0x98/0x99 pass, 0x9a slap shot, 0x9b pick up, 0x9c goal horn (the 7 second sample), 0x9d/0xa3 puck
+hits a body / stick, 0xa0/0xa1 body check, 0xa2 stung, 0xa4 whistle, 0xa6 crowd, 0xaa wrist shot, 0xac post,
+0xad boards, 0xae glass, 0xb0/0xb2 skates, 0xb1 body into the boards; the FM records are 0xab (the puck drop),
+0x94, 0x96 and the drum kit 0x7f..0x92 of the songs.
+
+### Songs (`music_load_kms` 0x8f13b, the sequencer `kms_track_tick`, `load_music_banks`, `play_speech`)
 
 ```
-PCFF001.PAT  +0 u16, +2 u8[256] sound id -> record index, +0x102 records of 0x14 bytes:
-             +0 1 = digital sample / 0 = FM instrument, +1 program number (1 based timbre index), +7 s8 transpose
-             in semitones, the rest envelope/driver data
-PCFF001.TIM  +0 u32 file size, +4 u16 timbre count, then count x (u16 0x180, u16 program), ".dig", u32 offsets;
-             32 byte timbres from +0x106: +0xa u16 sample rate (11025, one at 22050), +0xc u32 sample length,
-             +0x10/+0x14 u32 loop start/end (0 = no loop), +0x19 5 byte sample id
-PCFF001.DIG  +0 u16 0x7ff1, +2 u16 4, +4 u16 sample count (30), +6 the 4 byte sample ids sorted ascending,
-             +0x82 u32 start offsets of the samples 1..n-1 (relative to the data), +0xf6 signed 8 bit PCM
+.KMS  +1 u8 tempo, +6 u8 track count, +8 u16 file offsets of the tracks (each preceded by a size byte and "TRAK").
+      A track is a list of events: a delta time in steps (7 bit groups, the high bit continues) and an event byte
+        < 0xd9  a note (low 7 bits, the driver gets + 24), a velocity byte (below 0x80 the running velocity is used
+                instead), the length in steps (7 bit groups)
+        0xd9/0xda end (return from a call), 0xdb back to the start, 0xdc program, 0xdd tempo, 0xdf controller
+        number and value, 0xe2/0xe3 loop start (count)/end, 0xe4 running velocity, 0xe5 u16 pitch bend (the high
+        byte is sent), 0xe6 call, 0xe7 text (length byte; the track name), 0xe8 system exclusive (MT-32 only),
+        0xea marker; any other code carries one byte
+.CFG  per track 16 bytes from +8: u16 mask of the MIDI channels it may use (the first is taken), +6 volume
+      (controller 7, scaled by the song's volume), +7 pan
 ```
 
-Timbres are matched to the samples by their length (three pairs share a length; the first match is taken).
-`nhltool.py dig GAMEDIR OUT` exports the 33 digital effects as `sfx_<id>.wav`. Ids used by the game code:
-0x7d/0x7e crowd loops (`update_ambient_audio`, volume from `crowd_noise`), 0x90 period horn (FM only),
-0x97 one minute warning, 0x98/0x99 pass, 0x9a slap shot, 0x9b pick up, 0x9c goal horn (the 7 second sample),
-0x9d/0xa3 puck hits a body / stick, 0xa0/0xa1 body check, 0xa2 stung, 0xa4 whistle, 0xa6 crowd, 0xaa wrist shot,
-0xab puck drop (FM only), 0xac post, 0xad boards, 0xae glass, 0xb0/0xb2 skates, 0xb1 body into the boards.
-The `.KMS` files are the organ songs and jingles for the music driver (`music_load_kms`, `load_music_banks`), with
-a `.CFG` each; `.BGP` are the sound card drivers and `.SCN`/`.PAT`/`.TIM` their patch sets.
+The timer routine `sound_timer_tick` runs at 100 Hz (the PIT is set to 11932): a track adds 128 a tick and takes a step
+for every 32000 / tempo, i.e. 0.4 x tempo steps a second (24 a beat). A note stays in a table of 32 sounding notes
+until its length has run out. The songs of the match are organ tunes (two to three tracks: 'left', 'right' and
+the pedal), the anthems `CANADA` and `USA`, `ROCKDITI`, the stomps `SBROCKU` (the digital sample of program 0x7c),
+`ADROCKU` / `MTROCKU`, and the front end pieces (`TITLE`, `ADTITLE`, `ADSUM`, `ADAWARDS`, `ADAFAN`; `MT*` for
+the MT-32). `nhltool.py kms FILE.KMS --events` lists a song.
+
+`load_music_banks` (0x7dc8b) loads the songs of a match: six per home team from the byte table at 0xd1be3
+(6 bytes a team, indices into the 54 names at `off_d1b0b`, -1 none; teams above 25 use row 13), three random
+ones from the 18 indices at 0xd1c8b (none of the team's, all different), the stomp of the sound card, the anthem
+of the home team's country (byte at 0xcc9b0 + team: 0 Canada, 1 USA; names at 0xd1cde) and `ROCKDITI`.
+`play_speech(cue)` (0x59a11) stops the running song and starts the cue's: 0..5 the team's (none: one of the
+random ones), 6..8 the random ones, 9 the stomp, 10 the anthem, 11 `ROCKDITI`. The cues: 0 the intermission
+(`game_loop`), 3 a home goal without the announcer (`score_goal`), 1 / 4 a power play of the home / away team
+(`ref_check_announcements` with the announcer on), 2 halfway through a period, 5 late in the third, 6..8 and 11
+at random stoppages, 9 with the clapping crowd clip, 10 before the game. `stop_crowd_loop` ends the song at the
+puck drop (`faceoff_resolve`) and before a penalty shot.
 
 ## Announcer speech (`speech_load_bank`, `speech_queue_clip`, `speech_release_clip`)
 
@@ -156,9 +224,9 @@ u16 BE entry count (344), then per entry a 24 bit BE offset, a 24 bit BE size (`
 and a zero terminated name (eight `.int` names appear twice). An entry is either raw unsigned 8 bit PCM played
 at 5512 Hz (`speech_load_bank`: duration = size * 100 / 5512 ticks) or packed with pack code `0x47 0xFB`
 (`unpack` -> `bytepair_decode`, 0x97a38): 3 bytes, the unpacked size (24 bit BE), the escape byte, the number
-of byte pairs and the pairs (code, left, right); in the data a pair code expands recursively (`sub_979f8`),
+of byte pairs and the pairs (code, left, right); in the data a pair code expands recursively (`bytepair_expand`),
 the escape byte is followed by a literal, an escape followed by 0 ends it. The unpacked data skips a 5 byte
-header and is a running sum (`sub_83bf3`) of signed 8 bit samples at 11025 Hz. Clip types: `.num` numbers
+header and is a running sum (`speech_delta_decode`) of signed 8 bit samples at 11025 Hz. Clip types: `.num` numbers
 (`0`..`99`, `01`..`09` for the seconds), `.tea` / `.frm` / `.hom` / `.awa` team names (by `team_abbrev`),
 `.rnk` arenas, `.pen` penalties, `.cor` / `.bar` / `.int` phrases.
 
@@ -167,8 +235,8 @@ list, so the release order is what is said: `say_goal` "bos.tea goalnum.cor 12.n
 77.num [pause.cor andnum.cor 8.num]]", `say_penalty` "det.tea pennum.cor (pensnum.cor when more are queued,
 andnum.cor for the next one of the same team) 19.num pause.cor 2min.cor|5min.cor|gamemisc.cor hooking.pen
 pause.cor [at.cor pause.cor 12.num 05.num]", `say_penalty_shot`, `say_star` "3rdstar.cor bos.frm pause.cor
-number.cor 77.num", `sub_854ac` "oneleft.cor" (one minute left, from `game_clock_tick`; without speech the
-tone 0x97). The timer routine `sub_832bc` (100 Hz) starts each clip 0x1a ticks before the previous one ends
+number.cor 77.num", `say_one_minute_left` "oneleft.cor" (one minute left, from `game_clock_tick`; without speech the
+tone 0x97). The timer routine `speech_timer` (100 Hz) starts each clip 0x1a ticks before the previous one ends
 and keeps `speech_busy` set 0x1a ticks after the last. `nhltool.py viv XBRUCE2.VIV OUT` exports the clips as WAV.
 
 ## Rink (`load_rink`, `load_rink_tiles`)

@@ -4,8 +4,8 @@ extends Node2D
 ## paused, EADESK2.QFS after the game) at 640x480 with the menu bar of unk_ceb8f (after the game
 ## unk_cec4f) in the S1 font: boxes filled with colour 0xf9, light edge 0xfa, dark edge 0xf8
 ## (draw_menu_items, draw_box), the open entry highlighted (highlight_menu_item). The entries run
-## the handlers of the original: Back to Game (sub_1a5a1), Exit (exit_game_dialog), Go To Replay
-## (sub_1a817), the goalie choices (sub_1ab0b..sub_1abf1 -> Lines.choose_goalie). The other
+## the handlers of the original: Back to Game (menu_back_to_game), Exit (exit_game_dialog), Go To Replay
+## (menu_go_to_replay), the goalie choices (menu_home_goalie1..menu_away_no_goalie -> Lines.choose_goalie). The other
 ## entries open the front end screens of the original (controls, settings, statistics, line
 ## editor, box scores) and are shown but not active in this port.
 

@@ -148,7 +148,7 @@ func record(sim: Sim) -> void:
 # playback
 # --------------------------------------------------------------------------------------------
 
-## instant_replay: start at the oldest frame (sub_67581), paused
+## instant_replay: start at the oldest frame (replay_oldest_frame), paused
 func begin_playback() -> void:
 	read = write if wrapped else 0
 	mode = MODE_PAUSE
@@ -247,7 +247,7 @@ func decode(p: int) -> ReplayFrame:
 static func _s10(v: int) -> int:
 	return v - 0x400 if v & 0x200 else v
 
-## sub_7e93e: the sprite under a rink position (players, puck, referee), -1 for none
+## replay_sprite_at: the sprite under a rink position (players, puck, referee), -1 for none
 func sprite_at(x: int, y: int) -> int:
 	if frame == null:
 		return -1

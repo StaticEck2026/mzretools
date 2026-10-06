@@ -49,6 +49,10 @@ static var announcer_ppv_names: PackedStringArray  # the clip files (FANOM, GOAL
 static var crowd_spots: Array = []                # per crowd figure: [x, y, offset in crowd_sequences] on the rink surface
 static var crowd_sequences: PackedInt32Array      # [n, frame, ...] (n < 0: the last frames repeat at random), F000_149.PPV frames
 static var bench_y: PackedInt32Array              # y of the home / away bench (unk_cd2f8)
+static var music_songs: PackedStringArray         # load_music_banks: the KMS songs (off_d1b0b)
+static var music_team_songs: Array = []           # per home team: the songs of the cues 0..5 (-1 none)
+static var music_pool: Array = []                 # the candidates of the three random songs (cues 6..8)
+static var anthem_songs: PackedStringArray        # the anthem song per anthem_country
 static var penalty_names: PackedStringArray       # show_penalty: name per penalty (type - 9)
 static var anthem_country: Array = []             # init_match: 0 Canada, 1 USA per team
 static var anthem_length: Array = []              # steps of the anthem per country
@@ -121,6 +125,10 @@ static func load_tables() -> void:
 	crowd_spots = t["crowd_spots"]
 	crowd_sequences = PackedInt32Array(t["crowd_sequences"])
 	bench_y = PackedInt32Array(t["bench_y"])
+	music_songs = PackedStringArray(t["music_songs"])
+	music_team_songs = _ints(t["music_team_songs"])
+	music_pool = _ints(t["music_pool"])
+	anthem_songs = PackedStringArray(t["anthem_songs"])
 	penalty_names = PackedStringArray(t["penalty_names"])
 	anthem_country = _ints(t["anthem_country"])
 	anthem_length = _ints(t["anthem_length"])

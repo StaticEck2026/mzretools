@@ -189,9 +189,14 @@ static func announce_injury(sim: Sim, team: int, roster: int, for_game: bool) ->
 	open(sim)
 
 ## play_speech (0x59a11): a song of the music driver (the organ: 0..5 the home team's, 6..8
-## random ones, 9 the clapping, 10 the anthem, 11 ...), queued for the audio layer
+## random ones, 9 the stomp to the clapping, 10 the anthem, 11 ROCKDITI), queued for the audio
+## layer (MusicCues picks the song)
 static func music(sim: Sim, id: int) -> void:
 	sim.music_queue.append(id)
+
+## stop_crowd_loop (0x59981): the running song stops (the puck drop, a penalty shot)
+static func stop_music(sim: Sim) -> void:
+	sim.music_queue.append(-1)
 
 ## the announcer and crowd clips are on: option byte 2 bit 0 and sound
 static func speech_on(sim: Sim) -> bool:

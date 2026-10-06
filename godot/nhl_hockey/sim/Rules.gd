@@ -61,7 +61,7 @@ static func game_state_tick(sim: Sim) -> void:
 	if sim.step_count % 24 == 0:
 		Lines.regenerate_energy(sim)
 		if not sim.play_stopped:
-			update_lead_change(sim)
+			update_power_play(sim)
 
 ## update_stoppage (0x63929): runs the infraction queue and the whistle / stoppage timers. While
 ## the stoppage timer runs the referee keeps following the play; once it expired the queued calls
@@ -552,18 +552,24 @@ static func update_effects(sim: Sim) -> void:
 	Crowd.update(sim)
 
 
-## update_lead_change (0x63c9a)
-static func update_lead_change(sim: Sim) -> void:
-	var diff := sim.teams[0].goals - sim.teams[1].goals
+## update_power_play (0x63c73): the skaters on the ice (team +0x36) differ: a power play starts,
+## counted for the team with more skaters (team +4); the organ plays its song (cue 1 home, 4 away)
+## when the announcer is off and play is stopped (never at the only call, which runs while the
+## puck is in play)
+static func update_power_play(sim: Sim) -> void:
+	var diff := sim.teams[0].skaters_on_ice - sim.teams[1].skaters_on_ice
 	if diff == 0:
-		sim.lead_announced = false
+		sim.power_play = false
 		return
-	var leader := 0 if diff > 0 else 1
-	if sim.leading_team != leader:
-		sim.lead_announced = false
-	sim.leading_team = leader
-	if not sim.lead_announced:
-		sim.lead_announced = true
+	var team := 0 if diff > 0 else 1
+	if sim.power_play_team != team:
+		sim.power_play = false
+	sim.power_play_team = team
+	if not sim.power_play:
+		sim.power_play = true
+		sim.teams[team].power_plays += 1
+		if sim.play_stopped and not InfoPanel.speech_on(sim):
+			InfoPanel.music(sim, 1 if team == 0 else 4)
 
 ## game_clock_tick (0x5dc10): 24 sub ticks per second
 static func game_clock_tick(sim: Sim) -> void:
@@ -621,6 +627,9 @@ static func score_goal(sim: Sim, net: Entity) -> void:
 			sim.crowd_noise = maxi(sim.crowd_noise, 800)
 			sim.excitement += 10
 		Crowd.bench_cheer(sim, scorer_team)
+		# the organ celebrates a home goal when the announcer does not
+		if scorer_team == 0 and not InfoPanel.speech_on(sim):
+			InfoPanel.music(sim, 3)
 		# everyone celebrates / skates to the bench
 		for i in 6:
 			var p := sim.entities[scoring.first_slot + i]
@@ -981,6 +990,7 @@ static func place_faceoff(sim: Sim) -> void:
 
 ## faceoff_resolve (0x4db2b): the drop; the winner is decided by the centres' readiness and skill
 static func faceoff_resolve(sim: Sim) -> void:
+	InfoPanel.stop_music(sim)
 	sim.play_sfx(0xab)
 	sim.faceoff_pending = false
 	sim.whistle_ready = false

@@ -79,8 +79,8 @@ var scorer_jumps: int = 0            # dword_cca58: the goal scorer's jumps in a
 var faceoff_pending := false        # bit 0: faceoff set up, waiting for the drop
 var whistle_ready := false          # bit 2
 var shot_in_flight := false         # bit 4: a shot was taken (goalie_save / score bookkeeping)
-var lead_announced := false         # bit 5
-var leading_team := 0               # bit 6
+var power_play := false             # bit 5: the teams have different numbers of skaters (update_power_play)
+var power_play_team := 0            # bit 6: the team with more skaters (1 = away)
 var offside_warning := false        # bit 7: a team mate is in the attacking zone before the puck (Lines.offside_warning_check)
 var misc_first_touch := false       # misc_flags bit 4: first touch after the faceoff
 
@@ -139,7 +139,7 @@ var crowd_noise: int = 300
 var excitement: int = 0
 var step_count: int = 0
 var sfx_queue: PackedInt32Array = PackedInt32Array()
-var music_cues: Array = []         # play_sfx 0xaa on sound device 4 (sub_8f270)
+var music_cues: Array = []         # play_sfx 0xaa on sound device 4 (kms_play)
 var seed: int = 0xabcd4321           # dword_c9100: state of randomrange (demo_game reseeds it from rand(), init_match adds the team numbers)
 var puck_in_net := false            # byte_c90ba
 # line changes (Lines.gd)

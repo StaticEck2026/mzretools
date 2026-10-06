@@ -281,39 +281,41 @@ def mirrored_remap(remap):
 # Sound effects of the digital driver (PCFF001.PAT / .TIM / .DIG)
 # ----------------------------------------------------------------------------------------------
 
+def read_ea_bank(data):
+    '''The keyed bank layout of the .TIM and .DIG files: u32 file size (.TIM) or u16 0x7ff1 / u16 4
+    (.DIG), u16 n at +4, n 4 byte keys from +6, n u32 offsets relative to the data at 6 + 8 n.
+    Returns [(key bytes, data bytes)] (the last key of a .TIM is 0xffffffff).'''
+    n = struct.unpack_from('<H', data, 4)[0]
+    base = 6 + 8 * n
+    offs = [struct.unpack_from('<I', data, 6 + 4 * n + 4 * k)[0] for k in range(n)]
+    out = []
+    for k in range(n):
+        start = base + offs[k]
+        end = base + offs[k + 1] if k + 1 < n and offs[k + 1] > offs[k] else len(data)
+        out.append((data[6 + 4 * k: 10 + 4 * k], data[start:end]))
+    return out
+
 class SoundBank:
-    '''The sound effects played by play_sfx() -> sub_8f4c4(): the sound id selects a record of the
-    patch file (PCFF001.PAT: +2 a 256 byte id -> record map, records of 0x14 bytes from +0x102).
-    Record: +0 1 = digital sample, 0 = FM instrument; +1 program number (1 based timbre index for
-    digital records); +7 transpose in semitones (signed). The timbre file (PCFF001.TIM: u32 size,
-    u16 count, count x (u16 0x180, u16 program), ".dig", u32 offsets) holds 32 byte timbres at
-    +0x106: +0xa u16 sample rate, +0xc u32 sample length, +0x10 u32 loop start, +0x14 u32 loop end
-    (0 = no loop), +0x19 a 5 byte sample id. The sample bank (PCFF001.DIG: u16 7ff1, u16 4, u16
-    sample count, count x 4 byte sample ids sorted ascending, at +0x82 u32 start offsets of the
-    samples 1..n-1, data from +0xf6) holds signed 8 bit PCM. Timbres are matched to the samples by
-    their length (three pairs share a length; the first match is taken for those).'''
+    '''The sound effects played by play_sfx() -> snd_play_patch (0x8f4c4): the sound id selects a
+    record of the patch file (PCFF001.PAT: +2 a 256 byte id -> record map, records of 0x14 bytes
+    from +0x102). Record: +0 type (1 digital, 0 FM instrument), +1 timbre program, +7 s8 transpose,
+    +0xe note length (x 6 ticks of 100 Hz, 0 = 0xa0 ticks). The timbres (PCFF001.TIM, read_ea_bank,
+    keys 0x80 type 0 program) of the digital type are 32 bytes: +0 6, +2 the 4 byte id of the
+    sample in PCFF001.DIG (whose keys are those ids), +0x14 u32 length, +0x18 / +0x1c loop start /
+    end (0 = none). The Sound Blaster driver mixes at 11025 Hz and steps through a sample by the
+    note (unity at note 60): a sample plays at 11025 * 2^(transpose / 12) Hz, whatever rate its
+    timbre names (sub_8ee4f overwrites +0x12 with 11025).'''
     PAT_RECORDS = 0x102
-    DIG_DATA = 0xf6
+    MIX_RATE = 11025
 
     def __init__(self, pat, tim, dig):
         self.pat = pat
-        count = struct.unpack_from('<H', tim, 4)[0]
-        self.timbres = []
-        for k in range(count - 1):
-            r = tim[0x106 + k * 32: 0x106 + (k + 1) * 32]
-            if len(r) < 32:
-                break
-            rate, = struct.unpack_from('<H', r, 10)
-            length, loop_start, loop_end = struct.unpack_from('<III', r, 12)
-            self.timbres.append({'rate': rate, 'length': length, 'loop': (loop_start, loop_end), 'id': r[25:30]})
-        n = struct.unpack_from('<H', dig, 4)[0]
-        starts = [0] + [struct.unpack_from('<I', dig, 0x82 + 4 * i)[0] for i in range(n - 1)]
-        ends = starts[1:] + [len(dig) - self.DIG_DATA]
-        self.samples = [dig[self.DIG_DATA + s: self.DIG_DATA + e] for s, e in zip(starts, ends)]
-        bylen = {}
-        for i, smp in enumerate(self.samples):
-            bylen.setdefault(len(smp), []).append(i)
-        self.sample_of_timbre = [bylen.get(t['length'], [None])[0] for t in self.timbres]
+        self.samples = {key: smp for key, smp in read_ea_bank(dig)}
+        self.timbres = {}
+        for key, rec in read_ea_bank(tim):
+            if key[0] == 0x80 and key[1] == 1 and len(rec) >= 0x20:
+                length, loop_start, loop_end = struct.unpack_from('<III', rec, 0x14)
+                self.timbres[(key[2] << 8) | key[3]] = {'id': rec[2:6], 'length': length, 'loop': (loop_start, loop_end)}
 
     def record(self, sound_id):
         idx = self.pat[2 + sound_id]
@@ -322,21 +324,76 @@ class SoundBank:
         return self.pat[self.PAT_RECORDS + idx * 0x14: self.PAT_RECORDS + (idx + 1) * 0x14]
 
     def effect(self, sound_id):
-        '''Returns dict(pcm (signed 8 bit), rate, loop) for a digital sound id, None for FM only ids'''
+        '''Returns dict(pcm (signed 8 bit), rate, loop, length) for a digital sound id, None for
+        the FM ones'''
         r = self.record(sound_id)
-        if not r or r[0] != 1 or not (1 <= r[1] <= len(self.timbres)):
+        if not r or r[0] != 1 or r[1] not in self.timbres:
             return None
-        t = self.timbres[r[1] - 1]
-        si = self.sample_of_timbre[r[1] - 1]
-        if si is None:
+        t = self.timbres[r[1]]
+        pcm = self.samples.get(t['id'])
+        if pcm is None:
             return None
+        if 0 < t['length'] < len(pcm):
+            pcm = pcm[:t['length']]
         transpose = struct.unpack('b', bytes([r[7]]))[0]
-        rate = int(round(t['rate'] * 2 ** (transpose / 12.0)))
-        return {'pcm': self.samples[si], 'rate': rate, 'loop': t['loop'] if t['loop'][1] else None,
-                'timbre': r[1] - 1, 'sample': si, 'transpose': transpose}
+        rate = int(round(self.MIX_RATE * 2 ** (transpose / 12.0)))
+        return {'pcm': pcm, 'rate': rate, 'loop': t['loop'] if t['loop'][1] else None,
+                'timbre': r[1], 'sample': t['id'].hex(), 'transpose': transpose,
+                'length': (r[14] * 6 if r[14] else 0xa0) / 100.0}
 
     def effect_ids(self):
         return [i for i in range(256) if self.effect(i)]
+
+def read_kms(kms, cfg=b''):
+    '''A song of the music driver (music_load_kms): +1 tempo (0.4 * tempo steps a second), +6 track
+    count, +8 u16 track offsets; per track the CFG holds 16 bytes from +8 (u16 MIDI channel mask,
+    +6 volume, +7 pan). Returns dict(tempo, tracks=[dict(offset, mask, volume, pan, events)]) with
+    events (delta, code, a, b): code < 0xd9 a note (low 7 bits, + 24 at the driver; a velocity,
+    b length in steps), 0xdc program a, 0xdd tempo a, 0xdf controller a value b, 0xe5 pitch bend b,
+    0xe7 text, 0xd9 end, 0xdb loop to the start.'''
+    tempo, n = kms[1], kms[6]
+    tracks = []
+    for t in range(n):
+        off = struct.unpack_from('<H', kms, 8 + 2 * t)[0]
+        mask, vol, pan = 0xffff, 0x64, 0x40
+        if len(cfg) >= 8 + 16 * t + 8:
+            mask = struct.unpack_from('<H', cfg, 8 + 16 * t)[0]
+            vol, pan = cfg[8 + 16 * t + 6], cfg[8 + 16 * t + 7]
+        events = []
+        p = off
+        while p < len(kms):
+            delta = 0
+            while True:
+                c = kms[p]; p += 1
+                delta = delta * 128 + (c & 0x7f)
+                if not c & 0x80:
+                    break
+            code = kms[p]; p += 1
+            a = b = 0
+            if code < 0xd9:
+                a = kms[p]; p += 1
+                while True:
+                    c = kms[p]; p += 1
+                    b = b * 128 + (c & 0x7f)
+                    if not c & 0x80:
+                        break
+            elif code in (0xd9, 0xda, 0xdb, 0xe3):
+                pass
+            elif code == 0xdf:
+                a, b = kms[p], kms[p + 1]; p += 2
+            elif code == 0xe5:
+                b = struct.unpack_from('<H', kms, p)[0]; p += 2
+            elif code == 0xe6:
+                a = kms[p]; b = struct.unpack_from('<I', kms, p + 1)[0]; p += 5
+            elif code in (0xe7, 0xe8):
+                a = kms[p]; b = bytes(kms[p + 1: p + 1 + a]); p += 1 + a
+            else:
+                a = kms[p]; p += 1
+            events.append((delta, code, a, b))
+            if code in (0xd9, 0xda, 0xdb):
+                break
+        tracks.append({'offset': off, 'mask': mask, 'volume': vol, 'pan': pan, 'events': events})
+    return {'tempo': tempo, 'tracks': tracks}
 
 def write_wav_pcm8(path, pcm_signed, rate):
     '''Writes signed 8 bit mono PCM as an (unsigned) 8 bit WAV file'''

@@ -388,7 +388,8 @@ func asset_tests() -> void:
 		replay_tests(bos, det)
 		crowd_tests(bos, det)
 		speech_tests(bos, det, gf)
-	# sound effects: 30 digital samples, the goal horn (0x9c) is the 7 second sample
+	# sound effects: 30 digital samples found by their ids, the goal horn (0x9c) is the 7 second
+	# sample; the post (0xac) is the 22050 Hz recording played at 11025 Hz two semitones down
 	var snd := Sounds.load_bank(gf.read_raw("pcff001.pat"), gf.read_raw("pcff001.tim"), gf.read_raw("pcff001.dig"))
 	if snd == null or snd.sample_count != 30 or snd.timbre_count != 30:
 		fail("sound bank")
@@ -397,10 +398,16 @@ func asset_tests() -> void:
 		if horn == null or horn.data.size() != 77078 or horn.mix_rate != 11025:
 			fail("goal horn sample")
 		var crowd := snd.stream(0x7d)
-		if crowd == null or crowd.loop_mode != AudioStreamWAV.LOOP_FORWARD or crowd.loop_end != 9971:
+		if crowd == null or crowd.loop_mode != AudioStreamWAV.LOOP_FORWARD or crowd.loop_begin != 3856 or crowd.loop_end != 9971:
 			fail("crowd loop")
-		if not snd.has(0x90) or not snd.has(0xa4) or snd.effects.size() < 30:
+		var post := snd.stream(0xac)
+		if post == null or post.data.size() != 7040 or post.mix_rate != 9822:
+			fail("post sample: %s" % str([post.data.size(), post.mix_rate] if post != null else null))
+		if snd.has(0x90) or not snd.has(0x91) or not snd.has(0xa4) or snd.effects.size() != 33 or snd.has(0xab):
 			fail("effect ids: %d" % snd.effects.size())
+		if absf(snd.lengths.get(0x97, 0.0) - 0.36) > 0.001 or absf(snd.lengths.get(0x7b, 0.0) - 1.6) > 0.001:
+			fail("effect note lengths")
+		audio_tests(gf, snd)
 
 ## line changes, fatigue and goalie pulling (Lines.gd)
 func line_change_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
@@ -935,3 +942,137 @@ func speech_tests(bos: Database.TeamInfo, det: Database.TeamInfo, gf: Node) -> v
 		fail("goal sentence: %s" % str(sim.announcer_queue))
 	else:
 		print("speech: ", " ".join(sim.announcer_queue[0]))
+
+## the music: the patch bank, the KMS songs, the sequencer, the FM driver and chip, the cues
+func audio_tests(gf: Node, snd: Sounds) -> void:
+	var bank := FmBank.load_bank(gf.read_raw("pcff001.pat"), [gf.read_raw("pcff000.tim")])
+	if bank == null or bank.timbres.size() != 144:
+		fail("FM timbres: %d" % (bank.timbres.size() if bank != null else -1))
+		return
+	var organ := bank.record(0x0b)
+	if organ.is_empty() or organ[0] != 0 or organ[1] != 0x65 or organ[7] != 0xf4 or bank.timbre(0x65).size() != 80:
+		fail("program 0x0b patch")
+	if not bank.record(0x90).is_empty() or bank.record(0xab)[0] != 0 or bank.record(0x9c)[0] != 1:
+		fail("effect patch types")
+	# the driver's frequencies: note 60 = F-number 86 in block 5
+	if FmDriver.note_freq(60, 0) != (86 | 5 << 10) or FmDriver.note_freq(39, 0) != (102 | 3 << 10) or FmDriver.note_freq(60, 12) != (171 | 5 << 10):
+		fail("note frequencies")
+	# every song of the tables parses (CGY2 is listed but not on the disks)
+	var missing := []
+	for n in Tables.music_songs:
+		var k := Kms.parse(gf.read_raw(n + ".kms"), gf.read_raw(n + ".cfg"), n)
+		if k == null or k.tracks.is_empty():
+			missing.append(n)
+	if missing != ["CGY2"]:
+		fail("songs: " + str(missing))
+	var bos1 := Kms.parse(gf.read_raw("bos1.kms"), gf.read_raw("bos1.cfg"), "BOS1")
+	if bos1.tempo != 96 or bos1.tracks.size() != 2 or bos1.tracks[0][4] != "left" or bos1.tracks[1][1] != 4 or absf(bos1.duration() - 18.26) > 0.01:
+		fail("BOS1: %s %s" % [bos1.tempo, bos1.tracks])
+	# the sequencer: program 0x0b on channel 1, the first note 27 + 24 on the organ with its
+	# transpose of -12 (driver note 39: F-number 102 in block 3) and fine tune of -1
+	var mp := MusicPlayer.new()
+	mp.setup(bank, func(n: String) -> PackedByteArray: return gf.read_raw(n), snd.programs)
+	if not mp.play_song("BOS1"):
+		fail("BOS1 does not start")
+	# the first step comes after 3 timer ticks (128 a tick towards 32000 / 96)
+	var v0: FmDriver.Voice = null
+	var ticks := 0
+	while v0 == null and ticks < 6:
+		mp.driver.tick()
+		mp.seq.tick()
+		ticks += 1
+		for v: FmDriver.Voice in mp.driver.voices:
+			if v.allocated and v.channel == 1:
+				v0 = v
+	if ticks != 3:
+		fail("BOS1 starts after %d ticks" % ticks)
+	if v0 == null or v0.note != 51 or v0.program != 0x0b or v0.base_note != 39 or v0.freq != FmDriver.note_freq(39, 0) - 1:
+		fail("BOS1 first note: %s" % (str([v0.note, v0.program, v0.base_note, v0.freq]) if v0 != null else "none"))
+	var s := mp.render(int(MusicPlayer.RATE * 2))
+	var peak := 0.0
+	var energy := 0.0
+	for x in s:
+		peak = maxf(peak, absf(x))
+		energy += x * x
+	var rms := sqrt(energy / s.size())
+	if rms < 0.01 or peak >= 1.0:
+		fail("BOS1 level: rms %.3f peak %.3f" % [rms, peak])
+	# the drum kit: channel 9 note 36 plays patch 0x80, the FM kick (timbre 0x83, transpose -48)
+	# whose envelope drives the note offset: it starts 48 semitones up and falls 3 a tick
+	mp.stop_all()
+	mp.driver.midi(0x99, 36, 0x7f)
+	var kick: FmDriver.Voice = null
+	for v: FmDriver.Voice in mp.driver.voices:
+		if v.allocated and v.channel == 9:
+			kick = v
+	if kick == null or kick.program != 0x80 or kick.base_note != 12:
+		fail("kick drum voice")
+	else:
+		mp.driver.tick()
+		var n1 := kick.cur_note
+		mp.driver.tick()
+		if n1 != 60 or kick.cur_note != 57:
+			fail("kick drum sweep %d %d" % [n1, kick.cur_note])
+	mp.stop_all()
+	# FM effects: the puck drop is an FM instrument (0xab, timbre 0x5c, 6 ticks)
+	if not mp.has_effect(0xab) or mp.has_effect(0x9c) or mp.has_effect(0x90):
+		fail("FM effect ids")
+	mp.play_effect(0xab)
+	mp.driver.tick()
+	var drop := false
+	for v: FmDriver.Voice in mp.driver.voices:
+		if v.allocated and v.channel == 9 and v.program == 0xab:
+			drop = v.key
+	if not drop:
+		fail("puck drop voice")
+	for i in 7:
+		mp.seq.tick()
+		mp.driver.tick()
+	for v: FmDriver.Voice in mp.driver.voices:
+		if v.allocated and v.program == 0xab and v.key:
+			fail("puck drop note did not end")
+	# SBROCKU: the stomp is the digital sample of program 0x7c played by the DAC driver
+	mp.stop_all()
+	mp.play_song("SBROCKU")
+	var s2 := mp.render(int(MusicPlayer.RATE * 3))
+	var e2 := 0.0
+	for x in s2:
+		e2 += x * x
+	if sqrt(e2 / s2.size()) < 0.01:
+		fail("SBROCKU is silent")
+	mp.free()
+	# the cues of a Boston home game: the team's songs, three random ones, the US anthem
+	var cues := MusicCues.new(func(n: String) -> bool: return gf.has(n + ".kms"))
+	cues.setup(0)
+	if cues.team_songs != ["BOS2", "BOS1", "BOS3", "", "PITTS2", "BOS2"] or cues.song_for(1) != "BOS1" or cues.song_for(10) != "USA" \
+			or cues.song_for(9) != "SBROCKU" or cues.song_for(11) != "ROCKDITI":
+		fail("Boston cues " + str(cues.team_songs))
+	var pool_names := []
+	for i in Tables.music_pool:
+		pool_names.append(Tables.music_songs[i])
+	for k in 3:
+		var r: String = cues.random_songs[k]
+		if not pool_names.has(r) or cues.team_songs.has(r) or cues.random_songs.count(r) != 1:
+			fail("random song " + r)
+	if not cues.random_songs.has(cues.song_for(3)):
+		fail("cue 3 of Boston is a random song")
+	cues.setup(9)
+	if cues.anthem != "CANADA" or cues.song_for(5) != "MON1":
+		fail("Montreal cues")
+	# the simulation's cues: the power play (team +0x36 skaters), the puck drop stops the song,
+	# a home goal without the announcer plays cue 3
+	var sim := Sim.new()
+	sim.teams[0].skaters_on_ice = 6
+	sim.teams[1].skaters_on_ice = 5
+	Rules.update_power_play(sim)
+	Rules.update_power_play(sim)
+	if not sim.power_play or sim.power_play_team != 0 or sim.teams[0].power_plays != 1 or sim.teams[1].power_plays != 0:
+		fail("power play")
+	sim.teams[1].skaters_on_ice = 6
+	Rules.update_power_play(sim)
+	if sim.power_play:
+		fail("power play over")
+	sim.music_queue.clear()
+	Rules.faceoff_resolve(sim)
+	if sim.music_queue != [-1]:
+		fail("puck drop music " + str(sim.music_queue))

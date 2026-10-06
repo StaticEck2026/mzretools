@@ -43,6 +43,9 @@ var assets_ok := false
 
 var sounds: Sounds
 var announcer: Announcer             # XBRUCE2.VIV sentences (Speech.gd)
+var music: MusicPlayer               # the FM songs and effects (KMS, PCFF000.TIM)
+var cues: MusicCues                  # play_speech: cue -> song of the home team
+var sfx_left: Dictionary = {}        # AudioStreamPlayer -> seconds until its note ends
 var sfx_players: Array[AudioStreamPlayer] = []
 var crowd_player: AudioStreamPlayer
 var sfx_on := true                    # option_flags 0x80 (S)
@@ -188,6 +191,7 @@ func _physics_process(delta: float) -> void:
 	tick_acc += delta * 100.0
 	var ticks := int(tick_acc)
 	tick_acc -= ticks
+	_sfx_lengths(delta)
 	match mode:
 		Mode.PAUSED:
 			_pause_input()
@@ -206,6 +210,7 @@ func _physics_process(delta: float) -> void:
 	sim.step(c[0], c[1], c[2], c[3])
 	steps_done += 1
 	_play_queued_sfx()
+	_play_music()
 	_update_view()
 	if sim.match_over and not end_shown and shot_path == "":
 		# three_stars_sequence is over: the pause screen of the finished game (pause_menu(2))
@@ -334,12 +339,17 @@ func _unhandled_input(event: InputEvent) -> void:
 func _stop_sounds() -> void:
 	for p in sfx_players:
 		p.stop()
+	sfx_left.clear()
 	sim.sfx_queue.clear()
 	if announcer != null:
 		announcer.stop()
+	# the pause screen (sub_10f6d) and the replay stop the organ (stop_crowd_loop)
+	sim.music_queue.clear()
+	if music != null:
+		music.stop_all()
 
 ## handle_hotkey: F1-F4 lines of player 1, F5-F8 lines of player 2, F9 / F10 pull the goalie,
-## Tab the numbers of every player, S the sound effects, M the music (the crowd loop)
+## Tab the numbers of every player, S the sound effects (and the crowd), M the organ
 func _hotkeys() -> void:
 	if Input.is_action_just_pressed("toggle_names"):
 		show_names = not show_names
@@ -347,10 +357,13 @@ func _hotkeys() -> void:
 		sfx_on = not sfx_on
 		if not sfx_on:
 			_stop_sounds()
-	if Input.is_action_just_pressed("toggle_music"):
-		music_on = not music_on
 		if crowd_player != null:
-			crowd_player.stream_paused = not music_on
+			crowd_player.stream_paused = not sfx_on
+	if Input.is_action_just_pressed("toggle_music"):
+		# option_flags 0x40: off stops the song and the sequencer's notes (music_disable)
+		music_on = not music_on
+		if music != null:
+			music.set_music_enabled(music_on)
 	for p in 2:
 		var team := (sim.user1_team if p == 0 else sim.user2_team) - 1
 		if team < 0:
@@ -380,6 +393,9 @@ func _play_queued_sfx() -> void:
 	for id in sim.sfx_queue:
 		var stream := sounds.stream(id)
 		if stream == null:
+			# an FM instrument (the puck drop 0xab, 0x94, 0x96)
+			if music != null:
+				music.play_effect(id)
 			continue
 		var p: AudioStreamPlayer = null
 		for cand in sfx_players:
@@ -393,12 +409,35 @@ func _play_queued_sfx() -> void:
 		if p != null:
 			p.stream = stream
 			p.play()
+			sfx_left[p] = sounds.lengths.get(id, 0.0)
 	sim.sfx_queue.clear()
 	if crowd_player != null:
 		var crowd := sim.crowd_noise
 		if mode == Mode.REPLAY and sim.replay.frame != null:
 			crowd = sim.replay.frame.crowd
 		crowd_player.volume_db = linear_to_db(clampf(0.15 + crowd / 4000.0, 0.0, 1.0))
+
+## snd_play_patch gives each effect note a length (+0xe of its patch x 6 ticks): the note off
+## ends the sample
+func _sfx_lengths(delta: float) -> void:
+	for p in sfx_left.keys():
+		sfx_left[p] -= delta
+		if sfx_left[p] <= 0.0:
+			if p.playing:
+				p.stop()
+			sfx_left.erase(p)
+
+## play_speech / stop_crowd_loop of the simulation: the organ songs (MusicCues)
+func _play_music() -> void:
+	if music == null or cues == null:
+		sim.music_queue.clear()
+		return
+	for id in sim.music_queue:
+		if id < 0:
+			music.stop_song()
+		elif music_on:
+			music.play_song(cues.song_for(id))
+	sim.music_queue.clear()
 
 # --------------------------------------------------------------------------------------------
 # view
@@ -759,6 +798,15 @@ func _load_assets() -> void:
 		crowd_player.volume_db = linear_to_db(0.15)
 		add_child(crowd_player)
 		crowd_player.play()
+	# the music driver: PCFF001.PAT with the FM timbres of PCFF000.TIM (SBDAC.SCN), the songs
+	# of the home team (load_music_banks)
+	var fm := FmBank.load_bank(GameFiles.read_raw("pcff001.pat"), [GameFiles.read_raw("pcff000.tim")])
+	if fm != null:
+		music = MusicPlayer.new()
+		add_child(music)
+		music.setup(fm, func(n: String) -> PackedByteArray: return GameFiles.read_raw(n), sounds.programs if sounds != null else {})
+		cues = MusicCues.new(func(n: String) -> bool: return GameFiles.has(n + ".kms"))
+		cues.setup(home_team)
 
 func _placeholder_rink() -> Texture2D:
 	var img := Image.create(RINK_W, RINK_H, false, Image.FORMAT_RGBA8)

@@ -14,6 +14,7 @@
 #                                          --home/--away team indices, --team 0|1 jersey colours, --mirrored
 #   nhltool.py rinkfull GAMEDIR OUT.png    the rink surface with the home team's centre ice logo
 #   nhltool.py dig GAMEDIR OUTDIR          the digital sound effects (PCFF001.DIG) as WAV files
+#   nhltool.py kms FILE.KMS [--events]     the tracks (and events) of a song of the music driver
 #
 import argparse
 import json
@@ -21,7 +22,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from formats import (ShapeBank, Font, load_sample, write_wav, read_viv_index, viv_clip, render_tile_map,  # noqa: E402
+from formats import (ShapeBank, Font, load_sample, write_wav, read_viv_index, viv_clip, render_tile_map, read_kms,  # noqa: E402
                      write_png, unpack, pack_code, PackError, game_palette, mirrored_remap, SoundBank,
                      write_wav_pcm8, place_tile_map)
 
@@ -213,9 +214,28 @@ def cmd_dig(args):
         e = bank.effect(sid)
         write_wav_pcm8(os.path.join(args.outdir, f"sfx_{sid:02x}.wav"), e['pcm'], e['rate'])
         print(f"id 0x{sid:02x}: timbre {e['timbre']} sample {e['sample']} {len(e['pcm'])} bytes {e['rate']} Hz"
-              + (f" loop {e['loop']}" if e['loop'] else ''))
+              f" note {e['length']:.2f} s" + (f" loop {e['loop']}" if e['loop'] else ''))
         n += 1
     print(f"exported {n} sound effects to {args.outdir}")
+
+def cmd_kms(args):
+    '''Lists the tracks and events of a song (NAME.KMS with NAME.CFG)'''
+    base = os.path.splitext(args.file)[0]
+    cfg_path = next((base + e for e in ('.CFG', '.cfg') if os.path.exists(base + e)), None)
+    song = read_kms(read(args.file), read(cfg_path) if cfg_path else b'')
+    print(f"tempo {song['tempo']} ({0.4 * song['tempo']:.1f} steps/s), {len(song['tracks'])} tracks")
+    for i, t in enumerate(song['tracks']):
+        name = next((ev[3].split(b'\0')[0].decode('latin-1') for ev in t['events'] if ev[1] == 0xe7), '')
+        notes = [ev for ev in t['events'] if ev[1] < 0xd9]
+        print(f"track {i} '{name}': channels 0x{t['mask']:04x} volume {t['volume']} pan {t['pan']}, {len(notes)} notes")
+        if args.events:
+            step = 0
+            for d, code, a, b in t['events']:
+                step += d
+                if code < 0xd9:
+                    print(f"  {step:6d} note {(code & 0x7f) + 24:3d} vel {a if code >= 0x80 else '-':>3} len {b}")
+                elif code != 0xe7:
+                    print(f"  {step:6d} 0x{code:02x} {a} {b}")
 
 def main():
     ap = argparse.ArgumentParser(description='NHL Hockey (DOS) asset tool')
@@ -235,6 +255,7 @@ def main():
     p = sub.add_parser('rinkfull'); p.add_argument('gamedir'); p.add_argument('out'); p.add_argument('--home', type=int, default=0)
     p.add_argument('--away', type=int, default=4); p.set_defaults(fn=cmd_rinkfull)
     p = sub.add_parser('dig'); p.add_argument('gamedir'); p.add_argument('outdir'); p.set_defaults(fn=cmd_dig)
+    p = sub.add_parser('kms'); p.add_argument('file'); p.add_argument('--events', action='store_true'); p.set_defaults(fn=cmd_kms)
     args = ap.parse_args()
     args.fn(args)
 

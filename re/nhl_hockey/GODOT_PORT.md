@@ -5,14 +5,17 @@ the disassembly is to make the *behaviour* of the original recoverable (simulati
 data formats); the DOS specific layer (DOS/4GW, VGA, PIT timer, port I/O, EA's memory manager) is replaced by the
 engine and does not need to be ported.
 
-The port itself lives in [godot/nhl_hockey](../../godot/nhl_hockey) (Godot 4.3 project): the static tables
-extracted from the EXE, entity and team records, animation, physics and collisions, controls, the puck handling
-(passes, shots, saves, deflections), the rules (stoppages, faceoffs, goals, offside, icing, penalties, the
-clock) and the AI state machine are translated from the decompiled routines, and the match is rendered from the
-original game files in this directory: the sprite banks through the team colour remap tables, the rink with the
-home team's centre ice logo, the rosters, lines and ratings of the databases, the scoreboard shapes and the
-sound effect bank. Line changes, the penalty shot and the ceremonies are the main parts still missing (see its
-README for the exact list). [STRUCTURES.md](STRUCTURES.md) documents the data structures the port mirrors and
+The port itself lives in [godot/nhl_hockey](../../godot/nhl_hockey) (Godot 4.3 project). The whole match is
+translated from the decompiled routines: the static tables extracted from the EXE, entity and team records,
+animation, physics and collisions, controls, the puck handling (passes, shots, saves, deflections), the rules
+(stoppages, faceoffs, goals, offside, icing, penalties, misconducts, injuries, the penalty shot, the clock), line
+changes, fatigue and goalie pulling, the AI state machine, the ceremonies (anthem, intermissions, three stars,
+Stanley Cup), the instant replay, the pause screen, the crowd and benches, the announcer and the music (the KMS
+sequencer, the FM driver and an OPL2 model). It is drawn and played from the original game files in this
+directory: the sprite banks through the team colour remap tables, the rink with the home team's centre ice logo,
+the rosters, lines and ratings of the databases, the scoreboard, fonts and panels, the speech bank, the sound
+effects and the songs. The front end (menus, team selection, season and playoff mode, statistics screens, save
+games) is the main part still missing (see its README for the exact list). [STRUCTURES.md](STRUCTURES.md) documents the data structures the port mirrors and
 [FORMATS.md](FORMATS.md) the file formats its loaders (and `tools/nhl`) read.
 
 ## 1. What to port and what to replace
@@ -83,9 +86,13 @@ disassembly tells exactly how they are read:
    via `setremaptable`, team colors). Either bake RGB textures per palette, or keep 8-bit index textures and do
    the lookup in a `CanvasItem` shader with a 256x1 palette texture; the latter reproduces fades and color
    remapping (`drawshape_remap`) exactly.
-3. **Sound**: IFF 8SVX (`VHDR`/`BODY` chunks, signed 8-bit PCM) converts directly to WAV. Announcer clips
-   (`.cor`, `.bar`, `.int`, `.pen`) are concatenated at runtime by the speech routines around `0x84306-0x8579e`;
-   port their sequencing logic, not the audio code.
+3. **Sound**: the sound effects are samples of PCFF001.DIG found through the patch bank (PCFF001.PAT / .TIM) and
+   play at 11025 Hz shifted by the patch's transpose. Announcer clips (XBRUCE2.VIV: `.cor`, `.bar`, `.int`,
+   `.pen`, ...) are concatenated at runtime by the speech routines around `0x84306-0x8579e`; port their
+   sequencing logic, not the audio code. The music is MIDI like: the `.KMS` songs drive the sound card driver
+   (`.BGP`), so the port needs the sequencer (`kms_track_tick`), the FM driver's logic (YM30.BGP: voices, the
+   timbres' envelopes and LFOs, levels and frequencies) and a model of the OPL2 chip; the port does exactly that
+   in `audio/` and renders through an `AudioStreamGenerator` (see FORMATS.md).
 4. **Databases and saves** (`teams.db`, `schedule.db`, `career.db`, `game.set`, `game.sav` ...): the readers use
    plain `open/read` wrappers (`file_open_read`, `file_read`, `savegame_io`); follow the callers of these to get
    the record layouts and convert to JSON or Godot `Resource`s.

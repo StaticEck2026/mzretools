@@ -88,7 +88,7 @@ fields and is what most of the code reads.
 
 | Offset | Name | Meaning |
 |---|---|---|
-| 0x04 | `lead_changes` | incremented on each lead change (`update_lead_change`) |
+| 0x04 | `power_plays` | power plays of the team: incremented when it gets more skaters on the ice than the other (`update_power_play`) |
 | 0x10 | `goals` | score |
 | 0x2a | `current_line` | |
 | 0x30/0x32/0x34 | `carrier_hist` | last three puck carriers of the team (roster indices) |
@@ -167,7 +167,7 @@ by `speed_skill`/`weight`, `stop_skating` brakes, `goalie_move` for goalies).
 | 0xc9098 | `camera` | current camera position (x low word, y high word), `camera_target` (0xc90ac/0xc90ae) |
 | 0xc90bb | `game_flags` | 0x01 play stopped (whistle), 0x02 teams switched ends, 0x04 stoppage countdown running (`stoppage_timer`), 0x08 delayed penalty call pending, 0x10 practice / no statistics, 0x40 overtime, 0x80 game over (intermission camera) |
 | 0xc90bc | `action_flags` | 0x04 pass pending, 0x08 shot pending, 0x10 replay buffer wrapped, 0x40 camera hold, 0x80 controls mirrored |
-| 0xc90be | `stop_flags` | 0x01 faceoff set up (waiting for the drop), 0x04 whistle / announcement done, 0x10 a shot is in flight (`goalie_save` bookkeeping), 0x20 a team leads (0x40 = away), 0x80 goalie pulled |
+| 0xc90be | `stop_flags` | 0x01 faceoff set up (waiting for the drop), 0x04 whistle / announcement done, 0x10 a shot is in flight (`goalie_save` bookkeeping), 0x20 a power play is on (the skaters on the ice differ; 0x40 = the away team has more, `update_power_play`): the short handed team blocks shots more eagerly, its defencemen stay back and it clears the puck sooner, 0x80 goalie pulled |
 | 0xc90b2 | `faceoff_spot` | dot of the next faceoff (x low word, y high word), chosen by `start_stoppage` |
 | 0xc909c | `coll_half_w`/`coll_half_h` | half size of the entity being moved (`collide_boards`, `collide_net`) |
 | 0xc90d4 | `ref_phase` | 0 referee called, 1 collecting the puck, -1 ready for the faceoff; `ref_infraction` 0xc90d6 |

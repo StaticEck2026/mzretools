@@ -1,6 +1,6 @@
 class_name Speech
 ## The announcer's sentences (say_goal 0x8531f, say_penalty 0x84f7b, say_penalty_shot 0x8511e,
-## say_star 0x85213, say_time_remaining 0x84ddd, the one minute call sub_854ac, say_game_intro
+## say_star 0x85213, say_time_remaining 0x84ddd, the one minute call say_one_minute_left, say_game_intro
 ## 0x84b0d). A sentence is a list of clip names of XBRUCE2.VIV in the order speech_release_clip
 ## appends them to the playback list (speech_queue_clip only loads them, without duplicates):
 ## numbers are "<n>.num" ("<nn>.num" with a leading zero for the seconds after the minutes), the
@@ -79,7 +79,7 @@ static func star(index: int, abbrev: String, number: int) -> PackedStringArray:
 	var names := ["", "1ststar.cor", "2ndstar.cor", "3rdstar.cor"]
 	return PackedStringArray([names[clampi(index, 1, 3)], abbrev.to_lower() + ".frm", "pause.cor", "number.cor", _num(number)])
 
-## sub_854ac: one minute left in the period
+## say_one_minute_left: one minute left in the period
 static func one_minute() -> PackedStringArray:
 	return PackedStringArray(["oneleft.cor"])
 

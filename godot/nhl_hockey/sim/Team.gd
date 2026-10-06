@@ -9,6 +9,7 @@ const FL_OFFSIDE := 0x10             # +0x44 bit 4: an attacker is offside (chec
 const FL_PULLED_GOALIE := 0x80       # players[0].flags & 0x80 is the attack direction, this is ours
 
 var index: int = 0                   # 0 home, 1 away
+var power_plays: int = 0             # +0x04 power plays (update_power_play)
 var goals: int = 0                   # +0x10
 var shots: int = 0                   # +0x12
 var faceoffs_won: int = 0            # +0x14

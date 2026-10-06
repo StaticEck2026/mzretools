@@ -124,6 +124,13 @@ def main():
     t['crowd_spots'] = [shorts(le, 0xccef8 + i * 6, 3) for i in range(0xab)]
     t['crowd_sequences'] = list(struct.unpack('<248b', le.read(0xcce00, 248)))   # runs into 'ggG' (aGgG is data)
     t['bench_y'] = [shorts(le, 0xcd2f8 + i * 4 + 2, 1)[0] for i in range(2)]
+    # load_music_banks / play_speech: the organ songs (KMS) of the match. music_team_songs: per home
+    # team (> 25 uses row 13) the song of the cues 0..5 (-1 none: a random one), music_pool the
+    # candidates of the three random songs (cues 6..8), anthem_songs per anthem_country
+    t['music_songs'] = [cstr(le, le.read_u32(0xd1b0b + i * 4)) for i in range(54)]
+    t['music_team_songs'] = [list(struct.unpack('<6b', le.read(0xd1be3 + 6 * i, 6))) for i in range(26)]
+    t['music_pool'] = list(struct.unpack('<18i', le.read(0xd1c8b, 72)))
+    t['anthem_songs'] = [cstr(le, le.read_u32(0xd1cde + i * 4)) for i in range(2)]
     # team names and cities (table of 0xba byte records is runtime data; the fixed list of full
     # names follows the abbreviations in the data object)
     names = []

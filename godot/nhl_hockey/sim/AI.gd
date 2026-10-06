@@ -505,7 +505,7 @@ static func try_check(sim: Sim, e: Entity) -> void:
 		return
 	# sub_534bb: block a shot
 	var k2 := 8
-	if sim.lead_announced and sim.leading_team != e.team:
+	if sim.power_play and sim.power_play_team != e.team:
 		k2 = 4
 	k2 += 0xf - e.awareness
 	if sim.random(maxi(1, k2 / 2)) < 2:
@@ -557,8 +557,8 @@ static func def_defense(sim: Sim, e: Entity) -> void:
 			pvy = -pvy
 		pvy = maxi(0, pvy) + py
 		if pvy > 0x4d and (sim.team_of(e).flags & Team.FL_OFFSIDE) == 0 and sim.puck_carrier >= 0:
-			var trailing := sim.lead_announced and sim.leading_team != e.team
-			if not trailing and sim.same_team(sim.puck_carrier, e.slot):
+			var short_handed := sim.power_play and sim.power_play_team != e.team
+			if not short_handed and sim.same_team(sim.puck_carrier, e.slot):
 				e.set_state(Entity.State.DEF_OFFENSE)
 				return
 		var tx := 0x50 if e.line_slot == 2 else -0x50
@@ -777,11 +777,12 @@ static func consider_shot(sim: Sim, e: Entity) -> bool:
 	desperation_shot(sim, e)
 	return true
 
-## ai_offense_decision (0x55804): shoot when in a good spot, more eagerly when trailing late
+## ai_offense_decision (0x55804): shoot when in a good spot, more eagerly when short handed or
+## behind in the last seconds
 static func offense_decision(sim: Sim, e: Entity) -> bool:
 	var puck := sim.puck
-	var trailing := sim.lead_announced and sim.leading_team != e.team
-	if (trailing and sim.random(4) == 0) or (sim.clock_seconds < 4 and sim.team_of(e).goals < sim.opponents_of(e).goals):
+	var short_handed := sim.power_play and sim.power_play_team != e.team
+	if (short_handed and sim.random(4) == 0) or (sim.clock_seconds < 4 and sim.team_of(e).goals < sim.opponents_of(e).goals):
 		desperation_shot(sim, e)
 		return true
 	var odds := 0x20 - e.offense
@@ -933,9 +934,9 @@ static func nearest_to_puck(sim: Sim, e: Entity) -> void:
 			if hold:
 				if absi(sim.puck.vx) < 500 and absi(sim.puck.vy) < 500:
 					level -= 1
-				if sim.lead_announced:
+				if sim.power_play:
 					level -= 2
-					if sim.leading_team != e.team:
+					if sim.power_play_team != e.team:
 						level += 4
 				var base := 0x14 - e.stamina
 				var odds := (base >> -level) if level < 0 else (base << level)
@@ -1591,6 +1592,7 @@ static func puck_faceoff2(sim: Sim, e: Entity) -> void:
 		sim.penalty_shot_setup = false
 		InfoPanel.reset(sim)
 		if sim.penalty_shot_phase != 0:
+			InfoPanel.stop_music(sim)
 			penalty_shot_go(sim, e)
 			return
 		Rules.place_faceoff(sim)

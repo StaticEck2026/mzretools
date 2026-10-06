@@ -667,7 +667,7 @@ static func toggle_pull_goalie(sim: Sim, t: int) -> void:
 		team.goalie_request = (w | 0xfff0) & 0xffff
 	apply_line_change(sim, team)
 
-## sub_672f9, the goalie choice of the pause menu (Home / Visiting Team Goalie): goalie 0 or 1 of
+## choose_goalie, the goalie choice of the pause menu (Home / Visiting Team Goalie): goalie 0 or 1 of
 ## the line table, or -1 for none (the extra attacker). A goalie change during a delayed call
 ## against the other team (game_flags 8, play running) gives the extra attacker at once.
 static func choose_goalie(sim: Sim, t: int, choice: int) -> void:

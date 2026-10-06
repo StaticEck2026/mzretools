@@ -1,7 +1,7 @@
 class_name Announcer
 extends Node
 ## Plays the announcer's sentences of the simulation (Sim.announcer_queue, built by Speech.gd)
-## from XBRUCE2.VIV like the timer routine sub_832bc: the clips follow each other, the next one
+## from XBRUCE2.VIV like the timer routine speech_timer: the clips follow each other, the next one
 ## starts 0x1a ticks (100 Hz) before the current one ends, and after the last one the announcer
 ## stays busy another 0x1a ticks. A new sentence interrupts the running one (speech_reset). While
 ## busy, Sim.speech_busy holds the stoppage (penalty_box_update) and the cup presentation.

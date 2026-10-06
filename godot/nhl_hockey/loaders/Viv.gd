@@ -5,7 +5,7 @@ class_name Viv
 ## An entry is either raw unsigned 8 bit PCM played at 5512 Hz (the duration is size * 100 / 5512
 ## ticks) or packed with code 0x47 0xFB (unpack -> bytepair_decode 0x97a38: an escape byte, a
 ## table of byte pairs that expand recursively, the escape followed by 0 ends the data); the
-## unpacked data skips a 5 byte header and is a running sum (sub_83bf3) of signed 8 bit samples
+## unpacked data skips a 5 byte header and is a running sum (speech_delta_decode) of signed 8 bit samples
 ## played at 11025 Hz.
 
 const RAW_RATE := 5512
@@ -72,7 +72,7 @@ static func bytepair_decode(src: PackedByteArray) -> PackedByteArray:
 			n += 1
 			continue
 		if flag[b] == 0xff:
-			# sub_979f8: a pair expands into its left and right byte, recursively
+			# bytepair_expand: a pair expands into its left and right byte, recursively
 			stack.clear()
 			stack.append(b)
 			while stack.size() > 0 and n < total:
