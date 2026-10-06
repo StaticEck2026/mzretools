@@ -442,6 +442,10 @@ Besides the map it can write an annotated listing (symbolic operands, callers, r
 
 `omflib.py LIB... --json sigs.json` reads OMF object libraries (as written by the Watcom, Microsoft and Borland librarians) and turns the public routines of their modules into byte signatures, the bytes covered by fixups masked (`--list` prints the modules and their symbols). `lesigmatch.py game.exe game.json --libs LIB...` compares those signatures with the routines found by `ledisasm.py` and reports the routines whose code equals a library routine; a module matched by one routine is then aligned as a whole, which also places its static routines. `--names out.txt` writes the matches of still unnamed routines as a names list. This is how the C runtime routines of NHL Hockey were checked against the Open Watcom 1.9 libraries (the game was built with an older Watcom release, so most routines differ in details and were identified by reading them instead).
 
+### leemu.py
+
+`leemu.py` runs routines of an LE executable in the Unicorn CPU emulator (`pip install unicorn`): the objects are mapped at their base addresses with the fixups applied, and `LEEmu.call(address, eax=..., edx=...)` calls a routine with the Watcom register convention. `tools/nhl/test_pack.py` uses it to run the game's own decompressors on test buffers and compare them with the Python reimplementations.
+
 ### nhl/ and godot/
 
 `tools/nhl/nhltool.py` reads the data files of NHL Hockey using the formats recovered from the disassembly (RefPack and EA's other pack codes, SHPI shape banks, VFN fonts, 8SVX/RIFF samples, rink tile maps, VIV speech banks) and converts them to PNG/WAV; `tools/nhl/extract_tables.py` pulls the static tables (animation sequences, direction vectors, AI state names, ...) out of the executable into JSON. [godot/nhl_hockey](godot/nhl_hockey) is a Godot 4 project rebuilding the game from that material: it loads the original assets from the user's installation at runtime and ports the simulation routine by routine from the decompiled code.

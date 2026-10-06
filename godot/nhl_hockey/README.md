@@ -88,8 +88,8 @@ Montreal home game and the power play flags.
   digital effects, speech and the stomp through the DAC); the Adlib, MT-32 and speaker variants are not
   modelled. The OPL2 is a model, not a cycle exact emulation (envelope generator per 16 samples, 22050 Hz
   output). The ambient crowd is one looping sample whose volume follows `crowd_noise` (the original fades
-  several channels in `update_ambient_audio`). The recorded menu loops (`*.IFF`, PAUSE.IFF on the pause screen)
-  are not played: their bodies are not plain PCM and their coding is not identified (see FORMATS.md).
+  several channels in `update_ambient_audio`). The pause screen plays its recording (PAUSE.IFF, packed two
+  samples per byte, see FORMATS.md); the other front end recordings wait for the front end.
 - The period label under the clock is an addition (the original shows the period on the pause screen).
 
 ## Porting conventions

@@ -85,7 +85,8 @@ def refpack_decompress(data):
     return bytes(out)
 
 def delta_decompress(data):
-    '''Pack codes 0x60/0x62/0x66: running byte sum ("delta") encoding (delta_decode)'''
+    '''Pack codes 0x60/0x62/0x66/0x72: running byte sum ("delta") encoding (delta_decode): the code, 3 more
+    bytes after 62FB, 4 after 66FB, the unpacked size (24 bit BE), then one byte per output byte'''
     hdr = (data[0] << 8) | data[1]
     pos = 2
     if hdr == 0x62fb:
@@ -101,22 +102,177 @@ def delta_decompress(data):
         out[i] = acc
     return bytes(out)
 
+class _BitReader:
+    '''The bit reader of bitlz_decode (bitlz_getbits): most significant bit first from a 32 bit
+    buffer that is refilled whenever fewer than 16 bits are left'''
+    def __init__(self, data, pos):
+        self.d = data
+        self.p = pos
+        self.buf = 0
+        self.count = 0
+        self.bits(0)
+
+    def _byte(self):
+        b = self.d[self.p] if self.p < len(self.d) else 0
+        self.p += 1
+        return b
+
+    def bits(self, n):
+        if n > 16:
+            hi = self.bits(n - 16)
+            return (hi << 16) | self.bits(16)
+        v = self.buf >> (32 - n) if n else 0
+        self.buf = (self.buf << n) & 0xffffffff
+        self.count -= n
+        if self.count < 16:
+            shift = 24 - self.count
+            while True:
+                self.buf |= self._byte() << shift
+                shift -= 8
+                self.count += 8
+                if shift <= 8:
+                    break
+        return v
+
+    def gamma(self):
+        '''bitlz_getgamma: k zero bits and a one, then k + 2 bits r: r + 2^(k+2) - 4'''
+        top, n = 2, 1
+        while True:
+            top *= 2
+            n += 1
+            if self.bits(1):
+                break
+        return self.bits(n) + top - 4
+
+def huff_decompress(data):
+    '''Pack codes 0x30/0x32/0x34 (bitlz_decode 0x97740): EA's canonical Huffman code with an escape symbol.
+    The code (31FB etc. with 3 more bytes), then a bit stream: 24 bits the unpacked size, 8 bits the escape
+    byte; per code length 1, 2, ... a gamma coded number of codes until the code space is full; the symbols
+    in code order, each as a gamma coded step to the next unused byte value. The data: a symbol is output
+    unless it is the escape, which is followed by a gamma coded run length (the last byte repeated) or 0,
+    then 1 bit: 0 = an 8 bit literal follows, 1 = the end. 32FB stores the result as a running sum, 34FB as
+    a running sum of a running sum.'''
+    hdr = (data[0] << 8) | data[1]
+    pos = 5 if hdr & 0x100 else 2
+    hdr &= ~0x100
+    br = _BitReader(data, pos)
+    size = br.bits(24)
+    esc = br.bits(8)
+    base = [0] * 18
+    limit = [0] * 18
+    code = 0
+    nsym = 0
+    length = 0
+    shift = 15
+    while True:
+        length += 1
+        if length > 16:
+            raise PackError('bad Huffman table')
+        code *= 2
+        base[length] = code - nsym
+        n = br.gamma()
+        nsym += n
+        code += n
+        lim = (code << shift) & 0xffff if n else 0
+        limit[length] = lim
+        shift -= 1
+        if n != 0 and lim == 0:
+            break
+    maxlen = length
+    used = [False] * 256
+    syms = []
+    v = 0xff
+    for _ in range(nsym):
+        k = br.gamma() + 1
+        while k:
+            v = (v + 1) & 0xff
+            if not used[v]:
+                k -= 1
+        used[v] = True
+        syms.append(v)
+    out = bytearray()
+    while True:
+        top = br.buf >> 16
+        length = 1
+        while length < maxlen and top >= limit[length]:
+            length += 1
+        sym = syms[br.bits(length) - base[length]]
+        if sym != esc:
+            out.append(sym)
+            continue
+        run = br.gamma()
+        if run:
+            out += bytes([out[-1]]) * run
+            continue
+        if br.bits(1):
+            break
+        out.append(br.bits(8))
+    del out[size:]
+    if hdr == 0x32fb:
+        acc = 0
+        for i in range(len(out)):
+            acc = (acc + out[i]) & 0xff
+            out[i] = acc
+    elif hdr == 0x34fb:
+        a = b = 0
+        for i in range(len(out)):
+            a = (a + out[i]) & 0xff
+            b = (b + a) & 0xff
+            out[i] = b
+    return bytes(out)
+
+def rle7a_decompress(data):
+    '''Pack code 0x7a (pack7a_decode 0x97c2c): run length code of fixed size units. The code (7BFB with 3
+    more bytes), the unpacked size (24 bit BE), the unit size in bytes, the size of a count (1..4 bytes,
+    big endian, signed); then counts: n > 0 repeats the next unit n + 1 times, n < 0 copies -n units,
+    0 ends.'''
+    pos = 5 if data[0] & 1 else 2
+    size = int.from_bytes(data[pos:pos + 3], 'big')
+    unit = data[pos + 3]
+    nbytes = data[pos + 4]
+    pos += 5
+    out = bytearray()
+    while True:
+        n = int.from_bytes(data[pos:pos + nbytes], 'big', signed=True)
+        pos += nbytes
+        if n < 0:
+            out += data[pos:pos - n * unit]
+            pos += -n * unit
+        elif n > 0:
+            out += data[pos:pos + unit] * (n + 1)
+            pos += unit
+        else:
+            break
+    return bytes(out[:size]) if len(out) > size else bytes(out)
+
+def skip_copyright(data):
+    '''skip_copyright: a buffer may start with a "Copyright..." C string before its pack code'''
+    if data[:9] == b'Copyright':
+        return data.index(b'\0') + 1
+    return 0
+
 def unpack(data):
-    '''Mirror of the game's unpack(): returns the decompressed buffer, or the input itself when it
-    is not compressed. Pack codes 0x30-0x34 (bit-coded LZ), 0x46 (byte pair) and 0x7a are not
-    implemented.'''
+    '''Mirror of the game's unpack(): returns the decompressed buffer, or the input itself when it is not
+    compressed'''
+    skip = skip_copyright(data)
+    if skip:
+        data = data[skip:]
     code = pack_code(data)
     if code is None:
         return data
     if code == 0x10:
         return refpack_decompress(data)
-    if code in (0x60, 0x62, 0x66):
+    if code in (0x30, 0x32, 0x34):
+        return huff_decompress(data)
+    if code == 0x46:
+        return bytepair_decode(data)
+    if code in (0x60, 0x62, 0x66, 0x72):
         return delta_decompress(data)
     if code in (0x6a, 0x6e):
         size = (data[2] << 16) | (data[3] << 8) | data[4]
         return bytes(data[5:5 + size])
-    if code in (0x30, 0x32, 0x34, 0x46, 0x7a):
-        raise PackError(f"pack code 0x{code:02x} not implemented")
+    if code == 0x7a:
+        return rle7a_decompress(data)
     return data
 
 # ----------------------------------------------------------------------------------------------
@@ -468,25 +624,58 @@ class Font:
 # ----------------------------------------------------------------------------------------------
 
 class Sample:
-    def __init__(self, rate, pcm8_signed):
+    def __init__(self, rate, pcm8_signed, loop_start=None, loop_end=None):
         self.rate = rate
         self.pcm = pcm8_signed   # bytes, signed 8 bit
+        self.loop_start = loop_start    # sample positions of the repeated part (None: plays once)
+        self.loop_end = loop_end
 
-def load_sample(data):
+# The menu loops (MAINDESK.IFF, PAUSE.IFF, TONIGHTS.IFF, GAMESUM.IFF, SCOUTING.IFF) store their 8SVX BODY in a
+# 4 bit delta code: every byte holds two codes, the low nibble first, each adding one of these steps to an
+# 8 bit accumulator that starts at 0 (signed samples). It is the Fibonacci delta code of 8SVX without the
+# zero step, so silence is +1 / -1 (0x78). playsample hands every loadsound sample to the driver with the
+# packed flag and half of each length; the software mixer of the Sound Blaster driver expands two samples
+# per byte through the table at 0xd7414 (mix_fill_buffer, mix_play_sample), the GUS driver the same way.
+FIB_DELTA = (-34, -21, -13, -8, -5, -3, -2, -1, 1, 2, 3, 5, 8, 13, 21, 34)
+
+def fibdelta_decode(packed, acc=0):
+    '''4 bit delta code of the menu loops -> signed 8 bit samples (two per byte, low nibble first)'''
+    out = bytearray(2 * len(packed))
+    i = 0
+    for b in packed:
+        acc = (acc + FIB_DELTA[b & 15]) & 0xff
+        out[i] = acc
+        acc = (acc + FIB_DELTA[b >> 4]) & 0xff
+        out[i + 1] = acc
+        i += 2
+    return bytes(out)
+
+def load_sample(data, packed=None):
+    '''A sound file as loadsound reads it. 8SVX: VHDR +0 one shot samples, +4 repeat samples, +12 rate;
+    the BODY holds the samples (signed 8 bit) or, packed, half as many bytes in the 4 bit delta code
+    (packed=None: decided by the VHDR sample count being twice the stored body).'''
     if data[:4] == b'FORM' and data[8:12] == b'8SVX':
         pos = 12
         rate = 8000
+        oneshot = repeat = 0
         body = b''
         while pos + 8 <= len(data):
             cid = data[pos:pos + 4]
             size, = struct.unpack_from('>I', data, pos + 4)
             payload = data[pos + 8: pos + 8 + size]
             if cid == b'VHDR':
+                oneshot, repeat = struct.unpack_from('>II', payload, 0)
                 rate = struct.unpack_from('>H', payload, 12)[0]
             elif cid == b'BODY':
                 body = payload
             pos += 8 + size + (size & 1)
-        return Sample(rate, body)
+        total = oneshot + repeat
+        if packed is None:
+            packed = total > 0 and abs(total - 2 * len(body)) <= 2
+        pcm = fibdelta_decode(body) if packed else body
+        if repeat:
+            return Sample(rate, pcm, oneshot, min(total, len(pcm)))
+        return Sample(rate, pcm)
     if data[:4] == b'RIFF':
         # the game only handles 8 bit mono PCM with a 0x2c byte header, converting to signed
         rate, = struct.unpack_from('<I', data, 24)
@@ -495,10 +684,16 @@ def load_sample(data):
     raise ValueError("unknown sample format")
 
 def write_wav(path, sample):
+    '''8 bit WAV; the loop of a repeated sample goes into a "smpl" chunk'''
     pcm = bytes(b ^ 0x80 for b in sample.pcm)   # back to unsigned for WAV
-    hdr = b'RIFF' + struct.pack('<I', 36 + len(pcm)) + b'WAVEfmt ' + struct.pack('<IHHIIHH', 16, 1, 1, sample.rate, sample.rate, 1, 8)
+    body = b'WAVEfmt ' + struct.pack('<IHHIIHH', 16, 1, 1, sample.rate, sample.rate, 1, 8)
+    body += b'data' + struct.pack('<I', len(pcm)) + pcm + (b'\0' if len(pcm) & 1 else b'')
+    if getattr(sample, 'loop_start', None) is not None:
+        smpl = struct.pack('<9I', 0, 0, 1000000000 // sample.rate, 60, 0, 0, 0, 1, 0)
+        smpl += struct.pack('<6I', 0, 0, sample.loop_start, sample.loop_end - 1, 0, 0)
+        body += b'smpl' + struct.pack('<I', len(smpl)) + smpl
     with open(path, 'wb') as f:
-        f.write(hdr + b'data' + struct.pack('<I', len(pcm)) + pcm)
+        f.write(b'RIFF' + struct.pack('<I', len(body)) + body)
 
 # ----------------------------------------------------------------------------------------------
 # VIV speech bank (speech_load_bank @0x83897, speech_delta_decode, bytepair_decode @0x97a38) - verified

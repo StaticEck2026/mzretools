@@ -945,6 +945,17 @@ func speech_tests(bos: Database.TeamInfo, det: Database.TeamInfo, gf: Node) -> v
 
 ## the music: the patch bank, the KMS songs, the sequencer, the FM driver and chip, the cues
 func audio_tests(gf: Node, snd: Sounds) -> void:
+	# the menu recordings: packed 8SVX bodies, two samples per byte (fibdelta_decode)
+	var pause := Sounds.load_sample(gf.read_raw("pause.iff"))
+	if pause == null or pause.data.size() != 70656 or pause.mix_rate != 22050 or pause.loop_mode != AudioStreamWAV.LOOP_DISABLED:
+		fail("PAUSE.IFF: %s" % str([pause.data.size(), pause.mix_rate] if pause != null else null))
+	elif Array(pause.data.slice(30000, 30006)) != [47, 39, 44, 42, 21, 0]:
+		fail("PAUSE.IFF samples: %s" % str(Array(pause.data.slice(30000, 30006))))
+	var desk := Sounds.load_sample(gf.read_raw("maindesk.iff"))
+	if desk == null or desk.data.size() != 624640 or desk.loop_mode != AudioStreamWAV.LOOP_FORWARD or desk.loop_begin != 24960 or desk.loop_end != 624639:
+		fail("MAINDESK.IFF loop")
+	elif Array(desk.data.slice(30000, 30006)) != [8, 251, 253, 245, 232, 240]:
+		fail("MAINDESK.IFF samples")
 	var bank := FmBank.load_bank(gf.read_raw("pcff001.pat"), [gf.read_raw("pcff000.tim")])
 	if bank == null or bank.timbres.size() != 144:
 		fail("FM timbres: %d" % (bank.timbres.size() if bank != null else -1))

@@ -8,17 +8,20 @@ decode; the parts marked *unverified* could not be cross checked).
 
 ## Compression (`unpack` 0x97eb8)
 
-Any file may be stored compressed. The first two bytes identify the packer: byte 1 is `0xFB`, byte 0 (with bit 0
-cleared) is the pack code:
+Any file may be stored compressed. The buffer may start with a `Copyright...` C string (`skip_copyright`),
+then the first two bytes identify the packer: byte 1 is `0xFB`, byte 0 (with bit 0 cleared) is the pack code.
+`tools/nhl/formats.py` implements every code; `tools/nhl/test_pack.py` runs the game's own decoders in an
+emulator (`tools/leemu.py`) on the same buffers and compares the results. The game files use only RefPack
+(the `.QFS` banks), the byte pair code (the `.BGP` drivers) and the speech code of the VIV bank.
 
 | Code | Decoder | Notes |
 |---|---|---|
 | `10`/`11` | `refpack_decode` (0x97ce0) | standard EA **RefPack**: 2 byte header, optional 3 byte compressed size when bit 0 of byte 0 is set, 3 byte big endian decompressed size, then the usual 2/3/4 byte copy commands, literal runs `E0..FB` ((n&0x1f)+1)*4 bytes, stop `FC..FF` with 0-3 trailing literals |
-| `30`/`32`/`34` | `bitlz_decode` (0x97740) | bit coded LZ variant, not implemented in the tools |
-| `46` | `bytepair_decode` (0x97a38) | byte pair substitution, not implemented |
-| `60`/`62`/`66` | `delta_decode` (0x97bb8) | output byte = running sum of input bytes; `62` has a 5 byte header, `66` 6 bytes |
+| `30`/`32`/`34` | `bitlz_decode` (0x97740) | EA's canonical **Huffman** code: the code (+3 bytes when bit 0 is set), then a bit stream read most significant bit first (`bitlz_getbits`): 24 bits the unpacked size, 8 bits the escape byte, per code length 1, 2, ... a gamma coded number of codes until the code space is full, the symbols in code order as gamma coded steps over the byte values not yet used; in the data the escape symbol is followed by a gamma coded run (the last byte repeated) or 0 and one bit, 0 = an 8 bit literal, 1 = the end. Gamma code (`bitlz_getgamma`): k zero bits, a one, k+2 bits r: r + 2^(k+2) - 4. `32` stores the result as a running sum, `34` as a running sum of a running sum |
+| `46` | `bytepair_decode` (0x97a38) | byte pair substitution (see the speech bank below); the `.BGP` drivers |
+| `60`/`62`/`66`/`72` | `delta_decode` (0x97bb8) | output byte = running sum of input bytes; after the code `62FB` has 3 more header bytes, `66FB` 4, then the 24 bit size |
 | `6A`/`6E` | stored | 5 byte header followed by the raw data |
-| `7A` | `pack7a_decode` (0x97c2c) | not implemented |
+| `7A` | `pack7a_decode` (0x97c2c) | run length code of fixed size units: the code (+3 bytes for `7B`), 24 bit size, unit size, size of a count (1-4 bytes); signed big endian counts: n > 0 repeats the next unit n + 1 times, n < 0 copies -n units, 0 ends |
 
 `loadfile_packed` reads a file, unpacks it when needed and returns the result; `loadfile_auto` additionally tries
 the `.fsh/.vsh/.qfs/.qvs` variants of a name and rebuilds the directory of a `q*` bank (`shpi_from_compressed`).
@@ -120,11 +123,25 @@ the colours 0x25 and 0x27.
 IFF **8SVX** (`FORM....8SVX`, `VHDR` with the sample rate at +12, signed 8 bit `BODY`) or RIFF WAV with a 0x2c
 byte header, converted to signed by XOR 0x80. `loadsound` keeps a 16 byte header (rate, total length = one shot +
 repeat, loop) before the body; `playsample(sample, driver, channel, volume)` hands the driver half of each length
-(`drv_play_sample`). The menu loops of the installation (`MAINDESK.IFF`, `PAUSE.IFF` for the pause screen when the
-music is on, `TONIGHTS.IFF`, `GAMESUM.IFF`, `SCOUTING.IFF`) declare 22050 Hz and twice as many samples as their
-bodies hold bytes; the bytes are not plain PCM (their energy sits above 1 kHz and they read like 4 bit codes, the
-silence of the lead in is `0x78` repeated). Neither the loader, the Sound Blaster driver nor the installer expands
-them, so the coding of these files is still unidentified; the port does not play them.
+(`drv_play_sample`) together with the **packed** flag: every sample `loadsound` loads is coded, two
+samples per byte. These are the recordings of the front end (`MAINDESK.IFF` the main menu, `TONIGHTS.IFF`,
+`GAMESUM.IFF`, `SCOUTING.IFF`, `PAUSE.IFF` on the pause screen when the music is on; the code also loads
+`awards`, `awasong`, `leaguetm`, `jersey`, `coach`, `calendar`, `credits`, `title30`, `pioneer3`/`pioneer4`
+`.iff` recordings that are not part of this installation); their VHDR declares 22050 Hz and
+twice as many samples as the BODY holds bytes. The software mixer of the Sound Blaster driver (`mix_fill_buffer`,
+and `gus_stream_fill` / `gus_dig_play` for the Gravis UltraSound) expands each byte through the table at
+0xd7414 into two 8 bit steps, low nibble first, added to an accumulator that starts at 0 (signed samples):
+
+```
+nibble  0   1   2   3   4   5   6   7   8   9   a   b   c   d   e   f
+step  -34 -21 -13  -8  -5  -3  -2  -1  +1  +2  +3  +5  +8 +13 +21 +34
+```
+
+the Fibonacci delta code of 8SVX without the zero step, so silence is `0x78` (+1, -1). For a loop
+(`MAINDESK.IFF` repeats from sample 24960, `TONIGHTS.IFF` from the start) `mix_play_sample` precomputes the
+accumulator at the loop start. Decoded, the five files are 3 to 34 seconds of music without a single wrap of
+the accumulator; `nhltool.py wav PAUSE.IFF OUT.wav` exports them (with the loop in a `smpl` chunk) and the
+port plays `PAUSE.IFF` on its pause screen.
 
 ### Sound drivers and patch banks (`load_sound_config`, `loadpatches` 0x8ecc0)
 

@@ -48,6 +48,7 @@ var cues: MusicCues                  # play_speech: cue -> song of the home team
 var sfx_left: Dictionary = {}        # AudioStreamPlayer -> seconds until its note ends
 var sfx_players: Array[AudioStreamPlayer] = []
 var crowd_player: AudioStreamPlayer
+var pause_player: AudioStreamPlayer   # PAUSE.IFF on the pause screen (pause_menu, music on)
 var sfx_on := true                    # option_flags 0x80 (S)
 var music_on := true                  # option_flags 0x40 (M)
 var show_names := false               # show_names (Tab)
@@ -240,6 +241,18 @@ func _open_pause(after_game: bool) -> void:
 	mode = Mode.PAUSED
 	pause_menu.open(after_game)
 	_stop_sounds()
+	# pause_menu: loadsound("pause.iff"), played once on channel 3 at volume 0x4c when the music is on
+	if pause_player != null and music_on:
+		pause_player.volume_db = linear_to_db(0x4c / 127.0)
+		pause_player.play()
+
+## leaving the pause screen: sound_fade(channel 3, 100) fades the recording out over a second
+func _fade_pause_music() -> void:
+	if pause_player == null or not pause_player.playing:
+		return
+	var tw := create_tween()
+	tw.tween_property(pause_player, "volume_db", -60.0, 1.0)
+	tw.tween_callback(pause_player.stop)
 
 func _pause_input() -> void:
 	var dir := -1
@@ -260,11 +273,13 @@ func _on_menu(action: String) -> void:
 	match action:
 		"back":
 			pause_menu.close()
+			_fade_pause_music()
 			mode = Mode.MATCH
 		"exit":
 			get_tree().quit()
 		"replay":
 			pause_menu.close()
+			_fade_pause_music()
 			_start_replay(true)
 
 func _start_replay(from_menu: bool) -> void:
@@ -364,6 +379,8 @@ func _hotkeys() -> void:
 		music_on = not music_on
 		if music != null:
 			music.set_music_enabled(music_on)
+		if pause_player != null and not music_on:
+			pause_player.stop()
 	for p in 2:
 		var team := (sim.user1_team if p == 0 else sim.user2_team) - 1
 		if team < 0:
@@ -798,6 +815,12 @@ func _load_assets() -> void:
 		crowd_player.volume_db = linear_to_db(0.15)
 		add_child(crowd_player)
 		crowd_player.play()
+	# the recording of the pause screen (PAUSE.IFF, packed 8SVX)
+	var pause_wav := Sounds.load_sample(GameFiles.read_raw("pause.iff"))
+	if pause_wav != null:
+		pause_player = AudioStreamPlayer.new()
+		pause_player.stream = pause_wav
+		add_child(pause_player)
 	# the music driver: PCFF001.PAT with the FM timbres of PCFF000.TIM (SBDAC.SCN), the songs
 	# of the home team (load_music_banks)
 	var fm := FmBank.load_bank(GameFiles.read_raw("pcff001.pat"), [GameFiles.read_raw("pcff000.tim")])

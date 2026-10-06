@@ -94,8 +94,12 @@ func has(id: int) -> bool:
 func stream(id: int) -> AudioStreamWAV:
 	return effects.get(id, null)
 
-## IFF 8SVX / RIFF WAV samples as read by loadsound() (the screens' music and speech files)
-static func load_sample(data: PackedByteArray) -> AudioStreamWAV:
+## IFF 8SVX / RIFF WAV samples as read by loadsound() (the screens' music and speech files). The
+## menu loops (MAINDESK, PAUSE, TONIGHTS, GAMESUM, SCOUTING .IFF) store their BODY packed: playsample
+## gives the driver every loadsound sample with the packed flag and half of each length, and the
+## mixer expands two samples per byte (fibdelta_decode). packed = -1 decides by the VHDR sample count
+## being twice the stored body; a repeat part (VHDR +4) becomes the loop of the stream.
+static func load_sample(data: PackedByteArray, packed: int = -1) -> AudioStreamWAV:
 	if data.size() < 12:
 		return null
 	var tag := data.slice(0, 4).get_string_from_ascii()
@@ -105,18 +109,28 @@ static func load_sample(data: PackedByteArray) -> AudioStreamWAV:
 	if tag == "FORM" and data.slice(8, 12).get_string_from_ascii() == "8SVX":
 		var pos := 12
 		var rate := 8000
+		var oneshot := 0
+		var repeat := 0
 		var body := PackedByteArray()
 		while pos + 8 <= data.size():
 			var cid := data.slice(pos, pos + 4).get_string_from_ascii()
 			var size := _be32(data, pos + 4)
 			var payload := data.slice(pos + 8, pos + 8 + size)
 			if cid == "VHDR" and payload.size() >= 14:
+				oneshot = _be32(payload, 0)
+				repeat = _be32(payload, 4)
 				rate = (payload[12] << 8) | payload[13]
 			elif cid == "BODY":
 				body = payload
 			pos += 8 + size + (size & 1)
+		var total := oneshot + repeat
+		var is_packed := packed == 1 or (packed == -1 and total > 0 and absi(total - 2 * body.size()) <= 2)
 		wav.mix_rate = rate
-		wav.data = body
+		wav.data = fibdelta_decode(body) if is_packed else body
+		if repeat > 0:
+			wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
+			wav.loop_begin = oneshot
+			wav.loop_end = mini(total, wav.data.size())
 		return wav
 	if tag == "RIFF":
 		wav.mix_rate = data.decode_u32(24)
@@ -126,6 +140,23 @@ static func load_sample(data: PackedByteArray) -> AudioStreamWAV:
 		wav.data = pcm
 		return wav
 	return null
+
+## the steps of the 4 bit delta code (table 0xd7414 of mix_fill_buffer): Fibonacci steps without 0
+const FIB_DELTA := [-34, -21, -13, -8, -5, -3, -2, -1, 1, 2, 3, 5, 8, 13, 21, 34]
+
+## two signed 8 bit samples per byte, low nibble first, from an accumulator starting at 0
+static func fibdelta_decode(packed: PackedByteArray) -> PackedByteArray:
+	var out := PackedByteArray()
+	out.resize(packed.size() * 2)
+	var acc := 0
+	var i := 0
+	for b in packed:
+		acc = (acc + int(FIB_DELTA[b & 15])) & 0xff
+		out[i] = acc
+		acc = (acc + int(FIB_DELTA[b >> 4])) & 0xff
+		out[i + 1] = acc
+		i += 2
+	return out
 
 static func _be32(d: PackedByteArray, o: int) -> int:
 	return (d[o] << 24) | (d[o + 1] << 16) | (d[o + 2] << 8) | d[o + 3]
