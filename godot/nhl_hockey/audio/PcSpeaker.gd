@@ -6,7 +6,7 @@ extends RefCounted
 ## (PCFF003.TIM, 70 bytes: +0xc playable, +0x10 s8 note offset, +0x11 s8 fine tune, +0x12 bend
 ## range, +0x19 2 = the envelope moves the pitch, +0x1c start, +0x1e peak, +0x20 attack step,
 ## +0x22 decay step, +0x24 sustain, +0x26 release step, +0x28 2 = the LFO moves the pitch, +0x29
-## ticks a step, +0x2a delay, +0x2c steps (0x7fff for ever), +0x2e depth, +0x30 step, +0x34 its
+## ticks a step, +0x2a delay, +0x2c steps (0x7fff for ever), +0x2e depth (unsigned), +0x30 step, +0x34 its
 ## directions (1 up, 2 down, 3 both), +0x35 1 = a note sequence, +0x36 delay, +0x38 length,
 ## +0x3a ticks a step, +0x3b the eight note offsets).
 ##
@@ -206,7 +206,7 @@ func _lfo(v: Voice, t: PackedByteArray) -> void:
 		v.lfo_tick -= 1
 		return
 	v.lfo_tick = t[0x29]
-	var depth := _s16(t, 0x2e)
+	var depth := t.decode_u16(0x2e)       # an unsigned word against abs() of the LFO
 	if v.lfo_dir == 2:
 		v.lfo = _wrap16(v.lfo - v.lfo_step)
 		if absi(v.lfo) >= depth:

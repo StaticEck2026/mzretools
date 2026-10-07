@@ -1,0 +1,306 @@
+#!/usr/bin/env python3
+#
+# golden.py GAMEDIR OUTDIR: runs routines of HOCKEY.EXE in the emulator (tools/leemu.py) on fixed inputs
+# and writes what they produce as JSON files, which the Godot port's tests (godot/nhl_hockey/tests,
+# "golden" tests) compare with what the port computes from the same inputs:
+#
+#   rng.json         randomrange (0x8c230) and the C library's rand / srand (0x8eb27 / 0x8eb4b)
+#   fm_driver.json   the AdLib driver (adlib_drv_init / send_midi / tick): the OPL2 registers after
+#                    every timer tick of a few MIDI sequences, the port I/O caught by a hook
+#   pc_speaker.json  the PC speaker driver (pcspk_*): the PIT divisor and the speaker gate every tick
+#
+# The patch bank is put in the emulator's memory the way loadpatches leaves it: the .PAT file at
+# snd_patch_bank, each record's +0x10 pointing at its timbre from the .TIM files.
+#
+#   python3 tools/nhl/golden.py re/nhl_hockey godot/nhl_hockey/tests/golden
+#
+import json
+import os
+import random
+import struct
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+from leemu import LEEmu                       # noqa: E402
+
+from unicorn import UC_HOOK_INSN              # noqa: E402
+from unicorn.x86_const import (UC_X86_INS_IN, UC_X86_INS_OUT, UC_X86_REG_GDTR, UC_X86_REG_DS,  # noqa: E402
+                               UC_X86_REG_ES, UC_X86_REG_SS, UC_X86_REG_FS, UC_X86_REG_GS)
+
+RANDOMRANGE = 0x8c230
+RAND = 0x8eb27
+SRAND = 0x8eb4b
+SEED = 0xc9100                                # dword_c9100, the state of randomrange
+SND_PATCH_BANK = 0xede5c
+OPL_DELAY = (0xd67a0, 0xd67a4)                # the delay loops of opl_write_reg (opl_calibrate_delay)
+ADLIB_INIT = 0x9debe
+ADLIB_TICK = 0x9df80
+ADLIB_SEND = 0x9e676
+PCSPK_INIT = 0x9d698
+PCSPK_TICK = 0x9d6f3
+PCSPK_SEND = 0x9daac
+
+
+class PortEmu(LEEmu):
+    '''The emulator with the port I/O recorded (OUT) and answered with 0 (IN)'''
+
+    def __init__(self, exe):
+        super().__init__(exe)
+        # the sound code reloads DS (push ds / pop ds, empty_func_902a0: mov ds, cs:[0x90048]): a
+        # descriptor table with flat 32 bit segments, selector 0x10 for the data, saved where the
+        # code reloads it from
+        gdt = 0x50000000
+        self.uc.mem_map(gdt, 0x1000)
+        flat_code = struct.pack('<Q', 0x00cf9a000000ffff)
+        flat_data = struct.pack('<Q', 0x00cf92000000ffff)
+        self.uc.mem_write(gdt, b'\0' * 8 + flat_code + flat_data)
+        self.uc.reg_write(UC_X86_REG_GDTR, (0, gdt, 0x17, 0))
+        for r in (UC_X86_REG_DS, UC_X86_REG_ES, UC_X86_REG_SS, UC_X86_REG_FS, UC_X86_REG_GS):
+            self.uc.reg_write(r, 0x10)
+        self.write(0x90048, struct.pack('<H', 0x10))
+        self.outs = []
+        self.uc.hook_add(UC_HOOK_INSN, self._out, None, 1, 0, UC_X86_INS_OUT)
+        self.uc.hook_add(UC_HOOK_INSN, self._in, None, 1, 0, UC_X86_INS_IN)
+
+    def _out(self, uc, port, size, value, user):
+        self.outs.append((port & 0xffff, value & 0xff))
+
+    def _in(self, uc, port, size, user):
+        return 0
+
+    def take_outs(self):
+        o = self.outs
+        self.outs = []
+        return o
+
+
+def read(gamedir, name):
+    for n in os.listdir(gamedir):
+        if n.lower() == name.lower():
+            with open(os.path.join(gamedir, n), 'rb') as f:
+                return f.read()
+    raise FileNotFoundError(name)
+
+
+def parse_tim(tim):
+    '''{(type, program): entry bytes} of a .TIM file'''
+    out = {}
+    n = struct.unpack_from('<H', tim, 4)[0]
+    base = 6 + 8 * n
+    offs = [struct.unpack_from('<I', tim, 6 + 4 * n + 4 * k)[0] for k in range(n)]
+    for k in range(n):
+        key = tim[6 + 4 * k:10 + 4 * k]
+        if key[0] != 0x80:
+            continue
+        start = base + offs[k]
+        end = len(tim)
+        if k + 1 < n and base + offs[k + 1] > start:
+            end = min(base + offs[k + 1], end)
+        out[(key[1], (key[2] << 8) | key[3])] = tim[start:end]
+    return out
+
+
+def load_bank(emu, pat, tims):
+    '''loadpatches: the .PAT at snd_patch_bank, every record's timbre pointer (+0x10)'''
+    timbres = {}
+    for t in tims:
+        timbres.update(parse_tim(t))
+    p = emu.alloc(pat)
+    emu.write(SND_PATCH_BANK, struct.pack('<I', p))
+    nrec = (len(pat) - 0x102) // 0x14
+    for r in range(nrec):
+        rec = pat[0x102 + r * 0x14:0x102 + (r + 1) * 0x14]
+        t = timbres.get((rec[0], rec[1]))
+        if t is None:
+            continue
+        a = emu.alloc(t)
+        emu.write(p + 0x102 + r * 0x14 + 0x10, struct.pack('<I', a))
+
+
+# ----------------------------------------------------------------------------------------------
+# random numbers
+# ----------------------------------------------------------------------------------------------
+
+def rng_cases(exe):
+    emu = LEEmu(exe)
+    out = {'randomrange': [], 'rand': []}
+    for seed, n in ((0xabcd4321, 100), (0x12345678, 7), (0x0, 0x1a), (0xffffffff, 0x8000)):
+        emu.write(SEED, struct.pack('<I', seed))
+        vals = [emu.call(RANDOMRANGE, eax=n) & 0xffff for _ in range(64)]
+        out['randomrange'].append({'seed': seed, 'n': n, 'values': vals,
+                                   'final_seed': struct.unpack('<I', emu.read(SEED, 4))[0]})
+    for seed in (1, 0x1234, 0xdeadbeef):
+        emu.call(SRAND, eax=seed)
+        out['rand'].append({'seed': seed, 'values': [emu.call(RAND) for _ in range(64)]})
+    return out
+
+
+# ----------------------------------------------------------------------------------------------
+# the AdLib driver
+# ----------------------------------------------------------------------------------------------
+
+def fm_sequences():
+    '''lists of ticks, each a list of MIDI messages as the driver gets them (notes already + 24)'''
+    seqs = {}
+    # an organ note: program, volume, note on, a bend, the modulation wheel, note off
+    t = [[] for _ in range(120)]
+    t[0] = [[0xc0, 0x0b], [0xb0, 7, 100], [0xb0, 10, 64], [0x90, 60, 100]]
+    t[30] = [[0xe0, 0, 0x50]]
+    t[45] = [[0xb0, 1, 90]]
+    t[70] = [[0x80, 60, 0]]
+    seqs['organ'] = t
+    # the drum kit: the kick (FM sweep), a snare, a hat
+    t = [[] for _ in range(80)]
+    t[0] = [[0xb9, 7, 0x7f], [0x99, 36, 0x7f]]
+    t[10] = [[0x99, 38, 100]]
+    t[20] = [[0x99, 42, 90]]
+    t[30] = [[0x89, 36, 0], [0x89, 38, 0], [0x89, 42, 0]]
+    seqs['drums'] = t
+    # the FM effects of the match: the puck drop (0xab) and 0x94 as snd_play_patch sends them
+    t = [[] for _ in range(60)]
+    t[0] = [[0xb9, 7, 0x7f], [0x99, 0xab - 0x74 + 0x18, 0x7f]]
+    t[6] = [[0x89, 0xab - 0x74 + 0x18, 0]]
+    t[10] = [[0xb9, 7, 0x60], [0x99, 0x94 - 0x74 + 0x18, 0x7f]]
+    t[40] = [[0x89, 0x94 - 0x74 + 0x18, 0]]
+    seqs['effects'] = t
+    # more notes than voices: allocation and stealing, sustain pedal, all notes off
+    rnd = random.Random(1994)
+    t = [[] for _ in range(200)]
+    t[0] = [[0xc0 | c, p] for c, p in ((0, 0x0b), (1, 0x10), (2, 0x20), (3, 0x30))]
+    t[0] += [[0xb0 | c, 7, 110] for c in range(4)]
+    held = []
+    for k in range(1, 180, 3):
+        c = rnd.randrange(4)
+        n = rnd.randrange(40, 90)
+        t[k].append([0x90 | c, n, rnd.randrange(40, 127)])
+        held.append((c, n))
+        if len(held) > 6:
+            oc, on = held.pop(rnd.randrange(len(held)))
+            t[k + 1].append([0x80 | oc, on, 0])
+        if k == 60:
+            t[k].append([0xb1, 0x40, 0x7f])
+        if k == 120:
+            t[k].append([0xb1, 0x40, 0])
+        if k == 150:
+            t[k].append([0xb2, 0x7b, 0])
+    seqs['voices'] = t
+    return seqs
+
+
+def fm_run(exe, pat, tims, seq):
+    emu = PortEmu(exe)
+    load_bank(emu, pat, tims)
+    for a in OPL_DELAY:
+        emu.write(a, struct.pack('<I', 1))
+    regs = [0] * 256
+    index = [0]
+
+    def apply(outs):
+        for port, v in outs:
+            if port == 0x388:
+                index[0] = v
+            elif port == 0x389:
+                regs[index[0]] = v
+
+    emu.call(ADLIB_INIT, stack=(0x388,))
+    apply(emu.take_outs())
+    msgbuf = emu.alloc(16)
+    states = []
+    for tick in seq:
+        for msg in tick:
+            emu.write(msgbuf, bytes(msg))
+            emu.call(ADLIB_SEND, stack=(len(msg), msgbuf))
+        emu.call(ADLIB_TICK)
+        apply(emu.take_outs())
+        states.append(list(regs))
+    return states
+
+
+def fm_cases(exe, gamedir):
+    pat = read(gamedir, 'PCFF001.PAT')
+    tims = [read(gamedir, 'PCFF000.TIM')]
+    out = {}
+    for name, seq in fm_sequences().items():
+        states = fm_run(exe, pat, tims, seq)
+        # the registers as changes against the tick before (the first tick: every register)
+        diffs = []
+        prev = None
+        for st in states:
+            d = {('%02x' % r): v for r, v in enumerate(st) if prev is None or prev[r] != v}
+            diffs.append(d)
+            prev = st
+        out[name] = {'ticks': seq, 'regs': diffs}
+    return out
+
+
+# ----------------------------------------------------------------------------------------------
+# the PC speaker driver
+# ----------------------------------------------------------------------------------------------
+
+def pc_run(exe, pat, tims, seq):
+    emu = PortEmu(exe)
+    load_bank(emu, pat, tims)
+    emu.call(PCSPK_INIT)
+    emu.take_outs()
+    div = [0, 0]
+    low = [True]
+    gate = [0]
+    msgbuf = emu.alloc(16)
+    states = []
+    for tick in seq:
+        for msg in tick:
+            emu.write(msgbuf, bytes(msg))
+            emu.call(PCSPK_SEND, stack=(len(msg), msgbuf))
+        emu.call(PCSPK_TICK)
+        for port, v in emu.take_outs():
+            if port == 0x42:
+                if low[0]:
+                    div[0] = v
+                else:
+                    div[1] = v
+                low[0] = not low[0]
+            elif port == 0x61:
+                gate[0] = v & 1
+            elif port == 0x43:
+                low[0] = True
+        states.append([gate[0], div[0] | (div[1] << 8)])
+    return states
+
+
+def pc_cases(exe, gamedir):
+    pat = read(gamedir, 'PCFF003.PAT')
+    tims = [read(gamedir, 'PCFF003.TIM')]
+    out = {}
+    ids = [0x9c, 0xa4, 0x9a, 0xad, 0xab, 0x97, 0x7b, 0x95]
+    for k, sid in enumerate(ids):
+        t = [[] for _ in range(150)]
+        if sid >= 0x80:
+            t[0] = [[0xb9, 7, 0x7f], [0x99, sid - 0x74 + 0x18, 0x7f]]
+            t[40] = [[0x89, sid - 0x74 + 0x18, 0]]
+        else:
+            t[0] = [[0xcc, sid], [0xbc, 7, 0x7f], [0x9c, 0x24 + 0x18, 0x7f]]
+            t[40] = [[0x8c, 0x24 + 0x18, 0]]
+        if k % 2 == 0:
+            t[20] = [[0x99, 0xa4 - 0x74 + 0x18, 0x7f]]      # a second effect takes the speaker
+        out['%02x' % sid] = {'ticks': t, 'states': pc_run(exe, pat, tims, t)}
+    return out
+
+
+def main():
+    if len(sys.argv) != 3:
+        print(__doc__ or 'golden.py GAMEDIR OUTDIR')
+        sys.exit(2)
+    gamedir, outdir = sys.argv[1], sys.argv[2]
+    exe = os.path.join(gamedir, 'HOCKEY.EXE')
+    os.makedirs(outdir, exist_ok=True)
+    for name, data in (('rng', rng_cases(exe)), ('fm_driver', fm_cases(exe, gamedir)),
+                       ('pc_speaker', pc_cases(exe, gamedir))):
+        path = os.path.join(outdir, name + '.json')
+        with open(path, 'w') as f:
+            json.dump(data, f, separators=(',', ':'), sort_keys=True)
+            f.write('\n')
+        print('wrote', path)
+
+
+if __name__ == '__main__':
+    main()

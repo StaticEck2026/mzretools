@@ -279,6 +279,8 @@ func asset_tests() -> void:
 		fail("game files not found (re/nhl_hockey or NHL_GAME_DIR)")
 		return
 	print("game files: ", gf.game_dir)
+	# the executable's tables (the drivers' note tables, the menus ...)
+	Exe.load_from(gf.read_raw("hockey.exe"))
 	# sprite banks: 1134 run length coded frames; frame 0 is 16x32 with the hotspot (8, 25)
 	var frames := {}
 	for i in 23:
@@ -413,6 +415,7 @@ func asset_tests() -> void:
 		audio_tests(gf, snd)
 		sound_card_tests(gf)
 		opl2_tests()
+		golden_tests(gf)
 	league_tests(gf)
 
 ## the sound cards (load_sound_config): the Sound Blaster's digital driver and its mixer (the
@@ -577,6 +580,109 @@ func opl2_tests() -> void:
 			fail("native OPL2 differs at sample %d: %d %d" % [diff, a[diff], b[diff]])
 		else:
 			print("native OPL2 = GDScript OPL2 for %d samples" % a.size())
+
+## a chip that keeps the registers written to it
+class RecChip extends Opl2:
+	var regs := PackedInt32Array()
+
+	func _init() -> void:
+		super(22050.0, false)
+		regs.resize(256)
+
+	func write(reg: int, val: int) -> void:
+		regs[reg & 0xff] = val & 0xff
+		super.write(reg, val)
+
+static func _golden(name: String) -> Dictionary:
+	var f := FileAccess.open("res://tests/golden/%s.json" % name, FileAccess.READ)
+	if f == null:
+		return {}
+	var v = JSON.parse_string(f.get_as_text())
+	return v if v is Dictionary else {}
+
+## the port against the original (tools/nhl/golden.py runs HOCKEY.EXE's routines in an emulator on the
+## same inputs): randomrange and rand, the AdLib driver's OPL2 registers after every tick, the PC
+## speaker driver's PIT divisor and gate
+func golden_tests(gf: Node) -> void:
+	var rng := _golden("rng")
+	if rng.is_empty():
+		fail("golden data missing (tests/golden)")
+		return
+	var sim := Sim.new()
+	for c: Dictionary in rng["randomrange"]:
+		sim.seed = int(c["seed"])
+		for v in c["values"]:
+			var got := sim.random(int(c["n"]))
+			if got != int(v):
+				fail("randomrange(%d) from seed %x: %d, the original %d" % [int(c["n"]), int(c["seed"]), got, int(v)])
+				break
+		if sim.seed != int(c["final_seed"]):
+			fail("randomrange seed %x, the original %x" % [sim.seed, int(c["final_seed"])])
+	for c: Dictionary in rng["rand"]:
+		League.srand(int(c["seed"]))
+		for v in c["values"]:
+			if League.rand() != int(v):
+				fail("rand from seed %d differs" % int(c["seed"]))
+				break
+	# the AdLib driver: the registers the original has written by the end of each tick
+	var fm := _golden("fm_driver")
+	var bank := FmBank.load_bank(gf.read_raw("pcff001.pat"), [gf.read_raw("pcff000.tim")])
+	var compared := PackedInt32Array()
+	for r in range(0x20, 0xf6):
+		if (r & 0x1f) < 0x16 or r >= 0xa0:
+			compared.append(r)
+	compared.append(0xbd)
+	var fm_ok := 0
+	for case_name in fm:
+		var case: Dictionary = fm[case_name]
+		var chip := RecChip.new()
+		var drv := FmDriver.new(chip, bank)
+		var want := PackedInt32Array()
+		want.resize(256)
+		var ticks: Array = case["ticks"]
+		var bad := ""
+		for t in ticks.size():
+			for msg: Array in ticks[t]:
+				drv.midi(int(msg[0]), int(msg[1]), int(msg[2]) if msg.size() > 2 else 0)
+			drv.tick()
+			var d: Dictionary = case["regs"][t]
+			for k in d:
+				want[k.hex_to_int()] = int(d[k])
+			for r in compared:
+				if (r >= 0xa9 and r <= 0xaf) or (r >= 0xb9 and r <= 0xbc) or (r >= 0xc9 and r <= 0xdf):
+					continue
+				if chip.regs[r] != want[r]:
+					bad = "tick %d register %02x: %02x, the original %02x" % [t, r, chip.regs[r], want[r]]
+					break
+			if bad != "":
+				break
+		if bad != "":
+			fail("AdLib driver '%s' %s" % [case_name, bad])
+		else:
+			fm_ok += 1
+	# the PC speaker driver: the gate and, while it is open, the divisor
+	var pc := _golden("pc_speaker")
+	var pbank := FmBank.load_bank(gf.read_raw("pcff003.pat"), [gf.read_raw("pcff003.tim")])
+	var pc_ok := 0
+	for case_name in pc:
+		var case: Dictionary = pc[case_name]
+		var spk := PcSpeaker.new(pbank, 22050.0)
+		var ticks: Array = case["ticks"]
+		var bad := ""
+		for t in ticks.size():
+			for msg: Array in ticks[t]:
+				spk.midi(int(msg[0]), int(msg[1]), int(msg[2]) if msg.size() > 2 else 0)
+			spk.tick()
+			var st: Array = case["states"][t]
+			var gate := 1 if spk.gate else 0
+			if gate != int(st[0]) or (gate == 1 and spk.out_div != int(st[1])):
+				bad = "tick %d: gate %d divisor %d, the original %d %d" % [t, gate, spk.out_div, int(st[0]), int(st[1])]
+				break
+		if bad != "":
+			fail("PC speaker effect %s %s" % [case_name, bad])
+		else:
+			pc_ok += 1
+	print("golden: randomrange, rand, AdLib driver %d / %d sequences, PC speaker %d / %d effects" % [fm_ok, fm.size(), pc_ok, pc.size()])
 
 ## a league of computer teams: the schedule, a whole season of simulated games, the play-offs
 func league_tests(gf: Node) -> void:
