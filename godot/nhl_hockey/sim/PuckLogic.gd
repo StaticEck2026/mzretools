@@ -11,7 +11,11 @@ class_name PuckLogic
 
 static func puck_update(sim: Sim) -> void:
 	var puck := sim.puck
-	sim.puck_goal_timer -= 1
+	# the steps until the puck crosses the goal lines count down; every 5 steps they are predicted
+	# again (predict_puck_goal_line; the timer is the puck's +0x26)
+	for i in 2:
+		sim.goal_prediction[i][1] = Sim._s16(sim.goal_prediction[i][1] - 1)
+	sim.puck_goal_timer = Sim._s16(sim.puck_goal_timer - 1)
 	if sim.puck_goal_timer < 0:
 		sim.puck_goal_timer += 5
 		predict_goal_line(sim)
@@ -22,65 +26,68 @@ static func puck_update(sim: Sim) -> void:
 		var o := Tables.frame_offset(c.frame, (c.flags4 & Entity.F4_MIRROR) != 0)
 		var tx := c.xi + o.x
 		var ty := c.yi + o.y
-		puck.x = (puck.xi + ((tx - puck.xi) >> 2)) << 16 | (puck.x & 0xffff)
-		puck.y = (puck.yi + ((ty - puck.yi) >> 2)) << 16 | (puck.y & 0xffff)
+		puck.x = (Sim._s16(puck.xi + ((tx - puck.xi) >> 2)) << 16) | (puck.x & 0xffff)
+		puck.y = (Sim._s16(puck.yi + ((ty - puck.yi) >> 2)) << 16) | (puck.y & 0xffff)
 		puck.vx = c.vx
 		puck.vy = c.vy
 	Rules.check_icing(sim)
 	Rules.check_offside(sim)
 	Rules.update_offside_flags(sim)
 	if not sim.play_stopped:
-		if sim.puck_carrier < 0:
+		if sim.puck_carrier >= 0:
+			sim.penalty_shot_away = 0
+			sim.puck_stuck_timer = 0x78
+		else:
 			# penalty shot: a loose puck that keeps moving away from the net for 30 steps ends it
 			var up := sim.teams[sim.penalty_shot_team].attacks_up
 			if sim.penalty_shot and ((up and puck.vy <= 0) or (not up and puck.vy >= 0)):
 				sim.penalty_shot_away += 1
-				if sim.penalty_shot_away > 0x1d:
+				if sim.penalty_shot_away >= 0x1e:
 					Rules.end_penalty_shot(sim)
 					sim.penalty_shot_away = 0
 			else:
 				sim.penalty_shot_away = 0
-			# a puck that does not move for 0x78 steps (behind the net, in a corner) is frozen
-			if puck.xi == puck.prev_x >> 16 and puck.yi == puck.prev_y >> 16:
-				if not (absi(puck.xi) < 0xa3 and absi(puck.yi) < 0x10e and sim.teams[0].nearest_dist > 0x14 and sim.teams[1].nearest_dist > 0x14):
-					sim.puck_stuck_timer -= 1
-					if sim.puck_stuck_timer < 0:
-						Rules.queue_infraction(sim, puck, Rules.INF_FROZEN)
-				else:
-					sim.puck_stuck_timer = 0x78
-			else:
+			# a puck that does not move for 0x78 steps (behind the net, in a corner, or with
+			# players of both teams near it) is frozen
+			if puck.xi != Sim._s16(puck.prev_x >> 16) or puck.yi != Sim._s16(puck.prev_y >> 16) \
+					or (absi(puck.xi) < 0xa3 and absi(puck.yi) < 0x10e and sim.teams[0].nearest_dist > 0x14 \
+					and sim.teams[1].nearest_dist > 0x14):
 				sim.puck_stuck_timer = 0x78
-		else:
-			sim.penalty_shot_away = 0
-			sim.puck_stuck_timer = 0x78
-	# frame selection: a slow, low puck shows the flat disc, otherwise the rolling frames
-	if absi(puck.vz) < 0x100 and puck.timer_c == 0:
+			else:
+				sim.puck_stuck_timer = Sim._s16(sim.puck_stuck_timer - 1)
+				if sim.puck_stuck_timer < 0:
+					Rules.queue_infraction(sim, puck, Rules.INF_FROZEN)
+	# a slow puck on the ice shows the flat disc
+	if absi(puck.vz) < 0x100 and puck.zi == 0:
 		puck_flat(sim, puck)
 	puck_check_players(sim)
 
-## predict_puck_goal_line (0x5a3a2): where and when the puck crosses each goal line
+## predict_puck_goal_line (0x5a341): where (x, reflected off the side boards) and in how many steps
+## (16 bit words, 0xffff none) the puck crosses each goal line (+y, then -y)
 static func predict_goal_line(sim: Sim) -> void:
 	var puck := sim.puck
 	for i in 2:
 		var gy := 0xe8 if i == 0 else -0xe8
 		var pred: Array = sim.goal_prediction[i]
-		if puck.vy == 0:
+		var dy := Sim._s16(gy - puck.yi)
+		var vy := Sim._s16(puck.vy)
+		if vy == 0:
 			pred[1] = -1
 			continue
-		var steps := ((gy - puck.yi) << 12) / puck.vy
-		if steps < 0 or steps > 0xffff:
+		var steps := (dy << 12) / vy
+		if steps < 0 or steps >= 0x10000:
 			pred[1] = -1
 			continue
-		pred[1] = steps
-		var dx := (puck.vx * (gy - puck.yi)) / puck.vy
-		if dx > 0xffff:
+		pred[1] = Sim._s16(steps)
+		var dx := (Sim._s16(puck.vx) * dy) / vy
+		if dx >= 0x10000:
 			pred[1] = -1
 			continue
-		var px := dx + puck.xi
-		if px > 0x9f:
-			px = 0x140 - px
-		if px < -0x9f:
-			px = -0x140 - px
+		var px := Sim._s16(dx + puck.xi)
+		if px >= 0xa0:
+			px = Sim._s16(0x140 - px)
+		if px <= -0xa0:
+			px = Sim._s16(-0x140 - px)
 		pred[0] = px
 
 ## update_carrier (0x4de14): a player touches the puck: the place of the touch (last_touch_*, not

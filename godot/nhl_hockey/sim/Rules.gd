@@ -782,12 +782,15 @@ static func goal_statistics(sim: Sim, scoring: Team, conceding: Team) -> void:
 # offside, icing, breakaway
 # --------------------------------------------------------------------------------------------
 
-## check_offside (0x55a9f): attackers inside the zone before the puck set the team's offside flag
+## check_offside (0x55a9f): a team flagged offside (+0x44 bit 4) is cleared once none of its players
+## is in the attacking zone (past y 0x4e); when the puck crosses a blue line (0x4a) into a zone
+## (note_breakaway) the team attacking it is flagged if one of its players is already 10 past the
+## line, unless the other team touched the puck last (the original takes any slot below 6, -1
+## included, for the home team)
 static func check_offside(sim: Sim) -> void:
-	if not sim.opt_offsides or sim.penalty_shot:
+	if not sim.opt_offsides or sim.penalty_shot or sim.penalty_shot_setup:
 		return
 	var puck := sim.puck
-	# clear the flag of a team once all its players left the zone
 	for t in 2:
 		var team := sim.teams[t]
 		if team.flags & Team.FL_OFFSIDE:
@@ -795,35 +798,33 @@ static func check_offside(sim: Sim) -> void:
 			for i in 6:
 				var p := sim.entities[t * 6 + i]
 				if p.line_slot >= 0:
-					var py := p.yi if (p.flags & Entity.F_ATTACK_UP) else -p.yi
+					var py := p.yi if (p.flags & Entity.F_ATTACK_UP) else Sim._s16(-p.yi)
 					if py > 0x4e:
 						inside = true
 						break
 			if not inside:
 				team.flags &= ~Team.FL_OFFSIDE
-	var prev_y := puck.prev_y >> 16
+	var prev_y := Sim._s16(puck.prev_y >> 16)
 	var line := 0
 	if puck.yi >= 0x4a:
-		if prev_y > 0x49:
+		if prev_y >= 0x4a:
 			return
 		line = 0x4a
-	elif puck.yi <= -0x4a:
-		if prev_y < -0x49:
+	else:
+		if puck.yi > -0x4a or prev_y <= -0x4a:
 			return
 		line = -0x4a
-	else:
-		return
-	# the puck just crossed a blue line: the team attacking that zone
-	count_defenders_ahead(sim)
+	note_breakaway(sim)
+	# the team attacking that zone: at +y the home team unless the ends are switched
 	var attacking: Team = sim.teams[0] if sim.teams[0].attacks_up == (line > 0) else sim.teams[1]
-	if sim.last_touch_slot >= 0 and sim.same_team(sim.last_touch_slot, attacking.first_slot):
-		var limit := line + (10 if line > 0 else -10)
-		for i in 6:
-			var p := sim.entities[attacking.first_slot + i]
-			if p.line_slot >= 0 and ((line > 0 and p.yi > limit) or (line < 0 and p.yi < limit)):
-				attacking.flags |= Team.FL_OFFSIDE
+	if (attacking.first_slot < 6) != (sim.last_touch_slot < 6):
+		attacking.flags &= ~Team.FL_OFFSIDE
 		return
-	attacking.flags &= ~Team.FL_OFFSIDE
+	var limit := line + (10 if line > 0 else -10)
+	for i in 6:
+		var p := sim.entities[attacking.first_slot + i]
+		if p.line_slot >= 0 and ((line > 0 and p.yi > limit) or (line < 0 and p.yi < limit)):
+			attacking.flags |= Team.FL_OFFSIDE
 
 ## update_offside_flags (0x4de3f): per player flag for the two line pass rule
 static func update_offside_flags(sim: Sim) -> void:
@@ -905,11 +906,17 @@ static func count_defenders_ahead(sim: Sim) -> bool:
 	return true
 
 ## note_breakaway: breakaway bookkeeping when the puck crosses the blue line
-static func note_breakaway(sim: Sim) -> void:
+static func note_breakaway(sim: Sim) -> bool:
 	count_defenders_ahead(sim)
 	sim.breakaway = sim.defenders_ahead != 0
-	if sim.breakaway:
-		sim.crowd_noise += 100
+	if not sim.breakaway:
+		return false
+	sim.crowd_noise += 100
+	if sim.penalty_shot_phase != 0:
+		return false
+	# the breakaways of the carrier's team (+0x1c)
+	sim.teams[1 if sim.puck_carrier > 5 else 0].breakaways += 1
+	return true
 
 # --------------------------------------------------------------------------------------------
 # faceoffs (ai_puck_faceoff2 positioning, faceoff_resolve)

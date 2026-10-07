@@ -23,6 +23,7 @@ var faceoffs_won: int = 0            # +0x12
 var offensive_faceoffs: int = 0      # +0x14 faceoffs won in the attacking zone
 var one_timers: int = 0              # +0x18 one timer shots
 var one_timer_goals: int = 0         # +0x1a
+var breakaways: int = 0              # +0x1c breakaways (note_breakaway)
 var breakaway_goals: int = 0         # +0x1e
 var penalty_shots: int = 0           # +0x20 penalty shots awarded
 var penalty_shot_goals: int = 0      # +0x22
@@ -98,6 +99,7 @@ func reset_stats() -> void:
 	passes = 0
 	passes_completed = 0
 	one_timer_goals = 0
+	breakaways = 0
 	breakaway_goals = 0
 	penalty_shots = 0
 	penalty_shot_goals = 0
