@@ -2698,7 +2698,45 @@ func league_golden(gf: Node) -> void:
 		elif s_shown < 10:
 			s_shown += 1
 			fail("league scores %d-%d seed %d: %s" % [home, int(c["away"]), int(c["seed"]), bad])
-	print("golden league: league_sim_game %d / %d, league_scores %d / %d" % [ok, cases.size(), s_ok, sc.size()])
+	# the play-off seeding: schedule_rank_teams on random standings, playoff_make_round1
+	var pc: Array = data.get("playoffs", [])
+	var p_ok := 0
+	var p_shown := 0
+	for c: Dictionary in pc:
+		var lg := League.new()
+		var teams: PackedByteArray = (base["TEAMS"] as PackedByteArray).duplicate()
+		var stand: Array = c["standings"]
+		for t in 26:
+			var v: Array = _ints(stand[t])
+			teams[t * League.TEAM + 0x29] = v[0]
+			teams[t * League.TEAM + 0x2b] = v[1]
+			teams.encode_u16(t * League.TEAM + 0x2c, v[2])
+			teams.encode_u16(t * League.TEAM + 0x2e, v[3])
+		var before := teams.duplicate()
+		lg.files["TEAMS"] = teams
+		lg.pinfo.resize(League.PINFO_SIZE)
+		for t: int in _ints(c["humans"]):
+			lg.pinfo[0x20 + t * 0x1e + 0x17] = 1
+		var order := lg.rank_teams()
+		var bad := ""
+		if str(order) != str(_ints(c["order"])):
+			bad = "order %s (original %s)" % [str(order), str(c["order"])]
+		else:
+			var po := PackedByteArray()
+			po.resize(15 * 42)
+			po.fill(0xff)
+			lg.make_round1(order, po, int(c["n"]))
+			var want: Dictionary = c["after"]
+			if po.hex_encode() != str(want["po"]):
+				bad = "play-off games %s (original %s)" % [po.hex_encode().left(96), str(want["po"]).left(96)]
+			elif str(_byte_diff(before, lg.files["TEAMS"])) != str(_ints(want["TEAMS"])):
+				bad = "TEAMS %s (original %s)" % [str(_byte_diff(before, lg.files["TEAMS"])).left(200), str(want["TEAMS"]).left(200)]
+		if bad == "":
+			p_ok += 1
+		elif p_shown < 10:
+			p_shown += 1
+			fail("league play-offs humans %s n %d: %s" % [str(c["humans"]), int(c["n"]), bad])
+	print("golden league: league_sim_game %d / %d, league_scores %d / %d, play-off seeding %d / %d" % [ok, cases.size(), s_ok, sc.size(), p_ok, pc.size()])
 
 static func _scores_diff(want: Dictionary) -> String:
 	var games := []

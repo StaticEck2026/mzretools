@@ -4087,6 +4087,78 @@ def scores_cases(exe, count=200):
     return cases
 
 
+SCHEDULE_RANK_TEAMS = 0x42bba                  # (order list, -, TEAMS file): each conference by points
+PLAYOFF_MAKE_ROUND1 = 0x42fed                  # (order, play-off games, TEAMS file, series length) + the human teams
+
+
+def playoff_cases(exe, gamedir, count=200):
+    """the play-off seeding: schedule_rank_teams (with sort_teams_by_points) on random standings of
+    the league files' teams (equal points, wins and goals now and then), then playoff_make_round1
+    (with playoff_set_series) for series of 1, 3, 5 or 7 games and some human teams, whose records
+    list their play-off games"""
+    emu = PortEmu(exe)
+    rnd = random.Random(16)
+    base = read(gamedir, 'TEAMS.DB')
+    files = {}
+
+    def reg(r):
+        return emu.uc.reg_read(r) & 0xffffffff
+
+    def on_read(eax):
+        f = files['TEAMS']
+        buf, off, size = reg(UC_X86_REG_EDX), reg(UC_X86_REG_EBX), reg(UC_X86_REG_ECX)
+        if off + size > len(f):
+            return 1
+        emu.write(buf, bytes(f[off:off + size]))
+        return 0
+
+    def on_write(eax):
+        f = files['TEAMS']
+        buf, off, size = reg(UC_X86_REG_EDX), reg(UC_X86_REG_EBX), reg(UC_X86_REG_ECX)
+        if off + size > len(f):
+            return 1
+        f[off:off + size] = emu.read(buf, size)
+        return 0
+    emu.stub(FILE_READ, on_read)
+    emu.stub(FILE_WRITE, on_write)
+    order_buf = emu.alloc(b'\0' * 0x80)
+    po = emu.alloc(b'\xff' * 15 * 42)
+    pinfo = emu.alloc(b'\0' * 0x400)
+    cases = []
+    for k in range(count):
+        teams = bytearray(base)
+        stand = []
+        for t in range(26):
+            v = [rnd.randrange(15, 50), rnd.randrange(16), rnd.randrange(150, 350), rnd.randrange(150, 350)]
+            if stand and rnd.random() < 0.35:
+                other = rnd.choice(stand)
+                keep = rnd.randrange(1, 5)
+                v = other[:keep] + v[keep:]
+                if keep == 1:             # the same points from other wins and ties
+                    pts = other[0] * 2 + other[1]
+                    v[0] = rnd.randrange(max(0, (pts - 15 + 1) // 2), pts // 2 + 1)
+                    v[1] = pts - 2 * v[0]
+            stand.append(v)
+            teams[t * 0x2e8 + 0x29] = v[0]
+            teams[t * 0x2e8 + 0x2b] = v[1]
+            struct.pack_into('<HH', teams, t * 0x2e8 + 0x2c, v[2], v[3])
+        files['TEAMS'] = teams
+        before = bytes(teams)
+        emu.write(order_buf, b'\xff' * 0x80)
+        emu.call(SCHEDULE_RANK_TEAMS, eax=order_buf, ebx=1)
+        order = list(struct.unpack('<28i', emu.read(order_buf, 0x70)))
+        n = rnd.choice((1, 3, 5, 7, 7))
+        humans = sorted(rnd.sample(range(26), rnd.choice((0, 1, 1, 2, 4))))
+        emu.write(pinfo, b'\0' * 0x400)
+        for t in humans:
+            emu.write(pinfo + 0x20 + t * 30 + 0x17, b'\x01')
+        emu.write(po, b'\xff' * 15 * 42)
+        ret = emu.call(PLAYOFF_MAKE_ROUND1, eax=order_buf, edx=po, ebx=1, ecx=n, stack=(pinfo + 0x20,))
+        cases.append({'standings': stand, 'n': n, 'humans': humans, 'order': order,
+                      'after': {'ret': s32(ret), 'po': emu.read(po, 15 * 42).hex(), 'TEAMS': byte_diff(before, files['TEAMS'])}})
+    return cases
+
+
 def main():
     if len(sys.argv) != 3:
         print(__doc__ or 'golden.py GAMEDIR OUTDIR')
@@ -4096,7 +4168,8 @@ def main():
     os.makedirs(outdir, exist_ok=True)
     for name, data in (('rng', rng_cases(exe)), ('fm_driver', fm_cases(exe, gamedir)),
                        ('pc_speaker', pc_cases(exe, gamedir)), ('physics', physics_cases(exe)),
-                       ('league', {'league': league_cases(exe, gamedir), 'scores': scores_cases(exe)})):
+                       ('league', {'league': league_cases(exe, gamedir), 'scores': scores_cases(exe),
+                                   'playoffs': playoff_cases(exe, gamedir)})):
         write_golden(outdir, name, data)
     write_ai(outdir, ai_cases(exe))
 
