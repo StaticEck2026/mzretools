@@ -58,8 +58,10 @@ var speed: int = 0           # +0x18 the strength of the last body contacts (col
 var line_slot: int = -1      # +0x1a 0 goalie, 1-5 skaters, <0 bench
 var state_sp: int = 0        # +0x1c
 var state_stack: PackedByteArray = PackedByteArray([0, 0, 0, 0, 0, 0, 0, 0])   # +0x1e
-var timer_a: int = 0         # +0x26 generic state timer (word)
-var react_timer: int = 0     # +0x27 reaction countdown (byte, reloaded from `reaction`)
+var timer_a: int = 0         # +0x26 generic state timer (word; its high byte is react_timer)
+var react_timer: int:        # +0x27 reaction countdown (signed byte, reloaded from `reaction`)
+	get: return to_s8(timer_a >> 8)
+	set(v): timer_a = to_s16((timer_a & 0xff) | ((v & 0xff) << 8))
 var want_dir: int = 8        # +0x28 direction the AI wants to skate (byte)
 var dir_timer: int = 0       # +0x29 steps until the direction is re-evaluated (byte)
 var target_x: int = 0        # +0x2a AI target position

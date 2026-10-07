@@ -343,7 +343,11 @@ ENTITY_FIELDS = (('x', 0, -4), ('y', 4, -4), ('z', 8, -4), ('vx', 0xc, -2), ('vy
                  ('pass_skill', 0x5d, 1), ('offense', 0x5f, 1), ('goalie_skill', 0x60, 1), ('check_skill', 0x62, 1),
                  ('save_result', 0x63, 1), ('left_handed', 0x65, 1),
                  ('stamina', 0x58, 1), ('endurance', 0x61, 1), ('aggression', 0x64, 1), ('timer_d', 0x40, -2),
-                 ('state_sp', 0x1c, -2), ('stack', 0x1e, 4), ('stack2', 0x22, 4))
+                 ('state_sp', 0x1c, -2), ('stack', 0x1e, 4), ('stack2', 0x22, 4), ('timer_a', 0x26, -2),
+                 ('dir_timer', 0x29, -1), ('timer_e', 0x4a, -2), ('timer_f', 0x4c, -2), ('puck_dist', 0x4e, -2),
+                 ('puck_dist_sq', 0x50, -2), ('puck_dir', 0x52, 1), ('pass_ok', 0x53, 1), ('side', 0x54, -1),
+                 ('reaction', 0x59, 1), ('awareness', 0x5a, 1), ('accuracy', 0x5c, 1), ('number', 0x5e, 1),
+                 ('next_line', 0x42, -1), ('next_roster', 0x43, -1), ('w48', 0x48, -2))
 APPLY_SKATING = 0x5e16d
 PUCK = ENTITIES + 14 * 0x80
 GAME_FLAGS = 0xc90bb

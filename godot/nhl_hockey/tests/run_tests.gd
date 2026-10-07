@@ -1217,6 +1217,8 @@ func physics_golden() -> void:
 		sim.stub_calls.clear()
 		PuckLogic.puck_update(sim)
 		sim.puck.want_dir = sim.puck_stuck_timer & 0xff     # the puck's +0x28 word is the stuck timer
+		sim.puck.dir_timer = Entity.to_s8(sim.puck_stuck_timer >> 8)
+		sim.puck.timer_a = sim.puck_goal_timer              # and its +0x26 the prediction timer
 		var diff := []
 		var after: Dictionary = c["after"]
 		for k in after:
@@ -1487,6 +1489,24 @@ static func _entity_set(e: Entity, f: Dictionary) -> void:
 	var st := int(f["stack"]) | (int(f["stack2"]) << 32)
 	for i in 8:
 		e.state_stack[i] = (st >> (8 * i)) & 0xff
+	e.timer_a = int(f["timer_a"])
+	e.dir_timer = int(f["dir_timer"])
+	e.timer_e = int(f["timer_e"])
+	e.timer_f = int(f["timer_f"])
+	e.puck_dist = int(f["puck_dist"])
+	e.puck_dist_sq = int(f["puck_dist_sq"])
+	e.puck_dir = int(f["puck_dir"])
+	e.pass_ok = int(f["pass_ok"])
+	e.side = int(f["side"])
+	e.reaction = int(f["reaction"])
+	e.awareness = int(f["awareness"])
+	e.shot_accuracy = int(f["accuracy"])
+	e.number = int(f["number"])
+	e.next_line_slot = int(f["next_line"])
+	e.next_roster = int(f["next_roster"])
+	e.pass_target = int(f["w48"])
+	if e.slot < 12:
+		e.flags3 = int(f["w48"]) & 0xff
 
 static func _entity_get(e: Entity) -> Dictionary:
 	return {"x": e.x, "y": e.y, "z": e.z, "vx": e.vx, "vy": e.vy, "vz": e.vz, "frame": e.frame, "hit_by": e.hit_by,
@@ -1500,7 +1520,12 @@ static func _entity_get(e: Entity) -> Dictionary:
 		"check_skill": e.check_skill, "save_result": e.save_result, "left_handed": e.left_handed,
 		"aggression": e.aggression, "timer_d": e.timer_d, "state_sp": e.state_sp,
 		"stack": e.state_stack[0] | (e.state_stack[1] << 8) | (e.state_stack[2] << 16) | (e.state_stack[3] << 24),
-		"stack2": e.state_stack[4] | (e.state_stack[5] << 8) | (e.state_stack[6] << 16) | (e.state_stack[7] << 24)}
+		"stack2": e.state_stack[4] | (e.state_stack[5] << 8) | (e.state_stack[6] << 16) | (e.state_stack[7] << 24),
+		"timer_a": Entity.to_s16(e.timer_a), "dir_timer": Entity.to_s8(e.dir_timer), "timer_e": e.timer_e, "timer_f": e.timer_f,
+		"puck_dist": e.puck_dist, "puck_dist_sq": e.puck_dist_sq, "puck_dir": e.puck_dir & 0xff, "pass_ok": e.pass_ok,
+		"side": e.side, "reaction": e.reaction, "awareness": e.awareness, "accuracy": e.shot_accuracy, "number": e.number,
+		"next_line": Entity.to_s8(e.next_line_slot), "next_roster": Entity.to_s8(e.next_roster),
+		"w48": Entity.to_s16((e.pass_target & 0xff00) | e.flags3) if (e.slot < 12 and e.line_slot == 0) else e.pass_target}
 
 ## the fields of an entity that differ from the original's (heading: the 32 bit word); the golden
 ## data keeps only the fields the routine changed (after), the others are as before the call
@@ -1515,6 +1540,8 @@ static func _entity_diff(e: Entity, after: Dictionary, before: Dictionary) -> Ar
 			continue
 		if k == "spin" and e.slot != Entity.Slot.PUCK:
 			continue
+		if k == "next_line" and e.slot == Entity.Slot.PUCK:
+			continue         # the puck's +0x42 is the carrier (Sim.puck_carrier, compared on its own)
 		var w := int(want[k])
 		if k == "heading":
 			w &= 0xffffffff
