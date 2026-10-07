@@ -36,7 +36,11 @@ static var p2_side := 1
 
 static var input_devices := 8 | 1       # input_devices: 1 mouse, 2 joystick 1, 4 joystick 2, 8 keyboard
 static var sound_enabled := true        # a sound card is installed (sound_enabled)
-static var sound_device := 8            # dword_c541f: the card (8 Sound Blaster, 0x10 none ...)
+static var sound_device := 2            # dword_c541f: the card (1 PC speaker, 2 Sound Blaster, 4 AdLib,
+                                        # 8 MT-32, 0x10 none, 0x20 UltraSound: the table at 0xd243a)
+static var sound_cards := 0x3f          # dword_c541b: the cards that can be chosen (the port models them all)
+static var cd_drive := "D"              # NHL.CFG line 2
+static var installed: PackedStringArray = []   # NHL.CFG: the files on the hard disk
 static var stats_league := false        # dword_c695a: the statistics of the league (else '93 - '94)
 static var stats_playoffs := false      # dword_c6956: the play-offs (else the regular season)
 static var stats_dir := ""              # unk_c65d4: the directory of the league's files

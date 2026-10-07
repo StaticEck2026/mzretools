@@ -141,6 +141,7 @@ func leave_screen(ticks: int = 100) -> void:
 func run() -> void:
 	show_screen(true)
 	scr.black()
+	load_nhl_cfg()
 	var set_file := FileAccess.get_file_as_bytes("user://GAME.SET")
 	Session.apply_block(set_file if set_file.size() >= Session.SETTINGS_SIZE else Session.default_block())
 	if set_file.size() < Session.SETTINGS_SIZE:
@@ -592,3 +593,33 @@ func text_entry_dialog(prompt: String, maxlen: int, initial: String = "") -> Str
 				text += char(k)
 	scr.restore(behind)
 	return text if ok else ""
+
+## load_nhl_cfg (0x8baaf): NHL.CFG (the copy of the port in user:// when the card was changed): the
+## sound card as an index into the table at 0xd243a, the CD drive, the installed files
+func load_nhl_cfg() -> void:
+	var text := FileAccess.get_file_as_string("user://NHL.CFG")
+	if text == "":
+		text = GameFiles.read_raw("nhl.cfg").get_string_from_ascii()
+	var lines := text.split("\n", false)
+	if lines.size() > 0 and lines[0].strip_edges().is_valid_hex_number():
+		var idx := lines[0].strip_edges().hex_to_int()
+		var card := Exe.u8(0xd243a + idx) if idx >= 0 and idx < 6 else 2
+		Session.sound_device = card if card != 0 else 2
+	if lines.size() > 1:
+		Session.cd_drive = lines[1].strip_edges()
+	var inst := PackedStringArray()
+	for i in range(2, lines.size()):
+		inst.append(lines[i].strip_edges())
+	Session.installed = inst
+	Session.sound_enabled = Session.sound_device & 0x22 != 0
+
+## NHL.CFG written again with the card chosen (sound_setup_screen)
+func save_nhl_cfg() -> void:
+	var idx := 3
+	for i in 6:
+		if Exe.u8(0xd243a + i) == Session.sound_device:
+			idx = i
+	var out := "%04x\n%s\n" % [idx, Session.cd_drive] + "\n".join(Session.installed) + "\n"
+	var f := FileAccess.open("user://NHL.CFG", FileAccess.WRITE)
+	if f != null:
+		f.store_string(out)
