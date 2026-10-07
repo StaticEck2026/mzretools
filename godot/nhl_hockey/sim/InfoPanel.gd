@@ -104,27 +104,41 @@ static func _goalie_byte(sim: Sim, t: int) -> int:
 static func player_name(sim: Sim, t: int, r: int) -> String:
 	return Ceremonies.star_caption(sim, t, r)
 
-static func _log(sim: Sim, entry: Array) -> void:
-	if sim.no_stats:
-		return
-	if sim.event_log.size() >= 8:
-		sim.event_log[7] = entry
-	else:
-		sim.event_log.append(entry)
+## the event record (dword_e9ac8) into the events of the stoppage (unk_e9b4c, at most eight: a
+## ninth replaces the last), which gsummary_flush writes into the game summary
+static func _buffer_event(sim: Sim) -> void:
+	sim.events[sim.event_count] = sim.event_rec.duplicate()
+	sim.event_count += 1
+	if sim.event_count >= 8:
+		sim.event_count = 7
 
-## announce_goal (0x62343) and show_penalty type 1: "12:34 Boston", the scorer (PP / SH), the
-## assists; a home goal plays the GOAL or SIREN clip
-static func announce_goal(sim: Sim, team: int, scorer: int, assist1: int, assist2: int) -> void:
-	if sim.stubbed("announce_goal", [team, scorer, assist1, assist2]):
+## show_penalty (0x61e99): the panel's lines for the event record (a hook for the golden tests)
+static func _show(sim: Sim, lines: Array) -> void:
+	if sim.stubbed("show_penalty", []):
 		return
+	set_text(sim, lines)
+
+## announce_goal (0x62343) and show_penalty type 1: the record (1, team, scorer, assists or -1,
+## the goal flags, the period count, the time, both goalies), the stoppage's events and the
+## period's goals unless nothing is recorded; a home goal plays the GOAL or SIREN clip; "12:34
+## Boston", the scorer (PP / SH), the assists; the call of the goal waits for the panel
+static func announce_goal(sim: Sim, team: int, scorer: int, assist1: int, assist2: int) -> void:
 	var t := elapsed(sim)
-	_log(sim, ["goal", team, scorer, assist1, assist2, sim.period, t.x, t.y])
+	var r := sim.event_rec
+	r[0] = 1
+	r[1] = team & 0xff
+	r[2] = scorer & 0xff
+	r[3] = assist1 & 0xff
+	r[4] = assist2 & 0xff
+	r[5] = sim.goal_flags & 0xff
+	r[6] = sim.period_num & 0xff
+	r[7] = t.x & 0xff
+	r[8] = t.y & 0xff
+	r[9] = _goalie_byte(sim, team)
+	r[10] = _goalie_byte(sim, team ^ 1)
 	if not sim.no_stats:
-		# the record: team, scorer, assists (0xff none), the goal flags, period, time, the goalies
-		sim.summary_append(PackedByteArray([1, team, scorer & 0xff, assist1 & 0xff, assist2 & 0xff, sim.goal_flags,
-			sim.period + 1, t.x, t.y, _goalie_byte(sim, team), _goalie_byte(sim, team ^ 1)]))
+		_buffer_event(sim)
 		sim.gs_trailer[1 + team * 2] += 1
-	sim.goal_call = [team, scorer, assist1, assist2]       # said once the panel is up (ref_pickup)
 	if team == 0:
 		load_clip(sim, CLIP_GOAL if sim.random(0x14) < 10 else CLIP_SIREN)
 	var scoring := sim.teams[team]
@@ -140,74 +154,94 @@ static func announce_goal(sim: Sim, team: int, scorer: int, assist1: int, assist
 		lines[3] = player_name(sim, team, assist1)
 		if assist2 >= 0:
 			lines[4] = player_name(sim, team, assist2)
-	set_text(sim, lines)
+	_show(sim, lines)
 	open(sim)
+	sim.goal_call = [team, Entity.to_s8(scorer), Entity.to_s8(assist1), Entity.to_s8(assist2)]
 
-## record_penalty (0x624b9) and show_penalty type 2: "12:34 BOS Penalty", the player, the
-## penalty, "2 minutes" / "game misconduct"; or the penalty shot. A clip of the crowd (GUILTY for
-## an away penalty now and then) or of the foul when the panel is free.
-static func record_penalty(sim: Sim, team: int, roster: int, type: int, minutes: int, queue_index: int = 0) -> void:
-	var t := elapsed(sim)
-	_log(sim, ["penalty", team, roster, type, sim.period, t.x, t.y])
-	if not sim.no_stats:
-		sim.summary_append(PackedByteArray([2, team, roster & 0xff, (type - 9) & 0xff, minutes & 0xff, sim.period + 1, t.x, t.y]))
-	var idx := type - 9
-	if sim.panel == -1 and idx != 0x11:
+## record_penalty (0x624b9) and show_penalty type 2, unless nothing is recorded: the record (2,
+## team, player, the penalty, minutes, the period count, the time) into the stoppage's events; with
+## the panel free a clip now and then (GUILTY for an away penalty, else the foul's: ROUGHING,
+## HOOKING, CROSS CHECK); "12:34 BOS Penalty", the player, the penalty, "2 minutes" / "game
+## misconduct", or the penalty shot; a quiet crowd; the announcer: "and number" for the next
+## penalty of the same team, "penalties on" when another one of the team is queued
+static func record_penalty(sim: Sim, team: int, roster: int, kind: int, minutes: int, mm: int, ss: int, queue_index: int) -> void:
+	if sim.no_stats:
+		return
+	var r := sim.event_rec
+	r[0] = 2
+	r[1] = team & 0xff
+	r[2] = roster & 0xff
+	r[3] = kind & 0xff
+	r[4] = minutes & 0xff
+	r[5] = sim.period_num & 0xff
+	r[6] = mm & 0xff
+	r[7] = ss & 0xff
+	_buffer_event(sim)
+	if sim.panel == -1 and kind != 0x11:
 		var clip := -1
-		if team == 0 or sim.random(4) != 0:
-			if idx == 4:
-				if sim.random(3) == 0:
-					clip = CLIP_ROUGHING
-			elif idx == 6:
-				if sim.random(3) == 0:
-					clip = CLIP_HOOKING
-			elif idx == 5 and sim.random(3) == 0:
-				clip = CLIP_CROSS_CHECK
-		else:
+		if team != 0 and sim.random(4) == 0:
 			clip = CLIP_GUILTY
+		elif kind == 4:
+			if sim.random(3) == 0:
+				clip = CLIP_ROUGHING
+		elif kind == 6:
+			if sim.random(3) == 0:
+				clip = CLIP_HOOKING
+		elif kind == 5 and sim.random(3) == 0:
+			clip = CLIP_CROSS_CHECK
 		if clip >= 0:
 			load_clip(sim, clip)
 	var abbrev := sim.teams[team].abbrev()
-	if idx == 0x11:
+	if kind == 0x11:
 		var shooter_team := sim.penalty_shot_team
-		set_text(sim, ["%02d:%02d %s" % [t.x, t.y, sim.teams[shooter_team].abbrev()], "Penalty shot", "to be taken by",
+		_show(sim, ["%02d:%02d %s" % [mm, ss, sim.teams[shooter_team].abbrev()], "Penalty shot", "to be taken by",
 			player_name(sim, shooter_team, sim.penalty_shot_roster), ""])
 	else:
 		var what := "game misconduct" if minutes < 0 else "%d minutes" % minutes
-		set_text(sim, ["%02d:%02d %s Penalty" % [t.x, t.y, abbrev], player_name(sim, team, roster),
-			Tables.penalty_names[clampi(idx, 0, Tables.penalty_names.size() - 1)], what, ""])
+		_show(sim, ["%02d:%02d %s Penalty" % [mm, ss, abbrev], player_name(sim, team, roster),
+			Tables.penalty_names[clampi(kind, 0, Tables.penalty_names.size() - 1)], what, ""])
 	open(sim)
 	if sim.crowd_noise > 400:
 		sim.crowd_noise = 400
-	# the announcer (say_penalty_shot / say_penalty): "and number" for the next penalty of the same
-	# team, "penalties on" when another one of the team is queued, the time after the last one
-	if idx == 0x11:
+	if kind == 0x11:
 		var st := sim.penalty_shot_team
-		Speech.say(sim, Speech.penalty_shot(Speech.abbrev(sim, st), Speech.number(sim, st, sim.penalty_shot_roster), t.x, t.y))
+		var num := Speech.number(sim, st, sim.penalty_shot_roster)
+		if not sim.stubbed("say_penalty_shot", [num & 0xff, mm, ss]):
+			Speech.say(sim, Speech.penalty_shot(Speech.abbrev(sim, st), num, mm, ss))
 		return
-	var first := sim.last_penalty_team != team
-	if first:
+	var mode := 2
+	if sim.last_penalty_team != team:
+		mode = 1
 		sim.last_penalty_team = team
-	var count := 1 if first else 2
+	var count := mode
 	if queue_index > 0:
 		var nxt := Rules.inf_slot(sim, queue_index - 1) & 0x1f
 		if (1 if nxt >= 6 else 0) == team:
 			count += 1
-	Speech.say(sim, Speech.penalty(Speech.abbrev(sim, team), Speech.number(sim, team, roster), minutes, type, t.x, t.y,
-		first, count, queue_index == 0))
-	if queue_index == 0:
+	var last := queue_index == 0
+	var number := Speech.number(sim, team, roster)
+	if not sim.stubbed("say_penalty", [number & 0xff, minutes, mm, ss, mode, count, 1 if last else 0]):
+		Speech.say(sim, Speech.penalty(Speech.abbrev(sim, team), number, minutes, kind + 9, mm, ss, mode == 1, count, last))
+	if last:
 		sim.last_penalty_team = -1
 
-## announce_injury (0x62764) and show_penalty type 3
+## announce_injury (0x62764) and show_penalty type 3, unless nothing is recorded: the record (3,
+## team, player, 1 out for the game / -1 for the period, the period count, the time) into the
+## stoppage's events; "12:34 BOS Injury", the player, "gone for the game" / "gone for 1 period"
 static func announce_injury(sim: Sim, team: int, roster: int, for_game: bool) -> void:
-	var t := elapsed(sim)
-	if sim.stubbed("announce_injury", [team, roster & 0xff, 1 if for_game else -1, t.x & 0xff, t.y & 0xff]):
-		return
-	_log(sim, ["injury", team, roster, for_game, sim.period, t.x, t.y])
 	if sim.no_stats:
 		return
-	sim.summary_append(PackedByteArray([3, team, roster & 0xff, 1 if for_game else 0, sim.period + 1, t.x, t.y]))
-	set_text(sim, ["%02d:%02d %s Injury" % [t.x, t.y, sim.teams[team].abbrev()], player_name(sim, team, roster),
+	var t := elapsed(sim)
+	var r := sim.event_rec
+	r[0] = 3
+	r[1] = team & 0xff
+	r[2] = roster & 0xff
+	r[3] = 1 if for_game else 0xff
+	r[4] = sim.period_num & 0xff
+	r[5] = t.x & 0xff
+	r[6] = t.y & 0xff
+	_buffer_event(sim)
+	_show(sim, ["%02d:%02d %s Injury" % [t.x, t.y, sim.teams[team].abbrev()], player_name(sim, team, roster),
 		"gone for the game" if for_game else "gone for 1 period", "", ""])
 	open(sim)
 

@@ -139,6 +139,16 @@ the headless test feeds the same inputs to the port and compares, field by field
 `update_announcer` (the scoreboard panel opening and closing, the clips' frame scripts and the crowd during the fan clip) runs
 unstubbed in every group; only the loading of a clip's pictures from its PPV file is replaced by its
 effect on the simulation (the clip, its script, the first frame).
+So do the event records: `announce_goal`, `record_penalty` and `announce_injury` write the record
+of the event (`dword_e9ac8`, the bytes a kind does not write keep the last one's) into the
+stoppage's eight events, which `gsummary_flush` puts into GSUMMARY.DB; every case compares the record,
+the events and their count, and the `rules` group calls `record_penalty` and `announce_goal` directly
+(100 cases each). Only the panel's text (`show_penalty`) and the announcer's sentences are stubbed.
+
+When a long run departs from the original, `tools/nhl/golden_trace.py` runs the generation again
+with the record of one entity kept after every step of the chosen runs, and
+`RUNS_TRACE=trace.json RUNS_TRACE_SLOT=n AI_STATE=sim_steps` makes the test name the first step
+where the port's record differs.
 
 All of them match. The comparisons found and fixed, among others: the distance (the original's is
 |dx| / cos of the vector's angle from its arctangent and sine tables, not an octagonal estimate), the
@@ -156,7 +166,10 @@ pass, a weak shot's sound, the scatter of a shot and its lift, a blind pass with
 the random seed past the end of the direction table, and every FM register of the AdLib driver
 (`audio/FmDriver.gd` is a literal port). Running
 whole games beside them showed one more departure: the centre lost the puck chasing role to a line
-change during play (the original changes lines there only while the play is stopped).
+change during play (the original changes lines there only while the play is stopped). The long runs
+found two more: a skater chasing a puck the other team's goalie holds aims from his stick only while
+the puck is loose, fast or far (the port had the test the other way round), and a two line pass
+offside nobody touched is charged to the record before the entities, as the original does.
 
 The workflow `.github/workflows/nhl.yml` runs, on every change of the tools, the port or the game files:
 the decoders of `tools/nhl/formats.py` against the game's own (`tools/nhl/test_pack.py`), `golden.py`

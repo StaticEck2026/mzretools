@@ -22,6 +22,7 @@ const ANTHEM_STEPS := 0x708
 ## reset_match_state; the period number is 1, nothing is over. The mouse, the frame timing and
 ## the summary's event bytes are the main loop's.
 static func reset_game_state(sim: Sim) -> void:
+	sim.event_rec[0] = 0xff
 	sim.goal_call = []
 	sim.infraction_events = 0
 	sim.panel = -1
@@ -65,6 +66,7 @@ static func reset_game_state(sim: Sim) -> void:
 	sim.excitement = 0
 	Crowd.reset(sim)
 	sim.save_clip_shown = false
+	sim.last_penalty_team = 0
 	sim.excitement_samples = 0
 	sim.excitement_peak = 0
 	sim.excitement_sum = 0

@@ -71,7 +71,10 @@ var clip_frame: int = -1             # clip_frame: frame of the clip shown
 var clip_pos: int = 0                # clip_script_pos high word: position in the clip script
 var clip_time: int = 0               # clip_script_pos low word: steps left on this frame
 var panel_text: Array = ["", "", "", "", ""]   # panel_title (byte_e02c8), byte_e0250, byte_e028c, byte_e0308, byte_e0344
-var event_log: Array = []            # e9b4c: the last 8 goals / penalties / injuries of the period
+var event_rec := PackedByteArray([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])   # dword_e9ac8: the record of the last event (goal 1, penalty 2, injury 3; the bytes a kind does not write stay)
+var events: Array = [PackedByteArray(), PackedByteArray(), PackedByteArray(), PackedByteArray(),
+	PackedByteArray(), PackedByteArray(), PackedByteArray(), PackedByteArray()]   # unk_e9b4c: the events of the stoppage
+var event_count := 0                 # dword_cd34c
 # the game summary (GSUMMARY.DB, gsummary_append_record): the header (unk_c5423: month, day, home,
 # away, the number of records), the records of 11 bytes (1 goal, 2 penalty, 3 injury, 4 the goals
 # and shots of a period) and the trailer of the running period (unk_c542e) that always ends the file
@@ -343,7 +346,9 @@ func summary_init(month: int, day: int) -> void:
 func summary_flush() -> void:
 	if stubbed("gsummary_flush", []):
 		return
-	event_log.clear()
+	for i in event_count:
+		summary_append(events[i].duplicate())
+	event_count = 0
 
 ## center_mouse (0x50ade, at the faceoff): the mouse pointer back to the centre (a hook)
 func center_mouse() -> void:

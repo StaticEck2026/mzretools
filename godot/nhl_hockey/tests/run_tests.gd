@@ -723,7 +723,7 @@ func ai_golden() -> void:
 			continue
 		var sim := Sim.new()
 		sim.stubs = {"play_sfx": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
-			"injure_player": true, "bench_cheer": true, "announce_goal": true, "play_speech": true, "load_clip": true,
+			"injure_player": true, "bench_cheer": true, "show_penalty": true, "say_penalty": true, "say_penalty_shot": true, "play_speech": true, "load_clip": true,
 			"say_goal": true, "goal_milestone_check": true, "put_player_on_ice": true,
 			"pick_player_for_position": true, "draw_line_indicator": true}
 		var ok := 0
@@ -764,9 +764,9 @@ func ai_golden() -> void:
 func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 	var sim := Sim.new()
 	sim.stubs = {"play_sfx": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
-		"injure_player": true, "bench_cheer": true, "announce_goal": true, "play_speech": true, "load_clip": true,
+		"injure_player": true, "bench_cheer": true, "show_penalty": true, "say_penalty": true, "say_penalty_shot": true, "play_speech": true, "load_clip": true,
 		"say_goal": true, "goal_milestone_check": true, "put_player_on_ice": true,
-		"pick_player_for_position": true, "draw_line_indicator": true, "record_penalty": true,
+		"pick_player_for_position": true, "draw_line_indicator": true,
 		"add_penalty_display": true, "penalty_list_find": true, "update_effects": true,
 		"setup_faceoff": true, "announce_one_minute_left": true}
 	if group == "rules" or group == "goals":
@@ -790,7 +790,6 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 	if group == "lineup":
 		sim.stubs.erase("injure_player")
 		sim.stubs.erase("pick_player_for_position")
-		sim.stubs["announce_injury"] = true
 	var per := {}
 	var ok := 0
 	var shown := 0
@@ -918,6 +917,8 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 			"ai_puck_faceoff2": AI.puck_faceoff2(sim, sim.puck)
 			"end_of_period": Rules.end_of_period(sim)
 			"put_player_on_ice": sim.put_player_on_ice(sim.entities[a0], a1)
+			"record_penalty": Rules.record_penalty(sim, a0, a1, a2, args[3], args[4], args[5], args[6])
+			"announce_goal": InfoPanel.announce_goal(sim, a0, a1, a2, args[3])
 			"pick_player_for_position": Lines.pick_player_for_position(sim, a0, a1)
 			"count_dressed_players": Lines.count_dressed_players(sim, a0)
 			"choose_lineup_player": ret = Lines.choose_lineup_player(sim, a0, a1)
@@ -936,8 +937,34 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 			"sim_steps":
 				sim.buttons_prev[0] = int(c["globals"].get("buttons_prev0", 0))
 				sim.buttons_prev[1] = int(c["globals"].get("buttons_prev1", 0))
+				# (tools/nhl/golden_trace.py: the original's record of one entity after every step
+				# of some runs, compared step by step to find where a long run departs)
+				var trace: Array = []
+				var trace_group := OS.get_environment("RUNS_TRACE_GROUP")
+				if OS.get_environment("RUNS_TRACE") != "" and group == (trace_group if trace_group != "" else "runs"):
+					var tf := FileAccess.open(OS.get_environment("RUNS_TRACE"), FileAccess.READ)
+					var tj = JSON.parse_string(tf.get_as_text()) if tf != null else {}
+					if tj is Dictionary and tj.has(str(index)):
+						trace = tj[str(index)]
+				var step_i := 0
 				for st: Array in c["controls"]:
 					sim.run_sim_step(int(st[0]), int(st[1]))
+					if step_i < trace.size():
+						var want: Dictionary = trace[step_i]
+						var slot := int(OS.get_environment("RUNS_TRACE_SLOT"))
+						var got := _entity_get(sim.entities[slot])
+						var bad := []
+						for k in want:
+							if got.has(k) and int(got[k]) != int(want[k]) and k != "heading":
+								bad.append("%s %d/%d" % [k, int(got[k]), int(want[k])])
+						if sim.seed != int(want["seed"]):
+							bad.append("seed")
+						if sim.puck_carrier != int(want["carrier"]):
+							bad.append("carrier %d/%d" % [sim.puck_carrier, int(want["carrier"])])
+						if not bad.is_empty():
+							print("TRACE case %d step %d: %s" % [index, step_i, ", ".join(bad)])
+							trace = []
+					step_i += 1
 		var diff := _ai_world_diff(sim, c, base)
 		var la: Dictionary = c["lines_after"]
 		if la.has("infq"):
@@ -1361,7 +1388,15 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	sim.fade_in = int(g.get("fade_in", 0)) != 0
 	sim.clip_frame = int(g.get("clip_frame", -1))
 	sim.clip_time = int(g.get("clip_time", 0))
+	sim.last_penalty_team = int(g.get("last_penalty_team", -1))
 	sim.clip_pos = int(g.get("clip_pos", 0))
+	if g.has("events"):
+		var ev: Dictionary = g["events"]
+		sim.event_rec = PackedByteArray(_ints(ev["rec"]))
+		var buf: Array = _ints(ev["buf"])
+		for i in 8:
+			sim.events[i] = PackedByteArray(buf.slice(i * 11, i * 11 + 11))
+		sim.event_count = int(ev["count"])
 	sim.scorer_jumps = int(g.get("scorer_jumps", 0))
 	sim.sequence_steps = int(g.get("sequence_steps", 0))
 	sim.match_over = int(g.get("match_over", 0)) != 0
@@ -1487,7 +1522,7 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 		"camera_x": sim.camera_x, "camera_y": sim.camera_y, "camera_lead": sim.camera_offset_y,
 		"faceoff_digit": sim.faceoff_digit, "faceoff_side0": Entity.to_s16(sim.faceoff_side[0]),
 		"faceoff_side1": Entity.to_s16(sim.faceoff_side[1]), "fade_in": 1 if sim.fade_in else 0, "clip_frame": sim.clip_frame,
-		"clip_time": Entity.to_s16(sim.clip_time), "clip_pos": sim.clip_pos,
+		"clip_time": Entity.to_s16(sim.clip_time), "clip_pos": sim.clip_pos, "last_penalty_team": sim.last_penalty_team,
 		"scorer_jumps": sim.scorer_jumps, "sequence_steps": sim.sequence_steps, "match_over": 1 if sim.match_over else 0,
 		"star0_team": _star(sim, 0, 0), "star0_roster": _star(sim, 0, 1), "star1_team": _star(sim, 1, 0),
 		"star1_roster": _star(sim, 1, 1), "star2_team": _star(sim, 2, 0), "star2_roster": _star(sim, 2, 1),
@@ -1553,6 +1588,16 @@ static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 			if team.roster_status[i] != int(want["roster_status"][i]):
 				diff.append("team %d roster_status[%d] %d (original %d)" % [t, i, team.roster_status[i], int(want["roster_status"][i])])
 				break
+	if wa.has("events"):
+		var ev: Dictionary = wa["events"]
+		var buf := PackedByteArray()
+		for i in 8:
+			var e8: PackedByteArray = sim.events[i]
+			buf.append_array(e8 if e8.size() == 11 else PackedByteArray([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
+		if str(Array(sim.event_rec)) != str(_ints(ev["rec"])) or str(Array(buf)) != str(_ints(ev["buf"])) \
+				or sim.event_count != int(ev["count"]):
+			diff.append("events %s %s %d (original %s %s %d)" % [str(Array(sim.event_rec)), str(Array(buf).slice(0, 22)),
+				sim.event_count, str(ev["rec"]), str(ev["buf"].slice(0, 22)), int(ev["count"])])
 	if sim.puck_carrier != int(wa["carrier"]):
 		diff.append("carrier %d (original %d)" % [sim.puck_carrier, int(wa["carrier"])])
 	if str(sim.stub_calls) != str(_ints(c["calls"])):

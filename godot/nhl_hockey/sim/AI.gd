@@ -544,9 +544,13 @@ static func chase_puck(sim: Sim, e: Entity) -> void:
 		e.dir_timer += 5 if e.line_slot == 0 else 10
 		var t := choose_direction(sim, e, tx, ty)
 		var dir: int
-		if sim.puck_carrier >= 0 or absi(puck.vx) > 300 or absi(puck.vy) > 300 or Sim.approx_distance(t.x - e.xi, t.y - e.yi) > 0x18:
+		# (nobody carries the puck, it is fast or still far: towards the target from the stick, the
+		# words e03bc / e03c0; else the direction of the puck)
+		if sim.puck_carrier < 0 or absi(puck.vx) > 300 or absi(puck.vy) > 300 or Sim.approx_distance(t.x - e.xi, t.y - e.yi) > 0x18:
 			var o := Tables.frame_offset(e.frame, (e.flags4 & Entity.F4_MIRROR) != 0)
-			dir = Tables.direction8(t.x - ((e.vx >> 8) + o.x) - e.xi, t.y - ((e.vy >> 8) + o.y) - e.yi)
+			sim.scratch_a = Sim._s16(t.x - ((e.vx >> 8) + o.x) - e.xi)
+			sim.scratch_b = Sim._s16(t.y - ((e.vy >> 8) + o.y) - e.yi)
+			dir = Tables.direction8(sim.scratch_a, sim.scratch_b)
 		else:
 			dir = e.puck_dir
 		e.want_dir = dir
@@ -2163,6 +2167,7 @@ static func puck_faceoff2(sim: Sim, e: Entity) -> void:
 		net.y = ((0xec if n == Entity.Slot.NET_TOP else -0xec) << 16) | (net.y & 0xffff)
 	sim.ref_infraction = 0
 	sim.ref_infraction_slot = -1
+	sim.last_penalty_team = -1
 	sim.last_touch_x = sim.faceoff_x
 	sim.last_touch_y = sim.faceoff_y
 	sim.shadow.frame = 0x189

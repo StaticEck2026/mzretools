@@ -426,7 +426,7 @@ static func _elapsed(sim: Sim) -> Vector2i:
 static func record_penalty(sim: Sim, away: int, roster: int, kind: int, minutes: int, mm: int, ss: int, queue_index: int) -> void:
 	if sim.stubbed("record_penalty", [away, roster, kind, minutes, mm, ss, queue_index]):
 		return
-	InfoPanel.record_penalty(sim, away, roster, kind + 9, minutes, queue_index)
+	InfoPanel.record_penalty(sim, away, roster, kind, minutes, mm, ss, queue_index)
 
 ## add_penalty_display (0x14c22): the penalty clock entry on the scoreboard (a hook)
 static func add_penalty_display(sim: Sim, away: int, number: int, minutes: int) -> void:
