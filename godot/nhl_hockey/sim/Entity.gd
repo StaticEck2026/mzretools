@@ -82,7 +82,11 @@ var flags2: int = 0          # +0x45
 var frame_wait: int = 0      # +0x46 byte: steps before the frame may change again (advance_animation)
 var pass_target: int = -1    # +0x48 (word) slot of the chosen pass receiver
 var roster_idx: int = 0      # +0x47 (25, 26 goalies)
-var flags3: int = 0          # +0x48 goalie posture
+## +0x48 (byte): the goalie's posture bits, the low byte of the pass target word (a goalie's pass
+## overwrites them, as in the original)
+var flags3: int:
+	get: return pass_target & 0xff
+	set(v): pass_target = to_s16((pass_target & 0xff00) | (v & 0xff))
 var timer_e: int = 0         # +0x4a goalie save cooldown / poke direction
 var timer_f: int = 0         # +0x4c shoot state cooldown
 var puck_dist: int = 0       # +0x4e octagonal distance to the puck
@@ -124,6 +128,11 @@ var zi: int:
 var facing: int:
 	get: return (heading >> 16) & 7
 	set(v): heading = (heading & 0xffff) | ((v & 7) << 16)
+## +0x36 (byte), the low byte of the heading's high word: the puck keeps its spin bits there (1 the
+## spin direction, 2 the frame half, 4 flat)
+var spin: int:
+	get: return (heading >> 16) & 0xff
+	set(v): heading = (heading & ~0xff0000) | ((v & 0xff) << 16)
 
 func state() -> int:
 	return state_stack[state_sp]

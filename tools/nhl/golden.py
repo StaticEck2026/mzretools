@@ -1435,6 +1435,8 @@ AI_GROUPS = {
     'positional': ((1, (1, 2, 7, 8)), (2, (1, 2, 7, 8)), (3, (3, 5, 9, 11)), (4, (3, 5, 9, 11)), (5, (4, 10)), (6, (4, 10))),
     # the puck: chasing it, carrying it, shooting, receiving a pass, the breakaway
     'puck': ((17, SKATERS), (16, SKATERS), (18, SKATERS), (19, SKATERS), (46, SKATERS)),
+    # the goalies: in the crease, out for a rimmed puck
+    'goalie': ((14, (0, 6)), (14, (0, 6)), (14, (0, 6)), (14, (0, 6)), (14, (0, 6)), (15, (0, 6))),
 }
 
 
@@ -1460,11 +1462,56 @@ def ai_prepare(emu, rnd, state, actor, g):
         put_fields(puck, {'vx': rnd.randrange(-0x1000, 0x1001), 'vy': rnd.randrange(-0x1000, 0x1001)})
     if state == 46:
         g['breakaway'] = 1
+    if state in (14, 15):
+        # the goalie in, out of or behind his crease; the puck mostly near his net, shot, carried
+        # by him or an opponent; a shot predicted to the goal line
+        own = -1 if rec[0x44] & 0x80 else 1
+        r = rnd.random()
+        if r < 0.7:
+            gx, gy = rnd.randrange(-0x30, 0x31), own * rnd.randrange(0xb4, 0xef)
+        elif r < 0.85:
+            gx, gy = rnd.randrange(-0x50, 0x51), own * rnd.randrange(0x90, 0xf8)
+        else:
+            gx, gy = rnd.randrange(-0x40, 0x41), own * rnd.randrange(0xe5, 0xf8)
+        put_fields(rec, {'x': gx << 16 | rnd.randrange(0x10000), 'y': gy << 16 | rnd.randrange(0x10000),
+                         'w48': rnd.choice((0, 2, 4, 6)), 'timer_b': rnd.choice((-1, -1, 0, 0x10, 0x59, 0x5a, 0x100)),
+                         'target_y': rnd.choice((-1, 0, 0, 1, 0x105)), 'timer_a': rnd.choice((-1, -1, 0, 3)),
+                         'timer_e': rnd.choice((0, 0, 0, 1, 5)), 'puck_dist': rnd.choice((0x10, 0x18, 0x1d, 0x22, 0x2c, 0x40, 0x100)),
+                         'flags2': rnd.choice((0, 0, 0, 2, 4))})
+        if rnd.random() < 0.7:
+            px, py = rnd.randrange(-0x70, 0x71), own * rnd.randrange(0x60, 0xf5)
+            hard = rnd.choice((0x1000, 0x2000, 0x4000))
+            put_fields(puck, {'x': px << 16 | rnd.randrange(0x10000), 'y': py << 16 | rnd.randrange(0x10000),
+                              'vx': rnd.randrange(-hard, hard + 1), 'vy': rnd.randrange(-hard, hard + 1),
+                              'z': rnd.choice((0, 0, 0, 6, 9, 12, 0x18)) << 16, 'vz': rnd.choice((0, 0, 0x400, 0x900))})
+        r = rnd.random()
+        if r < 0.2:
+            carrier = actor
+            struct.pack_into('<ii', puck, 0, struct.unpack_from('<i', rec, 0)[0], struct.unpack_from('<i', rec, 4)[0])
+        elif r < 0.45:
+            carrier = rnd.randrange(1, 6) + (0 if actor >= 6 else 6)
+        elif r < 0.55:
+            carrier = rnd.randrange(1, 6) + (6 if actor >= 6 else 0)
+        else:
+            carrier = -1
+        for k in ('pred0', 'pred1'):
+            g[k + '_x'] = rnd.randrange(-0x30, 0x31)
+            g[k + '_steps'] = rnd.choice((-1, -1, 2, 5, 8, 12, 20, 0x22, 0x30))
+        if state == 14 and rnd.random() < 0.35:
+            # a shot on its way to the net, close to the goalie
+            px, py = gx + rnd.randrange(-0x28, 0x29), gy - own * rnd.randrange(0x8, 0x40)
+            put_fields(puck, {'x': px << 16, 'y': py << 16, 'vx': rnd.randrange(-0x1800, 0x1801),
+                              'vy': own * rnd.randrange(0x800, 0x4000), 'z': rnd.choice((0, 0, 4, 9, 0x10)) << 16,
+                              'vz': rnd.choice((0, 0, 0x400, 0x900))})
+            put_fields(rec, {'puck_dist': rnd.randrange(0x8, 0x30), 'w48': rnd.choice((0, 0, 2, 4, 6))})
+            carrier = -1
+            g['pred0_steps' if own > 0 else 'pred1_steps'] = rnd.randrange(1, 0x24)
+            g['pred0_x' if own > 0 else 'pred1_x'] = gx + rnd.randrange(-0x20, 0x21)
     puck[0x42] = carrier & 0xff
     emu.write(PUCK, puck)
     emu.write(ENTITIES + actor * 0x80, rec)
     for n, a, sz in AI_GLOBALS:
-        if n in ('action_flags', 'pass_target', 'one_timer', 'breakaway'):
+        if n in ('action_flags', 'pass_target', 'one_timer', 'breakaway', 'pred0_x', 'pred0_steps', 'pred1_x', 'pred1_steps'):
             emu.write(a, struct.pack('<' + _FMT[sz], g[n] if sz < 0 else g[n] & ((1 << (8 * sz)) - 1)))
     return carrier
 

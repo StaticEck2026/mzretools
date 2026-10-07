@@ -695,7 +695,7 @@ static func score_goal(sim: Sim, net: Entity) -> void:
 		puck.vy = 0
 		puck.z = 0x600 << 4
 		puck.vz = 0
-		puck.flags3 |= 4
+		puck.spin |= 4
 		puck.set_state(Entity.State.PUCK_IDLE)
 		Anim.set_animation(sim.shadow, 0x7fd)
 		# goal_flags: 1 even strength, 2 short handed, 4 power play, | 8 into an empty net
@@ -717,7 +717,7 @@ static func score_goal(sim: Sim, net: Entity) -> void:
 		puck.vy = 0
 		puck.z = 0x600 << 4
 		puck.vz = 0
-		puck.flags3 |= 4
+		puck.spin |= 4
 		if not sim.play_stopped:
 			puck.set_state(Entity.State.PUCK_IDLE)
 			if scoring.flags & Team.FL_OFFSIDE:
@@ -984,7 +984,7 @@ static func place_faceoff(sim: Sim) -> void:
 	puck.vx = 0
 	puck.vy = 0
 	puck.vz = 0
-	puck.flags3 = 0
+	puck.spin = 0
 	sim.puck_carrier = -1
 	reset_nets(sim)
 	sim.sort_draw_order()

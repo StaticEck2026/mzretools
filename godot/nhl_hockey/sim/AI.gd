@@ -1354,18 +1354,38 @@ static func breakaway_next_waypoint(sim: Sim) -> void:
 # goalie (ai_goalie 0x4b774, ai_goalie_get_puck 0x4b5c2)
 # --------------------------------------------------------------------------------------------
 
+## ai_goalie (0x4b774). In the crease (flags3 bit 2: the goal mouth, bit 4: the crease) the goalie
+## stands (0x99 with the puck); outside it he skates back to it (to +-4, 0xc4); behind the goal line
+## he comes out round the post (0xa0). Holding the puck longer than 0x5a steps from 0x9b in is an
+## infraction. Every awareness / 3 steps he decides: the puck in the other half: the middle of the
+## crease (0xd4); with the puck: cover it when an opponent is within 0x14 (one in four, after
+## holding it a little), else pass (ai_choose_pass_target with goalie_pass_mode 1); a loose puck
+## close by (0x2d) with opponents near (0x3c): dive (1 in 0x19.6); an opponent carrying it close
+## (0x23): poke check (same odds, then 0xf0 steps not). Otherwise he turns towards the puck (never
+## to face his own net) and stands on the line from the net to where the puck will be (0xe0 / 0xa0
+## steps ahead) 0x12 to 0x1c out (further when the carrier is alone or winds up). A shot predicted
+## to reach the goal line (goal_prediction) wide of him makes him move across or, close to it, try
+## a save (goalie_save_anims by the side of the puck, high or low); a hard rim around the boards
+## behind the net with everybody far makes him go and get it (GOALIE_GET_PUCK). The scratch words
+## of the original carry the targets; the original's e03bc stays stale when flags3 bit 2 is set.
 static func goalie(sim: Sim, e: Entity) -> void:
 	var puck := sim.puck
+	var keep := true            # ebp: stand still when within 5 of the target
+	var a := sim.scratch_a      # word e03bc: x / direction / save animation
+	var b := sim.scratch_b      # word e03c0: y
+	var ac := Sim._s16(sim.scratch_ac)   # word e03ac: the y target
+	var b0 := 0                 # word e03b0: the goal line offset, then the side of a save
+	var b4 := 0                 # word e03b4: the distance out
 	if e.timer_e > 0:
 		e.timer_e -= 1
 	if sim.puck_carrier != e.slot:
 		e.save_result = 0
 	e.flags3 |= 6
-	var ax := e.xi
+	var x := e.xi
 	var ay := absi(e.yi)
-	if ax > -0x29 and ax < 0x29 and ay > 0xc4 and ay < 0xe4:
+	if x >= -0x28 and x < 0x29 and ay >= 0xc5 and ay < 0xe4:
 		e.flags3 &= ~4
-	if ax > -0x31 and ax < 0x31 and ay > 0xc4:
+	if x >= -0x30 and x < 0x31 and ay >= 0xc5:
 		e.flags3 &= ~2
 	if Lines.handle_line_change(sim, e):
 		return
@@ -1373,165 +1393,270 @@ static func goalie(sim: Sim, e: Entity) -> void:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		e.timer_a = 0
 		e.want_dir = 8
-		e.target_y = -1
+		e.dir_timer = 0
+		e.target_y = Sim._s16((e.target_y & 0xff) | 0xff00)      # the high byte only
 	var up := (e.flags & Entity.F_ATTACK_UP) != 0
-	var own_y := -0xe4 if up else 0xe4          # a little in front of the goal line
-	if ay >= 0xe5 or absi(ax) > 0x34 or ay > 0xee or ay < 0xb3:
-		# out of position: back to the crease
-		skate_towards(sim, e, -4 if ax < 0 else 4, own_y)
+	var pred: Array = sim.goal_prediction[1 if up else 0]
+	if ay > 0xe4:
+		ac = 0
+		a = (-0xa0 if e.xi < 0 else 0xa0) if absi(x) <= 0x30 else x
+		_goalie_tail(sim, e, a, ac, keep)
+		return
+	if absi(x) > 0x34 or ay >= 0xef or ay < 0xb3:
+		sim.scratch_a = 4 if x >= 0 else -4
+		sim.scratch_b = -0xc4 if up else 0xc4
+		skate_towards(sim, e, sim.scratch_a, sim.scratch_b)
 		return
 	if (e.flags2 & Entity.F2_TURNING) == 0 and (e.flags & Entity.F_BUSY) == 0:
 		Anim.set_animation(e, 0x99 if sim.puck_carrier == e.slot else 1)
 	if sim.play_stopped:
 		return
-	# holding the puck too long is a stoppage
 	if e.timer_b >= 0:
 		if sim.puck_carrier == e.slot:
 			if ay < 0x9b:
 				e.timer_b = 0
-			e.timer_b -= 1
+			e.timer_b = Sim._s16(e.timer_b - 1)
 			if e.timer_b < 0:
 				Rules.queue_infraction(sim, e, Rules.INF_GOALIE_HOLD)
 		else:
 			e.timer_b = -1
 	if e.flags2 & Entity.F2_TURNING:
 		return
-	e.timer_a -= 1
+	e.timer_a = Sim._s16(e.timer_a - 1)
 	if e.timer_a >= 0:
-		goalie_move_dir(sim, e, e.want_dir)
+		var d := Entity.to_s8(e.want_dir)
+		sim.scratch_ac = (sim.scratch_ac & 0xffff0000) | (d & 0xffff)
+		goalie_move_dir(sim, e, d)
 		return
 	e.timer_a = e.awareness / 3
+	var decide := true          # loc_4baf5: the dive and the poke check
 	if (e.flags & Entity.F_USER) == 0:
-		if (puck.yi ^ e.yi) < 0:
-			# the puck is in the other half: rest in the middle of the crease
-			goalie_move_to(sim, e, 0, -0xd4 if up else 0xd4)
+		b = Sim._s16(puck.yi ^ e.yi)
+		if b < 0:
+			a = 0
+			ac = -0xd4 if up else 0xd4
+			_goalie_tail(sim, e, a, ac, keep)
 			return
-		e.target_y -= 1
+		e.target_y = Sim._s16(e.target_y - 1)
 		if sim.puck_carrier == e.slot:
+			decide = false
 			if e.timer_b < 0:
 				e.timer_b = 0x5a
 			e.target_y = -1
 			if e.timer_b < 0x5a and sim.random(4) == 0:
-				var opp := sim.opponents_of(e)
+				var first := 6 if e.slot < 6 else 0
 				for i in 6:
-					var o := sim.entities[opp.first_slot + i]
-					if (o.flags2 & Entity.F2_UNSELECTABLE) == 0 and o.line_slot > 0 and o.puck_dist < 0x14:
+					var o := sim.entities[first + i]
+					if (o.flags2 & Entity.F2_UNSELECTABLE) == 0 and o.line_slot > 0 and o.puck_dist < 0x23 and o.puck_dist < 0x14:
 						e.flags |= Entity.F_BUSY
 						e.flags2 |= Entity.F2_TURNING
-						Anim.set_animation(e, 0x1135)      # cover the puck
+						Anim.set_animation(e, 0x1135)        # cover the puck
 						return
+				sim.goalie_pass_mode = 1
 				if choose_pass_target(sim, e):
 					return
-		else:
-			var dx := puck.xi - e.xi
-			var dy := puck.yi - e.yi
-			if sim.puck_carrier < 0:
-				if e.target_y == 0 and e.puck_dist < 0x2d and absi(puck.yi) < 0xe9 and sim.opponents_of(e).nearest_dist < 0x3c and sim.random(0x100) < 10:
-					e.facing = Tables.direction8(dx, dy)
-					e.timer_c = 8
-					e.flags |= Entity.F_BUSY
-					e.flags2 |= Entity.F2_TURNING
-					Anim.set_animation(e, 0x181)           # dive on the loose puck
-					e.timer_e = 0x168
-					sim.add_crowd(0x96, 0x4b0)
-					return
-			elif not sim.same_team(sim.puck_carrier, e.slot) and e.timer_e == 0 and sim.random(0x100) < 10 and e.puck_dist < 0x23 and absi(puck.yi) < 0xe9:
-				e.facing = Tables.direction8(dx, dy)
+	if decide:
+		a = Sim._s16(puck.xi - e.xi)
+		b = Sim._s16(puck.yi - e.yi)
+		if sim.puck_carrier < 0:
+			if e.target_y == 0 and e.puck_dist < 0x2d and absi(puck.yi) < 0xe9 \
+					and sim.opponents_of(e).nearest_dist < 0x3c and sim.random(0x100) < 0xa:
+				_set_heading_word(e, Tables.direction8(a, b))
+				e.timer_c = 8
 				e.flags |= Entity.F_BUSY
 				e.flags2 |= Entity.F2_TURNING
-				Anim.set_animation(e, 0x1095)              # poke check
-				e.timer_e = 0xf0
-				return
-	# positioning: on the line between the puck and the net, a few units out
-	var pred: Array = sim.goal_prediction[1 if up else 0]
-	var tx := puck.xi
-	var ty := puck.yi
-	if sim.puck_carrier == e.slot:
-		tx = 0
-	ty = clampi(ty, -0xe3, 0xe3) - own_y
-	# face the puck, never straight into the own net
-	var fdir := Tables.direction8(tx, ty)
-	var fdiff := (fdir - e.facing) & 7
-	if fdiff != 0:
-		var stepd := ((-fdiff & 4) >> 1) - 1
-		var nf := e.facing + stepd
-		if (1 << e.facing) & 0x42:
-			var bad := 0x83 if not up else 0x38
-			if bad & (1 << (nf & 7)):
-				nf -= stepd * 2
-		e.facing = nf & 7
-	var lead := 0xa0 if absi(puck.yi) > 0xbb else 0xe0
-	var px := puck.xi + ((puck.vx * lead) >> 16)
-	var py := clampi(puck.yi + ((puck.vy * lead) >> 16), -0xe3, 0xe3) - own_y
-	if sim.puck_carrier == e.slot:
-		px = 0
-	var d := Sim.approx_distance(px, py)
-	if d > 0x1d:
-		var scale := 0x12
-		if absi(puck.yi) < 0x74 and Rules.count_defenders_ahead(sim):
-			scale = 0x14
-		if sim.action_shot:
-			scale += 8
-		py = (scale * py) / (d + 1)
-		px = ((scale + 8) * px) / (d + 1)
-	ty = py + own_y
-	tx = px
-	# a shot on the way: move to where it crosses the line and pick a save
-	var pred_steps: int = pred[1]
-	var pred_x: int = pred[0]
-	var coming := pred_steps >= 0 and pred_steps < 0x23
-	if coming or (sim.puck_carrier < 0 and e.puck_dist < 0x1a and absi(puck.yi) < 0xe9):
-		if coming and absi(pred_x) <= 0x18:
-			tx = pred_x
-		if coming and (e.flags & Entity.F_BUSY) == 0 and sim.puck_carrier != e.slot and absi(puck.xi) < 100 and puck.zi < 0x14 \
-				and (absi(puck.vx) + absi(puck.vy)) > 0x1200:
-			e.vx >>= 1
-			e.vy >>= 1
-			var rel := (Tables.direction8(puck.xi + (puck.vx >> 10) - e.xi, puck.yi + (puck.vy >> 10) - e.yi) - e.facing) & 7
-			var idx := 1
-			if rel == 0 or rel == 4:
-				idx = 1 if sim.random(2) == 0 else 5
-			elif rel < 4:
-				idx = 1
-			else:
-				idx = 5
-			if puck.zi >= 8 or puck.vz >= 0x800:
-				idx += 2          # glove / blocker high
-			elif pred_steps > 8 and e.facing != 2 and e.facing != 6 and sim.puck_carrier >= 0:
-				idx += 1
-			var anim := Tables.goalie_save_anims[clampi(idx, 1, 9)]
-			if anim != 0:
-				e.flags |= Entity.F_BUSY
-				e.flags2 |= Entity.F2_TURNING
-				Anim.set_animation(e, anim)
+				Anim.set_animation(e, 0x181)                # dive on the loose puck
+				e.timer_e = 0x168
 				sim.add_crowd(0x96, 0x4b0)
+				sim.scratch_a = a
+				sim.scratch_b = b
 				return
-	if absi(puck.yi) > 0xdc and sim.puck_carrier != e.slot:
-		tx = -0x18 if puck.xi <= 0 else 0x18
-	goalie_move_to(sim, e, tx, ty)
+		elif not sim.same_team(sim.puck_carrier, e.slot) and e.timer_e == 0 and sim.random(0x100) < 0xa \
+				and e.puck_dist < 0x23 and absi(puck.yi) < 0xe9:
+			_set_heading_word(e, Tables.direction8(a, b))
+			e.flags |= Entity.F_BUSY
+			e.flags2 |= Entity.F2_TURNING
+			Anim.set_animation(e, 0x1095)                    # poke check
+			e.timer_e = 0xf0
+			sim.scratch_a = a
+			sim.scratch_b = b
+			return
+	# positioning (loc_4baab)
+	b0 = -0xe4 if up else 0xe4
+	b4 = -0xe8 if up else 0xe8
+	if absi(e.yi) > 0xe4:
+		ac = 0
+		a = 0 if absi(e.xi) > 0x30 else (-0xa0 if e.xi < 0 else 0xa0)
+		_goalie_tail(sim, e, a, ac, keep)
+		return
+	var t := _goalie_clamp_target(sim, e, puck.xi, puck.yi, b0)
+	a = Tables.direction8(t.x, t.y)
+	b = _heading_word(e)
+	a = Sim._s16(a - b)
+	if a != 0:
+		a = (((-a) & 4) >> 1) - 1
+		var mask := 1 << (b & 31)
+		var nb := Sim._s16(b + a)
+		b = nb
+		if mask & 0x42:
+			var bad := 0x38 if up else 0x83
+			if bad & (1 << (b & 31)):
+				a = -a
+				b = Sim._s16(b + 2 * a)
+		b &= 7
+		_set_heading_word(e, b)
+	a = 0xe0
+	if absi(puck.yi) > 0xbb:
+		a -= 0x40
+	b = a
+	a = Sim._s16(puck.xi + ((puck.vx * a) >> 16))
+	b = Sim._s16(puck.yi + ((puck.vy * b) >> 16))
+	t = _goalie_clamp_target(sim, e, a, b, b0)
+	a = t.x
+	b = t.y
+	var d := Sim.approx_distance(a, b)
+	if d >= 0x1e:
+		ac = Sim._s16(d + 1)
+		if absi(puck.yi) < 0x74 and Rules.count_defenders_ahead(sim):
+			b4 = 0x1c if sim.action_shot else 0x14
+		else:
+			b4 = 0x1a if sim.action_shot else 0x12
+		b = Sim._s16(_div_trunc(b * b4, ac))
+		b4 += 8
+		a = Sim._s16(_div_trunc(a * b4, ac))
+	b = Sim._s16(b + b0)
+	ac = b
+	var ny := (Sim._s16(puck.vy) >> 9) + puck.yi
+	if sim.puck_carrier < 0 and absi(puck.yi) < 0xe8 and absi(e.yi) > 0x74 and e.puck_dist < 0x1e and absi(ny) > absi(e.yi):
+		keep = false
+	var steps: int = int(pred[1]) & 0xffff
+	var px: int = Sim._s16(int(pred[0]))
+	if keep and steps >= 0x23:
+		_goalie_tail(sim, e, a, ac, keep)
+		return
+	if keep and absi(px) >= 0x19:
+		# a puck rimmed hard round the boards behind the net, nobody near: get it
+		if sim.puck_carrier >= 0 or (sim.icing_flags & 4) or absi(puck.xi) < 0x44 or absi(puck.vy) < 0x3800 \
+				or absi(puck.yi) < 0x98 or (-puck.vy if up else puck.vy) < -0x190 \
+				or sim.team_record(e).nearest_dist < 0x132 or sim.opponents_of(e).nearest_dist < 0x132:
+			_goalie_tail(sim, e, a, ac, keep)
+			return
+		e.set_state_reset(Entity.State.GOALIE_GET_PUCK)
+		return
+	var near := clampi(absi(px - e.xi) - 8, 0, 0x10) >> 2
+	if absi(ny) > absi(e.yi):
+		near += 4
+	if keep and (e.puck_dist > 0x19 or absi(puck.yi) > 0xe8):
+		if steps >= near + 0xc or absi(puck.yi) > 0xe9:
+			# across to where the shot will cross the line
+			a = px
+			if absi(puck.yi) > 0xdc:
+				a = 0x18 if puck.xi > 0 else -0x18
+			_goalie_tail(sim, e, a, ac, keep)
+			return
+	# a save (loc_4c1ec)
+	if sim.puck_carrier == e.slot or absi(puck.xi) >= 0x64 or puck.zi >= 0x14:
+		_goalie_tail(sim, e, a, ac, keep)
+		return
+	e.vx = Sim._s16(e.vx) >> 1
+	e.vy = Sim._s16(e.vy) >> 1
+	if (e.flags3 & 2) == 0:
+		a = Sim._s16((Sim._s16(puck.vx) >> 10) + puck.xi - e.xi)
+		b = Sim._s16((Sim._s16(puck.vy) >> 10) + puck.yi - e.yi)
+		var dd := Tables.direction8(a, b)
+		b0 = 0 if dd == 8 else ((dd - _heading_word(e)) & 7)
+	else:
+		b0 = (Entity.to_s8(e.puck_dir) - _heading_word(e)) & 7
+	if b0 == 4 and absi(puck.vy) + absi(puck.vx) <= 0x1200:
+		a = 8
+	else:
+		if b0 == 0 or b0 == 4:
+			var f := _heading_word(e)
+			if f == 0:
+				b0 = 7 if a < 0 else 1
+			elif f == 4:
+				b0 = 1 if a < 0 else 7
+			elif f == 1 or f == 5:
+				b0 = 7 if absi(a) < absi(b) else 1
+			elif f == 3 or f == 7:
+				b0 = 1 if absi(a) < absi(b) else 7
+			else:
+				b0 = sim.random(2)
+		a = b0 >> 2
+		if e.flags4 & Entity.F4_MIRROR:
+			a = 1 if a == 0 else 0
+		if b0 >= 4:
+			b0 = 7 - b0
+		if b0 >= 2 and puck.zi < 0xa and puck.vz < 0x800:
+			a += 6
+		elif puck.zi < 8 and puck.vz < 0x800:
+			a += 4
+			var hw := _heading_word(e)
+			if steps >= 9 and hw != 2 and hw != 6 and sim.puck_carrier >= 0:
+				a -= 2
+	e.flags |= Entity.F_BUSY
+	e.flags2 |= Entity.F2_TURNING
+	# (the original reads the word after the index: goalie_save_anims[a + 1])
+	Anim.set_animation(e, Tables.goalie_save_anims[a + 1])
+	sim.add_crowd(0x96, 0x4b0)
+	a = px
+	if absi(puck.yi) > 0xdc:
+		a = 0x18 if puck.xi > 0 else -0x18
+	_goalie_tail(sim, e, a, ac, keep)
 
-static func goalie_move_to(sim: Sim, e: Entity, tx: int, ty: int) -> void:
-	var dx := tx - ((e.vx >> 8) + e.xi)
-	var dy := ty - (e.yi + (e.vy >> 8))
-	var dir := 8
-	if absi(dx) >= 5 or absi(dy) >= 5:
-		dir = Tables.direction8(dx, dy)
-	e.want_dir = dir
-	goalie_move_dir(sim, e, dir)
+## the end of ai_goalie (loc_4c549): skate to (a, ac), standing still within 5 of it (keep)
+static func _goalie_tail(sim: Sim, e: Entity, a: int, ac: int, keep: bool) -> void:
+	var dx := Sim._s16(a - (e.xi + Entity.to_s8(e.vx >> 8)))
+	var dy := Sim._s16(ac - (e.yi + Entity.to_s8(e.vy >> 8)))
+	if keep and absi(dx) < 5 and absi(dy) < 5:
+		dx = 0
+		dy = 0
+	var dir := Tables.direction8(dx, dy)
+	e.want_dir = dir & 0xff
+	sim.scratch_a = dx
+	sim.scratch_b = dy
+	sim.scratch_ac = (sim.scratch_ac & 0xffff0000) | (Entity.to_s8(dir) & 0xffff)
+	goalie_move_dir(sim, e, Entity.to_s8(dir))
+
+## goalie_clamp_target (0x4b6f4): in front of the goal line the point the goalie looks at is held
+## inside the goal lines (and on the middle when he has the puck); then relative to the goal line
+## offset b0
+static func _goalie_clamp_target(sim: Sim, e: Entity, a: int, b: int, b0: int) -> Vector2i:
+	if absi(e.yi) < 0xe8:
+		if sim.puck_carrier == e.slot:
+			a = 0
+		b = clampi(b, -0xe3, 0xe3)
+	return Vector2i(a, Sim._s16(b - b0))
+
+## the word +0x36: the high word of the heading (the facing, 0..7)
+static func _heading_word(e: Entity) -> int:
+	return Sim._s16(e.heading >> 16)
+
+static func _set_heading_word(e: Entity, v: int) -> void:
+	e.heading = (e.heading & 0xffff) | ((v & 0xffff) << 16)
 
 static func goalie_move_dir(sim: Sim, e: Entity, dir: int) -> void:
-	if dir < 8:
-		sim.skating_accelerate(e, dir)
-	else:
+	if dir > 7:
 		sim.brake(e)
+	else:
+		sim.skating_accelerate(e, dir)
 
-## ai_goalie_get_puck (0x4b5c2): the goalie leaves the crease for a loose puck behind the net
+## ai_goalie_get_puck (0x4b5c2): the goalie skates out for a puck rimmed behind the net until
+## somebody has it, it comes back hard (0x800) or an opponent gets near (0x96)
 static func goalie_get_puck(sim: Sim, e: Entity) -> void:
 	if e.timer_e > 0:
 		e.timer_e -= 1
 	e.flags3 |= 6
+	var x := e.xi
+	var ay := absi(e.yi)
+	if x >= -0x28 and x < 0x29 and ay >= 0xc5 and ay < 0xe4:
+		e.flags3 &= ~4
+	if x >= -0x30 and x < 0x31 and ay >= 0xc5:
+		e.flags3 &= ~2
 	if (e.flags & Entity.F_USER) or sim.play_stopped:
 		default_skate(sim, e)
+		return
+	if Lines.handle_line_change(sim, e):
 		return
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
@@ -1543,7 +1668,7 @@ static func goalie_get_puck(sim: Sim, e: Entity) -> void:
 			default_skate(sim, e)
 			return
 		var puck := sim.puck
-		if (puck.vy < 0) != ((e.flags & Entity.F_ATTACK_UP) != 0) and absi(puck.vy) > 0x800:
+		if ((e.flags & Entity.F_ATTACK_UP) != 0) != (puck.vy < 0) and absi(puck.vy) > 0x800:
 			default_skate(sim, e)
 			return
 		if sim.opponents_of(e).nearest_dist < 0x96:

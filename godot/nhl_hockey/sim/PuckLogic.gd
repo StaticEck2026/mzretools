@@ -613,14 +613,14 @@ static func puck_spin(sim: Sim, puck: Entity, a: int) -> void:
 	if puck.vx + puck.vy < 0x14:
 		puck_flat(sim, puck)
 		return
-	puck.flags3 = ((a & 1) ^ puck.flags3) & 3
+	puck.spin = ((a & 1) ^ puck.spin) & 3
 	puck.anim_hold = -1
 	Anim.set_animation(puck, 0x239)
 
 static func puck_flat(_sim: Sim, puck: Entity) -> void:
 	if puck.anim_pos > 3 and puck.anim_pos < 0xc:
-		puck.flags3 ^= 2
-	puck.flags3 |= 4
+		puck.spin ^= 2
+	puck.spin |= 4
 	puck.anim_pos = 0
 	puck.anim_hold = -1
 

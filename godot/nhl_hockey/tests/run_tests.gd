@@ -1700,8 +1700,8 @@ static func _team_diff(t: Team, want: Dictionary, stats := true) -> Array:
 		diff.append("goalie shots %s (original %s)" % [str(gshots), str(want_g)])
 	return diff
 
-## the fields of physics.json (ENTITY_FIELDS of golden.py) to and from an entity of the port (the
-## puck keeps its spin bits, +0x36, in flags3; the others' +0x36 is the facing in heading)
+## the fields of physics.json (ENTITY_FIELDS of golden.py) to and from an entity of the port (+0x36,
+## spin: the puck's spin bits, the others' facing, both in heading)
 static func _entity_set(e: Entity, f: Dictionary) -> void:
 	e.x = int(f["x"])
 	e.y = int(f["y"])
@@ -1719,8 +1719,6 @@ static func _entity_set(e: Entity, f: Dictionary) -> void:
 	e.push_x = int(f["push_x"])
 	e.push_y = int(f["push_y"])
 	e.heading = int(f["heading"]) & 0xffffffff
-	if e.slot == Entity.Slot.PUCK:
-		e.flags3 = int(f["spin"])
 	e.anim = int(f["anim"])
 	e.anim_pos = int(f["anim_pos"])
 	e.anim_hold = int(f["anim_hold"])
@@ -1763,15 +1761,13 @@ static func _entity_set(e: Entity, f: Dictionary) -> void:
 	e.number = int(f["number"])
 	e.next_line_slot = int(f["next_line"])
 	e.next_roster = int(f["next_roster"])
-	e.pass_target = int(f["w48"])
-	if e.slot < 12:
-		e.flags3 = int(f["w48"]) & 0xff
+	e.pass_target = int(f["w48"])          # (flags3 is its low byte)
 
 static func _entity_get(e: Entity) -> Dictionary:
 	return {"x": e.x, "y": e.y, "z": e.z, "vx": e.vx, "vy": e.vy, "vz": e.vz, "frame": e.frame, "hit_by": e.hit_by,
 		"speed": e.speed, "line_slot": e.line_slot, "want_dir": e.want_dir & 0xff, "target_x": e.target_x,
 		"target_y": e.target_y, "push_x": e.push_x, "push_y": e.push_y,
-		"heading": e.heading, "spin": e.flags3 if e.slot == Entity.Slot.PUCK else (e.heading >> 16) & 0xff,
+		"heading": e.heading, "spin": e.spin,
 		"anim": e.anim, "anim_pos": e.anim_pos, "anim_hold": e.anim_hold, "flags": e.flags, "flags2": e.flags2,
 		"frame_wait": e.frame_wait, "roster": e.roster_idx & 0xff, "flags4": e.flags4, "weight": e.weight, "speed_skill": e.speed_skill,
 		"stamina": e.stamina, "endurance": e.endurance, "timer_b": e.timer_b, "timer_c": e.timer_c,
@@ -1784,7 +1780,7 @@ static func _entity_get(e: Entity) -> Dictionary:
 		"puck_dist": e.puck_dist, "puck_dist_sq": e.puck_dist_sq, "puck_dir": e.puck_dir & 0xff, "pass_ok": e.pass_ok,
 		"side": e.side, "reaction": e.reaction, "awareness": e.awareness, "accuracy": e.shot_accuracy, "number": e.number,
 		"next_line": Entity.to_s8(e.next_line_slot), "next_roster": Entity.to_s8(e.next_roster),
-		"w48": Entity.to_s16((e.pass_target & 0xff00) | e.flags3) if (e.slot < 12 and e.line_slot == 0) else e.pass_target}
+		"w48": e.pass_target}
 
 ## the fields of an entity that differ from the original's (heading: the 32 bit word); the golden
 ## data keeps only the fields the routine changed (after), the others are as before the call
@@ -1795,10 +1791,6 @@ static func _entity_diff(e: Entity, after: Dictionary, before: Dictionary) -> Ar
 	var got := _entity_get(e)
 	var diff := []
 	for k in want:
-		if k == "heading" and e.slot == Entity.Slot.PUCK:
-			continue
-		if k == "spin" and e.slot != Entity.Slot.PUCK:
-			continue
 		if k == "next_line" and e.slot == Entity.Slot.PUCK:
 			continue         # the puck's +0x42 is the carrier (Sim.puck_carrier, compared on its own)
 		var w := int(want[k])
