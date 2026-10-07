@@ -67,6 +67,7 @@ static var knockdown_right2_x: Array = []
 static var knockdown_left2_x: Array = []
 static var knockdown_top_y: Array = []            # y against the end boards per facing
 static var knockdown_bottom_y: Array = []
+static var menu_items: Dictionary = {}           # hex address -> [x0, y0, x1, y1, text, callback, sub list, sub count] (Menus.gd)
 static var loaded := false
 
 static func _static_init() -> void:
@@ -142,6 +143,7 @@ static func load_tables() -> void:
 	knockdown_left2_x = _ints(t["knockdown_left2_x"])
 	knockdown_top_y = _ints(t["knockdown_top_y"])
 	knockdown_bottom_y = _ints(t["knockdown_bottom_y"])
+	menu_items = t.get("menu_items", {})
 	loaded = true
 
 ## JSON numbers come back as floats: convert nested arrays of numbers to ints

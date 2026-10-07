@@ -7,7 +7,7 @@ config_version=5
 
 config/name="NHL Hockey"
 config/description="Reimplementation of EA Sports NHL Hockey (DOS, 1994) based on the disassembly in re/nhl_hockey"
-run/main_scene="res://view/Main.tscn"
+run/main_scene="res://view/App.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
 
 [autoload]

@@ -67,6 +67,12 @@ var replay_from_menu := false
 var end_shown := false
 var anthem := true
 
+var config: Dictionary = {}           # the front end's setup of the match (App.play_match_async): home, away,
+                                      # user1, user2 (0 none, 1 home, 2 away), option_flags
+var front: FrontEnd = null            # the front end draws the pause screen, intermissions and the end
+var app: Node = null
+var front_busy := false               # a screen of the front end is up (the match waits)
+var finished_period := -1
 var home_team := 0
 var away_team := 4
 var user1_team := 1                   # user1_team / user2_team: 0 none, 1 home, 2 away
@@ -170,6 +176,26 @@ func _read_settings() -> void:
 		away_team = cfg.get_value("match", "away", away_team)
 		user1_team = cfg.get_value("match", "user1", user1_team)
 		user2_team = cfg.get_value("match", "user2", user2_team)
+	if not config.is_empty():
+		home_team = config.get("home", home_team)
+		away_team = config.get("away", away_team)
+		user1_team = config.get("user1", user1_team)
+		user2_team = config.get("user2", user2_team)
+		var flags: int = config.get("option_flags", 0x7bff)
+		sim.opt_penalties = flags & 1 != 0
+		sim.opt_offsides = flags & 2 != 0
+		sim.opt_line_changes = flags & 4 != 0
+		sim.opt_two_line_pass = flags & 8 != 0
+		sim.opt_injuries = flags & 0x10 != 0
+		sim.settings2 = (flags >> 8) & 0xff
+		sim.period_length = config.get("period_length", sim.period_length)
+		sfx_on = flags & 0x80 != 0
+		music_on = flags & 0x40 != 0
+		sim.user1_team = user1_team
+		sim.user2_team = user2_team
+		sim.assign_users()
+		anthem = config.get("anthem", true)
+		return
 	if OS.has_environment("NHL_HOME"):
 		home_team = int(OS.get_environment("NHL_HOME"))
 	if OS.has_environment("NHL_AWAY"):
@@ -193,6 +219,8 @@ func _physics_process(delta: float) -> void:
 	var ticks := int(tick_acc)
 	tick_acc -= ticks
 	_sfx_lengths(delta)
+	if front_busy:
+		return
 	match mode:
 		Mode.PAUSED:
 			_pause_input()
@@ -201,7 +229,10 @@ func _physics_process(delta: float) -> void:
 			_replay_step(ticks)
 			return
 	if Input.is_action_just_pressed("pause") and not sim.match_over:
-		_open_pause(false)
+		if front != null:
+			_front_pause(0)
+		else:
+			_open_pause(false)
 		return
 	if Input.is_action_just_pressed("replay") and not sim.intro and not sim.stars_running and sim.replay.frame_count() > 0:
 		_start_replay(false)
@@ -213,10 +244,20 @@ func _physics_process(delta: float) -> void:
 	_play_queued_sfx()
 	_play_music()
 	_update_view()
+	if sim.intermission_pending and front != null:
+		# end_of_period -> leave_match_video -> end_match_from_period: the box score of the period
+		# and the pause screen of the intermission (pause_menu(1)) before the next period
+		sim.intermission_pending = false
+		_front_intermission(sim.period - 1)
+		return
+	sim.intermission_pending = false
 	if sim.match_over and not end_shown and shot_path == "":
 		# three_stars_sequence is over: the pause screen of the finished game (pause_menu(2))
 		end_shown = true
-		_open_pause(true)
+		if front != null:
+			_front_end()
+		else:
+			_open_pause(true)
 	if shot_path != "" and steps_done >= shot_steps and not shot_taken:
 		shot_taken = true
 		match OS.get_environment("NHL_SCREENSHOT_MODE"):
@@ -236,6 +277,54 @@ func _physics_process(delta: float) -> void:
 # --------------------------------------------------------------------------------------------
 # pause screen (pause_menu) and instant replay (instant_replay)
 # --------------------------------------------------------------------------------------------
+
+## the pause screen of the front end (pause_menu(0)): back to the game, the replay, or the match is left
+func _front_pause(variant: int) -> void:
+	mode = Mode.PAUSED
+	front_busy = true
+	_stop_sounds()
+	if crowd_player != null:
+		crowd_player.stream_paused = true
+	app.front_over_match(true)
+	var code: int = await front.pause_menu(variant, self)
+	_after_front(code)
+
+## end_match_from_period (0x190be): the box score of the period, the scores around the league, the
+## intermission desk (pause_menu(1))
+func _front_intermission(period_done: int) -> void:
+	mode = Mode.PAUSED
+	front_busy = true
+	_stop_sounds()
+	if crowd_player != null:
+		crowd_player.stream_paused = true
+	app.front_over_match(true)
+	var code: int = await front.intermission(self, period_done)
+	_after_front(code)
+
+## end_match_from_loop (0x1920f): the box score of the game, then pause_menu(2) until the Sports
+## Desk or Exit
+func _front_end() -> void:
+	mode = Mode.PAUSED
+	front_busy = true
+	_stop_sounds()
+	app.front_over_match(true)
+	await front.game_end(self)
+	app.match_finished(1)
+
+## what the front end's pause screen decided: 1 back to the game, 2 the match is left, 7 the replay
+func _after_front(code: int) -> void:
+	if code == 2:
+		app.match_finished(2)
+		return
+	app.front_over_match(false)
+	front_busy = false
+	if crowd_player != null:
+		crowd_player.stream_paused = not sfx_on
+	if code == 7:
+		_start_replay(true)
+		return
+	mode = Mode.MATCH
+	sim.fade_in = true
 
 func _open_pause(after_game: bool) -> void:
 	mode = Mode.PAUSED
@@ -300,7 +389,9 @@ func _end_replay() -> void:
 	sim.last_sfx = -1
 	sim.replay.held_sfx = -1
 	_stop_sounds()
-	if replay_from_menu and not end_shown:
+	if replay_from_menu and front != null and not end_shown:
+		_front_pause(0)
+	elif replay_from_menu and not end_shown:
 		mode = Mode.PAUSED
 		pause_menu.visible = true
 	elif end_shown:

@@ -25,6 +25,39 @@ def cstr(le, addr, maxlen=64):
 def shorts(le, addr, n):
     return list(struct.unpack('<%dh' % n, le.read(addr, n * 2)))
 
+def menu_items(le, exe):
+    """the menu bars and pull-down lists of the front end (draw_menu_items, draw_menu, run_menu,
+    hit_test_menus): 32 byte records x0, y0, x1, y1, text, callback, sub list, sub count. Every record
+    of the data object is returned by its address; the callback as the routine name of hockey.json
+    when it is next to the executable. The code addresses menus as (first record, count)."""
+    names = {}
+    j = os.path.join(os.path.dirname(os.path.abspath(exe)), 'hockey.json')
+    if os.path.exists(j):
+        names = {r['addr']: r['name'] for r in json.load(open(j))['routines']}
+    lo, hi = 0xc0000, 0xd8000
+    data = le.read(lo, hi - lo)
+
+    def text(a):
+        b = le.read(a, 90) or b''
+        s = b.split(b'\0')[0]
+        return s.decode('latin-1') if len(s) <= 80 else None
+
+    def item(a):
+        x0, y0, x1, y1, txt, cb, sub, n = struct.unpack_from('<8i', data, a - lo)
+        if not (0 <= x0 <= 640 and 0 <= y0 <= 480 and 0 <= x1 <= 640 and 0 <= y1 <= 480 and y1 > y0):
+            return None
+        if not lo <= txt < hi or text(txt) is None or not 0 <= n < 64:
+            return None
+        if (cb and cb not in names and names) or (sub and not lo <= sub < hi) or (sub and n == 0):
+            return None
+        return [x0, y0, x1, y1, text(txt), names.get(cb, '0x%x' % cb) if cb else '', '%x' % sub if sub else '', n]
+    out = {}
+    for a in range(lo, hi - 32):
+        it = item(a)
+        if it is not None:
+            out['%x' % a] = it
+    return out
+
 def main():
     exe, out = sys.argv[1], sys.argv[2]
     le = LEExecutable(exe)
@@ -173,6 +206,7 @@ def main():
     t['line_preference'] = [[list(struct.unpack('<4b', le.read(le.read_u32(0xcbd2e + 4 * i) + 4 * j, 4))) for j in range(4)] for i in range(11)]
     # line_rotation[group][line]: the lines offered by the line change prompt (pick_next_line)
     t['line_rotation'] = [list(struct.unpack('<4b', le.read(0xccb5a + 4 * i, 4))) for i in range(24)]
+    t['menu_items'] = menu_items(le, exe)
     with open(out, 'w') as f:
         json.dump(t, f, indent=1)
     print(f"wrote {out}: {len(t['anim_sequences'])} animation words, {len(t['ai_state_names'])} states")

@@ -12563,5 +12563,2877 @@
    -1,
    -1
   ]
- ]
+ ],
+ "menu_items": {
+  "c67b1": [
+   0,
+   0,
+   247,
+   17,
+   "\u0001 '93 - '94 Season",
+   "stats_source_9394_season",
+   "",
+   0
+  ],
+  "c67d1": [
+   0,
+   18,
+   247,
+   35,
+   "\u0002 '93 - '94 Play-Offs",
+   "stats_source_9394_playoffs",
+   "",
+   0
+  ],
+  "c67f1": [
+   0,
+   36,
+   247,
+   53,
+   "----------------------------------",
+   "",
+   "",
+   0
+  ],
+  "c6811": [
+   0,
+   54,
+   247,
+   71,
+   "\u0002 \"WWWWWWWW\" Season",
+   "stats_source_league_season",
+   "",
+   0
+  ],
+  "c6831": [
+   0,
+   72,
+   247,
+   89,
+   "\u0002 \"WWWWWWWW\" Season Play-Offs",
+   "stats_source_league_season_playoffs",
+   "",
+   0
+  ],
+  "c6851": [
+   0,
+   90,
+   247,
+   107,
+   "----------------------------------",
+   "",
+   "",
+   0
+  ],
+  "c6871": [
+   0,
+   108,
+   247,
+   126,
+   "\u0002 \"WWWWWWWW\" Play-Offs",
+   "stats_source_league_playoffs",
+   "",
+   0
+  ],
+  "c846a": [
+   0,
+   0,
+   140,
+   17,
+   "Statistics Type \u0003",
+   "",
+   "c67b1",
+   5
+  ],
+  "c848a": [
+   0,
+   18,
+   140,
+   35,
+   "Standings ...",
+   "cal_hub_stats",
+   "",
+   1
+  ],
+  "c84aa": [
+   0,
+   36,
+   140,
+   53,
+   "Teams Sorted By \u0003",
+   "",
+   "ce96f",
+   5
+  ],
+  "c84ca": [
+   0,
+   54,
+   140,
+   71,
+   "Players Sorted By \u0003",
+   "",
+   "cea2f",
+   8
+  ],
+  "c84ea": [
+   0,
+   72,
+   140,
+   90,
+   "Goalies Sorted By \u0003",
+   "",
+   "ceb2f",
+   3
+  ],
+  "c854f": [
+   0,
+   0,
+   167,
+   17,
+   "Player 1 Controls ...",
+   "menu_p1_controls_b",
+   "",
+   0
+  ],
+  "c856f": [
+   0,
+   18,
+   167,
+   35,
+   "Player 2 Controls ...",
+   "menu_p2_controls_b",
+   "",
+   0
+  ],
+  "c858f": [
+   0,
+   36,
+   167,
+   54,
+   "Show League Settings ...",
+   "settings_screen_a",
+   "",
+   0
+  ],
+  "c85e2": [
+   0,
+   0,
+   169,
+   17,
+   "Next month",
+   "calendar_next_month",
+   "",
+   0
+  ],
+  "c8602": [
+   0,
+   18,
+   169,
+   35,
+   "Previous month",
+   "calendar_prev_month",
+   "",
+   0
+  ],
+  "c8622": [
+   0,
+   36,
+   169,
+   54,
+   "Return to Sports Central",
+   "calendar_return",
+   "",
+   0
+  ],
+  "c8657": [
+   0,
+   0,
+   37,
+   18,
+   "Play",
+   "",
+   "c85e2",
+   3
+  ],
+  "c8677": [
+   38,
+   0,
+   81,
+   18,
+   "Game",
+   "",
+   "c854f",
+   3
+  ],
+  "c8697": [
+   82,
+   0,
+   151,
+   18,
+   "Statistics",
+   "",
+   "c846a",
+   5
+  ],
+  "c86cc": [
+   0,
+   0,
+   151,
+   18,
+   "Show League settings",
+   "menu_show_league_settings",
+   "",
+   0
+  ],
+  "c86fc": [
+   0,
+   0,
+   112,
+   18,
+   "League settings",
+   "menu_league_settings",
+   "",
+   0
+  ],
+  "c8728": [
+   0,
+   0,
+   52,
+   17,
+   "Done",
+   "dialog_done",
+   "",
+   0
+  ],
+  "c8748": [
+   0,
+   18,
+   52,
+   36,
+   "Cancel",
+   "dialog_cancel",
+   "",
+   0
+  ],
+  "c8778": [
+   0,
+   0,
+   49,
+   18,
+   "Select",
+   "",
+   "c8728",
+   2
+  ],
+  "c8798": [
+   50,
+   0,
+   111,
+   18,
+   "Settings",
+   "",
+   "c86fc",
+   1
+  ],
+  "c8804": [
+   0,
+   0,
+   52,
+   17,
+   "Done",
+   "line_editor_done",
+   "",
+   0
+  ],
+  "c8824": [
+   0,
+   18,
+   52,
+   36,
+   "Cancel",
+   "line_editor_cancel",
+   "",
+   0
+  ],
+  "c885c": [
+   191,
+   0,
+   239,
+   18,
+   "",
+   "",
+   "",
+   0
+  ],
+  "c887c": [
+   240,
+   0,
+   283,
+   18,
+   "Trade",
+   "",
+   "c8804",
+   2
+  ],
+  "c889c": [
+   284,
+   0,
+   401,
+   18,
+   "Player Statistics",
+   "",
+   "c87b8",
+   2
+  ],
+  "c88c2": [
+   0,
+   0,
+   43,
+   18,
+   "Trade",
+   "menu_return_one",
+   "",
+   0
+  ],
+  "c88e2": [
+   0,
+   0,
+   69,
+   18,
+   "Return To",
+   "",
+   "c88c2",
+   1
+  ],
+  "c8902": [
+   70,
+   0,
+   174,
+   18,
+   "Statistics Type",
+   "",
+   "c67b1",
+   4
+  ],
+  "ce3af": [
+   0,
+   0,
+   32,
+   18,
+   "File",
+   "",
+   "ce40f",
+   18
+  ],
+  "ce3cf": [
+   33,
+   0,
+   76,
+   18,
+   "Game",
+   "",
+   "ce7ef",
+   7
+  ],
+  "ce3ef": [
+   77,
+   0,
+   146,
+   18,
+   "Statistics",
+   "",
+   "ce8cf",
+   5
+  ],
+  "ce40f": [
+   0,
+   0,
+   165,
+   17,
+   "Open ...",
+   "league_select_screen",
+   "",
+   0
+  ],
+  "ce42f": [
+   0,
+   18,
+   165,
+   35,
+   "--------------------",
+   "",
+   "",
+   0
+  ],
+  "ce44f": [
+   0,
+   36,
+   165,
+   53,
+   "New Exhibition Game ...",
+   "exhibition_mode",
+   "",
+   0
+  ],
+  "ce46f": [
+   0,
+   54,
+   165,
+   71,
+   "--------------------",
+   "",
+   "",
+   0
+  ],
+  "ce48f": [
+   0,
+   72,
+   165,
+   89,
+   "New League ...",
+   "new_league_mode",
+   "",
+   0
+  ],
+  "ce4af": [
+   0,
+   90,
+   165,
+   107,
+   "Import Databases ...",
+   "league_import_databases",
+   "",
+   0
+  ],
+  "ce4cf": [
+   0,
+   108,
+   165,
+   125,
+   "Export Databases ...",
+   "",
+   "",
+   0
+  ],
+  "ce4ef": [
+   0,
+   126,
+   165,
+   143,
+   "Next League Game ...",
+   "",
+   "",
+   0
+  ],
+  "ce50f": [
+   0,
+   144,
+   165,
+   161,
+   "League Manager \u0003",
+   "",
+   "",
+   13
+  ],
+  "ce52f": [
+   0,
+   162,
+   165,
+   179,
+   "--------------------",
+   "",
+   "",
+   0
+  ],
+  "ce54f": [
+   0,
+   180,
+   165,
+   197,
+   "New Play-Off Series ...",
+   "stanley_cup_tree_screen",
+   "",
+   0
+  ],
+  "ce56f": [
+   0,
+   198,
+   165,
+   215,
+   "Next Play-Off Game ...",
+   "",
+   "",
+   0
+  ],
+  "ce58f": [
+   0,
+   216,
+   165,
+   233,
+   "Play-Off Settings ...",
+   "",
+   "",
+   0
+  ],
+  "ce5af": [
+   0,
+   234,
+   165,
+   251,
+   "Play-Off Hilights ...",
+   "",
+   "",
+   0
+  ],
+  "ce5cf": [
+   0,
+   252,
+   165,
+   269,
+   "--------------------",
+   "",
+   "",
+   0
+  ],
+  "ce5ef": [
+   0,
+   270,
+   165,
+   287,
+   "Central Registry ...",
+   "menu_central_registry",
+   "",
+   0
+  ],
+  "ce60f": [
+   0,
+   288,
+   165,
+   305,
+   "--------------------",
+   "",
+   "",
+   0
+  ],
+  "ce62f": [
+   0,
+   306,
+   165,
+   324,
+   "Exit",
+   "menu_exit",
+   "",
+   0
+  ],
+  "ce64f": [
+   0,
+   0,
+   253,
+   17,
+   "Merge League Files ...",
+   "league_merge_files",
+   "",
+   0
+  ],
+  "ce66f": [
+   0,
+   18,
+   253,
+   35,
+   "---------------------------------",
+   "",
+   "",
+   0
+  ],
+  "ce68f": [
+   0,
+   36,
+   253,
+   53,
+   "Remove Team From League ...",
+   "league_remove_team",
+   "",
+   0
+  ],
+  "ce6af": [
+   0,
+   54,
+   253,
+   71,
+   "Add Team to League ...",
+   "league_add_team",
+   "",
+   0
+  ],
+  "ce6cf": [
+   0,
+   72,
+   253,
+   89,
+   "---------------------------------",
+   "",
+   "",
+   0
+  ],
+  "ce6ef": [
+   0,
+   90,
+   253,
+   107,
+   "Trade Players ... ",
+   "league_trade_players",
+   "",
+   0
+  ],
+  "ce70f": [
+   0,
+   108,
+   253,
+   125,
+   "---------------------------------",
+   "",
+   "",
+   0
+  ],
+  "ce72f": [
+   0,
+   126,
+   253,
+   143,
+   "Rebuild DataBases ...",
+   "league_rebuild_databases",
+   "",
+   0
+  ],
+  "ce74f": [
+   0,
+   144,
+   253,
+   161,
+   "Merge and Update Team Databases ...",
+   "league_merge_update_teams",
+   "",
+   0
+  ],
+  "ce76f": [
+   0,
+   162,
+   253,
+   179,
+   "Change League Play Settings ...",
+   "league_change_play_settings",
+   "",
+   0
+  ],
+  "ce78f": [
+   0,
+   180,
+   253,
+   197,
+   "League Hilights ...",
+   "league_hilights",
+   "",
+   0
+  ],
+  "ce7af": [
+   0,
+   198,
+   253,
+   215,
+   "---------------------------------",
+   "",
+   "",
+   0
+  ],
+  "ce7cf": [
+   0,
+   216,
+   253,
+   234,
+   "Update Teams DataBases ...",
+   "league_update_team_databases",
+   "",
+   0
+  ],
+  "ce7ef": [
+   0,
+   0,
+   146,
+   17,
+   "Game: LA  at MTL ...",
+   "locker_room_hub",
+   "",
+   0
+  ],
+  "ce80f": [
+   0,
+   18,
+   146,
+   35,
+   "Exhibition Settings ...",
+   "menu_exhibition_settings",
+   "",
+   0
+  ],
+  "ce82f": [
+   0,
+   36,
+   146,
+   53,
+   "-------------------",
+   "",
+   "",
+   0
+  ],
+  "ce84f": [
+   0,
+   54,
+   146,
+   71,
+   "Player 1 Controls ...",
+   "menu_p1_controls_a",
+   "",
+   0
+  ],
+  "ce86f": [
+   0,
+   72,
+   146,
+   89,
+   "Player 2 Controls ...",
+   "menu_p2_controls_a",
+   "",
+   0
+  ],
+  "ce88f": [
+   0,
+   90,
+   146,
+   107,
+   "-------------------",
+   "",
+   "",
+   0
+  ],
+  "ce8af": [
+   0,
+   108,
+   146,
+   126,
+   "Sound Settings ...",
+   "menu_sound_settings",
+   "",
+   0
+  ],
+  "ce8cf": [
+   0,
+   0,
+   140,
+   17,
+   "Statistics Type \u0003",
+   "",
+   "c67b1",
+   4
+  ],
+  "ce8ef": [
+   0,
+   18,
+   140,
+   35,
+   "Standings ...",
+   "hub_stats",
+   "",
+   1
+  ],
+  "ce90f": [
+   0,
+   36,
+   140,
+   53,
+   "Teams Sorted By \u0003",
+   "",
+   "ce96f",
+   6
+  ],
+  "ce92f": [
+   0,
+   54,
+   140,
+   71,
+   "Players Sorted By \u0003",
+   "",
+   "cea2f",
+   8
+  ],
+  "ce94f": [
+   0,
+   72,
+   140,
+   90,
+   "Goalies Sorted By \u0003",
+   "",
+   "ceb2f",
+   3
+  ],
+  "ce96f": [
+   0,
+   0,
+   124,
+   17,
+   "Standings ...",
+   "team_stats_standings",
+   "",
+   0
+  ],
+  "ce98f": [
+   0,
+   18,
+   124,
+   35,
+   "Scoring ...",
+   "team_stats_scoring",
+   "",
+   0
+  ],
+  "ce9af": [
+   0,
+   36,
+   124,
+   53,
+   "Defense ...",
+   "team_stats_defense",
+   "",
+   0
+  ],
+  "ce9cf": [
+   0,
+   54,
+   124,
+   71,
+   "Penalty Killing ...",
+   "team_stats_penalty_killing",
+   "",
+   0
+  ],
+  "ce9ef": [
+   0,
+   72,
+   124,
+   89,
+   "Power Play ...",
+   "team_stats_power_play",
+   "",
+   0
+  ],
+  "cea0f": [
+   0,
+   90,
+   124,
+   108,
+   "Penalties ...",
+   "team_stats_penalties",
+   "",
+   0
+  ],
+  "cea2f": [
+   0,
+   0,
+   159,
+   17,
+   "Points ...",
+   "leaders_points",
+   "",
+   0
+  ],
+  "cea4f": [
+   0,
+   18,
+   159,
+   35,
+   "Goals ...",
+   "leaders_goals",
+   "",
+   0
+  ],
+  "cea6f": [
+   0,
+   36,
+   159,
+   53,
+   "Assists ...",
+   "leaders_assists",
+   "",
+   0
+  ],
+  "cea8f": [
+   0,
+   54,
+   159,
+   71,
+   "Power Play Goals ...",
+   "leaders_pp_goals",
+   "",
+   0
+  ],
+  "ceaaf": [
+   0,
+   72,
+   159,
+   89,
+   "Shorthanded Goals ...",
+   "leaders_sh_goals",
+   "",
+   0
+  ],
+  "ceacf": [
+   0,
+   90,
+   159,
+   107,
+   "Plus/Minus ...",
+   "leaders_plus_minus",
+   "",
+   0
+  ],
+  "ceaef": [
+   0,
+   108,
+   159,
+   125,
+   "Penalty Minutes ...",
+   "leaders_penalty_minutes",
+   "",
+   0
+  ],
+  "ceb0f": [
+   0,
+   126,
+   159,
+   144,
+   "Shooting Percentage ...",
+   "leaders_shooting_pct",
+   "",
+   0
+  ],
+  "ceb2f": [
+   0,
+   0,
+   171,
+   17,
+   "Goals Against Average ...",
+   "leaders_gaa",
+   "",
+   0
+  ],
+  "ceb4f": [
+   0,
+   18,
+   171,
+   35,
+   "Wins ...",
+   "leaders_wins",
+   "",
+   0
+  ],
+  "ceb6f": [
+   0,
+   36,
+   171,
+   54,
+   "Save Percentage ...",
+   "leaders_save_pct",
+   "",
+   0
+  ],
+  "ceb8f": [
+   0,
+   0,
+   46,
+   18,
+   "Action",
+   "",
+   "cecaf",
+   4
+  ],
+  "cebaf": [
+   47,
+   0,
+   90,
+   18,
+   "Game",
+   "",
+   "ced6f",
+   7
+  ],
+  "cebcf": [
+   91,
+   0,
+   160,
+   18,
+   "Statistics",
+   "",
+   "cefef",
+   5
+  ],
+  "cebef": [
+   161,
+   0,
+   237,
+   18,
+   "Line Editor",
+   "",
+   "cef2f",
+   2
+  ],
+  "cec0f": [
+   238,
+   0,
+   344,
+   18,
+   "Instant Replay",
+   "",
+   "cef0f",
+   1
+  ],
+  "cec2f": [
+   345,
+   0,
+   454,
+   18,
+   "Game Summary",
+   "",
+   "cef6f",
+   4
+  ],
+  "cec4f": [
+   0,
+   0,
+   46,
+   18,
+   "Action",
+   "",
+   "ced2f",
+   2
+  ],
+  "cec6f": [
+   47,
+   0,
+   116,
+   18,
+   "Statistics",
+   "",
+   "cefef",
+   5
+  ],
+  "cec8f": [
+   117,
+   0,
+   225,
+   18,
+   "Game Summary",
+   "",
+   "cef6f",
+   4
+  ],
+  "cecaf": [
+   0,
+   0,
+   118,
+   17,
+   "Back to Game",
+   "menu_back_to_game",
+   "",
+   0
+  ],
+  "ceccf": [
+   0,
+   18,
+   118,
+   35,
+   "Save Game ...",
+   "broadcast_booth_screen",
+   "",
+   0
+  ],
+  "cecef": [
+   0,
+   36,
+   118,
+   53,
+   "Sports Desk",
+   "pause_sports_desk_confirm",
+   "",
+   0
+  ],
+  "ced0f": [
+   0,
+   54,
+   118,
+   72,
+   "Exit",
+   "exit_game_dialog",
+   "",
+   0
+  ],
+  "ced2f": [
+   0,
+   0,
+   118,
+   17,
+   "Sports Desk",
+   "pause_sports_desk",
+   "",
+   0
+  ],
+  "ced4f": [
+   0,
+   18,
+   118,
+   36,
+   "Exit",
+   "exit_game_dialog",
+   "",
+   0
+  ],
+  "ced6f": [
+   0,
+   0,
+   169,
+   17,
+   "Player 1 Controls ...",
+   "menu_p1_controls_c",
+   "",
+   0
+  ],
+  "ced8f": [
+   0,
+   18,
+   169,
+   35,
+   "Player 2 Controls ...",
+   "menu_p2_controls_c",
+   "",
+   0
+  ],
+  "cedaf": [
+   0,
+   36,
+   169,
+   53,
+   "---------------------",
+   "",
+   "",
+   0
+  ],
+  "cedcf": [
+   0,
+   54,
+   169,
+   71,
+   "Home Team Goalie \u0003",
+   "",
+   "cee4f",
+   3
+  ],
+  "cedef": [
+   0,
+   72,
+   169,
+   90,
+   "Visiting Team Goalie \u0003",
+   "",
+   "ceeaf",
+   3
+  ],
+  "cee0f": [
+   0,
+   90,
+   169,
+   107,
+   "---------------------",
+   "",
+   "",
+   0
+  ],
+  "cee2f": [
+   0,
+   108,
+   169,
+   126,
+   "xxxxxxxxxxx Settings ...",
+   "game_settings_screen",
+   "",
+   0
+  ],
+  "cee4f": [
+   0,
+   0,
+   0,
+   17,
+   "\u0002 00 X. XXXXXXXXXXXXXXXX",
+   "menu_home_goalie1",
+   "",
+   0
+  ],
+  "cee6f": [
+   0,
+   18,
+   0,
+   35,
+   "\u0002 00 X. XXXXXXXXXXXXXXXX",
+   "menu_home_goalie2",
+   "",
+   0
+  ],
+  "cee8f": [
+   0,
+   36,
+   0,
+   54,
+   "\u0002 NONE",
+   "menu_home_no_goalie",
+   "",
+   0
+  ],
+  "ceeaf": [
+   0,
+   0,
+   0,
+   17,
+   "\u0002 00 X. XXXXXXXXXXXXXXXX",
+   "menu_away_goalie1",
+   "",
+   0
+  ],
+  "ceecf": [
+   0,
+   18,
+   0,
+   35,
+   "\u0002 00 X. XXXXXXXXXXXXXXXX",
+   "menu_away_goalie2",
+   "",
+   0
+  ],
+  "ceeef": [
+   0,
+   36,
+   0,
+   54,
+   "\u0002 NONE",
+   "menu_away_no_goalie",
+   "",
+   0
+  ],
+  "cef0f": [
+   0,
+   0,
+   107,
+   17,
+   "Go To Replay ...",
+   "menu_go_to_replay",
+   "",
+   0
+  ],
+  "cef2f": [
+   0,
+   0,
+   110,
+   17,
+   "Home Team ...",
+   "menu_edit_lines_home",
+   "",
+   0
+  ],
+  "cef4f": [
+   0,
+   18,
+   110,
+   36,
+   "Visiting Team ...",
+   "menu_edit_lines_away",
+   "",
+   0
+  ],
+  "cef6f": [
+   0,
+   0,
+   140,
+   17,
+   "Game Statistics ...",
+   "menu_game_statistics",
+   "",
+   0
+  ],
+  "cef8f": [
+   0,
+   18,
+   140,
+   35,
+   "Penalty Summary ...",
+   "menu_penalty_summary",
+   "",
+   0
+  ],
+  "cefaf": [
+   0,
+   36,
+   140,
+   53,
+   "Scoring Summary ...",
+   "menu_scoring_summary",
+   "",
+   0
+  ],
+  "cefcf": [
+   0,
+   54,
+   140,
+   72,
+   "Team Scratches ...",
+   "menu_team_scratches",
+   "",
+   0
+  ],
+  "cefef": [
+   0,
+   0,
+   140,
+   17,
+   "Statistics Type \u0003",
+   "",
+   "c67b1",
+   2
+  ],
+  "cf00f": [
+   0,
+   18,
+   140,
+   35,
+   "Standings ...",
+   "exh_hub_stats",
+   "",
+   1
+  ],
+  "cf02f": [
+   0,
+   36,
+   140,
+   53,
+   "Teams Sorted By \u0003",
+   "",
+   "ce96f",
+   6
+  ],
+  "cf04f": [
+   0,
+   54,
+   140,
+   71,
+   "Players Sorted By \u0003",
+   "",
+   "cea2f",
+   8
+  ],
+  "cf06f": [
+   0,
+   72,
+   140,
+   90,
+   "Goalies Sorted By \u0003",
+   "",
+   "ceb2f",
+   3
+  ],
+  "cf08f": [
+   0,
+   0,
+   46,
+   18,
+   "Action",
+   "",
+   "cecaf",
+   4
+  ],
+  "cf0af": [
+   47,
+   0,
+   90,
+   18,
+   "Game",
+   "",
+   "ced6f",
+   4
+  ],
+  "cf0cf": [
+   91,
+   0,
+   197,
+   18,
+   "Instant Replay",
+   "",
+   "cef0f",
+   1
+  ],
+  "cf0ef": [
+   198,
+   0,
+   275,
+   18,
+   "Line Editor",
+   "",
+   "cef2f",
+   2
+  ],
+  "cf10f": [
+   276,
+   0,
+   345,
+   18,
+   "Statistics",
+   "",
+   "cefef",
+   5
+  ],
+  "cf12f": [
+   346,
+   0,
+   455,
+   18,
+   "Game Summary",
+   "",
+   "cef6f",
+   3
+  ],
+  "cf14f": [
+   0,
+   0,
+   77,
+   18,
+   "Line Editor",
+   "",
+   "cf20f",
+   4
+  ],
+  "cf16f": [
+   78,
+   0,
+   128,
+   18,
+   "Roster",
+   "",
+   "cf28f",
+   2
+  ],
+  "cf18f": [
+   129,
+   0,
+   247,
+   18,
+   "Player Statistics",
+   "",
+   "cf2cf",
+   1
+  ],
+  "cf1af": [
+   0,
+   0,
+   77,
+   18,
+   "Line Editor",
+   "",
+   "cf20f",
+   4
+  ],
+  "cf1cf": [
+   78,
+   0,
+   128,
+   18,
+   "Roster",
+   "",
+   "cf28f",
+   2
+  ],
+  "cf1ef": [
+   129,
+   0,
+   247,
+   18,
+   "Player Statistics",
+   "",
+   "cf2cf",
+   1
+  ],
+  "cf20f": [
+   0,
+   0,
+   152,
+   17,
+   "Use These Lines",
+   "lines_use_these",
+   "",
+   0
+  ],
+  "cf22f": [
+   0,
+   18,
+   152,
+   35,
+   "Use Original Lines",
+   "lines_use_original",
+   "",
+   0
+  ],
+  "cf24f": [
+   0,
+   36,
+   152,
+   53,
+   "Use Default Lines",
+   "lines_use_default",
+   "",
+   0
+  ],
+  "cf26f": [
+   0,
+   54,
+   152,
+   72,
+   "Save As Default Lines",
+   "lines_teams_a",
+   "",
+   0
+  ],
+  "cf28f": [
+   0,
+   0,
+   104,
+   17,
+   "Dress Player",
+   "lines_dress_player_b",
+   "",
+   0
+  ],
+  "cf2af": [
+   0,
+   18,
+   104,
+   36,
+   "Scratch Player",
+   "lines_scratch_player_b",
+   "",
+   0
+  ],
+  "cf2cf": [
+   0,
+   0,
+   156,
+   18,
+   "Show Player Statistics",
+   "roster_stats_table",
+   "",
+   0
+  ],
+  "cf2ef": [
+   0,
+   0,
+   77,
+   18,
+   "Line Editor",
+   "",
+   "cf32f",
+   5
+  ],
+  "cf30f": [
+   78,
+   0,
+   196,
+   18,
+   "Player Statistics",
+   "",
+   "cf2cf",
+   1
+  ],
+  "cf32f": [
+   0,
+   0,
+   152,
+   17,
+   "Cancel",
+   "lines_cancel",
+   "",
+   0
+  ],
+  "cf34f": [
+   0,
+   18,
+   152,
+   35,
+   "Use These Lines",
+   "lines_use_these",
+   "",
+   0
+  ],
+  "cf36f": [
+   0,
+   36,
+   152,
+   53,
+   "Use Original Lines",
+   "lines_use_original",
+   "",
+   0
+  ],
+  "cf38f": [
+   0,
+   54,
+   152,
+   71,
+   "Use Default Lines",
+   "lines_use_default",
+   "",
+   0
+  ],
+  "cf3af": [
+   0,
+   72,
+   152,
+   90,
+   "Save As Default Lines",
+   "lines_teams_a",
+   "",
+   0
+  ],
+  "cf3cf": [
+   0,
+   0,
+   77,
+   18,
+   "Line Editor",
+   "",
+   "cf42f",
+   3
+  ],
+  "cf3ef": [
+   78,
+   0,
+   128,
+   18,
+   "Roster",
+   "",
+   "cf28f",
+   2
+  ],
+  "cf40f": [
+   129,
+   0,
+   247,
+   18,
+   "Player Statistics",
+   "",
+   "cf2cf",
+   1
+  ],
+  "cf42f": [
+   0,
+   0,
+   152,
+   17,
+   "Save These Lines",
+   "lines_teams_b",
+   "",
+   0
+  ],
+  "cf44f": [
+   0,
+   18,
+   152,
+   35,
+   "Use Original Lines",
+   "lines_use_original",
+   "",
+   0
+  ],
+  "cf46f": [
+   0,
+   36,
+   152,
+   54,
+   "Use Default Lines",
+   "lines_use_default",
+   "",
+   0
+  ],
+  "cf48f": [
+   0,
+   0,
+   69,
+   18,
+   "Return To",
+   "",
+   "cf4cf",
+   1
+  ],
+  "cf4af": [
+   70,
+   0,
+   174,
+   18,
+   "Statistics Type",
+   "",
+   "c67b1",
+   4
+  ],
+  "cf4cf": [
+   0,
+   0,
+   77,
+   18,
+   "Line Editor",
+   "menu_return_one",
+   "",
+   0
+  ],
+  "cf4ef": [
+   0,
+   0,
+   70,
+   18,
+   "Return To",
+   "",
+   "cf50f",
+   1
+  ],
+  "cf50f": [
+   0,
+   0,
+   83,
+   18,
+   "Sports Desk",
+   "hub_sports_desk",
+   "",
+   0
+  ],
+  "cf52f": [
+   0,
+   0,
+   154,
+   18,
+   "Output Current Data ...",
+   "menu_output_current_data",
+   "",
+   0
+  ],
+  "cf54f": [
+   0,
+   0,
+   69,
+   18,
+   "Return To",
+   "",
+   "cf5cf",
+   1
+  ],
+  "cf56f": [
+   70,
+   0,
+   120,
+   18,
+   "Roster",
+   "",
+   "cf68f",
+   1
+  ],
+  "cf58f": [
+   121,
+   0,
+   224,
+   18,
+   "Statistics Type",
+   "",
+   "c67b1",
+   4
+  ],
+  "cf5af": [
+   225,
+   0,
+   262,
+   18,
+   "Print",
+   "",
+   "cf52f",
+   1
+  ],
+  "cf5cf": [
+   0,
+   0,
+   84,
+   18,
+   "Sports Desk",
+   "hub_sports_desk",
+   "",
+   0
+  ],
+  "cf5ef": [
+   0,
+   0,
+   125,
+   17,
+   "Overall Standings",
+   "hub_overall_standings",
+   "",
+   0
+  ],
+  "cf60f": [
+   0,
+   18,
+   125,
+   35,
+   "Sports Desk",
+   "hub_sports_desk",
+   "",
+   0
+  ],
+  "cf64f": [
+   0,
+   18,
+   125,
+   35,
+   "Overall Standings",
+   "hub_overall_standings",
+   "",
+   0
+  ],
+  "cf66f": [
+   0,
+   36,
+   125,
+   54,
+   "Sports Desk",
+   "hub_sports_desk",
+   "",
+   0
+  ],
+  "cf68f": [
+   0,
+   0,
+   127,
+   18,
+   "Show Team Roster",
+   "menu_show_team_roster",
+   "",
+   0
+  ],
+  "cf6af": [
+   0,
+   0,
+   69,
+   18,
+   "Return To",
+   "",
+   "cf5ef",
+   2
+  ],
+  "cf6cf": [
+   70,
+   0,
+   187,
+   18,
+   "Player Statistics",
+   "",
+   "cf72f",
+   1
+  ],
+  "cf6ef": [
+   188,
+   0,
+   291,
+   18,
+   "Statistics Type",
+   "",
+   "c67b1",
+   4
+  ],
+  "cf70f": [
+   292,
+   0,
+   329,
+   18,
+   "Print",
+   "",
+   "cf52f",
+   1
+  ],
+  "cf72f": [
+   0,
+   0,
+   255,
+   18,
+   "Show Player Statistics And Attributes",
+   "menu_show_player_stats",
+   "",
+   0
+  ],
+  "cf74f": [
+   0,
+   0,
+   69,
+   18,
+   "Return To",
+   "",
+   "cf62f",
+   3
+  ],
+  "cf76f": [
+   70,
+   0,
+   107,
+   18,
+   "Print",
+   "",
+   "cf52f",
+   1
+  ],
+  "cf78f": [
+   0,
+   0,
+   69,
+   18,
+   "Return To",
+   "",
+   "cf50f",
+   1
+  ],
+  "cf7af": [
+   70,
+   0,
+   173,
+   18,
+   "Statistics Type",
+   "",
+   "c67b1",
+   4
+  ],
+  "cf7cf": [
+   174,
+   0,
+   289,
+   18,
+   "Teams Sorted By",
+   "",
+   "ce96f",
+   6
+  ],
+  "cf7ef": [
+   290,
+   0,
+   327,
+   18,
+   "Print",
+   "",
+   "cf52f",
+   1
+  ],
+  "cf80f": [
+   0,
+   0,
+   69,
+   18,
+   "Return To",
+   "",
+   "cf50f",
+   1
+  ],
+  "cf82f": [
+   70,
+   0,
+   173,
+   18,
+   "Statistics Type",
+   "",
+   "c67b1",
+   4
+  ],
+  "cf84f": [
+   174,
+   0,
+   299,
+   18,
+   "Players Sorted By",
+   "",
+   "cea2f",
+   8
+  ],
+  "cf86f": [
+   300,
+   0,
+   337,
+   18,
+   "Print",
+   "",
+   "cf52f",
+   1
+  ],
+  "cf88f": [
+   0,
+   0,
+   69,
+   18,
+   "Return To",
+   "",
+   "cf50f",
+   1
+  ],
+  "cf8af": [
+   70,
+   0,
+   173,
+   18,
+   "Statistics Type",
+   "",
+   "c67b1",
+   4
+  ],
+  "cf8cf": [
+   174,
+   0,
+   299,
+   18,
+   "Goalies Sorted By",
+   "",
+   "ceb2f",
+   3
+  ],
+  "cf8ef": [
+   300,
+   0,
+   337,
+   18,
+   "Print",
+   "",
+   "cf52f",
+   1
+  ],
+  "cf90f": [
+   0,
+   0,
+   32,
+   18,
+   "File",
+   "",
+   "cf96f",
+   2
+  ],
+  "cf92f": [
+   33,
+   0,
+   94,
+   18,
+   "Settings",
+   "",
+   "cf9af",
+   4
+  ],
+  "cf94f": [
+   95,
+   0,
+   164,
+   18,
+   "Statistics",
+   "",
+   "cfa2f",
+   5
+  ],
+  "cf96f": [
+   0,
+   0,
+   169,
+   17,
+   "Play Next Game ...",
+   "menu_play_next_game",
+   "",
+   0
+  ],
+  "cf98f": [
+   0,
+   18,
+   169,
+   36,
+   "Return To Sports Central",
+   "menu_return_to_central",
+   "",
+   0
+  ],
+  "cf9af": [
+   0,
+   0,
+   140,
+   17,
+   "Player 1 Controls ...",
+   "menu_p1_controls_d",
+   "",
+   0
+  ],
+  "cf9cf": [
+   0,
+   18,
+   140,
+   35,
+   "Player 2 Controls ...",
+   "menu_p2_controls_d",
+   "",
+   0
+  ],
+  "cf9ef": [
+   0,
+   36,
+   140,
+   53,
+   "-------------------",
+   "",
+   "",
+   0
+  ],
+  "cfa0f": [
+   0,
+   54,
+   140,
+   72,
+   "Play-Off Settings ...",
+   "menu_playoff_settings",
+   "",
+   0
+  ],
+  "cfa2f": [
+   0,
+   0,
+   140,
+   17,
+   "Statistics Type \u0003",
+   "",
+   "c67b1",
+   2
+  ],
+  "cfa4f": [
+   0,
+   18,
+   140,
+   35,
+   "Standings ...",
+   "hub_stats",
+   "",
+   1
+  ],
+  "cfa6f": [
+   0,
+   36,
+   140,
+   53,
+   "Teams Sorted By \u0003",
+   "",
+   "ce96f",
+   6
+  ],
+  "cfa8f": [
+   0,
+   54,
+   140,
+   71,
+   "Players Sorted By \u0003",
+   "",
+   "cea2f",
+   8
+  ],
+  "cfaaf": [
+   0,
+   72,
+   140,
+   90,
+   "Goalies Sorted By \u0003",
+   "",
+   "ceb2f",
+   3
+  ],
+  "cfbe8": [
+   0,
+   0,
+   102,
+   17,
+   "Anaheim ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cfc08": [
+   0,
+   18,
+   102,
+   35,
+   "Calgary ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cfc28": [
+   0,
+   36,
+   102,
+   53,
+   "Edmonton ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cfc48": [
+   0,
+   54,
+   102,
+   71,
+   "Los Angeles ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cfc68": [
+   0,
+   72,
+   102,
+   89,
+   "San Jose ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cfc88": [
+   0,
+   90,
+   102,
+   108,
+   "Vancouver ...",
+   "",
+   "",
+   0
+  ],
+  "cfcf2": [
+   0,
+   0,
+   83,
+   17,
+   "Chicago ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cfd12": [
+   0,
+   18,
+   83,
+   35,
+   "Dallas ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cfd32": [
+   0,
+   36,
+   83,
+   53,
+   "Detroit ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cfd52": [
+   0,
+   54,
+   83,
+   71,
+   "St. Louis ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cfd72": [
+   0,
+   72,
+   83,
+   89,
+   "Toronto ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cfd92": [
+   0,
+   90,
+   83,
+   108,
+   "Winnipeg ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cfe08": [
+   0,
+   0,
+   92,
+   17,
+   "Boston ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cfe28": [
+   0,
+   18,
+   92,
+   35,
+   "Buffalo ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cfe48": [
+   0,
+   36,
+   92,
+   53,
+   "Hartford ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cfe68": [
+   0,
+   54,
+   92,
+   71,
+   "Montreal ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cfe88": [
+   0,
+   72,
+   92,
+   89,
+   "Ottawa ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cfea8": [
+   0,
+   90,
+   92,
+   107,
+   "Pittsburgh ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cfec8": [
+   0,
+   108,
+   92,
+   126,
+   "Quebec ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cff51": [
+   0,
+   0,
+   108,
+   17,
+   "Florida ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cff71": [
+   0,
+   18,
+   108,
+   35,
+   "New Jersey ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cff91": [
+   0,
+   36,
+   108,
+   53,
+   "NY Islanders ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cffb1": [
+   0,
+   54,
+   108,
+   71,
+   "NY Rangers ...",
+   "",
+   "",
+   0
+  ],
+  "cffd1": [
+   0,
+   72,
+   108,
+   89,
+   "Philadelphia ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "cfff1": [
+   0,
+   90,
+   108,
+   107,
+   "Tampa Bay ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "d0011": [
+   0,
+   108,
+   108,
+   126,
+   "Washington ...",
+   "dbedit_select_team",
+   "",
+   0
+  ],
+  "d006e": [
+   0,
+   0,
+   128,
+   17,
+   "Save to Game ...",
+   "menu_save_to_game",
+   "",
+   0
+  ],
+  "d008e": [
+   0,
+   18,
+   128,
+   35,
+   "Temporary Save ...",
+   "new_database_dialog",
+   "",
+   0
+  ],
+  "d00ae": [
+   0,
+   36,
+   128,
+   53,
+   "Load Database ...",
+   "menu_load_database",
+   "",
+   0
+  ],
+  "d00ce": [
+   0,
+   54,
+   128,
+   72,
+   "Return",
+   "dbedit_return",
+   "",
+   0
+  ],
+  "d0139": [
+   0,
+   0,
+   102,
+   17,
+   "Pacific \u0003",
+   "",
+   "cfbe8",
+   6
+  ],
+  "d0159": [
+   0,
+   18,
+   102,
+   35,
+   "Central \u0003",
+   "",
+   "cfcf2",
+   6
+  ],
+  "d0179": [
+   0,
+   36,
+   102,
+   53,
+   "Northeast \u0003",
+   "",
+   "cfe08",
+   7
+  ],
+  "d0199": [
+   0,
+   54,
+   102,
+   71,
+   "Atlantic \u0003",
+   "",
+   "cff51",
+   7
+  ],
+  "d01b9": [
+   0,
+   72,
+   102,
+   89,
+   "Free Agents ...",
+   "dbedit_free_agents",
+   "",
+   0
+  ],
+  "d01d9": [
+   0,
+   90,
+   102,
+   108,
+   "Find Player ...",
+   "roster_edit_screen",
+   "",
+   0
+  ],
+  "d01f9": [
+   0,
+   0,
+   102,
+   17,
+   "Pacific \u0003",
+   "",
+   "cfbe8",
+   6
+  ],
+  "d0219": [
+   0,
+   18,
+   102,
+   35,
+   "Central \u0003",
+   "",
+   "cfcf2",
+   6
+  ],
+  "d0239": [
+   0,
+   36,
+   102,
+   53,
+   "Northeast \u0003",
+   "",
+   "cfe08",
+   7
+  ],
+  "d0259": [
+   0,
+   54,
+   102,
+   71,
+   "Atlantic \u0003",
+   "",
+   "cff51",
+   7
+  ],
+  "d0279": [
+   0,
+   72,
+   102,
+   89,
+   "Free Agents ...",
+   "dbedit_free_agents",
+   "",
+   0
+  ],
+  "d0299": [
+   0,
+   90,
+   102,
+   108,
+   "Find Player ...",
+   "roster_edit_screen",
+   "",
+   0
+  ],
+  "d031d": [
+   0,
+   0,
+   169,
+   17,
+   "Move to Free Agent List",
+   "",
+   "",
+   0
+  ],
+  "d033d": [
+   0,
+   18,
+   169,
+   35,
+   "Move to Roster 2",
+   "",
+   "",
+   0
+  ],
+  "d035d": [
+   0,
+   36,
+   169,
+   53,
+   "Create Free Agent ...",
+   "create_player_menu",
+   "",
+   0
+  ],
+  "d037d": [
+   0,
+   54,
+   169,
+   72,
+   "Edit Team Lines ...",
+   "dbedit_edit_team_lines",
+   "",
+   0
+  ],
+  "d039d": [
+   0,
+   0,
+   169,
+   17,
+   "Move to Free Agent List",
+   "",
+   "",
+   0
+  ],
+  "d03bd": [
+   0,
+   18,
+   169,
+   35,
+   "Move to Roster 1",
+   "",
+   "",
+   0
+  ],
+  "d03dd": [
+   0,
+   36,
+   169,
+   53,
+   "Create Free Agent ...",
+   "create_player_menu",
+   "",
+   0
+  ],
+  "d03fd": [
+   0,
+   54,
+   169,
+   72,
+   "Edit Team Lines ...",
+   "dbedit_edit_team_lines",
+   "",
+   0
+  ],
+  "d0450": [
+   0,
+   0,
+   32,
+   18,
+   "File",
+   "",
+   "d006e",
+   4
+  ],
+  "d0470": [
+   33,
+   0,
+   92,
+   18,
+   "Roster 1",
+   "",
+   "d0139",
+   6
+  ],
+  "d0490": [
+   93,
+   0,
+   154,
+   18,
+   "Roster 2",
+   "",
+   "d01f9",
+   6
+  ],
+  "d04b0": [
+   155,
+   0,
+   244,
+   18,
+   "Edit Roster 1",
+   "",
+   "d031d",
+   4
+  ],
+  "d04d0": [
+   245,
+   0,
+   336,
+   18,
+   "Edit Roster 2",
+   "",
+   "d039d",
+   4
+  ],
+  "d04fc": [
+   0,
+   0,
+   52,
+   17,
+   "Done",
+   "roster_dress_done",
+   "",
+   0
+  ],
+  "d051c": [
+   0,
+   18,
+   52,
+   36,
+   "Cancel",
+   "lines_cancel",
+   "",
+   0
+  ],
+  "d0558": [
+   0,
+   0,
+   104,
+   17,
+   "Dress Player",
+   "lines_dress_player",
+   "",
+   0
+  ],
+  "d0578": [
+   0,
+   18,
+   104,
+   36,
+   "Scratch Player",
+   "lines_scratch_player",
+   "",
+   0
+  ],
+  "d05af": [
+   0,
+   0,
+   156,
+   18,
+   "Show Player Statistics",
+   "roster_screen",
+   "",
+   0
+  ],
+  "d05f4": [
+   0,
+   0,
+   77,
+   18,
+   "Line Editor",
+   "",
+   "d04fc",
+   2
+  ],
+  "d0614": [
+   78,
+   0,
+   128,
+   18,
+   "Roster",
+   "",
+   "d0558",
+   2
+  ],
+  "d0634": [
+   129,
+   0,
+   247,
+   18,
+   "Player Statistics",
+   "",
+   "d05af",
+   1
+  ],
+  "d068a": [
+   0,
+   0,
+   191,
+   17,
+   "Regular Season Statistics ...",
+   "roster_regular_season_stats",
+   "",
+   0
+  ],
+  "d06aa": [
+   0,
+   18,
+   191,
+   36,
+   "Play-Off Statistics ...",
+   "roster_playoff_stats",
+   "",
+   0
+  ],
+  "d0720": [
+   0,
+   0,
+   143,
+   18,
+   "Return To Line Editor",
+   "menu_return_one",
+   "",
+   0
+  ],
+  "d075e": [
+   0,
+   0,
+   117,
+   18,
+   "Player Statistics",
+   "",
+   "d0720",
+   1
+  ],
+  "d077e": [
+   118,
+   0,
+   190,
+   18,
+   "Display ...",
+   "",
+   "d068a",
+   2
+  ]
+ }
 }

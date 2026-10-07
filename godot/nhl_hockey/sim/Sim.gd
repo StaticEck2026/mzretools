@@ -50,6 +50,7 @@ var game_over := false              # game_flags 0x40: the final whistle went
 var intro := false                   # the anthem before the game (match_sequence) is running
 var stars_running := false           # the three stars after the game (three_stars_sequence)
 var match_over := false              # the three stars are over: the game is finished
+var intermission_pending := false    # end_of_period: a period ended, the front end shows the intermission
 var sequence_steps: int = 0          # dword_e9b04: steps left of the anthem / three stars
 var cup_final := false               # game_over_check: this game decides the Stanley Cup
 var intermission_camera := false     # game_flags 0x80 (the cup presentation)
@@ -87,6 +88,7 @@ var misc_first_touch := false       # misc_flags bit 4: first touch after the fa
 var controls_blocked := false       # dword_ccc9c
 var period: int = 0                 # period_idx (0 based)
 var period_length: int = 300        # seconds on the clock at the start of a period (dword_e9ab6)
+var overtime_length: int = 0         # period_length of a regular season overtime (word_cbc4a[0]), 0 the same
 var clock_seconds: int = 300
 var clock_sub: int = 0              # 24 sub ticks per second, decremented every step
 var period_over := false
@@ -231,8 +233,11 @@ func start_period(p: int, switch_ends: bool = true) -> void:
 	elif switch_ends:
 		ends_switched = not ends_switched
 	period = p
-	# period_clock_init: the clock; a random time of the late game announcement (3rd period)
+	# period_clock_init: the clock (period_length: the overtime of a regular season game is the
+	# first entry of the table, 5 minutes); a random time of the late game announcement (3rd period)
 	clock_seconds = period_length
+	if p >= 3 and (settings2 & 2) != 0 and overtime_length > 0:
+		clock_seconds = overtime_length
 	clock_sub = 0
 	announce_time = clock_seconds - random(clock_seconds >> 1)
 	period_over = false
