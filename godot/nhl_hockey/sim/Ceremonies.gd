@@ -305,6 +305,8 @@ static func next_period(sim: Sim) -> void:
 	elif p > 3:
 		p = 3
 	sim.infractions.clear()
+	if not sim.no_stats:
+		sim.summary_close_period()
 	sim.start_period(p, switch)
 	sim.intermission_pending = true
 	# game_loop: the scoreboard of the intermission with the organ

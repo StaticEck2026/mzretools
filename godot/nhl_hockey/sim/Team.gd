@@ -1,7 +1,8 @@
 class_name Team
 extends RefCounted
 ## One of the two team records (0xdf614 home, 0xdf714 away, 0x100 bytes each). Only the fields the
-## simulation uses are kept; statistics are reduced to the few counters the rules touch.
+## simulation uses are kept; the team statistics are the counters of the Game Statistics screen
+## (team_select_screen2) and of the league files.
 ## Offsets refer to re/nhl_hockey/STRUCTURES.md.
 
 const FL_LINE_CHANGE_UI := 0x02      # +0x44 bit 1: line change menu open
@@ -9,10 +10,18 @@ const FL_OFFSIDE := 0x10             # +0x44 bit 4: an attacker is offside (chec
 const FL_PULLED_GOALIE := 0x80       # players[0].flags & 0x80 is the attack direction, this is ours
 
 var index: int = 0                   # 0 home, 1 away
+var shots: int = 0                   # +0x00 shots on goal (shot_landed)
+var pp_goals: int = 0                # +0x02 power play goals (goal_ends_penalty)
 var power_plays: int = 0             # +0x04 power plays (update_power_play)
+var pp_shots: int = 0                # +0x06 shots on a power play
+var pp_time: int = 0                 # +0x08 seconds on a power play (lead_time_stats)
+var penalty_count: int = 0           # +0x0a penalties (penalty_box_update)
+var penalty_minutes: int = 0         # +0x0c
+var zone_time: int = 0               # +0x0e seconds with the puck in the attacking zone (zone_time_stats)
 var goals: int = 0                   # +0x10
-var shots: int = 0                   # +0x12
-var faceoffs_won: int = 0            # +0x14
+var faceoffs_won: int = 0            # +0x12
+var offensive_faceoffs: int = 0      # +0x14 faceoffs won in the attacking zone
+var one_timers: int = 0              # +0x18 one timer shots
 var one_timer_goals: int = 0         # +0x1a
 var breakaway_goals: int = 0         # +0x1e
 var penalty_shots: int = 0           # +0x20 penalty shots awarded
@@ -75,7 +84,19 @@ func reset_stats() -> void:
 		goalie_stats.append(PackedInt32Array([0, 0, 0]))
 	goals = 0
 	shots = 0
+	pp_goals = 0
+	power_plays = 0
+	pp_shots = 0
+	pp_time = 0
+	penalty_count = 0
+	penalty_minutes = 0
+	zone_time = 0
+	faceoffs_won = 0
+	offensive_faceoffs = 0
+	one_timers = 0
 	hits = 0
+	passes = 0
+	passes_completed = 0
 	one_timer_goals = 0
 	breakaway_goals = 0
 	penalty_shots = 0

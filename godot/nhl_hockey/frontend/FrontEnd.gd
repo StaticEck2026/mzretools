@@ -541,16 +541,49 @@ func set_pause_menu_labels(m: int) -> void:
 			desk1.text = "Return"
 			desk2.text = "Return"
 
-## end_match_from_period (0x190be): the box score of the period, then the intermission desk
+## the game summary of the game on the ice written to GSUMMARY.DB (gsummary_flush,
+## gsummary_write_header)
+func write_summary(m: Node) -> void:
+	if m != null and not m.sim.no_stats:
+		GameFiles.write_data("gsummary.db", m.sim.summary_bytes())
+
+## the scores around the league are followed in exhibitions without the all star teams
+func _league_scores_on(m: Node) -> bool:
+	if Session.mode != 0 or m == null:
+		return false
+	for t in 2:
+		var info: Database.TeamInfo = m.sim.teams[t].info
+		if info != null and info.index >= 0x1a:
+			return false
+	return true
+
+## end_match_from_period (0x190be): the box score of the period, the scores around the league
+## (started after the 1st period), then the intermission desk
 func intermission(m: Node, period_done: int) -> int:
 	game = m
-	await games.boxscore_screen(1, period_done + 1, period_done + 1)
+	write_summary(m)
+	var period := period_done + 1
+	var r := await games.boxscore_screen(1, period, period)
+	if _league_scores_on(m):
+		if period == 1:
+			BoxScore.league_scores_init(m.sim.teams[0].info.index, m.sim.teams[1].info.index)
+		if r & 4 == 0:
+			BoxScore.league_scores_advance(period, m.sim.teams[0].info.index)
+			if BoxScore.simulate_pending_games() >= 0:
+				await games.boxscore_screen(0x20, period, 0)
 	return await pause_menu(1, m)
 
-## end_match_from_loop (0x1920f): the box score of the game, then pause_menu(2)
+## end_match_from_loop (0x1920f): the box score of the game, the final scores around the league
+## (the coach's clip of the CD is missing), then pause_menu(2)
 func game_end(m: Node) -> void:
 	game = m
-	await games.boxscore_screen(1, 1, m.sim.period + 1)
+	write_summary(m)
+	var period: int = m.sim.period + 1
+	var r := await games.boxscore_screen(1, 1, period)
+	if _league_scores_on(m) and r & 4 == 0 and not BoxScore.games.is_empty():
+		BoxScore.league_scores_advance(period, m.sim.teams[0].info.index)
+		BoxScore.simulate_pending_games()
+		await games.boxscore_screen(0x20, period, 0)
 	var code := await pause_menu(2, m)
 	game = null
 

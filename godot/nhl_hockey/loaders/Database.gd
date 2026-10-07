@@ -18,6 +18,7 @@ class Player:
 	var ratings: PackedByteArray
 	var goalie: bool
 	var roster_idx: int         # 0..24 skaters, 25..27 goalies
+	var key: int = -1           # the record's offset in KEY.DB
 
 	func full_name() -> String:
 		return first + " " + last
@@ -110,6 +111,7 @@ func read_player(key: int, goalie: bool, roster_idx: int) -> Player:
 	p.last = cstring(key_db, key + 0x13, 16)
 	p.goalie = goalie
 	p.roster_idx = roster_idx
+	p.key = key
 	var att := key_db.decode_s32(key + 0x24)
 	var n := 0x10 if goalie else 0x14
 	if att >= 0 and att + n <= att_db.size():

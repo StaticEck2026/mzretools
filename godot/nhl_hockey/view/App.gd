@@ -29,7 +29,10 @@ func _ready() -> void:
 
 ## NHL_UI_SCRIPT: scripted input for screenshots of the front end, commands separated by ";":
 ## wait:FRAMES, click:X,Y (a click of the mouse at X,Y of the 640x480 screen), key:enter|esc,
-## press:ACTION (an input action of the match, e.g. pause), shot:PATH (the window as PNG), quit
+## press:ACTION (an input action of the match, e.g. pause), shot:PATH (the window as PNG),
+## simgame:PERIODS[,SECONDS] (the session's teams play that many periods without a view; the
+## front end's screens then see it as the game on the ice), call:CALLBACK (a menu callback run
+## like run_menu does, without waiting for it), scores:PERIOD (the scores around the league), quit
 func _run_script(script: String) -> void:
 	for cmd in script.split(";", false):
 		var parts := cmd.strip_edges().split(":", true, 1)
@@ -63,8 +66,41 @@ func _run_script(script: String) -> void:
 				await RenderingServer.frame_post_draw
 				var img := get_viewport().get_texture().get_image()
 				print("screenshot %s: %s" % [arg, error_string(img.save_png(arg))])
+			"simgame":
+				var pa := arg.split(",")
+				front.game = _sim_game(int(pa[0]), int(pa[1]) if pa.size() > 1 else 30)
+			"call":
+				front.dispatch(arg)
+				await get_tree().process_frame
+			"scores":
+				# the scores around the league after period ARG (end_match_from_period)
+				BoxScore.league_scores_init(Session.home_team, Session.away_team)
+				for p in range(1, int(arg) + 1):
+					BoxScore.league_scores_advance(p, Session.home_team)
+				front.games.boxscore_screen(0x20, int(arg), 0)
+				await get_tree().process_frame
 			"quit":
 				get_tree().quit()
+
+func _sim_game(periods: int, seconds: int) -> Node:
+	var holder: Node = load("res://view/SimHolder.gd").new()
+	add_child(holder)
+	var sim := Sim.new()
+	holder.sim = sim
+	sim.user1_team = 0
+	sim.user2_team = 0
+	sim.period_length = seconds
+	sim.set_teams(front.db.load_team(Session.home_team), front.db.load_team(Session.away_team))
+	sim.assign_users()
+	var steps := 0
+	while steps < 200000 and not sim.match_over and sim.period < periods:
+		sim.step(8, 8, 0, 0)
+		steps += 1
+		if sim.intermission_pending:
+			sim.intermission_pending = false
+	print("simgame: %d steps, period %d, %d:%d, %d summary records" % [steps, sim.period, sim.teams[0].goals,
+		sim.teams[1].goals, sim.gs_records.size()])
+	return holder
 
 func quit() -> void:
 	get_tree().quit()

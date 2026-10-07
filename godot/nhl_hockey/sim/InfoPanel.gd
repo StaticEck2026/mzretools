@@ -90,6 +90,13 @@ static func elapsed(sim: Sim) -> Vector2i:
 		t -= 1
 	return Vector2i(t / 60, t % 60)
 
+## the goalie of a team's line table in the net (line table +0x24 + the goalie chosen)
+static func _goalie_byte(sim: Sim, t: int) -> int:
+	var team := sim.teams[t]
+	var lt := Lines.line_table(team)
+	var k := 0x24 + (team.goalie_request & 1)
+	return lt[k] if k < lt.size() else 0xff
+
 static func player_name(sim: Sim, t: int, r: int) -> String:
 	return Ceremonies.star_caption(sim, t, r)
 
@@ -106,6 +113,11 @@ static func _log(sim: Sim, entry: Array) -> void:
 static func announce_goal(sim: Sim, team: int, scorer: int, assist1: int, assist2: int) -> void:
 	var t := elapsed(sim)
 	_log(sim, ["goal", team, scorer, assist1, assist2, sim.period, t.x, t.y])
+	if not sim.no_stats:
+		# the record: team, scorer, assists (0xff none), the goal flags, period, time, the goalies
+		sim.summary_append(PackedByteArray([1, team, scorer & 0xff, assist1 & 0xff, assist2 & 0xff, sim.goal_flags,
+			sim.period + 1, t.x, t.y, _goalie_byte(sim, team), _goalie_byte(sim, team ^ 1)]))
+		sim.gs_trailer[1 + team * 2] += 1
 	sim.goal_call = [team, scorer, assist1, assist2]       # said once the panel is up (ref_pickup)
 	if team == 0:
 		load_clip(sim, CLIP_GOAL if sim.random(0x14) < 10 else CLIP_SIREN)
@@ -131,6 +143,8 @@ static func announce_goal(sim: Sim, team: int, scorer: int, assist1: int, assist
 static func record_penalty(sim: Sim, team: int, roster: int, type: int, minutes: int, queue_index: int = 0) -> void:
 	var t := elapsed(sim)
 	_log(sim, ["penalty", team, roster, type, sim.period, t.x, t.y])
+	if not sim.no_stats:
+		sim.summary_append(PackedByteArray([2, team, roster & 0xff, (type - 9) & 0xff, minutes & 0xff, sim.period + 1, t.x, t.y]))
 	var idx := type - 9
 	if sim.panel == -1 and idx != 0x11:
 		var clip := -1
@@ -184,6 +198,7 @@ static func announce_injury(sim: Sim, team: int, roster: int, for_game: bool) ->
 	_log(sim, ["injury", team, roster, for_game, sim.period, t.x, t.y])
 	if sim.no_stats:
 		return
+	sim.summary_append(PackedByteArray([3, team, roster & 0xff, 1 if for_game else 0, sim.period + 1, t.x, t.y]))
 	set_text(sim, ["%02d:%02d %s Injury" % [t.x, t.y, sim.teams[team].abbrev()], player_name(sim, team, roster),
 		"gone for the game" if for_game else "gone for 1 period", "", ""])
 	open(sim)

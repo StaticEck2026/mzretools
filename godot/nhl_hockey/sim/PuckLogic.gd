@@ -451,6 +451,9 @@ static func shot_landed(sim: Sim) -> void:
 			team.shots += 1
 			team.add_stat(s.roster_idx, Team.ST_SHOTS)
 			var opp := sim.opponents_of(s)
+			if sim.power_play and opp.skaters_on_ice < team.skaters_on_ice:
+				team.pp_shots += 1
+			sim.gs_trailer[2 + team.index * 2] += 1
 			var g := opp.goalie_index()
 			if g >= 0:
 				opp.goalie_stats[g][1] += 1

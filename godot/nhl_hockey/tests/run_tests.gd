@@ -730,6 +730,16 @@ func ceremony_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 		fail("goal panel: '%s' goals %d assists %d" % [shown, home.stat(7, Team.ST_GOALS), home.stat(10, Team.ST_ASSISTS)])
 	else:
 		print("goal panel: ", shown)
+	# the game summary: the goal record (team, scorer, assists, period 1) and the trailer's goal
+	var gs := sim.summary_bytes()
+	var recs := Sim.summary_records(gs)
+	var goal_rec: PackedByteArray = recs[0] if recs.size() > 0 else PackedByteArray()
+	if gs.size() != 11 * (recs.size() + 1) or recs.size() != 2 or goal_rec[0] != 1 or goal_rec[1] != 0 or goal_rec[2] != 7 \
+			or goal_rec[3] != 10 or goal_rec[4] != 0xff or goal_rec[6] != 1 or recs[-1][0] != 4 or recs[-1][1] != 1:
+		fail("game summary after a goal: %s" % gs.hex_encode())
+	sim.summary_close_period()
+	if Sim.summary_records(sim.summary_bytes()).size() != 3:
+		fail("the period record should stay when a period is closed")
 	# the final whistle, the three stars (two goals, two assists, one goal) and the end of the game
 	sim = Sim.new()
 	sim.set_teams(bos, det)

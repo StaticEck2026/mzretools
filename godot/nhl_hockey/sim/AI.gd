@@ -1090,6 +1090,7 @@ static func one_timer_step(sim: Sim, e: Entity) -> void:
 			e.anim_pos = 4
 			e.anim_hold = 4
 			Anim.advance(e)
+			sim.team_of(e).one_timers += 1
 			sim.crowd_noise += 100
 			PuckLogic.update_carrier(sim, e)
 			sim.puck_carrier = e.slot

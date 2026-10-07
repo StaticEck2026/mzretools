@@ -64,6 +64,12 @@ var clip_pos: int = 0                # dword_e9ab2 high word: position in the cl
 var clip_time: int = 0               # dword_e9ab2 low word: steps left on this frame
 var panel_text: Array = ["", "", "", "", ""]   # byte_e02c8 (title), byte_e0250, byte_e028c, byte_e0308, byte_e0344
 var event_log: Array = []            # e9b4c: the last 8 goals / penalties / injuries of the period
+# the game summary (GSUMMARY.DB, gsummary_append_record): the header (unk_c5423: month, day, home,
+# away, the number of records), the records of 11 bytes (1 goal, 2 penalty, 3 injury, 4 the goals
+# and shots of a period) and the trailer of the running period (unk_c542e) that always ends the file
+var gs_header := PackedByteArray([0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0])
+var gs_records: Array = []
+var gs_trailer := PackedByteArray([4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 var ref_infraction_slot: int = -1    # ref_infraction high word: the entity the call is about
 var infraction_type_served: int = 0  # the infraction of the penalty being served (record_penalty)
 var goal_flags: int = 1             # word_e9ab0 of the last goal: 1 even, 2 short handed, 4 power play, 8 empty net
@@ -222,7 +228,48 @@ func new_game() -> void:
 		entities[i].roster_idx = -1
 		entities[i].line_slot = -1
 	replay.reset()
+	summary_init(0, 0)
 	start_period(0)
+
+## gsummary_init (0x1aed0..): a new summary for the date of the game
+func summary_init(month: int, day: int) -> void:
+	gs_header = PackedByteArray([0, month, day, team_info[0].index if team_info[0] != null else 0,
+		team_info[1].index if team_info[1] != null else 1, 1, 0, 0, 0, 0, 0])
+	gs_records.clear()
+	gs_trailer = PackedByteArray([4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+
+## gsummary_append_record: an event of the game (the trailer stays the last record)
+func summary_append(rec: PackedByteArray) -> void:
+	rec.resize(11)
+	gs_records.append(rec)
+
+## gsummary_write_final after the intermission: the trailer of the period stays, a new one starts
+func summary_close_period() -> void:
+	gs_records.append(gs_trailer)
+	gs_trailer = PackedByteArray([4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+
+## GSUMMARY.DB as the original writes it: the header, the records, the trailer
+func summary_bytes() -> PackedByteArray:
+	var n := gs_records.size() + 1
+	gs_header[5] = n & 0xff
+	gs_header[6] = n >> 8
+	var out := gs_header.duplicate()
+	for r: PackedByteArray in gs_records:
+		out.append_array(r)
+	out.append_array(gs_trailer)
+	return out
+
+## the records of a summary (GSUMMARY.DB) after its header, the trailer included
+static func summary_records(data: PackedByteArray) -> Array:
+	var out: Array = []
+	var n := data.decode_u16(5) if data.size() >= 11 else 0
+	var at := 11
+	for i in n:
+		if at + 11 > data.size():
+			break
+		out.append(data.slice(at, at + 11))
+		at += 11
+	return out
 
 ## new period: dress the default lines, everyone to the centre faceoff
 func start_period(p: int, switch_ends: bool = true) -> void:

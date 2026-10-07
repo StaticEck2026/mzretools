@@ -53,6 +53,9 @@ static func game_state_tick(sim: Sim) -> void:
 	if not sim.play_stopped:
 		game_clock_tick(sim)
 		if sim.clock_sub == 0x17:
+			# update_line_timers: once a second the zone and power play times, the penalties
+			zone_time_stats(sim)
+			lead_time_stats(sim)
 			penalty_timers(sim)
 	if sim.penalty_box_mode:
 		return
@@ -199,6 +202,8 @@ static func serve_penalty(sim: Sim, e: Entity, minutes: int, server: Entity = nu
 	team.penalties.append([server.roster_idx, minutes * 60, server.slot, minutes == 2])
 	if not sim.no_stats:
 		team.add_stat(e.roster_idx, Team.ST_PIM, minutes)
+		team.penalty_count += 1
+		team.penalty_minutes += maxi(minutes, 0)
 	InfoPanel.record_penalty(sim, team.index, e.roster_idx, sim.infraction_type_served, minutes, queue_index)
 	if server != e:
 		sim.panel_text[4] = "served by #%d" % server.number
@@ -226,6 +231,25 @@ static func penalty_time_left(sim: Sim) -> int:
 	for pen in short_team.penalties:
 		left = mini(left, pen[1])
 	return left if left != 0x7fff else 0
+
+## zone_time_stats (0x639a4): a second with the puck beyond a blue line counts for the team
+## attacking that end
+static func zone_time_stats(sim: Sim) -> void:
+	if sim.no_stats:
+		return
+	var y := sim.puck.yi
+	if y > -0x4f and y < 0x4f:
+		return
+	var up := y >= 0x4f
+	for team in sim.teams:
+		if team.attacks_up == up:
+			team.zone_time += 1
+			return
+
+## lead_time_stats (0x63b57): a second of the power play for the team with more skaters
+static func lead_time_stats(sim: Sim) -> void:
+	if sim.power_play:
+		sim.teams[sim.power_play_team].pp_time += 1
 
 ## penalty_timers (0x63a37): penalties run with the game clock; the first expired one returns
 static func penalty_timers(sim: Sim) -> void:
@@ -275,6 +299,7 @@ static func goal_ends_penalty(sim: Sim, conceding: Team, scoring: Team) -> void:
 	for i in conceding.penalties.size():
 		if conceding.penalties[i][3]:
 			penalty_expired(sim, conceding, i)
+			scoring.pp_goals += 1
 			return
 
 ## process_infractions (0x637b5): the first queued event stops the play; penalties against the
@@ -934,8 +959,10 @@ static func place_faceoff(sim: Sim) -> void:
 		e.flags2 &= ~Entity.F2_OFFSIDE
 		if e.line_slot < 0 or e.state() == Entity.State.PENALTY_BOX or e.state() == Entity.State.DOOR_OPEN:
 			continue
-		# dress_line: a player coming onto the ice gets his role on the stack (and NEAREST for the centre)
-		if e.state() == Entity.State.INIT_PERIOD or e.state() == Entity.State.ALL_GOTO_FACEOFF:
+		# dress_line (apply_line_change gives every player of the line his place again): the role
+		# state, NEAREST on top of it for the centre; during a penalty shot only the players
+		# coming from the bench
+		if sim.penalty_shot_phase == 0 or e.state() == Entity.State.INIT_PERIOD or e.state() == Entity.State.ALL_GOTO_FACEOFF:
 			AI.set_default_state(sim, e)
 			if e.line_slot == 4:
 				e.set_state_reset(Entity.State.NEAREST)
@@ -1035,7 +1062,12 @@ static func faceoff_resolve(sim: Sim) -> void:
 	sim.referee.set_state(Entity.State.REF_NORMAL)
 	sim.referee.vx = -0x500 if sim.referee.xi > 0 else 0x500
 	if winner >= 0:
-		sim.team_of(sim.entities[winner]).faceoffs_won += 1
+		# the faceoffs won, those beyond the blue line of the winner's attacking end separately
+		var w := sim.entities[winner]
+		var wt := sim.team_of(w)
+		wt.faceoffs_won += 1
+		if (sim.puck.yi > 0x4e and wt.attacks_up) or (sim.puck.yi < -0x4e and not wt.attacks_up):
+			wt.offensive_faceoffs += 1
 
 ## all_players_arrived (0x51440): every player on the ice stands at his faceoff place (timer_b -100)
 static func all_players_arrived(sim: Sim) -> bool:

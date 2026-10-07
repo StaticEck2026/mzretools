@@ -460,6 +460,34 @@ func _edit_lines(side: int) -> int:
 	await ed.edit(side, 0xcf2ef, 2, fe.game.sim.teams[side])
 	return 2
 
-## the box score between the periods and after the game (boxscore_screen 0x2d35a)
+## the box score between the periods and after the game (boxscore_screen 0x2d35a, BoxScore.gd)
 func boxscore_screen(kind: int, from_period: int, to_period: int) -> int:
-	return 0
+	return await BoxScore.new(fe).boxscore_screen(kind, from_period, to_period)
+
+## the period of the game on the ice (_period_num, 1 based)
+func _period_num() -> int:
+	return fe.game.sim.period + 1 if fe.game != null else 3
+
+## menu_game_statistics (0x1a96d): the statistics of the two teams (team_select_screen2)
+func menu_game_statistics() -> int:
+	await fe.leave_screen(100)
+	await BoxScore.new(fe).game_statistics()
+	return 2
+
+## menu_penalty_summary (0x1a9ac): the penalties of the game so far
+func menu_penalty_summary() -> int:
+	await fe.leave_screen(100)
+	await boxscore_screen(2, 1, _period_num())
+	return 2
+
+## menu_scoring_summary (0x1aa6d): the goals of the game so far
+func menu_scoring_summary() -> int:
+	await fe.leave_screen(100)
+	await boxscore_screen(1, 1, _period_num())
+	return 2
+
+## menu_team_scratches (0x1aac4): the players scratched by both teams
+func menu_team_scratches() -> int:
+	await fe.leave_screen(100)
+	await boxscore_screen(4, 0, 0)
+	return 2

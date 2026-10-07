@@ -102,6 +102,29 @@ func wait_ticks(ticks: int, interruptible: bool = true) -> bool:
 				return true
 	return false
 
+## wait_ticks_or_input (0x33e6a) with its result: 0 the time ran out, 1 a click, 2 a double click
+## (a second click within 0x14 ticks), 3 Esc
+func wait_ticks_or_input(ticks: int) -> int:
+	var t := 0.0
+	var clicks := 0
+	var first := 0.0
+	while t * 100.0 < ticks:
+		await get_tree().process_frame
+		t += get_process_delta_time()
+		var e := poll()
+		if not e.is_empty():
+			if e["buttons"] & 4:
+				return 3
+			if e["buttons"] & 2:
+				if clicks == 0:
+					first = t
+				else:
+					return 2
+				clicks += 1
+		if clicks != 0 and (t - first) * 100.0 > 0x14:
+			return clicks
+	return clicks
+
 func frame() -> void:
 	await get_tree().process_frame
 
