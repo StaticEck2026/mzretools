@@ -118,6 +118,7 @@ the headless test feeds the same inputs to the port and compares, field by field
 | | `move_entity`, `collide_neighbours`, `collide_pair`, the draw order | 300 clusters of team mates | every record of the cluster, the draw order, the seed |
 | | `advance_animation` | 500 animation states of 81 animations (frames, durations, the ends, the board pins) | the record, the stride sounds |
 | | `puck_check_players`, `puck_player_interaction`, `goalie_save`, `puck_hits_player`, `attach_puck_to_stick`, `take_puck`, `update_carrier`, `shot_landed`, `two_line_pass_check` | 800 situations of the puck among players, goalies and the referee (loose, carried, shots in flight, first touches, icing) | every record, the carrier, the sounds, infractions, knock downs and user switches in order, the touch, pass and icing state, the team records (the last carriers, shots, faceoffs, passes), the players' and goalies' shots, the seed |
+| | `collide_pair` (opponents), `goalie_collision`, `resolve_body_check`, `resolve_hook_hold`, `resolve_dive_hit`, `penalty_odds`, `breakaway_foul`, `facing_boards`, `knock_down`, `knockdown_position`, `crowd_reaction_sfx` | 1800 body contacts among both teams, goalies, the referee and the puck, in open ice, along the boards, in the corners and at the nets: `move_entity`, and `resolve_body_check` and `knock_down` called directly | every record (the state stack too), the carrier, the sounds, penalties, injuries, bench cheers and stoppages in order, the penalty shot, the referee's hits, the crowd, the teams' hits, the seed |
 
 All of them match. The comparisons found and fixed, among others: the distance (the original's is
 |dx| / cos of the vector's angle from its arctangent and sine tables, not an octagonal estimate), the
@@ -126,8 +127,11 @@ a stride counter the port had invented, the draw order deciding which players co
 off its pegs, the frame shown at most every 5 steps with the skate stride sound, who gets to a loose puck
 (a goalie's reach with the stick, the skaters' 14 around their frame, the stick blade, the body), the
 steal odds and the hold speed, deflections off a goalie, icing called only when the other team touches
-the puck, the two line pass against the right goal line, and every FM register of the AdLib driver
-(`audio/FmDriver.gd` is a literal port).
+the puck, the two line pass against the right goal line, the referee's hits counted for the home team,
+the injury that stops the play at once, a skater turning on the spot by the direction of his whole
+velocity, and every FM register of the AdLib driver (`audio/FmDriver.gd` is a literal port). Running
+whole games beside them showed one more departure: the centre lost the puck chasing role to a line
+change during play (the original changes lines there only while the play is stopped).
 
 The workflow `.github/workflows/nhl.yml` runs, on every change of the tools, the port or the game files:
 the decoders of `tools/nhl/formats.py` against the game's own (`tools/nhl/test_pack.py`), `golden.py`

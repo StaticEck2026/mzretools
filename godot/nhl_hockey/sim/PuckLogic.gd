@@ -1254,7 +1254,8 @@ static func goalie_collision(sim: Sim, e: Entity, o: Entity) -> void:
 			if sim.last_impact > 7 and (sim.puck_carrier != p.slot or sim.last_impact > 9):
 				if absi(g.yi) > 0x9f and p.slot != Entity.Slot.REFEREE and p.slot < 12 and p.roster_idx >= 0 \
 						and sim.team_of(p).entity_of[p.roster_idx] > -3 and g.speed > 0x1e and (p.flags2 & Entity.F2_PENALIZED) == 0:
-					if sim.random(0x14 - p.check_skill) < 3 and not sim.no_stats:
+					# (and the goalie's y with bit 2 clear, as the original tests it)
+					if sim.random(0x14 - p.check_skill) < 3 and not sim.no_stats and (g.yi & 4) == 0:
 						Rules.maybe_queue_infraction(sim, p, Rules.INF_INTERFERENCE)
 		var t := p
 		p = g
@@ -1281,15 +1282,15 @@ static func knock_down(sim: Sim, hitter: Entity, victim: Entity) -> void:
 		crowd_reaction_sfx(sim, 1)
 		sim.play_sfx(0x7d)
 		return
-	# the puck and the nets have no line slot in the original (0, like a goalie)
-	var hitter_slot := hitter.line_slot if hitter.slot < 12 else 0
+	# the puck and the nets have line slot 0 (like a goalie), the referee -1
+	var hitter_slot := hitter.line_slot
 	var anim: int
 	if victim.goalie_skill >= 0xc and sim.random(0x10) + 0x10 > victim.speed:
 		victim.timer_d = 0x3c
 		anim = 0x8d3
 	else:
 		if hitter_slot != 0 and not sim.no_stats and not sim.play_stopped:
-			sim.team_of(hitter).hits += 1
+			sim.team_record(hitter).hits += 1
 		victim.timer_c = 0x78
 		var dir := Tables.direction8(hitter.xi - victim.xi, hitter.yi - victim.yi)
 		anim = victim.anim
@@ -1338,15 +1339,19 @@ static func knock_down(sim: Sim, hitter: Entity, victim: Entity) -> void:
 			victim.flags |= Entity.F_BUSY
 			Anim.set_animation(victim, 0xa0b)
 			injure_player(sim, victim)
-			if hitter_slot == 0 or not sim.opt_penalties or (hitter.slot < 12 and sim.team_of(hitter).penalties.size() > 7) \
+			if hitter_slot == 0 or not sim.opt_penalties or sim.box_count[1 if (hitter.flags & Entity.F_PLAYER2) else 0] >= 8 \
 					or not Rules.injury_check(sim, hitter):
 				Rules.queue_infraction(sim, hitter, Rules.INF_INJURY)
 			else:
-				# the hit that injured him is called: from behind (a major) or roughing
+				# the hit that injured him is called: from behind (a major) or roughing, and the
+				# play stops at once (start_stoppage from the first free entry of the queue on)
 				var d := Tables.direction8(victim.xi - hitter.xi, victim.yi - hitter.yi)
 				var hf := hitter.facing
 				var behind := ((d - hf + 1) & 7) < 3 and ((victim.facing - hf + 1) & 7) < 3
 				Rules.queue_infraction(sim, hitter, Rules.INF_CHECK_FROM_BEHIND if behind else Rules.INF_ROUGHING)
+				for i in 0x20:
+					if i >= sim.infractions.size():
+						Rules.start_stoppage(sim, i - 1)
 	sim.play_sfx(0x7d if (victim.flags & Entity.F_PLAYER2) else 0xa0)
 
 ## the board part of knock_down (0x56441..0x566ad): a player hit against the side or end boards is
@@ -1478,6 +1483,8 @@ static func knockdown_position(_sim: Sim, e: Entity, dir: int) -> int:
 ## injure_player (0x55e72): the player is hurt: out for the period (-3) or, after a heavy hit and
 ## with bad luck (rating 15 of the player), for the game (-4). The camera looks at him.
 static func injure_player(sim: Sim, e: Entity) -> void:
+	if sim.stubbed("injure_player", [e.slot]):
+		return
 	e.flags2 |= Entity.F2_UNSELECTABLE
 	sim.add_crowd(300, 1000)
 	sim.excitement += 0x1e

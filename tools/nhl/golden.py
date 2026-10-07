@@ -19,7 +19,9 @@
 #                    puck_check_players among players, goalies and the referee (goalie_save,
 #                    puck_hits_player, attach_puck_to_stick, take_puck, update_carrier, shot_landed;
 #                    knock_down and follow_puck_user_switch stubbed, the team records' statistics
-#                    pointing at buffers of the emulator)
+#                    pointing at buffers of the emulator); body contacts of both teams (move_entity,
+#                    resolve_body_check, knock_down; injury_check, injure_player, bench_cheer and
+#                    start_stoppage stubbed). The records after a call keep the fields that changed.
 #
 # The patch bank is put in the emulator's memory the way loadpatches leaves it: the .PAT file at
 # snd_patch_bank, each record's +0x10 pointing at its timbre from the .TIM files.
@@ -95,13 +97,19 @@ class PortEmu(LEEmu):
         return o
 
     def stub(self, addr, fn):
-        '''Replaces the routine at addr: fn(eax) is called instead and the routine returns'''
+        '''Replaces the routine at addr: fn(eax) is called instead and the routine returns (with
+        fn's result in eax unless it is None); returns the hook for unstub'''
         def hook(uc, address, size, user):
-            fn(uc.reg_read(UC_X86_REG_EAX))
+            r = fn(uc.reg_read(UC_X86_REG_EAX))
+            if r is not None:
+                uc.reg_write(UC_X86_REG_EAX, r & 0xffffffff)
             sp = uc.reg_read(UC_X86_REG_ESP)
             uc.reg_write(UC_X86_REG_EIP, struct.unpack('<I', uc.mem_read(sp, 4))[0])
             uc.reg_write(UC_X86_REG_ESP, sp + 4)
-        self.uc.hook_add(UC_HOOK_CODE, hook, None, addr, addr)
+        return self.uc.hook_add(UC_HOOK_CODE, hook, None, addr, addr)
+
+    def unstub(self, h):
+        self.uc.hook_del(h)
 
 
 def read(gamedir, name):
@@ -330,7 +338,8 @@ ENTITY_FIELDS = (('x', 0, -4), ('y', 4, -4), ('z', 8, -4), ('vx', 0xc, -2), ('vy
                  ('flags4', 0x55, 1), ('weight', 0x56, 1), ('speed_skill', 0x57, 1), ('shot_skill', 0x5b, 1),
                  ('pass_skill', 0x5d, 1), ('offense', 0x5f, 1), ('goalie_skill', 0x60, 1), ('check_skill', 0x62, 1),
                  ('save_result', 0x63, 1), ('left_handed', 0x65, 1),
-                 ('stamina', 0x58, 1), ('endurance', 0x61, 1))
+                 ('stamina', 0x58, 1), ('endurance', 0x61, 1), ('aggression', 0x64, 1), ('timer_d', 0x40, -2),
+                 ('state_sp', 0x1c, -2), ('stack', 0x1e, 4), ('stack2', 0x22, 4))
 APPLY_SKATING = 0x5e16d
 PUCK = ENTITIES + 14 * 0x80
 GAME_FLAGS = 0xc90bb
@@ -364,6 +373,21 @@ ICING_STATE = 0xe9abe                         # byte 2: flags, byte 3: the shoot
 GOAL_PREDICTION = 0xdf812                     # words +2 / +6: x where the puck crosses the +y / -y goal line
 SAVE_CLIP_SHOWN = 0xe9a9e                     # dword_e9a9e low word
 GS_TRAILER = 0xc542e                          # the game summary of the running period: +2 / +4 home / away shots
+INJURY_CHECK = 0x65b83                        # (entity): may he be lost
+INJURE_PLAYER = 0x55e72
+BENCH_CHEER = 0x61576                         # (away)
+START_STOPPAGE = 0x63543                      # (index in the infraction queue)
+RESOLVE_BODY_CHECK = 0x5382c                  # (e, o, strength)
+PERIOD_IDX = 0xc90da
+SETTINGS2 = 0xc5400
+BREAKAWAY_FLAG = 0xcc0f8
+DEFENDERS_AHEAD = 0xcc124
+PENALTY_SHOT_SLOT = 0xcc0fc
+PENALTY_SHOT_USER = 0xcc108
+CROWD_HIT_TOGGLE = 0xcc0da
+REF_HITS = 0xcbec2
+PENALIZED_COUNT = 0xe9aba                     # byte per team: players in the penalty box
+LAST_IMPACT = 0xe9b28
 # the team record fields of the pickup cases (+0x30.. the last three carriers, +0x36 skaters, +0x38
 # goalie_request) and the default line table of the port (Lines.default_line_table)
 TEAM_FIELDS = (('shots', 0, -2), ('pp_shots', 6, -2), ('faceoffs_won', 0x12, -2), ('offensive_faceoffs', 0x14, -2),
@@ -674,9 +698,10 @@ def pickup_cases(emu, rnd, base, calls):
     reach, the skaters' bodies and sticks, goalie_save, puck_hits_player, attach_puck_to_stick,
     take_puck, update_carrier, shot_landed); play_sfx, the infraction queue, knock_down and
     follow_puck_user_switch stubbed (calls: their calls in order)"""
-    emu.stub(KNOCK_DOWN, lambda eax: calls.append(['knock_down', (eax - ENTITIES) // 0x80,
-                                                   ((emu.uc.reg_read(UC_X86_REG_EDX) & 0xffffffff) - ENTITIES) // 0x80]))
-    emu.stub(FOLLOW_PUCK_USER_SWITCH, lambda eax: calls.append(['follow_puck_user_switch', struct.unpack('<h', struct.pack('<H', eax & 0xffff))[0]]))
+    hooks = [emu.stub(KNOCK_DOWN, lambda eax: calls.append(['knock_down', (eax - ENTITIES) // 0x80,
+                                                            ((emu.uc.reg_read(UC_X86_REG_EDX) & 0xffffffff) - ENTITIES) // 0x80])),
+             emu.stub(FOLLOW_PUCK_USER_SWITCH, lambda eax: calls.append(['follow_puck_user_switch',
+                                                                         struct.unpack('<h', struct.pack('<H', eax & 0xffff))[0]]))]
     # the statistics the team records point at: the line table (the goalie in the net: +0x24 +
     # goalie_request), the players' 0x10 byte records and the goalies' 3 words
     tables = []
@@ -797,6 +822,159 @@ def pickup_cases(emu, rnd, base, calls):
                     'final_seed': struct.unpack('<I', emu.read(SEED, 4))[0]})
         for a, n in ((GAME_FLAGS, 1), (STOP_FLAGS, 2), (MISC_FLAGS, 4), (OPTION_FLAGS, 4)):
             emu.write(a, b'\0' * n)
+    for h in hooks:
+        emu.unstub(h)
+    return out
+
+
+CHECK_GLOBALS = (('period', PERIOD_IDX, -2), ('settings2', SETTINGS2, 1), ('breakaway', BREAKAWAY_FLAG, -4),
+                 ('defenders_ahead', DEFENDERS_AHEAD, -4), ('penalty_shot_slot', PENALTY_SHOT_SLOT, -4),
+                 ('penalty_shot_user', PENALTY_SHOT_USER, -4), ('crowd_hit_toggle', CROWD_HIT_TOGGLE, -2),
+                 ('ref_hits', REF_HITS, -2), ('box_home', PENALIZED_COUNT, 1), ('box_away', PENALIZED_COUNT + 1, 1),
+                 ('user1_slot', MISC_FLAGS + 2, -2), ('crowd', CROWD_NOISE + 2, -2), ('excitement', EXCITEMENT + 2, -2),
+                 ('last_impact', LAST_IMPACT, -2), ('action_flags', ACTION_FLAGS, 1), ('puck_in_net', PUCK_IN_NET, 1))
+
+
+def check_cases(emu, rnd, base, calls):
+    '''body contacts among players of both teams, goalies, the referee and the puck: move_entity
+    (collide_pair, goalie_collision), resolve_body_check (resolve_hook_hold, resolve_dive_hit,
+    penalty_odds, breakaway_foul, facing_boards) and knock_down (knockdown_position at the
+    boards) called directly, a third each; injury_check (answering yes), injure_player,
+    bench_cheer and start_stoppage stubbed'''
+    def slot_of(eax):
+        return ((eax & 0xffffffff) - ENTITIES) // 0x80
+
+    def s16(v):
+        return struct.unpack('<h', struct.pack('<H', v & 0xffff))[0]
+    hooks = [emu.stub(INJURY_CHECK, lambda eax: (calls.append(['injury_check', slot_of(eax)]), 1)[1]),
+             emu.stub(INJURE_PLAYER, lambda eax: calls.append(['injure_player', slot_of(eax)])),
+             emu.stub(BENCH_CHEER, lambda eax: calls.append(['bench_cheer', eax & 0xffffffff])),
+             emu.stub(START_STOPPAGE, lambda eax: calls.append(['start_stoppage', s16(eax)]))]
+    out = []
+    frames = list(range(0, 0x284)) + list(range(0x294, 0x2da)) + list(range(0x378, 0x468))
+    anims = (0x621, 0x621, 0x621, 0x621, 0, 0x289, 0x639, 0x873, 0x589, 0x589, 0xed7, 0x6d9, 0x13c5, 0x529)
+    for k in range(1800):
+        mode = ('move', 'body', 'knock')[k % 3]
+        emu.write(ENTITIES, base)
+        teams = []
+        for t in TEAM_RECORDS:
+            energy = rnd.choice((0x1000, 0xc00))
+            emu.write(t + 0x46, struct.pack('<28h', *([energy] * 28)))
+            ent = [rnd.choice((-1, -1, -1, -2, -3)) for _ in range(28)]
+            emu.write(t + 0x7e, struct.pack('<28h', *ent))
+            f = {'energy': energy, 'entity_of': ent, 'hits': rnd.randrange(20), 'skaters': rnd.choice((6, 6, 5, 4)),
+                 'goalie_request': rnd.choice((0, 0, 0, 1, -0x100))}
+            emu.write(t + 0x24, struct.pack('<h', f['hits']))
+            emu.write(t + 0x36, struct.pack('<hh', f['skaters'], f['goalie_request']))
+            teams.append(f)
+        region = rnd.randrange(4)
+        if region == 0:          # open ice
+            cx, cy = rnd.randrange(-110, 111), rnd.randrange(-200, 201)
+        elif region == 1:        # the side boards
+            cx, cy = rnd.choice((-1, 1)) * rnd.randrange(0x78, 0x98), rnd.randrange(-0xe0, 0xe0)
+        elif region == 2:        # the corners
+            cx, cy = rnd.choice((-1, 1)) * rnd.randrange(0x50, 0x90), rnd.choice((-1, 1)) * rnd.randrange(0xc0, 0xf8)
+        else:                    # the end boards and the nets
+            cx, cy = rnd.randrange(-0x70, 0x71), rnd.choice((-1, 1)) * rnd.randrange(0xa0, 0xfc)
+        pool = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 16]
+        cluster = rnd.sample(pool, rnd.choice((2, 2, 3, 4)))
+        if rnd.random() < (0.6 if mode == 'knock' else 0.3):
+            cluster.append(14)
+        befores = {}
+        mover = rnd.choice([s_ for s_ in cluster if s_ != 14])
+        for slot in cluster:
+            rec = bytearray(emu.read(ENTITIES + slot * 0x80, 0x80))
+            x = cx + rnd.randrange(-7, 8)
+            y = cy + rnd.randrange(-7, 8)
+            lim = rnd.choice((0x800, 0x1800, 0x3000))
+            vx, vy = rnd.randrange(-lim, lim), rnd.randrange(-lim, lim)
+            if slot == mover and rnd.random() < 0.7:
+                # skating at the centre of the cluster: a contact
+                vx = max(-0x7fff, min(0x7fff, (cx - x) * rnd.randrange(0x100, 0x600) or rnd.randrange(-lim, lim)))
+                vy = max(-0x7fff, min(0x7fff, (cy - y) * rnd.randrange(0x100, 0x600) or rnd.randrange(-lim, lim)))
+            f = {'x': x << 16 | rnd.randrange(0x10000), 'y': y << 16 | rnd.randrange(0x10000),
+                 'vx': vx, 'vy': vy,
+                 'speed': rnd.choice((rnd.randrange(0, 0x40), rnd.randrange(0, 8))), 'heading': rnd.randrange(8) << 16 | rnd.randrange(0x10000),
+                 'want_dir': rnd.randrange(9), 'target_x': rnd.randrange(-150, 151), 'target_y': rnd.randrange(-250, 251)}
+            if slot == 14:
+                f['frame'] = rnd.choice((0x430, 0x44f, 0x450, 0x467))
+            else:
+                f.update({'line_slot': -1 if slot == 16 else (0 if slot in (0, 6) else rnd.randrange(1, 6)),
+                          'frame': rnd.choice(frames), 'flags4': rnd.choice((0, 8)),
+                          'flags': (0x40 if 6 <= slot < 12 else 0) | rnd.choice((0, 0, 0, 0x08, 0x10, 0x20)) |
+                          rnd.choice((0, 0x80)) | (0x04 if rnd.random() < 0.03 else 0),
+                          'flags2': rnd.choice((0, 0, 0, 0, 1, 0x10, 2)) | (0x20 if rnd.random() < 0.03 else 0),
+                          'roster': rnd.randrange(0, 20), 'weight': rnd.randrange(140, 230),
+                          'speed_skill': rnd.randrange(0, 16), 'stamina': rnd.randrange(0, 16),
+                          'check_skill': rnd.randrange(0, 16), 'aggression': rnd.randrange(0, 16),
+                          'goalie_skill': rnd.randrange(0, 16), 'anim': rnd.choice(anims), 'anim_pos': rnd.randrange(0, 6),
+                          'anim_hold': rnd.randrange(-1, 4), 'hit_by': rnd.choice((0, 3, -1)),
+                          'state_sp': rnd.randrange(8), 'stack': rnd.choice((0, 0x12121212, 0x01020304)),
+                          'stack2': rnd.choice((0, 0x12121212)), 'timer_d': rnd.randrange(0, 4)})
+            put_fields(rec, f)
+            struct.pack_into('<ii', rec, 0x74, f['x'], f['y'])
+            emu.write(ENTITIES + slot * 0x80, rec)
+        emu.call(SORT_DRAW_ORDER2)
+        for slot in cluster:
+            rec = bytearray(emu.read(ENTITIES + slot * 0x80, 0x80))
+            if slot == mover or rnd.random() < 0.2:
+                x0, y0 = struct.unpack_from('<ii', rec, 0)
+                vx, vy = struct.unpack_from('<hh', rec, 0xc)
+                struct.pack_into('<ii', rec, 0x74, x0, y0)
+                struct.pack_into('<ii', rec, 0, x0 + vx * 16, y0 + vy * 16)
+                emu.write(ENTITIES + slot * 0x80, rec)
+            befores[slot] = entity_fields(emu, slot)
+            befores[slot]['prev'] = list(struct.unpack_from('<ii', rec, 0x74))
+        carrier = rnd.choice((-1, -1, mover, rnd.choice(cluster)))
+        emu.write(PUCK + 0x42, bytes([carrier & 0xff]))
+        g = {'game_flags': rnd.choice((0, 0, 0, 0, 1, 0x10, 8)), 'options': rnd.choice((0x1f, 0x1f, 0x1b, 0x0e, 0x11)),
+             'period': rnd.choice((0, 1, 2, 3)), 'settings2': rnd.choice((0, 2)), 'breakaway': rnd.choice((0, 0, 1)),
+             'defenders_ahead': rnd.choice((0, 1)), 'penalty_shot_slot': rnd.choice((-1, -1, -1, 3)),
+             'penalty_shot_user': rnd.choice((0, -1)), 'crowd_hit_toggle': rnd.choice((0, 1)), 'ref_hits': rnd.randrange(3),
+             'box_home': rnd.choice((0, 1, 8)), 'box_away': rnd.choice((0, 2, 8)),
+             'user1_slot': rnd.choice((-1, mover, rnd.choice(cluster))), 'crowd': rnd.randrange(0, 1100),
+             'excitement': rnd.randrange(0, 100), 'last_impact': rnd.randrange(0, 0x30), 'action_flags': rnd.choice((0, 0xc)),
+             'puck_in_net': 0, 'puck': [rnd.randrange(-150, 151), rnd.randrange(-250, 251)]}
+        emu.write(GAME_FLAGS, bytes([g['game_flags']]))
+        emu.write(OPTION_FLAGS, struct.pack('<I', g['options']))
+        for n, a, sz in CHECK_GLOBALS:
+            emu.write(a, struct.pack('<' + _FMT[sz], g[n] if sz < 0 else g[n] & ((1 << (8 * sz)) - 1)))
+        if 14 not in cluster:
+            puck = bytearray(emu.read(PUCK, 0x80))
+            put_fields(puck, {'x': g['puck'][0] << 16, 'y': g['puck'][1] << 16})
+            emu.write(PUCK, puck)
+        seed = rnd.getrandbits(32)
+        emu.write(SEED, struct.pack('<I', seed))
+        order = draw_order(emu)
+        del calls[:]
+        other = rnd.choice([s_ for s_ in cluster if s_ != mover])
+        strength = rnd.randrange(0, 0x30)
+        if mode == 'move':
+            x = struct.unpack('<h', emu.read(ENTITIES + mover * 0x80 + 2, 2))[0]
+            y = struct.unpack('<h', emu.read(ENTITIES + mover * 0x80 + 6, 2))[0]
+            emu.call(MOVE_ENTITY, eax=ENTITIES + mover * 0x80, edx=x & 0xffffffff, ebx=y & 0xffffffff)
+        elif mode == 'body':
+            if other == 14:
+                other = mover
+                mode = 'none'
+            else:
+                emu.call(RESOLVE_BODY_CHECK, eax=ENTITIES + mover * 0x80, edx=ENTITIES + other * 0x80, ebx=strength)
+        else:
+            emu.call(KNOCK_DOWN, eax=ENTITIES + other * 0x80, edx=ENTITIES + mover * 0x80)
+        out.append({'mode': mode, 'mover': mover, 'other': other, 'strength': strength,
+                    'carrier': carrier, 'globals': g, 'teams': teams, 'seed': seed,
+                    'before': {str(s_): v for s_, v in befores.items()}, 'order': order,
+                    'after': {str(s_): entity_fields(emu, s_) for s_ in cluster}, 'order_after': draw_order(emu),
+                    'calls': [list(c) for c in calls], 'carrier_after': struct.unpack('<b', emu.read(PUCK + 0x42, 1))[0],
+                    'game_flags_after': emu.read(GAME_FLAGS, 1)[0],
+                    'globals_after': {n: struct.unpack('<' + _FMT[sz], emu.read(a, abs(sz)))[0] for n, a, sz in CHECK_GLOBALS},
+                    'hits_after': [struct.unpack('<h', emu.read(t + 0x24, 2))[0] for t in TEAM_RECORDS],
+                    'final_seed': struct.unpack('<I', emu.read(SEED, 4))[0]})
+        for a, n in ((GAME_FLAGS, 1), (OPTION_FLAGS, 4), (PENALTY_SHOT_SLOT, 4), (BREAKAWAY_FLAG, 4), (MISC_FLAGS, 4)):
+            emu.write(a, b'\0' * n)
+        emu.write(PENALTY_SHOT_SLOT, struct.pack('<i', -1))
+    for h in hooks:
+        emu.unstub(h)
     return out
 
 
@@ -883,6 +1061,17 @@ def physics_cases(exe):
     out['contacts'] = contact_cases(emu, rnd, base, sfx)
     out['animation'] = animation_cases(emu, rnd, base, sfx)
     out['pickup'] = pickup_cases(emu, rnd, base, calls)
+    out['checks'] = check_cases(emu, rnd, base, calls)
+    # the records after the call keep only the fields that changed (the test merges them over the
+    # records before the call)
+    for cases in out.values():
+        for c in cases if isinstance(cases, list) else ():
+            if isinstance(c, dict) and 'after' in c and 'before' in c:
+                if 'x' in c['after']:
+                    c['after'] = {k: v for k, v in c['after'].items() if c['before'].get(k) != v}
+                else:
+                    c['after'] = {s_: {k: v for k, v in a.items() if c['before'][s_].get(k) != v}
+                                  for s_, a in c['after'].items()}
     # the entities as entities_init leaves them (every case starts from these)
     emu.write(ENTITIES, base)
     out['base'] = [dict(entity_fields(emu, i), prev=list(struct.unpack('<iii', emu.read(ENTITIES + i * 0x80 + 0x74, 12))))

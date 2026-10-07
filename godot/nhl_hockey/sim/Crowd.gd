@@ -51,6 +51,8 @@ static func start(sim: Sim, index: int, id: int) -> void:
 
 ## bench_cheer (0x61576): the bench of team t cheers
 static func bench_cheer(sim: Sim, t: int) -> void:
+	if sim.stubbed("bench_cheer", [t]):
+		return
 	if t == 0:
 		start(sim, HOME_BENCH, 0x87)
 	else:

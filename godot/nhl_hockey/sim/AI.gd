@@ -885,8 +885,6 @@ static func nearest_to_puck(sim: Sim, e: Entity) -> void:
 		elif (e.flags & Entity.F_USER) == 0:
 			e.set_state_reset(Entity.State.PUCK_CARRIER)
 		return
-	if Lines.handle_line_change(sim, e):
-		return
 	e.react_timer -= 1
 	if e.react_timer < 0:
 		e.react_timer = e.reaction
@@ -945,7 +943,10 @@ static func nearest_to_puck(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_BUSY:
 		return
 	if sim.play_stopped:
-		skate_idle(sim, e)
+		# (the line change only while the play is stopped: a change during play would take the
+		# role away from the centre)
+		if not Lines.handle_line_change(sim, e):
+			skate_idle(sim, e)
 		return
 	if e.flags & Entity.F_USER:
 		return

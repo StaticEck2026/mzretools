@@ -555,6 +555,11 @@ func _default_skills(e: Entity) -> void:
 func team_of(e: Entity) -> Team:
 	return teams[e.team]
 
+## the team record an entity points at (+0x6c): the puck, the nets, the shadow and the referee
+## point at the home team's
+func team_record(e: Entity) -> Team:
+	return teams[0] if e.slot >= 12 else teams[e.team]
+
 func opponents_of(e: Entity) -> Team:
 	return teams[1 - e.team]
 
@@ -956,7 +961,7 @@ func skating_turn(e: Entity, turn: int) -> void:
 		turn ^= 4
 		k = 6
 	if turn != 0:
-		var vdir := Tables.direction8(e.vx >> 8, e.vy >> 8) if (e.vx != 0 or e.vy != 0) else 8
+		var vdir := Tables.direction8(e.vx, e.vy)     # 8 when standing
 		if (vdir & 8) == 0 and ((vdir - e.facing + k) & 7) < 4:
 			stop_skating(e)
 			return

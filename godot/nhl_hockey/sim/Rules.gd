@@ -350,6 +350,10 @@ static func process_infractions(sim: Sim) -> void:
 
 ## start_stoppage (0x63fb2): whistle; the faceoff spot follows from the event
 static func start_stoppage(sim: Sim, idx: int) -> void:
+	if sim.stubbed("start_stoppage", [idx]):
+		return
+	if idx < 0 or idx >= sim.infractions.size():
+		return
 	var inf: Array = sim.infractions[idx]
 	var type: int = inf[0]
 	var culprit: Entity = sim.entities[inf[1]]
@@ -449,6 +453,8 @@ static func maybe_queue_infraction(sim: Sim, e: Entity, type: int) -> void:
 ## injury_check (0x65b83): may the player be lost (penalty, injury)? A defenceman only while more
 ## than 2 defencemen, a forward only while more than 4 forwards of the team are still available.
 static func injury_check(sim: Sim, e: Entity) -> bool:
+	if sim.stubbed("injury_check", [e.slot]):
+		return true
 	if e.slot >= 12:
 		return true
 	var team := sim.team_of(e)
