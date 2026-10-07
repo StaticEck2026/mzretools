@@ -392,6 +392,11 @@ BENCH_CHEER = 0x61576                         # (away)
 START_STOPPAGE = 0x63543                      # (index in the infraction queue)
 RESOLVE_BODY_CHECK = 0x5382c                  # (e, o, strength)
 PERIOD_IDX = 0xc90da
+LINE_TABLES = (0xdc200, 0xdabf0)               # team +0xda: the line tables of the match (TEAMS.DB +0xbc)
+PLAYER_RATINGS = 0xdaca0                       # team +0xde: 25 x 0x14 rating bytes per team (+0x1f4 away)
+POS_LISTS = 0xe9cec                            # build_lines: 11 lists x 2 teams x 25 bytes
+LINEUP_REQ = 0xe0384                           # lineup_req_roster[6], lineup_req_slot[6]
+GOALIE_MENU = (0xcdc47, 0xcdc60, 0xcdc79, 0xcdc97, 0xcdcb0, 0xcdcc9)
 ROSTERS = 0xdb3a8                              # 2 x 28 player records of 0x27 bytes, a status byte first
 SETTINGS2 = 0xc5400
 BREAKAWAY_FLAG = 0xcc0f8
@@ -1320,7 +1325,7 @@ AI_GLOBALS = (('game_flags', GAME_FLAGS, 1), ('stop_flags', STOP_FLAGS, 1), ('mi
               ('period_length', 0xe9ab8, -2), ('deferred', 0xc5840, -4), ('infraction_events', 0xcc0ac, -4),
               ('save_clip_shown', 0xe9a9e, -2), ('period_over', 0xcbc46, -2), ('goal_call', 0xe9ad3, 1),
               ('goal_team', 0xe9ad4, 1), ('goal_scorer', 0xe9ad5, 1), ('goal_a1', 0xe9ad6, 1), ('goal_a2', 0xe9ad7, 1),
-              ('infraction0', 0xe9a16, 1))
+              ('infraction0', 0xe9a16, 1), ('message', 0xcbec8, -2), ('message_timer', 0xcbeca, -2))
 SAY_GOAL = 0x59ad0                             # stubbed: the announcer says the goal (the goal_call bytes)
 GOAL_MILESTONE_CHECK = 0x62807                 # stubbed: its deferred call is empty in this build
 PICK_PLAYER_FOR_POSITION = 0x655cc             # stubbed: the line table rebuilt around a lost player; (team, roster)
@@ -1333,7 +1338,7 @@ AI_TEAM_FIELDS = TEAM_FIELDS + (('goals', 0x10, -2), ('hits', 0x24, -2), ('break
                                 ('current_line', 0x2a, -2), ('nearest_d2', 0x3a, 4), ('nearest_dist', 0x3e, -4), ('nearest_slot', 0x42, -2),
                                 ('strategy', 0xd2, 1), ('strategy2', 0xd3, 1), ('flags2', 0xd4, 1), ('mode', 0xd5, 1),
                                 ('energy_threshold', 0xd6, -2), ('one_timer_tries', 0x16, -2), ('one_timers', 0x18, -2),
-                                ('goalie_slot', 0xfa, -2))
+                                ('goalie_slot', 0xfa, -2), ('dpair', 0x2c, -2), ('extra_attacker', 0x2e, -2))
 DEFAULT_STATES = (14, 2, 2, 3, 5, 3, 5)
 
 
@@ -1466,7 +1471,8 @@ def ai_world(emu, rnd, base, tables):
               'deferred': 0, 'infraction_events': rnd.choice((0, 0, 1, 8, 0x3f)), 'save_clip_shown': rnd.choice((0, 0, 1)),
               'period_over': 0, 'goal_call': rnd.choice((0xff, 0xff, 1)), 'goal_team': rnd.randrange(2),
               'goal_scorer': rnd.randrange(20), 'goal_a1': rnd.choice((0xff, rnd.randrange(20))),
-              'goal_a2': rnd.choice((0xff, rnd.randrange(20))), 'infraction0': rnd.choice((0, 0, 0, 0, 3))})
+              'goal_a2': rnd.choice((0xff, rnd.randrange(20))), 'infraction0': rnd.choice((0, 0, 0, 0, 3)),
+              'message': rnd.choice((-1, -1, 0, 1, 4, 5)), 'message_timer': rnd.choice((0, 0, 0x20))})
     for n, a, sz in AI_GLOBALS:
         emu.write(a, struct.pack('<' + _FMT[sz], g[n] if sz < 0 else g[n] & ((1 << (8 * sz)) - 1)))
     emu.write(OPTION_FLAGS, struct.pack('<I', g['option_flags']))
@@ -1712,7 +1718,8 @@ def ai_cases(exe):
     emu.stub(INJURY_CHECK, lambda eax: (calls.append(['injury_check', ((eax & 0xffffffff) - ENTITIES) // 0x80]), 1)[1])
     emu.stub(INJURE_PLAYER, lambda eax: calls.append(['injure_player', ((eax & 0xffffffff) - ENTITIES) // 0x80]))
     emu.stub(BENCH_CHEER, lambda eax: calls.append(['bench_cheer', eax & 0xffffffff]))
-    emu.stub(DRAW_LINE_INDICATOR, lambda eax: None)    # the HUD (the port's draws team.current_line)
+    emu.stub(DRAW_LINE_INDICATOR, lambda eax: calls.append(['draw_line_indicator', eax & 0xffff,
+                                                           struct.unpack('<i', struct.pack('<I', emu.uc.reg_read(UC_X86_REG_EDX)))[0]]))
     speech = {'busy': 0}
     emu.stub(SPEECH_BUSY, lambda eax: speech['busy'])
 
@@ -1735,16 +1742,17 @@ def ai_cases(exe):
                                                      s32(emu.uc.reg_read(UC_X86_REG_ECX))]))
     emu.call(ENTITIES_INIT)
     tables = []
-    for t in TEAM_RECORDS:
-        lt = emu.alloc(bytes(DEFAULT_LINE_TABLE))
+    for ti, t in enumerate(TEAM_RECORDS):
+        # the line tables, the player records (`rosters`, a status byte first) and the ratings
+        # where entities_init points the team records
+        emu.write(LINE_TABLES[ti], bytes(DEFAULT_LINE_TABLE))
+        emu.write(t + 0xda, struct.pack('<I', LINE_TABLES[ti]))
+        emu.write(t + 0xde, struct.pack('<I', PLAYER_RATINGS + ti * 0x1f4))
+        emu.write(t + 0xee, struct.pack('<I', ROSTERS + ti * 0x444))
         ps = emu.alloc(b'\0' * 28 * 0x10)
         gs = emu.alloc(b'\0' * 3 * 6)
-        emu.write(t + 0xda, struct.pack('<I', lt))
         emu.write(t + 0xe6, struct.pack('<I', ps))
         emu.write(t + 0xea, struct.pack('<I', gs))
-        # the per-player game records (0x27 bytes, a status byte first; the port keeps the
-        # status in entity_of) and the ratings (put_player_on_ice is stubbed): not compared
-        emu.write(t + 0xee, struct.pack('<I', emu.alloc(b'\0' * 28 * 0x27)))
         emu.write(t + 0xf2, struct.pack('<I', emu.alloc(b'\0' * 0x400)))
         tables.append((ps, gs))
     base = emu.read(ENTITIES, 17 * 0x80)
@@ -1799,7 +1807,162 @@ def ai_cases(exe):
             c['before'] = {s_: {k_: v for k_, v in b.items() if out['base'][int(s_)].get(k_) != v} for s_, b in c['before'].items()}
             c['after'] = {s_: a for s_, a in c['after'].items() if a}
         out[group] = cases
+    out['lines'] = lines_cases(emu, rnd, base, tables, calls, out['base'], os.path.join(os.path.dirname(exe), 'TEAMS.DB'))
     return out
+
+
+# the line changes: the routines called directly (with their register arguments)
+LINE_ROUTINES = {'build_lines': 0x64614, 'assign_line_positions': 0x5bbfa, 'apply_line_change': 0x5bef4,
+                 'choose_line': 0x5a0a3, 'line_avg_energy': 0x5a30c, 'team_avg_energy': 0x5a03b,
+                 'pick_next_line': 0x50908, 'cpu_line_change_select': 0x50975, 'request_line_change': 0x50434,
+                 'maybe_pull_goalie': 0x591c7, 'cpu_pull_goalie_check': 0x59352, 'late_game_pull_goalie': 0x593f5,
+                 'cpu_line_change': 0x59265, 'dress_line': 0x5e0dd, 'send_team_to_faceoff': 0x511b4,
+                 'handle_line_change': 0x52bb6, 'adjust_strategy': 0x5a581, 'hotkey_pull_goalie': 0x671e8,
+                 'controls_goalie_pull_request': 0x7cbb3, 'choose_goalie': 0x672f9}
+PERIOD_NUM = 0xd8c84
+
+
+def lines_read(emu):
+    '''the line change state outside the team records: the candidate lists of build_lines, the
+    lineup request, the goalie menu's radio buttons, the scratch words'''
+    raw = emu.read(POS_LISTS, 11 * 0x32)
+    lists = [[[struct.unpack_from('<b', raw, k * 0x32 + t * 0x19 + i)[0] for i in range(25)] for k in range(11)] for t in range(2)]
+    req = list(struct.unpack('<12b', emu.read(LINEUP_REQ, 12)))
+    return {'pos_lists': lists, 'req': req, 'menu': [emu.read(a, 1)[0] for a in GOALIE_MENU],
+            'scratch': list(struct.unpack('<hh', emu.read(SCRATCH[0], 2) + emu.read(SCRATCH[1], 2)))}
+
+
+def lines_cases(emu, rnd, base, tables, calls, base_fields, teams_path):
+    '''the line change routines on random teams: line tables of TEAMS.DB (now and then edited),
+    rosters with positions, ratings, statuses (empty, injured, scratched), energies, players out or
+    in the penalty box, the coaching fields, the goalie pulled or requested, special teams, the
+    end of the third period'''
+    with open(teams_path, 'rb') as f:
+        teams_db = f.read()
+    nteams = len(teams_db) // 0x2e8
+    names = list(LINE_ROUTINES)
+    cases = []
+    for k in range(100 * len(names)):
+        name = names[k % len(names)]
+        g, teams, carrier = ai_world(emu, rnd, base, tables)
+        lines_in = {'positions': [], 'ratings': [], 'line_tables': []}
+        if rnd.random() < 0.5:
+            g['period'] = 2
+            g['clock_seconds'] = rnd.randrange(0, 0x50)
+        for ti, t in enumerate(TEAM_RECORDS):
+            n = rnd.randrange(nteams)
+            lt = bytearray(teams_db[n * 0x2e8 + 0xbc:n * 0x2e8 + 0xec])
+            for _ in range(rnd.choice((0, 0, 0, 1, 3))):
+                lt[rnd.randrange(0x26)] = rnd.randrange(25)
+            lt += bytes([0x64]) * 0x10
+            emu.write(LINE_TABLES[ti], bytes(lt))
+            lines_in['line_tables'].append(list(lt))
+            pos = [rnd.choice('CCLLRRDDD') for _ in range(25)] + ['G'] * 3
+            ratings = [[rnd.randrange(1, 7) for _ in range(0x14)] for _ in range(25)]
+            status = [rnd.choice((3, 3, 3, 3, 3, 3, 3, 0, 1, 2)) for _ in range(25)] + [3, 3, rnd.choice((0, 3))]
+            if rnd.random() < 0.3:
+                status[rnd.randrange(25)] = 7
+            for i in range(28):
+                emu.write(ROSTERS + ti * 0x444 + i * 0x27, bytes([status[i]]))
+                emu.write(ROSTERS + ti * 0x444 + i * 0x27 + 6, pos[i].encode())
+            for i in range(25):
+                emu.write(PLAYER_RATINGS + ti * 0x1f4 + i * 0x14, bytes(ratings[i]))
+            lines_in['positions'].append(''.join(pos))
+            lines_in['ratings'].append(ratings)
+            teams[ti]['roster_status'] = status
+            energies = [rnd.choice((0x1000, 0x1000, rnd.randrange(0x400, 0x1001))) for _ in range(28)]
+            emu.write(t + 0x46, struct.pack('<28h', *energies))
+            teams[ti]['energies'] = energies
+            ent = list(teams[ti]['entity_of'])
+            for i in range(28):
+                if ent[i] == -2 and rnd.random() < 0.15:
+                    ent[i] = rnd.choice((-3, -3, 1, -4))
+            emu.write(t + 0x7e, struct.pack('<28h', *ent))
+            teams[ti]['entity_of'] = ent
+            f = {'goalie_request': rnd.choice((0, 0, 1, 0xff00, 0xfff0, 0xff01, 0x10)), 'current_line': rnd.randrange(8),
+                 'dpair': rnd.randrange(3), 'extra_attacker': rnd.choice((-1, 2, 5)), 'mode': rnd.choice((0, 1, 1, 4, 5, 6, 8)),
+                 'flags2': rnd.choice((0, 1, 1, 0x41, 0x81, 0xc1, 0x40)), 'energy_threshold': rnd.choice((0xccc, 0xd9a, 0x800)),
+                 'skaters': rnd.choice((6, 6, 6, 5, 4)), 'goals': rnd.randrange(5), 'flags': rnd.choice((0, 0, 2))}
+            for n_, o, sz in AI_TEAM_FIELDS:
+                if n_ in f:
+                    emu.write(t + o, struct.pack('<' + _FMT[abs(sz)], f[n_] & ((1 << (8 * abs(sz))) - 1)))
+            teams[ti].update({n_: struct.unpack('<' + _FMT[sz], emu.read(t + o, abs(sz)))[0] for n_, o, sz in AI_TEAM_FIELDS if n_ in f})
+        # some players with a change pending (handle_line_change, dress_line, send_team_to_faceoff)
+        for slot in range(12):
+            if rnd.random() < 0.3:
+                rec = bytearray(emu.read(ENTITIES + slot * 0x80, 0x80))
+                roster = struct.unpack_from('<b', rec, 0x47)[0]
+                put_fields(rec, {'next_roster': rnd.choice((roster, rnd.randrange(28))), 'next_line': rnd.randrange(-1, 7),
+                                 'timer_b': rnd.choice((0, 0, -100))})
+                emu.write(ENTITIES + slot * 0x80, rec)
+        for n_, a, sz in AI_GLOBALS:
+            emu.write(a, struct.pack('<' + _FMT[sz], g[n_] if sz < 0 else g[n_] & ((1 << (8 * sz)) - 1)))
+        emu.write(OPTION_FLAGS, struct.pack('<I', g['option_flags']))
+        emu.write(PERIOD_NUM, struct.pack('<h', g['period'] + 1))
+        emu.call(LINE_ROUTINES['build_lines'])
+        if name == 'build_lines':
+            emu.write(POS_LISTS, bytes(rnd.choice((0xff, 0, 1, 7)) for _ in range(11 * 0x32)))
+        for a in GOALIE_MENU:
+            emu.write(a, bytes([rnd.choice((1, 2))]))
+        emu.write(LINEUP_REQ, bytes([rnd.randrange(-1, 28) & 0xff for _ in range(6)] + [rnd.randrange(7) for _ in range(6)]))
+        seed = rnd.getrandbits(32)
+        emu.write(SEED, struct.pack('<I', seed))
+        scratch_ac = rnd.choice((0, 1, 2, 3, 0xffff, 0x10002))
+        # (e03bc: the place of the line change prompt for pick_next_line, else a stale word)
+        scratch = [rnd.choice((0, 1, 2, 3) + (() if name == 'pick_next_line' else (0x800, 0x1000))), rnd.randrange(0x10000)]
+        emu.write(SCRATCH[2], struct.pack('<I', scratch_ac))
+        emu.write(SCRATCH[0], struct.pack('<H', scratch[0]))
+        emu.write(SCRATCH[1], struct.pack('<H', scratch[1]))
+        lines_in.update(lines_read(emu))
+        befores = {str(s_): dict(entity_fields(emu, s_), prev=list(struct.unpack('<iii', emu.read(ENTITIES + s_ * 0x80 + 0x74, 12))))
+                   for s_ in range(17)}
+        t = rnd.randrange(2)
+        slot = t * 6 + rnd.randrange(6)
+        args = []
+        regs = {}
+        if name in ('assign_line_positions', 'apply_line_change', 'team_avg_energy', 'dress_line'):
+            args = [t]
+            regs = {'eax': TEAM_RECORDS[t]}
+        elif name == 'choose_line':
+            args = [t]
+            regs = {'eax': TEAM_RECORDS[1 - t], 'edx': TEAM_RECORDS[t]}
+        elif name == 'line_avg_energy':
+            args = [t, rnd.randrange(8)]
+            regs = {'eax': TEAM_RECORDS[t], 'edx': args[1]}
+        elif name in ('pick_next_line', 'cpu_line_change_select', 'handle_line_change'):
+            args = [slot]
+            regs = {'eax': ENTITIES + slot * 0x80}
+        elif name == 'request_line_change':
+            args = [slot, rnd.randrange(5)]
+            regs = {'eax': ENTITIES + slot * 0x80, 'edx': args[1]}
+        elif name == 'maybe_pull_goalie':
+            args = [t, rnd.randrange(-0x100, 0x101)]
+            regs = {'eax': TEAM_RECORDS[t], 'edx': TEAM_RECORDS[1 - t], 'ebx': args[1]}
+        elif name in ('late_game_pull_goalie', 'send_team_to_faceoff', 'adjust_strategy', 'hotkey_pull_goalie',
+                      'controls_goalie_pull_request'):
+            args = [t]
+            regs = {'eax': t}
+        elif name == 'choose_goalie':
+            args = [t, rnd.choice((0, 1, -1))]
+            regs = {'eax': t, 'edx': args[1]}
+        del calls[:]
+        ret = emu.call(LINE_ROUTINES[name], **regs)
+        after = ai_record(emu)
+        cases.append({'routine': name, 'args': args, 'globals': g, 'teams': teams, 'carrier': carrier, 'seed': seed,
+                      'scratch_ac': scratch_ac, 'scratch': scratch, 'lines': lines_in,
+                      'before': befores, 'order': draw_order(emu), 'calls': [list(c) for c in calls],
+                      'after': {str(s_): {k_: v for k_, v in entity_fields(emu, s_).items() if befores[str(s_)].get(k_) != v}
+                                for s_ in range(17)},
+                      'world_after': after, 'lines_after': dict(lines_read(emu), ret=struct.unpack('<i', struct.pack('<I', ret))[0])})
+        for a, n_ in ((GAME_FLAGS, 1), (OPTION_FLAGS, 4), (STOP_FLAGS, 2), (MISC_FLAGS, 4), (BREAKAWAY_FLAG, 4),
+                      (PENALTY_SHOT_ACTIVE, 4), (PENALTY_SHOT_SETUP, 4), (PENALTY_SHOT_PHASE, 4)):
+            emu.write(a, b'\0' * n_)
+        emu.write(LINE_TABLES[0], bytes(DEFAULT_LINE_TABLE))
+        emu.write(LINE_TABLES[1], bytes(DEFAULT_LINE_TABLE))
+    for c in cases:
+        c['before'] = {s_: {k_: v for k_, v in b.items() if base_fields[int(s_)].get(k_) != v} for s_, b in c['before'].items()}
+        c['after'] = {s_: a for s_, a in c['after'].items() if a}
+    return cases
 
 
 UPDATE_CAMERA = 0x65d01

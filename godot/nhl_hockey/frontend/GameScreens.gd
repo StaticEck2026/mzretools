@@ -414,6 +414,9 @@ func set_goalie_menu_labels() -> void:
 		var team := sim.teams[t]
 		var lt := Lines.line_table(team)
 		var sel := 2 if Entity.to_s16(team.goalie_request) < 0 else team.goalie_request & 1
+		# the attribute bytes of the items, as set_goalie_menu_labels leaves them
+		team.goalie_menu = PackedByteArray([2, 2, 2])
+		team.goalie_menu[sel] = 1
 		for g in 3:
 			var it := Menus.at(base + g * 32)
 			var name := "NONE"

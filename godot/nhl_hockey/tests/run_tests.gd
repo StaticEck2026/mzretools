@@ -710,11 +710,14 @@ func ai_golden() -> void:
 	for group in data:
 		if group == "base":
 			continue
+		if group == "lines":
+			counts.append(_lines_golden(data[group], base))
+			continue
 		var sim := Sim.new()
 		sim.stubs = {"play_sfx": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
 			"injure_player": true, "bench_cheer": true, "announce_goal": true, "play_speech": true, "load_clip": true,
 			"say_goal": true, "goal_milestone_check": true, "put_player_on_ice": true,
-			"pick_player_for_position": true}
+			"pick_player_for_position": true, "draw_line_indicator": true}
 		var ok := 0
 		var bad := 0
 		var shown := 0
@@ -748,6 +751,117 @@ func ai_golden() -> void:
 			parts.append("%s %d/%d" % [Tables.ai_state_names[st + 1], per_state[st][0], per_state[st][0] + per_state[st][1]])
 		counts.append("%s %d / %d (%s)" % [group, ok, ok + bad, ", ".join(parts)])
 	print("golden AI: ", "; ".join(counts))
+
+## the line change routines (ai.json "lines"): called directly on random teams
+func _lines_golden(cases: Array, base: Array) -> String:
+	var sim := Sim.new()
+	sim.stubs = {"play_sfx": true, "put_player_on_ice": true, "pick_player_for_position": true, "draw_line_indicator": true}
+	var per := {}
+	var ok := 0
+	var shown := 0
+	var only := OS.get_environment("AI_STATE")
+	var index := -1
+	for c: Dictionary in cases:
+		index += 1
+		_ai_world_set(sim, c, base)
+		var li: Dictionary = c["lines"]
+		for t in 2:
+			var team: Team = sim.teams[t]
+			var info := Database.TeamInfo.new()
+			var pos: String = li["positions"][t]
+			for i in 25:
+				var p := Database.Player.new()
+				p.position = pos.substr(i, 1)
+				p.ratings = PackedByteArray(_ints(li["ratings"][t][i]))
+				p.roster_idx = i
+				info.skaters.append(p)
+			for i in 3:
+				var p := Database.Player.new()
+				p.position = "G"
+				p.goalie = true
+				p.ratings = PackedByteArray()
+				p.ratings.resize(0x10)
+				p.roster_idx = 25 + i
+				info.goalies.append(p)
+			info.line_table = PackedByteArray(_ints(li["line_tables"][t]))
+			team.info = info
+			for k in 11:
+				team.pos_lists[k] = PackedInt32Array(_ints(li["pos_lists"][t][k]))
+			for i in 3:
+				team.goalie_menu[i] = int(li["menu"][t * 3 + i])
+		var req: Array = li["req"]
+		for i in 6:
+			sim.req_roster[i] = int(req[i])
+			sim.req_slot[i] = int(req[6 + i])
+		var name: String = c["routine"]
+		var args: Array = _ints(c["args"])
+		var a0: int = args[0] if args.size() > 0 else 0
+		var a1: int = args[1] if args.size() > 1 else 0
+		sim.stub_calls.clear()
+		var ret = null
+		match name:
+			"build_lines": Lines.build_lines(sim)
+			"assign_line_positions": Lines.assign_line_positions(sim, sim.teams[a0])
+			"apply_line_change": Lines.apply_line_change(sim, sim.teams[a0])
+			"choose_line": Lines.choose_line(sim, sim.teams[1 - a0], sim.teams[a0])
+			"line_avg_energy": ret = Lines.line_avg_energy(sim, sim.teams[a0], a1)
+			"team_avg_energy": Lines.team_avg_energy(sim, sim.teams[a0])
+			"pick_next_line": Lines.pick_next_line(sim, sim.entities[a0])
+			"cpu_line_change_select": Lines.cpu_line_change_select(sim, sim.entities[a0])
+			"request_line_change": ret = 1 if Lines.request_line_change(sim, sim.entities[a0], a1) else 0
+			"maybe_pull_goalie": Lines.maybe_pull_goalie(sim, sim.teams[a0], sim.teams[1 - a0], a1)
+			"cpu_pull_goalie_check": Lines.cpu_pull_goalie_check(sim)
+			"late_game_pull_goalie": ret = 1 if Lines.late_game_pull_goalie(sim, a0) else 0
+			"cpu_line_change": Lines.cpu_line_change(sim)
+			"dress_line": Lines.dress_line(sim, sim.teams[a0])
+			"send_team_to_faceoff": Lines.send_team_to_faceoff(sim, sim.teams[a0])
+			"handle_line_change": ret = 1 if Lines.handle_line_change(sim, sim.entities[a0]) else 0
+			"adjust_strategy": Lines.adjust_strategy(sim, a0)
+			"hotkey_pull_goalie": Lines.toggle_pull_goalie(sim, a0)
+			"controls_goalie_pull_request": Lines.user_goalie_back(sim, a0)
+			"choose_goalie": Lines.choose_goalie(sim, a0, a1)
+		var diff := _ai_world_diff(sim, c, base)
+		var la: Dictionary = c["lines_after"]
+		if ret != null:
+			var want := int(la["ret"])
+			if name != "line_avg_energy":
+				want = 1 if (want & 0xffff) != 0 else 0
+			if int(ret) != want:
+				diff.append("returns %d (original %d)" % [int(ret), want])
+		for t in 2:
+			for k in 11:
+				if str(Array(sim.teams[t].pos_lists[k])) != str(_ints(la["pos_lists"][t][k])):
+					diff.append("team %d list %d %s (original %s)" % [t, k, str(sim.teams[t].pos_lists[k]), str(la["pos_lists"][t][k])])
+			for i in 3:
+				if sim.teams[t].goalie_menu[i] != int(la["menu"][t * 3 + i]):
+					diff.append("team %d goalie menu %s (original %s)" % [t, str(sim.teams[t].goalie_menu), str(la["menu"])])
+					break
+		var got_req := []
+		for i in 6:
+			got_req.append(Entity.to_s8(sim.req_roster[i]))
+		for i in 6:
+			got_req.append(Entity.to_s8(sim.req_slot[i]))
+		if str(got_req) != str(_ints(la["req"])):
+			diff.append("lineup request %s (original %s)" % [str(got_req), str(la["req"])])
+		var sc: Array = la["scratch"]
+		if Sim._s16(sim.scratch_a) != int(sc[0]) or Sim._s16(sim.scratch_b) != int(sc[1]):
+			diff.append("scratch %d %d (original %s)" % [Sim._s16(sim.scratch_a), Sim._s16(sim.scratch_b), str(sc)])
+		if not per.has(name):
+			per[name] = [0, 0]
+		if diff.is_empty():
+			ok += 1
+			per[name][0] += 1
+		else:
+			per[name][1] += 1
+			if only != "" and name != only:
+				failures += 1
+			elif shown < 10:
+				shown += 1
+				fail("lines %s %s%s: %s" % [name, str(args), " (case %d)" % index if only != "" else "", ", ".join(diff.slice(0, 8))])
+	var parts := []
+	for n in per:
+		parts.append("%s %d/%d" % [n, per[n][0], per[n][0] + per[n][1]])
+	return "lines %d / %d (%s)" % [ok, cases.size(), ", ".join(parts)]
 
 ## update_camera against the original (golden.py camera_cases)
 func _camera_golden(cases: Array) -> int:
@@ -917,6 +1031,8 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	else:
 		sim.goal_call = []
 	sim.infractions = [[int(g["infraction0"]), -1, false]] if int(g.get("infraction0", 0)) != 0 else []
+	sim.message = int(g.get("message", -1))
+	sim.message_timer = int(g.get("message_timer", 0))
 	var teams: Array = c["teams"]
 	for t in 2:
 		var team: Team = sim.teams[t]
@@ -940,9 +1056,13 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 		team.flags2 = int(f["flags2"])
 		team.mode = int(f["mode"])
 		team.energy_threshold = int(f["energy_threshold"])
+		team.dpair_counter = int(f.get("dpair", 0))
+		team.extra_attacker = int(f.get("extra_attacker", -1))
 		for i in 28:
 			team.entity_of[i] = int(f["entity_of"][i])
 			team.roster_status[i] = int(f["roster_status"][i])
+			if f.has("energies"):
+				team.energy[i] = int(f["energies"][i])
 	for i in 12:
 		var e: Entity = sim.entities[i]
 		e.team = 0 if i < 6 else 1
@@ -990,7 +1110,8 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 		"sound_card": sim.sound_device, "sound_enabled": 1 if sim.sound_enabled else 0, "announce_time": sim.announce_time,
 		"period_length": sim.period_length, "deferred": 1 if sim.deferred else 0, "infraction_events": sim.infraction_events,
 		"save_clip_shown": 1 if sim.save_clip_shown else 0, "period_over": 1 if sim.period_over else 0,
-		"goal_call": 0 if sim.goal_call.is_empty() else 1, "infraction0": 0 if sim.infractions.is_empty() else 1}
+		"goal_call": 0 if sim.goal_call.is_empty() else 1, "infraction0": 0 if sim.infractions.is_empty() else 1,
+		"message": sim.message, "message_timer": sim.message_timer}
 
 static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 	var diff := []
@@ -1022,7 +1143,7 @@ static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 			"nearest_dist": team.nearest_dist, "nearest_d2": team.nearest_d2, "nearest_slot": team.nearest_slot, "strategy": team.strategy,
 			"strategy2": team.strategy2, "flags2": team.flags2, "mode": team.mode, "energy_threshold": team.energy_threshold,
 			"one_timer_tries": team.one_timer_tries, "one_timers": team.one_timers, "goalie_slot": team.goalie_slot,
-			"goals": team.goals}
+			"goals": team.goals, "dpair": team.dpair_counter, "extra_attacker": team.extra_attacker}
 		for k in tg:
 			if int(tg[k]) != int(want[k]):
 				diff.append("team %d %s %d (original %d)" % [t, k, int(tg[k]), int(want[k])])

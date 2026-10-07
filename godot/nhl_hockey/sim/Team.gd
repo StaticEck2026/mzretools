@@ -50,6 +50,25 @@ var flags2: int = 0                  # +0xd4: 0x01 the CPU picks its own lines (
 var mode: int = 0                    # +0xd5 adjust_strategy mode
 var energy_threshold: int = 0xccc    # +0xd6 a line below this average energy is changed
 var goalie_slot: int = -1            # +0xfa
+# the candidate lists build_lines sorts by ratings at the start of the match (25 roster indices,
+# best first, -1 after the last), 0x32 bytes apart from 0xe9cec (+0x19 for the away team): by
+# position letter and for all skaters but defencemen, by the offensive and the defensive sums of
+# the ratings; entry 6 (0xe9e18) holds the lineup flags of the players (cd418 of the roster status,
+# 0 for the players in the line table's forward lines and defence pairs)
+const PL_C := 0
+const PL_R_DEF := 1
+const PL_D := 2
+const PL_C_DEF := 3
+const PL_D_DEF := 4
+const PL_L := 5
+const PL_FLAGS := 6
+const PL_SKATERS := 7
+const PL_L_DEF := 8
+const PL_R := 9
+const PL_SKATERS_DEF := 10
+var pos_lists: Array = []
+# the attribute bytes of the pause menu's goalie choice (goalie 1, goalie 2, none; 1 = checked)
+var goalie_menu: PackedByteArray = PackedByteArray([2, 2, 2])
 # the status byte of each player's record in the global `rosters` (0xdb3a8, 0x27 bytes a player,
 # 28 a team): 3 on the bench, 4 on the ice, 7 called on by the line editor (bench_player_slot)
 var roster_status: PackedByteArray = PackedByteArray()
@@ -78,6 +97,11 @@ func _init(idx: int = 0) -> void:
 	entity_of.resize(28)
 	roster_status.resize(28)
 	roster_status.fill(3)
+	for k in 11:
+		var l := PackedInt32Array()
+		l.resize(25)
+		l.fill(-1)
+		pos_lists.append(l)
 	for i in 28:
 		energy[i] = 0x1000
 		entity_of[i] = -2

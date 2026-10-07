@@ -366,8 +366,13 @@ func _accept_controls(player: int, state: int) -> void:
 	var m: Node = fe.game
 	if m != null:
 		var sim: Sim = m.sim
+		var before := [sim.user1_team, sim.user2_team]
 		sim.user1_team = Session.user_side(0)
 		sim.user2_team = Session.user_side(1)
+		# controls_apply_user_change: a team the users left gets back a goalie its user pulled
+		for side in [1, 2]:
+			if side in before and sim.user1_team != side and sim.user2_team != side:
+				Lines.user_goalie_back(sim, side - 1)
 		sim.assign_users()
 		fe.games.set_goalie_menu_labels()
 

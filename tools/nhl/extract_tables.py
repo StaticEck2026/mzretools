@@ -208,10 +208,19 @@ def main():
             a += 1
         lists.append(l)
     t['line_table_lists'] = lists
-    # line_preference[strategy][line]: 4 candidate lines tried by choose_line (-1 = end)
-    t['line_preference'] = [[list(struct.unpack('<4b', le.read(le.read_u32(0xcbd2e + 4 * i) + 4 * j, 4))) for j in range(4)] for i in range(11)]
+    # the same lists as the original indexes them: line_table_lists_raw[line_table_lists_base[type] + k]
+    # (signed bytes; an index past a list's end reads the next one)
+    t['line_table_lists_base'] = list(bases)
+    t['line_table_lists_raw'] = list(struct.unpack('<256b', le.read(0xcccc8, 256)))
+    # line_preference[mode][line]: 4 candidate lines tried by choose_line (-1 = end), indexed by the
+    # coaching mode (team +0xd5); 8 rows each, as the original reads them (mode 1 adds 4 to the
+    # line with flags2 & 0x80; past a mode's own rows it reads the next mode's)
+    t['line_preference'] = [[list(struct.unpack('<4b', le.read(le.read_u32(0xcbd2e + 4 * i) + 4 * j, 4))) for j in range(8)] for i in range(11)]
     # line_rotation[group][line]: the lines offered by the line change prompt (pick_next_line)
     t['line_rotation'] = [list(struct.unpack('<4b', le.read(0xccb5a + 4 * i, 4))) for i in range(24)]
+    # and as raw signed bytes from 0x20 before the table to 0x60 after it (pick_next_line indexes
+    # it with the prompt's place plus 4 x the current line)
+    t['line_rotation_raw'] = list(struct.unpack('<224b', le.read(0xccb5a - 0x20, 224)))
     t['menu_items'] = menu_items(le, exe)
     with open(out, 'w') as f:
         json.dump(t, f, indent=1)

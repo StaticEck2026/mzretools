@@ -44,19 +44,35 @@ static func roster_exists(team: Team, r: int) -> bool:
 		return team.info.player(r) != null
 	return true
 
-## on the ice or on the bench: not in the penalty box (1) and not unavailable (-3)
-static func available(team: Team, r: int) -> bool:
-	return roster_exists(team, r) and team.entity_of[r] < 1 and team.entity_of[r] > -3
+## the word the original reads at team +0x7e + 2 r (entity_of[r]); below the table it reads the
+## energy words in front of it, above it the port answers "not available"
+static func entity_word(team: Team, r: int) -> int:
+	if r >= 0 and r < 28:
+		return team.entity_of[r]
+	if r < 0 and r >= -28:
+		return team.energy[28 + r]
+	return 1
 
-## player_available (0x5bf04): the player is available and not already in the requested lineup;
-## registers him at index k
+## the word at team +0x46 + 2 r (energy[r]) for a line table entry (an unsigned byte); behind the
+## energy words come the entity_of words
+static func energy_word(team: Team, r: int) -> int:
+	if r >= 0 and r < 28:
+		return team.energy[r]
+	if r >= 28 and r < 56:
+		return team.entity_of[r - 28]
+	return 0
+
+## player_available (0x5bb9e): roster player r may take lineup position k: neither in the penalty
+## box (entity_of > 0) nor out of the game (-3 and below), nor in the lineup at another position;
+## he is registered at k
 static func player_available(sim: Sim, team: Team, r: int, k: int) -> bool:
-	if not available(team, r):
+	var st := entity_word(team, r)
+	if st > 0 or st <= -3:
 		return false
-	for i in 6:
+	for i in range(5, -1, -1):
 		if i != k and sim.req_roster[i] == r:
 			return false
-	sim.req_roster[k] = r
+	sim.req_roster[k] = Entity.to_s8(r)
 	return true
 
 ## the skaters of a position class in roster order (the lists at 0xe9d50.. of the original)
@@ -74,9 +90,107 @@ static func position_class(team: Team, type: int) -> Array:
 			out.append(r)
 	return out
 
+# cd418: the lineup flag of a roster status (build_lines)
+const STATUS_FLAGS := [0, 0, 2, 1, 1, 0, 0, 1, 0]
+
+## the 0x14 rating bytes of skater r (player_ratings), zeros for an empty slot
+static func skater_ratings(team: Team, r: int) -> PackedByteArray:
+	var p: Database.Player = team.info.player(r) if team.info != null else null
+	if p != null and p.ratings.size() >= 0x14:
+		return p.ratings
+	var z := PackedByteArray()
+	z.resize(0x14)
+	return z
+
+## the position letter of skater r (the byte at +6 of his record in `rosters`)
+static func position_letter(team: Team, r: int) -> int:
+	var p: Database.Player = team.info.player(r) if team.info != null else null
+	if p == null or p.position.is_empty():
+		return 0
+	return p.position.unicode_at(0)
+
+## shellsort_by_key (0x93541): sorts the keys from the largest down and their indices with them
+static func shellsort_desc(keys: PackedInt32Array, idx: PackedInt32Array) -> void:
+	var n := keys.size()
+	var gap := n >> 1
+	while gap > 0:
+		for i in range(gap, n):
+			var j := i - gap
+			while j >= 0 and keys[j] < keys[j + gap]:
+				var k := keys[j]
+				keys[j] = keys[j + gap]
+				keys[j + gap] = k
+				k = idx[j]
+				idx[j] = idx[j + gap]
+				idx[j + gap] = k
+				j -= gap
+		gap >>= 1
+
+## sort_line_candidates (0x644a8) / sort_line_candidates_skaters (0x6455f): the skaters of a
+## position letter (0: all but the defencemen) by a sum of their ratings, -1 after the last
+static func sort_line_candidates(team: Team, letter: int, sums: PackedInt32Array) -> PackedInt32Array:
+	var keys := PackedInt32Array()
+	var idx := PackedInt32Array()
+	keys.resize(25)
+	idx.resize(25)
+	for i in 25:
+		idx[i] = i
+		var l := position_letter(team, i)
+		var match := (l != 0x44) if letter == 0 else (l == letter)
+		keys[i] = sums[i] if match else -1
+	shellsort_desc(keys, idx)
+	var out := PackedInt32Array()
+	out.resize(25)
+	for i in 25:
+		out[i] = idx[i] if keys[i] >= 0 else -1
+	return out
+
+## build_lines (0x64614), at the start of a match: for both teams the candidates of each position
+## sorted by the offensive sum of their ratings (agility, speed, shot power, defensive and offensive
+## awareness, passing, weight, stick handling) and by the defensive one (agility, speed, shot power,
+## defensive awareness, passing, awareness, aggressiveness, checking, weight, stick handling);
+## players without a record or injured (status 0 / 1) are left out. Then the lineup flags.
+static func build_lines(sim: Sim) -> void:
+	for t in 2:
+		var team := sim.teams[t]
+		var off := PackedInt32Array()
+		var dfn := PackedInt32Array()
+		off.resize(25)
+		dfn.resize(25)
+		for i in 25:
+			var st := team.roster_status[i]
+			if st == 0 or st == 1:
+				off[i] = -1
+				dfn[i] = -1
+				continue
+			var r := skater_ratings(team, i)
+			off[i] = r[1] + r[2] + r[4] + r[6] + r[9] + r[10] + r[3] + r[13]
+			dfn[i] = r[1] + r[2] + r[4] + r[6] + r[9] + r[11] + r[5] + r[12] + r[3] + r[13]
+		team.pos_lists[Team.PL_D] = sort_line_candidates(team, 0x44, off)
+		team.pos_lists[Team.PL_R] = sort_line_candidates(team, 0x52, off)
+		team.pos_lists[Team.PL_L] = sort_line_candidates(team, 0x4c, off)
+		team.pos_lists[Team.PL_C] = sort_line_candidates(team, 0x43, off)
+		team.pos_lists[Team.PL_D_DEF] = sort_line_candidates(team, 0x44, dfn)
+		team.pos_lists[Team.PL_R_DEF] = sort_line_candidates(team, 0x52, dfn)
+		team.pos_lists[Team.PL_L_DEF] = sort_line_candidates(team, 0x4c, dfn)
+		team.pos_lists[Team.PL_C_DEF] = sort_line_candidates(team, 0x43, dfn)
+		team.pos_lists[Team.PL_SKATERS] = sort_line_candidates(team, 0, off)
+		team.pos_lists[Team.PL_SKATERS_DEF] = sort_line_candidates(team, 0, dfn)
+		var flags := PackedInt32Array()
+		flags.resize(25)
+		for i in 25:
+			var st := team.roster_status[i]
+			flags[i] = STATUS_FLAGS[st] if st < STATUS_FLAGS.size() else 0
+		var lt := line_table(team)
+		for i in 0x12:
+			var r := Entity.to_s8(lt[i])
+			if r >= 0 and r < 25:
+				flags[r] = 0
+		team.pos_lists[Team.PL_FLAGS] = flags
+
 ## line_avg_energy (0x5a30c): average energy of the players of a line (3 forwards, 5 on the power
-## play, 4 killing a penalty)
-static func line_avg_energy(sim: Sim, team: Team, line: int) -> int:
+## play, 4 killing a penalty); the sum is a 16 bit word
+static func line_avg_energy(_sim: Sim, team: Team, line: int) -> int:
 	var lt := line_table(team)
 	var start: int
 	var n: int
@@ -91,79 +205,115 @@ static func line_avg_energy(sim: Sim, team: Team, line: int) -> int:
 		n = 4
 	var total := 0
 	for i in n:
-		var r := lt[start + i]
-		total += team.energy[r] if r < 28 else 0x1000
+		total = Entity.to_s16(total + energy_word(team, lt[start + i]))
 	return total / n
 
-## team_avg_energy (0x5a03b): average energy of the skaters on the ice
+## team_avg_energy (0x5a03b): average energy of the skaters on the ice (the goalie not counted),
+## left in the scratch word e03bc (0 with nobody on the ice)
 static func team_avg_energy(sim: Sim, team: Team) -> int:
 	var total := 0
 	var n := 0
 	for i in 6:
 		var e := sim.entities[team.first_slot + i]
 		if e.line_slot > 0:
-			total += team.energy[e.roster_idx]
+			total += energy_word(team, Entity.to_s8(e.roster_idx))
 			n += 1
-	return total / n if n > 0 else 0x1000
+	sim.scratch_a = 0
+	if n != 0:
+		sim.scratch_a = Entity.to_s16(total / n)
+	return sim.scratch_a
 
-## assign_line_positions (0x5bc50): fills sim.req_roster / sim.req_slot with the six players of
-## the current line (goalie, two defencemen of the pair in use, the three forwards of the line, or
-## the extra attacker instead of the goalie when it is pulled); unavailable players are replaced
-## from the preference list of their position
+## the k-th entry of the preference list of position type `type` (line table offsets), read as
+## the original does: past the list's -1 terminator come the next lists
+static func _list_offset(type: int, k: int) -> int:
+	var i := Tables.line_table_lists_base[type] + k
+	return Tables.line_table_lists_raw[i] if i >= 0 and i < Tables.line_table_lists_raw.size() else -1
+
+## a byte of the line table (an offset outside it reads as 0)
+static func _lt(lt: PackedByteArray, off: int) -> int:
+	return lt[off] if off >= 0 and off < lt.size() else 0
+
+## assign_line_positions (0x5bbfa): fills sim.req_roster / sim.req_slot with the players of the
+## current line from the line table: the goalie (goalie_request), the defence pair in use with the
+## forward lines (dpair_counter), the forwards of the line, or the units of the power play and the
+## penalty killing (current_line 4..7); with the goalie pulled (goalie_request < 0, not for the
+## team defending a penalty shot) the extra attacker instead. A player who is not available is
+## replaced from the preference list of the position, then from the candidates build_lines sorted
+## (defencemen or all skaters, by the defensive ratings while killing a penalty), then by any
+## skater from 24 down to 1. Lineup positions below skaters_on_ice - 2 take an available player
+## without the check against the other positions.
 static func assign_line_positions(sim: Sim, team: Team) -> void:
+	var mode := 0
+	var cur := team.current_line
+	var lt := line_table(team)
 	for k in 6:
 		sim.req_roster[k] = -1
-	var mode := 0
-	if team.goalie_pulled():
+	if (sim.penalty_shot_phase == 0 or team.index == sim.penalty_shot_team) and Entity.to_s16(team.goalie_request) < 0:
 		mode = 1
 	else:
 		team.extra_attacker = -1
-	var lt := line_table(team)
 	var types: Array = Tables.lineup_slot_types[mode]
 	for k in range(team.skaters_on_ice - 1, -1, -1):
 		var type: int = types[k]
 		sim.req_slot[k] = type
-		var r := -1
+		var off: int
 		if type == 0:
-			var lists: Array = Tables.line_table_lists[0]
-			r = lt[lists[clampi(team.goalie_request & 0xf, 0, lists.size() - 1)]]
+			off = _list_offset(0, Entity.to_s16(team.goalie_request))
 		elif type == 6:
-			r = lt[0x26]
+			off = 0x26
+		elif cur < 4 and type <= 2:
+			off = _list_offset(type, team.dpair_counter)
 		else:
-			var lists: Array = Tables.line_table_lists[type]
-			var idx := team.dpair_counter if (team.current_line < 4 and type < 3) else team.current_line
-			r = lt[lists[clampi(idx, 0, lists.size() - 1)]]
-		sim.req_roster[k] = r if r < 28 else -1
+			off = _list_offset(type, cur)
+		sim.req_roster[k] = Entity.to_s8(_lt(lt, off))
 	for k in range(5, -1, -1):
 		var r := sim.req_roster[k]
 		if r < 0:
 			continue
 		var type := sim.req_slot[k]
-		if not available(team, r) or not player_available(sim, team, r, k):
-			var found := false
-			for off in Tables.line_table_lists[type]:
-				var cand := lt[off]
-				if cand < 28 and player_available(sim, team, cand, k):
-					found = true
-					break
-			if not found:
-				for cand in position_class(team, type):
-					if player_available(sim, team, cand, k):
-						found = true
-						break
-			if not found:
-				for cand in range(24, -1, -1):
-					if player_available(sim, team, cand, k):
-						found = true
-						break
-			if not found:
-				sim.req_roster[k] = -1
+		var st := entity_word(team, r)
+		if st <= -3 or st > 0 or (k >= team.skaters_on_ice - 2 and not player_available(sim, team, r, k)):
+			_replace_player(sim, team, k, type, cur, lt)
 		if type == 6:
 			team.extra_attacker = sim.req_roster[k]
 
-## apply_line_change (0x5bef4): gives every entity of the team its next player. Players already
-## on the ice keep their entity (maybe with a new position), the others replace the entities whose
-## players are not in the new lineup; those skate to the bench (handle_line_change).
+## the replacement search of assign_line_positions for lineup position k
+static func _replace_player(sim: Sim, team: Team, k: int, type: int, cur: int, lt: PackedByteArray) -> void:
+	var i := 0
+	while true:
+		var off := _list_offset(type, i)
+		i += 1
+		if off < 0:
+			break
+		if player_available(sim, team, Entity.to_s8(_lt(lt, off)), k):
+			return
+	var which: int
+	var defence := type == 1 or type == 2
+	if type == 6 or cur < 6:
+		which = Team.PL_D if defence else Team.PL_SKATERS
+	else:
+		which = Team.PL_D_DEF if defence else Team.PL_SKATERS_DEF
+	var cands: PackedInt32Array = team.pos_lists[which]
+	i = 0
+	while true:
+		var cand := cands[i] if i < 25 else -1
+		i += 1
+		if cand >= 0:
+			if player_available(sim, team, cand, k):
+				return
+			continue
+		# the end of the candidates: any skater from 24 down to 1; when one is found the original
+		# checks him a second time (the same answer), when none is the position keeps its player
+		for c in range(0x18, 0, -1):
+			if player_available(sim, team, c, k):
+				return
+		return
+
+## apply_line_change (0x5bef4): gives the entities of the team their next players (next_roster,
+## next_line_slot): a player of the new lineup already on an entity keeps it, the others go to the
+## first entity on the ice without a new player, else to the last free one on the bench, which is
+## sent out (INIT_PERIOD, line slot 5). The entities whose players are not in the lineup go to the
+## bench (handle_line_change).
 static func apply_line_change(sim: Sim, team: Team) -> void:
 	var first := team.first_slot
 	for i in 6:
@@ -176,31 +326,23 @@ static func apply_line_change(sim: Sim, team: Team) -> void:
 			continue
 		for i in 6:
 			var e := sim.entities[first + i]
-			if e.roster_idx == r:
+			if Entity.to_s8(e.roster_idx) == r:
 				e.next_line_slot = sim.req_slot[k]
 				e.next_roster = r
 				sim.req_roster[k] = -1
 				break
+	var target: Entity = null
 	for k in range(5, -1, -1):
 		var r := sim.req_roster[k]
 		if r < 0:
 			continue
-		var target: Entity = null
-		var benched: Entity = null
 		for i in 6:
 			var e := sim.entities[first + i]
-			if e.next_roster >= 0 or serving_penalty(e):
-				# the original tracks a penalty by roster player and reuses the box entity
-				# (release_from_box takes any free entity when the penalty expires); the port keeps the
-				# penalized player on his entity until he is back on the ice
-				continue
-			if e.line_slot < 0:
-				benched = e
+			if e.next_roster >= 0:
 				continue
 			target = e
-			break
-		if target == null:
-			target = benched
+			if e.line_slot >= 0:
+				break
 		if target == null:
 			continue
 		if target.line_slot < 0:
@@ -210,13 +352,8 @@ static func apply_line_change(sim: Sim, team: Team) -> void:
 		target.next_roster = r
 		sim.req_roster[k] = -1
 
-## an entity on its way to, in or leaving the penalty box keeps its player
-static func serving_penalty(e: Entity) -> bool:
-	var st := e.state()
-	return st == Entity.State.PENALTY_BOX or st == Entity.State.DOOR_OPEN or st == Entity.State.EXIT_PENALTY_BOX \
-		or (e.flags2 & Entity.F2_PENALIZED) != 0
-
-## dress_line (0x5e03c): puts the assigned players on the ice at once (period start)
+## dress_line (0x5e0dd): puts the assigned players on the ice at once (period start): on the ice
+## in entity_of and in the roster status (4)
 static func dress_line(sim: Sim, team: Team) -> void:
 	for i in 6:
 		var e := sim.entities[team.first_slot + i]
@@ -225,8 +362,11 @@ static func dress_line(sim: Sim, team: Team) -> void:
 			AI.set_default_state(sim, e)
 			if e.line_slot == 4:
 				e.set_state_reset(Entity.State.NEAREST)
-			team.entity_of[e.next_roster] = -1
-			sim.put_player_on_ice(e, e.next_roster)
+			var r := e.next_roster
+			if r >= 0 and r < 28:
+				team.entity_of[r] = -1
+				team.roster_status[r] = 4
+			sim.put_player_on_ice(e, r)
 		e.next_line_slot = -1
 		e.next_roster = -1
 
@@ -274,9 +414,11 @@ static func bench(sim: Sim, e: Entity) -> void:
 	var team := sim.team_of(e)
 	if e.timer_a == 100:
 		e.frame = -1
-		var old := e.roster_idx
-		if old >= 0 and old < 28 and team.entity_of[old] < 1 and team.entity_of[old] > -3:
+		var old := Entity.to_s8(e.roster_idx)
+		var st := entity_word(team, old)
+		if st <= 0 and st >= -2 and old >= 0 and old < 28:
 			team.entity_of[old] = -2
+			team.roster_status[old] = 3
 		if (e.next_line_slot == 0) != (e.next_roster < 25):
 			e.line_slot = e.next_line_slot
 		AI.set_default_state(sim, e)
@@ -491,8 +633,13 @@ static func send_team_to_faceoff(sim: Sim, team: Team) -> void:
 ## the defence pair rotates with every forward line change (0, 1, 2, 0, ...)
 static func rotate_defence(team: Team) -> void:
 	team.dpair_counter += 1
-	if team.dpair_counter > 2:
-		team.dpair_counter = 0
+	if team.dpair_counter >= 3:
+		team.dpair_counter -= 3
+
+## draw_line_indicator (0x14afe): the line number on the scoreboard (the port's HUD draws
+## team.current_line); a hook for the golden tests
+static func draw_line_indicator(sim: Sim, t: int, line: int) -> void:
+	sim.stubbed("draw_line_indicator", [t, line])
 
 ## request_line_change (0x50434): the user asks for forward line `line` (0..3); on special teams
 ## the request selects a power play (0..1) or penalty killing (0..1) unit instead
@@ -501,103 +648,123 @@ static func request_line_change(sim: Sim, e: Entity, line: int) -> bool:
 		return false
 	var team := sim.team_of(e)
 	var other := sim.opponents_of(e)
-	var mine := team.skaters_on_ice
-	var theirs := other.skaters_on_ice
-	if not ((theirs == mine or line < 2) and (theirs != mine or line < 4)):
+	var d := Entity.to_s16(other.skaters_on_ice - team.skaters_on_ice)
+	if d != 0 and line > 1:
 		return false
-	if theirs < mine:
+	if d == 0 and line > 3:
+		return false
+	if d < 0:
 		line += 4
-	elif theirs > mine:
+	elif d > 0:
 		line += 6
 	e.flags2 &= ~Entity.F2_LINE_CHANGE
 	e.flags |= Entity.F_USER
 	team.flags &= ~Team.FL_LINE_CHANGE_UI
-	team.line_change_ui = false
-	if team.current_line != line:
-		team.current_line = line
-		if line < 4:
-			rotate_defence(team)
-		apply_line_change(sim, team)
+	if team.current_line == line:
+		return true
+	team.current_line = line
+	if line < 4:
+		rotate_defence(team)
+	draw_line_indicator(sim, 1 if e.flags & Entity.F_PLAYER2 else 0, line)
+	apply_line_change(sim, team)
 	return true
 
-## pick_next_line (0x4dc6b) / cpu_line_change_select: the next line of the rotation table for
-## the team of `e` (k = 0 keeps the current line, 1 the next one)
-static func next_line(sim: Sim, e: Entity, k: int) -> int:
+## pick_next_line (0x50908): the line the line change prompt offers in place k (scratch word
+## e03bc, 0..3) for the team of `e`: the row of line_rotation for the current line (power play
+## +8 rows, penalty killing +16); the line is left in e03bc (-1 for none), the current line in e03c0
+static func pick_next_line(sim: Sim, e: Entity) -> void:
 	var team := sim.team_of(e)
 	var other := sim.opponents_of(e)
-	var group := 0
-	if team.skaters_on_ice != other.skaters_on_ice:
-		group = 16 if other.skaters_on_ice > team.skaters_on_ice else 8
-	var row: Array = Tables.line_rotation[clampi(group + team.current_line, 0, Tables.line_rotation.size() - 1)]
-	var line: int = row[k]
-	return line if line >= 0 else team.current_line
+	var d := Entity.to_s16(other.skaters_on_ice - team.skaters_on_ice)
+	if d != 0:
+		sim.scratch_a = Entity.to_s16(sim.scratch_a + 0x20)
+		if d > 0:
+			sim.scratch_a = Entity.to_s16(sim.scratch_a + 0x20)
+	sim.scratch_b = team.current_line
+	var i := Entity.to_s16(sim.scratch_a + team.current_line * 4) + 0x20
+	sim.scratch_a = Tables.line_rotation_raw[i] if i >= 0 and i < Tables.line_rotation_raw.size() else -1
 
-## cpu_line_change_select (0x50975): applies `line` (0..7) for the team of `e`
-static func select_line(sim: Sim, e: Entity, line: int) -> void:
+## cpu_line_change_select (0x50975): the line chosen at the prompt (place scratch_ac) for the team
+## of `e`: the player is the user's again, the prompt closes and the line comes on
+static func cpu_line_change_select(sim: Sim, e: Entity) -> void:
 	var team := sim.team_of(e)
+	sim.scratch_a = Entity.to_s16(sim.scratch_ac)
+	pick_next_line(sim, e)
+	if sim.scratch_a < 0:
+		return
 	e.flags2 &= ~Entity.F2_LINE_CHANGE
 	e.flags |= Entity.F_USER
 	team.flags &= ~Team.FL_LINE_CHANGE_UI
-	team.line_change_ui = false
-	if line != team.current_line:
-		team.current_line = line
-		if line < 4:
-			rotate_defence(team)
-		apply_line_change(sim, team)
+	if sim.scratch_a == team.current_line:
+		return
+	team.current_line = sim.scratch_a
+	if sim.scratch_a < 4:
+		rotate_defence(team)
+	draw_line_indicator(sim, 1 if e.flags & Entity.F_PLAYER2 else 0, sim.scratch_a)
+	apply_line_change(sim, team)
 
-## choose_line (0x5a0a3): the CPU coach picks the next line for `team` playing against `other`:
-## on special teams the fresher of the two units, otherwise the first line of the strategy's
-## preference order whose energy is above the threshold (or the best one), unless the players
-## on the ice are still fresh enough
+## choose_line (0x5a0a3): the CPU coach picks the next line for `team` playing against `other`.
+## On special teams the fresher of the two units (the first unless it is below 0xf33). At even
+## strength a coach who picks his own lines (flags2 & 1) keeps a fresh line on at a stoppage (the
+## average energy on the ice above the threshold) and otherwise starts from his current line, the
+## others from the line the opponent has on; then the first of the four candidates of the coaching
+## mode's preference row above the threshold, or the freshest of them and the current line.
 static func choose_line(sim: Sim, other: Team, team: Team) -> void:
+	var d := Entity.to_s16(team.skaters_on_ice - other.skaters_on_ice)
+	var t := 1 if team.index == 1 else 0
 	var line: int
-	if other.skaters_on_ice == team.skaters_on_ice:
-		if (team.flags2 & 1) == 0:
-			line = other.current_line
-			if line >= 6:
-				line -= 6
-			elif line >= 4:
-				line -= 4
-		else:
-			line = team.current_line
-			if not sim.play_stopped and line < 4 and (team.flags2 & 0x40) == 0:
-				if team.energy_threshold < team_avg_energy(sim, team):
-					return
-			if line > 3:
-				line = 3
-			if team.mode == 6 and (line < 4 or line > 5):
-				line = 3
-		if team.mode == 1 and (team.flags2 & 0x80):
-			line += 4
-		var row := clampi(team.strategy * 4 + line, 0, Tables.line_preference.size() * 4 - 1)
-		var cands: Array = Tables.line_preference[row / 4][row % 4]
-		var best := team.current_line
-		var best_e := line_avg_energy(sim, team, best)
-		var chosen := -1
-		for c in cands:
-			if c < 0:
-				break
-			var en := line_avg_energy(sim, team, c)
-			if en > team.energy_threshold:
-				chosen = c
-				break
-			if en > best_e:
-				best = c
-				best_e = en
-		if chosen < 0:
-			chosen = best
-		if chosen != team.current_line:
-			team.current_line = chosen
-			if team.mode == 1 and chosen == 2:
-				team.flags2 ^= 0x80
-			if chosen < 4:
-				rotate_defence(team)
-	else:
-		line = 6 if team.skaters_on_ice < other.skaters_on_ice else 4
-		var e0 := line_avg_energy(sim, team, line)
-		if e0 < 0xf33 and line_avg_energy(sim, team, line + 1) > e0:
+	if d != 0:
+		line = 4 if d >= 0 else 6
+		var e0 := Entity.to_s16(line_avg_energy(sim, team, line))
+		if e0 < 0xf33 and e0 < Entity.to_s16(line_avg_energy(sim, team, line + 1)):
 			line += 1
 		team.current_line = line
+		draw_line_indicator(sim, t, line)
+		team.flags2 &= ~0x40
+		return
+	if team.flags2 & 1:
+		line = team.current_line
+		if sim.play_stopped and line < 4 and (team.flags2 & 0x40) == 0:
+			team_avg_energy(sim, team)
+			var thr := team.energy_threshold if team.skaters_on_ice == other.skaters_on_ice else 0xf33
+			if (sim.scratch_a & 0xffff) > thr:
+				return
+		if line > 3:
+			line = 3
+		if Entity.to_s8(team.mode) == 6 and (line < 4 or line > 5):
+			line = 3
+	else:
+		line = other.current_line
+		if line >= 6:
+			line -= 6
+		elif line >= 4:
+			line -= 4
+	if Entity.to_s8(team.mode) == 1 and (team.flags2 & 0x80):
+		line += 4
+	var cands: Array = Tables.line_preference[Entity.to_s8(team.mode)][line]
+	var best := team.current_line
+	var best_e := Entity.to_s16(line_avg_energy(sim, team, best))
+	var c := -1
+	for k in 4:
+		c = int(cands[k])
+		if c < 0:
+			break
+		var en := Entity.to_s16(line_avg_energy(sim, team, c))
+		if (en & 0xffffffff) > team.energy_threshold:
+			break
+		if en > best_e:
+			best_e = en
+			best = c
+		c = -1
+	if c < 0:
+		c = best
+	if c != team.current_line:
+		team.current_line = c
+		if Entity.to_s8(team.mode) == 1 and c == 2:
+			team.flags2 ^= 0x80
+		if c < 4:
+			rotate_defence(team)
+	draw_line_indicator(sim, t, c)
 	team.flags2 &= ~0x40
 
 ## adjust_strategy (0x5a581): the CPU coaching mode from the score (game start, 10:00 of the 2nd)
@@ -631,73 +798,119 @@ static func adjust_strategy(sim: Sim, t: int) -> void:
 	team.energy_threshold = 0xccc
 	team.mode = 0
 
+## the radio buttons of the pause menu's goalie choice (the attribute bytes of the menu items:
+## goalie 1, goalie 2, none; 1 is the checked one)
+static func set_goalie_menu(team: Team, pulled: bool) -> void:
+	var g := (team.goalie_request & 0xff) & 0xf
+	if pulled:
+		team.goalie_menu[g] = 2
+		team.goalie_menu[2] = 1
+	else:
+		team.goalie_menu[2] = 2
+		team.goalie_menu[g] = 1
+
 ## maybe_pull_goalie (0x591c7): a CPU team trailing by one or two in the last minute of the third
-## period pulls its goalie while the puck is in the attacking half (y in world coordinates)
+## period pulls its goalie while the puck (or the faceoff spot) is in its attacking half
 static func maybe_pull_goalie(sim: Sim, team: Team, other: Team, y: int) -> void:
-	if sim.penalty_shot or sim.period != 2:
+	if sim.penalty_shot_phase != 0 or sim.period != 2:
 		return
-	var diff := other.goals - team.goals
-	if diff <= 0 or diff >= 3 or sim.clock_seconds >= 0x3d:
+	var diff := Entity.to_s16(other.goals - team.goals)
+	if diff <= 0 or diff > sim.period or sim.clock_seconds > 0x3c:
 		return
-	if not team.attacks_up:
+	if (sim.entities[team.first_slot].flags & Entity.F_ATTACK_UP) == 0:
 		y = -y
-	if y >= 0:
-		team.goalie_request = (team.goalie_request & 0xff) | 0xff00
-		apply_line_change(sim, team)
+	if Entity.to_s16(y) < 0:
+		return
+	team.goalie_request = (team.goalie_request & 0xff) | 0xff00
+	set_goalie_menu(team, true)
+	apply_line_change(sim, team)
 
 ## cpu_pull_goalie_check (0x59352), at every faceoff: a goalie pulled by the CPU comes back
-## (the user's request stays), then the CPU reconsiders for the faceoff spot
+## (the user's request stays), then the CPU teams reconsider for the faceoff spot
 static func cpu_pull_goalie_check(sim: Sim) -> void:
 	for t in 2:
 		var team := sim.teams[t]
-		var other := sim.teams[1 - t]
-		if (team.goalie_request & 0xf0) == 0:
-			team.goalie_request &= 0xff
-			if not sim.is_user_team(t):
-				maybe_pull_goalie(sim, team, other, sim.faceoff_y)
+		if (team.goalie_request & 0xf0) != 0:
+			continue
+		team.goalie_request &= 0xff
+		set_goalie_menu(team, false)
+		if sim.user1_team != t + 1 and sim.user2_team != t + 1:
+			maybe_pull_goalie(sim, team, sim.teams[1 - t], sim.faceoff_y)
 
-## late_game_pull_goalie (0x593f5): true while a trailing team should keep its goalie off
+## late_game_pull_goalie (0x593f5): true while a trailing team should keep its goalie off (the
+## original checks only user 1's team)
 static func late_game_pull_goalie(sim: Sim, t: int) -> bool:
-	if sim.period != 2 or sim.clock_seconds >= 0x3d or sim.user2_team == t + 1:
+	if sim.period != 2 or sim.clock_seconds > 0x3c or sim.user1_team == t + 1:
 		return false
 	var team := sim.teams[t]
 	var diff := sim.teams[1 - t].goals - team.goals
-	if diff < 1 or diff > 2:
+	if diff <= 0 or diff > 2:
 		return false
 	var y := sim.faceoff_y
-	if not team.attacks_up:
+	if (sim.entities[team.first_slot].flags & Entity.F_ATTACK_UP) == 0:
 		y = -y
 	return y >= 0
 
-## cpu_line_change (0x59265), every step: with a delayed penalty call the team in possession
-## pulls its goalie for the extra attacker; a trailing CPU team may pull it late in the game
+## cpu_line_change (0x59265), every step of play: with a delayed penalty call the team in
+## possession pulls its goalie for the extra attacker; a trailing CPU team may pull it late in the
+## game (the referee holding the puck counts as the away team's)
 static func cpu_line_change(sim: Sim) -> void:
-	if sim.play_stopped or sim.puck_carrier < 0 or sim.puck_carrier >= 12:
+	if sim.play_stopped:
 		return
-	var t := 0 if sim.puck_carrier < 6 else 1
-	var team := sim.teams[t]
-	if team.goalie_pulled():
-		return
-	if not sim.delayed_call:
-		if not sim.is_user_team(t):
+	for t in 2:
+		var team := sim.teams[t]
+		if Entity.to_s16(team.goalie_request) < 0:
+			continue
+		var c := Entity.to_s8(sim.puck_carrier)
+		if c < 0 or (c < 6) != (t == 0):
+			continue
+		if sim.delayed_call:
+			team.goalie_request = (team.goalie_request & 0xff) | 0xff00
+			set_goalie_menu(team, true)
+			apply_line_change(sim, team)
+		elif sim.user1_team != t + 1 and sim.user2_team != t + 1:
 			maybe_pull_goalie(sim, team, sim.teams[1 - t], sim.puck.yi)
-	else:
-		team.goalie_request = (team.goalie_request & 0xff) | 0xff00
-		apply_line_change(sim, team)
 
-## hotkey_pull_goalie (F9 / F10): the user pulls the goalie or sends him back
+## hotkey_pull_goalie (0x671e8, F9 / F10): the user pulls the goalie or sends him back (not one the
+## CPU pulled for a delayed call): the PULL GOALIE / RETURN GOALIE message (unless a higher one is
+## showing), the menu's radio buttons, the new lineup
 static func toggle_pull_goalie(sim: Sim, t: int) -> void:
 	if not sim.is_user_team(t):
 		return
 	var team := sim.teams[t]
-	var w := team.goalie_request
+	var w := Entity.to_s16(team.goalie_request)
 	if (w & 0xfff0) == 0xff00:
-		return      # pulled by the CPU logic (delayed penalty): not the user's call
-	sim.show_message(MSG_RETURN_GOALIE if team.goalie_pulled() else MSG_PULL_GOALIE, 0x50)
-	if team.goalie_pulled():
+		return
+	var msg := MSG_PULL_GOALIE if w >= 0 else MSG_RETURN_GOALIE
+	if msg > sim.message or sim.message < 2:
+		sim.show_message(msg, 0x50)
+	if w < 0:
+		team.goalie_menu[2] = 2
 		team.goalie_request = w & 0xf
+		team.goalie_menu[team.goalie_request] = 1
 	else:
-		team.goalie_request = (w | 0xfff0) & 0xffff
+		team.goalie_menu[w & 0xf] = 2
+		team.goalie_request = (team.goalie_request | 0xfff0) & 0xffff
+		team.goalie_menu[2] = 1
+	apply_line_change(sim, team)
+
+## controls_goalie_pull_request (0x7cbb3): a team the users left (the controls changed during the
+## game) gets its goalie back from a pull the user asked for, unless the CPU would pull him now
+## (trailing by one or two in the last minute of the third, or a delayed call with the puck)
+static func user_goalie_back(sim: Sim, t: int) -> void:
+	var team := sim.teams[t]
+	if Entity.to_s16(team.goalie_request) >= 0 or (team.goalie_request & 0xf0) == 0:
+		return
+	team.goalie_request &= 0xff0f
+	var diff := Entity.to_s16(sim.teams[1 - t].goals - team.goals)
+	if diff > 0 and diff <= 2 and sim.period == 2 and sim.clock_seconds <= 0x3c:
+		return
+	var c := Entity.to_s8(sim.puck_carrier)
+	if not sim.play_stopped and c >= 0 and (c < 6) == (t == 0) and sim.delayed_call:
+		return
+	team.goalie_request &= 0xff
+	team.goalie_menu[2] = 2
+	team.goalie_menu[team.goalie_request & 0xf] = 1
 	apply_line_change(sim, team)
 
 ## choose_goalie, the goalie choice of the pause menu (Home / Visiting Team Goalie): goalie 0 or 1 of

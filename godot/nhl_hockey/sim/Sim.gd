@@ -277,7 +277,10 @@ func new_game() -> void:
 		for i in 28:
 			team.energy[i] = 0x1000
 			team.entity_of[i] = -2 if Lines.roster_exists(team, i) else -3
+			team.roster_status[i] = 3 if Lines.roster_exists(team, i) else 0
+		team.goalie_menu = PackedByteArray([1, 2, 2])
 		Lines.adjust_strategy(self, t)
+	Lines.build_lines(self)
 	for i in 12:
 		entities[i].roster_idx = -1
 		entities[i].line_slot = -1
@@ -873,7 +876,8 @@ func control_player(e: Entity, control: int, pressed: int, player: int) -> void:
 				# C as the carrier: the line change prompt (request_line_change_button); the prompt
 				# itself is not ported, the next line of the rotation is taken at once
 				if opt_line_changes:
-					Lines.select_line(self, e, Lines.next_line(self, e, 1))
+					scratch_ac = (scratch_ac & ~0xffff) | 1
+					Lines.cpu_line_change_select(self, e)
 				return
 			if e.line_slot == 0:
 				return

@@ -40,8 +40,11 @@ static var marker_frames: PackedInt32Array        # draw_sprites: frames under u
 static var arrow_frames: Array = []               # 2 x 8 off screen arrows per clip direction
 static var lineup_slot_types: Array = []          # [mode][k]: position type of the k-th dressed player (assign_line_positions)
 static var line_table_lists: Array = []           # [type]: preference list of line table offsets (line 0..7 first)
-static var line_preference: Array = []            # [strategy][line]: candidate lines of choose_line
+static var line_table_lists_base: PackedInt32Array # [type]: start of its list in line_table_lists_raw
+static var line_table_lists_raw: PackedInt32Array  # the lists as signed bytes (0xcccc8, 256 bytes)
+static var line_preference: Array = []            # [mode][line]: candidate lines of choose_line (8 rows per mode)
 static var line_rotation: Array = []              # [group * 8 + line]: lines offered by the line change prompt
+static var line_rotation_raw: PackedInt32Array    # the same as signed bytes from 0x20 before it (0xccb3a, 224 bytes)
 static var clip_scripts: Array = []              # scoreboard clips: [count, frame, frame, ...]
 static var clip_frame_steps: Array = []           # steps per clip frame
 static var clip_closes: Array = []                # the panel closes after the clip
@@ -118,8 +121,11 @@ static func load_tables() -> void:
 	arrow_frames = _ints(t["arrow_frames"])
 	lineup_slot_types = _ints(t["lineup_slot_types"])
 	line_table_lists = _ints(t["line_table_lists"])
+	line_table_lists_base = PackedInt32Array(t["line_table_lists_base"])
+	line_table_lists_raw = PackedInt32Array(t["line_table_lists_raw"])
 	line_preference = _ints(t["line_preference"])
 	line_rotation = _ints(t["line_rotation"])
+	line_rotation_raw = PackedInt32Array(t["line_rotation_raw"])
 	check_anims = _ints(t["check_anims"])
 	clip_scripts = _ints(t["clip_scripts"])
 	clip_frame_steps = _ints(t["clip_frame_steps"])
