@@ -2180,8 +2180,8 @@ static func _leave_at_bench(_sim: Sim, e: Entity, dx: int) -> bool:
 	e.flags |= Entity.F_BUSY
 	return true
 
-## ai_game_misconduct (0x4ab87): the player is thrown out: he skates to the bench door and leaves;
-## his place is taken at the next faceoff (pick_player_for_position, done by assign_line_positions)
+## ai_game_misconduct (0x4ab87): the player is thrown out: he skates to the bench door, turns to
+## it and steps off; the lines are rebuilt without him (pick_player_for_position)
 static func game_misconduct(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_BUSY:
 		return
@@ -2194,22 +2194,40 @@ static func game_misconduct(sim: Sim, e: Entity) -> void:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		e.flags2 |= Entity.F2_UNSELECTABLE
 		if e.flags & Entity.F_USER:
-			sim.switch_to_nearest(e, 0 if e.slot == sim.user1_slot else 1)
+			sim.switch_to_nearest(e, 0 if e.slot == sim.user1_slot else 2)
 		e.want_dir = 8
+		e.dir_timer = 0
 		e.target_y = 0x24 if (e.flags & Entity.F_PLAYER2) else -0x1c
 		e.target_x = -0xa8
 		e.timer_a = 0
 		e.flags2 |= Entity.F2_NO_COLLIDE
 		e.push_x = 0
 		e.push_y = 0
-	e.timer_a -= 1
+	e.timer_a = Entity.to_s16(e.timer_a - 1)
 	if e.timer_a < 0:
 		e.timer_a += 8
-		var dy := e.yi - e.target_y
-		var dx := e.xi - e.target_x
-		if absi(dy) < 0x15 and dx < 0x21:
-			if _leave_at_bench(sim, e, dx):
-				e.timer_a = 100
+		var dy := Entity.to_s16(e.yi - e.target_y)
+		sim.scratch_a = Entity.to_s16(e.xi - e.target_x)
+		if absi(dy) <= 0x14 and sim.scratch_a <= 0x20:
+			sim.scratch_b = 1 if e.line_slot == 0 else Anim.GLIDE
+			Anim.set_animation(e, sim.scratch_b)
+			e.flags |= Entity.F_ARRIVED
+			if e.facing != 4:
+				e.facing = (e.facing + (1 if e.facing < 4 else -1)) & 7
+			e.vy = 0
+			e.vx = -0x800
+			if sim.scratch_a > 0x10:
+				return
+			e.vx = 0
+			if e.facing != 4:
+				return
+			e.vx = -0x800
+			e.facing = 2
+			Anim.set_animation(e, 0xd2d if e.line_slot == 0 else 0x7bf)
+			e.flags |= Entity.F_BUSY
+			e.timer_a = 100
+			if sim.period < 4 and not sim.game_over:
+				sim.pick_player_for_position(1 if e.flags & Entity.F_PLAYER2 else 0, e.roster_idx)
 			return
 	if (e.flags & Entity.F_ARRIVED) == 0:
 		skate_towards(sim, e, e.target_x, e.target_y)
@@ -2222,85 +2240,97 @@ static func game_misconduct(sim: Sim, e: Entity) -> void:
 static func penalty_box(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_BUSY:
 		return
-	var team := sim.team_of(e)
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		e.flags2 |= Entity.F2_UNSELECTABLE
+		if e.flags & Entity.F_USER:
+			# the user takes the team mate nearest to the puck
+			sim.switch_to_nearest(e, 0 if e.slot == sim.user1_slot else 2)
 		e.want_dir = 8
+		e.dir_timer = 0
 		# the next free seat: the players already sitting in the box (penalized_count)
-		var seat := mini(sim.box_count[team.index] & 0xf, 2)
-		var side := 0xb if (e.flags & Entity.F_PLAYER2) else -0xb
-		e.target_y = (seat + 3) * side
+		var away := (e.flags & Entity.F_PLAYER2) != 0
+		var seat := Entity.to_s8(sim.box_count[1 if away else 0]) & 0xf
+		if seat > 2:
+			seat = 2
+		e.target_y = Sim._s16((seat + 3) * (0xb if away else -0xb))
 		e.target_x = 0xa0
 		e.timer_a = 0
 		e.flags2 |= Entity.F2_NO_COLLIDE
 		e.push_x = 0
 		e.push_y = 0
-	var dx := e.xi - e.target_x
-	var dy := e.yi - e.target_y
-	if absi(dy) >= 0xd or dx <= -0x19:
+	var dx := Sim._s16(e.xi - e.target_x)
+	if absi(Sim._s16(e.yi - e.target_y)) > 0xc or dx < -0x18:
 		skate_towards(sim, e, e.target_x, e.target_y)
 		return
-	e.timer_a -= 1
+	e.timer_a = Sim._s16(e.timer_a - 1)
 	if e.timer_a >= 0:
 		return
 	e.timer_a += 8
 	e.flags |= Entity.F_ARRIVED
 	Anim.set_animation(e, Anim.GLIDE)
-	if e.facing != 4:
-		var diff := (4 - e.facing) & 7
-		e.facing = (e.facing + (1 if diff < 5 else -1)) & 7
+	var cmp := 4
+	var hw := _heading_word(e)
+	if cmp != hw:
+		cmp = (cmp - hw) & 7
+		_set_heading_word(e, (hw + (1 if cmp < 5 else -1)) & 7)
+	sim.scratch_ac = cmp
 	e.vy = 0
 	e.vx = 0x1000
-	if dx > -9:
-		e.vx = 0
-		if e.facing == 4:
-			# over the boards into the box
-			e.flags |= Entity.F_BUSY
-			e.facing = 2
-			Anim.set_animation(e, Anim.FACEOFF)
-			e.flags2 &= ~Entity.F2_PENALIZED
-			if team.skaters_on_ice > 4:
-				team.skaters_on_ice -= 1
-			e.set_state(Entity.State.DOOR_OPEN)
+	if dx < -8:
+		return
+	e.vx = 0
+	if cmp != _heading_word(e):
+		return
+	# over the boards into the box
+	e.flags |= Entity.F_BUSY
+	_set_heading_word(e, 2)
+	Anim.set_animation(e, 0x7a1)
+	e.flags2 &= ~Entity.F2_PENALIZED
+	var team := sim.team_record(e)
+	if team.skaters_on_ice > 4:
+		team.skaters_on_ice -= 1
+	e.set_state(Entity.State.DOOR_OPEN)
 
 ## ai_door_open (0x4affb): in the box: off the ice until the penalty expires
 static func door_open(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_BUSY:
 		return
-	if e.line_slot >= 0:
-		sim.box_count[e.team] += 1          # sits down (drawn as frame 0x17e in the box)
-		e.line_slot = (e.line_slot & 0xff) | ~0xff      # high byte 0xff: hidden, still a skater slot
-		e.frame = -1
-		e.vx = 0
-		e.vy = 0
+	# counted among the players in the box (penalty_box_update counts them afresh every step)
+	var t := 1 if (e.flags & Entity.F_PLAYER2) else 0
+	sim.box_count[t] = (sim.box_count[t] + 1) & 0xff
+	e.line_slot = (e.line_slot & 0xff) | ~0xff      # high byte 0xff: hidden, still a skater slot
+	e.frame = -1
 
 ## ai_exit_penalty_box (0x4b02d): steps back onto the ice next to the box
 static func exit_penalty_box(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_BUSY:
 		return
 	if e.flags & Entity.F_STATE_ENTERED:
-		e.flags = (e.flags & ~(Entity.F_STATE_ENTERED | Entity.F_USER)) | Entity.F_ARRIVED
+		e.flags = (e.flags | Entity.F_ARRIVED) & ~(Entity.F_STATE_ENTERED | Entity.F_BACKWARDS)
 		e.flags2 |= Entity.F2_UNSELECTABLE
-		sim.box_count[e.team] = maxi(0, sim.box_count[e.team] - 1)
-		var seat := mini(sim.box_count[e.team], 2)
-		var side := 0xb if (e.flags & Entity.F_PLAYER2) else -0xb
-		e.set_pos(0x9e, (seat + 3) * side)
+		# stands up at his seat in the box (the count of the players still sitting there)
+		var t := 1 if (e.flags & Entity.F_PLAYER2) else 0
+		sim.box_count[t] = (sim.box_count[t] - 1) & 0xff
+		var seat := Entity.to_s8(sim.box_count[t])
+		if seat > 2:
+			seat = 2
+		e.y = ((0x21 + 11 * seat if t == 1 else -0x21 - 11 * seat) << 16) | (e.y & 0xffff)
 		e.vx = 0
 		e.vy = 0
-		e.facing = 2
+		e.x = (0x9e << 16) | (e.x & 0xffff)
+		_set_heading_word(e, 2)
 		e.flags |= Entity.F_BUSY
 		Anim.set_animation(e, 0x7bf)
 		sim.sort_draw_order()
 		return
-	e.facing = 4
-	e.next_line_slot = -1
+	_set_heading_word(e, 4)
 	e.next_roster = -1
+	e.next_line_slot = -1
 	e.flags &= ~(Entity.F_ARRIVED | Entity.F_USER)
 	e.flags2 &= ~(Entity.F2_UNSELECTABLE | Entity.F2_NO_COLLIDE)
 	e.vx = -0x1000
-	e.frame = 0
-	set_default_state(sim, e)
+	default_skate(sim, e)
 
 # --------------------------------------------------------------------------------------------
 # referee (rfaceoff rnorm rcallpen rpickup rgotofo rpointgoal rgetnew)

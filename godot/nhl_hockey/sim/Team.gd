@@ -50,6 +50,9 @@ var flags2: int = 0                  # +0xd4: 0x01 the CPU picks its own lines (
 var mode: int = 0                    # +0xd5 adjust_strategy mode
 var energy_threshold: int = 0xccc    # +0xd6 a line below this average energy is changed
 var goalie_slot: int = -1            # +0xfa
+# the status byte of each player's record in the global `rosters` (0xdb3a8, 0x27 bytes a player,
+# 28 a team): 3 on the bench, 4 on the ice, 7 called on by the line editor (bench_player_slot)
+var roster_status: PackedByteArray = PackedByteArray()
 var injured: Array = []              # roster indices hurt for the rest of the period (entity_of -3)
 var penalties: Array = []            # +0xb6 list: [roster_idx, seconds left, entity slot, minor]
 var first_slot: int = 0              # index of players[0] in Sim.entities
@@ -73,6 +76,8 @@ func _init(idx: int = 0) -> void:
 	first_slot = idx * 6
 	energy.resize(28)
 	entity_of.resize(28)
+	roster_status.resize(28)
+	roster_status.fill(3)
 	for i in 28:
 		energy[i] = 0x1000
 		entity_of[i] = -2

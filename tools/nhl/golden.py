@@ -392,6 +392,7 @@ BENCH_CHEER = 0x61576                         # (away)
 START_STOPPAGE = 0x63543                      # (index in the infraction queue)
 RESOLVE_BODY_CHECK = 0x5382c                  # (e, o, strength)
 PERIOD_IDX = 0xc90da
+ROSTERS = 0xdb3a8                              # 2 x 28 player records of 0x27 bytes, a status byte first
 SETTINGS2 = 0xc5400
 BREAKAWAY_FLAG = 0xcc0f8
 DEFENDERS_AHEAD = 0xcc124
@@ -1322,6 +1323,8 @@ AI_GLOBALS = (('game_flags', GAME_FLAGS, 1), ('stop_flags', STOP_FLAGS, 1), ('mi
               ('infraction0', 0xe9a16, 1))
 SAY_GOAL = 0x59ad0                             # stubbed: the announcer says the goal (the goal_call bytes)
 GOAL_MILESTONE_CHECK = 0x62807                 # stubbed: its deferred call is empty in this build
+PICK_PLAYER_FOR_POSITION = 0x655cc             # stubbed: the line table rebuilt around a lost player; (team, roster)
+PUT_PLAYER_ON_ICE = 0x5b2c5                    # stubbed: the ratings copy (no roster data here); (entity, roster)
 PLAY_SPEECH = 0x59a11                          # stubbed: the announcer (a sample)
 LOAD_CUTSCENE_CLIP = 0x66497                   # stubbed: the clip on the scoreboard (loaded: dword_cbecc = the clip)
 ANNOUNCE_GOAL = 0x62343                        # stubbed (the panel): (team, scorer, assist, assist)
@@ -1339,7 +1342,7 @@ def ai_world(emu, rnd, base, tables):
     positional states, the AI timers), the puck loose or carried, the referee, the team records and
     the globals the handlers read"""
     emu.write(ENTITIES, base)
-    game = rnd.choice((0, 0, 0, 0, 0, 2, 2, 1, 8, 0x10))
+    game = rnd.choice((0, 0, 0, 0, 0, 2, 2, 1, 8, 0x10, 0x40))
     switched = game & 2
     teams = []
     frames = list(range(0, 0x284)) + list(range(0x294, 0x2da)) + list(range(0x378, 0x468))
@@ -1352,6 +1355,13 @@ def ai_world(emu, rnd, base, tables):
                   'mode': rnd.randrange(3), 'energy_threshold': 0xccc, 'current_line': rnd.randrange(4), 'goals': rnd.randrange(3)})
         f['energy'] = rnd.choice((0x1000, 0xc00, 0x800))
         f['entity_of'] = [-2] * 28
+        # the status bytes of the players' records in `rosters`: 3 on the bench, now and then one
+        # the line editor called on (7, bench_player_slot)
+        f['roster_status'] = [3] * 28
+        if rnd.random() < 0.4:
+            f['roster_status'][rnd.randrange(28)] = 7
+        for i, st in enumerate(f['roster_status']):
+            emu.write(ROSTERS + ti * 0x444 + i * 0x27, bytes([st]))
         for n, o, sz in AI_TEAM_FIELDS:
             emu.write(t + o, struct.pack('<' + _FMT[sz], f[n] if sz < 0 else f[n] & ((1 << (8 * sz)) - 1)))
         emu.write(t + 0x46, struct.pack('<28h', *([f['energy']] * 28)))
@@ -1435,7 +1445,7 @@ def ai_world(emu, rnd, base, tables):
          'one_timer': rnd.choice((0, 0, 1)), 'penalty_shot_slot': -1, 'penalty_shot_active': 0, 'penalty_shot_setup': 0,
          'penalty_shot_phase': 0, 'penalty_shot_team': 0, 'icing_flags': rnd.choice((0, 4, 5)), 'icing_shooter': rnd.choice((2, 9)),
          'pred0_x': rnd.randrange(-0x50, 0x51), 'pred0_steps': rnd.choice((-1, 20, 60)), 'pred1_x': rnd.randrange(-0x50, 0x51),
-         'pred1_steps': rnd.choice((-1, 20, 60)), 'period': rnd.choice((0, 1, 2)), 'clock_seconds': rnd.randrange(1, 300),
+         'pred1_steps': rnd.choice((-1, 20, 60)), 'period': rnd.choice((0, 1, 2, 2, 3, 4)), 'clock_seconds': rnd.randrange(1, 300),
          'clock_sub': rnd.randrange(24), 'whistle_timer': rnd.choice((0, 0, 0x14)), 'camera_target_x': rnd.randrange(-0x20, 0x21),
          'camera_target_y': rnd.randrange(-0xbc, 0xec), 'last_impact': rnd.randrange(0x20), 'crowd_hit_toggle': rnd.choice((0, 1)),
          'ref_hits': rnd.randrange(3), 'box_home': rnd.choice((0, 0, 1)), 'box_away': rnd.choice((0, 0, 1)),
@@ -1466,8 +1476,9 @@ def ai_world(emu, rnd, base, tables):
 def ai_record(emu):
     return {'globals': {n: struct.unpack('<' + _FMT[sz], emu.read(a, abs(sz)))[0] for n, a, sz in AI_GLOBALS},
             'teams': [dict({n: struct.unpack('<' + _FMT[sz], emu.read(t + o, abs(sz)))[0] for n, o, sz in AI_TEAM_FIELDS},
-                           entity_of=list(struct.unpack('<28h', emu.read(t + 0x7e, 56))))
-                      for t in TEAM_RECORDS],
+                           entity_of=list(struct.unpack('<28h', emu.read(t + 0x7e, 56))),
+                           roster_status=[emu.read(ROSTERS + ti * 0x444 + i * 0x27, 1)[0] for i in range(28)])
+                      for ti, t in enumerate(TEAM_RECORDS)],
             'carrier': struct.unpack('<b', emu.read(PUCK + 0x42, 1))[0], 'seed': struct.unpack('<I', emu.read(SEED, 4))[0]}
 
 
@@ -1485,6 +1496,9 @@ AI_GROUPS = {
     'pucks': ((24, (14,)), (25, (15,)), (26, (14,))),
     # the referee: at the faceoff, following the play, to the faceoff dot, pointing at the goal
     'referee': ((30, (16,)), (31, (16,)), (34, (16,)), (34, (16,)), (35, (16,))),
+    # the bench and the penalty box: to the bench, waiting there, into the box, sitting in it, back on
+    'bench': ((11, SKATERS + (0, 6)), (11, SKATERS + (0, 6)), (40, SKATERS), (12, SKATERS), (13, SKATERS),
+              (9, SKATERS), (10, SKATERS), (29, SKATERS)),
     # the referee's calls: signalling, the new puck, picking up the puck
     'refcalls': ((32, (16,)), (32, (16,)), (36, (16,)), (36, (16,)), (33, (16,)), (33, (16,)), (33, (16,)), (33, (16,))),
 }
@@ -1535,6 +1549,37 @@ def ai_prepare(emu, rnd, state, actor, g):
         if rnd.random() < 0.5:
             rec[0x44] |= 2                           # the entry: the announcements
             g['panel'] = rnd.choice((-1, -1, -1, 0x100))
+    if state in (9, 10, 11, 12, 13, 29, 40):
+        # near the bench door or the penalty box, a change pending (the next roster and line slot)
+        away = actor >= 6 and actor < 12
+        r = rnd.random()
+        if state in (11, 40, 9, 29) and r < 0.7:
+            by = (0x41 if away else -0x32) + rnd.randrange(-0x30, 0x31)
+            if state == 29:
+                by = (0x24 if away else -0x1c) + rnd.randrange(-0x18, 0x19)
+            put_fields(rec, {'x': (-0xa8 + rnd.randrange(-0x10, 0x30)) << 16 | rnd.randrange(0x10000),
+                             'y': by << 16 | rnd.randrange(0x10000)})
+        elif state in (12, 13, 10) and r < 0.7:
+            put_fields(rec, {'x': (0xa0 + rnd.randrange(-0x20, 0x10)) << 16 | rnd.randrange(0x10000),
+                             'y': ((0xb if away else -0xb) * rnd.randrange(2, 6) + rnd.randrange(-6, 7)) << 16 | rnd.randrange(0x10000)})
+        roster = struct.unpack_from('<B', rec, 0x47)[0]
+        put_fields(rec, {'next_roster': rnd.choice((roster, rnd.randrange(28), -1)), 'next_line': rnd.choice((-1, rnd.randrange(6))),
+                         'timer_a': rnd.choice((-1, 0, 3, 100) + ((0, 0x5a) if state == 40 else ())), 'timer_b': rnd.choice((0, 0, 5, -100)),
+                         'flags2': rnd.choice((0, 0, 4, 0x10, 0x20)), 'vx': rnd.choice((0, 0, 0x800)), 'vy': rnd.choice((0, 0, -0x400))})
+        if rnd.random() < 0.3:
+            rec[0x44] |= 4                             # arrived at the door
+        if state in (40, 29) and rnd.random() < 0.5:
+            # turned (or turning) towards the bench
+            h = 6 if state == 40 else 4
+            put_fields(rec, {'heading': rnd.choice((h - 1, h, h, h + 1)) << 16 | rnd.randrange(0x10000)})
+            if rnd.random() < 0.6:
+                # at the door, about to step off (or let a called on player come)
+                wy = ((0x46 if away else -0x32) if state == 40 else (0x24 if away else -0x1c))
+                put_fields(rec, {'x': (-0xa8 + rnd.randrange(-4, 0x14)) << 16 | rnd.randrange(0x10000),
+                                 'y': (wy + rnd.randrange(-0x12, 0x13)) << 16 | rnd.randrange(0x10000),
+                                 'target_x': -0xa8, 'target_y': wy, 'timer_a': rnd.choice((0, 0, 1))})
+                if state == 40 and rnd.random() < 0.6:
+                    emu.write(ROSTERS + (0x444 if away else 0) + rnd.randrange(25) * 0x27, b'\x07')
     if state == 33:
         # the puck loose near the referee, in a net, out of the rink; the panel up with a clip, a goal
         # to say; a frozen puck by a goalie who made a save
@@ -1679,6 +1724,10 @@ def ai_cases(exe):
         calls.append(['load_clip', s32(eax & 0xffffffff)])
         emu.write(0xcbecc, struct.pack('<h', eax & 0xffff))
     emu.stub(LOAD_CUTSCENE_CLIP, on_clip)
+    emu.stub(PUT_PLAYER_ON_ICE, lambda eax: calls.append(['put_player_on_ice', ((eax & 0xffffffff) - ENTITIES) // 0x80,
+                                                         s32(emu.uc.reg_read(UC_X86_REG_EDX)) & 0xffff]))
+    emu.stub(PICK_PLAYER_FOR_POSITION, lambda eax: calls.append(['pick_player_for_position', s32(eax & 0xffffffff),
+                                                                 s32(emu.uc.reg_read(UC_X86_REG_EDX))]))
     emu.stub(SAY_GOAL, lambda eax: calls.append(['say_goal'] + list(emu.read(0xe9ad4, 4))), pop=4)
     emu.stub(GOAL_MILESTONE_CHECK, lambda eax: calls.append(['goal_milestone_check']))
     emu.stub(ANNOUNCE_GOAL, lambda eax: calls.append(['announce_goal', s32(eax & 0xffffffff),
@@ -1693,6 +1742,10 @@ def ai_cases(exe):
         emu.write(t + 0xda, struct.pack('<I', lt))
         emu.write(t + 0xe6, struct.pack('<I', ps))
         emu.write(t + 0xea, struct.pack('<I', gs))
+        # the per-player game records (0x27 bytes, a status byte first; the port keeps the
+        # status in entity_of) and the ratings (put_player_on_ice is stubbed): not compared
+        emu.write(t + 0xee, struct.pack('<I', emu.alloc(b'\0' * 28 * 0x27)))
+        emu.write(t + 0xf2, struct.pack('<I', emu.alloc(b'\0' * 0x400)))
         tables.append((ps, gs))
     base = emu.read(ENTITIES, 17 * 0x80)
     out = {'base': [dict(entity_fields(emu, i), prev=list(struct.unpack('<iii', emu.read(ENTITIES + i * 0x80 + 0x74, 12))))
@@ -1704,6 +1757,8 @@ def ai_cases(exe):
             g, teams, carrier = ai_world(emu, rnd, base, tables)
             actor = rnd.choice(actors)
             carrier = ai_prepare(emu, rnd, state, actor, g)
+            for ti in range(2):
+                teams[ti]['roster_status'] = [emu.read(ROSTERS + ti * 0x444 + i * 0x27, 1)[0] for i in range(28)]
             speech['busy'] = g['speech_busy']
             rec = bytearray(emu.read(ENTITIES + actor * 0x80, 0x80))
             sp = struct.unpack_from('<h', rec, 0x1c)[0] & 7

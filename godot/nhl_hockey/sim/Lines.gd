@@ -286,8 +286,7 @@ static func bench(sim: Sim, e: Entity) -> void:
 		var nr := e.next_roster
 		e.next_roster = -1
 		e.next_line_slot = -1
-		if nr >= 0:
-			sim.put_player_on_ice(e, nr)
+		sim.put_player_on_ice(e, nr)        # (also with no player to come: -1)
 		return
 	if handle_line_change(sim, e):
 		return
@@ -303,7 +302,8 @@ static func bench(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		e.want_dir = 8
-		e.target_y = BENCH_Y[team.index]
+		e.dir_timer = 0
+		e.target_y = BENCH_Y[1 if (e.flags & Entity.F_PLAYER2) else 0]
 		e.target_x = BENCH_X
 		e.timer_a = 0
 	if e.next_roster == e.roster_idx:
@@ -324,17 +324,18 @@ static func bench(sim: Sim, e: Entity) -> void:
 		if absi(dy) < 0x29 and dx < 0x21:
 			Anim.set_animation(e, 1 if e.line_slot == 0 else Anim.GLIDE)
 			e.flags |= Entity.F_ARRIVED
-			if e.facing != 4:
-				e.facing = (e.facing + (1 if e.facing < 4 else -1)) & 7
+			var hw := AI._heading_word(e)
+			if hw != 4:
+				AI._set_heading_word(e, (hw + (1 if hw < 4 else -1)) & 7)
 			e.vy = 0
 			e.vx = -0x800
 			if dx > 0x10:
 				return
 			e.vx = 0
-			if e.facing != 4:
+			if AI._heading_word(e) != 4:
 				return
 			e.vx = -0x800
-			e.facing = 2
+			AI._set_heading_word(e, 2)
 			Anim.set_animation(e, 0xd2d if e.line_slot == 0 else 0x7bf)
 			e.flags |= Entity.F_BUSY
 			e.timer_a = 100
@@ -350,16 +351,18 @@ static func exit_bench(sim: Sim, e: Entity) -> void:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		e.vx = 0
 		e.vy = 0
-		e.flags3 = 0
+		e.pass_target = 0                # the word +0x48
 		var k := e.slot - 6
 		if k >= 0:
 			k = e.slot - 4
-		e.set_pos(-0xa0, k * 0xe)
-		e.facing = 2
+		# at the bench door (the fractions of the position stay)
+		e.y = (Sim._s16(k * 0xe) << 16) | (e.y & 0xffff)
+		e.x = (-0xa0 * 0x10000) | (e.x & 0xffff)
+		AI._set_heading_word(e, 2)
 		e.flags = (e.flags & ~0x30) | Entity.F_BUSY
 		Anim.set_animation(e, 0xd15 if e.line_slot == 0 else 0x7a1)
 		return
-	e.facing = 4
+	AI._set_heading_word(e, 4)
 	e.flags &= ~Entity.F_ARRIVED
 	e.flags2 &= ~(Entity.F2_UNSELECTABLE | Entity.F2_NO_COLLIDE)
 	e.anim = 0
@@ -374,43 +377,73 @@ static func bench_wait(sim: Sim, e: Entity) -> void:
 	if handle_line_change(sim, e):
 		return
 	var team := sim.team_of(e)
+	var away := 1 if e.flags & Entity.F_PLAYER2 else 0
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		e.want_dir = 8
-		e.target_y = BENCH_Y[team.index] + (2 - sim.random(4)) * 0xf
+		e.dir_timer = 0
+		e.target_y = Entity.to_s16(BENCH_Y[away] + (2 - sim.random(4)) * 0xf)
 		e.target_x = BENCH_X
 		e.timer_a = 0
 		e.timer_b = 0
+	if e.timer_a == 0x5a:
+		# a player called on from the bench (bench_player_slot) takes this one's place
+		e.set_state_reset(Entity.State.BENCH_WAIT)
+		sim.put_player_on_ice(e, e.timer_b)
+		e.frame = -1
+		e.timer_b = 0
+		e.timer_a = 0
+		return
 	if e.timer_a == 100:
-		if e.line_slot > 0 and e.facing == 6 and sim.random((team.energy[e.roster_idx] >> 5) + 0x50) == 0:
+		if e.line_slot > 0 and e.facing == 6 \
+				and Entity.to_s16(sim.random(Entity.to_s16(team.energy[e.roster_idx] / 32 + 0x50))) == 0:
 			Anim.set_animation(e, 0xd97)
 			e.flags |= Entity.F_BUSY
 			return
 		if e.anim == 0:
 			Anim.set_animation(e, Anim.GLIDE)
 		return
-	e.timer_a -= 1
+	e.timer_a = Entity.to_s16(e.timer_a - 1)
 	if e.timer_a < 0:
 		e.timer_a += 8
-		var dy: int = e.yi - WAIT_Y[team.index]
-		var dx := e.xi - e.target_x
-		if absi(dy) < 0x27 and dx < 0x20:
-			Anim.set_animation(e, 1 if e.line_slot == 0 else Anim.GLIDE)
+		var dy := Entity.to_s16(e.yi - WAIT_Y[away])
+		sim.scratch_a = Entity.to_s16(e.xi - e.target_x)
+		if absi(dy) <= 0x26 and sim.scratch_a <= 0x1f:
+			sim.scratch_b = 1 if e.line_slot == 0 else Anim.GLIDE
+			Anim.set_animation(e, sim.scratch_b)
 			e.flags |= Entity.F_ARRIVED
 			if e.facing != 6:
 				e.facing = (e.facing + (1 if (e.facing > 2 and e.facing < 7) else -1)) & 7
 			e.vy = 0
 			e.vx = -0x800
-			if dx > 0x10:
+			if sim.scratch_a > 0x10:
 				return
 			e.vx = 0
 			if e.facing != 6:
 				return
 			e.timer_a = 100
 			Anim.set_animation(e, Anim.GLIDE)
+			bench_player_slot(sim, e)
 			return
 	if (e.flags & Entity.F_ARRIVED) == 0:
 		AI.skate_towards(sim, e, e.target_x, e.target_y)
+
+## bench_player_slot (0x51115): a player at the bench door lets the first skater the line editor
+## called on (roster status 7) come on: he turns to the bench and the change is made after 0x5a
+## steps of the animation (timer_b keeps the roster index)
+static func bench_player_slot(sim: Sim, e: Entity) -> void:
+	var team: Team = sim.teams[1 if e.flags & Entity.F_PLAYER2 else 0]
+	for idx in 25:
+		if team.roster_status[idx] != 7:
+			continue
+		e.facing = 4
+		Anim.set_animation(e, 0x7bf)
+		e.flags |= Entity.F_BUSY
+		e.timer_a = 0x5a
+		e.timer_b = idx
+		team.roster_status[idx] = 3
+		team.entity_of[idx] = -2
+		return
 
 ## safety net of the port before the puck is placed: a change that did not complete at the bench
 ## in time (the original waits for every player) is applied at once

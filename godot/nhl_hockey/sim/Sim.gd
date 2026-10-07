@@ -470,6 +470,8 @@ func set_teams(home: Database.TeamInfo, away: Database.TeamInfo) -> void:
 ## from the bench (EXIT_BENCH) or the penalty box (EXIT_PENALTY_BOX), the bookkeeping of the
 ## team record and his ratings
 func put_player_on_ice(e: Entity, roster: int) -> void:
+	if stubbed("put_player_on_ice", [e.slot, roster & 0xffff]):
+		return
 	var team := team_of(e)
 	e.flags2 &= ~Entity.F2_HOOKED
 	e.roster_idx = roster
@@ -586,6 +588,13 @@ func _default_skills(e: Entity) -> void:
 	e.left_handed = 1 if (e.slot % 4) == 1 else 0
 	e.flags4 = Entity.F4_MIRROR if e.left_handed else 0
 	e.number = 10 + e.roster_idx if e.roster_idx >= 0 else 10 + e.slot
+
+## pick_player_for_position (0x655cc): the line table of a team that lost a player for the game
+## (game misconduct, injury) is rebuilt around him. The port's line picking skips the missing
+## player instead (assign_line_positions); the call is a hook for the golden tests.
+func pick_player_for_position(team: int, roster: int) -> void:
+	if stubbed("pick_player_for_position", [team, roster]):
+		return
 
 func team_of(e: Entity) -> Team:
 	return teams[e.team]

@@ -713,7 +713,8 @@ func ai_golden() -> void:
 		var sim := Sim.new()
 		sim.stubs = {"play_sfx": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
 			"injure_player": true, "bench_cheer": true, "announce_goal": true, "play_speech": true, "load_clip": true,
-			"say_goal": true, "goal_milestone_check": true}
+			"say_goal": true, "goal_milestone_check": true, "put_player_on_ice": true,
+			"pick_player_for_position": true}
 		var ok := 0
 		var bad := 0
 		var shown := 0
@@ -941,6 +942,7 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 		team.energy_threshold = int(f["energy_threshold"])
 		for i in 28:
 			team.entity_of[i] = int(f["entity_of"][i])
+			team.roster_status[i] = int(f["roster_status"][i])
 	for i in 12:
 		var e: Entity = sim.entities[i]
 		e.team = 0 if i < 6 else 1
@@ -1032,6 +1034,10 @@ static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 		for i in 28:
 			if team.entity_of[i] != int(want["entity_of"][i]):
 				diff.append("team %d entity_of[%d] %d (original %d)" % [t, i, team.entity_of[i], int(want["entity_of"][i])])
+				break
+		for i in 28:
+			if team.roster_status[i] != int(want["roster_status"][i]):
+				diff.append("team %d roster_status[%d] %d (original %d)" % [t, i, team.roster_status[i], int(want["roster_status"][i])])
 				break
 	if sim.puck_carrier != int(wa["carrier"]):
 		diff.append("carrier %d (original %d)" % [sim.puck_carrier, int(wa["carrier"])])
