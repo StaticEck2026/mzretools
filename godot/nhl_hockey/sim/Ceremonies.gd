@@ -529,6 +529,7 @@ static func begin_three_stars(sim: Sim) -> void:
 	sim.camera_target_y = 0
 	sim.panel = -1
 	InfoPanel.open(sim)
+	sim.sort_draw_order()
 
 ## the period length setting (option_flags bits 10-11): 0 short, 1 medium, 2 long periods
 static func period_setting(sim: Sim) -> int:

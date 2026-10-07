@@ -152,6 +152,9 @@ var seed: int = 0xabcd4321           # dword_c9100: state of randomrange (demo_g
 var puck_in_net := false            # byte_c90ba
 var bounced := false                # bounced_this_step: a net frame was hit (bounce_off_boards)
 var scored_net := -1                # the net of the last score_goal call
+var draw_list := PackedInt32Array()  # unk_e9ade: the 17 entities sorted by y (draw_order_list)
+var draw_pos := PackedInt32Array()   # draw_order_pos: each entity's place in draw_list
+var draw_keys := PackedInt32Array()  # draw_order_keys: the y each entity was last sorted by
 # line changes (Lines.gd)
 var req_roster: PackedInt32Array = PackedInt32Array([-1, -1, -1, -1, -1, -1])   # unk_e0384: lineup being assigned
 var req_slot: PackedInt32Array = PackedInt32Array([0, 0, 0, 0, 0, 0])          # unk_e038a: its line slots
@@ -203,6 +206,14 @@ func _init() -> void:
 	referee = entities[Entity.Slot.REFEREE]
 	puck.line_slot = 0
 	shadow.line_slot = 0
+	# entities_init: the draw order starts as the slots, then sorted
+	draw_list.resize(17)
+	draw_pos.resize(17)
+	draw_keys.resize(17)
+	for i in 17:
+		draw_list[i] = i
+		draw_pos[i] = i
+	sort_draw_order()
 	# the nets are bodies with a velocity too (a skater may knock one off its pegs, net_push_off)
 	entities[Entity.Slot.NET_TOP].line_slot = 0
 	entities[Entity.Slot.NET_BOTTOM].line_slot = 0
@@ -235,6 +246,7 @@ func new_game() -> void:
 	replay.reset()
 	summary_init(0, 0)
 	start_period(0)
+	sort_draw_order()
 
 ## gsummary_init (0x1aed0..): a new summary for the date of the game
 func summary_init(month: int, day: int) -> void:
@@ -1093,21 +1105,67 @@ func find_switch_target(target: int, cur: int) -> int:
 # bounce_off_boards; collide_neighbours -> collide_pair)
 # --------------------------------------------------------------------------------------------
 
+## move_entity (0x580f5): boards and nets for the body (then, when it did not bounce, for the stick
+## of a player at the frame's offset), body contacts with the neighbours in the draw order, and the
+## entity's new place in the draw order (sorted by y); after a contact that sent the puck in / an
+## exchange of momentum (puck_in_net) the entity goes back to its last position instead
 func move_entity(e: Entity) -> void:
-	puck_in_net = false
 	bounced = false
-	if e.slot >= 12 and e.slot != Entity.Slot.PUCK and e.slot != Entity.Slot.REFEREE:
-		return
-	if (e.flags & Entity.F_ARRIVED) == 0 or e.slot == Entity.Slot.PUCK:
+	puck_in_net = false
+	var x := e.xi
+	var y := e.yi
+	if (e.flags & Entity.F_ARRIVED) == 0:
 		collide_boards(e, e.xi, e.yi, e.half_w, e.half_h)
-		if e.vx == 0 and e.vy == 0 and e.slot < 12:
-			# standing players also keep their stick inside the rink
+		if e.push_y == 0 and e.push_x == 0 and e.slot < 12:
 			var o := Tables.frame_offset(e.frame, (e.flags4 & Entity.F4_MIRROR) != 0)
-			collide_boards(e, e.xi + o.x, e.yi + o.y, 1, 1)
-		collide_neighbours(e)
-	if puck_in_net and (e.anim < 0xf0f or e.anim > 0x1055):
-		e.x = (e.prev_x >> 16) << 16 | (e.x & 0xffff)
-		e.y = (e.prev_y >> 16) << 16 | (e.y & 0xffff)
+			collide_boards(e, _s16(e.xi + o.x), _s16(e.yi + o.y), 1, 1)
+		collide_neighbours(e, x, y)
+	if not puck_in_net:
+		_draw_order_move(e.slot, y)
+	elif e.anim < 0xf0f or e.anim > 0x1055:
+		e.x = (e.prev_x & ~0xffff) | (e.x & 0xffff)
+		e.y = (e.prev_y & ~0xffff) | (e.y & 0xffff)
+
+## sort_draw_order (0x5dd6b): every entity's y as its key, bubble sorted (stable)
+func sort_draw_order() -> void:
+	for i in 17:
+		draw_keys[i] = entities[i].yi
+	var swapped := true
+	while swapped:
+		swapped = false
+		for k in 16:
+			var a := draw_list[k]
+			var b := draw_list[k + 1]
+			if draw_keys[b] < draw_keys[a]:
+				draw_list[k] = b
+				draw_list[k + 1] = a
+				draw_pos[a] = k + 1
+				draw_pos[b] = k
+				swapped = true
+
+## the end of move_entity: the entity moves up or down the draw order to its new y
+func _draw_order_move(slot: int, y: int) -> void:
+	var k := draw_pos[slot]
+	while k != 16:
+		var o := draw_list[k + 1]
+		if y <= draw_keys[o]:
+			break
+		draw_list[k] = o
+		draw_list[k + 1] = slot
+		draw_pos[slot] += 1
+		draw_pos[o] -= 1
+		k += 1
+	k = draw_pos[slot]
+	while k != 0:
+		var o := draw_list[k - 1]
+		if draw_keys[o] <= y:
+			break
+		draw_list[k] = o
+		draw_list[k - 1] = slot
+		draw_pos[slot] -= 1
+		draw_pos[o] += 1
+		k -= 1
+	draw_keys[slot] = y
 
 ## collide_boards (0x582c9): boards with rounded corners (radius 64); between the corners at the
 ## ends the nets are checked first. a, b (dword_e03ba / dword_e03be) are the board's direction,
@@ -1349,49 +1407,62 @@ func collide_player_net(e: Entity, net: Entity, px: int, py: int, hw: int, hh: i
 	bounced = true
 	bounce_off_boards(e, a, b)
 
-## collide_neighbours / collide_pair: body contact between skaters (and the referee)
-func collide_neighbours(e: Entity) -> void:
+## collide_neighbours (0x58ce2): the entities next to this one in the draw order, up to 16 apart in
+## y (by the keys of their last moves), upwards then downwards
+func collide_neighbours(e: Entity, x: int, y: int) -> void:
 	if e.flags2 & Entity.F2_NO_COLLIDE:
 		return
 	if e.slot >= 12 and e.slot != Entity.Slot.REFEREE:
 		return
-	for i in 17:
-		if i == e.slot or (i >= 12 and i != Entity.Slot.REFEREE):
-			continue
-		var o := entities[i]
-		if o.line_slot < 0 and o.slot != Entity.Slot.REFEREE:
-			continue
-		if absi(o.yi - e.yi) > 0x10:
-			continue
-		collide_pair(e, o)
+	var k := draw_pos[e.slot]
+	while k != 16:
+		var o := draw_list[k + 1]
+		var d := _s16(draw_keys[o] - y)
+		if d > 0x10:
+			break
+		collide_pair(e, x, d, entities[o])
+		k += 1
+	k = draw_pos[e.slot]
+	while k != 0:
+		var o := draw_list[k - 1]
+		var d := _s16(y - draw_keys[o])
+		if d > 0x10:
+			return
+		collide_pair(e, x, d, entities[o])
+		k -= 1
 
-func collide_pair(e: Entity, o: Entity) -> void:
+## collide_pair (0x58dc7): x is the mover's x before its move, dy the neighbour's key against its y.
+## Closing in, opponents (or the referee) hit each other (the impact, a byte of the closing speed,
+## at least 5, adds to both +0x18 words; goalie_collision, resolve_body_check); then unless the puck
+## went in the momentum is exchanged along the contact by the weights, and team mates step around
+## each other
+func collide_pair(e: Entity, x: int, dyk: int, o: Entity) -> void:
 	if (o.flags & Entity.F_ARRIVED) or (o.flags2 & Entity.F2_NO_COLLIDE):
 		return
-	var dx := o.xi - e.xi
-	var dy := o.yi - e.yi
+	if o.slot >= 12 and o.slot != Entity.Slot.REFEREE:
+		return
+	var dx := _s16(o.xi - x)
 	if absi(dx) > 0x10:
 		return
-	var d2 := dx * dx + dy * dy
-	if d2 > 0x100:
+	if dx * dx + dyk * dyk > 0x100:
 		return
-	var rvx := e.vx - o.vx
-	var rvy := e.vy - o.vy
-	var closing := dy * rvy + dx * rvx
+	var rvx := _s16(e.vx - o.vx)
+	var dxr := _s16(o.xi - e.xi)
+	var dyr := _s16(o.yi - e.yi)
+	var rvy := _s16(e.vy - o.vy)
+	var closing := dyr * rvy + rvx * dxr
 	if closing < 0:
 		return
-	var strength := closing >> 4
-	if e.slot == Entity.Slot.REFEREE or o.slot == Entity.Slot.REFEREE or e.team != o.team:
-		# the impact (a signed byte of closing >> 12, at least 5) adds to both players' speed word,
-		# which knock_down and resolve_body_check read as the strength of the hit
-		var s := ((strength >> 8) & 0xff)
+	var strength := _s16(closing >> 4)
+	if e.slot == Entity.Slot.REFEREE or o.slot == Entity.Slot.REFEREE or ((o.flags ^ e.flags) & Entity.F_PLAYER2) != 0:
+		var s := ((closing >> 4) >> 8) & 0xff
 		if s >= 0x80:
 			s -= 0x100
 		if s < 6:
 			s = 5
 		last_impact = s
-		e.speed += s
-		o.speed += s
+		e.speed = _s16(e.speed + s)
+		o.speed = _s16(o.speed + s)
 		if (o.flags2 & Entity.F2_KNOCKED) == 0:
 			o.hit_by = e.slot
 		if (e.flags2 & Entity.F2_KNOCKED) == 0:
@@ -1402,28 +1473,27 @@ func collide_pair(e: Entity, o: Entity) -> void:
 		PuckLogic.resolve_body_check(self, e, o, s)
 	if puck_in_net:
 		return
-	# exchange momentum along the contact normal, weighted by the masses
-	var tang := (dy * rvx - rvy * dx) >> 4
+	var tang := _s16((dyr * rvx - rvy * dxr) >> 4)
 	var me := e.weight + 0x8c
-	var total := o.weight + 0x8c + me
-	var give := (me * strength) / total
-	e.vx = o.vx + ((give * dx + tang * dy) >> 4)
-	e.vy = o.vy + ((give * dy - tang * dx) >> 4)
-	o.vx += (dx * give) >> 4
-	o.vy += (dy * give) >> 4
-	puck_in_net = true   # the original marks the frame as "position reverted" with byte_c90ba
-	if not play_stopped and e.team == o.team:
+	var total := _s16(o.weight + 0x8c + me)
+	var give := _div_trunc(me * strength, total)
+	e.vx = _s16(o.vx + _s16((give * dxr + tang * dyr) >> 4))
+	e.vy = _s16(o.vy + _s16((give * dyr - tang * dxr) >> 4))
+	o.vx = _s16(o.vx + _s16((dxr * give) >> 4))
+	o.vy = _s16(o.vy + _s16((dyr * give) >> 4))
+	puck_in_net = true   # byte_c90ba: the mover goes back to its last position
+	if not play_stopped and ((o.flags ^ e.flags) & Entity.F_PLAYER2) == 0:
 		# team mates step around each other
-		var away := Tables.direction8(dx, dy)
+		var away := Tables.direction8(dxr, dyr)
 		if (e.flags & Entity.F_USER) == 0:
-			var want := Tables.direction8(e.target_x - e.xi, e.target_y - e.yi)
+			var want := Tables.direction8(_s16(e.target_x - e.xi), _s16(e.target_y - e.yi))
 			if want == away or (e.vx == 0 and e.vy == 0 and away == e.facing):
 				e.want_dir = (away + 2) & 7
 				apply_skating(e, e.want_dir)
 		if (o.flags & Entity.F_USER) == 0:
 			var back := (away + 4) & 7
-			var want_o := Tables.direction8(o.target_x - o.xi, o.target_y - o.yi)
-			if want_o == back or (e.vx == 0 and e.vy == 0 and back == o.puck_dir):
+			var want_o := Tables.direction8(_s16(o.target_x - o.xi), _s16(o.target_y - o.yi))
+			if want_o == back or (e.vx == 0 and e.vy == 0 and back == o.facing):
 				o.want_dir = (back + 2) & 7
 				apply_skating(o, o.want_dir)
 

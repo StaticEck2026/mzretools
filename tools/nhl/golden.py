@@ -13,7 +13,8 @@
 #                    record after the call, the sound effects asked for (play_sfx stubbed), the seed;
 #                    apply_skating (skating_turn, skating_accelerate, stop_skating, brake, goalie_move)
 #                    on skater, goalie and referee states with a direction; collide_boards at the nets
-#                    (collide_net, collide_player_net, net_push_off; score_goal, queue_infraction stubbed)
+#                    (collide_net, collide_player_net, net_push_off; score_goal, queue_infraction stubbed);
+#                    move_entity among team mates (the draw order, collide_pair, stepping around)
 #
 # The patch bank is put in the emulator's memory the way loadpatches leaves it: the .PAT file at
 # snd_patch_bank, each record's +0x10 pointing at its timbre from the .TIM files.
@@ -316,7 +317,8 @@ def pc_cases(exe, gamedir):
 
 # the fields of an entity record compared (STRUCTURES.md): name, offset, size (negative: signed)
 ENTITY_FIELDS = (('x', 0, -4), ('y', 4, -4), ('z', 8, -4), ('vx', 0xc, -2), ('vy', 0xe, -2), ('vz', 0x10, -2),
-                 ('frame', 0x12, -2), ('speed', 0x18, -2), ('line_slot', 0x1a, -2), ('push_x', 0x30, -2),
+                 ('frame', 0x12, -2), ('hit_by', 0x14, -2), ('speed', 0x18, -2), ('line_slot', 0x1a, -2),
+                 ('want_dir', 0x28, 1), ('target_x', 0x2a, -2), ('target_y', 0x2c, -2), ('push_x', 0x30, -2),
                  ('push_y', 0x32, -2), ('heading', 0x34, -4), ('spin', 0x36, 1), ('anim', 0x38, -2),
                  ('anim_pos', 0x3a, -2), ('anim_hold', 0x3c, -2), ('flags', 0x44, 1), ('flags2', 0x45, 1),
                  ('roster', 0x47, 1), ('flags4', 0x55, 1), ('weight', 0x56, 1), ('speed_skill', 0x57, 1),
@@ -331,6 +333,11 @@ TEAM_RECORDS = (0xdf614, 0xdf714)             # +0x46: the energy word of each r
 SCORE_GOAL = 0x5ab36
 QUEUE_INFRACTION = 0x62d80                    # (entity, type)
 PUCK_IN_NET = 0xc90ba
+MOVE_ENTITY = 0x580f5                         # (entity, x, y)
+SORT_DRAW_ORDER2 = 0x5dd7c
+DRAW_KEYS = 0xe9a58                           # short[17]
+DRAW_POS = 0xe9a7a                            # short[17]
+DRAW_LIST = 0xe9ade                           # byte[17]
 _FMT = {1: 'B', -1: 'b', 2: 'H', -2: 'h', 4: 'I', -4: 'i'}
 
 
@@ -481,6 +488,85 @@ def net_cases(emu, rnd, base, sfx, goals, infractions):
     return out
 
 
+def draw_order(emu):
+    return {'list': list(emu.read(DRAW_LIST, 17)),
+            'pos': list(struct.unpack('<17h', emu.read(DRAW_POS, 34))),
+            'keys': list(struct.unpack('<17h', emu.read(DRAW_KEYS, 34)))}
+
+
+def contact_cases(emu, rnd, base, sfx):
+    '''move_entity among team mates: boards and the stick, the neighbours in the draw order,
+    collide_pair's exchange of momentum, team mates stepping around each other (apply_skating)'''
+    out = []
+    frames = list(range(0, 0x284)) + list(range(0x294, 0x2da)) + list(range(0x378, 0x468))
+    for k in range(300):
+        emu.write(ENTITIES, base)
+        for t in TEAM_RECORDS:
+            emu.write(t + 0x46, struct.pack('<28h', *([0x1000] * 28)))
+        cx = rnd.randrange(-150, 151)
+        cy = rnd.randrange(-250, 251)
+        cluster = [s_ for s_ in range(6) if rnd.random() < 0.75] or [1, 2]
+        if rnd.random() < 0.5:
+            cluster.append(14)
+        befores = {}
+        for slot in cluster:
+            rec = bytearray(emu.read(ENTITIES + slot * 0x80, 0x80))
+            x = cx + rnd.randrange(-14, 15)
+            y = cy + rnd.randrange(-14, 15)
+            lim = rnd.choice((0x400, 0x1800, 0x3000))
+            f = {'x': x << 16 | rnd.randrange(0x10000), 'y': y << 16 | rnd.randrange(0x10000),
+                 'vx': rnd.randrange(-lim, lim), 'vy': rnd.randrange(-lim, lim),
+                 'speed': rnd.randrange(0, 21), 'heading': rnd.randrange(8) << 16 | rnd.randrange(0x10000),
+                 'want_dir': rnd.randrange(9), 'target_x': rnd.randrange(-150, 151), 'target_y': rnd.randrange(-250, 251)}
+            if slot != 14:
+                f.update({'line_slot': 0 if slot == 0 else rnd.randrange(1, 6),
+                          'frame': rnd.choice(frames), 'flags4': rnd.choice((0, 8)),
+                          'flags': rnd.choice((0, 0, 0, 0x08, 0x10)) | rnd.choice((0, 0x80)) | (0x04 if rnd.random() < 0.05 else 0),
+                          'flags2': (0x20 if rnd.random() < 0.05 else 0) | rnd.choice((0, 0, 2)),
+                          'roster': rnd.randrange(0, 20), 'weight': rnd.randrange(140, 230),
+                          'speed_skill': rnd.randrange(0, 16), 'stamina': rnd.randrange(0, 16),
+                          'anim': rnd.choice((0, 0x289, 0x2a1, 0x331, 0x529)), 'anim_pos': rnd.randrange(0, 6),
+                          'anim_hold': rnd.randrange(-1, 4), 'hit_by': rnd.choice((0, 3, -1))})
+            put_fields(rec, f)
+            struct.pack_into('<ii', rec, 0x74, f['x'], f['y'])
+            emu.write(ENTITIES + slot * 0x80, rec)
+        emu.call(SORT_DRAW_ORDER2)
+        # the mover takes its step; another entity may have moved since the keys were taken
+        mover = rnd.choice([s_ for s_ in cluster if s_ != 14])
+        for slot in cluster:
+            rec = bytearray(emu.read(ENTITIES + slot * 0x80, 0x80))
+            if slot == mover or rnd.random() < 0.2:
+                x0, y0 = struct.unpack_from('<ii', rec, 0)
+                vx, vy = struct.unpack_from('<hh', rec, 0xc)
+                struct.pack_into('<ii', rec, 0x74, x0, y0)
+                struct.pack_into('<ii', rec, 0, x0 + vx * 16, y0 + vy * 16)
+                emu.write(ENTITIES + slot * 0x80, rec)
+            befores[slot] = entity_fields(emu, slot)
+            befores[slot]['prev'] = list(struct.unpack_from('<ii', rec, 0x74))
+        carrier = rnd.choice((-1, -1, mover, cluster[0]))
+        emu.write(PUCK + 0x42, bytes([carrier & 0xff]))
+        game = rnd.choice((0, 0, 0, 1))
+        emu.write(GAME_FLAGS, bytes([game]))
+        options = rnd.choice((0, 4))
+        emu.write(OPTION_FLAGS, struct.pack('<I', options))
+        seed = rnd.getrandbits(32)
+        emu.write(SEED, struct.pack('<I', seed))
+        emu.write(PUCK_IN_NET, b'\0')
+        order = draw_order(emu)
+        del sfx[:]
+        x = struct.unpack('<h', emu.read(ENTITIES + mover * 0x80 + 2, 2))[0]
+        y = struct.unpack('<h', emu.read(ENTITIES + mover * 0x80 + 6, 2))[0]
+        emu.call(MOVE_ENTITY, eax=ENTITIES + mover * 0x80, edx=x & 0xffffffff, ebx=y & 0xffffffff)
+        out.append({'mover': mover, 'carrier': carrier, 'game_flags': game, 'options': options, 'seed': seed,
+                    'before': {str(s_): v for s_, v in befores.items()}, 'order': order,
+                    'after': {str(s_): entity_fields(emu, s_) for s_ in cluster}, 'order_after': draw_order(emu),
+                    'sfx': list(sfx), 'puck_in_net': emu.read(PUCK_IN_NET, 1)[0],
+                    'final_seed': struct.unpack('<I', emu.read(SEED, 4))[0]})
+        emu.write(GAME_FLAGS, b'\0')
+        emu.write(OPTION_FLAGS, b'\0' * 4)
+    return out
+
+
 def physics_cases(exe):
     emu = PortEmu(exe)
     rnd = random.Random(1993)
@@ -549,6 +635,11 @@ def physics_cases(exe):
                               'final_seed': struct.unpack('<I', emu.read(SEED, 4))[0]})
     out['skating'] = skating_cases(emu, rnd, base)
     out['nets'] = net_cases(emu, rnd, base, sfx, goals, infractions)
+    out['contacts'] = contact_cases(emu, rnd, base, sfx)
+    # the entities as entities_init leaves them (every case starts from these)
+    emu.write(ENTITIES, base)
+    out['base'] = [dict(entity_fields(emu, i), prev=list(struct.unpack('<iii', emu.read(ENTITIES + i * 0x80 + 0x74, 12))))
+                   for i in range(17)]
     return out
 
 

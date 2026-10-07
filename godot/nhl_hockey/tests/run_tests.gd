@@ -828,7 +828,65 @@ func physics_golden() -> void:
 	Rules.reset_nets(sim)
 	sim.play_stopped = false
 	sim.infractions.clear()
-	print("golden physics: %d / %d distances, collide_boards %d / %d, apply_skating %d / %d, at the nets %d / %d" % [ph["distance"].size() - dbad, ph["distance"].size(), ok, ph["boards"].size(), sk_ok, ph["skating"].size(), n_ok, ph["nets"].size()])
+	# move_entity among team mates: the draw order, collide_pair, stepping around each other
+	var c_ok := 0
+	var c_bad := 0
+	var base: Array = ph["base"]
+	for c: Dictionary in ph["contacts"]:
+		for i in 17:
+			var b: Entity = sim.entities[i]
+			_entity_set(b, base[i])
+			b.prev_x = int(base[i]["prev"][0])
+			b.prev_y = int(base[i]["prev"][1])
+			b.prev_z = int(base[i]["prev"][2])
+		var befores: Dictionary = c["before"]
+		for k in befores:
+			var e: Entity = sim.entities[int(k)]
+			_entity_set(e, befores[k])
+			e.prev_x = int(befores[k]["prev"][0])
+			e.prev_y = int(befores[k]["prev"][1])
+			e.prev_z = e.z
+			e.energy = 0x1000
+			if e.slot < 12 and e.roster_idx >= 0:
+				sim.teams[e.team].energy[e.roster_idx] = 0x1000
+		var order: Dictionary = c["order"]
+		for i in 17:
+			sim.draw_list[i] = int(order["list"][i])
+			sim.draw_pos[i] = int(order["pos"][i])
+			sim.draw_keys[i] = int(order["keys"][i])
+		sim.puck_carrier = int(c["carrier"])
+		sim.play_stopped = (int(c["game_flags"]) & 1) != 0
+		sim.opt_line_changes = (int(c["options"]) & 4) != 0
+		sim.seed = int(c["seed"])
+		sim.sfx_queue.clear()
+		var mover: Entity = sim.entities[int(c["mover"])]
+		sim.move_entity(mover)
+		var diff := []
+		var after: Dictionary = c["after"]
+		for k in after:
+			for d in _entity_diff(sim.entities[int(k)], after[k]):
+				diff.append("%s: %s" % [k, d])
+		var oa: Dictionary = c["order_after"]
+		for i in 17:
+			if sim.draw_list[i] != int(oa["list"][i]) or sim.draw_pos[i] != int(oa["pos"][i]) or sim.draw_keys[i] != int(oa["keys"][i]):
+				diff.append("draw order %s %s (original %s %s)" % [str(sim.draw_list), str(sim.draw_keys), str(oa["list"]), str(oa["keys"])])
+				break
+		var sfx: Array = c["sfx"]
+		if sim.sfx_queue.size() != sfx.size():
+			diff.append("sounds %s (original %s)" % [str(sim.sfx_queue), str(sfx)])
+		if sim.puck_in_net != (int(c["puck_in_net"]) != 0):
+			diff.append("puck_in_net %s" % sim.puck_in_net)
+		if sim.seed != int(c["final_seed"]):
+			diff.append("seed")
+		if diff.is_empty():
+			c_ok += 1
+		else:
+			c_bad += 1
+			if c_bad <= 6:
+				fail("move_entity slot %d: %s" % [mover.slot, ", ".join(diff.slice(0, 6))])
+	sim.play_stopped = false
+	sim.sort_draw_order()
+	print("golden physics: %d / %d distances, collide_boards %d / %d, apply_skating %d / %d, at the nets %d / %d, move_entity %d / %d" % [ph["distance"].size() - dbad, ph["distance"].size(), ok, ph["boards"].size(), sk_ok, ph["skating"].size(), n_ok, ph["nets"].size(), c_ok, ph["contacts"].size()])
 
 ## the fields of physics.json (ENTITY_FIELDS of golden.py) to and from an entity of the port (the
 ## puck keeps its spin bits, +0x36, in flags3; the others' +0x36 is the facing in heading)
@@ -840,8 +898,12 @@ static func _entity_set(e: Entity, f: Dictionary) -> void:
 	e.vy = int(f["vy"])
 	e.vz = int(f["vz"])
 	e.frame = int(f["frame"])
+	e.hit_by = int(f["hit_by"])
 	e.speed = int(f["speed"])
 	e.line_slot = int(f["line_slot"])
+	e.want_dir = int(f["want_dir"])
+	e.target_x = int(f["target_x"])
+	e.target_y = int(f["target_y"])
 	e.push_x = int(f["push_x"])
 	e.push_y = int(f["push_y"])
 	e.heading = int(f["heading"]) & 0xffffffff
@@ -860,8 +922,9 @@ static func _entity_set(e: Entity, f: Dictionary) -> void:
 	e.endurance = int(f["endurance"])
 
 static func _entity_get(e: Entity) -> Dictionary:
-	return {"x": e.x, "y": e.y, "z": e.z, "vx": e.vx, "vy": e.vy, "vz": e.vz, "frame": e.frame,
-		"speed": e.speed, "line_slot": e.line_slot, "push_x": e.push_x, "push_y": e.push_y,
+	return {"x": e.x, "y": e.y, "z": e.z, "vx": e.vx, "vy": e.vy, "vz": e.vz, "frame": e.frame, "hit_by": e.hit_by,
+		"speed": e.speed, "line_slot": e.line_slot, "want_dir": e.want_dir & 0xff, "target_x": e.target_x,
+		"target_y": e.target_y, "push_x": e.push_x, "push_y": e.push_y,
 		"heading": e.heading, "spin": e.flags3 if e.slot == Entity.Slot.PUCK else (e.heading >> 16) & 0xff,
 		"anim": e.anim, "anim_pos": e.anim_pos, "anim_hold": e.anim_hold, "flags": e.flags, "flags2": e.flags2,
 		"roster": e.roster_idx & 0xff, "flags4": e.flags4, "weight": e.weight, "speed_skill": e.speed_skill,
@@ -1034,11 +1097,13 @@ func line_change_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 		fail("line bookkeeping after F2: line %d pair %d" % [sim.teams[0].current_line, sim.teams[0].dpair_counter])
 	else:
 		print("line change: second line on the ice after F2, dressed %s" % str(_dressed(sim, 0)))
-	# everybody who left is on the bench, nobody is dressed twice
+	# everybody who left is on the bench, nobody is dressed twice (a player sent off on his way to
+	# the box is in it already)
 	var home := sim.teams[0]
 	for i in 6:
 		var e := sim.entities[i]
-		if e.line_slot >= 0 and home.entity_of[e.roster_idx] != -1:
+		var boxed := e.state() == Entity.State.PENALTY_BOX or e.state() == Entity.State.DOOR_OPEN
+		if e.line_slot >= 0 and home.entity_of[e.roster_idx] != (1 if boxed else -1):
 			fail("player %d on the ice but entity_of = %d" % [e.roster_idx, home.entity_of[e.roster_idx]])
 	# the CPU coach: a tired line is replaced at the next faceoff
 	sim = Sim.new()

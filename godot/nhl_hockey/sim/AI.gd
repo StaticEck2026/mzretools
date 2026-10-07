@@ -1542,6 +1542,7 @@ static func puck_faceoff(sim: Sim, e: Entity) -> void:
 		if sim.opt_line_changes and (sim.user1_team != 0 or sim.user2_team != 0) and sim.penalty_box_mode:
 			# the users get their line change prompt: the penalty box sequence ends here
 			sim.action_hold_camera = true
+			sim.sort_draw_order()
 			sim.penalty_box_mode = false
 		for t in 2:
 			var team := sim.teams[t]
@@ -1624,6 +1625,7 @@ static func penalty_shot_go(sim: Sim, e: Entity) -> void:
 	sim.camera_target_x = 0
 	sim.camera_target_y = 0
 	Rules.reset_nets(sim)
+	sim.sort_draw_order()
 	sim.last_touch_x = 0
 	sim.last_touch_y = 0
 	sim.last_touch_slot = -1
@@ -1888,6 +1890,7 @@ static func exit_penalty_box(sim: Sim, e: Entity) -> void:
 		e.facing = 2
 		e.flags |= Entity.F_BUSY
 		Anim.set_animation(e, 0x7bf)
+		sim.sort_draw_order()
 		return
 	e.facing = 4
 	e.next_line_slot = -1

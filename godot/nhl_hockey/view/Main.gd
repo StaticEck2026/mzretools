@@ -857,6 +857,7 @@ func _load_assets() -> void:
 		var saved: Dictionary = config.get("restore", {})
 		if not saved.is_empty():
 			SaveGame.restore(sim, saved)
+			sim.sort_draw_order()
 			sim.replay.reset()
 			anthem = false
 	# palette with the jersey colours (load_team_palettes)

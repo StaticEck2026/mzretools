@@ -969,6 +969,7 @@ static func place_faceoff(sim: Sim) -> void:
 	puck.flags3 = 0
 	sim.puck_carrier = -1
 	reset_nets(sim)
+	sim.sort_draw_order()
 	sim.last_touch_x = sim.faceoff_x
 	sim.last_touch_y = sim.faceoff_y
 	sim.last_touch_slot = -1
@@ -1027,6 +1028,7 @@ static func place_faceoff(sim: Sim) -> void:
 	ref.vy = 0
 	ref.flags2 &= ~Entity.F2_NO_COLLIDE
 	Anim.set_animation(ref, 0xc57)
+	sim.sort_draw_order()
 	sim.user1_slot = -1
 	sim.user2_slot = -1
 	sim.assign_users()
