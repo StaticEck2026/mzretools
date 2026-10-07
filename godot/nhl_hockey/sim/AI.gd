@@ -1991,7 +1991,7 @@ static func puck_faceoff2(sim: Sim, e: Entity) -> void:
 		sim.ref_phase = -1
 		sim.whistle_timer = 0
 		sim.penalty_box_mode = false
-		sim.infractions.clear()
+		Rules.clear_infractions(sim)
 		sim.penalty_shot_setup = false
 		InfoPanel.reset(sim)
 		if sim.penalty_shot_phase != 0:
@@ -2454,7 +2454,7 @@ static func ref_pickup(sim: Sim, e: Entity) -> void:
 		if sim.period >= 3:
 			sim.panel = 0x38
 		return
-	if not sim.infractions.is_empty():
+	if Rules.inf_type(sim, 0) != 0:
 		Anim.set_animation(e, Anim.REF_GLIDE)
 		sim.ref_phase = -1
 		return

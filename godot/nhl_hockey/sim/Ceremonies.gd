@@ -214,7 +214,7 @@ static func period_end(sim: Sim) -> void:
 	if diff == 0:
 		if sim.period == 3 and regular_season(sim):
 			# a regular season game ends tied after the overtime
-			sim.infractions.clear()
+			Rules.clear_infractions(sim)
 			sim.add_crowd(900, 0x4b0)
 			sim.play_stopped = true
 			sim.game_over = true
@@ -266,7 +266,7 @@ static func period_end(sim: Sim) -> void:
 			p.set_state_reset(Entity.State.GET_CUP)
 		else:
 			p.set_state_reset(Entity.State.CELEBRATE)
-	sim.infractions.clear()
+	Rules.clear_infractions(sim)
 	if winner == 0:
 		sim.add_crowd(1000, 0x5dc)
 		if sim.cup_final:
@@ -279,15 +279,18 @@ static func period_end(sim: Sim) -> void:
 	Rules.queue_infraction(sim, sim.entities[first], Rules.INF_PERIOD_END)
 
 static func _serving(team: Team, e: Entity) -> bool:
-	for pen: Array in team.penalties:
-		if pen[2] == e.slot:
-			return true
-	return false
+	var r := Entity.to_s8(e.roster_idx)
+	return r >= 0 and r < 28 and team.entity_of[r] > 0
 
 static func _remove_penalty(team: Team, e: Entity) -> void:
-	for i in team.penalties.size():
-		if team.penalties[i][2] == e.slot:
-			team.penalties.remove_at(i)
+	var r := Entity.to_s8(e.roster_idx)
+	for i in 0x1c:
+		if team.box_queue[i] < 0:
+			return
+		if team.box_queue[i] == r:
+			for k in range(i, 0x1b):
+				team.box_queue[k] = team.box_queue[k + 1]
+			team.box_queue[0x1b] = -1
 			return
 
 ## end_of_period (0x5dea6): the next period, the overtime (playoffs: as long as needed, the teams
@@ -304,7 +307,7 @@ static func next_period(sim: Sim) -> void:
 		switch = false
 	elif p > 3:
 		p = 3
-	sim.infractions.clear()
+	Rules.clear_infractions(sim)
 	if not sim.no_stats:
 		sim.summary_close_period()
 	sim.start_period(p, switch)
@@ -478,7 +481,7 @@ static func begin_three_stars(sim: Sim) -> void:
 	sim.whistle_timer = 0
 	sim.penalty_box_mode = false
 	sim.box_count = [0, 0]
-	sim.infractions.clear()
+	Rules.clear_infractions(sim)
 	sim.period_over = false
 	sim.intermission_camera = false
 	sim.play_stopped = true

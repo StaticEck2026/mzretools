@@ -100,7 +100,7 @@ func _draw() -> void:
 			draw_texture(line_labels[line], Vector2(0x2a if t == 0 else 0xfb, HUD_Y + 0x14))
 	for t in 2:
 		var team := sim.teams[t]
-		var penalties := not team.penalties.is_empty()
+		var penalties := not team.box_list().is_empty()
 		var panel: Texture2D = null
 		if penalties:
 			panel = panels["homp" if t == 0 else "visp"]
@@ -153,18 +153,17 @@ func _draw_energy(team: Team, x0: int) -> void:
 
 ## draw_penalty_clocks: number, minutes and seconds of up to four penalties in the small digits
 func _draw_penalty_clocks(team: Team, x0: int) -> void:
+	var box := team.box_list()
 	for i in 4:
 		var y := HUD_Y + 9 + 5 * i
-		if i >= team.penalties.size():
+		if i >= box.size():
 			for dx in [10, 0x10, 0x1b, 0x21, 0x2a, 0x30]:
 				draw_texture(small_digits[10], Vector2(x0 + dx, y))
 			continue
-		var pen: Array = team.penalties[i]
+		var pen: Array = box[i]
 		var number := 0
 		if team.info != null and team.info.player(pen[0]) != null:
 			number = team.info.player(pen[0]).number
-		elif pen[2] >= 0:
-			number = sim.entities[pen[2]].number
 		var seconds: int = pen[1]
 		var values := [number / 10, number % 10, seconds / 60 / 10, (seconds / 60) % 10, (seconds % 60) / 10, seconds % 10]
 		var xs := [10, 0x10, 0x1b, 0x21, 0x2a, 0x30]

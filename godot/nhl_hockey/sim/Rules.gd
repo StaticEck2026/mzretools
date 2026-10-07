@@ -40,211 +40,624 @@ const INF_TWO_LINE := 29
 const INF_NET_OFF := 30           # a skater knocked a net off (net_push_off)
 
 # --------------------------------------------------------------------------------------------
+# the infraction queue (infraction_queue, 0xe9a16): 32 entries of two bytes, the event and the
+# slot of the player it is about (0x80 once its stoppage started); an event 0 ends the queue
+# --------------------------------------------------------------------------------------------
+
+static func inf_type(sim: Sim, i: int) -> int:
+	return sim.infq[i * 2] if i >= 0 and i < 32 else 0
+
+static func inf_slot(sim: Sim, i: int) -> int:
+	return sim.infq[i * 2 + 1] if i >= 0 and i < 32 else 0
+
+static func inf_set(sim: Sim, i: int, type: int, slot: int) -> void:
+	if i >= 0 and i < 32:
+		sim.infq[i * 2] = type & 0xff
+		sim.infq[i * 2 + 1] = slot & 0xff
+
+## the entries in use (up to the first event 0)
+static func inf_count(sim: Sim) -> int:
+	var n := 0
+	while n < 32 and sim.infq[n * 2] != 0:
+		n += 1
+	return n
+
+## clear_infractions (0x63d3c)
+static func clear_infractions(sim: Sim) -> void:
+	sim.infq.fill(0)
+
+static func _is_penalty(type: int) -> int:
+	return Entity.to_s8(Tables.infraction_is_penalty[type]) if type >= 0 and type < Tables.infraction_is_penalty.size() else 0
+
+# --------------------------------------------------------------------------------------------
 # per step (sim_game_state)
 # --------------------------------------------------------------------------------------------
 
-static func game_state_tick(sim: Sim) -> void:
+## sim_game_state (0x5c302), the first part of every step: the stoppage machinery, the crowd, the
+## end of the period at 0:00; then every 24 steps (not while a penalty is handed out) the CPU's
+## goalie pulls, the crowd, the bench energy, the power play and the energy bar of a team that
+## is changing lines on the fly
+static func sim_game_state(sim: Sim) -> void:
 	update_stoppage(sim)
 	update_effects(sim)
 	if not sim.play_stopped and sim.clock_seconds == 0 and sim.clock_sub == 0:
-		sim.play_sfx(0x90)          # end of period horn
-		sim.action_hold_camera = true
+		sim.play_sfx(0x90)
+		hold_camera(sim)
 		setup_faceoff(sim)
-	if not sim.play_stopped:
-		game_clock_tick(sim)
-		if sim.clock_sub == 0x17:
-			# update_line_timers: once a second the zone and power play times, the penalties
-			zone_time_stats(sim)
-			lead_time_stats(sim)
-			penalty_timers(sim)
-			goalie_time_stats(sim)
 	if sim.penalty_box_mode:
 		return
+	sim.tick24 = Entity.to_s8(sim.tick24 - 1)
+	if sim.tick24 >= 0:
+		return
+	sim.tick24 += 0x18
+	sim.tick_toggle ^= 1
 	Lines.cpu_line_change(sim)
-	# the 24 Hz tick of sim_game_state: energy, lead changes
-	if sim.step_count % 24 == 0:
-		Lines.regenerate_energy(sim)
-		if not sim.play_stopped:
-			update_power_play(sim)
+	update_crowd_random(sim)
+	Lines.regenerate_energy(sim)
+	if not sim.play_stopped:
+		update_power_play(sim)
+	if not sim.opt_line_changes:
+		return
+	for t in 2:
+		var team := sim.teams[t]
+		for i in 6:
+			var e := sim.entities[team.first_slot + i]
+			if e.line_slot >= 0 and e.next_roster >= 0 and sim.penalty_shot_phase == 0 and (sim.tick_toggle & 1):
+				sim.lc_bar[t] = 1
+				return
+		sim.lc_bar[t] = 0
 
-## update_stoppage (0x63929): runs the infraction queue and the whistle / stoppage timers. While
-## the stoppage timer runs the referee keeps following the play; once it expired the queued calls
-## are signalled one after another (penalty_box_update).
+## hold_camera (0x5cd25): the camera stays where it is
+static func hold_camera(sim: Sim) -> void:
+	sim.camera_target_x = sim.camera_x
+	sim.camera_target_y = sim.camera_y
+	sim.action_hold_camera = true
+
+## update_stoppage (0x63bf8): the once a second timers, the infraction queue; during a stoppage the
+## scoreboard, the announcement timer (then the whistle may blow again: stop_flags 4) and, once
+## the stoppage runs (game_flags 4), its timers or, after them, the penalties handed out
 static func update_stoppage(sim: Sim) -> void:
+	update_line_timers(sim)
 	process_infractions(sim)
 	if not sim.play_stopped:
 		return
 	InfoPanel.update(sim)
 	if sim.announce_timer >= 0:
-		sim.announce_timer -= 1
+		sim.announce_timer = Entity.to_s16(sim.announce_timer - 1)
 		if sim.announce_timer < 0:
 			sim.whistle_ready = true
 	if not sim.stoppage_countdown:
 		return
-	if sim.stoppage_timer < 0:
+	if sim.stoppage_timer >= 0:
+		stoppage_tick(sim)
+	else:
 		penalty_box_update(sim)
+
+## update_line_timers (0x63b85): once a second of play (word c90d0, misc_flags 0x40 for that
+## step) the zone and power play times and the penalties of both teams
+static func update_line_timers(sim: Sim) -> void:
+	sim.second_tick = false
+	if sim.play_stopped or sim.penalty_shot:
 		return
-	sim.whistle_timer = maxi(0, sim.whistle_timer - 1)
-	sim.stoppage_timer -= 1
-	if sim.stoppage_timer < 0:
-		sim.delayed_call = false
+	sim.second_timer = Entity.to_s16(sim.second_timer - 1)
+	if sim.second_timer >= 0:
+		return
+	sim.second_tick = true
+	sim.second_timer += 0x18
+	zone_time_stats(sim)
+	lead_time_stats(sim)
+	penalty_timers(sim, sim.teams[0])
+	penalty_timers(sim, sim.teams[1])
+
+## stoppage_tick (0x63475): the whistle and the stoppage timers; when the stoppage is over and a
+## penalty is among the calls the penalty box sequence starts: no new calls, the puck lies dead
+## (PUCK_IDLE) until the referee collected it
+static func stoppage_tick(sim: Sim) -> void:
+	sim.whistle_timer = Entity.to_s16(sim.whistle_timer - 1)
+	if sim.whistle_timer < 0:
 		sim.whistle_timer = 0
-		# a penalty among the calls: the penalty box sequence (no new calls, the 24 Hz tick
-		# pauses, the puck lies dead until the referee collected it)
-		for inf: Array in sim.infractions:
-			if Tables.infraction_is_penalty[inf[0]] != 0:
-				sim.whistle_ready = true
-				sim.announce_timer = -1
-				sim.penalty_box_mode = true
-				sim.puck_carrier = -1
-				sim.puck.set_state_reset(Entity.State.PUCK_IDLE)
-				sim.faceoff_timer = 0x1c20
-				if sim.ref_phase >= 0:
-					sim.ref_phase = (sim.ref_phase & 0xff) - 0x100   # high byte 0xff
-				if sim.message_timer == 0:
-					sim.message = -1
+	sim.stoppage_timer = Entity.to_s16(sim.stoppage_timer - 1)
+	if sim.stoppage_timer >= 0:
+		return
+	sim.delayed_call = false
+	sim.whistle_timer = 0
+	var i := 0
+	while inf_type(sim, i) != 0:
+		var type := inf_type(sim, i)
+		i += 1
+		if _is_penalty(type) == 0:
+			continue
+		sim.whistle_ready = true
+		sim.announce_timer = -1
+		sim.penalty_box_mode = true
+		sim.puck_carrier = -1
+		sim.puck.set_state_reset(Entity.State.PUCK_IDLE)
+		sim.faceoff_timer = 0x1c20
+		sim.ref_phase = (sim.ref_phase & 0xff) - 0x100
+		sim.whistle_timer = 0
+		if sim.message_timer == 0:
+			sim.message = -1
+		return
+
+## process_infractions (0x637b5): every queued event that has not stopped the play yet does it
+## (start_stoppage); a penalty on the team without the puck is delayed (the referee's arm goes up,
+## game_flags 8) until that team touches it. Each event then sets the stoppage and announcement
+## timers once (slot | 0x80).
+static func process_infractions(sim: Sim) -> void:
+	if sim.action_replay or sim.penalty_box_mode:
+		return
+	var i := 0
+	while inf_type(sim, i) != 0:
+		var type := inf_type(sim, i)
+		var slot := Entity.to_s8(inf_slot(sim, i))
+		if not sim.stoppage_countdown:
+			if _is_penalty(type) != 0:
+				var c := Entity.to_s8(sim.puck_carrier)
+				if c >= 0 and (c < 6) == (slot < 6):
+					sim.whistle_timer = 0x28
+					if sim.message != -1:
+						sim.message_timer = 0x50
+					start_stoppage(sim, i)
+				else:
+					if not sim.delayed_call:
+						sim.delayed_call = true
+						ref_announce(sim, INF_DELAYED_CALL)
+					i += 1
+					continue
+			else:
+				start_stoppage(sim, i)
+		var s := inf_slot(sim, i)
+		if (s & 0x80) == 0:
+			inf_set(sim, i, inf_type(sim, i), s | 0x80)
+			var dur := Entity.to_s16(Entity.to_s8(Tables.stoppage_duration[type]) << 5)
+			if dur > sim.stoppage_timer:
+				sim.stoppage_timer = dur
+			if sim.injury_stoppage:
+				sim.stoppage_timer = 0x140
+			var delay: int
+			if sim.penalty_shot_setup and type == INF_PENALTY_SHOT_END:
+				delay = Entity.to_s16(Entity.to_s8(Tables.announce_delay[4]) << 5)
+				sim.stoppage_timer = Entity.to_s16(Entity.to_s8(Tables.stoppage_duration[13]) << 5)
+			else:
+				delay = Entity.to_s16(Entity.to_s8(Tables.announce_delay[type]) << 5)
+			if delay > sim.announce_timer:
+				sim.announce_timer = delay
+		i += 1
+
+## start_stoppage (0x63543): the whistle for queued event `idx`; the faceoff spot follows from it:
+## centre ice after a goal, the last touch for a frozen puck and a two line pass, else where the
+## puck is (an offside outside the blue line moves to the line, an icing to the far end), then
+## pulled to a dot (the end zone dots at +-0x60 / +-0xb8; a call on a team in its own end moves the
+## faceoff out to the neutral zone dots)
+static func start_stoppage(sim: Sim, idx: int) -> void:
+	if sim.stubbed("start_stoppage", [idx]):
+		return
+	var type := inf_type(sim, idx)
+	var culprit := Entity.to_s8(inf_slot(sim, idx))
+	if not sim.play_stopped:
+		sim.play_stopped = true
+		sim.faceoff_x = 0
+		sim.faceoff_y = 0
+		if type != INF_GOAL:
+			sim.faceoff_x = sim.last_touch_x
+			sim.faceoff_y = sim.last_touch_y
+			if type != INF_FROZEN and type != INF_TWO_LINE:
+				sim.faceoff_x = Entity.to_s16(sim.puck.xi)
+				sim.faceoff_y = Entity.to_s16(sim.puck.yi)
+				if type == INF_OFFSIDE:
+					if absi(sim.faceoff_y) < 0x4e:
+						sim.faceoff_y = -0x4e if sim.faceoff_y < 0 else 0x4e
+				elif type == INF_ICING:
+					var c := sim.entities[culprit] if culprit >= 0 and culprit < 17 else null
+					sim.faceoff_y = -0x258 if (c != null and (c.flags & Entity.F_ATTACK_UP)) else 0x258
+		if sim.penalty_shot_setup:
+			sim.faceoff_x = sim.penalty_shot_spot.x
+			sim.faceoff_y = sim.penalty_shot_spot.y
+		if sim.faceoff_x >= 0x60:
+			sim.faceoff_x = 0x60
+		elif sim.faceoff_x <= -0x60:
+			sim.faceoff_x = -0x60
+		if sim.faceoff_y >= 0x90:
+			sim.faceoff_x = -0x60 if sim.faceoff_x < 0 else 0x60
+			sim.faceoff_y = 0xb8
+		elif sim.faceoff_y <= -0x90:
+			sim.faceoff_x = -0x60 if sim.faceoff_x < 0 else 0x60
+			sim.faceoff_y = -0xb8
+		var k := 0
+		while true:
+			var s := Entity.to_s8(inf_slot(sim, k) & 0x7f)
+			var c := sim.entities[s] if s >= 0 and s < 17 else null
+			if c == null or (c.flags & Entity.F_ATTACK_UP) == 0:
+				if sim.faceoff_y <= -0x4e:
+					sim.faceoff_y = -0x3d
+					sim.faceoff_x = -100 if sim.faceoff_x < 0 else 100
+			elif sim.faceoff_y >= 0x4e:
+				sim.faceoff_y = 0x3d
+				sim.faceoff_x = -100 if sim.faceoff_x < 0 else 100
+			k += 1
+			if inf_type(sim, k) == 0:
 				break
+	sim.stoppage_timer = 0
+	sim.stoppage_countdown = true
+	sim.play_sfx(0xa4)
+	ref_announce(sim, INF_PENALTY_SHOT_END)
 
 ## ref_announce (0x62ea2): the referee signals the call (ai_ref_call_penalty) or points at the
-## goal (ai_ref_point_goal); the end of a penalty shot and the delayed call (0x1c) are silent
-static func ref_announce(sim: Sim, type: int, slot: int = -1) -> void:
+## goal (ai_ref_point_goal); the end of a penalty shot (5) and the delayed call (0x1c) are silent
+static func ref_announce(sim: Sim, type: int) -> void:
 	if type == INF_PENALTY_SHOT_END or type == INF_DELAYED_CALL:
 		return
-	sim.ref_phase = 0
 	sim.ref_infraction = type
-	sim.ref_infraction_slot = slot
+	sim.ref_phase = 0
 	sim.referee.set_state(Entity.State.REF_POINT_GOAL if type == INF_GOAL else Entity.State.REF_CALL_PENALTY)
 
-## penalty_box_update (0x62ee9): once the stoppage timer expired and the referee is free
-## (ref_phase != 0) the last queued call is handled: penalties send the player to the box (an
-## injured culprit's penalty is served by a team mate), the call is signalled, and the entry stays
-## queued until the player left the ice. With the queue empty the faceoff is prepared.
+## penalty_box_update (0x62ee9), once the stoppage is over and the referee is free (ref_phase not
+## 0, the announcer quiet): the last queued call is handled. A penalty sends the player to the box:
+## the team's penalties and minutes, his penalty minutes, the scoreboard entry, record_penalty;
+## his entity_of word becomes the penalty time in seconds with the flags 0x2000 (just called), 0x4000
+## (a major) and 0x1000 (kept from an earlier penalty: coincidental), his status 5, and he joins
+## the box queue (team +0xb6). An injured culprit's penalty is served by a skater on the ice. A
+## game misconduct throws him out (status 8, GAME_MISCONDUCT, entity_of -5), a penalty shot is
+## called (begin_penalty_shot). A call not handed out yet waits until its player left the ice.
+## With the queue empty: the players in the box (not coincidental ones) take skaters off the ice
+## (at least 4 stay), the stoppage ends and the puck goes to the faceoff.
 static func penalty_box_update(sim: Sim) -> void:
 	if sim.ref_phase == 0 or sim.speech_busy:
 		return
 	while true:
-		if sim.infractions.is_empty():
-			if sim.clip != InfoPanel.CLIP_FAN_ANTHEM and sim.clip != InfoPanel.CLIP_CLAP and sim.panel >= 0:
+		if inf_type(sim, 0) == 0:
+			if sim.clip != 0 and sim.clip != 2 and sim.panel >= 0:
 				return
 			for t in 2:
 				var team := sim.teams[t]
-				# a team never plays with fewer than 3 skaters: extra penalties are stacked
-				team.skaters_on_ice = clampi(6 - team.penalties.size(), 4, 6)
+				var n := 6
+				for r in range(0x1b, -1, -1):
+					var w := team.entity_of[r]
+					if w <= 0:
+						continue
+					w &= ~0x2000
+					team.entity_of[r] = w
+					if (w & 0x1000) == 0 and n > 4:
+						n -= 1
+				team.skaters_on_ice = n
 			sim.stoppage_countdown = false
 			var ps := sim.puck.state()
 			if ps == Entity.State.PUCK_FACEOFF or ps == Entity.State.PUCK_FACEOFF2:
 				return
 			sim.puck.set_state(Entity.State.PUCK_FACEOFF)
 			return
-		var inf: Array = sim.infractions[sim.infractions.size() - 1]
-		var e: Entity = sim.entities[inf[1]]
-		if not inf[2]:
-			# a delayed call or a player still on his way to the box
-			if e.line_slot >= 0:
+		var i := inf_count(sim) - 1
+		var s := inf_slot(sim, i)
+		if (s & 0x80) == 0:
+			var e0 := sim.entities[Entity.to_s8(s)]
+			if e0.line_slot >= 0:
 				return
-			e.flags2 &= ~Entity.F2_PENALIZED
-			sim.infractions.pop_back()
+			inf_set(sim, i, 0, 0)
 			return
-		inf[2] = false
-		var type: int = inf[0]
+		inf_set(sim, i, inf_type(sim, i), s & 0x7f)
+		var type := inf_type(sim, i)
+		var slot := s & 0x7f
+		var e := sim.entities[slot]
+		var mm_ss := _elapsed(sim)
 		if type == INF_PENALTY_SHOT:
-			sim.infractions.pop_back()
-			e.flags2 &= ~Entity.F2_PENALIZED
 			begin_penalty_shot(sim)
-			# the shooter and the goalie line up, the others wait at the benches once the referee
-			# picks up the puck (ai_ref_pickup_puck -> all_goto_positions with the shot phase set)
-			ref_announce(sim, type, e.slot)
+			inf_set(sim, i, 0, 0)
+			record_penalty(sim, 1 if e.flags & Entity.F_PLAYER2 else 0, Entity.to_s8(e.roster_idx), type - 9, 0, mm_ss.x, mm_ss.y, 0)
+			ref_announce(sim, type)
 			return
-		var minutes: int = Tables.infraction_is_penalty[type]
+		var minutes := _is_penalty(type)
 		if minutes < 0:
-			sim.infractions.pop_back()
-			e.flags2 &= ~Entity.F2_PENALIZED
-			game_misconduct(sim, e, sim.infractions.size())
-			ref_announce(sim, type, e.slot)
-			return
-		if minutes > 0:
-			if e.slot >= 12 or e.roster_idx < 0:
-				sim.infractions.pop_back()
-				continue
 			var team := sim.team_of(e)
-			var server := e
-			if team.entity_of[e.roster_idx] == -3 or team.entity_of[e.roster_idx] == -4:
-				# the culprit is injured: a skater on the ice serves the penalty
-				server = null
-				for k in 6:
-					var p: Entity = sim.entities[team.index * 6 + k]
-					if p.line_slot >= 1 and p.roster_idx >= 0 and team.entity_of[p.roster_idx] == -1 \
-							and (p.flags2 & Entity.F2_PENALIZED) == 0:
-						server = p
-						break
-				if server == null:
-					return
-				inf[1] = server.slot
-			sim.infraction_type_served = type
-			serve_penalty(sim, e, minutes, server, sim.infractions.size() - 1)
-			e.flags2 &= ~Entity.F2_PENALIZED
-			ref_announce(sim, type, e.slot)
+			var r := Entity.to_s8(e.roster_idx)
+			team.roster_status[r] = 8
+			if Lines.entity_word(team, r) > -3:
+				e.set_state(Entity.State.GAME_MISCONDUCT)
+			team.entity_of[r] = -5
+			record_penalty(sim, 1 if e.flags & Entity.F_PLAYER2 else 0, r, type - 9, minutes, mm_ss.x, mm_ss.y, i)
+			sim.ref_infraction_slot = Entity.to_s8(inf_slot(sim, i))
+			inf_set(sim, i, 0, 0)
+			ref_announce(sim, type)
 			return
-		sim.infractions.pop_back()
-		if not sim.penalty_box_mode or type == INF_GOAL:
-			ref_announce(sim, type, e.slot)
+		if minutes == 0:
+			sim.ref_infraction_slot = slot
+			inf_set(sim, i, 0, 0)
+			if not sim.action_replay and not sim.penalty_box_mode:
+				ref_announce(sim, type)
+				return
+			if type != INF_GOAL:
+				continue
+			ref_announce(sim, type)
 			return
-
-## the player goes to the penalty box (penalty_box_update, record_penalty)
-## (the culprit's minutes and the panel entry; server is the skater who sits in the box)
-static func serve_penalty(sim: Sim, e: Entity, minutes: int, server: Entity = null, queue_index: int = 0) -> void:
-	if server == null:
-		server = e
-	var team := sim.team_of(e)
-	for pen in team.penalties:
-		if pen[2] == server.slot:
-			return
-	team.penalties.append([server.roster_idx, minutes * 60, server.slot, minutes == 2])
-	if not sim.no_stats:
-		team.add_stat(e.roster_idx, Team.ST_PIM, minutes)
+		# a penalty
+		var team := sim.team_of(e)
 		team.penalty_count += 1
-		team.penalty_minutes += maxi(minutes, 0)
-	InfoPanel.record_penalty(sim, team.index, e.roster_idx, sim.infraction_type_served, minutes, queue_index)
-	if server != e:
-		sim.panel_text[4] = "served by #%d" % server.number
-	if server.roster_idx >= 0:
-		team.entity_of[server.roster_idx] = 1        # in the box
-	server.next_line_slot = -1
-	server.next_roster = -1
-	server.set_state(Entity.State.PENALTY_BOX)
-	server.flags2 |= Entity.F2_UNSELECTABLE
-	if server.slot == sim.user1_slot:
-		sim.switch_to_nearest(server, 0)
-	elif server.slot == sim.user2_slot:
-		sim.switch_to_nearest(server, 1)
-	sim.add_crowd(300, 1000)
+		team.penalty_minutes += minutes
+		var r := Entity.to_s8(e.roster_idx)
+		if r < 0x19:
+			team.add_stat(r, Team.ST_PIM, minutes)
+		add_penalty_display(sim, 1 if e.flags & Entity.F_PLAYER2 else 0, e.number, minutes)
+		record_penalty(sim, 1 if e.flags & Entity.F_PLAYER2 else 0, r, type - 9, minutes, mm_ss.x, mm_ss.y, i)
+		var w := minutes * 0x3c
+		if w == 0x12c:
+			w |= 0x4000
+		w |= 0x2000
+		var server := e
+		var st := Lines.entity_word(team, r)
+		if st == -3 or st == -4:
+			# the culprit is hurt or out: a skater on the ice serves the penalty
+			server = null
+			for k in 6:
+				var p := sim.entities[team.first_slot + k]
+				if p.line_slot > 0 and Lines.entity_word(team, Entity.to_s8(p.roster_idx)) == -1 \
+						and (p.flags2 & Entity.F2_PENALIZED) == 0:
+					server = p
+					break
+			if server == null:
+				return
+			r = Entity.to_s8(server.roster_idx)
+			inf_set(sim, i, inf_type(sim, i), (inf_slot(sim, i) & 0x80) | server.slot)
+			sim.panel_text[4] = "served by #%d" % server.number
+		if team.entity_of[r] >= 0 and (team.entity_of[r] & 0x1000):
+			w |= 0x1000
+		team.entity_of[r] = w
+		team.roster_status[r] = 5
+		var q := 0
+		while q < 0x1c and team.box_queue[q] >= 0:
+			q += 1
+		if q < 0x1c:
+			team.box_queue[q] = r
+			if q + 1 < 0x1c:
+				team.box_queue[q + 1] = -1
+		server.set_state(Entity.State.PENALTY_BOX)
+		sim.ref_infraction_slot = server.slot
+		ref_announce(sim, type)
+		return
 
-## penalty_time_left (0x540f5): seconds until the team with more skaters loses its advantage
-## (the shortest penalty of the short handed team), 0 at even strength
+## the time of the period played (period_length - clock_seconds, a started second counting in the
+## last minute), as minutes and seconds
+static func _elapsed(sim: Sim) -> Vector2i:
+	var t := Entity.to_s16(sim.period_length - sim.clock_seconds)
+	if sim.clock_seconds < 0x3c and sim.clock_sub != 0:
+		t -= 1
+	return Vector2i(t / 0x3c, t % 0x3c)
+
+## record_penalty (0x624b9): the call in the event log, the game summary, the scoreboard panel
+## (with a clip now and then) and the announcer (InfoPanel); a hook for the golden tests
+static func record_penalty(sim: Sim, away: int, roster: int, kind: int, minutes: int, mm: int, ss: int, queue_index: int) -> void:
+	if sim.stubbed("record_penalty", [away, roster, kind, minutes, mm, ss, queue_index]):
+		return
+	InfoPanel.record_penalty(sim, away, roster, kind + 9, minutes, queue_index)
+
+## add_penalty_display (0x14c22): the penalty clock entry on the scoreboard (a hook)
+static func add_penalty_display(sim: Sim, away: int, number: int, minutes: int) -> void:
+	sim.stubbed("add_penalty_display", [away, number, minutes])
+
+## penalty_list_find (0x14ca0): the penalty clock entry of a player released by a goal (a hook)
+static func penalty_list_find(sim: Sim, away: int, number: int) -> void:
+	sim.stubbed("penalty_list_find", [away, number])
+
+## count_penalized (0x5df86): the players sitting in each box (penalized_count; not a coincidental
+## one whose time is up); everybody else not out of the game is back on the bench (status 3)
+static func count_penalized(sim: Sim) -> void:
+	for t in 2:
+		var team := sim.teams[t]
+		var n := 0
+		for r in range(0x1b, -1, -1):
+			var w := team.entity_of[r]
+			if w > 0:
+				if (w & 0x1000) == 0 or (w & 0x7ff) != 0:
+					n += 1
+			elif w > -3:
+				team.entity_of[r] = -2
+				team.roster_status[r] = 3
+		sim.box_count[t] = n & 0xff
+
+## penalty_timers (0x63a37), once a second for a team: the first two penalties of the box queue
+## run; one whose time is up (flags aside) is taken out of the queue (status 7, no longer a major).
+## Then penalty_expired for the players whose penalties ran (the original looks at the first one
+## with one penalty, the first two with two, the second with three, none with more).
+static func penalty_timers(sim: Sim, team: Team) -> void:
+	var running := 2
+	var ran := [-1, -1]
+	var n := 0
+	var b := 0
+	while b < 0x1c:
+		var r := team.box_queue[b]
+		if r < 0:
+			break
+		running -= 1
+		if running >= 0:
+			if n < 2:
+				ran[n] = r
+			n += 1
+			var w := Entity.to_s16(team.entity_of[r] - 1)
+			team.entity_of[r] = w
+			if (w & 0x3fff) == 0:
+				team.roster_status[r] = 7
+				team.entity_of[r] = w & ~0x4000
+				var k := b
+				while k + 1 < 0x1c:
+					team.box_queue[k] = team.box_queue[k + 1]
+					if team.box_queue[k] < 0:
+						break
+					k += 1
+				b -= 1
+		b += 1
+	if running == 1:
+		penalty_expired(sim, team, ran[0])
+	elif running == 0:
+		penalty_expired(sim, team, ran[0])
+		penalty_expired(sim, team, ran[1])
+	elif running == -1:
+		penalty_expired(sim, team, ran[1])
+
+## penalty_expired (0x639f9): in the last 5 seconds of a penalty the buzzer counts down; at 0 the
+## player comes out (release_from_box)
+static func penalty_expired(sim: Sim, team: Team, r: int) -> void:
+	var w := Lines.entity_word(team, r)
+	if (w & 0x3fff) > 5:
+		return
+	if w == 0:
+		release_from_box(sim, team, r)
+	sim.play_sfx(0x97)
+
+## release_from_box (0x6392a): the first entity of the team without a position takes the player
+## (put_player_on_ice: out of the box door, EXIT_PENALTY_BOX) at the position the lineup gives a
+## team with one more skater; both teams look at their lines again
+static func release_from_box(sim: Sim, team: Team, r: int) -> void:
+	var e: Entity = null
+	for i in range(team.first_slot, 17):
+		if sim.entities[i].line_slot < 0:
+			e = sim.entities[i]
+			break
+	team.skaters_on_ice += 1
+	sim.teams[0].flags |= 1
+	sim.teams[1].flags |= 1
+	sim.teams[0].flags2 |= 0x40
+	sim.teams[1].flags2 |= 0x40
+	if e == null:
+		return
+	var k := team.skaters_on_ice + (1 if Entity.to_s16(team.goalie_request) < 0 else 0)
+	e.line_slot = LINEUP_SLOT_RAW[k] if k >= 0 and k < LINEUP_SLOT_RAW.size() else -1
+	AI.set_default_state(sim, e)
+	sim.put_player_on_ice(e, r)
+	e.flags2 |= Entity.F2_UNSELECTABLE
+
+# unk_cbc36: the byte before lineup_slot_types, then the slot types of mode 0 and the last of mode 1
+const LINEUP_SLOT_RAW := [-1, 0, 1, 2, 4, 3, 5, 6]
+
+## goal_ends_penalty (0x63d69), team `t` scored: the goal wipes the queued calls but the
+## misconducts, the majors and the minors of the scoring team (all of them when the overtime goal
+## ended the game; the original loses a kept call when one follows it in the queue); then a power
+## play goal frees the first player of the box queue not serving a major (the scoring team's power
+## play goals, both teams look at their lines again)
+static func goal_ends_penalty(sim: Sim, t: int) -> void:
+	var scoring := sim.teams[t]
+	var conceding := sim.teams[1 - t]
+	var w := 0
+	var i := 0
+	while inf_type(sim, i) != 0:
+		var type := inf_type(sim, i)
+		var keep := false
+		if not (sim.period == 3 and sim.teams[0].goals != sim.teams[1].goals):
+			var p := _is_penalty(type)
+			if p == -1 or p == 5:
+				keep = true
+			elif p == 2 and ((Entity.to_s8(inf_slot(sim, i)) < 6) != (t != 0)):
+				keep = true
+		if keep:
+			if w != i:
+				inf_set(sim, w, type, inf_slot(sim, i))
+				w += 1
+		else:
+			var s := Entity.to_s8(inf_slot(sim, i))
+			if s >= 0 and s < 12:
+				sim.entities[s].flags2 &= ~Entity.F2_PENALIZED
+			inf_set(sim, i, 0, 0)
+		i += 1
+	if inf_type(sim, 0) == 0 and sim.message == 6:
+		sim.message = -1
+	if scoring.skaters_on_ice <= conceding.skaters_on_ice:
+		return
+	var b := 0
+	var r := -1
+	while b < 0x1c:
+		r = conceding.box_queue[b]
+		if r < 0:
+			return
+		if (conceding.entity_of[r] & 0x4000) == 0:
+			break
+		b += 1
+	conceding.entity_of[r] = 0
+	conceding.roster_status[r] = 7
+	release_from_box(sim, conceding, r)
+	var p: Database.Player = conceding.info.player(r) if conceding.info != null else null
+	penalty_list_find(sim, 1 if t == 0 else 0, p.number if p != null else 0)
+	var k := b
+	while k + 1 < 0x1c:
+		conceding.box_queue[k] = conceding.box_queue[k + 1]
+		if conceding.box_queue[k] < 0:
+			break
+		k += 1
+	scoring.pp_goals += 1
+	sim.teams[0].flags |= 1
+	sim.teams[1].flags |= 1
+
+## update_power_play (0x63c73): the skaters on the ice differ: a power play (stop_flags 0x20, 0x40
+## for the away team's) starts once, counting for the team; at even strength it ends
+static func update_power_play(sim: Sim) -> void:
+	var d := Entity.to_s16(sim.teams[0].skaters_on_ice - sim.teams[1].skaters_on_ice)
+	if d == 0:
+		sim.power_play = false
+		return
+	var team := sim.teams[1]
+	if d > 0:
+		team = sim.teams[0]
+		if sim.power_play_team == 1:
+			sim.power_play = false
+			sim.power_play_team = 0
+	elif sim.power_play_team != 1:
+		sim.power_play = false
+		sim.power_play_team = 1
+	if sim.power_play:
+		return
+	sim.power_play = true
+	team.power_plays += 1
+	if sim.play_stopped and not InfoPanel.speech_on(sim):
+		InfoPanel.music(sim, 1 if team.index == 0 else 4)
+
+## penalty_time_left (0x54a53): the original's sum over the penalties of the short handed team
+## (seconds left, the flags masked), less the first penalty of the other team when it has one
 static func penalty_time_left(sim: Sim) -> int:
-	var home := sim.teams[0]
-	var away := sim.teams[1]
-	if home.skaters_on_ice == away.skaters_on_ice:
+	var d := Entity.to_s16(sim.teams[0].skaters_on_ice - sim.teams[1].skaters_on_ice)
+	if d == 0:
 		return 0
-	var short_team := away if home.skaters_on_ice > away.skaters_on_ice else home
-	var left := 0x7fff
-	for pen in short_team.penalties:
-		left = mini(left, pen[1])
-	return left if left != 0x7fff else 0
+	var more := sim.teams[0] if d > 0 else sim.teams[1]
+	var short := sim.teams[1] if d > 0 else sim.teams[0]
+	var prev := 0
+	var total := 0
+	for b in 0x1c:
+		var r := short.box_queue[b]
+		if r < 0:
+			break
+		var w := Entity.to_s16(short.entity_of[r])
+		if w < 0:
+			continue
+		var s := w & 0x3fff
+		var a := s - prev
+		total += a
+		prev = a
+	if more.skaters_on_ice == 6:
+		return total
+	total -= prev
+	for b in 0x1c:
+		var r := more.box_queue[b]
+		if r < 0:
+			return total
+		var w := Entity.to_s16(more.entity_of[r])
+		if w < 0:
+			continue
+		if Entity.to_s16(total) < (w & 0x3fff):
+			return total
+		return total + prev
+	return total
 
 ## zone_time_stats (0x639a4): a second with the puck beyond a blue line counts for the team
-## attacking that end
+## attacking that end (the ends switch with game_flags 2)
 static func zone_time_stats(sim: Sim) -> void:
 	if sim.no_stats:
 		return
-	var y := sim.puck.yi
-	if y > -0x4f and y < 0x4f:
+	var y := Entity.to_s16(sim.puck.yi)
+	var t: int
+	if y > 0x4e:
+		t = 0
+	elif y < -0x4e:
+		t = 1
+	else:
 		return
-	var up := y >= 0x4f
-	for team in sim.teams:
-		if team.attacks_up == up:
-			team.zone_time += 1
-			return
+	if sim.ends_switched:
+		t ^= 1
+	sim.teams[1 if t > 0 else 0].zone_time += 1
 
 ## the second of the goalies in the nets (sim_update_players with misc_flags 0x40): their time
 ## played, for the minutes and the goalie of record of the league files
@@ -261,173 +674,43 @@ static func lead_time_stats(sim: Sim) -> void:
 	if sim.power_play:
 		sim.teams[sim.power_play_team].pp_time += 1
 
-## penalty_timers (0x63a37): penalties run with the game clock; the first expired one returns
-static func penalty_timers(sim: Sim) -> void:
-	for t in 2:
-		var team := sim.teams[t]
-		var i := 0
-		while i < team.penalties.size():
-			var pen: Array = team.penalties[i]
-			pen[1] -= 1
-			if pen[1] <= 0:
-				penalty_expired(sim, team, i)
-			else:
-				i += 1
-
-## penalty_expired (0x639f9): the player leaves the box
-static func penalty_expired(sim: Sim, team: Team, idx: int) -> void:
-	var pen: Array = team.penalties[idx]
-	team.penalties.remove_at(idx)
-	var e: Entity = sim.entities[pen[2]]
-	team.skaters_on_ice = clampi(6 - team.penalties.size(), 4, 6)
-	if e.roster_idx >= 0:
-		team.entity_of[e.roster_idx] = -1
-	if e.line_slot < 0:
-		e.line_slot = e.line_slot & 0xff      # DOOR_OPEN only set the high byte
-	if e.line_slot <= 0:
-		e.line_slot = 5 if e.slot % 6 == 5 else maxi(1, e.slot % 6)
-	e.set_state(Entity.State.EXIT_PENALTY_BOX)
-
-## goal_ends_penalty (0x63d69): a power play goal releases the first minor of the conceding team
-## The goal also wipes the queued calls: everything but the majors, the misconducts and the minors
-## of the scoring team (all of them when the overtime goal ended the game).
-static func goal_ends_penalty(sim: Sim, conceding: Team, scoring: Team) -> void:
-	var ended := sim.period == 3 and sim.teams[0].goals != sim.teams[1].goals
-	var kept: Array = []
-	for inf: Array in sim.infractions:
-		var pen: int = Tables.infraction_is_penalty[inf[0]]
-		var keep := not ended and (pen == -1 or pen == 5 or (pen == 2 and sim.same_team(inf[1], scoring.first_slot)))
-		if keep:
-			kept.append(inf)
-		elif inf[1] < 12:
-			sim.entities[inf[1]].flags2 &= ~Entity.F2_PENALIZED
-	sim.infractions = kept
-	if sim.infractions.is_empty() and sim.message == 6:
-		sim.message = -1
-	if conceding.skaters_on_ice >= scoring.skaters_on_ice:
-		return
-	for i in conceding.penalties.size():
-		if conceding.penalties[i][3]:
-			penalty_expired(sim, conceding, i)
-			scoring.pp_goals += 1
-			return
-
-## process_infractions (0x637b5): the first queued event stops the play; penalties against the
-## team that does not have the puck are delayed until it touches it
-static func process_infractions(sim: Sim) -> void:
-	if sim.penalty_box_mode:
-		return
-	for i in sim.infractions.size():
-		var inf: Array = sim.infractions[i]
-		var type: int = inf[0]
-		if not sim.stoppage_countdown:
-			var penalty := Tables.infraction_is_penalty[type] != 0
-			if not penalty:
-				start_stoppage(sim, i)
-			elif sim.puck_carrier >= 0 and sim.same_team(inf[1], sim.puck_carrier):
-				sim.whistle_timer = 0x28
-				if sim.message != -1:
-					sim.message_timer = 0x50
-				start_stoppage(sim, i)
-			else:
-				if not sim.delayed_call:
-					sim.delayed_call = true   # the referee's arm goes up (announcement 0x1c)
-				continue
-		if not inf[2]:
-			inf[2] = true
-			var dur := Tables.stoppage_duration[type] << 5
-			if sim.stoppage_timer < dur:
-				sim.stoppage_timer = dur
-			if sim.injury_stoppage:
-				sim.stoppage_timer = 0x140
-			var delay := Tables.announce_delay[type]
-			if sim.penalty_shot_setup and type == INF_PENALTY_SHOT_END:
-				# after the penalty shot (byte_c9111 / byte_c9146)
-				sim.stoppage_timer = Tables.stoppage_duration[13] << 5
-				delay = Tables.announce_delay[4]
-			if sim.announce_timer < delay * 0x20:
-				sim.announce_timer = delay * 0x20
-
-## start_stoppage (0x63fb2): whistle; the faceoff spot follows from the event
-static func start_stoppage(sim: Sim, idx: int) -> void:
-	if sim.stubbed("start_stoppage", [idx]):
-		return
-	if idx < 0 or idx >= sim.infractions.size():
-		return
-	var inf: Array = sim.infractions[idx]
-	var type: int = inf[0]
-	var culprit: Entity = sim.entities[inf[1]]
-	if not sim.play_stopped:
-		sim.play_stopped = true
-		var fx := 0
-		var fy := 0
-		if type != INF_GOAL:
-			fx = sim.last_touch_x
-			fy = sim.last_touch_y
-			if type != INF_FROZEN and type != INF_TWO_LINE:
-				fx = sim.puck.xi
-				fy = sim.puck.yi
-				if type == INF_OFFSIDE:
-					if absi(fy) < 0x4e:
-						fy = -0x4e if fy < 0 else 0x4e
-				elif type == INF_ICING:
-					fy = -600 if (culprit.flags & Entity.F_ATTACK_UP) else 600
-		if sim.penalty_shot_setup:
-			# after a penalty shot the play resumes where the foul happened
-			fx = sim.penalty_shot_spot.x
-			fy = sim.penalty_shot_spot.y
-		# snap to the nearest dot: x = +-96, y = +-184 in the end zones, neutral zone dots at +-100/+-61
-		fx = clampi(fx, -0x60, 0x60)
-		if fy >= 0x90:
-			fx = -0x60 if fx < 0 else 0x60
-			fy = 0xb8
-		elif fy < -0x8f:
-			fx = -0x60 if fx < 0 else 0x60
-			fy = -0xb8
-		for inf2 in sim.infractions:
-			var c: Entity = sim.entities[inf2[1]]
-			if (c.flags & Entity.F_ATTACK_UP) == 0:
-				if fy < -0x4d:
-					fy = -0x3d
-					fx = -100 if fx < 0 else 100
-			elif fy > 0x4d:
-				fy = 0x3d
-				fx = -100 if fx < 0 else 100
-		sim.faceoff_x = fx
-		sim.faceoff_y = fy
-	sim.stoppage_timer = 0
-	sim.stoppage_countdown = true
-	sim.play_sfx(0xa4)               # whistle
-	# ref_announce(5): silent, the calls are signalled by penalty_box_update once the stoppage
-	# timer expired
-
-## queue_infraction (0x52d80)
+## queue_infraction (0x62d80): a rule event is queued (not while a penalty is handed out or in a
+## replay): the message box shows the most important call (infraction_priority; the PENALTY
+## message stays until the penalty is handed out), the crowd and a sound for the hits; a player
+## already called for a penalty is not called again
 static func queue_infraction(sim: Sim, e: Entity, type: int) -> void:
 	if sim.stubbed("queue_infraction", [e.slot, type]):
 		return
-	if sim.infractions.size() >= 0x20 or sim.penalty_box_mode:
+	if sim.action_replay or sim.penalty_box_mode:
 		return
-	# the message box shows the most important call (infraction_priority = message id); the
-	# PENALTY message stays until the penalty is handed out
-	var prio: int = Tables.infraction_priority[type]
-	if not sim.penalty_shot_setup and sim.message < prio:
-		sim.message = prio
-		if prio != -1 and prio != 6:
-			sim.message_timer = 0x50
-	if type > INF_ICING:
-		sim.add_crowd(400, 800)
+	if not sim.penalty_shot_setup:
+		var prio := Entity.to_s16(Tables.infraction_priority[type])
+		if sim.message < prio:
+			sim.message = prio
+			if sim.message != -1 and sim.message != 6:
+				sim.message_timer = 0x50
+	if type >= 7:
+		sim.add_crowd(0x190, 0x320)
 		if e.flags & Entity.F_PLAYER2:
 			sim.excitement += 0x14
 			sim.play_sfx(0x7d)
 		else:
 			sim.play_sfx(0xa0)
-	if Tables.infraction_is_penalty[type] != 0:
+	for i in 32:
+		if inf_type(sim, i) != 0:
+			continue
+		inf_set(sim, i, type, e.slot)
+		if _is_penalty(type) == 0:
+			return
 		if e.flags2 & Entity.F2_PENALIZED:
+			inf_set(sim, i, 0, 0)
 			return
 		e.flags2 |= Entity.F2_PENALIZED
-	sim.infractions.append([type, e.slot, false])
+		return
 
-## maybe_queue_infraction (0x52cf9): rule events filtered by the option flags
+## maybe_queue_infraction (0x62cf9): rule events filtered by the options: icing always, offside
+## and the two line pass when on, penalties when on for a team with fewer than 8 in the box and a
+## player who may be lost (injury_check); never during a stoppage, for the referee or a penalty shot
 static func maybe_queue_infraction(sim: Sim, e: Entity, type: int) -> void:
 	if sim.stubbed("maybe_queue_infraction", [e.slot, type]):
 		return
@@ -443,12 +726,32 @@ static func maybe_queue_infraction(sim: Sim, e: Entity, type: int) -> void:
 		else:
 			if not sim.opt_penalties:
 				return
-			# penalized_count > 7, and the team must keep enough players of the culprit's position
-			if e.slot < 12 and sim.team_of(e).penalties.size() > 7:
+			if Entity.to_s8(sim.box_count[1 if e.flags & Entity.F_PLAYER2 else 0]) >= 8:
 				return
-			if e.slot < 12 and not injury_check(sim, e):
+			if not injury_check(sim, e):
 				return
 	queue_infraction(sim, e, type)
+
+## update_crowd_random (0x5c248), every 24 steps: the excitement's peak and running sum, its
+## decay; during a loud stoppage a cheer (0xa6) or a whistle (0x96) now and then
+static func update_crowd_random(sim: Sim) -> void:
+	if sim.excitement > sim.excitement_peak:
+		sim.excitement_peak = sim.excitement
+	sim.excitement_sum += sim.excitement
+	sim.excitement_samples = (sim.excitement_samples + 1) & 0xffff
+	sim.excitement = Entity.to_s16(sim.excitement - 1)
+	if sim.excitement < 0:
+		sim.excitement = 0
+	if not sim.play_stopped or sim.crowd_noise <= 0x258:
+		return
+	var n := (1000 - sim.crowd_noise) / 4
+	if n < 0x19:
+		n = 0x19
+	var r := Entity.to_s16(sim.random(n))
+	if r == 0:
+		sim.play_sfx(0xa6)
+	elif r == 1:
+		sim.play_sfx(0x96)
 
 ## injury_check (0x65b83): may the player be lost (penalty, injury)? A defenceman only while more
 ## than 2 defencemen, a forward only while more than 4 forwards of the team are still available.
@@ -543,7 +846,7 @@ static func start_penalty_shot(sim: Sim) -> void:
 	sim.penalty_shot = true
 	sim.penalty_shot_setup = true
 	sim.penalty_shot_clock = 1000
-	sim.infractions.clear()
+	clear_infractions(sim)
 
 ## the goalie of the team defending against the penalty shot
 static func defending_goalie(sim: Sim) -> int:
@@ -567,20 +870,6 @@ static func end_penalty_shot(sim: Sim) -> void:
 	sim.referee.set_state(Entity.State.REF_PICKUP)
 
 ## the game misconduct of penalty_box_update (infraction_is_penalty -1): the player is out for the
-## game and skates off (ai_game_misconduct), no one serves time in the box
-static func game_misconduct(sim: Sim, e: Entity, queue_index: int = 0) -> void:
-	if e.slot >= 12 or e.roster_idx < 0:
-		return
-	var team := sim.team_of(e)
-	if team.entity_of[e.roster_idx] > -3:
-		e.next_line_slot = -1
-		e.next_roster = -1
-		e.set_state(Entity.State.GAME_MISCONDUCT)
-	team.entity_of[e.roster_idx] = -5
-	sim.show_message(6, 0x100)          # PENALTY
-	InfoPanel.record_penalty(sim, team.index, e.roster_idx, INF_ABUSE_OF_OFFICIAL, -1, queue_index)
-
-
 ## update_effects (0x615a3): crowd noise decays towards the ambient level
 static func update_effects(sim: Sim) -> void:
 	if sim.crowd_noise >= 0x2bd:
@@ -592,54 +881,46 @@ static func update_effects(sim: Sim) -> void:
 		sim.crowd_noise = 0
 		if sim.random(0x10) == 0:
 			sim.crowd_noise = sim.random(0x20)
-	if sim.excitement > 0:
-		sim.excitement -= 1
 	Crowd.update(sim)
 
 
-## update_power_play (0x63c73): the skaters on the ice (team +0x36) differ: a power play starts,
-## counted for the team with more skaters (team +4); the organ plays its song (cue 1 home, 4 away)
-## when the announcer is off and play is stopped (never at the only call, which runs while the
-## puck is in play)
-static func update_power_play(sim: Sim) -> void:
-	var diff := sim.teams[0].skaters_on_ice - sim.teams[1].skaters_on_ice
-	if diff == 0:
-		sim.power_play = false
-		return
-	var team := 0 if diff > 0 else 1
-	if sim.power_play_team != team:
-		sim.power_play = false
-	sim.power_play_team = team
-	if not sim.power_play:
-		sim.power_play = true
-		sim.teams[team].power_plays += 1
-		if sim.play_stopped and not InfoPanel.speech_on(sim):
-			InfoPanel.music(sim, 1 if team == 0 else 4)
-
-## game_clock_tick (0x5dc10): 24 sub ticks per second
+## game_clock_tick (0x5dc10), every step of play: 24 sub ticks per second; at 61 and 60 seconds
+## left the tone (or with the announcer on, his last minute line); the CPU coaches' reviews at
+## the full minutes of the 2nd and 3rd period (time_announcements). During a penalty shot the
+## clock stands and the shot must be over within 1000 steps.
 static func game_clock_tick(sim: Sim) -> void:
 	if sim.penalty_shot:
-		# the game clock stands still; the shot must be over within 1000 steps
 		sim.penalty_shot_clock -= 1
 		if sim.penalty_shot_clock <= 0:
 			end_penalty_shot(sim)
 		return
 	if sim.clock_seconds == 0 and sim.clock_sub == 0:
 		return
-	if sim.clock_sub - 1 >= 0:
-		sim.clock_sub -= 1
+	sim.clock_sub = Entity.to_s16(sim.clock_sub - 1)
+	if sim.clock_sub >= 0:
 		return
-	if sim.clock_seconds < 1:
-		sim.clock_sub = 0
-	else:
+	if sim.clock_seconds > 0:
 		sim.clock_seconds -= 1
-		sim.clock_sub += 0x17
-	# one minute left: the tone (on 61 and 60 seconds) or the announcer
+		sim.clock_sub += 0x18
+	else:
+		sim.clock_sub = 0
 	if sim.clock_seconds == 0x3d or sim.clock_seconds == 0x3c:
 		if not InfoPanel.speech_on(sim):
 			sim.play_sfx(0x97)
 		elif sim.clock_seconds == 0x3c:
-			Speech.say(sim, Speech.one_minute())
+			announce_one_minute_left(sim)
+	if sim.clock_seconds % 0x3c != 0:
+		return
+	var pn := sim.period + 1
+	var c := sim.clock_seconds
+	if (pn == 3 and (c == 0x3c or c == 0x78 or c == 0xb4 or c == 0x12c or c == 0x258)) or (pn == 2 and c == 0x258):
+		Lines.time_announcements(sim)
+
+## announce_one_minute_left (0x6280a): the announcer's last minute line (a hook)
+static func announce_one_minute_left(sim: Sim) -> void:
+	if sim.stubbed("announce_one_minute_left", []):
+		return
+	Speech.say(sim, Speech.one_minute())
 
 # --------------------------------------------------------------------------------------------
 # goals (score_goal 0x5ab36) and the end of a period (setup_faceoff 0x5d852)
@@ -661,7 +942,7 @@ static func score_goal(sim: Sim, net: Entity) -> void:
 		if sim.last_touch_slot >= 0 and sim.same_team(sim.last_touch_slot, scoring.first_slot):
 			sim.last_shooter = sim.last_touch_slot
 		PuckLogic.shot_landed(sim)
-		goal_ends_penalty(sim, conceding, scoring)
+		goal_ends_penalty(sim, scoring.index)
 		sim.play_sfx(0x9c)        # goal horn
 		sim.action_hold_camera = true
 		sim.camera_target_x = sim.camera_x
@@ -974,7 +1255,7 @@ static func place_faceoff(sim: Sim) -> void:
 	sim.stoppage_timer = -1
 	sim.announce_timer = -1
 	sim.delayed_call = false
-	sim.infractions.clear()
+	clear_infractions(sim)
 	sim.shot_in_flight = false
 	sim.pass_target = -1
 	sim.icing_flags = 0

@@ -123,7 +123,16 @@ var faceoff_ready: Array = [0, 0]   # word_e038e / word_e0394: readiness of the 
 var faceoff_side: Array = [0x8800, 0xa000]   # dword_e0392 / word_e0396
 var faceoff_dir: Array = [-1, -1]   # word_c90b6 / word_c90b8: direction held by the users at the drop
 var skip_wait := false              # dword_cc0f0: a user pressed a button during the pre faceoff wait
-var infractions: Array = []         # infraction_queue: [type, slot, processed]
+var infq := PackedByteArray()       # infraction_queue: 32 x [event, slot | 0x80 once its stoppage started] (Rules.inf_*)
+var tick24: int = 0                 # byte_cc0d9: the steps to the next 24 step tick of sim_game_state
+var tick_toggle: int = 0            # word_cc0d8: flips every 24 steps (the energy bar blinks)
+var second_timer: int = 0           # dword_c90d0: the steps to the next second of play (update_line_timers)
+var second_tick := false            # misc_flags 0x40: a second of play passed this step
+var lc_bar := PackedInt32Array([0, 0])   # word_cbc52: the energy bar of a team changing on the fly blinks
+var action_replay := false          # action_flags 0x80: no rule events (the replay)
+var excitement_peak: int = 0        # word_e9aa4
+var excitement_sum: int = 0         # dword_e009c
+var excitement_samples: int = 0     # word_e9aa6
 var last_touch_slot: int = -1       # dword_e9ac2
 var last_touch_x: int = 0           # word_e9ac6
 var last_touch_y: int = 0           # word_e9ac4
@@ -229,6 +238,7 @@ var ref_hits := 0                    # word_cbec2: body checks of a user on the 
 var last_impact := 0                 # word_e9b28: strength of the last collision between opponents
 
 func _init() -> void:
+	infq.resize(64)
 	seed = 0xabcd4321
 	teams.append(Team.new(0))
 	teams.append(Team.new(1))
@@ -282,7 +292,7 @@ func new_game() -> void:
 		team.goalie_request = 0
 		team.extra_attacker = -1
 		team.reset_stats()
-		team.penalties.clear()
+		team.box_queue.fill(-1)
 		team.skaters_on_ice = 6
 		for i in 28:
 			team.energy[i] = 0x1000
@@ -348,6 +358,11 @@ func start_period(p: int, switch_ends: bool = true) -> void:
 	elif switch_ends:
 		ends_switched = not ends_switched
 	period = p
+	# period_init: period_strategy_init (the coaching, the first lines)
+	Lines.period_strategy_init(self)
+	# period_start_reset: count_penalized (the players with time left in the box; everybody else
+	# not out of the game to the bench) before the lines are dressed
+	Rules.count_penalized(self)
 	# period_clock_init: the clock (period_length: the overtime of a regular season game is the
 	# first entry of the table, 5 minutes); a random time of the late game announcement (3rd period)
 	clock_seconds = period_length
@@ -374,13 +389,6 @@ func start_period(p: int, switch_ends: bool = true) -> void:
 			if team.entity_of[r] == -3:
 				team.entity_of[r] = -2
 		team.injured.clear()
-		# count_penalized: the players with time left in the box
-		box_count[t] = 0
-		for pen: Array in team.penalties:
-			if pen[1] > 0:
-				box_count[t] += 1
-		if p == 1:
-			Lines.adjust_strategy(self, t)       # time_announcements: strategy review in the 2nd period
 		for i in 6:
 			var e := entities[t * 6 + i]
 			e.flags &= ~(Entity.F_ATTACK_UP | Entity.F_USER | Entity.F_BUSY | Entity.F_BACKWARDS)
@@ -406,7 +414,7 @@ func start_period(p: int, switch_ends: bool = true) -> void:
 	play_stopped = true
 	faceoff_x = 0
 	faceoff_y = 0
-	infractions.clear()
+	Rules.clear_infractions(self)
 	# jump straight to the faceoff set up (the referee ceremony of the original is skipped)
 	puck.state_sp = 0
 	puck.state_stack[0] = Entity.State.PUCK_FACEOFF
@@ -697,9 +705,14 @@ func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) ->
 			else:
 				stars_running = false
 				match_over = true
-	Rules.game_state_tick(self)
+	# run_sim_steps: the clock, then sim_tick (sim_game_state, sim_update_players, the camera, the replay)
+	if not play_stopped:
+		Rules.game_clock_tick(self)
+	Rules.sim_game_state(self)
+	if second_tick:
+		Rules.goalie_time_stats(self)
 	# dword_ccc9c: the users cannot move during the whistle / announcement phase of a stoppage
-	controls_blocked = play_stopped and (game_over or (not faceoff_pending and stoppage_timer < 0 and infractions.is_empty()))
+	controls_blocked = play_stopped and (game_over or (not faceoff_pending and stoppage_timer < 0 and Rules.inf_type(self, 0) == 0))
 	update_puck_distances()
 	for i in 17:
 		var e := entities[i]

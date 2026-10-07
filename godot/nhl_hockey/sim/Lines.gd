@@ -893,6 +893,135 @@ static func set_goalie_menu(team: Team, pulled: bool) -> void:
 		team.goalie_menu[2] = 2
 		team.goalie_menu[g] = 1
 
+## period_strategy_init (0x5a6a0), at the start of a period: the coaching of both teams (an
+## overtime: the home team plays mode 2, the away team mode 8 and picks its own lines; the third
+## period from the score; the first two: modes 0 and 1, the away team picks its own lines,
+## alternating), the first forward line and defence pair; with line changes the CPU teams start
+## with their third pair (the away team also with its fourth line)
+static func period_strategy_init(sim: Sim) -> void:
+	var home := sim.teams[0]
+	var away := sim.teams[1]
+	home.flags2 = 0
+	away.flags2 = 0
+	home.strategy = 3
+	home.strategy2 = 2
+	away.strategy = 3
+	away.strategy2 = 2
+	var pn := sim.period + 1
+	if pn > 3:
+		home.energy_threshold = 0xd9a
+		home.mode = 2
+		away.energy_threshold = 0xd9a
+		away.flags2 = 1
+		away.mode = 8
+	elif pn == 3:
+		adjust_strategy(sim, 0)
+		adjust_strategy(sim, 1)
+	else:
+		home.energy_threshold = 0xccc
+		home.mode = 0
+		away.energy_threshold = 0xccc
+		away.flags2 = 0x81
+		away.mode = 1
+	away.dpair_counter = 0
+	away.current_line = 0
+	home.dpair_counter = 0
+	home.current_line = 0
+	if not sim.opt_line_changes:
+		return
+	if sim.user1_team != 1 and sim.user2_team != 1:
+		home.dpair_counter = 2
+	if sim.user1_team != 2 and sim.user2_team != 2:
+		away.current_line = 3
+		away.dpair_counter = 2
+
+## time_announcements (0x5a77c), at full minutes of the 2nd and 3rd period (game_clock_tick): the
+## CPU coaches review their strategy. In the 2nd period from 10:00 on adjust_strategy (at 10:00 a
+## team behind by two or more also raises its strategy and lowers its second one). In the 3rd
+## period a trailing team goes for it (modes 6 / 7 with a high threshold in the last 1 / 3 minutes,
+## mode 0xa from 10:00 when two behind), a leading home team plays mode 3, a leading away team
+## modes 8 / 9; before 10:00 adjust_strategy. A changed mode makes the team change lines (flags2 0x40).
+static func time_announcements(sim: Sim) -> void:
+	if sim.no_stats:
+		return
+	var home := sim.teams[0]
+	var away := sim.teams[1]
+	var d := Entity.to_s16(home.goals - away.goals)
+	var pn := sim.period + 1
+	var c := sim.clock_seconds
+	if pn == 2 and c <= 0x258:
+		var m0 := home.mode
+		adjust_strategy(sim, 0)
+		if m0 != home.mode:
+			home.flags2 |= 0x40
+		var m1 := away.mode
+		adjust_strategy(sim, 1)
+		if m1 != away.mode:
+			away.flags2 |= 0x40
+		if c != 0x258:
+			return
+		if d < -1:
+			if home.strategy < 4:
+				home.strategy += 1
+			if home.strategy2 > 1:
+				home.strategy2 -= 1
+		if d <= 1:
+			return
+		if away.strategy < 4:
+			away.strategy += 1
+		if away.strategy2 > 1:
+			away.strategy2 -= 1
+		return
+	if pn != 3:
+		return
+	var m := home.mode
+	if (c <= 0x3c and d <= -1) or (c <= 0x78 and d < -1):
+		_go_for_it(home, 6)
+	elif (c <= 0xb4 and d <= -1) or (c <= 0x12c and d < -1):
+		_go_for_it(home, 7)
+	elif c <= 0x258:
+		if d < -1:
+			_go_for_it(home, 0xa)
+		else:
+			home.energy_threshold = 0xccc if d > 2 else 0xd9a
+			home.flags2 &= ~1
+			home.mode = 3
+			home.strategy = 3
+			home.strategy2 = 2
+	else:
+		adjust_strategy(sim, 0)
+	if m != home.mode:
+		home.flags2 |= 0x40
+	m = away.mode
+	if (c <= 0x3c and d >= 1) or (c <= 0x78 and d > 1):
+		_go_for_it(away, 6)
+	elif (c <= 0xb4 and d > 1) or (c <= 0x12c and d > 1):
+		_go_for_it(away, 7)
+	elif c <= 0x258:
+		if d > 1:
+			_go_for_it(away, 0xa)
+		else:
+			if d < -2:
+				away.energy_threshold = 0xccc
+				away.mode = 9
+			else:
+				away.energy_threshold = 0xd9a
+				away.mode = 8
+			away.flags2 |= 1
+			away.strategy = 3
+			away.strategy2 = 2
+	else:
+		adjust_strategy(sim, 1)
+	if m != away.mode:
+		away.flags2 |= 0x40
+
+static func _go_for_it(team: Team, mode: int) -> void:
+	team.energy_threshold = 0xb33
+	team.flags2 |= 1
+	team.mode = mode
+	team.strategy = 4
+	team.strategy2 = 1
+
 ## maybe_pull_goalie (0x591c7): a CPU team trailing by one or two in the last minute of the third
 ## period pulls its goalie while the puck (or the faceoff spot) is in its attacking half
 static func maybe_pull_goalie(sim: Sim, team: Team, other: Team, y: int) -> void:

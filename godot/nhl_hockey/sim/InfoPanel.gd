@@ -188,9 +188,9 @@ static func record_penalty(sim: Sim, team: int, roster: int, type: int, minutes:
 	if first:
 		sim.last_penalty_team = team
 	var count := 1 if first else 2
-	if queue_index > 0 and queue_index - 1 < sim.infractions.size():
-		var nxt: int = sim.infractions[queue_index - 1][1]
-		if nxt < 12 and (1 if nxt >= 6 else 0) == team:
+	if queue_index > 0:
+		var nxt := Rules.inf_slot(sim, queue_index - 1) & 0x1f
+		if (1 if nxt >= 6 else 0) == team:
 			count += 1
 	Speech.say(sim, Speech.penalty(Speech.abbrev(sim, team), Speech.number(sim, team, roster), minutes, type, t.x, t.y,
 		first, count, queue_index == 0))

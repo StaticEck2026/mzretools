@@ -1450,7 +1450,7 @@ static func knock_down(sim: Sim, hitter: Entity, victim: Entity) -> void:
 				var behind := ((d - hf + 1) & 7) < 3 and ((victim.facing - hf + 1) & 7) < 3
 				Rules.queue_infraction(sim, hitter, Rules.INF_CHECK_FROM_BEHIND if behind else Rules.INF_ROUGHING)
 				for i in 0x20:
-					if i >= sim.infractions.size():
+					if Rules.inf_type(sim, i) == 0:
 						Rules.start_stoppage(sim, i - 1)
 	sim.play_sfx(0x7d if (victim.flags & Entity.F_PLAYER2) else 0xa0)
 

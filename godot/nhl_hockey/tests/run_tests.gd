@@ -185,7 +185,7 @@ func run_tests() -> void:
 		if scored:
 			break
 	if not scored:
-		fail("no goal: puck %d,%d v %d,%d carrier %d stopped %s infractions %s" % [sim.puck.xi, sim.puck.yi, sim.puck.vx, sim.puck.vy, sim.puck_carrier, sim.play_stopped, str(sim.infractions)])
+		fail("no goal: puck %d,%d v %d,%d carrier %d stopped %s infractions %s" % [sim.puck.xi, sim.puck.yi, sim.puck.vx, sim.puck.vy, sim.puck_carrier, sim.play_stopped, str(sim.infq.slice(0, 8))])
 	else:
 		print("goal scored, home %d away %d (seed try %d)" % [sim.teams[0].goals, sim.teams[1].goals, tries])
 		# after the goal the play stops and a new faceoff follows at centre ice
@@ -228,7 +228,7 @@ func run_tests() -> void:
 			back = true
 			break
 	if not in_box:
-		fail("penalized player never reached the box (state %s line %d pos %d,%d penalties %s)" % [Tables.ai_state_names[culprit.state() + 1], culprit.line_slot, culprit.xi, culprit.yi, str(sim.teams[1].penalties)])
+		fail("penalized player never reached the box (state %s line %d pos %d,%d penalties %s)" % [Tables.ai_state_names[culprit.state() + 1], culprit.line_slot, culprit.xi, culprit.yi, str(sim.teams[1].box_list())])
 	elif not short_handed_faceoff:
 		fail("no short handed faceoff (skaters %d)" % sim.teams[1].skaters_on_ice)
 	elif not back:
@@ -1040,7 +1040,9 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 		sim.goal_call = gc
 	else:
 		sim.goal_call = []
-	sim.infractions = [[int(g["infraction0"]), -1, false]] if int(g.get("infraction0", 0)) != 0 else []
+	Rules.clear_infractions(sim)
+	if int(g.get("infraction0", 0)) != 0:
+		Rules.inf_set(sim, 0, int(g["infraction0"]), 0)
 	sim.message = int(g.get("message", -1))
 	sim.message_timer = int(g.get("message_timer", 0))
 	for t in 2:
@@ -1133,7 +1135,7 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 		"sound_card": sim.sound_device, "sound_enabled": 1 if sim.sound_enabled else 0, "announce_time": sim.announce_time,
 		"period_length": sim.period_length, "deferred": 1 if sim.deferred else 0, "infraction_events": sim.infraction_events,
 		"save_clip_shown": 1 if sim.save_clip_shown else 0, "period_over": 1 if sim.period_over else 0,
-		"goal_call": 0 if sim.goal_call.is_empty() else 1, "infraction0": 0 if sim.infractions.is_empty() else 1,
+		"goal_call": 0 if sim.goal_call.is_empty() else 1, "infraction0": 0 if Rules.inf_type(sim, 0) == 0 else 1,
 		"message": sim.message, "message_timer": sim.message_timer,
 		"lc_show0": sim.lc_show[0], "lc_show1": sim.lc_show[1], "lc_blink0": sim.lc_blink[0], "lc_blink1": sim.lc_blink[1],
 		"lc_place0": sim.lc_place[0], "lc_place1": sim.lc_place[1], "lc_line0": sim.lc_line[0], "lc_line1": sim.lc_line[1],
@@ -1327,7 +1329,7 @@ func physics_golden() -> void:
 		sim.play_stopped = (int(c["game_flags"]) & 1) != 0
 		sim.seed = int(c["seed"])
 		sim.sfx_queue.clear()
-		sim.infractions.clear()
+		Rules.clear_infractions(sim)
 		sim.penalty_box_mode = false
 		sim.puck_in_net = false
 		sim.bounced = false
@@ -1347,8 +1349,8 @@ func physics_golden() -> void:
 				diff.append("sounds %s (original %s)" % [str(sim.sfx_queue), str(sfx)])
 			var infs: Array = c["infractions"]
 			var got_infs := []
-			for inf: Array in sim.infractions:
-				got_infs.append([inf[1], inf[0]])
+			for i in Rules.inf_count(sim):
+				got_infs.append([Rules.inf_slot(sim, i), Rules.inf_type(sim, i)])
 			if str(got_infs) != str(infs.map(func(a): return [int(a[0]), int(a[1])])):
 				diff.append("infractions %s (original %s)" % [str(got_infs), str(infs)])
 			var nv: Array = c["net_v"]
@@ -1369,7 +1371,7 @@ func physics_golden() -> void:
 				fail("at the net: slot %d at %d,%d z %d v %d,%d prev %d,%d: %s" % [e.slot, int(c["px"]), int(c["py"]), int(c["before"]["z"]) >> 16, int(c["before"]["vx"]), int(c["before"]["vy"]), int(c["prev_x"]) >> 16, int(c["prev_y"]) >> 16, ", ".join(diff)])
 	Rules.reset_nets(sim)
 	sim.play_stopped = false
-	sim.infractions.clear()
+	Rules.clear_infractions(sim)
 	# move_entity among team mates: the draw order, collide_pair, stepping around each other
 	var c_ok := 0
 	var c_bad := 0
@@ -1543,7 +1545,7 @@ func physics_golden() -> void:
 	var b_bad := 0
 	sim.stubs = {"play_sfx": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
 		"injure_player": true, "bench_cheer": true, "start_stoppage": true}
-	sim.infractions.clear()
+	Rules.clear_infractions(sim)
 	for c: Dictionary in ph["checks"]:
 		for i in 17:
 			_entity_set(sim.entities[i], base[i])
@@ -2393,8 +2395,8 @@ func match_rules_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 		bully.anim = Anim.BODY_CHECK
 		PuckLogic.check_hit(sim, bully, sim.referee, 0x30)
 	var queued := false
-	for inf: Array in sim.infractions:
-		if inf[0] == Rules.INF_ABUSE_OF_OFFICIAL:
+	for i in Rules.inf_count(sim):
+		if Rules.inf_type(sim, i) == Rules.INF_ABUSE_OF_OFFICIAL:
 			queued = true
 	if not queued:
 		fail("three hits on the referee should be a game misconduct (hits %d)" % sim.ref_hits)

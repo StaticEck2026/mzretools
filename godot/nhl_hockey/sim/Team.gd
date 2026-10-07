@@ -73,7 +73,7 @@ var goalie_menu: PackedByteArray = PackedByteArray([2, 2, 2])
 # 28 a team): 3 on the bench, 4 on the ice, 7 called on by the line editor (bench_player_slot)
 var roster_status: PackedByteArray = PackedByteArray()
 var injured: Array = []              # roster indices hurt for the rest of the period (entity_of -3)
-var penalties: Array = []            # +0xb6 list: [roster_idx, seconds left, entity slot, minor]
+var box_queue: PackedInt32Array = PackedInt32Array()   # +0xb6: 28 roster indices of the box, in order, -1 after the last
 var first_slot: int = 0              # index of players[0] in Sim.entities
 var attacks_up: bool = false         # the goal this team shoots at is at +y (flags & 0x80 of its players)
 # per player game statistics (the 0x10 byte records at team +0xe6): goals, assists, penalty
@@ -97,6 +97,8 @@ func _init(idx: int = 0) -> void:
 	entity_of.resize(28)
 	roster_status.resize(28)
 	roster_status.fill(3)
+	box_queue.resize(28)
+	box_queue.fill(-1)
 	for k in 11:
 		var l := PackedInt32Array()
 		l.resize(25)
@@ -167,3 +169,13 @@ func abbrev() -> String:
 	if info != null:
 		return info.abbrev
 	return "HOME" if index == 0 else "AWAY"
+
+## the players in the box in the order of the queue: [roster index, seconds left] (the scoreboard)
+func box_list() -> Array:
+	var out := []
+	for r in box_queue:
+		if r < 0:
+			break
+		if r < 28 and entity_of[r] > 0:
+			out.append([r, entity_of[r] & 0x7ff])
+	return out
