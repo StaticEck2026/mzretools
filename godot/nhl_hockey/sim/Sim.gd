@@ -151,6 +151,7 @@ var music_cues: Array = []         # play_sfx 0xaa on sound device 4 (kms_play)
 var seed: int = 0xabcd4321           # dword_c9100: state of randomrange (demo_game reseeds it from rand(), init_match adds the team numbers)
 var puck_in_net := false            # byte_c90ba
 var bounced := false                # bounced_this_step: a net frame was hit (bounce_off_boards)
+var scored_net := -1                # the net of the last score_goal call
 # line changes (Lines.gd)
 var req_roster: PackedInt32Array = PackedInt32Array([-1, -1, -1, -1, -1, -1])   # unk_e0384: lineup being assigned
 var req_slot: PackedInt32Array = PackedInt32Array([0, 0, 0, 0, 0, 0])          # unk_e038a: its line slots
@@ -202,6 +203,9 @@ func _init() -> void:
 	referee = entities[Entity.Slot.REFEREE]
 	puck.line_slot = 0
 	shadow.line_slot = 0
+	# the nets are bodies with a velocity too (a skater may knock one off its pegs, net_push_off)
+	entities[Entity.Slot.NET_TOP].line_slot = 0
+	entities[Entity.Slot.NET_BOTTOM].line_slot = 0
 	teams[0].attacks_up = true
 	teams[1].attacks_up = false
 	teams[0].goalie_slot = 0
@@ -1240,24 +1244,30 @@ func bounce_off_boards(e: Entity, a: int, b: int) -> void:
 	if e.vz > 0:
 		e.vz = 0
 
-## collide_net (0x584aa): the puck against a net; players are pushed around it (collide_player_net)
+## collide_net (0x584aa): the puck against a net (hw, hh: the half size of the moving entity);
+## players are pushed around it (collide_player_net). Coming down onto the roof the puck stays on
+## top; else the goal line is crossed between the posts (the crossing point from the step's motion)
+## a goal (score_goal) unless the puck comes from behind the net or hits a post, otherwise it
+## bounces off the frame
 func collide_net(e: Entity, net: Entity, px: int, py: int, hw: int, hh: int) -> void:
 	if e.zi > 0xd:
 		return      # over the net
 	if e.slot != Entity.Slot.PUCK:
-		collide_player_net(e, net, px, py)
+		collide_player_net(e, net, px, py, hw, hh)
 		return
-	var dx := px - net.xi
-	if absi(dx) > hw + 0x10:
+	var dx := _s16(px - net.xi)
+	var w := hw + 0x10
+	if dx > w or dx < -w:
 		return
-	var dy := py - net.yi
-	if absi(dy) > hh + 2:
+	var dy := _s16(py - net.yi)
+	var h := hh + 2
+	if dy > h or dy < -h:
 		return
-	if (e.prev_z >> 16) > 0xc:
+	if _s16(e.prev_z >> 16) >= 0xd:
 		# it came down onto the roof of the net: it stays at its height and bounces up
 		e.z = (e.prev_z & ~0xffff) | (e.z & 0xffff)
 		if e.vz < 0:
-			e.vz = (-e.vz) >> 1
+			e.vz = _s16(-e.vz) >> 1
 		return
 	puck_in_net = true
 	e.flags &= ~Entity.F_ATTACK_UP
@@ -1266,69 +1276,76 @@ func collide_net(e: Entity, net: Entity, px: int, py: int, hw: int, hh: int) -> 
 		puck_carrier = -1
 		c.timer_c = 8
 		var ty := puck.yi if (c.flags & Entity.F_ATTACK_UP) else -puck.yi
-		if ty < 0:
+		if _s16(ty) < 0:
 			e.flags |= Entity.F_ATTACK_UP
-	# the goal line is crossed between the posts: a goal (score_goal) unless the puck comes from
-	# behind the net or hits the frame
-	var dir_y := (e.y - e.prev_y) >> 8
-	if dir_y != 0:
-		var post_w := hw + 0x10
-		var depth := hh + 2
-		if dir_y > 0:
-			depth = -depth
-		var dxp := ((e.x - e.prev_x) >> 8) * (depth + dy) / dir_y
-		if dxp > -0x10000 and dxp < 0x10000:
-			var cx := dx - dxp
-			if absi(cx) <= post_w:
-				var toward_front := (py ^ (0x100 if dir_y > 0 else -0x100)) >= 0
-				if toward_front and (e.flags & Entity.F_ATTACK_UP) == 0:
-					if e.zi != 0xd and absi(cx) <= post_w - 1:
-						Rules.score_goal(self, net)
+	var a := -0x100
+	var b := 0
+	var dyv := (e.y - e.prev_y) >> 8
+	if dyv != 0:
+		var depth := -h
+		if dyv > 0:
+			a = 0x100
+			depth = h
+		depth = _s16(depth + dy)
+		var dxv := _s16((e.x - e.prev_x) >> 8)
+		var div := _s16(dyv)
+		# where the step crossed the front of the net (an unsigned 16 bit quotient in the original)
+		var q := _div_trunc(dxv * depth, div) if div != 0 else -1
+		if q >= 0 and q < 0x10000:
+			var cx := _s16(dx - q)
+			if cx >= -w and cx <= w:
+				if _s16(e.yi ^ a) >= 0:
+					a = -a
+					if (e.flags & Entity.F_ATTACK_UP) == 0:
+						if e.zi != 0xd and cx <= w - 1 and cx >= -(w - 1):
+							Rules.score_goal(self, net)
+							return
+						# off the post / crossbar
+						shot_in_flight = false
+						if not play_stopped:
+							add_crowd(500, 0x4b0)
+							excitement += 0x28
+						play_sfx(0xac)
+						var r := random(0x1000)
+						e.vy = -r if e.yi >= 0 else r
+						e.vx = random(0x2000) - 0x1000
+						e.vz = random(0x2000) - 0x1000
+						PuckLogic.puck_spin(self, e, e.vy)
+						Rules.end_penalty_shot(self)
+						one_timer = false
+						breakaway = false
 						return
-					# off the post / crossbar
-					shot_in_flight = false
-					if not play_stopped:
-						add_crowd(500, 0x4b0)
-						excitement += 0x28
-					play_sfx(0xac)
-					var r := random(0x1000)
-					e.vy = -r if e.yi >= 0 else r
-					e.vx = random(0x2000) - 0x1000
-					e.vz = random(0x2000) - 0x1000
-					PuckLogic.puck_spin(self, e, e.vy)
-					Rules.end_penalty_shot(self)
-					one_timer = false
-					breakaway = false
-					return
-	# bounce off the frame
-	var a := 0x100 if dir_y > 0 else -0x100
-	if dir_y == 0:
-		a = 0
-	var b := 0x100 if (px - (e.prev_x >> 16)) < 0 else -0x100
+				bounced = true
+				bounce_off_boards(e, a, b)
+				return
+	# off the side of the frame
+	a = 0
+	b = 0x100 if _s16(e.xi - (e.prev_x >> 16)) < 0 else -0x100
 	bounced = true
 	bounce_off_boards(e, a, b)
 
-## collide_player_net: a skater or the referee bumps into the net frame
-func collide_player_net(e: Entity, net: Entity, px: int, py: int) -> void:
+## collide_player_net (0x53ce5): a skater or the referee bumps into the net frame (an elliptic
+## body); a skater going fast enough may knock the net off instead (net_push_off)
+func collide_player_net(e: Entity, net: Entity, px: int, py: int, hw: int, hh: int) -> void:
 	if e.slot >= 12 and e.slot != Entity.Slot.REFEREE:
 		return
-	var dy := py - net.yi
-	var dx := px - net.xi
+	var dy := _s16(py - net.yi)
+	var dx := _s16(px - net.xi)
 	if net.slot == Entity.Slot.NET_TOP:
-		if e.half_h + dy < -0x22:
+		if hh + dy < -0x22:
 			return
-	elif dy - e.half_h > 0x21:
+	elif dy - hh > 0x21:
 		return
-	if absi(dx) - e.half_w >= 0x40:
+	if absi(dx) - hw >= 0x40:
 		return
 	var q := (dx * dx) >> 2
 	if q > 0x100 or dy * dy * 2 + q > 0x100:
 		return
-	if e.slot != Entity.Slot.REFEREE and PuckLogic.net_pushed_off(self, e):
+	if e.slot != Entity.Slot.REFEREE and PuckLogic.net_push_off(self, e, net):
 		return
-	var dist := approx_distance(dx, dy) + 1
-	var a := clampi((-dy << 8) / dist, -0xff, 0xff)
-	var b := clampi((dx << 8) / dist, -0xff, 0xff)
+	var dist := (approx_distance(dx, dy) + 1) & 0xffff
+	var a := clampi(_s16(_div_trunc(-dy << 8, dist)), -0xff, 0xff)
+	var b := clampi(_s16(_div_trunc(dx << 8, dist)), -0xff, 0xff)
 	bounced = true
 	bounce_off_boards(e, a, b)
 

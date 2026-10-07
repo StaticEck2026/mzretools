@@ -493,17 +493,23 @@ static func puck_flat(_sim: Sim, puck: Entity) -> void:
 	puck.anim_pos = 0
 	puck.anim_hold = -1
 
-## net_push_off: a player in front of the net is pushed off the goalie
-static func net_pushed_off(sim: Sim, e: Entity) -> bool:
+## net_push_off (0x54990): now and then (1 in 32) a skater hitting the net hard (a velocity word
+## over 0x1b58) with the puck near it knocks the net off its pegs: the net takes a quarter of his
+## velocity, he stops and the whistle goes (infraction 0x1e)
+static func net_push_off(sim: Sim, e: Entity, net: Entity) -> bool:
 	if sim.random(0x20) != 0:
 		return false
-	var puck := sim.puck
-	if absi(puck.yi - e.yi) >= 0x29:
+	if absi(Sim._s16(sim.puck.yi - net.yi)) > 0x28:
 		return false
 	if absi(e.vx) < 0x1b59 and absi(e.vy) < 0x1b59:
 		return false
-	e.vx >>= 2
-	e.vy >>= 2
+	net.vx = e.vx >> 2
+	net.vy = e.vy >> 2
+	e.vx = 0
+	e.vy = 0
+	sim.action_hold_camera = true
+	if not sim.play_stopped:
+		Rules.queue_infraction(sim, e, Rules.INF_NET_OFF)
 	return true
 
 # --------------------------------------------------------------------------------------------

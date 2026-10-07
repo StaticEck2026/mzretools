@@ -37,7 +37,7 @@ const INF_PENALTY_SHOT := 26        # a foul on a breakaway
 const INF_DISALLOWED := 27
 const INF_DELAYED_CALL := 28
 const INF_TWO_LINE := 29
-const INF_REF_HIT := 30
+const INF_NET_OFF := 30           # a skater knocked a net off (net_push_off)
 
 # --------------------------------------------------------------------------------------------
 # per step (sim_game_state)
@@ -636,6 +636,7 @@ static func game_clock_tick(sim: Sim) -> void:
 # --------------------------------------------------------------------------------------------
 
 static func score_goal(sim: Sim, net: Entity) -> void:
+	sim.scored_net = net.slot
 	var puck := sim.puck
 	# the team that shoots at this net scores
 	var scorer_team := 0
@@ -931,6 +932,15 @@ static func faceoff_position(sim: Sim, e: Entity) -> Vector2i:
 	return Vector2i(sx + fx, sy + fy)
 
 ## the block of ai_puck_faceoff2 that snaps everybody into place before the drop
+## ai_puck_faceoff2: the nets back on their pegs at y +-0xec, still
+static func reset_nets(sim: Sim) -> void:
+	for n in [Entity.Slot.NET_TOP, Entity.Slot.NET_BOTTOM]:
+		var net := sim.entities[n]
+		net.x = net.x & 0xffff
+		net.y = ((0xec if n == Entity.Slot.NET_TOP else -0xec) << 16) | (net.y & 0xffff)
+		net.vx = 0
+		net.vy = 0
+
 static func place_faceoff(sim: Sim) -> void:
 	sim.faceoff_pending = true
 	sim.whistle_ready = true
@@ -958,6 +968,7 @@ static func place_faceoff(sim: Sim) -> void:
 	puck.vz = 0
 	puck.flags3 = 0
 	sim.puck_carrier = -1
+	reset_nets(sim)
 	sim.last_touch_x = sim.faceoff_x
 	sim.last_touch_y = sim.faceoff_y
 	sim.last_touch_slot = -1

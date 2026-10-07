@@ -767,7 +767,68 @@ func physics_golden() -> void:
 	sim.delayed_call = false
 	sim.offside_warning = false
 	sim.whistle_timer = 0
-	print("golden physics: %d / %d distances, collide_boards %d / %d, apply_skating %d / %d" % [ph["distance"].size() - dbad, ph["distance"].size(), ok, ph["boards"].size(), sk_ok, ph["skating"].size()])
+	# at the nets: goals, posts, the roof, the frame, skaters against the frame, nets knocked off
+	var n_ok := 0
+	var n_bad := 0
+	for c: Dictionary in ph["nets"]:
+		Rules.reset_nets(sim)
+		var e: Entity = sim.entities[int(c["slot"])]
+		_entity_set(e, c["before"])
+		e.half_w = int(c["hw"])
+		e.half_h = int(c["hh"])
+		e.prev_x = int(c["prev_x"])
+		e.prev_y = int(c["prev_y"])
+		e.prev_z = int(c["prev_z"])
+		if e.slot != Entity.Slot.PUCK:
+			sim.puck.y = int(c["puck_y"]) << 16
+		sim.puck_carrier = int(c["carrier"])
+		sim.play_stopped = (int(c["game_flags"]) & 1) != 0
+		sim.seed = int(c["seed"])
+		sim.sfx_queue.clear()
+		sim.infractions.clear()
+		sim.penalty_box_mode = false
+		sim.puck_in_net = false
+		sim.bounced = false
+		sim.scored_net = -1
+		sim.collide_boards(e, int(c["px"]), int(c["py"]), e.half_w, e.half_h)
+		var diff := []
+		var goal: Array = c["goal"]
+		if not goal.is_empty():
+			if sim.scored_net != int(goal[0]):
+				diff.append("no goal (the original scores in net %d)" % int(goal[0]))
+		else:
+			if sim.scored_net >= 0:
+				diff.append("a goal in net %d (the original has none)" % sim.scored_net)
+			diff.append_array(_entity_diff(e, c["after"]))
+			var sfx: Array = c["sfx"]
+			if sim.sfx_queue.size() != sfx.size() or (sfx.size() > 0 and sim.sfx_queue[0] != int(sfx[0])):
+				diff.append("sounds %s (original %s)" % [str(sim.sfx_queue), str(sfx)])
+			var infs: Array = c["infractions"]
+			var got_infs := []
+			for inf: Array in sim.infractions:
+				got_infs.append([inf[1], inf[0]])
+			if str(got_infs) != str(infs.map(func(a): return [int(a[0]), int(a[1])])):
+				diff.append("infractions %s (original %s)" % [str(got_infs), str(infs)])
+			var nv: Array = c["net_v"]
+			var net := sim.entities[Entity.Slot.NET_TOP if int(c["py"]) > 0 else Entity.Slot.NET_BOTTOM]
+			if net.vx != int(nv[0]) or net.vy != int(nv[1]):
+				diff.append("net velocity %d,%d (original %s)" % [net.vx, net.vy, str(nv)])
+			if sim.puck_in_net != (int(c["puck_in_net"]) != 0):
+				diff.append("puck_in_net %s" % sim.puck_in_net)
+			if sim.puck_carrier != int(c["carrier_after"]):
+				diff.append("carrier %d (original %d)" % [sim.puck_carrier, int(c["carrier_after"])])
+			if sim.seed != int(c["final_seed"]):
+				diff.append("seed")
+		if diff.is_empty():
+			n_ok += 1
+		else:
+			n_bad += 1
+			if n_bad <= 8:
+				fail("at the net: slot %d at %d,%d z %d v %d,%d prev %d,%d: %s" % [e.slot, int(c["px"]), int(c["py"]), int(c["before"]["z"]) >> 16, int(c["before"]["vx"]), int(c["before"]["vy"]), int(c["prev_x"]) >> 16, int(c["prev_y"]) >> 16, ", ".join(diff)])
+	Rules.reset_nets(sim)
+	sim.play_stopped = false
+	sim.infractions.clear()
+	print("golden physics: %d / %d distances, collide_boards %d / %d, apply_skating %d / %d, at the nets %d / %d" % [ph["distance"].size() - dbad, ph["distance"].size(), ok, ph["boards"].size(), sk_ok, ph["skating"].size(), n_ok, ph["nets"].size()])
 
 ## the fields of physics.json (ENTITY_FIELDS of golden.py) to and from an entity of the port (the
 ## puck keeps its spin bits, +0x36, in flags3; the others' +0x36 is the facing in heading)

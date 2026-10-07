@@ -225,7 +225,7 @@ static func ref_announcements(sim: Sim) -> bool:
 	if sim.no_stats or sim.panel != -1:
 		return false
 	var inf := sim.ref_infraction
-	if inf != Rules.INF_TWO_LINE and inf != Rules.INF_REF_HIT and inf != Rules.INF_FROZEN and inf != Rules.INF_GOALIE_HOLD \
+	if inf != Rules.INF_TWO_LINE and inf != Rules.INF_NET_OFF and inf != Rules.INF_FROZEN and inf != Rules.INF_GOALIE_HOLD \
 			and inf != Rules.INF_OFFSIDE and inf != Rules.INF_ICING:
 		return false
 	if sim.clock_seconds < sim.period_length / 2 and sim.clock_seconds > 0x3b and sim.half_announce:

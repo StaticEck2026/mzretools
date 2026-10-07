@@ -1623,6 +1623,7 @@ static func penalty_shot_go(sim: Sim, e: Entity) -> void:
 	sim.action_hold_camera = false
 	sim.camera_target_x = 0
 	sim.camera_target_y = 0
+	Rules.reset_nets(sim)
 	sim.last_touch_x = 0
 	sim.last_touch_y = 0
 	sim.last_touch_slot = -1
