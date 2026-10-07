@@ -10,7 +10,7 @@ extends RefCounted
 ## directions (1 up, 2 down, 3 both), +0x35 1 = a note sequence, +0x36 delay, +0x38 length,
 ## +0x3a ticks a step, +0x3b the eight note offsets).
 ##
-## The driver keeps 16 voice records but timbre_env_sign (0x9da99) gives every note voice 1, so the
+## The driver keeps 16 voice records but pcspk_pick_voice (0x9da99) gives every note voice 1, so the
 ## speaker plays one note at a time, the last one; pcspk_note_off never moves past voice 0, so a
 ## note ends by its envelope (sustain 0 -> release) or by the next note (both as in the original).
 ## Every 100 Hz tick the envelope, the LFO and the sequence of the voice move the PIT divisor of the
@@ -18,11 +18,11 @@ extends RefCounted
 ## 1193182 / divisor Hz while the voice sounds, silence otherwise.
 
 const PIT_HZ := 1193182.0
-const DIV_TABLE := 0xd6608           # unk_d6608: the PIT divisor of each note (120)
+const DIV_TABLE := 0xd6608           # pcspk_divisors: the PIT divisor of each note (120)
 const CLASS := 5                     # the driver class of the speaker records
 const VOICES := 16
 
-class Voice:                         # unk_f24d8[i] (0x30 bytes)
+class Voice:                         # pcspk_voices[i] (0x30 bytes)
 	var channel := 0                 # +0
 	var active := 0                  # +1 (1 sounding, 2 note off)
 	var note := 0                    # +3 (with the timbre's offset)
@@ -45,7 +45,7 @@ class Voice:                         # unk_f24d8[i] (0x30 bytes)
 	var seq_idx := 0                 # +0x29
 	var hw := 0                      # +0x2e
 
-class Channel:                       # unk_f27d8[ch] (0x4e bytes)
+class Channel:                       # pcspk_channels[ch] (0x4e bytes)
 	var timbre := PackedByteArray()  # +0x1e
 	var sustain := 0                 # +0x25
 	var bend := 0                    # +0x26 (no message sets it)
@@ -55,12 +55,12 @@ var bank: FmBank
 var voices: Array = []
 var channels: Array = []
 var divs := PackedInt32Array()
-var hw_active := PackedInt32Array()  # byte_d6774[0..4]
+var hw_active := PackedInt32Array()  # pcspk_hw_active[0..4]
 var hw_div := PackedInt32Array()     # word_d677b[0..4]
-var hw_enabled := PackedInt32Array() # byte_d6785..d6789
+var hw_enabled := PackedInt32Array() # pcspk_hw_enabled[0..4] (byte_d6785..d6789)
 var gate := false                    # port 0x61 bit 0: the PIT drives the speaker
 var out_div := 0                     # PIT channel 2's divisor
-var tick_count := 0                  # byte_d679a
+var tick_count := 0                  # pcspk_tick_count
 var out_rate := 22050.0
 var phase := 0.0
 var level := 0.25
@@ -111,7 +111,7 @@ func midi(status: int, d1: int, d2: int) -> void:
 		0xc0:
 			channels[ch].timbre = _timbre(d1)
 
-## pcspk_note_on: voice 1 (timbre_env_sign) takes the note
+## pcspk_note_on: voice 1 (pcspk_pick_voice) takes the note
 func note_on(ch: int, note: int) -> void:
 	var t: PackedByteArray = channels[ch].timbre
 	if ch == 9:

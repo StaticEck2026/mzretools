@@ -605,7 +605,7 @@ loc_6ad80:
 ; ====================================================================================================
 ; present_frame  [0x6ada7, 181 bytes, 46 instructions]
 ; copies the off-screen game surface to the screen
-; called by: game_loop, faceoff_wait_loop, simulate_game_offscreen, instant_replay
+; called by: game_loop, faceoff_wait_loop, league_highlight_game, instant_replay
 ; ====================================================================================================
 present_frame:
     push 0x10                                    ; 06ada7 6810000000
@@ -765,7 +765,7 @@ loc_6af48:
 
 ; ====================================================================================================
 ; set_view_rect  [0x6af52, 69 bytes, 17 instructions]
-; called by: game_loop, load_rink, faceoff_wait_loop, simulate_game_offscreen, instant_replay
+; called by: game_loop, load_rink, faceoff_wait_loop, league_highlight_game, instant_replay
 ; ====================================================================================================
 set_view_rect:
     push 0x14                                    ; 06af52 6814000000
@@ -789,7 +789,7 @@ set_view_rect:
 
 ; ====================================================================================================
 ; set_camera_offset  [0x6af97, 22 bytes, 5 instructions]
-; called by: game_loop, load_rink, faceoff_wait_loop, simulate_game_offscreen, instant_replay
+; called by: game_loop, load_rink, faceoff_wait_loop, league_highlight_game, instant_replay
 ; ====================================================================================================
 set_camera_offset:
     push 4                                       ; 06af97 6804000000
@@ -847,7 +847,7 @@ loc_6b001:
 
 ; ====================================================================================================
 ; begin_frame  [0x6b008, 139 bytes, 37 instructions]
-; called by: game_loop, faceoff_wait_loop, simulate_game_offscreen, instant_replay
+; called by: game_loop, faceoff_wait_loop, league_highlight_game, instant_replay
 ; ====================================================================================================
 begin_frame:
     push 0x2c                                    ; 06b008 682c000000
@@ -1149,7 +1149,7 @@ calibrate_right_joystick:
 ; ====================================================================================================
 ; event_queue_pop  [0x6b391, 70 bytes, 26 instructions]
 ; next queued input event (32 x 13 byte ring at 0xea0f8)
-; called by: pause_menu, run_menu, menu_page_a, menu_page_b, team_select_screen, league_name_entry, listbox_dialog, dialog_pointer_loop, frontend_main_menu, wait_ticks_or_input, calendar_screen, team_info_screen (+20 more)
+; called by: pause_menu, run_menu, menu_page_a, menu_page_b, scouting_report_screen, league_name_entry, listbox_dialog, dialog_pointer_loop, frontend_main_menu, wait_ticks_or_input, calendar_screen, team_info_screen (+20 more)
 ; ====================================================================================================
 event_queue_pop:
     push 0xc                                     ; 06b391 680c000000
@@ -1184,7 +1184,7 @@ loc_6b3ac:
 
 ; ====================================================================================================
 ; event_queue_reset  [0x6b3d7, 57 bytes, 13 instructions]
-; called by: handle_hotkey, league_leaders_screen, awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, run_menu, menu_page_a, menu_page_b, team_select_screen, draw_team_logos (+35 more)
+; called by: handle_hotkey, league_leaders_screen, awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, run_menu, menu_page_a, menu_page_b, scouting_report_screen, lineups_screen (+35 more)
 ; ====================================================================================================
 event_queue_reset:
     push 8                                       ; 06b3d7 6808000000
@@ -1314,12 +1314,12 @@ loc_6b50a:
     jmp loc_6b5da                                ; 06b51c e9b9000000
 
 loc_6b521:
-    cmp dword ptr [dword_ea29c], 0x1e            ; 06b521 833d9ca20e001e
+    cmp dword ptr [arrow_held_polls], 0x1e       ; 06b521 833d9ca20e001e
     jl loc_6b534                                 ; 06b528 7c0a
-    mov dword ptr [dword_ea29c], 0x1d            ; 06b52a c7059ca20e001d00..
+    mov dword ptr [arrow_held_polls], 0x1d       ; 06b52a c7059ca20e001d00..
 loc_6b534:
     mov ebx, 5                                   ; 06b534 bb05000000
-    mov eax, dword ptr [dword_ea29c]             ; 06b539 a19ca20e00
+    mov eax, dword ptr [arrow_held_polls]        ; 06b539 a19ca20e00
     mov edx, eax                                 ; 06b53e 89c2
     sar edx, 0x1f                                ; 06b540 c1fa1f
     idiv ebx                                     ; 06b543 f7fb
@@ -1667,7 +1667,7 @@ draw_box:
 
 ; ====================================================================================================
 ; draw_item_text  [0x6b88e, 61 bytes, 24 instructions]
-; called by: listbox_draw_item, draw_menu_items, draw_menu, highlight_menu_item
+; called by: listbox_draw_item, draw_menu_items, draw_menu, menu_item_draw_normal
 ; ====================================================================================================
 draw_item_text:
     push 0x5c                                    ; 06b88e 685c000000
@@ -1779,10 +1779,11 @@ loc_6b93a:
 
 
 ; ====================================================================================================
-; highlight_menu_item  [0x6b94e, 157 bytes, 59 instructions]
+; menu_item_draw_normal  [0x6b94e, 157 bytes, 59 instructions]
+; a menu entry in its normal state (face fill)
 ; called by: pause_menu, run_menu, menu_page_a, menu_page_b, frontend_main_menu, calendar_screen, team_info_screen, line_editor_screen, database_menu, edit_lines_screen, edit_lines_screen2, playoff_tree_menu
 ; ====================================================================================================
-highlight_menu_item:
+menu_item_draw_normal:
     push 0x28                                    ; 06b94e 6828000000
     call __CHK                                   ; 06b953 e8f40f0200
     push esi                                     ; 06b958 56
@@ -1848,10 +1849,11 @@ loc_6b9e2:
 
 
 ; ====================================================================================================
-; unhighlight_menu_item  [0x6b9eb, 98 bytes, 36 instructions]
+; menu_item_draw_selected  [0x6b9eb, 98 bytes, 36 instructions]
+; a menu entry selected (dark fill)
 ; called by: pause_menu, run_menu, menu_page_a, menu_page_b, frontend_main_menu, calendar_screen, team_info_screen, line_editor_screen, database_menu, edit_lines_screen, edit_lines_screen2, playoff_tree_menu
 ; ====================================================================================================
-unhighlight_menu_item:
+menu_item_draw_selected:
     push 0x28                                    ; 06b9eb 6828000000
     call __CHK                                   ; 06b9f0 e8570f0200
     push esi                                     ; 06b9f5 56
@@ -2013,7 +2015,7 @@ loc_6bb55:
     test eax, eax                                ; 06bb55 85c0
     jne loc_6bb67                                ; 06bb57 750e
     mov dword ptr [dword_ea298], eax             ; 06bb59 a398a20e00
-    mov dword ptr [dword_ea29c], eax             ; 06bb5e a39ca20e00
+    mov dword ptr [arrow_held_polls], eax        ; 06bb5e a39ca20e00
     pop ebp                                      ; 06bb63 5d
     pop esi                                      ; 06bb64 5e
     pop edx                                      ; 06bb65 5a
@@ -2024,7 +2026,7 @@ loc_6bb67:
     jne loc_6bb80                                ; 06bb6e 7510
     xor edx, edx                                 ; 06bb70 31d2
     mov dword ptr [dword_ea298], edx             ; 06bb72 891598a20e00
-    mov dword ptr [dword_ea29c], edx             ; 06bb78 89159ca20e00
+    mov dword ptr [arrow_held_polls], edx        ; 06bb78 89159ca20e00
     jmp loc_6bba4                                ; 06bb7e eb24
 
 loc_6bb80:
@@ -2032,12 +2034,12 @@ loc_6bb80:
     mov al, byte ptr [dword_ea2a5]               ; 06bb82 a0a5a20e00
     cmp eax, dword ptr [dword_ea298]             ; 06bb87 3b0598a20e00
     jne loc_6bb97                                ; 06bb8d 7508
-    inc dword ptr [dword_ea29c]                  ; 06bb8f ff059ca20e00
+    inc dword ptr [arrow_held_polls]             ; 06bb8f ff059ca20e00
     jmp loc_6bba4                                ; 06bb95 eb0d
 
 loc_6bb97:
     xor ebp, ebp                                 ; 06bb97 31ed
-    mov dword ptr [dword_ea29c], ebp             ; 06bb99 892d9ca20e00
+    mov dword ptr [arrow_held_polls], ebp        ; 06bb99 892d9ca20e00
     mov dword ptr [dword_ea298], eax             ; 06bb9f a398a20e00
 loc_6bba4:
     cmp dword ptr [dword_cda28], 0x20            ; 06bba4 833d28da0c0020
@@ -3273,7 +3275,7 @@ loc_6c828:
     call savefile                                ; 06c950 e87b690200
     add esp, 0xc                                 ; 06c955 83c40c
     xor ecx, ecx                                 ; 06c958 31c9
-    mov dword ptr [dword_ebc68], ecx             ; 06c95a 890d68bc0e00
+    mov dword ptr [editor_dirty], ecx            ; 06c95a 890d68bc0e00
 loc_6c960:
     add esp, 0xa0                                ; 06c960 81c4a0000000
     pop ebp                                      ; 06c966 5d
@@ -3503,7 +3505,7 @@ dbedit_teams_record:
 
 ; ====================================================================================================
 ; dbedit_key_ptr  [0x6cbb7, 21 bytes, 7 instructions]
-; called by: playoff_setup_screen, dbedit_build_team_list, jersey_number_prompt, dbedit_validate_lines, roster_move_players, free_agent_move_dialog, dbedit_team_scan_players, roster_count_check, dbedit_find_player_by_name, roster_edit_screen, roster_table
+; called by: league_sim_game, dbedit_build_team_list, jersey_number_prompt, dbedit_validate_lines, roster_move_players, free_agent_move_dialog, dbedit_team_scan_players, roster_count_check, dbedit_find_player_by_name, roster_edit_screen, roster_table
 ; ====================================================================================================
 dbedit_key_ptr:
     push 8                                       ; 06cbb7 6808000000
@@ -3517,7 +3519,7 @@ dbedit_key_ptr:
 
 ; ====================================================================================================
 ; dbedit_season_ptr  [0x6cbcc, 21 bytes, 7 instructions]
-; called by: playoff_setup_screen
+; called by: league_sim_game
 ; ====================================================================================================
 dbedit_season_ptr:
     push 8                                       ; 06cbcc 6808000000
@@ -3532,7 +3534,7 @@ loc_6cbd1:
 
 ; ====================================================================================================
 ; dbedit_season_ptr_b  [0x6cbe1, 7 bytes, 2 instructions]
-; called by: playoff_setup_screen
+; called by: league_sim_game
 ; ====================================================================================================
 dbedit_season_ptr_b:
     push 8                                       ; 06cbe1 6808000000
@@ -3541,7 +3543,7 @@ dbedit_season_ptr_b:
 
 ; ====================================================================================================
 ; dbedit_career_ptr  [0x6cbe8, 21 bytes, 7 instructions]
-; called by: playoff_setup_screen, roster_table
+; called by: league_sim_game, roster_table
 ; ====================================================================================================
 dbedit_career_ptr:
     push 8                                       ; 06cbe8 6808000000
@@ -3556,7 +3558,7 @@ loc_6cbed:
 
 ; ====================================================================================================
 ; dbedit_career_ptr_b  [0x6cbfd, 7 bytes, 2 instructions]
-; called by: playoff_setup_screen, roster_table
+; called by: league_sim_game, roster_table
 ; ====================================================================================================
 dbedit_career_ptr_b:
     push 8                                       ; 06cbfd 6808000000
@@ -3962,7 +3964,7 @@ loc_6cf94:
     mov eax, edx                                 ; 06d080 89d0
     shl eax, 3                                   ; 06d082 c1e003
     sub eax, edx                                 ; 06d085 29d0
-    cmp byte ptr [esi + eax*4 + unk_eaf80], 0    ; 06d087 80bc8680af0e0000
+    cmp byte ptr [esi + eax*4 + editor_selected], 0 ; 06d087 80bc8680af0e0000
     je loc_6d0ca                                 ; 06d08f 7439
     push 0x80                                    ; 06d091 6880000000
     xor eax, eax                                 ; 06d096 31c0
@@ -3994,7 +3996,7 @@ loc_6d0ca:
     jmp loc_6d24f                                ; 06d0d4 e976010000
 
 loc_6d0d9:
-    mov edi, dword ptr [dword_ebca4]             ; 06d0d9 8b3da4bc0e00
+    mov edi, dword ptr [editor_scroll]           ; 06d0d9 8b3da4bc0e00
     xor esi, esi                                 ; 06d0df 31f6
     jmp loc_6d1f4                                ; 06d0e1 e90e010000
 
@@ -4103,7 +4105,7 @@ loc_6d205:
     mov edx, 2                                   ; 06d20e ba02000000
     mov eax, unk_d0bb8                           ; 06d213 b8b80b0d00
     call buttons_draw_all                        ; 06d218 e8c538fcff
-    mov eax, dword ptr [dword_ebca4]             ; 06d21d a1a4bc0e00
+    mov eax, dword ptr [editor_scroll]           ; 06d21d a1a4bc0e00
     mov dword ptr [dword_d0c10], eax             ; 06d222 a3100c0d00
     mov eax, dword ptr [dword_d0bfc]             ; 06d227 a1fc0b0d00
     sub eax, 4                                   ; 06d22c 83e804
@@ -4429,13 +4431,13 @@ dbedit_select_team:
     mov esi, edx                                 ; 06d5ef 89d6
     mov edi, dword ptr [eax + 4]                 ; 06d5f1 8b7804
     mov ebp, dword ptr [eax + 8]                 ; 06d5f4 8b6808
-    mov al, byte ptr [edx + byte_d079e]          ; 06d5f7 8a829e070d00
+    mov al, byte ptr [edx + roster_team_column]  ; 06d5f7 8a829e070d00
     mov byte ptr [esp], al                       ; 06d5fd 880424
     mov eax, edi                                 ; 06d600 89f8
     shl eax, 3                                   ; 06d602 c1e003
     sub eax, edi                                 ; 06d605 29f8
     mov al, byte ptr [eax + ebp + unk_c83c3]     ; 06d607 8a8428c3830c00
-    mov byte ptr [edx + byte_d079e], al          ; 06d60e 88829e070d00
+    mov byte ptr [edx + roster_team_column], al  ; 06d60e 88829e070d00
     mov ah, byte ptr [esp]                       ; 06d614 8a2424
     cmp ah, 0xff                                 ; 06d617 80fcff
     jne loc_6d62f                                ; 06d61a 7513
@@ -4514,7 +4516,7 @@ dbedit_free_agents:
     setne al                                     ; 06d6ed 0f95c0
     movzx esi, al                                ; 06d6f0 0fb6f0
     mov edi, esi                                 ; 06d6f3 89f7
-    movzx esi, byte ptr [esi + byte_d079e]       ; 06d6f5 0fb6b69e070d00
+    movzx esi, byte ptr [esi + roster_team_column] ; 06d6f5 0fb6b69e070d00
     mov ecx, dword ptr [esi*4 + unk_c5519]       ; 06d6fc 8b0cb519550c00
     sar ecx, 1                                   ; 06d703 d1f9
     cmp ecx, 4                                   ; 06d705 83f904
@@ -4551,7 +4553,7 @@ loc_6d72a:
 loc_6d766:
     mov dword ptr [funcptr_d0411], ebx           ; 06d766 891d11040d00
 loc_6d76c:
-    mov byte ptr [edi + byte_d079e], 0xff        ; 06d76c c6879e070d00ff
+    mov byte ptr [edi + roster_team_column], 0xff ; 06d76c c6879e070d00ff
     mov byte ptr [edi + byte_d07a8], 1           ; 06d773 c687a8070d0001
     mov eax, edi                                 ; 06d77a 89f8
     call dbedit_free_lists                       ; 06d77c e813070000
@@ -4759,7 +4761,7 @@ loc_6d92d:
     cmp eax, ecx                                 ; 06d933 39c8
     jl loc_6d922                                 ; 06d935 7ceb
     xor edi, edi                                 ; 06d937 31ff
-    mov dword ptr [dword_ebca4], edi             ; 06d939 893da4bc0e00
+    mov dword ptr [editor_scroll], edi           ; 06d939 893da4bc0e00
     cmp ecx, 0x1c                                ; 06d93f 83f91c
     jg loc_6d94c                                 ; 06d942 7f08
     mov dword ptr [dword_d0c20], edi             ; 06d944 893d200c0d00
@@ -4793,7 +4795,7 @@ loc_6d97b:
 ; ====================================================================================================
 dbedit_build_team_roster:
     xor eax, eax                                 ; 06d98e 31c0
-    mov al, byte ptr [esi + byte_d079e]          ; 06d990 8a869e070d00
+    mov al, byte ptr [esi + roster_team_column]  ; 06d990 8a869e070d00
     call dbedit_carteams_record                  ; 06d996 e8d0f1ffff
     mov edx, eax                                 ; 06d99b 89c2
     mov eax, esi                                 ; 06d99d 89f0
@@ -4812,7 +4814,7 @@ dbedit_build_team_roster:
     mov edi, unk_ea990                           ; 06d9c2 bf90a90e00
     add edi, eax                                 ; 06d9c7 01c7
     xor eax, eax                                 ; 06d9c9 31c0
-    mov al, byte ptr [esi + byte_d079e]          ; 06d9cb 8a869e070d00
+    mov al, byte ptr [esi + roster_team_column]  ; 06d9cb 8a869e070d00
     mov edx, edi                                 ; 06d9d1 89fa
     call dbedit_build_team_list                  ; 06d9d3 e86be6ffff
     mov ecx, cmp_key_names                       ; 06d9d8 b98bd70600
@@ -4828,7 +4830,7 @@ loc_6d9f2:
     shl edx, 3                                   ; 06d9f4 c1e203
     sub edx, esi                                 ; 06d9f7 29f2
     xor bl, bl                                   ; 06d9f9 30db
-    mov byte ptr [eax + edx*4 + unk_eaf80], bl   ; 06d9fb 889c9080af0e00
+    mov byte ptr [eax + edx*4 + editor_selected], bl ; 06d9fb 889c9080af0e00
     inc eax                                      ; 06da02 40
 loc_6da03:
     cmp eax, 0x1c                                ; 06da03 83f81c
@@ -4861,7 +4863,7 @@ loc_6da49:
     jmp loc_6da6c                                ; 06da65 eb05
 
 loc_6da67:
-    mov eax, unk_eaf80                           ; 06da67 b880af0e00
+    mov eax, editor_selected                     ; 06da67 b880af0e00
 loc_6da6c:
     call dbedit_find_player_entry                ; 06da6c e817000000
     test eax, eax                                ; 06da71 85c0
@@ -4960,7 +4962,7 @@ loc_6daff:
     add ecx, 0x35                                ; 06db3e 83c135
     cmp byte ptr [esi + byte_d07a8], 1           ; 06db41 80bea8070d0001
     jne loc_6db97                                ; 06db48 754d
-    mov eax, dword ptr [dword_ebca4]             ; 06db4a a1a4bc0e00
+    mov eax, dword ptr [editor_scroll]           ; 06db4a a1a4bc0e00
     add eax, edi                                 ; 06db4f 01f8
     cmp eax, dword ptr [dword_d07b2]             ; 06db51 3b05b2070d00
     jge loc_6dc04                                ; 06db57 0f8da7000000
@@ -4979,7 +4981,7 @@ loc_6db79:
     push eax                                     ; 06db79 50
     call fillrect2                               ; 06db7a e8b9330200
     add esp, 0x14                                ; 06db7f 83c414
-    add edi, dword ptr [dword_ebca4]             ; 06db82 033da4bc0e00
+    add edi, dword ptr [editor_scroll]           ; 06db82 033da4bc0e00
     mov eax, dword ptr [dword_d07ae]             ; 06db88 a1ae070d00
     mov dl, byte ptr [edi + eax]                 ; 06db8d 8a1407
     not dl                                       ; 06db90 f6d2
@@ -5024,9 +5026,9 @@ loc_6dbe1:
     sub eax, esi                                 ; 06dbef 29f0
     shl eax, 2                                   ; 06dbf1 c1e002
     add edi, eax                                 ; 06dbf4 01c7
-    mov al, byte ptr [edi + unk_eaf80]           ; 06dbf6 8a8780af0e00
+    mov al, byte ptr [edi + editor_selected]     ; 06dbf6 8a8780af0e00
     not al                                       ; 06dbfc f6d0
-    mov byte ptr [edi + unk_eaf80], al           ; 06dbfe 888780af0e00
+    mov byte ptr [edi + editor_selected], al     ; 06dbfe 888780af0e00
 loc_6dc04:
     cmp byte ptr [esi + byte_d07a8], 1           ; 06dc04 80bea8070d0001
     jne loc_6dc14                                ; 06dc0b 7507
@@ -5038,7 +5040,7 @@ loc_6dc14:
     shl eax, 3                                   ; 06dc16 c1e003
     sub eax, esi                                 ; 06dc19 29f0
     shl eax, 2                                   ; 06dc1b c1e002
-    add eax, unk_eaf80                           ; 06dc1e 0580af0e00
+    add eax, editor_selected                     ; 06dc1e 0580af0e00
 loc_6dc23:
     call dbedit_find_player_entry                ; 06dc23 e860feffff
     test eax, eax                                ; 06dc28 85c0
@@ -5331,7 +5333,7 @@ dbedit_edit_team_lines:
     mov ax, word ptr [dword_c90ca]               ; 06df2f 66a1ca900c00
     mov dword ptr [esp + 0x2ec], eax             ; 06df35 898424ec020000
     xor eax, eax                                 ; 06df3c 31c0
-    mov al, byte ptr [byte_d079e]                ; 06df3e a09e070d00
+    mov al, byte ptr [roster_team_column]        ; 06df3e a09e070d00
     mov word ptr [dword_c90ca], ax               ; 06df43 66a3ca900c00
     jmp loc_6df65                                ; 06df49 eb1a
 
@@ -5406,7 +5408,7 @@ loc_6e03f:
     test ebx, ebx                                ; 06e046 85db
     sete al                                      ; 06e048 0f94c0
     and eax, 0xff                                ; 06e04b 25ff000000
-    cmp byte ptr [eax + byte_d079e], 0xff        ; 06e050 80b89e070d00ff
+    cmp byte ptr [eax + roster_team_column], 0xff ; 06e050 80b89e070d00ff
     jne loc_6e068                                ; 06e057 750f
     test ebx, ebx                                ; 06e059 85db
     sete al                                      ; 06e05b 0f94c0
@@ -5442,7 +5444,7 @@ database_menu:
     mov dword ptr [esp + 0x68], ecx              ; 06e09f 894c2468
     xor ebx, ebx                                 ; 06e0a3 31db
     mov dword ptr [esp + 0x74], ebx              ; 06e0a5 895c2474
-    mov dword ptr [dword_ebc68], ebx             ; 06e0a9 891d68bc0e00
+    mov dword ptr [editor_dirty], ebx            ; 06e0a9 891d68bc0e00
     call dbedit_free_lists_all                   ; 06e0af e8cafdffff
     call player_ratings_card                     ; 06e0b4 e83ff2ffff
     mov dword ptr [esp + 0x18], esi              ; 06e0b9 89742418
@@ -5583,11 +5585,11 @@ loc_6e22e:
     mov edx, eax                                 ; 06e278 89c2
     test eax, eax                                ; 06e27a 85c0
     jne loc_6e292                                ; 06e27c 7514
-    mov esi, dword ptr [dword_ebca4]             ; 06e27e 8b35a4bc0e00
+    mov esi, dword ptr [editor_scroll]           ; 06e27e 8b35a4bc0e00
     test esi, esi                                ; 06e284 85f6
     jle loc_6e292                                ; 06e286 7e0a
     lea eax, [esi - 1]                           ; 06e288 8d46ff
-    mov dword ptr [dword_ebca4], eax             ; 06e28b a3a4bc0e00
+    mov dword ptr [editor_scroll], eax           ; 06e28b a3a4bc0e00
     jmp loc_6e2b2                                ; 06e290 eb20
 
 loc_6e292:
@@ -5595,11 +5597,11 @@ loc_6e292:
     jne loc_6e2b7                                ; 06e295 7520
     mov eax, dword ptr [dword_d07b2]             ; 06e297 a1b2070d00
     sub eax, 0x1c                                ; 06e29c 83e81c
-    mov edi, dword ptr [dword_ebca4]             ; 06e29f 8b3da4bc0e00
+    mov edi, dword ptr [editor_scroll]           ; 06e29f 8b3da4bc0e00
     cmp eax, edi                                 ; 06e2a5 39f8
     jle loc_6e2b7                                ; 06e2a7 7e0e
     lea ebp, [edi + edx]                         ; 06e2a9 8d2c17
-    mov dword ptr [dword_ebca4], ebp             ; 06e2ac 892da4bc0e00
+    mov dword ptr [editor_scroll], ebp           ; 06e2ac 892da4bc0e00
 loc_6e2b2:
     call player_ratings_card                     ; 06e2b2 e841f0ffff
 loc_6e2b7:
@@ -5612,11 +5614,11 @@ loc_6e2b7:
     call scrollbar_at                            ; 06e2ce e83b2afcff
     test eax, eax                                ; 06e2d3 85c0
     jl loc_6e2f1                                 ; 06e2d5 7c1a
-    mov eax, dword ptr [dword_ebca4]             ; 06e2d7 a1a4bc0e00
+    mov eax, dword ptr [editor_scroll]           ; 06e2d7 a1a4bc0e00
     mov ebx, dword ptr [dword_d0c10]             ; 06e2dc 8b1d100c0d00
     cmp eax, ebx                                 ; 06e2e2 39d8
     je loc_6e2f1                                 ; 06e2e4 740b
-    mov dword ptr [dword_ebca4], ebx             ; 06e2e6 891da4bc0e00
+    mov dword ptr [editor_scroll], ebx           ; 06e2e6 891da4bc0e00
     call player_ratings_card                     ; 06e2ec e807f0ffff
 loc_6e2f1:
     mov ecx, dword ptr [esp + 0x58]              ; 06e2f1 8b4c2458
@@ -5893,7 +5895,7 @@ loc_6e5f6:
     mov eax, dword ptr [esp + eax*4 + 0x20]      ; 06e616 8b448420
     add eax, ecx                                 ; 06e61a 01c8
     mov ecx, dword ptr [esp + 0x74]              ; 06e61c 8b4c2474
-    call highlight_menu_item                     ; 06e620 e829d3ffff
+    call menu_item_draw_normal                   ; 06e620 e829d3ffff
     mov edx, dword ptr [esp + 0x54]              ; 06e625 8b542454
     mov eax, dword ptr [esp + 0x50]              ; 06e629 8b442450
     mov dword ptr [esp + edx*4 + 0x30], eax      ; 06e62d 89449430
@@ -5978,7 +5980,7 @@ loc_6e6ec:
     mov ecx, dword ptr [esp + esi*4 + 0x20]      ; 06e70e 8b4cb420
     add eax, ecx                                 ; 06e712 01c8
     mov ecx, dword ptr [esp + 0x74]              ; 06e714 8b4c2474
-    call highlight_menu_item                     ; 06e718 e831d2ffff
+    call menu_item_draw_normal                   ; 06e718 e831d2ffff
     mov eax, dword ptr [esp + 0x50]              ; 06e71d 8b442450
     mov dword ptr [esp + esi*4 + 0x30], eax      ; 06e721 8944b430
     mov ebp, dword ptr [esp + 0x8c]              ; 06e725 8bac248c000000
@@ -5992,7 +5994,7 @@ loc_6e6ec:
     mov ecx, dword ptr [esp + esi*4 + 0x20]      ; 06e741 8b4cb420
     add eax, ecx                                 ; 06e745 01c8
     mov ecx, dword ptr [esp + 0x74]              ; 06e747 8b4c2474
-    call unhighlight_menu_item                   ; 06e74b e89bd2ffff
+    call menu_item_draw_selected                 ; 06e74b e89bd2ffff
     mov eax, dword ptr [esp + 0x54]              ; 06e750 8b442454
     mov ebx, dword ptr [esp + 0x50]              ; 06e754 8b5c2450
     shl ebx, 5                                   ; 06e758 c1e305
@@ -6128,7 +6130,7 @@ loc_6e8a6:
     mov eax, dword ptr [esp + eax*4 + 0x20]      ; 06e8df 8b448420
     add eax, ecx                                 ; 06e8e3 01c8
     mov ecx, dword ptr [esp + 0x74]              ; 06e8e5 8b4c2474
-    call highlight_menu_item                     ; 06e8e9 e860d0ffff
+    call menu_item_draw_normal                   ; 06e8e9 e860d0ffff
     mov edx, dword ptr [esp + 0x54]              ; 06e8ee 8b542454
     mov eax, dword ptr [esp + 0x50]              ; 06e8f2 8b442450
     mov dword ptr [esp + edx*4 + 0x30], eax      ; 06e8f6 89449430
@@ -6144,7 +6146,7 @@ loc_6e8a6:
     mov ecx, dword ptr [esp + 0x74]              ; 06e918 8b4c2474
     mov edx, esi                                 ; 06e91c 89f2
 loc_6e91e:
-    call unhighlight_menu_item                   ; 06e91e e8c8d0ffff
+    call menu_item_draw_selected                 ; 06e91e e8c8d0ffff
     jmp loc_6e430                                ; 06e923 e908fbffff
 
 loc_6e928:
@@ -6254,7 +6256,7 @@ loc_6ea2c:
     push eax                                     ; 06ea46 50
     call drawshape                               ; 06ea47 e8a4190200
     add esp, 0xc                                 ; 06ea4c 83c40c
-    cmp dword ptr [dword_ebc68], 0               ; 06ea4f 833d68bc0e0000
+    cmp dword ptr [editor_dirty], 0              ; 06ea4f 833d68bc0e0000
     je loc_6ea9d                                 ; 06ea56 7445
     mov dword ptr [dword_ebc74], aTheDatabaseHasNotBeenSav ; 06ea58 c70574bc0e003229.."The database has not been saved."
     mov dword ptr [dword_ebc78], aAreYouSureYouWantToExit ; 06ea62 c70578bc0e005329.."Are you sure you want to exit?"
@@ -7135,7 +7137,7 @@ loc_6f2ef:
     sub eax, edx                                 ; 06f2f8 29d0
     shl eax, 2                                   ; 06f2fa c1e002
     add eax, esi                                 ; 06f2fd 01f0
-    cmp byte ptr [eax + unk_eaf80], 0            ; 06f2ff 80b880af0e0000
+    cmp byte ptr [eax + editor_selected], 0      ; 06f2ff 80b880af0e0000
     je loc_6f47f                                 ; 06f306 0f8473010000
     mov eax, edx                                 ; 06f30c 89d0
     shl eax, 2                                   ; 06f30e c1e002
@@ -7198,7 +7200,7 @@ loc_6f3a4:
     cmp dword ptr [esp + 0x20], 0                ; 06f3a4 837c242000
     jl loc_6f47f                                 ; 06f3a9 0f8cd0000000
     mov dword ptr [esp + 0xc], 0xffffffff        ; 06f3af c744240cffffffff
-    mov al, byte ptr [ecx + byte_d079e]          ; 06f3b7 8a819e070d00
+    mov al, byte ptr [ecx + roster_team_column]  ; 06f3b7 8a819e070d00
     mov byte ptr [esi], al                       ; 06f3bd 8806
     mov edx, dword ptr [ecx*4 + dword_eaf78]     ; 06f3bf 8b148d78af0e00
     mov eax, dword ptr [esp + 0x20]              ; 06f3c6 8b442420
@@ -7223,7 +7225,7 @@ loc_6f3a4:
     mov byte ptr [ebx + eax + unk_ea993], 2      ; 06f3f8 c6840393a90e0002
     xor eax, eax                                 ; 06f400 31c0
     mov edx, dword ptr [esp + 0x10]              ; 06f402 8b542410
-    mov al, byte ptr [edx + byte_d079e]          ; 06f406 8a829e070d00
+    mov al, byte ptr [edx + roster_team_column]  ; 06f406 8a829e070d00
     mov edx, dword ptr [esp + 0x18]              ; 06f40c 8b542418
     call dbedit_team_scan_players                ; 06f410 e82e1c0000
     xor ebx, ebx                                 ; 06f415 31db
@@ -7335,7 +7337,7 @@ loc_6f53b:
     cmp dword ptr [esp + 0x20], 0                ; 06f53b 837c242000
     jl loc_6f601                                 ; 06f540 0f8cbb000000
     mov dword ptr [esp + 0xc], 0xffffffff        ; 06f546 c744240cffffffff
-    mov al, byte ptr [ecx + byte_d079e]          ; 06f54e 8a819e070d00
+    mov al, byte ptr [ecx + roster_team_column]  ; 06f54e 8a819e070d00
     mov byte ptr [esi], al                       ; 06f554 8806
     mov edx, dword ptr [ecx*4 + dword_eaf78]     ; 06f556 8b148d78af0e00
     mov eax, dword ptr [esp + 0x20]              ; 06f55d 8b442420
@@ -7434,7 +7436,7 @@ loc_6f664:
 loc_6f67e:
     cmp dword ptr [esp + 0xc], 0                 ; 06f67e 837c240c00
     je loc_6f6a5                                 ; 06f683 7420
-    mov dword ptr [dword_ebc68], 1               ; 06f685 c70568bc0e000100..
+    mov dword ptr [editor_dirty], 1              ; 06f685 c70568bc0e000100..
     xor eax, eax                                 ; 06f68f 31c0
     call dbedit_free_lists                       ; 06f691 e8fee7ffff
     mov eax, 1                                   ; 06f696 b801000000
@@ -9391,7 +9393,7 @@ loc_70dd4:
     jmp loc_70e5c                                ; 070e47 eb13
 
 loc_70e49:
-    mov dword ptr [dword_ebc68], 1               ; 070e49 c70568bc0e000100..
+    mov dword ptr [editor_dirty], 1              ; 070e49 c70568bc0e000100..
     jmp loc_70e66                                ; 070e53 eb11
 
 loc_70e55:
@@ -9455,7 +9457,7 @@ loc_70ec9:
     mov eax, esi                                 ; 070ec9 89f0
     shl eax, 3                                   ; 070ecb c1e003
     sub eax, esi                                 ; 070ece 29f0
-    cmp byte ptr [ebp + eax*4 + unk_eaf80], 0    ; 070ed0 80bc8580af0e0000
+    cmp byte ptr [ebp + eax*4 + editor_selected], 0 ; 070ed0 80bc8580af0e0000
     je loc_70fb4                                 ; 070ed8 0f84d6000000
     inc dword ptr [esp + 0x28]                   ; 070ede ff442428
     cmp dword ptr [dword_d07b2], 0x1e            ; 070ee2 833db2070d001e
@@ -9505,11 +9507,11 @@ loc_70ec9:
     cmp eax, 1                                   ; 070f8e 83f801
     jne loc_70fb4                                ; 070f91 7521
     mov dword ptr [esp + 0x30], eax              ; 070f93 89442430
-    cmp byte ptr [esi + byte_d079e], 0x1a        ; 070f97 80be9e070d001a
+    cmp byte ptr [esi + roster_team_column], 0x1a ; 070f97 80be9e070d001a
     jae loc_70fb4                                ; 070f9e 7314
     mov byte ptr [edi], 0xff                     ; 070fa0 c607ff
     xor eax, eax                                 ; 070fa3 31c0
-    mov al, byte ptr [esi + byte_d079e]          ; 070fa5 8a869e070d00
+    mov al, byte ptr [esi + roster_team_column]  ; 070fa5 8a869e070d00
     mov edx, dword ptr [esp + 0x38]              ; 070fab 8b542438
     call dbedit_team_scan_players                ; 070faf e88f000000
 loc_70fb4:
@@ -9537,7 +9539,7 @@ loc_70fb4:
 loc_7100c:
     cmp dword ptr [esp + 0x30], 0                ; 07100c 837c243000
     je loc_7103b                                 ; 071011 7428
-    mov dword ptr [dword_ebc68], 1               ; 071013 c70568bc0e000100..
+    mov dword ptr [editor_dirty], 1              ; 071013 c70568bc0e000100..
     mov eax, esi                                 ; 07101d 89f0
     call dbedit_free_lists                       ; 07101f e870ceffff
     mov eax, dword ptr [esp + 0x2c]              ; 071024 8b44242c
@@ -9818,7 +9820,7 @@ roster_count_check:
     xor eax, eax                                 ; 071354 31c0
     xor ebx, ebx                                 ; 071356 31db
 loc_71358:
-    cmp byte ptr [ebx + unk_eaf80], 0            ; 071358 80bb80af0e0000
+    cmp byte ptr [ebx + editor_selected], 0      ; 071358 80bb80af0e0000
     je loc_71368                                 ; 07135f 7407
     inc dword ptr [esp + 0xe8]                   ; 071361 ff8424e8000000
 loc_71368:
@@ -9894,7 +9896,7 @@ loc_71429:
     xor ecx, ecx                                 ; 07142b 31c9
     xor ebx, ebx                                 ; 07142d 31db
 loc_7142f:
-    cmp byte ptr [ebx + unk_eaf80], 0            ; 07142f 80bb80af0e0000
+    cmp byte ptr [ebx + editor_selected], 0      ; 07142f 80bb80af0e0000
     je loc_71456                                 ; 071436 741e
     mov edx, ebx                                 ; 071438 89da
     shl edx, 3                                   ; 07143a c1e203
@@ -10062,7 +10064,7 @@ loc_7165a:
     cmp ebx, dword ptr [esp + 0xe8]              ; 07165a 3b9c24e8000000
     jl loc_71494                                 ; 071661 0f8c2dfeffff
     mov ebx, 1                                   ; 071667 bb01000000
-    mov dword ptr [dword_ebc68], ebx             ; 07166c 891d68bc0e00
+    mov dword ptr [editor_dirty], ebx            ; 07166c 891d68bc0e00
     xor eax, eax                                 ; 071672 31c0
     call dbedit_free_lists                       ; 071674 e81bc8ffff
     mov eax, ebx                                 ; 071679 89d8
@@ -10100,7 +10102,7 @@ loc_716b6:
     shl eax, 3                                   ; 0716b8 c1e003
     sub eax, ebp                                 ; 0716bb 29e8
     xor dh, dh                                   ; 0716bd 30f6
-    mov byte ptr [ecx + eax*4 + unk_eaf80], dh   ; 0716bf 88b48180af0e00
+    mov byte ptr [ecx + eax*4 + editor_selected], dh ; 0716bf 88b48180af0e00
     inc ecx                                      ; 0716c6 41
     cmp ecx, 0x1c                                ; 0716c7 83f91c
     jl loc_716b6                                 ; 0716ca 7cea
@@ -10153,9 +10155,9 @@ loc_7174d:
     mov eax, ebp                                 ; 07174d 89e8
     shl eax, 3                                   ; 07174f c1e003
     sub eax, ebp                                 ; 071752 29e8
-    mov dl, byte ptr [ecx + eax*4 + unk_eaf80]   ; 071754 8a948180af0e00
+    mov dl, byte ptr [ecx + eax*4 + editor_selected] ; 071754 8a948180af0e00
     not dl                                       ; 07175b f6d2
-    mov byte ptr [ecx + eax*4 + unk_eaf80], dl   ; 07175d 88948180af0e00
+    mov byte ptr [ecx + eax*4 + editor_selected], dl ; 07175d 88948180af0e00
 loc_71764:
     inc ecx                                      ; 071764 41
     cmp ecx, 0x1c                                ; 071765 83f91c
@@ -10175,7 +10177,7 @@ loc_71781:
     jl loc_71777                                 ; 071787 7cee
     cmp dword ptr [dword_d0c20], 0               ; 071789 833d200c0d0000
     je loc_7179c                                 ; 071790 740a
-    mov dword ptr [dword_ebca4], 0xffffffff      ; 071792 c705a4bc0e00ffff..
+    mov dword ptr [editor_scroll], 0xffffffff    ; 071792 c705a4bc0e00ffff..
 loc_7179c:
     xor ecx, ecx                                 ; 07179c 31c9
     jmp loc_71829                                ; 07179e e986000000
@@ -10221,9 +10223,9 @@ loc_71803:
     mov byte ptr [ecx + eax], dl                 ; 07180d 881401
     cmp dword ptr [dword_d0c20], 0               ; 071810 833d200c0d0000
     je loc_71828                                 ; 071817 740f
-    cmp dword ptr [dword_ebca4], -1              ; 071819 833da4bc0e00ff
+    cmp dword ptr [editor_scroll], -1            ; 071819 833da4bc0e00ff
     jne loc_71828                                ; 071820 7506
-    mov dword ptr [dword_ebca4], ecx             ; 071822 890da4bc0e00
+    mov dword ptr [editor_scroll], ecx           ; 071822 890da4bc0e00
 loc_71828:
     inc ecx                                      ; 071828 41
 loc_71829:
@@ -10251,7 +10253,7 @@ dbedit_setup_team_menu:
     push ebp                                     ; 07184a 55
     mov ebp, eax                                 ; 07184b 89c5
     mov esi, edx                                 ; 07184d 89d6
-    movzx edi, byte ptr [eax + byte_d079e]       ; 07184f 0fb6b89e070d00
+    movzx edi, byte ptr [eax + roster_team_column] ; 07184f 0fb6b89e070d00
     cmp edi, 0xff                                ; 071856 81ffff000000
     jne loc_71871                                ; 07185c 7513
     mov edx, dbedit_free_agents                  ; 07185e badbd60600
@@ -10606,13 +10608,13 @@ loc_71cc1:
     mov byte ptr [eax + byte_d07a8], 1           ; 071ce8 c680a8070d0001
     call dbedit_free_lists                       ; 071cef e8a0c1ffff
     mov eax, dword ptr [esp + 0x1bc]             ; 071cf4 8b8424bc010000
-    mov byte ptr [eax + byte_d079e], 0xff        ; 071cfb c6809e070d00ff
+    mov byte ptr [eax + roster_team_column], 0xff ; 071cfb c6809e070d00ff
     jmp loc_71dd3                                ; 071d02 e9cc000000
 
 loc_71d07:
     xor eax, eax                                 ; 071d07 31c0
     mov edx, dword ptr [esp + 0x1b4]             ; 071d09 8b9424b4010000
-    mov al, byte ptr [edx + byte_d079e]          ; 071d10 8a829e070d00
+    mov al, byte ptr [edx + roster_team_column]  ; 071d10 8a829e070d00
     mov ebx, dword ptr [esp + 0x1b8]             ; 071d16 8b9c24b8010000
     cmp eax, ebx                                 ; 071d1d 39d8
     jne loc_71d88                                ; 071d1f 7567
@@ -10647,7 +10649,7 @@ loc_71d4d:
 loc_71d88:
     xor eax, eax                                 ; 071d88 31c0
     mov edx, dword ptr [esp + 0x1bc]             ; 071d8a 8b9424bc010000
-    mov al, byte ptr [edx + byte_d079e]          ; 071d91 8a829e070d00
+    mov al, byte ptr [edx + roster_team_column]  ; 071d91 8a829e070d00
     cmp eax, ebx                                 ; 071d97 39d8
     je loc_71dd3                                 ; 071d99 7438
     mov edx, ebx                                 ; 071d9b 89da
@@ -10658,7 +10660,7 @@ loc_71d88:
     mov byte ptr [eax + byte_d07a8], dl          ; 071db2 8890a8070d00
     mov al, byte ptr [esp + 0x1b8]               ; 071db8 8a8424b8010000
     mov edx, dword ptr [esp + 0x1bc]             ; 071dbf 8b9424bc010000
-    mov byte ptr [edx + byte_d079e], al          ; 071dc6 88829e070d00
+    mov byte ptr [edx + roster_team_column], al  ; 071dc6 88829e070d00
     mov eax, edx                                 ; 071dcc 89d0
     call dbedit_free_lists                       ; 071dce e8c1c0ffff
 loc_71dd3:
@@ -10678,7 +10680,7 @@ loc_71e09:
     shl eax, 3                                   ; 071e0b c1e003
     sub eax, edx                                 ; 071e0e 29d0
     shl eax, 2                                   ; 071e10 c1e002
-    add eax, unk_eaf80                           ; 071e13 0580af0e00
+    add eax, editor_selected                     ; 071e13 0580af0e00
 loc_71e18:
     call dbedit_find_player_entry                ; 071e18 e86bbcffff
     test eax, eax                                ; 071e1d 85c0
@@ -10920,7 +10922,7 @@ loc_720bd:
     mov esi, dword ptr [dword_d0b1e]             ; 0720e8 8b351e0b0d00
     xor eax, eax                                 ; 0720ee 31c0
     mov dword ptr [dword_d0b16], eax             ; 0720f0 a3160b0d00
-    mov dword ptr [dword_d42ac], eax             ; 0720f5 a3ac420d00
+    mov dword ptr [text_bg_colour], eax          ; 0720f5 a3ac420d00
     mov dword ptr [dword_d0b1a], esi             ; 0720fa 89351a0b0d00
     mov dword ptr [dword_d0b1e], edi             ; 072100 893d1e0b0d00
     push eax                                     ; 072106 50

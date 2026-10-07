@@ -598,7 +598,7 @@ loc_7b04c:
     and byte ptr [option_flags], 0xdf            ; 07b100 8025ff530c00df
     shl eax, 5                                   ; 07b107 c1e005
     or dword ptr [option_flags], eax             ; 07b10a 0905ff530c00
-    cmp dword ptr [dword_c541f], 0x10            ; 07b110 833d1f540c0010
+    cmp dword ptr [sound_card], 0x10             ; 07b110 833d1f540c0010
     je loc_7b151                                 ; 07b117 7438
     mov dh, byte ptr [dword_ed360]               ; 07b119 8a3560d30e00
     test dh, 0x40                                ; 07b11f f6c640
@@ -614,7 +614,7 @@ loc_7b04c:
     shl eax, 7                                   ; 07b148 c1e007
     or dword ptr [option_flags], eax             ; 07b14b 0905ff530c00
 loc_7b151:
-    test byte ptr [dword_c541f], 0x22            ; 07b151 f6051f540c0022
+    test byte ptr [sound_card], 0x22             ; 07b151 f6051f540c0022
     je loc_7b177                                 ; 07b158 741d
     test byte ptr [byte_ed361], 1                ; 07b15a f60561d30e0001
     setne al                                     ; 07b161 0f95c0
@@ -861,7 +861,7 @@ game_settings_screen:
     call grabshape                               ; 07b3f5 e806600100
     add esp, 0xc                                 ; 07b3fa 83c40c
     call game_settings_dialog                    ; 07b3fd e8ea000000
-    call sound_settings_dialog                   ; 07b402 e8fd010000
+    call game_settings_show_options              ; 07b402 e8fd010000
     cmp dword ptr [dword_c53fb], 2               ; 07b407 833dfb530c0002
     jne loc_7b417                                ; 07b40e 7507
     call game_settings_pointer_loop              ; 07b410 e831040000
@@ -881,7 +881,7 @@ loc_7b41c:
     mov word ptr [word_cbc58], dx                ; 07b434 66891558bc0c00
     mov word ptr [word_cbc56], dx                ; 07b43b 66891556bc0c00
     mov word ptr [word_cbc6c], dx                ; 07b442 6689156cbc0c00
-    mov word ptr [word_cbc6a], dx                ; 07b449 6689156abc0c00
+    mov word ptr [line_change_prompt], dx        ; 07b449 6689156abc0c00
     xor eax, eax                                 ; 07b450 31c0
     jmp loc_7b462                                ; 07b452 eb0e
 
@@ -1011,7 +1011,7 @@ loc_7b53c:
     push 0xf8                                    ; 07b57d 68f8000000
     call settextpos                              ; 07b582 e839340100
     add esp, 8                                   ; 07b587 83c408
-    cmp dword ptr [dword_c541f], 0x10            ; 07b58a 833d1f540c0010
+    cmp dword ptr [sound_card], 0x10             ; 07b58a 833d1f540c0010
     jne loc_7b5bb                                ; 07b591 7528
     push 0xaa                                    ; 07b593 68aa000000
     push 0x60                                    ; 07b598 6a60
@@ -1048,13 +1048,14 @@ loc_7b5d8:
 
 
 ; ====================================================================================================
-; sound_settings_dialog  [0x7b604, 304 bytes, 89 instructions]
+; game_settings_show_options  [0x7b604, 304 bytes, 89 instructions]
+; the option pairs of the settings screen from the option flags, Music / Sound / Speech dimmed without them
 ; called by: game_settings_screen
 ;   uses string "Music"
 ;   uses string "Sound"
 ;   uses string "Digitized Speech"
 ; ====================================================================================================
-sound_settings_dialog:
+game_settings_show_options:
     push 0x1c                                    ; 07b604 681c000000
     call __CHK                                   ; 07b609 e83e130100
     push ebx                                     ; 07b60e 53
@@ -1087,7 +1088,7 @@ sound_settings_dialog:
     shr eax, 0x1f                                ; 07b661 c1e81f
     shl eax, 5                                   ; 07b664 c1e005
     or edx, eax                                  ; 07b667 09c2
-    test byte ptr [dword_c541f], 0x10            ; 07b669 f6051f540c0010
+    test byte ptr [sound_card], 0x10             ; 07b669 f6051f540c0010
     je loc_7b676                                 ; 07b670 7404
     xor eax, eax                                 ; 07b672 31c0
     jmp loc_7b684                                ; 07b674 eb0e
@@ -1099,7 +1100,7 @@ loc_7b676:
     shl eax, 6                                   ; 07b681 c1e006
 loc_7b684:
     or edx, eax                                  ; 07b684 09c2
-    test byte ptr [dword_c541f], 0x10            ; 07b686 f6051f540c0010
+    test byte ptr [sound_card], 0x10             ; 07b686 f6051f540c0010
     je loc_7b693                                 ; 07b68d 7404
     xor eax, eax                                 ; 07b68f 31c0
     jmp loc_7b6a1                                ; 07b691 eb0e
@@ -1111,7 +1112,7 @@ loc_7b693:
     shl eax, 7                                   ; 07b69e c1e007
 loc_7b6a1:
     or edx, eax                                  ; 07b6a1 09c2
-    test byte ptr [dword_c541f], 0x22            ; 07b6a3 f6051f540c0022
+    test byte ptr [sound_card], 0x22             ; 07b6a3 f6051f540c0022
     je loc_7b6bc                                 ; 07b6aa 7410
     mov eax, dword ptr [option_flags]            ; 07b6ac a1ff530c00
     shl eax, 0x17                                ; 07b6b1 c1e017
@@ -1129,7 +1130,7 @@ loc_7b6be:
     push 0xf8                                    ; 07b6d0 68f8000000
     call settextpos                              ; 07b6d5 e8e6320100
     add esp, 8                                   ; 07b6da 83c408
-    cmp dword ptr [dword_c541f], 0x10            ; 07b6dd 833d1f540c0010
+    cmp dword ptr [sound_card], 0x10             ; 07b6dd 833d1f540c0010
     jne loc_7b70e                                ; 07b6e4 7528
     push 0xaa                                    ; 07b6e6 68aa000000
     push 0x60                                    ; 07b6eb 6a60
@@ -1190,7 +1191,7 @@ loc_7b74c:
     jl loc_7b792                                 ; 07b782 7c0e
     cmp edx, 0xf                                 ; 07b784 83fa0f
     jg loc_7b792                                 ; 07b787 7f09
-    cmp dword ptr [dword_c541f], 0x10            ; 07b789 833d1f540c0010
+    cmp dword ptr [sound_card], 0x10             ; 07b789 833d1f540c0010
     je loc_7b7b7                                 ; 07b790 7425
 loc_7b792:
     cmp edx, 0x10                                ; 07b792 83fa10
@@ -1222,7 +1223,7 @@ loc_7b7b7:
 
 ; ====================================================================================================
 ; game_settings_draw_buttons  [0x7b7be, 136 bytes, 54 instructions]
-; called by: sound_settings_dialog, game_settings_menu
+; called by: game_settings_show_options, game_settings_menu
 ; ====================================================================================================
 game_settings_draw_buttons:
     push 0x28                                    ; 07b7be 6828000000
@@ -1690,7 +1691,7 @@ loc_7bc3b:
     and byte ptr [option_flags], 0xdf            ; 07bce5 8025ff530c00df
     shl eax, 5                                   ; 07bcec c1e005
     or dword ptr [option_flags], eax             ; 07bcef 0905ff530c00
-    cmp dword ptr [dword_c541f], 0x10            ; 07bcf5 833d1f540c0010
+    cmp dword ptr [sound_card], 0x10             ; 07bcf5 833d1f540c0010
     je loc_7bd36                                 ; 07bcfc 7438
     mov dh, byte ptr [dword_ed360]               ; 07bcfe 8a3560d30e00
     test dh, 0x40                                ; 07bd04 f6c640
@@ -1866,9 +1867,9 @@ menu_exhibition_settings:
     call grabshape                               ; 07bf04 e8f7540100
     add esp, 0xc                                 ; 07bf09 83c40c
     call setdefaultscreen                        ; 07bf0c e8978c0300
-    call sound_settings_draw                     ; 07bf11 e896020000
-    call sound_toggle_dialog                     ; 07bf16 e83b000000
-    call sound_settings_menu                     ; 07bf1b e8f7030000
+    call exhibition_settings_draw                ; 07bf11 e896020000
+    call exhibition_settings_show_options        ; 07bf16 e83b000000
+    call exhibition_settings_menu                ; 07bf1b e8f7030000
     push 0x13                                    ; 07bf20 6a13
     push 0xa                                     ; 07bf22 6a0a
     push ebp                                     ; 07bf24 55
@@ -1895,13 +1896,14 @@ loc_7bf4f:
 
 
 ; ====================================================================================================
-; sound_toggle_dialog  [0x7bf56, 355 bytes, 105 instructions]
+; exhibition_settings_show_options  [0x7bf56, 355 bytes, 105 instructions]
+; the option pairs of the Exhibition / Playoff / League settings dialog
 ; called by: menu_exhibition_settings
 ;   uses string "Digitized Speech"
 ;   uses string "Music"
 ;   uses string "Sound"
 ; ====================================================================================================
-sound_toggle_dialog:
+exhibition_settings_show_options:
     push 0x1c                                    ; 07bf56 681c000000
     call __CHK                                   ; 07bf5b e8ec090100
     push ebx                                     ; 07bf60 53
@@ -1934,7 +1936,7 @@ sound_toggle_dialog:
     shr eax, 0x1f                                ; 07bfb3 c1e81f
     shl eax, 5                                   ; 07bfb6 c1e005
     or edx, eax                                  ; 07bfb9 09c2
-    test byte ptr [dword_c541f], 0x10            ; 07bfbb f6051f540c0010
+    test byte ptr [sound_card], 0x10             ; 07bfbb f6051f540c0010
     je loc_7bfc8                                 ; 07bfc2 7404
     xor eax, eax                                 ; 07bfc4 31c0
     jmp loc_7bfd6                                ; 07bfc6 eb0e
@@ -1946,7 +1948,7 @@ loc_7bfc8:
     shl eax, 6                                   ; 07bfd3 c1e006
 loc_7bfd6:
     or edx, eax                                  ; 07bfd6 09c2
-    test byte ptr [dword_c541f], 0x10            ; 07bfd8 f6051f540c0010
+    test byte ptr [sound_card], 0x10             ; 07bfd8 f6051f540c0010
     je loc_7bfe5                                 ; 07bfdf 7404
     xor eax, eax                                 ; 07bfe1 31c0
     jmp loc_7bff3                                ; 07bfe3 eb0e
@@ -1958,7 +1960,7 @@ loc_7bfe5:
     shl eax, 7                                   ; 07bff0 c1e007
 loc_7bff3:
     or edx, eax                                  ; 07bff3 09c2
-    test byte ptr [dword_c541f], 0x22            ; 07bff5 f6051f540c0022
+    test byte ptr [sound_card], 0x22             ; 07bff5 f6051f540c0022
     je loc_7c00e                                 ; 07bffc 7410
     mov eax, dword ptr [option_flags]            ; 07bffe a1ff530c00
     shl eax, 0x17                                ; 07c003 c1e017
@@ -1997,7 +1999,7 @@ loc_7c040:
 loc_7c049:
     or byte ptr [byte_ed361], 8                  ; 07c049 800d61d30e0008
 loc_7c050:
-    call sound_settings_draw_buttons             ; 07c050 e864000000
+    call exhibition_settings_draw_buttons        ; 07c050 e864000000
     push 0xff                                    ; 07c055 68ff000000
     push 0xf8                                    ; 07c05a 68f8000000
     call settextpos                              ; 07c05f e85c290100
@@ -2010,7 +2012,7 @@ loc_7c050:
     call printstr_at                             ; 07c07c e8e3580100
     add esp, 0xc                                 ; 07c081 83c40c
 loc_7c084:
-    cmp dword ptr [dword_c541f], 0x10            ; 07c084 833d1f540c0010
+    cmp dword ptr [sound_card], 0x10             ; 07c084 833d1f540c0010
     jne loc_7c0b5                                ; 07c08b 7528
     push 0xaa                                    ; 07c08d 68aa000000
     push 0x60                                    ; 07c092 6a60
@@ -2030,10 +2032,10 @@ loc_7c0b5:
 
 
 ; ====================================================================================================
-; sound_settings_draw_buttons  [0x7c0b9, 243 bytes, 88 instructions]
-; called by: sound_toggle_dialog, sound_settings_menu
+; exhibition_settings_draw_buttons  [0x7c0b9, 243 bytes, 88 instructions]
+; called by: exhibition_settings_show_options, exhibition_settings_menu
 ; ====================================================================================================
-sound_settings_draw_buttons:
+exhibition_settings_draw_buttons:
     push 0x2c                                    ; 07c0b9 682c000000
     call __CHK                                   ; 07c0be e889080100
     push ebx                                     ; 07c0c3 53
@@ -2138,8 +2140,8 @@ loc_7c1a4:
 
 
 ; ====================================================================================================
-; sound_settings_draw  [0x7c1ac, 225 bytes, 66 instructions]
-; "Digitized Speech" / "Music" / "Sound"
+; exhibition_settings_draw  [0x7c1ac, 225 bytes, 66 instructions]
+; "Digitized Speech" / "Music" / "Sound": the settings dialog of a game
 ; called by: menu_exhibition_settings
 ;   uses string "Digitized Speech"
 ;   uses string "Music"
@@ -2147,7 +2149,7 @@ loc_7c1a4:
 ;   uses string "setting6"
 ;   uses string "dbox"
 ; ====================================================================================================
-sound_settings_draw:
+exhibition_settings_draw:
     push 0x40                                    ; 07c1ac 6840000000
     call __CHK                                   ; 07c1b1 e896070100
     push ebx                                     ; 07c1b6 53
@@ -2186,7 +2188,7 @@ loc_7c1dc:
     push esi                                     ; 07c20f 56
     call freemem                                 ; 07c210 e8c3100100
     add esp, 4                                   ; 07c215 83c404
-    cmp dword ptr [dword_c541f], 0x10            ; 07c218 833d1f540c0010
+    cmp dword ptr [sound_card], 0x10             ; 07c218 833d1f540c0010
     jne loc_7c249                                ; 07c21f 7528
     push 0xaa                                    ; 07c221 68aa000000
     push 0x60                                    ; 07c226 6a60
@@ -2222,10 +2224,10 @@ loc_7c266:
 
 
 ; ====================================================================================================
-; sound_settings_button_at  [0x7c28d, 138 bytes, 49 instructions]
-; called by: sound_settings_menu
+; exhibition_settings_button_at  [0x7c28d, 138 bytes, 49 instructions]
+; called by: exhibition_settings_menu
 ; ====================================================================================================
-sound_settings_button_at:
+exhibition_settings_button_at:
     push 0xc                                     ; 07c28d 680c000000
     call __CHK                                   ; 07c292 e8b5060100
     push ecx                                     ; 07c297 51
@@ -2254,7 +2256,7 @@ loc_7c2a5:
     jl loc_7c2eb                                 ; 07c2db 7c0e
     cmp edx, 0xf                                 ; 07c2dd 83fa0f
     jg loc_7c2eb                                 ; 07c2e0 7f09
-    cmp dword ptr [dword_c541f], 0x10            ; 07c2e2 833d1f540c0010
+    cmp dword ptr [sound_card], 0x10             ; 07c2e2 833d1f540c0010
     je loc_7c310                                 ; 07c2e9 7425
 loc_7c2eb:
     cmp edx, 0x10                                ; 07c2eb 83fa10
@@ -2285,11 +2287,12 @@ loc_7c310:
 
 
 ; ====================================================================================================
-; sound_settings_menu  [0x7c317, 1339 bytes, 383 instructions]
+; exhibition_settings_menu  [0x7c317, 1339 bytes, 383 instructions]
+; the settings dialog of a game: the rule pairs, the period length, music, sound effects and speech
 ; called by: menu_exhibition_settings
 ;   uses string "Pointer"
 ; ====================================================================================================
-sound_settings_menu:
+exhibition_settings_menu:
     push 0x40                                    ; 07c317 6840000000
     call __CHK                                   ; 07c31c e82b060100
     push ebx                                     ; 07c321 53
@@ -2438,7 +2441,7 @@ loc_7c4a0:
     mov ebx, esp                                 ; 07c4c3 89e3
     mov edx, dword ptr [esp + 8]                 ; 07c4c5 8b542408
     mov eax, dword ptr [esp + 0xc]               ; 07c4c9 8b44240c
-    call sound_settings_button_at                ; 07c4cd e8bbfdffff
+    call exhibition_settings_button_at           ; 07c4cd e8bbfdffff
     test eax, eax                                ; 07c4d2 85c0
     je loc_7c7d7                                 ; 07c4d4 0f84fd020000
     mov ecx, dword ptr [esp]                     ; 07c4da 8b0c24
@@ -2536,7 +2539,7 @@ loc_7c567:
     and byte ptr [option_flags], 0xdf            ; 07c61a 8025ff530c00df
     shl eax, 5                                   ; 07c621 c1e005
     or dword ptr [option_flags], eax             ; 07c624 0905ff530c00
-    cmp dword ptr [dword_c541f], 0x10            ; 07c62a 833d1f540c0010
+    cmp dword ptr [sound_card], 0x10             ; 07c62a 833d1f540c0010
     je loc_7c665                                 ; 07c631 7432
     test ch, 0x40                                ; 07c633 f6c540
     setne al                                     ; 07c636 0f95c0
@@ -2551,7 +2554,7 @@ loc_7c567:
     shl eax, 7                                   ; 07c65c c1e007
     or dword ptr [option_flags], eax             ; 07c65f 0905ff530c00
 loc_7c665:
-    test byte ptr [dword_c541f], 0x22            ; 07c665 f6051f540c0022
+    test byte ptr [sound_card], 0x22             ; 07c665 f6051f540c0022
     je loc_7c68b                                 ; 07c66c 741d
     test byte ptr [byte_ed361], 1                ; 07c66e f60561d30e0001
     setne al                                     ; 07c675 0f95c0
@@ -2663,7 +2666,7 @@ loc_7c7b1:
     or eax, edx                                  ; 07c7cb 09d0
     mov dword ptr [dword_ed360], eax             ; 07c7cd a360d30e00
 loc_7c7d2:
-    call sound_settings_draw_buttons             ; 07c7d2 e8e2f8ffff
+    call exhibition_settings_draw_buttons        ; 07c7d2 e8e2f8ffff
 loc_7c7d7:
     mov eax, dword ptr [esp + 8]                 ; 07c7d7 8b442408
     push eax                                     ; 07c7db 50
@@ -3380,7 +3383,7 @@ loc_7cebc:
     je loc_7cfaa                                 ; 07cee3 0f84c1000000
     xor edx, edx                                 ; 07cee9 31d2
     mov word ptr [ebx*2 + word_cbc56], dx        ; 07ceeb 6689145d56bc0c00
-    mov word ptr [ebx*2 + word_cbc6a], dx        ; 07cef3 6689145d6abc0c00
+    mov word ptr [ebx*2 + line_change_prompt], dx ; 07cef3 6689145d6abc0c00
     test ebx, ebx                                ; 07cefb 85db
     je loc_7cf18                                 ; 07cefd 7419
     mov eax, 6                                   ; 07ceff b806000000
@@ -4732,7 +4735,7 @@ loc_7ddc2:
     inc edi                                      ; 07ddd7 47
     cmp edi, 3                                   ; 07ddd8 83ff03
     jl loc_7dd26                                 ; 07dddb 0f8c45ffffff
-    cmp dword ptr [dword_c541f], 8               ; 07dde1 833d1f540c0008
+    cmp dword ptr [sound_card], 8                ; 07dde1 833d1f540c0008
     jne loc_7ddfe                                ; 07dde8 7514
     xor ecx, ecx                                 ; 07ddea 31c9
     mov ebx, aMTROCKU                            ; 07ddec bbd4330c00        "MTROCKU"
@@ -4877,7 +4880,7 @@ loc_7df42:
 
 ; ====================================================================================================
 ; draw_team_logo_parts  [0x7df4e, 228 bytes, 81 instructions]
-; called by: draw_team_logos, boxscore_screen
+; called by: lineups_screen, boxscore_screen
 ; ====================================================================================================
 draw_team_logo_parts:
     push 0x18                                    ; 07df4e 6818000000
@@ -5202,7 +5205,7 @@ loc_7e1ee:
     mov word ptr [esp + 0x18], ax                ; 07e291 6689442418
     mov si, word ptr [word_cc0de]                ; 07e296 668b35dec00c00
     xor ecx, ecx                                 ; 07e29d 31c9
-    mov dword ptr [dword_ed70c], ecx             ; 07e29f 890d0cd70e00
+    mov dword ptr [camera_free], ecx             ; 07e29f 890d0cd70e00
     mov word ptr [word_cd4fc], 0xffff            ; 07e2a5 66c705fcd40c00ff..
     mov ebp, 0xffffffff                          ; 07e2ae bdffffffff
     mov dword ptr [dword_ed74c], ebp             ; 07e2b3 892d4cd70e00
@@ -5210,18 +5213,18 @@ loc_7e1ee:
     xor edx, edx                                 ; 07e2bf 31d2
     mov dword ptr [dword_ed6fc], ecx             ; 07e2c1 890dfcd60e00
     xor ebx, ebx                                 ; 07e2c7 31db
-    mov word ptr [word_ed758], bx                ; 07e2c9 66891d58d70e00
+    mov word ptr [camera_speed_acc], bx          ; 07e2c9 66891d58d70e00
     add dword ptr [dword_c7444], 0x3e8           ; 07e2d0 810544740c00e803..
     add dword ptr [dword_c7448], 0x3e8           ; 07e2da 810548740c00e803..
     call replay_oldest_frame                     ; 07e2e4 e89892feff
-    mov dword ptr [dword_e03a4], eax             ; 07e2e9 a3a4030e00
+    mov dword ptr [controls_read], eax           ; 07e2e9 a3a4030e00
     xor ebp, ebp                                 ; 07e2ee 31ed
     mov dword ptr [esp + 0x14], ebp              ; 07e2f0 896c2414
     xor eax, eax                                 ; 07e2f4 31c0
     call replay_seek_frames                      ; 07e2f6 e80596feff
     mov eax, dword ptr [crowd_noise]             ; 07e2fb a1dcc00c00
     sar eax, 0x10                                ; 07e300 c1f810
-    mov dword ptr [dword_ccc88], eax             ; 07e303 a388cc0c00
+    mov dword ptr [crowd_level], eax             ; 07e303 a388cc0c00
     mov eax, dword ptr [dword_c9096]             ; 07e308 a196900c00
     sar eax, 0x10                                ; 07e30d c1f810
     add eax, 0x20                                ; 07e310 83c020
@@ -5311,7 +5314,7 @@ loc_7e44a:
     test eax, eax                                ; 07e458 85c0
     je loc_7e82e                                 ; 07e45a 0f84ce030000
     imul eax, dword ptr [esp + 0x14], 6          ; 07e460 6b44241406
-    add word ptr [word_ed758], ax                ; 07e465 66010558d70e00
+    add word ptr [camera_speed_acc], ax          ; 07e465 66010558d70e00
     mov ebx, dword ptr [dword_ed756]             ; 07e46c 8b1d56d70e00
     sar ebx, 0x10                                ; 07e472 c1fb10
     mov ecx, 0x14                                ; 07e475 b914000000
@@ -5324,7 +5327,7 @@ loc_7e44a:
     mov edx, ebx                                 ; 07e489 89da
     sar edx, 0x1f                                ; 07e48b c1fa1f
     idiv ecx                                     ; 07e48e f7f9
-    mov word ptr [word_ed758], dx                ; 07e490 66891558d70e00
+    mov word ptr [camera_speed_acc], dx          ; 07e490 66891558d70e00
     mov eax, dword ptr [dword_ed754]             ; 07e497 a154d70e00
     and eax, 0x3f                                ; 07e49c 83e03f
     cmp eax, 0x10                                ; 07e49f 83f810
@@ -5337,7 +5340,7 @@ loc_7e44a:
     cwde                                         ; 07e4b6 98
     mov dword ptr [esp + 0x14], eax              ; 07e4b7 89442414
     call setscreen_main                          ; 07e4bb e822dd0000
-    cmp dword ptr [dword_ed70c], 0               ; 07e4c0 833d0cd70e0000
+    cmp dword ptr [camera_free], 0               ; 07e4c0 833d0cd70e0000
     je loc_7e55d                                 ; 07e4c7 0f8490000000
     mov ax, word ptr [dword_ed6f0]               ; 07e4cd 66a1f0d60e00
     mov word ptr [camera], ax                    ; 07e4d3 66a398900c00
@@ -5378,7 +5381,7 @@ loc_7e53e:
 loc_7e55d:
     cmp word ptr [word_cd4fc], 0                 ; 07e55d 66833dfcd40c0000
     jl loc_7e5e5                                 ; 07e565 0f8c7a000000
-    mov eax, dword ptr [dword_cd4fa]             ; 07e56b a1fad40c00
+    mov eax, dword ptr [replay_follow]           ; 07e56b a1fad40c00
     sar eax, 0x10                                ; 07e570 c1f810
     mov dx, word ptr [eax*2 + unk_e9f18]         ; 07e573 668b1445189f0e00
     mov word ptr [camera], dx                    ; 07e57b 66891598900c00
@@ -5561,7 +5564,7 @@ loc_7e82e:
     call sound_pause_all                         ; 07e82e e815affdff
     mov ecx, 0xffffffff                          ; 07e833 b9ffffffff
     mov word ptr [crowd_noise], cx               ; 07e838 66890ddcc00c00
-    mov word ptr [word_cd500], cx                ; 07e83f 66890d00d50c00
+    mov word ptr [replay_held_sfx], cx           ; 07e83f 66890d00d50c00
     mov eax, dword ptr [esp + 0x1c]              ; 07e846 8b44241c
     mov word ptr [camera], ax                    ; 07e84a 66a398900c00
     mov eax, dword ptr [esp + 0x20]              ; 07e850 8b442420
@@ -5573,7 +5576,7 @@ loc_7e82e:
     mov dword ptr [dword_d8c74], eax             ; 07e869 a3748c0d00
     mov word ptr [word_cc0de], si                ; 07e86e 668935dec00c00
     movsx eax, si                                ; 07e875 0fbfc6
-    mov dword ptr [dword_ccc88], eax             ; 07e878 a388cc0c00
+    mov dword ptr [crowd_level], eax             ; 07e878 a388cc0c00
     mov eax, 1                                   ; 07e87d b801000000
     mov dword ptr [dword_c66d4], eax             ; 07e882 a3d4660c00
     mov dword ptr [dword_c66d0], eax             ; 07e887 a3d0660c00
@@ -5845,7 +5848,7 @@ loc_7eb60:
     cmp eax, 0x10                                ; 07eb68 83f810
     je loc_7eb76                                 ; 07eb6b 7409
     xor ebx, ebx                                 ; 07eb6d 31db
-    mov word ptr [word_ed758], bx                ; 07eb6f 66891d58d70e00
+    mov word ptr [camera_speed_acc], bx          ; 07eb6f 66891d58d70e00
 loc_7eb76:
     mov eax, dword ptr [dword_ed754]             ; 07eb76 a154d70e00
     and eax, 0x40                                ; 07eb7b 83e040
@@ -5874,9 +5877,9 @@ loc_7ebb0:
     test byte ptr [dword_ed754], 2               ; 07ebb0 f60554d70e0002
     je loc_7ebe2                                 ; 07ebb7 7429
     mov eax, dword ptr [esi]                     ; 07ebb9 8b06
-    mov edx, dword ptr [dword_ed6e8]             ; 07ebbb 8b15e8d60e00
+    mov edx, dword ptr [camera_step_acc]         ; 07ebbb 8b15e8d60e00
     add edx, eax                                 ; 07ebc1 01c2
-    mov dword ptr [dword_ed6e8], edx             ; 07ebc3 8915e8d60e00
+    mov dword ptr [camera_step_acc], edx         ; 07ebc3 8915e8d60e00
     cmp edx, 5                                   ; 07ebc9 83fa05
     jge loc_7ebd2                                ; 07ebcc 7d04
     xor edi, edi                                 ; 07ebce 31ff
@@ -5885,14 +5888,14 @@ loc_7ebb0:
 loc_7ebd2:
     mov edi, 0xffffffff                          ; 07ebd2 bfffffffff
     lea ecx, [edx - 5]                           ; 07ebd7 8d4afb
-    mov dword ptr [dword_ed6e8], ecx             ; 07ebda 890de8d60e00
+    mov dword ptr [camera_step_acc], ecx         ; 07ebda 890de8d60e00
     jmp loc_7ebf8                                ; 07ebe0 eb16
 
 loc_7ebe2:
     xor edi, edi                                 ; 07ebe2 31ff
-    mov dword ptr [dword_ed6e8], edi             ; 07ebe4 893de8d60e00
+    mov dword ptr [camera_step_acc], edi         ; 07ebe4 893de8d60e00
     mov edi, 0xffffffff                          ; 07ebea bfffffffff
-    mov word ptr [word_ed758], 0xfff2            ; 07ebef 66c70558d70e00f2..
+    mov word ptr [camera_speed_acc], 0xfff2      ; 07ebef 66c70558d70e00f2..
 loc_7ebf8:
     mov eax, dword ptr [dword_ed754]             ; 07ebf8 a154d70e00
     and eax, 0x40                                ; 07ebfd 83e040
@@ -5905,9 +5908,9 @@ loc_7ec0c:
     test byte ptr [dword_ed754], 8               ; 07ec0c f60554d70e0008
     je loc_7ec3e                                 ; 07ec13 7429
     mov eax, dword ptr [esi]                     ; 07ec15 8b06
-    mov edx, dword ptr [dword_ed6e8]             ; 07ec17 8b15e8d60e00
+    mov edx, dword ptr [camera_step_acc]         ; 07ec17 8b15e8d60e00
     add edx, eax                                 ; 07ec1d 01c2
-    mov dword ptr [dword_ed6e8], edx             ; 07ec1f 8915e8d60e00
+    mov dword ptr [camera_step_acc], edx         ; 07ec1f 8915e8d60e00
     cmp edx, 5                                   ; 07ec25 83fa05
     jge loc_7ec2e                                ; 07ec28 7d04
     xor edi, edi                                 ; 07ec2a 31ff
@@ -5916,14 +5919,14 @@ loc_7ec0c:
 loc_7ec2e:
     mov edi, 1                                   ; 07ec2e bf01000000
     lea ecx, [edx - 5]                           ; 07ec33 8d4afb
-    mov dword ptr [dword_ed6e8], ecx             ; 07ec36 890de8d60e00
+    mov dword ptr [camera_step_acc], ecx         ; 07ec36 890de8d60e00
     jmp loc_7ec54                                ; 07ec3c eb16
 
 loc_7ec3e:
     xor edi, edi                                 ; 07ec3e 31ff
-    mov dword ptr [dword_ed6e8], edi             ; 07ec40 893de8d60e00
+    mov dword ptr [camera_step_acc], edi         ; 07ec40 893de8d60e00
     mov edi, 1                                   ; 07ec46 bf01000000
-    mov word ptr [word_ed758], 0xe               ; 07ec4b 66c70558d70e000e..
+    mov word ptr [camera_speed_acc], 0xe         ; 07ec4b 66c70558d70e000e..
 loc_7ec54:
     mov eax, dword ptr [dword_ed754]             ; 07ec54 a154d70e00
     and eax, 0x40                                ; 07ec59 83e040
@@ -5933,7 +5936,7 @@ loc_7ec54:
 loc_7ec60:
     or byte ptr [dword_ed754], 0x40              ; 07ec60 800d54d70e0040
     xor edi, edi                                 ; 07ec67 31ff
-    mov dword ptr [dword_ed70c], edi             ; 07ec69 893d0cd70e00
+    mov dword ptr [camera_free], edi             ; 07ec69 893d0cd70e00
     mov eax, 0xffffffff                          ; 07ec6f b8ffffffff
     mov dword ptr [dword_ed74c], eax             ; 07ec74 a34cd70e00
     mov dword ptr [dword_ed6ec], eax             ; 07ec79 a3ecd60e00
@@ -5960,7 +5963,7 @@ loc_7eca1:
     je loc_7eeb3                                 ; 07eccb 0f84e2010000
     cmp eax, -1                                  ; 07ecd1 83f8ff
     jne loc_7edc0                                ; 07ecd4 0f85e6000000
-    mov dword ptr [dword_ed70c], 1               ; 07ecda c7050cd70e000100..
+    mov dword ptr [camera_free], 1               ; 07ecda c7050cd70e000100..
     mov dword ptr [dword_ed6ec], eax             ; 07ece4 a3ecd60e00
     mov word ptr [word_cd4fc], 0xffff            ; 07ece9 66c705fcd40c00ff..
     mov eax, dword ptr [dword_ed704]             ; 07ecf2 a104d70e00
@@ -6015,7 +6018,7 @@ loc_7eda5:
 
 loc_7edc0:
     xor edx, edx                                 ; 07edc0 31d2
-    mov dword ptr [dword_ed70c], edx             ; 07edc2 89150cd70e00
+    mov dword ptr [camera_free], edx             ; 07edc2 89150cd70e00
     mov dx, word ptr [dword_ed74c]               ; 07edc8 668b154cd70e00
     mov word ptr [word_cd4fc], dx                ; 07edcf 668915fcd40c00
     mov edx, dword ptr [eax*2 + word_e9f16]      ; 07edd6 8b1445169f0e00
@@ -7946,7 +7949,7 @@ jpt_804ff:
 ; ====================================================================================================
 ; draw_settings_title  [0x8050f, 181 bytes, 65 instructions]
 ; "Exhibition" / "Playoff" / "League"
-; called by: settings_screen_a, settings_screen_b, settings_dialog, game_settings_dialog, sound_settings_draw
+; called by: settings_screen_a, settings_screen_b, settings_dialog, game_settings_dialog, exhibition_settings_draw
 ;   uses string "Exhibition"
 ;   uses string "Playoff"
 ;   uses string "League"
@@ -8359,7 +8362,7 @@ loc_808ce:
     push aHomeBck                                ; 0808ea 6894350c00        "HomeBck"
     call allocmem                                ; 0808ef e8b4c30000
     add esp, 0xc                                 ; 0808f4 83c40c
-    mov dword ptr [dword_ed794], eax             ; 0808f7 a394d70e00
+    mov dword ptr [lineup_room_image], eax       ; 0808f7 a394d70e00
     push 0x20                                    ; 0808fc 6a20
     push 0x1a6f9                                 ; 0808fe 68f9a60100
     push aVisBck                                 ; 080903 689c350c00        "VisBck"
@@ -8367,7 +8370,7 @@ loc_808ce:
     add esp, 0xc                                 ; 08090d 83c40c
     mov dword ptr [dword_ed79c], eax             ; 080910 a39cd70e00
     mov esi, dword ptr [pointer_shapes]          ; 080915 8b3538c20d00
-    mov edi, dword ptr [dword_ed794]             ; 08091b 8b3d94d70e00
+    mov edi, dword ptr [lineup_room_image]       ; 08091b 8b3d94d70e00
     movsd dword ptr es:[edi], dword ptr [esi]    ; 080921 a5
     movsd dword ptr es:[edi], dword ptr [esi]    ; 080922 a5
     movsd dword ptr es:[edi], dword ptr [esi]    ; 080923 a5
@@ -8380,11 +8383,11 @@ loc_808ce:
     movsd dword ptr es:[edi], dword ptr [esi]    ; 080934 a5
     movsd dword ptr es:[edi], dword ptr [esi]    ; 080935 a5
     movsb byte ptr es:[edi], byte ptr [esi]      ; 080936 a4
-    mov eax, dword ptr [dword_ed794]             ; 080937 a194d70e00
+    mov eax, dword ptr [lineup_room_image]       ; 080937 a194d70e00
     mov word ptr [eax + 4], 0x140                ; 08093c 66c740044001
     mov eax, dword ptr [dword_ed79c]             ; 080942 a19cd70e00
     mov word ptr [eax + 4], 0x138                ; 080947 66c740043801
-    mov eax, dword ptr [dword_ed794]             ; 08094d a194d70e00
+    mov eax, dword ptr [lineup_room_image]       ; 08094d a194d70e00
     mov word ptr [eax + 6], 0x160                ; 080952 66c740066001
     mov eax, dword ptr [dword_ed79c]             ; 080958 a19cd70e00
     mov word ptr [eax + 6], 0x15b                ; 08095d 66c740065b01
@@ -8454,7 +8457,7 @@ loc_808ce:
     push eax                                     ; 080a4e 50
     call freemem                                 ; 080a4f e884c80000
     add esp, 4                                   ; 080a54 83c404
-    mov edx, dword ptr [dword_ed794]             ; 080a57 8b1594d70e00
+    mov edx, dword ptr [lineup_room_image]       ; 080a57 8b1594d70e00
     push edx                                     ; 080a5d 52
     call freemem                                 ; 080a5e e875c80000
     add esp, 4                                   ; 080a63 83c404
@@ -8605,7 +8608,7 @@ loc_80ba3:
     add esp, 0xc                                 ; 080bf0 83c40c
     push 0x45                                    ; 080bf3 6a45
     push 0xa                                     ; 080bf5 6a0a
-    mov esi, dword ptr [dword_ed794]             ; 080bf7 8b3594d70e00
+    mov esi, dword ptr [lineup_room_image]       ; 080bf7 8b3594d70e00
     push esi                                     ; 080bfd 56
     call grabshape                               ; 080bfe e8fd070100
     add esp, 0xc                                 ; 080c03 83c40c
@@ -9389,7 +9392,7 @@ loc_81683:
 loc_816c8:
     push 0x45                                    ; 0816c8 6a45
     push 0xa                                     ; 0816ca 6a0a
-    mov edx, dword ptr [dword_ed794]             ; 0816cc 8b1594d70e00
+    mov edx, dword ptr [lineup_room_image]       ; 0816cc 8b1594d70e00
     push edx                                     ; 0816d2 52
     call drawshape2                              ; 0816d3 e808fa0000
     add esp, 0xc                                 ; 0816d8 83c40c
@@ -10687,7 +10690,7 @@ sound_card_menu_a:
     push ecx                                     ; 08269b 51
     push edx                                     ; 08269c 52
     push esi                                     ; 08269d 56
-    mov eax, dword ptr [dword_c541f]             ; 08269e a11f540c00
+    mov eax, dword ptr [sound_card]              ; 08269e a11f540c00
     mov dword ptr [dword_ed360], eax             ; 0826a3 a360d30e00
     xor edx, edx                                 ; 0826a8 31d2
 loc_826aa:
@@ -10713,7 +10716,7 @@ loc_826d1:
     push 0xf8                                    ; 0826e1 68f8000000
     call settextpos                              ; 0826e6 e8d5c20000
     add esp, 8                                   ; 0826eb 83c408
-    test byte ptr [dword_c541b], 1               ; 0826ee f6051b540c0001
+    test byte ptr [sound_cards_allowed], 1       ; 0826ee f6051b540c0001
     jne loc_82716                                ; 0826f5 751f
     mov eax, dword ptr [dword_d23a7]             ; 0826f7 a1a7230d00
     add eax, 0x13                                ; 0826fc 83c013
@@ -10726,7 +10729,7 @@ loc_826d1:
     add esp, 0xc                                 ; 082713 83c40c
 loc_82716:
     add esi, 0x10                                ; 082716 83c610
-    test byte ptr [dword_c541b], 2               ; 082719 f6051b540c0002
+    test byte ptr [sound_cards_allowed], 2       ; 082719 f6051b540c0002
     jne loc_8273c                                ; 082720 751a
     mov eax, dword ptr [esi + 4]                 ; 082722 8b4604
     add eax, 0x13                                ; 082725 83c013
@@ -10739,7 +10742,7 @@ loc_82716:
     add esp, 0xc                                 ; 082739 83c40c
 loc_8273c:
     add esi, 0x10                                ; 08273c 83c610
-    test byte ptr [dword_c541b], 4               ; 08273f f6051b540c0004
+    test byte ptr [sound_cards_allowed], 4       ; 08273f f6051b540c0004
     jne loc_82762                                ; 082746 751a
     mov eax, dword ptr [esi + 4]                 ; 082748 8b4604
     add eax, 0x13                                ; 08274b 83c013
@@ -10752,7 +10755,7 @@ loc_8273c:
     add esp, 0xc                                 ; 08275f 83c40c
 loc_82762:
     add esi, 0x10                                ; 082762 83c610
-    test byte ptr [dword_c541b], 8               ; 082765 f6051b540c0008
+    test byte ptr [sound_cards_allowed], 8       ; 082765 f6051b540c0008
     jne loc_82788                                ; 08276c 751a
     mov eax, dword ptr [esi + 4]                 ; 08276e 8b4604
     add eax, 0x13                                ; 082771 83c013
@@ -10765,7 +10768,7 @@ loc_82762:
     add esp, 0xc                                 ; 082785 83c40c
 loc_82788:
     add esi, 0x20                                ; 082788 83c620
-    test byte ptr [dword_c541b], 0x20            ; 08278b f6051b540c0020
+    test byte ptr [sound_cards_allowed], 0x20    ; 08278b f6051b540c0020
     jne loc_827ae                                ; 082792 751a
     mov eax, dword ptr [esi + 4]                 ; 082794 8b4604
     add eax, 0x13                                ; 082797 83c013
@@ -10865,7 +10868,7 @@ loc_8283c:
     push 0xf8                                    ; 08284c 68f8000000
     call settextpos                              ; 082851 e86ac10000
     add esp, 8                                   ; 082856 83c408
-    test byte ptr [dword_c541b], 1               ; 082859 f6051b540c0001
+    test byte ptr [sound_cards_allowed], 1       ; 082859 f6051b540c0001
     jne loc_82881                                ; 082860 751f
     mov eax, dword ptr [dword_d23a7]             ; 082862 a1a7230d00
     add eax, 0x13                                ; 082867 83c013
@@ -10878,7 +10881,7 @@ loc_8283c:
     add esp, 0xc                                 ; 08287e 83c40c
 loc_82881:
     add esi, 0x10                                ; 082881 83c610
-    test byte ptr [dword_c541b], 2               ; 082884 f6051b540c0002
+    test byte ptr [sound_cards_allowed], 2       ; 082884 f6051b540c0002
     jne loc_828a7                                ; 08288b 751a
     mov eax, dword ptr [esi + 4]                 ; 08288d 8b4604
     add eax, 0x13                                ; 082890 83c013
@@ -10891,7 +10894,7 @@ loc_82881:
     add esp, 0xc                                 ; 0828a4 83c40c
 loc_828a7:
     add esi, 0x10                                ; 0828a7 83c610
-    test byte ptr [dword_c541b], 4               ; 0828aa f6051b540c0004
+    test byte ptr [sound_cards_allowed], 4       ; 0828aa f6051b540c0004
     jne loc_828cd                                ; 0828b1 751a
     mov eax, dword ptr [esi + 4]                 ; 0828b3 8b4604
     add eax, 0x13                                ; 0828b6 83c013
@@ -10904,7 +10907,7 @@ loc_828a7:
     add esp, 0xc                                 ; 0828ca 83c40c
 loc_828cd:
     add esi, 0x10                                ; 0828cd 83c610
-    test byte ptr [dword_c541b], 8               ; 0828d0 f6051b540c0008
+    test byte ptr [sound_cards_allowed], 8       ; 0828d0 f6051b540c0008
     jne loc_828f3                                ; 0828d7 751a
     mov eax, dword ptr [esi + 4]                 ; 0828d9 8b4604
     add eax, 0x13                                ; 0828dc 83c013
@@ -10917,7 +10920,7 @@ loc_828cd:
     add esp, 0xc                                 ; 0828f0 83c40c
 loc_828f3:
     add esi, 0x20                                ; 0828f3 83c620
-    test byte ptr [dword_c541b], 0x20            ; 0828f6 f6051b540c0020
+    test byte ptr [sound_cards_allowed], 0x20    ; 0828f6 f6051b540c0020
     jne loc_82919                                ; 0828fd 751a
     mov eax, dword ptr [esi + 4]                 ; 0828ff 8b4604
     add eax, 0x13                                ; 082902 83c013
@@ -11108,7 +11111,7 @@ loc_82aac:
     mov dword ptr [esp + 0x20], eax              ; 082af3 89442420
     test dword ptr [dword_ed360], eax            ; 082af7 850560d30e00
     jne loc_82d0c                                ; 082afd 0f8509020000
-    test dword ptr [dword_c541b], eax            ; 082b03 85051b540c00
+    test dword ptr [sound_cards_allowed], eax    ; 082b03 85051b540c00
     je loc_82d0c                                 ; 082b09 0f84fd010000
     cmp eax, 0x10                                ; 082b0f 83f810
     jb loc_82b37                                 ; 082b12 7223
@@ -11179,7 +11182,7 @@ loc_82bda:
     test eax, eax                                ; 082be4 85c0
     je loc_82c84                                 ; 082be6 0f8498000000
     mov eax, dword ptr [dword_ed360]             ; 082bec a160d30e00
-    mov dword ptr [dword_c541f], eax             ; 082bf1 a31f540c00
+    mov dword ptr [sound_card], eax              ; 082bf1 a31f540c00
     push ebp                                     ; 082bf6 55
     call freemem                                 ; 082bf7 e8dca60000
     add esp, 4                                   ; 082bfc 83c404
@@ -11222,8 +11225,8 @@ loc_82c78:
 
 loc_82c84:
     mov eax, dword ptr [dword_ed360]             ; 082c84 a160d30e00
-    xor dword ptr [dword_c541b], eax             ; 082c89 31051b540c00
-    mov eax, dword ptr [dword_c541f]             ; 082c8f a11f540c00
+    xor dword ptr [sound_cards_allowed], eax     ; 082c89 31051b540c00
+    mov eax, dword ptr [sound_card]              ; 082c8f a11f540c00
     mov dword ptr [dword_ed360], eax             ; 082c94 a360d30e00
     cmp byte ptr [sound_enabled], 0              ; 082c99 803d30240d0000
     je loc_82cfd                                 ; 082ca0 745b

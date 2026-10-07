@@ -3493,7 +3493,7 @@ pcspk_note_on:
     xor eax, eax                                 ; 09d707 31c0
     mov al, byte ptr [esp + 0xc]                 ; 09d709 8a44240c
     imul eax, eax, 0x4e                          ; 09d70d 6bc04e
-    mov esi, unk_f27d8                           ; 09d710 bed8270f00
+    mov esi, pcspk_channels                      ; 09d710 bed8270f00
     add esi, eax                                 ; 09d715 01c6
     cmp byte ptr [esp + 0xc], 9                  ; 09d717 807c240c09
     je loc_9d723                                 ; 09d71c 7405
@@ -3513,7 +3513,7 @@ loc_9d73e:
     test edx, edx                                ; 09d73e 85d2
     je loc_9d802                                 ; 09d740 0f84bc000000
     mov eax, edx                                 ; 09d746 89d0
-    call timbre_env_sign                         ; 09d748 e84c030000
+    call pcspk_pick_voice                        ; 09d748 e84c030000
     mov ecx, eax                                 ; 09d74d 89c1
     cwde                                         ; 09d74f 98
     cmp eax, -1                                  ; 09d750 83f8ff
@@ -3522,7 +3522,7 @@ loc_9d73e:
     shl eax, 2                                   ; 09d75b c1e002
     sub eax, ebx                                 ; 09d75e 29d8
     shl eax, 4                                   ; 09d760 c1e004
-    add eax, unk_f24d8                           ; 09d763 05d8240f00
+    add eax, pcspk_voices                        ; 09d763 05d8240f00
     mov dword ptr [eax + 0x10], edx              ; 09d768 895010
     mov bl, byte ptr [esp + 0xc]                 ; 09d76b 8a5c240c
     mov byte ptr [eax], bl                       ; 09d76f 8818
@@ -3581,7 +3581,7 @@ pcspk_note_off:
     call empty_func_902a0                        ; 09d806 e8952affff
     mov bh, byte ptr [esp + 8]                   ; 09d80b 8a7c2408
     mov bl, byte ptr [esp + 0xc]                 ; 09d80f 8a5c240c
-    mov eax, unk_f24d8                           ; 09d813 b8d8240f00
+    mov eax, pcspk_voices                        ; 09d813 b8d8240f00
     xor edx, edx                                 ; 09d818 31d2
     jmp loc_9d82c                                ; 09d81a eb10
 
@@ -3650,7 +3650,7 @@ pcspk_update_voices:
     push esi                                     ; 09d883 56
     push edi                                     ; 09d884 57
     sub esp, 4                                   ; 09d885 83ec04
-    mov esi, unk_f24d8                           ; 09d888 bed8240f00
+    mov esi, pcspk_voices                        ; 09d888 bed8240f00
     xor edx, edx                                 ; 09d88d 31d2
     mov dword ptr [esp], edx                     ; 09d88f 891424
     jmp loc_9da76                                ; 09d892 e9df010000
@@ -3851,11 +3851,11 @@ loc_9da76:
 
 
 ; ====================================================================================================
-; timbre_env_sign  [0x9da99, 19 bytes, 6 instructions]
-; -1 when the timbre has no envelope step (+0xc), else 1
+; pcspk_pick_voice  [0x9da99, 19 bytes, 6 instructions]
+; the voice of a note: 1 when the timbre plays (+0xc), else -1 (the speaker sounds one note at a time)
 ; called by: pcspk_note_on
 ; ====================================================================================================
-timbre_env_sign:
+pcspk_pick_voice:
     cmp word ptr [eax + 0xc], 0                  ; 09da99 6683780c00
     jne loc_9daa6                                ; 09da9e 7506
     mov eax, 0xffffffff                          ; 09daa0 b8ffffffff
@@ -4302,10 +4302,10 @@ adlib_drv_init:
     call empty_func_902a0                        ; 09debf e8dc23ffff
     push esi                                     ; 09dec4 56
     push edi                                     ; 09dec5 57
-    mov word ptr [word_f3452], 0x1ff             ; 09dec6 66c70552340f00ff..
+    mov word ptr [adlib_free_mask], 0x1ff        ; 09dec6 66c70552340f00ff..
     xor ebx, ebx                                 ; 09decf 31db
-    mov word ptr [word_f3450], bx                ; 09ded1 66891d50340f00
-    mov word ptr [word_f344e], bx                ; 09ded8 66891d4e340f00
+    mov word ptr [adlib_used_mask], bx           ; 09ded1 66891d50340f00
+    mov word ptr [adlib_released_mask], bx       ; 09ded8 66891d4e340f00
     xor edx, edx                                 ; 09dedf 31d2
     jmp loc_9df3a                                ; 09dee1 eb57
 
@@ -4316,11 +4316,11 @@ loc_9dee3:
     shl eax, 4                                   ; 09deea c1e004
     sub eax, ebx                                 ; 09deed 29d8
     add eax, eax                                 ; 09deef 01c0
-    mov ecx, unk_f2f28                           ; 09def1 b9282f0f00
+    mov ecx, adlib_channels                      ; 09def1 b9282f0f00
     add ecx, eax                                 ; 09def6 01c1
-    mov dword ptr [ebx*4 + unk_f3108], ecx       ; 09def8 890c9d08310f00
+    mov dword ptr [ebx*4 + adlib_channel_ptrs], ecx ; 09def8 890c9d08310f00
     xor ebx, ebx                                 ; 09deff 31db
-    mov dword ptr [eax + unk_f2f28], ebx         ; 09df01 8998282f0f00
+    mov dword ptr [eax + adlib_channels], ebx    ; 09df01 8998282f0f00
     xor esi, esi                                 ; 09df07 31f6
     mov word ptr [eax + unk_f2f3c], si           ; 09df09 6689b03c2f0f00
     xor edi, edi                                 ; 09df10 31ff
@@ -4385,13 +4385,13 @@ adlib_drv_tick:
 
 loc_9df94:
     movsx eax, si                                ; 09df94 0fbfc6
-    movsx edx, word ptr [word_f3450]             ; 09df97 0fbf1550340f00
+    movsx edx, word ptr [adlib_used_mask]        ; 09df97 0fbf1550340f00
     test eax, edx                                ; 09df9e 85d0
     je loc_9e010                                 ; 09dfa0 746e
     xor eax, eax                                 ; 09dfa2 31c0
     mov ax, di                                   ; 09dfa4 6689f8
     imul eax, eax, 0x56                          ; 09dfa7 6bc056
-    mov ecx, unk_f3148                           ; 09dfaa b948310f00
+    mov ecx, adlib_voices                        ; 09dfaa b948310f00
     add ecx, eax                                 ; 09dfaf 01c1
     cmp word ptr [ecx + 0x28], 0                 ; 09dfb1 6683792800
     jne loc_9dfef                                ; 09dfb6 7537
@@ -4401,9 +4401,9 @@ loc_9df94:
     call adlib_voice_off                         ; 09dfc3 e8c8030000
     mov eax, esi                                 ; 09dfc8 89f0
     not eax                                      ; 09dfca f7d0
-    and word ptr [word_f3450], ax                ; 09dfcc 66210550340f00
-    and word ptr [word_f344e], ax                ; 09dfd3 6621054e340f00
-    or word ptr [word_f3452], si                 ; 09dfda 66093552340f00
+    and word ptr [adlib_used_mask], ax           ; 09dfcc 66210550340f00
+    and word ptr [adlib_released_mask], ax       ; 09dfd3 6621054e340f00
+    or word ptr [adlib_free_mask], si            ; 09dfda 66093552340f00
     mov edx, dword ptr [ecx]                     ; 09dfe1 8b11
     and word ptr [edx + 0x14], ax                ; 09dfe3 66214214
     mov ecx, dword ptr [ecx]                     ; 09dfe7 8b09
@@ -4499,7 +4499,7 @@ adlib_channel_release:
     sub esp, 4                                   ; 09e08b 83ec04
     mov byte ptr [esp], dl                       ; 09e08e 881424
     movzx esi, al                                ; 09e091 0fb6f0
-    mov esi, dword ptr [esi*4 + unk_f3108]       ; 09e094 8b34b508310f00
+    mov esi, dword ptr [esi*4 + adlib_channel_ptrs] ; 09e094 8b34b508310f00
     mov di, word ptr [esi + 0x14]                ; 09e09b 668b7e14
     xor edx, edx                                 ; 09e09f 31d2
     mov ebx, 1                                   ; 09e0a1 bb01000000
@@ -4512,7 +4512,7 @@ loc_9e0a8:
     je loc_9e0ee                                 ; 09e0b0 743c
     movsx eax, dx                                ; 09e0b2 0fbfc2
     imul eax, eax, 0x56                          ; 09e0b5 6bc056
-    add eax, unk_f3148                           ; 09e0b8 0548310f00
+    add eax, adlib_voices                        ; 09e0b8 0548310f00
     cmp esi, dword ptr [eax]                     ; 09e0bd 3b30
     jne loc_9e0ee                                ; 09e0bf 752d
     mov cl, byte ptr [esp]                       ; 09e0c1 8a0c24
@@ -4524,7 +4524,7 @@ loc_9e0a8:
     jmp loc_9e0f7                                ; 09e0d4 eb21
 
 loc_9e0d6:
-    or word ptr [word_f344e], bx                 ; 09e0d6 66091d4e340f00
+    or word ptr [adlib_released_mask], bx        ; 09e0d6 66091d4e340f00
     sar word ptr [eax + 0x54], 1                 ; 09e0dd 66d17854
     lea edx, [eax + 8]                           ; 09e0e1 8d5008
     mov eax, dword ptr [eax + 4]                 ; 09e0e4 8b4004
@@ -4559,7 +4559,7 @@ adlib_controller:
     mov byte ptr [esp + 4], al                   ; 09e105 88442404
     xor ecx, ecx                                 ; 09e109 31c9
     mov cl, al                                   ; 09e10b 88c1
-    mov ecx, dword ptr [ecx*4 + unk_f3108]       ; 09e10d 8b0c8d08310f00
+    mov ecx, dword ptr [ecx*4 + adlib_channel_ptrs] ; 09e10d 8b0c8d08310f00
     lea esi, [ecx + 4]                           ; 09e114 8d7104
     cmp dl, 0x40                                 ; 09e117 80fa40
     jb loc_9e149                                 ; 09e11a 722d
@@ -4678,16 +4678,16 @@ loc_9e232:
     xor eax, eax                                 ; 09e23d 31c0
     mov ax, si                                   ; 09e23f 6689f0
     imul eax, eax, 0x56                          ; 09e242 6bc056
-    add eax, unk_f3148                           ; 09e245 0548310f00
+    add eax, adlib_voices                        ; 09e245 0548310f00
     lea edx, [eax + 8]                           ; 09e24a 8d5008
     mov eax, dword ptr [eax + 4]                 ; 09e24d 8b4004
     mov ebx, 1                                   ; 09e250 bb01000000
     call adlib_voice_off                         ; 09e255 e836010000
     mov eax, edi                                 ; 09e25a 89f8
     not eax                                      ; 09e25c f7d0
-    and word ptr [word_f3450], ax                ; 09e25e 66210550340f00
-    and word ptr [word_f344e], ax                ; 09e265 6621054e340f00
-    or word ptr [word_f3452], di                 ; 09e26c 66093d52340f00
+    and word ptr [adlib_used_mask], ax           ; 09e25e 66210550340f00
+    and word ptr [adlib_released_mask], ax       ; 09e265 6621054e340f00
+    or word ptr [adlib_free_mask], di            ; 09e26c 66093d52340f00
     and word ptr [ecx + 0x14], ax                ; 09e273 66214114
     and word ptr [ecx + 0x18], ax                ; 09e277 66214118
 loc_9e27b:
@@ -4710,7 +4710,7 @@ loc_9e284:
 ; ====================================================================================================
 adlib_program:
     and eax, 0xff                                ; 09e28b 25ff000000
-    mov eax, dword ptr [eax*4 + unk_f3108]       ; 09e290 8b048508310f00
+    mov eax, dword ptr [eax*4 + adlib_channel_ptrs] ; 09e290 8b048508310f00
     mov byte ptr [eax + 0x1b], dl                ; 09e297 88501b
     ret                                          ; 09e29a c3
 
@@ -4721,7 +4721,7 @@ adlib_program:
 ; ====================================================================================================
 adlib_pitch_bend:
     and eax, 0xff                                ; 09e29b 25ff000000
-    mov eax, dword ptr [eax*4 + unk_f3108]       ; 09e2a0 8b048508310f00
+    mov eax, dword ptr [eax*4 + adlib_channel_ptrs] ; 09e2a0 8b048508310f00
     add eax, 4                                   ; 09e2a7 83c004
     add edx, edx                                 ; 09e2aa 01d2
     mov word ptr [eax + 8], dx                   ; 09e2ac 66895008
@@ -4761,13 +4761,13 @@ loc_9e2f7:
     je loc_9e309                                 ; 09e2fc 740b
     lea edx, [esi + 0x28]                        ; 09e2fe 8d5628
     lea eax, [edi + 0x24]                        ; 09e301 8d4724
-    call adlib_env_init                          ; 09e304 e894020000
+    call adlib_lfo_init                          ; 09e304 e894020000
 loc_9e309:
     cmp word ptr [edi + 0x32], 0                 ; 09e309 66837f3200
     je loc_9e31b                                 ; 09e30e 740b
     lea edx, [esi + 0x36]                        ; 09e310 8d5636
     lea eax, [edi + 0x34]                        ; 09e313 8d4734
-    call adlib_lfo_init                          ; 09e316 e8bc010000
+    call adlib_seq_init                          ; 09e316 e8bc010000
 loc_9e31b:
     mov word ptr [esi + 0x1c], 0                 ; 09e31b 66c7461c0000
     mov ax, word ptr [esi + 0x1c]                ; 09e321 668b461c
@@ -4875,6 +4875,7 @@ jpt_9e414:
 
 ; ====================================================================================================
 ; adlib_env_step  [0x9e428, 175 bytes, 69 instructions]
+; the envelope: delay, attack to the peak, decay to the sustain, release (key down / key off)
 ; called by: adlib_voice_update
 ; ====================================================================================================
 adlib_env_step:
@@ -4963,10 +4964,11 @@ loc_9e4d2:
 
 
 ; ====================================================================================================
-; adlib_lfo_init  [0x9e4d7, 58 bytes, 19 instructions]
+; adlib_seq_init  [0x9e4d7, 58 bytes, 19 instructions]
+; the step sequence of a timbre (+0x34 delay, +0x37 ticks a step, +0x38 length)
 ; called by: adlib_voice_load_timbre
 ; ====================================================================================================
-adlib_lfo_init:
+adlib_seq_init:
     push ebx                                     ; 09e4d7 53
     mov word ptr [edx], 0                        ; 09e4d8 66c7020000
     mov bx, word ptr [eax + 4]                   ; 09e4dd 668b5804
@@ -4985,16 +4987,17 @@ adlib_lfo_init:
 
 loc_9e506:
     mov byte ptr [edx + 2], 2                    ; 09e506 c6420202
-    call adlib_lfo_step                          ; 09e50a e802000000
+    call adlib_seq_step                          ; 09e50a e802000000
     pop ebx                                      ; 09e50f 5b
     ret                                          ; 09e510 c3
 
 
 ; ====================================================================================================
-; adlib_lfo_step  [0x9e511, 140 bytes, 53 instructions]
-; called by: adlib_lfo_init, adlib_voice_update
+; adlib_seq_step  [0x9e511, 140 bytes, 53 instructions]
+; the step sequence: after the delay a value of +0x3a every +0x37 ticks, for +0x38 ticks
+; called by: adlib_seq_init, adlib_voice_update
 ; ====================================================================================================
-adlib_lfo_step:
+adlib_seq_step:
     push ebx                                     ; 09e511 53
     push ecx                                     ; 09e512 51
     push edi                                     ; 09e513 57
@@ -5061,10 +5064,11 @@ loc_9e599:
 
 
 ; ====================================================================================================
-; adlib_env_init  [0x9e59d, 44 bytes, 13 instructions]
+; adlib_lfo_init  [0x9e59d, 44 bytes, 13 instructions]
+; the LFO of a timbre: phase, count and value cleared, depth +0x28, rate +0x2e
 ; called by: adlib_voice_load_timbre
 ; ====================================================================================================
-adlib_env_init:
+adlib_lfo_init:
     push ebx                                     ; 09e59d 53
     mov word ptr [edx + 0xc], 0                  ; 09e59e 66c7420c0000
     mov bx, word ptr [edx + 0xc]                 ; 09e5a4 668b5a0c
@@ -5081,10 +5085,11 @@ adlib_env_init:
 
 
 ; ====================================================================================================
-; adlib_env_update  [0x9e5c9, 173 bytes, 64 instructions]
+; adlib_lfo_update  [0x9e5c9, 173 bytes, 64 instructions]
+; the LFO: from tick +0x24 to +0x26 the 16.16 sine of the phase times the depth, limited to +0x2a
 ; called by: adlib_voice_update
 ; ====================================================================================================
-adlib_env_update:
+adlib_lfo_update:
     push ebx                                     ; 09e5c9 53
     push ecx                                     ; 09e5ca 51
     push esi                                     ; 09e5cb 56
@@ -5614,7 +5619,7 @@ adlib_voice_update:
     add edx, 0x36                                ; 09eaeb 83c236
     mov eax, dword ptr [ebp - 0xc]               ; 09eaee 8b45f4
     add eax, 0x34                                ; 09eaf1 83c034
-    call adlib_lfo_step                          ; 09eaf4 e818faffff
+    call adlib_seq_step                          ; 09eaf4 e818faffff
     mov eax, dword ptr [ebp - 8]                 ; 09eaf9 8b45f8
     movsx ecx, word ptr [eax + 0x36]             ; 09eafc 0fbf4836
     mov eax, dword ptr [ebp - 0xc]               ; 09eb00 8b45f4
@@ -5654,7 +5659,7 @@ loc_9eb61:
     add edx, 0x28                                ; 09eb6e 83c228
     mov eax, dword ptr [ebp - 0xc]               ; 09eb71 8b45f4
     add eax, 0x24                                ; 09eb74 83c024
-    call adlib_env_update                        ; 09eb77 e84dfaffff
+    call adlib_lfo_update                        ; 09eb77 e84dfaffff
     mov eax, dword ptr [ebp - 8]                 ; 09eb7c 8b45f8
     movsx ecx, word ptr [eax + 0x28]             ; 09eb7f 0fbf4828
     mov eax, dword ptr [ebp - 0xc]               ; 09eb83 8b45f4
@@ -5815,7 +5820,7 @@ adlib_note_on:
     xor eax, eax                                 ; 09ecfd 31c0
     mov al, byte ptr [ebp - 4]                   ; 09ecff 8a45fc
     shl eax, 2                                   ; 09ed02 c1e002
-    mov eax, dword ptr [eax + unk_f3108]         ; 09ed05 8b8008310f00
+    mov eax, dword ptr [eax + adlib_channel_ptrs] ; 09ed05 8b8008310f00
     mov dword ptr [ebp - 0x38], eax              ; 09ed0b 8945c8
     cmp byte ptr [ebp - 4], 9                    ; 09ed0e 807dfc09
     jne loc_9ed36                                ; 09ed12 7522
@@ -5858,11 +5863,11 @@ loc_9ed6f:
     xor eax, eax                                 ; 09ed6f 31c0
     mov ax, word ptr [ebp - 0x28]                ; 09ed71 668b45d8
     imul eax, eax, 0x56                          ; 09ed75 6bc056
-    mov edx, unk_f3148                           ; 09ed78 ba48310f00
+    mov edx, adlib_voices                        ; 09ed78 ba48310f00
     add edx, eax                                 ; 09ed7d 01c2
     mov dword ptr [ebp - 0x3c], edx              ; 09ed7f 8955c4
     movsx edx, word ptr [ebp - 0x24]             ; 09ed82 0fbf55dc
-    movsx eax, word ptr [word_f3450]             ; 09ed86 0fbf0550340f00
+    movsx eax, word ptr [adlib_used_mask]        ; 09ed86 0fbf0550340f00
     test edx, eax                                ; 09ed8d 85c2
     je loc_9ed9e                                 ; 09ed8f 740d
     mov eax, dword ptr [ebp - 0x3c]              ; 09ed91 8b45c4
@@ -5904,13 +5909,13 @@ loc_9ede0:
     mov eax, dword ptr [eax + 4]                 ; 09edee 8b4004
     call adlib_voice_off                         ; 09edf1 e89af5ffff
     mov eax, dword ptr [ebp - 0x24]              ; 09edf6 8b45dc
-    or word ptr [word_f3450], ax                 ; 09edf9 66090550340f00
+    or word ptr [adlib_used_mask], ax            ; 09edf9 66090550340f00
     mov eax, dword ptr [ebp - 0x24]              ; 09ee00 8b45dc
     not eax                                      ; 09ee03 f7d0
-    and word ptr [word_f3452], ax                ; 09ee05 66210552340f00
+    and word ptr [adlib_free_mask], ax           ; 09ee05 66210552340f00
     mov eax, dword ptr [ebp - 0x24]              ; 09ee0c 8b45dc
     not eax                                      ; 09ee0f f7d0
-    and word ptr [word_f344e], ax                ; 09ee11 6621054e340f00
+    and word ptr [adlib_released_mask], ax       ; 09ee11 6621054e340f00
     mov edx, dword ptr [ebp - 0x24]              ; 09ee18 8b55dc
     not edx                                      ; 09ee1b f7d2
     mov eax, dword ptr [ebp - 0x38]              ; 09ee1d 8b45c8
@@ -5962,7 +5967,7 @@ loc_9ee91:
     mov dx, word ptr [ebp - 0x2c]                ; 09ee9e 668b55d4
     cmp edx, eax                                 ; 09eea2 39c2
     jge loc_9ef91                                ; 09eea4 0f8de7000000
-    mov ax, word ptr [word_f3452]                ; 09eeaa 66a152340f00
+    mov ax, word ptr [adlib_free_mask]           ; 09eeaa 66a152340f00
     mov edx, dword ptr [ebp - 0x38]              ; 09eeb0 8b55c8
     and ax, word ptr [edx + 0x16]                ; 09eeb3 66234216
     mov dword ptr [ebp - 0x14], eax              ; 09eeb7 8945ec
@@ -5988,7 +5993,7 @@ loc_9eee5:
     xor eax, eax                                 ; 09eee5 31c0
     mov ax, word ptr [ebp - 0x28]                ; 09eee7 668b45d8
     imul eax, eax, 0x56                          ; 09eeeb 6bc056
-    mov edx, unk_f3148                           ; 09eeee ba48310f00
+    mov edx, adlib_voices                        ; 09eeee ba48310f00
     add edx, eax                                 ; 09eef3 01c2
     mov dword ptr [ebp - 0x3c], edx              ; 09eef5 8955c4
     mov eax, dword ptr [ebp - 0x14]              ; 09eef8 8b45ec
@@ -5998,12 +6003,12 @@ loc_9eee5:
     mov word ptr [ebp - 0x24], dx                ; 09ef02 668955dc
     mov eax, dword ptr [ebp - 0x24]              ; 09ef06 8b45dc
     not eax                                      ; 09ef09 f7d0
-    and word ptr [word_f3452], ax                ; 09ef0b 66210552340f00
+    and word ptr [adlib_free_mask], ax           ; 09ef0b 66210552340f00
     mov eax, dword ptr [ebp - 0x24]              ; 09ef12 8b45dc
     not eax                                      ; 09ef15 f7d0
-    and word ptr [word_f344e], ax                ; 09ef17 6621054e340f00
+    and word ptr [adlib_released_mask], ax       ; 09ef17 6621054e340f00
     mov eax, dword ptr [ebp - 0x24]              ; 09ef1e 8b45dc
-    or word ptr [word_f3450], ax                 ; 09ef21 66090550340f00
+    or word ptr [adlib_used_mask], ax            ; 09ef21 66090550340f00
     mov eax, dword ptr [ebp - 0x24]              ; 09ef28 8b45dc
     mov edx, dword ptr [ebp - 0x38]              ; 09ef2b 8b55c8
     or word ptr [edx + 0x14], ax                 ; 09ef2e 66094214
@@ -6040,7 +6045,7 @@ loc_9eee5:
     jmp loc_9f12b                                ; 09ef8c e99a010000
 
 loc_9ef91:
-    mov ax, word ptr [word_f344e]                ; 09ef91 66a14e340f00
+    mov ax, word ptr [adlib_released_mask]       ; 09ef91 66a14e340f00
     mov edx, dword ptr [ebp - 0x38]              ; 09ef97 8b55c8
     and ax, word ptr [edx + 0x16]                ; 09ef9a 66234216
     mov dword ptr [ebp - 0x30], eax              ; 09ef9e 8945d0
@@ -6066,7 +6071,7 @@ loc_9efcd:
     xor eax, eax                                 ; 09efcd 31c0
     mov ax, word ptr [ebp - 0x28]                ; 09efcf 668b45d8
     imul eax, eax, 0x56                          ; 09efd3 6bc056
-    mov edx, unk_f3148                           ; 09efd6 ba48310f00
+    mov edx, adlib_voices                        ; 09efd6 ba48310f00
     add edx, eax                                 ; 09efdb 01c2
     mov dword ptr [ebp - 0x3c], edx              ; 09efdd 8955c4
     mov ebx, 1                                   ; 09efe0 bb01000000
@@ -6082,12 +6087,12 @@ loc_9efcd:
     mov word ptr [ebp - 0x24], dx                ; 09f000 668955dc
     mov eax, dword ptr [ebp - 0x24]              ; 09f004 8b45dc
     not eax                                      ; 09f007 f7d0
-    and word ptr [word_f3452], ax                ; 09f009 66210552340f00
+    and word ptr [adlib_free_mask], ax           ; 09f009 66210552340f00
     mov eax, dword ptr [ebp - 0x24]              ; 09f010 8b45dc
     not eax                                      ; 09f013 f7d0
-    and word ptr [word_f344e], ax                ; 09f015 6621054e340f00
+    and word ptr [adlib_released_mask], ax       ; 09f015 6621054e340f00
     mov eax, dword ptr [ebp - 0x24]              ; 09f01c 8b45dc
-    or word ptr [word_f3450], ax                 ; 09f01f 66090550340f00
+    or word ptr [adlib_used_mask], ax            ; 09f01f 66090550340f00
     mov eax, dword ptr [ebp - 0x24]              ; 09f026 8b45dc
     mov edx, dword ptr [ebp - 0x38]              ; 09f029 8b55c8
     or word ptr [edx + 0x14], ax                 ; 09f02c 66094214
@@ -6132,12 +6137,12 @@ loc_9f08f:
     call adlib_voice_off                         ; 09f0a0 e8ebf2ffff
     mov eax, dword ptr [ebp - 0x18]              ; 09f0a5 8b45e8
     not eax                                      ; 09f0a8 f7d0
-    and word ptr [word_f3452], ax                ; 09f0aa 66210552340f00
+    and word ptr [adlib_free_mask], ax           ; 09f0aa 66210552340f00
     mov eax, dword ptr [ebp - 0x18]              ; 09f0b1 8b45e8
     not eax                                      ; 09f0b4 f7d0
-    and word ptr [word_f344e], ax                ; 09f0b6 6621054e340f00
+    and word ptr [adlib_released_mask], ax       ; 09f0b6 6621054e340f00
     mov eax, dword ptr [ebp - 0x18]              ; 09f0bd 8b45e8
-    or word ptr [word_f3450], ax                 ; 09f0c0 66090550340f00
+    or word ptr [adlib_used_mask], ax            ; 09f0c0 66090550340f00
     mov eax, dword ptr [ebp - 0x18]              ; 09f0c7 8b45e8
     mov edx, dword ptr [ebp - 0x38]              ; 09f0ca 8b55c8
     or word ptr [edx + 0x14], ax                 ; 09f0cd 66094214
@@ -6209,11 +6214,11 @@ loc_9f18b:
     xor eax, eax                                 ; 09f18b 31c0
     mov ax, word ptr [ebp - 0x28]                ; 09f18d 668b45d8
     imul eax, eax, 0x56                          ; 09f191 6bc056
-    mov edx, unk_f3148                           ; 09f194 ba48310f00
+    mov edx, adlib_voices                        ; 09f194 ba48310f00
     add edx, eax                                 ; 09f199 01c2
     mov dword ptr [ebp - 0x3c], edx              ; 09f19b 8955c4
     movsx edx, word ptr [ebp - 0x24]             ; 09f19e 0fbf55dc
-    movsx eax, word ptr [word_f3450]             ; 09f1a2 0fbf0550340f00
+    movsx eax, word ptr [adlib_used_mask]        ; 09f1a2 0fbf0550340f00
     test edx, eax                                ; 09f1a9 85c2
     je loc_9f1ba                                 ; 09f1ab 740d
     mov eax, dword ptr [ebp - 0x3c]              ; 09f1ad 8b45c4
@@ -6243,12 +6248,12 @@ loc_9f1d4:
     call adlib_voice_off                         ; 09f1e2 e8a9f1ffff
     mov eax, dword ptr [ebp - 0x18]              ; 09f1e7 8b45e8
     not eax                                      ; 09f1ea f7d0
-    and word ptr [word_f3452], ax                ; 09f1ec 66210552340f00
+    and word ptr [adlib_free_mask], ax           ; 09f1ec 66210552340f00
     mov eax, dword ptr [ebp - 0x18]              ; 09f1f3 8b45e8
     not eax                                      ; 09f1f6 f7d0
-    and word ptr [word_f344e], ax                ; 09f1f8 6621054e340f00
+    and word ptr [adlib_released_mask], ax       ; 09f1f8 6621054e340f00
     mov eax, dword ptr [ebp - 0x18]              ; 09f1ff 8b45e8
-    or word ptr [word_f3450], ax                 ; 09f202 66090550340f00
+    or word ptr [adlib_used_mask], ax            ; 09f202 66090550340f00
     mov eax, dword ptr [ebp - 0x18]              ; 09f209 8b45e8
     mov edx, dword ptr [ebp - 0x38]              ; 09f20c 8b55c8
     or word ptr [edx + 0x14], ax                 ; 09f20f 66094214
@@ -6486,10 +6491,10 @@ sbdac_drv_reset_voices:
     push edi                                     ; 09f41f 57
     cmp dword ptr [dword_d5250], 0               ; 09f420 833d50520d0000
     je loc_9f49c                                 ; 09f427 7473
-    mov word ptr [word_f3716], 0xf               ; 09f429 66c70516370f000f..
+    mov word ptr [sbdac_free_mask], 0xf          ; 09f429 66c70516370f000f..
     xor ebx, ebx                                 ; 09f432 31db
-    mov word ptr [word_f3718], bx                ; 09f434 66891d18370f00
-    mov word ptr [word_f3714], bx                ; 09f43b 66891d14370f00
+    mov word ptr [sbdac_used_mask], bx           ; 09f434 66891d18370f00
+    mov word ptr [sbdac_released_mask], bx       ; 09f43b 66891d14370f00
     xor eax, eax                                 ; 09f442 31c0
     mov ebx, unk_d522e                           ; 09f444 bb2e520d00
 loc_9f449:
@@ -6566,7 +6571,7 @@ loc_9f4de:
     add esi, esi                                 ; 09f4e5 01f6
     add esi, unk_f3454                           ; 09f4e7 81c654340f00
     movsx edx, word ptr [esp]                    ; 09f4ed 0fbf1424
-    movsx eax, word ptr [word_f3714]             ; 09f4f1 0fbf0514370f00
+    movsx eax, word ptr [sbdac_released_mask]    ; 09f4f1 0fbf0514370f00
     test edx, eax                                ; 09f4f8 85c2
     je loc_9f511                                 ; 09f4fa 7415
     push edi                                     ; 09f4fc 57
@@ -6808,7 +6813,7 @@ loc_9f6b3:
     jmp loc_9f71d                                ; 09f6e8 eb33
 
 loc_9f6ea:
-    or word ptr [word_f3714], bx                 ; 09f6ea 66091d14370f00
+    or word ptr [sbdac_released_mask], bx        ; 09f6ea 66091d14370f00
     sar word ptr [eax + 6], 1                    ; 09f6f1 66d17806
     imul eax, esi, 0x16                          ; 09f6f5 6bc616
     add eax, unk_f34dc                           ; 09f6f8 05dc340f00
@@ -6891,7 +6896,7 @@ loc_9f7b1:
     add edx, unk_f3454                           ; 09f7bd 81c254340f00
     movsx esi, ax                                ; 09f7c3 0fbff0
     mov dword ptr [esp], esi                     ; 09f7c6 893424
-    movsx esi, word ptr [word_f3718]             ; 09f7c9 0fbf3518370f00
+    movsx esi, word ptr [sbdac_used_mask]        ; 09f7c9 0fbf3518370f00
     and esi, dword ptr [esp]                     ; 09f7d0 233424
     movsx ebp, word ptr [ecx + 4]                ; 09f7d3 0fbf6904
     test esi, ebp                                ; 09f7d7 85ee
@@ -6940,7 +6945,7 @@ loc_9f829:
 loc_9f839:
     cmp bx, word ptr [ecx + 8]                   ; 09f839 663b5908
     jge loc_9f880                                ; 09f83d 7d41
-    mov ax, word ptr [word_f3716]                ; 09f83f 66a116370f00
+    mov ax, word ptr [sbdac_free_mask]           ; 09f83f 66a116370f00
     and ax, word ptr [ecx + 4]                   ; 09f845 66234104
     je loc_9f880                                 ; 09f849 7435
     mov edx, eax                                 ; 09f84b 89c2
@@ -6968,7 +6973,7 @@ loc_9f861:
     jmp loc_9f8b3                                ; 09f87e eb33
 
 loc_9f880:
-    mov ax, word ptr [word_f3714]                ; 09f880 66a114370f00
+    mov ax, word ptr [sbdac_released_mask]       ; 09f880 66a114370f00
     and ax, word ptr [ecx + 4]                   ; 09f886 66234104
     je loc_9f8a4                                 ; 09f88a 7418
     mov edx, eax                                 ; 09f88c 89c2
@@ -7050,12 +7055,12 @@ sbdac_voice_start:
     mov word ptr [esi + 0xa], ax                 ; 09f93b 6689460a
     mov ax, word ptr [esi]                       ; 09f93f 668b06
     not eax                                      ; 09f942 f7d0
-    and word ptr [word_f3716], ax                ; 09f944 66210516370f00
+    and word ptr [sbdac_free_mask], ax           ; 09f944 66210516370f00
     mov ax, word ptr [esi]                       ; 09f94b 668b06
-    or word ptr [word_f3718], ax                 ; 09f94e 66090518370f00
+    or word ptr [sbdac_used_mask], ax            ; 09f94e 66090518370f00
     mov ax, word ptr [esi]                       ; 09f955 668b06
     not eax                                      ; 09f958 f7d0
-    and word ptr [word_f3714], ax                ; 09f95a 66210514370f00
+    and word ptr [sbdac_released_mask], ax       ; 09f95a 66210514370f00
     mov ax, word ptr [esi]                       ; 09f961 668b06
     or word ptr [edi], ax                        ; 09f964 660907
     mov ax, word ptr [esi]                       ; 09f967 668b06
@@ -7334,13 +7339,13 @@ sbdac_voice_free:
     call sbdac_voice_stop                        ; 09fbbd e842000000
     mov word ptr [edx + 6], 0                    ; 09fbc2 66c742060000
     mov ax, word ptr [edx]                       ; 09fbc8 668b02
-    or word ptr [word_f3716], ax                 ; 09fbcb 66090516370f00
+    or word ptr [sbdac_free_mask], ax            ; 09fbcb 66090516370f00
     mov ax, word ptr [edx]                       ; 09fbd2 668b02
     not eax                                      ; 09fbd5 f7d0
-    and word ptr [word_f3718], ax                ; 09fbd7 66210518370f00
+    and word ptr [sbdac_used_mask], ax           ; 09fbd7 66210518370f00
     mov ax, word ptr [edx]                       ; 09fbde 668b02
     not eax                                      ; 09fbe1 f7d0
-    and word ptr [word_f3714], ax                ; 09fbe3 66210514370f00
+    and word ptr [sbdac_released_mask], ax       ; 09fbe3 66210514370f00
     mov bx, word ptr [edx]                       ; 09fbea 668b1a
     not ebx                                      ; 09fbed f7d3
     mov eax, dword ptr [edx + 0xe]               ; 09fbef 8b420e

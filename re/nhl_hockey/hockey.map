@@ -452,10 +452,10 @@ playoff_round_screen: code1 NEAR 19b07-19c74 R19b07-19c74
 #@ city and name, shortened to fit a width
 format_team_name: code1 NEAR 19c75-19cff R19c75-19cff
 draw_bevel_box: code1 NEAR 19d00-19f14 R19d00-19f14
-#@ arena, rink, srlogo "%s at %s"
-team_select_screen: code1 NEAR 19f28-1abde R19f28-1abde
-#@ ctlogo, logohome, logoaway
-draw_team_logos: code1 NEAR 1abdf-1b7b6 R1abdf-1b7b6
+#@ the scouting report of the two teams before a game: arena, rink, srlogo "%s at %s"
+scouting_report_screen: code1 NEAR 19f28-1abde R19f28-1abde
+#@ tonight's line-ups of the two teams: ctlogo, logohome, logoaway
+lineups_screen: code1 NEAR 1abdf-1b7b6 R1abdf-1b7b6
 #@ open_but: open/delete/cancel
 league_select_buttons: code1 NEAR 1b7c3-1b943 R1b7c3-1b943
 #@ lists *.nhl/*.po/*.lp league directories
@@ -487,8 +487,8 @@ league_scores_init: code1 NEAR 1f2b1-1f3d6 R1f2b1-1f3d6
 league_scores_advance: code1 NEAR 1f3d7-1f57f R1f3d7-1f57f
 #@ keeps a text inside its screen half
 print_text_fit: code1 NEAR 1f580-1f5ed R1f580-1f5ed
-#@ ctbkgd/cttitle3 team selection
-team_select_screen2: code1 NEAR 1f5ee-1fdd0 R1f5ee-1fdd0
+#@ the statistics of the two teams of a game: ctbkgd/cttitle3
+game_statistics_screen: code1 NEAR 1f5ee-1fdd0 R1f5ee-1fdd0
 #@ dialog: the current (.DB) or the original (.ORG) databases
 choose_db_or_org: code1 NEAR 1fdd1-1fe48 R1fdd1-1fe48
 draw_dialog_frame: code1 NEAR 1fe49-1fed1 R1fe49-1fed1
@@ -717,7 +717,8 @@ league_db_read_header: code1 NEAR 31b80-31c78 R31b80-31c78
 date_to_day_index: code1 NEAR 31c79-31c9a R31c79-31c9a
 day_to_month_day: code1 NEAR 31c9b-31cc3 R31c9b-31cc3
 league_play_day: code1 NEAR 31cc4-31f63 R31cc4-31f63
-league_update_standings: code1 NEAR 31f64-32202 R31f64-32202
+#@ a decided play-off series: its remaining games come off the schedule
+playoff_trim_series: code1 NEAR 31f64-32202 R31f64-32202
 playoff_series_count: code1 NEAR 32221-32294 R32221-32294
 league_db_load: code1 NEAR 32295-32630 R32295-32630
 schedule_play_games: code1 NEAR 32631-328aa R32631-328aa
@@ -743,8 +744,8 @@ schedule_screen2: code1 NEAR 34a41-34dce R34a41-34dce
 new_league_dialog: code1 NEAR 34dcf-35281 R34dcf-35281
 rand_below: code1 NEAR 35282-352a5 R35282-352a5
 add_pair_max4: code1 NEAR 352a6-352c4 R352a6-352c4
-#@ pset/aps/apset/gset/ags/agset
-playoff_setup_screen: code1 NEAR 352c5-37950 R352c5-37950
+#@ the statistical simulation of a league game nobody plays (its strings pset/aps/apset/gset/ags/agset)
+league_sim_game: code1 NEAR 352c5-37950 R352c5-37950
 loading_screen_timer: code1 NEAR 37951-379e8 R37951-379e8
 #@ "load" shape with palette cycling while files load
 loading_screen: code1 NEAR 379e9-37c30 R379e9-37c30
@@ -1314,8 +1315,8 @@ replay_draw_frame: code1 NEAR 57dcc-588a3 R57dcc-588a3
 #@ writes stats.log
 dump_stats_log: code1 NEAR 588a4-58e7a R588a4-58e7a unreferenced
 write_stats_table: code1 NEAR 58e7b-59335 R58e7b-59335
-#@ full CPU vs CPU simulation of a game without rendering
-simulate_game_offscreen: code1 NEAR 59336-5a032 R59336-5a032
+#@ another game of the night played on the ice for a while (around the league), its score carried on
+league_highlight_game: code1 NEAR 59336-5a032 R59336-5a032
 mark_rink_dirty: code1 NEAR 5a033-5a043 R5a033-5a043
 zm_clear_flags: code1 NEAR 5a044-5a056 R5a044-5a056 unreferenced
 zm_toggle_flags: code1 NEAR 5a057-5a067 R5a057-5a067 unreferenced
@@ -1392,8 +1393,10 @@ draw_box: code1 NEAR 5b7fc-5b88d R5b7fc-5b88d
 draw_item_text: code1 NEAR 5b88e-5b8ca R5b88e-5b8ca
 draw_item_text_dim: code1 NEAR 5b8cb-5b90f R5b8cb-5b90f
 printstr2_copy_at: code1 NEAR 5b910-5b94d R5b910-5b94d unreferenced
-highlight_menu_item: code1 NEAR 5b94e-5b9ea R5b94e-5b9ea
-unhighlight_menu_item: code1 NEAR 5b9eb-5ba4c R5b9eb-5ba4c
+#@ a menu entry in its normal state (face fill)
+menu_item_draw_normal: code1 NEAR 5b94e-5b9ea R5b94e-5b9ea
+#@ a menu entry selected (dark fill)
+menu_item_draw_selected: code1 NEAR 5b9eb-5ba4c R5b9eb-5ba4c
 #@ which menu/item is under (x, y)
 hit_test_menus: code1 NEAR 5ba4d-5baea R5ba4d-5baea
 ui_timer_callback: code1 NEAR 5baeb-5bc2f R5baeb-5bc2f
@@ -1617,19 +1620,22 @@ empty_func_7b39c: code1 NEAR 6b39c-6b3a6 R6b39c-6b3a6
 game_settings_screen: code1 NEAR 6b3a7-6b4eb R6b3a7-6b4eb
 #@ setting7/setting4
 game_settings_dialog: code1 NEAR 6b4ec-6b603 R6b4ec-6b603
-sound_settings_dialog: code1 NEAR 6b604-6b733 R6b604-6b733
+#@ the option pairs of the settings screen from the option flags, Music / Sound / Speech dimmed without them
+game_settings_show_options: code1 NEAR 6b604-6b733 R6b604-6b733
 game_settings_button_at: code1 NEAR 6b734-6b7bd R6b734-6b7bd
 game_settings_draw_buttons: code1 NEAR 6b7be-6b845 R6b7be-6b845
 game_settings_pointer_loop: code1 NEAR 6b846-6b9e7 R6b846-6b9e7
 game_settings_menu: code1 NEAR 6b9e8-6beba R6b9e8-6beba
 #@ menu "Exhibition Settings ..."
 menu_exhibition_settings: code1 NEAR 6bebb-6bf55 R6bebb-6bf55
-sound_toggle_dialog: code1 NEAR 6bf56-6c0b8 R6bf56-6c0b8
-sound_settings_draw_buttons: code1 NEAR 6c0b9-6c1ab R6c0b9-6c1ab
-#@ "Digitized Speech" / "Music" / "Sound"
-sound_settings_draw: code1 NEAR 6c1ac-6c28c R6c1ac-6c28c
-sound_settings_button_at: code1 NEAR 6c28d-6c316 R6c28d-6c316
-sound_settings_menu: code1 NEAR 6c317-6c851 R6c317-6c851
+#@ the option pairs of the Exhibition / Playoff / League settings dialog
+exhibition_settings_show_options: code1 NEAR 6bf56-6c0b8 R6bf56-6c0b8
+exhibition_settings_draw_buttons: code1 NEAR 6c0b9-6c1ab R6c0b9-6c1ab
+#@ "Digitized Speech" / "Music" / "Sound": the settings dialog of a game
+exhibition_settings_draw: code1 NEAR 6c1ac-6c28c R6c1ac-6c28c
+exhibition_settings_button_at: code1 NEAR 6c28d-6c316 R6c28d-6c316
+#@ the settings dialog of a game: the rule pairs, the period length, music, sound effects and speech
+exhibition_settings_menu: code1 NEAR 6c317-6c851 R6c317-6c851
 controller_box_draw_on: code1 NEAR 6c852-6c900 R6c852-6c900
 controller_box_draw_off: code1 NEAR 6c901-6c992 R6c901-6c992
 #@ menu "Player 1 Controls ..."
@@ -3102,8 +3108,8 @@ pcspk_note_off: code1 NEAR 8d805-8d857 R8d805-8d857
 pcspk_program: code1 NEAR 8d858-8d87f R8d858-8d87f
 #@ envelopes and pitch of the sounding voices, then the speaker
 pcspk_update_voices: code1 NEAR 8d880-8da98 R8d880-8da98
-#@ -1 when the timbre has no envelope step (+0xc), else 1
-timbre_env_sign: code1 NEAR 8da99-8daab R8da99-8daab
+#@ the voice of a note: 1 when the timbre plays (+0xc), else -1 (the speaker sounds one note at a time)
+pcspk_pick_voice: code1 NEAR 8da99-8daab R8da99-8daab
 #@ parses the MIDI bytes of drv_send_midi for the PC speaker driver
 pcspk_drv_send_midi: code1 NEAR 8daac-8dc9e R8daac-8dc9e
 #@ parses the MIDI bytes of drv_send_midi for the Sound Blaster DAC driver
@@ -3128,11 +3134,16 @@ adlib_pitch_bend: code1 NEAR 8e29b-8e2b0 R8e29b-8e2b0
 adlib_voice_load_timbre: code1 NEAR 8e2b1-8e377 R8e2b1-8e377
 adlib_voice_release: code1 NEAR 8e378-8e38f R8e378-8e38f
 adlib_voice_off: code1 NEAR 8e390-8e410 R8e390-8e410
+#@ the envelope: delay, attack to the peak, decay to the sustain, release (key down / key off)
 adlib_env_step: code1 NEAR 8e428-8e4d6 R8e428-8e4d6
-adlib_lfo_init: code1 NEAR 8e4d7-8e510 R8e4d7-8e510
-adlib_lfo_step: code1 NEAR 8e511-8e59c R8e511-8e59c
-adlib_env_init: code1 NEAR 8e59d-8e5c8 R8e59d-8e5c8
-adlib_env_update: code1 NEAR 8e5c9-8e675 R8e5c9-8e675
+#@ the step sequence of a timbre (+0x34 delay, +0x37 ticks a step, +0x38 length)
+adlib_seq_init: code1 NEAR 8e4d7-8e510 R8e4d7-8e510
+#@ the step sequence: after the delay a value of +0x3a every +0x37 ticks, for +0x38 ticks
+adlib_seq_step: code1 NEAR 8e511-8e59c R8e511-8e59c
+#@ the LFO of a timbre: phase, count and value cleared, depth +0x28, rate +0x2e
+adlib_lfo_init: code1 NEAR 8e59d-8e5c8 R8e59d-8e5c8
+#@ the LFO: from tick +0x24 to +0x26 the 16.16 sine of the phase times the depth, limited to +0x2a
+adlib_lfo_update: code1 NEAR 8e5c9-8e675 R8e5c9-8e675
 #@ parses the MIDI bytes of drv_send_midi for the AdLib (OPL2) driver
 adlib_drv_send_midi: code1 NEAR 8e676-8e85a R8e676-8e85a
 #@ applies one envelope / LFO target (pitch, level, feedback) to a voice
@@ -6216,7 +6227,7 @@ dword_c4e24: data2 VAR 4e24
 dword_c4e28: data2 VAR 4e28
 dword_c4e2c: data2 VAR 4e2c
 palette_black: data2 VAR 4e30
-dword_c5130: data2 VAR 5130
+demo_game_running: data2 VAR 5130
 unk_c5131: data2 VAR 5131
 unk_c5133: data2 VAR 5133
 byte_c5135: data2 VAR 5135
@@ -6290,8 +6301,8 @@ dword_c540b: data2 VAR 540b
 dword_c540f: data2 VAR 540f
 dword_c5413: data2 VAR 5413
 dword_c5417: data2 VAR 5417
-dword_c541b: data2 VAR 541b
-dword_c541f: data2 VAR 541f
+sound_cards_allowed: data2 VAR 541b
+sound_card: data2 VAR 541f
 unk_c5423: data2 VAR 5423
 byte_c5424: data2 VAR 5424
 byte_c5425: data2 VAR 5425
@@ -6350,7 +6361,7 @@ dword_c585c: data2 VAR 585c
 dword_c5860: data2 VAR 5860
 unk_c5861: data2 VAR 5861
 unk_c5862: data2 VAR 5862
-dword_c5886: data2 VAR 5886
+demo_kind: data2 VAR 5886
 dword_c588a: data2 VAR 588a
 unk_c588e: data2 VAR 588e
 aOfficiallyLicensed: data2 VAR 588f
@@ -6490,7 +6501,7 @@ off_c6399: data2 VAR 6399
 dword_c6410: data2 VAR 6410
 dword_c6414: data2 VAR 6414
 dword_c6418: data2 VAR 6418
-dword_c641c: data2 VAR 641c
+text_shadow: data2 VAR 641c
 unk_c6420: data2 VAR 6420
 unk_c6430: data2 VAR 6430
 aTheFileYouSpecifiedAlrea: data2 VAR 6440
@@ -6508,17 +6519,17 @@ aRequireXXKbytesOfFreeDis: data2 VAR 6570
 off_c659a: data2 VAR 659a
 dword_c65a8: data2 VAR 65a8
 dword_c65ac: data2 VAR 65ac
-dword_c65b0: data2 VAR 65b0
-dword_c65b4: data2 VAR 65b4
-dword_c65b8: data2 VAR 65b8
-dword_c65bc: data2 VAR 65bc
+stats_current_arg: data2 VAR 65b0
+stats_selected_team: data2 VAR 65b4
+stats_current_screen: data2 VAR 65b8
+stats_next_screen: data2 VAR 65bc
 dword_c65c0: data2 VAR 65c0
 dword_c65c4: data2 VAR 65c4
 dword_c65c8: data2 VAR 65c8
 dword_c65cc: data2 VAR 65cc
 dword_c65d0: data2 VAR 65d0
 unk_c65d4: data2 VAR 65d4
-dword_c65f4: data2 VAR 65f4
+league_done_mask: data2 VAR 65f4
 aReturningToSportsCentral: data2 VAR 65f8
 aReturningOutOfTheGame: data2 VAR 6614
 aReturningToThePlayoffTre: data2 VAR 662e
@@ -6582,8 +6593,8 @@ a2d22d: data2 VAR 692b
 aEmbS_c6935: data2 VAR 6935
 aBkgd_c693b: data2 VAR 693b
 aEASNVfn: data2 VAR 6940
-dword_c6956: data2 VAR 6956
-dword_c695a: data2 VAR 695a
+stats_playoffs: data2 VAR 6956
+stats_league: data2 VAR 695a
 unk_c6960: data2 VAR 6960
 dword_c6a60: data2 VAR 6a60
 off_c6a64: data2 VAR 6a64
@@ -6708,7 +6719,7 @@ dword_c71f4: data2 VAR 71f4
 dword_c71fc: data2 VAR 71fc
 dword_c7208: data2 VAR 7208
 dword_c7210: data2 VAR 7210
-byte_c7218: data2 VAR 7218
+fe_desk_toggle: data2 VAR 7218
 dword_c7219: data2 VAR 7219
 dword_c721d: data2 VAR 721d
 aInsufficientDiskSpaceAva_c7221: data2 VAR 7221
@@ -7054,9 +7065,9 @@ aDiskDriveFullCanNotCreat: data2 VAR 8cd4
 off_c8d02: data2 VAR 8d02
 unk_c8d06: data2 VAR 8d06
 dword_c9002: data2 VAR 9002
-unk_c900c: data2 VAR 900c
-unk_c905c: data2 VAR 905c
-dword_c9074: data2 VAR 9074
+forward_line_order: data2 VAR 900c
+defence_pair_order: data2 VAR 905c
+loading_shown: data2 VAR 9074
 #@ 0x9600 bytes of packed replay frames
 replay_buffer: data2 VAR 9078
 #@ pointer to the integer part of puck.x (entities[14])
@@ -7134,7 +7145,7 @@ clock_sub: data2 VAR 90de
 #@ (dx, dy) * 200 for directions 0-7
 dir8_vectors: data2 VAR 90e0
 unk_c90e2: data2 VAR 90e2
-dword_c9100: data2 VAR 9100
+random_seed: data2 VAR 9100
 word_c9102: data2 VAR 9102
 #@ stoppage length (<< 5 steps) per infraction
 stoppage_duration: data2 VAR 9104
@@ -7169,7 +7180,7 @@ word_cbc62: data2 VAR bc62
 word_cbc64: data2 VAR bc64
 word_cbc66: data2 VAR bc66
 word_cbc68: data2 VAR bc68
-word_cbc6a: data2 VAR bc6a
+line_change_prompt: data2 VAR bc6a
 word_cbc6c: data2 VAR bc6c
 unk_cbc6e: data2 VAR bc6e
 unk_cbc7e: data2 VAR bc7e
@@ -7192,16 +7203,16 @@ faceoff_spots: data2 VAR be8c
 unk_cbe8e: data2 VAR be8e
 #@ [6 - skaters_on_ice][line_slot] -> faceoff_spots index
 faceoff_lineup: data2 VAR bea8
-dword_cbebe: data2 VAR bebe
+panel_state: data2 VAR bebe
 word_cbec0: data2 VAR bec0
 #@ body checks of a user on the referee, 3 = abuse of official
 ref_hits: data2 VAR bec2
-word_cbec4: data2 VAR bec4
-dword_cbec6: data2 VAR bec6
+cut_to_scene: data2 VAR bec4
+injury_stoppage: data2 VAR bec6
 word_cbec8: data2 VAR bec8
-dword_cbeca: data2 VAR beca
+panel_clip: data2 VAR beca
 dword_cbecc: data2 VAR becc
-word_cbece: data2 VAR bece
+clip_frame: data2 VAR bece
 off_cbed0: data2 VAR bed0
 unk_cbefc: data2 VAR befc
 unk_cbf04: data2 VAR bf04
@@ -7225,7 +7236,7 @@ marker_frames: data2 VAR c0b0
 arrow_frames: data2 VAR c0b4
 word_cc0d8: data2 VAR c0d8
 byte_cc0d9: data2 VAR c0d9
-word_cc0da: data2 VAR c0da
+crowd_hit_toggle: data2 VAR c0da
 #@ high word crowd noise 0..2000, low word pending replay sound event
 crowd_noise: data2 VAR c0dc
 word_cc0de: data2 VAR c0de
@@ -7245,7 +7256,7 @@ penalty_shot_user: data2 VAR c108
 dword_cc10c: data2 VAR c10c
 #@ faceoff spot after the penalty shot (cc114 y)
 penalty_shot_spot_x: data2 VAR c110
-dword_cc114: data2 VAR c114
+penalty_shot_spot_y: data2 VAR c114
 penalty_shot_phase: data2 VAR c118
 penalty_shot_setup: data2 VAR c11c
 #@ 1000 steps for the shot
@@ -7285,7 +7296,7 @@ center_zones: data2 VAR ca38
 unk_cca3a: data2 VAR ca3a
 unk_cca3c: data2 VAR ca3c
 unk_cca3e: data2 VAR ca3e
-dword_cca58: data2 VAR ca58
+scorer_jumps: data2 VAR ca58
 #@ save animation per direction class
 goalie_save_anims: data2 VAR ca5a
 #@ ai_puck_carrier skating targets (x, y) x 10
@@ -7323,9 +7334,9 @@ unk_ccc4e: data2 VAR cc4e
 shot_targets: data2 VAR cc60
 unk_ccc62: data2 VAR cc62
 crowd_loop_channel: data2 VAR cc84
-dword_ccc88: data2 VAR cc88
-dword_ccc8c: data2 VAR cc8c
-dword_ccc90: data2 VAR cc90
+crowd_level: data2 VAR cc88
+crowd_roar: data2 VAR cc8c
+crowd_murmur: data2 VAR cc90
 dword_ccc94: data2 VAR cc94
 dword_ccc98: data2 VAR cc98
 #@ users cannot move during the whistle phase of a stoppage
@@ -7362,10 +7373,10 @@ off_cd4a0: data2 VAR d4a0
 unk_cd4b0: data2 VAR d4b0
 #@ RETURN GOALIE, PULL GOALIE, FACE-OFF, 2 LINE PASS, OFFSIDE, ICING, PENALTY
 message_strings: data2 VAR d4dc
-dword_cd4fa: data2 VAR d4fa
+replay_follow: data2 VAR d4fa
 word_cd4fc: data2 VAR d4fc
-word_cd4fe: data2 VAR d4fe
-word_cd500: data2 VAR d500
+replay_half_step: data2 VAR d4fe
+replay_held_sfx: data2 VAR d500
 unk_cd504: data2 VAR d504
 off_cd6e4: data2 VAR d6e4
 off_cd8c4: data2 VAR d8c4
@@ -7724,7 +7735,7 @@ unk_d0720: data2 VAR 10720
 aPlayerStatistics_d0740: data2 VAR 10740
 aDisplay: data2 VAR 10752
 unk_d075e: data2 VAR 1075e
-byte_d079e: data2 VAR 1079e
+roster_team_column: data2 VAR 1079e
 byte_d079f: data2 VAR 1079f
 byte_d07a8: data2 VAR 107a8
 byte_d07a9: data2 VAR 107a9
@@ -8079,7 +8090,7 @@ a1ststarCor: data2 VAR 12782
 a2ndstarCor: data2 VAR 1278e
 a3rdstarCor: data2 VAR 1279a
 aCor_d27a2: data2 VAR 127a2
-dword_d27b2: data2 VAR 127b2
+speech_voice: data2 VAR 127b2
 byte_d27b6: data2 VAR 127b6
 dword_d27b7: data2 VAR 127b7
 speech_enabled: data2 VAR 127bb
@@ -8327,7 +8338,7 @@ dword_d429c: data2 VAR 1429c
 funcptr_d42a0: data2 VAR 142a0
 off_d42a4: data2 VAR 142a4
 dword_d42a8: data2 VAR 142a8
-dword_d42ac: data2 VAR 142ac
+text_bg_colour: data2 VAR 142ac
 dword_d42b0: data2 VAR 142b0
 dword_d42b4: data2 VAR 142b4
 dword_d42b8: data2 VAR 142b8
@@ -8556,8 +8567,8 @@ unk_d5efe: data2 VAR 15efe
 unk_d5f58: data2 VAR 15f58
 unk_d5fb4: data2 VAR 15fb4
 unk_d6012: data2 VAR 16012
-unk_d6074: data2 VAR 16074
-unk_d6178: data2 VAR 16178
+atan_table: data2 VAR 16074
+sine_table: data2 VAR 16178
 unk_d6578: data2 VAR 16578
 dword_d657c: data2 VAR 1657c
 byte_d65f8: data2 VAR 165f8
@@ -8565,19 +8576,19 @@ byte_d65f9: data2 VAR 165f9
 word_d65fc: data2 VAR 165fc
 funcptr_d6600: data2 VAR 16600
 funcptr_d6604: data2 VAR 16604
-unk_d6608: data2 VAR 16608
+pcspk_divisors: data2 VAR 16608
 byte_d6770: data2 VAR 16770
-byte_d6774: data2 VAR 16774
+pcspk_hw_active: data2 VAR 16774
 byte_d6775: data2 VAR 16775
 byte_d6776: data2 VAR 16776
 byte_d6777: data2 VAR 16777
 byte_d6778: data2 VAR 16778
-unk_d677b: data2 VAR 1677b
+pcspk_hw_div: data2 VAR 1677b
 word_d677d: data2 VAR 1677d
 word_d677f: data2 VAR 1677f
 word_d6781: data2 VAR 16781
 word_d6783: data2 VAR 16783
-byte_d6785: data2 VAR 16785
+pcspk_hw_enabled: data2 VAR 16785
 byte_d6786: data2 VAR 16786
 byte_d6787: data2 VAR 16787
 byte_d6788: data2 VAR 16788
@@ -8587,20 +8598,20 @@ byte_d678d: data2 VAR 1678d
 byte_d678e: data2 VAR 1678e
 byte_d678f: data2 VAR 1678f
 byte_d6790: data2 VAR 16790
-byte_d679a: data2 VAR 1679a
-word_d679c: data2 VAR 1679c
+pcspk_tick_count: data2 VAR 1679a
+opl_port: data2 VAR 1679c
 dword_d67a0: data2 VAR 167a0
 dword_d67a4: data2 VAR 167a4
-unk_d67a8: data2 VAR 167a8
-unk_d67b4: data2 VAR 167b4
-unk_d67f4: data2 VAR 167f4
-unk_d683c: data2 VAR 1683c
-unk_d687c: data2 VAR 1687c
-unk_d68fc: data2 VAR 168fc
+opl_voice_operator: data2 VAR 167a8
+opl_voice_registers: data2 VAR 167b4
+adlib_fnum_table: data2 VAR 167f4
+adlib_velocity_levels: data2 VAR 1683c
+adlib_volume_table: data2 VAR 1687c
+opl_shadow: data2 VAR 168fc
 unk_d691c: data2 VAR 1691c
 unk_d699c: data2 VAR 1699c
 unk_d69b9: data2 VAR 169b9
-unk_d69ff: data2 VAR 169ff
+opl_written: data2 VAR 169ff
 unk_d6a1f: data2 VAR 16a1f
 unk_d6a9f: data2 VAR 16a9f
 unk_d6abc: data2 VAR 16abc
@@ -9194,7 +9205,7 @@ byte_dc224: data2 VAR 1c224
 byte_dc225: data2 VAR 1c225
 unk_dc228: data2 VAR 1c228
 font_current_default: data2 VAR 1c230
-dword_dc234: data2 VAR 1c234
+league_game_number: data2 VAR 1c234
 #@ mouse pointer shape bank
 pointer_shapes: data2 VAR 1c238
 unk_dc23e: data2 VAR 1c23e
@@ -9234,29 +9245,29 @@ hud_blank_digit: data2 VAR 1c334
 dword_dc338: data2 VAR 1c338
 dword_dc33c: data2 VAR 1c33c
 unk_dc340: data2 VAR 1c340
-unk_dc640: data2 VAR 1c640
+standings_order: data2 VAR 1c640
 dword_dc6a8: data2 VAR 1c6a8
 dword_dc6ac: data2 VAR 1c6ac
 dword_dc6b0: data2 VAR 1c6b0
 dword_dc6b4: data2 VAR 1c6b4
 dword_dc6b8: data2 VAR 1c6b8
-unk_dc6bc: data2 VAR 1c6bc
-unk_dc720: data2 VAR 1c720
+roster_skater_order: data2 VAR 1c6bc
+roster_goalie_order: data2 VAR 1c720
 dword_dc734: data2 VAR 1c734
-dword_dc738: data2 VAR 1c738
+stats_hub_active: data2 VAR 1c738
 unk_dc73c: data2 VAR 1c73c
 dword_dc750: data2 VAR 1c750
 unk_dc754: data2 VAR 1c754
 dword_dc7b8: data2 VAR 1c7b8
 unk_dc7bc: data2 VAR 1c7bc
 dword_dc830: data2 VAR 1c830
-unk_dc834: data2 VAR 1c834
+card_player_record: data2 VAR 1c834
 byte_dc836: data2 VAR 1c836
 unk_dc837: data2 VAR 1c837
 unk_dc847: data2 VAR 1c847
 dword_dc85c: data2 VAR 1c85c
 dword_dc860: data2 VAR 1c860
-unk_dc868: data2 VAR 1c868
+league_status_shown: data2 VAR 1c868
 dword_dc888: data2 VAR 1c888
 dword_dc88c: data2 VAR 1c88c
 unk_dc890: data2 VAR 1c890
@@ -9294,7 +9305,7 @@ unk_dd0d8: data2 VAR 1d0d8
 dword_dd100: data2 VAR 1d100
 dword_dd104: data2 VAR 1d104
 dword_dd108: data2 VAR 1d108
-dword_dd10c: data2 VAR 1d10c
+standings_rows: data2 VAR 1d10c
 dword_dd110: data2 VAR 1d110
 dword_dd114: data2 VAR 1d114
 dword_dd118: data2 VAR 1d118
@@ -9332,7 +9343,7 @@ dword_dd660: data2 VAR 1d660
 dword_dd664: data2 VAR 1d664
 dword_dd668: data2 VAR 1d668
 byte_dd669: data2 VAR 1d669
-dword_dd66c: data2 VAR 1d66c
+lineup_logos: data2 VAR 1d66c
 dword_dd670: data2 VAR 1d670
 dword_dd678: data2 VAR 1d678
 dword_dd688: data2 VAR 1d688
@@ -9357,16 +9368,16 @@ dword_dd748: data2 VAR 1d748
 dword_dd74c: data2 VAR 1d74c
 byte_dd750: data2 VAR 1d750
 dword_dd770: data2 VAR 1d770
-unk_dd774: data2 VAR 1d774
+calendar_games: data2 VAR 1d774
 unk_dd775: data2 VAR 1d775
-dword_dd780: data2 VAR 1d780
+calendar_game: data2 VAR 1d780
 dword_dd784: data2 VAR 1d784
 unk_dd788: data2 VAR 1d788
 unk_dd789: data2 VAR 1d789
 dword_dd794: data2 VAR 1d794
 dword_dd798: data2 VAR 1d798
 dword_dd79c: data2 VAR 1d79c
-dword_dd7a0: data2 VAR 1d7a0
+calendar_month: data2 VAR 1d7a0
 dword_dd7a4: data2 VAR 1d7a4
 dword_dd7a8: data2 VAR 1d7a8
 dword_dd7ac: data2 VAR 1d7ac
@@ -9388,7 +9399,7 @@ dword_ddd28: data2 VAR 1dd28
 dword_ddd2c: data2 VAR 1dd2c
 dword_ddd30: data2 VAR 1dd30
 dword_ddd34: data2 VAR 1dd34
-dword_ddd38: data2 VAR 1dd38
+league_team: data2 VAR 1dd38
 dword_ddd3c: data2 VAR 1dd3c
 byte_ddd40: data2 VAR 1dd40
 byte_ddd41: data2 VAR 1dd41
@@ -9427,7 +9438,7 @@ unk_deb74: data2 VAR 1eb74
 unk_deb78: data2 VAR 1eb78
 unk_deb7c: data2 VAR 1eb7c
 unk_deb80: data2 VAR 1eb80
-unk_dee94: data2 VAR 1ee94
+crowd_figures: data2 VAR 1ee94
 unk_dee96: data2 VAR 1ee96
 unk_dee97: data2 VAR 1ee97
 dword_def84: data2 VAR 1ef84
@@ -9613,7 +9624,7 @@ word_e024e: data2 VAR 2024e
 byte_e024f: data2 VAR 2024f
 byte_e0250: data2 VAR 20250
 byte_e028c: data2 VAR 2028c
-byte_e02c8: data2 VAR 202c8
+panel_title: data2 VAR 202c8
 word_e0304: data2 VAR 20304
 word_e0306: data2 VAR 20306
 byte_e0308: data2 VAR 20308
@@ -9621,8 +9632,8 @@ byte_e0344: data2 VAR 20344
 unk_e037e: data2 VAR 2037e
 word_e0380: data2 VAR 20380
 word_e0382: data2 VAR 20382
-unk_e0384: data2 VAR 20384
-unk_e038a: data2 VAR 2038a
+lineup_req_roster: data2 VAR 20384
+lineup_req_slot: data2 VAR 2038a
 #@ readiness of the home centre (1..6) set by ai_faceoff
 faceoff_ready_home: data2 VAR 2038e
 word_e0390: data2 VAR 20390
@@ -9635,21 +9646,21 @@ faceoff_countdown_digit: data2 VAR 20398
 word_e039a: data2 VAR 2039a
 replay_write_ptr: data2 VAR 2039c
 dword_e03a0: data2 VAR 203a0
-dword_e03a4: data2 VAR 203a4
+controls_read: data2 VAR 203a4
 dword_e03a8: data2 VAR 203a8
 dword_e03aa: data2 VAR 203aa
-dword_e03ac: data2 VAR 203ac
-dword_e03ae: data2 VAR 203ae
+scratch_e03ac: data2 VAR 203ac
+scratch_e03ae: data2 VAR 203ae
 dword_e03b0: data2 VAR 203b0
-dword_e03b2: data2 VAR 203b2
+scratch_e03b2: data2 VAR 203b2
 dword_e03b4: data2 VAR 203b4
-dword_e03b6: data2 VAR 203b6
+scratch_e03b6: data2 VAR 203b6
 dword_e03b8: data2 VAR 203b8
 dword_e03b9: data2 VAR 203b9
-dword_e03ba: data2 VAR 203ba
+scratch_a: data2 VAR 203ba
 dword_e03bc: data2 VAR 203bc
 dword_e03bd: data2 VAR 203bd
-dword_e03be: data2 VAR 203be
+scratch_b: data2 VAR 203be
 dword_e03c0: data2 VAR 203c0
 byte_e03c1: data2 VAR 203c1
 byte_e03c4: data2 VAR 203c4
@@ -9684,10 +9695,10 @@ word_e9aa4: data2 VAR 29aa4
 excitement: data2 VAR 29aa6
 word_e9aa8: data2 VAR 29aa8
 word_e9aaa: data2 VAR 29aaa
-dword_e9aac: data2 VAR 29aac
+announce_time: data2 VAR 29aac
 dword_e9aae: data2 VAR 29aae
-word_e9ab0: data2 VAR 29ab0
-dword_e9ab2: data2 VAR 29ab2
+goal_flags: data2 VAR 29ab0
+clip_script_pos: data2 VAR 29ab2
 word_e9ab4: data2 VAR 29ab4
 dword_e9ab6: data2 VAR 29ab6
 dword_e9ab7: data2 VAR 29ab7
@@ -9715,7 +9726,7 @@ byte_e9acf: data2 VAR 29acf
 byte_e9ad0: data2 VAR 29ad0
 byte_e9ad1: data2 VAR 29ad1
 byte_e9ad2: data2 VAR 29ad2
-byte_e9ad3: data2 VAR 29ad3
+goal_call: data2 VAR 29ad3
 byte_e9ad4: data2 VAR 29ad4
 byte_e9ad5: data2 VAR 29ad5
 byte_e9ad6: data2 VAR 29ad6
@@ -9724,7 +9735,7 @@ unk_e9ada: data2 VAR 29ada
 draw_order_list: data2 VAR 29adb
 unk_e9adc: data2 VAR 29adc
 unk_e9add: data2 VAR 29add
-unk_e9ade: data2 VAR 29ade
+draw_order_slots: data2 VAR 29ade
 unk_e9adf: data2 VAR 29adf
 dword_e9af0: data2 VAR 29af0
 dword_e9af2: data2 VAR 29af2
@@ -9732,10 +9743,10 @@ dword_e9af4: data2 VAR 29af4
 unk_e9af6: data2 VAR 29af6
 unk_e9af8: data2 VAR 29af8
 unk_e9afa: data2 VAR 29afa
-dword_e9b04: data2 VAR 29b04
+sequence_steps: data2 VAR 29b04
 #@ strength of the last collision between opponents (collide_pair)
 last_impact: data2 VAR 29b28
-unk_e9b2a: data2 VAR 29b2a
+crowd_spots_busy: data2 VAR 29b2a
 unk_e9b2c: data2 VAR 29b2c
 unk_e9b4c: data2 VAR 29b4c
 unk_e9ba4: data2 VAR 29ba4
@@ -9848,7 +9859,7 @@ unk_ea0fc: data2 VAR 2a0fc
 unk_ea0fd: data2 VAR 2a0fd
 unk_ea101: data2 VAR 2a101
 dword_ea298: data2 VAR 2a298
-dword_ea29c: data2 VAR 2a29c
+arrow_held_polls: data2 VAR 2a29c
 dword_ea2a0: data2 VAR 2a2a0
 byte_ea2a4: data2 VAR 2a2a4
 dword_ea2a5: data2 VAR 2a2a5
@@ -9866,18 +9877,18 @@ unk_eac84: data2 VAR 2ac84
 unk_eac86: data2 VAR 2ac86
 dword_eaf78: data2 VAR 2af78
 dword_eaf7c: data2 VAR 2af7c
-unk_eaf80: data2 VAR 2af80
+editor_selected: data2 VAR 2af80
 unk_eaf99: data2 VAR 2af99
 unk_eaf9c: data2 VAR 2af9c
 unk_eafb5: data2 VAR 2afb5
 unk_eafb8: data2 VAR 2afb8
-dword_ebc68: data2 VAR 2bc68
+editor_dirty: data2 VAR 2bc68
 dword_ebc6c: data2 VAR 2bc6c
 dword_ebc70: data2 VAR 2bc70
 dword_ebc74: data2 VAR 2bc74
 dword_ebc78: data2 VAR 2bc78
 dword_ebc7c: data2 VAR 2bc7c
-dword_ebca4: data2 VAR 2bca4
+editor_scroll: data2 VAR 2bca4
 dword_ebe9c: data2 VAR 2be9c
 dword_ebea0: data2 VAR 2bea0
 dword_ec6b8: data2 VAR 2c6b8
@@ -9904,7 +9915,7 @@ dword_ecde8: data2 VAR 2cde8
 dword_ecdec: data2 VAR 2cdec
 dword_ecdf0: data2 VAR 2cdf0
 unk_ecdf4: data2 VAR 2cdf4
-unk_ed0f4: data2 VAR 2d0f4
+lineup_entries: data2 VAR 2d0f4
 unk_ed0f5: data2 VAR 2d0f5
 unk_ed0f6: data2 VAR 2d0f6
 unk_ed0f7: data2 VAR 2d0f7
@@ -9927,7 +9938,7 @@ dword_ed6d8: data2 VAR 2d6d8
 dword_ed6dc: data2 VAR 2d6dc
 dword_ed6e0: data2 VAR 2d6e0
 dword_ed6e4: data2 VAR 2d6e4
-dword_ed6e8: data2 VAR 2d6e8
+camera_step_acc: data2 VAR 2d6e8
 dword_ed6ec: data2 VAR 2d6ec
 dword_ed6f0: data2 VAR 2d6f0
 dword_ed6f4: data2 VAR 2d6f4
@@ -9936,12 +9947,12 @@ dword_ed6fc: data2 VAR 2d6fc
 dword_ed700: data2 VAR 2d700
 dword_ed704: data2 VAR 2d704
 dword_ed708: data2 VAR 2d708
-dword_ed70c: data2 VAR 2d70c
+camera_free: data2 VAR 2d70c
 dword_ed74c: data2 VAR 2d74c
 dword_ed750: data2 VAR 2d750
 dword_ed754: data2 VAR 2d754
 dword_ed756: data2 VAR 2d756
-word_ed758: data2 VAR 2d758
+camera_speed_acc: data2 VAR 2d758
 dword_ed75c: data2 VAR 2d75c
 dword_ed760: data2 VAR 2d760
 dword_ed764: data2 VAR 2d764
@@ -9956,7 +9967,7 @@ dword_ed784: data2 VAR 2d784
 dword_ed788: data2 VAR 2d788
 dword_ed78c: data2 VAR 2d78c
 dword_ed790: data2 VAR 2d790
-dword_ed794: data2 VAR 2d794
+lineup_room_image: data2 VAR 2d794
 dword_ed798: data2 VAR 2d798
 dword_ed79c: data2 VAR 2d79c
 dword_ed7a0: data2 VAR 2d7a0
@@ -10168,28 +10179,28 @@ dword_f24c8: data2 VAR 324c8
 dword_f24cc: data2 VAR 324cc
 unk_f24d0: data2 VAR 324d0
 unk_f24d4: data2 VAR 324d4
-unk_f24d8: data2 VAR 324d8
+pcspk_voices: data2 VAR 324d8
 unk_f24d9: data2 VAR 324d9
-unk_f27d8: data2 VAR 327d8
+pcspk_channels: data2 VAR 327d8
 unk_f27ee: data2 VAR 327ee
 unk_f27ef: data2 VAR 327ef
 unk_f27f6: data2 VAR 327f6
 unk_f27fd: data2 VAR 327fd
-unk_f2f28: data2 VAR 32f28
+adlib_channels: data2 VAR 32f28
 unk_f2f3c: data2 VAR 32f3c
 unk_f2f3e: data2 VAR 32f3e
 unk_f2f40: data2 VAR 32f40
 unk_f2f42: data2 VAR 32f42
 unk_f2f43: data2 VAR 32f43
 unk_f2f44: data2 VAR 32f44
-unk_f3108: data2 VAR 33108
-unk_f3148: data2 VAR 33148
+adlib_channel_ptrs: data2 VAR 33108
+adlib_voices: data2 VAR 33148
 unk_f3150: data2 VAR 33150
 unk_f3196: data2 VAR 33196
 unk_f3197: data2 VAR 33197
-word_f344e: data2 VAR 3344e
-word_f3450: data2 VAR 33450
-word_f3452: data2 VAR 33452
+adlib_released_mask: data2 VAR 3344e
+adlib_used_mask: data2 VAR 33450
+adlib_free_mask: data2 VAR 33452
 unk_f3454: data2 VAR 33454
 unk_f3456: data2 VAR 33456
 unk_f345c: data2 VAR 3345c
@@ -10198,9 +10209,9 @@ unk_f34dc: data2 VAR 334dc
 unk_f3534: data2 VAR 33534
 unk_f3538: data2 VAR 33538
 unk_f354a: data2 VAR 3354a
-word_f3714: data2 VAR 33714
-word_f3716: data2 VAR 33716
-word_f3718: data2 VAR 33718
+sbdac_released_mask: data2 VAR 33714
+sbdac_free_mask: data2 VAR 33716
+sbdac_used_mask: data2 VAR 33718
 unk_f371c: data2 VAR 3371c
 unk_f371e: data2 VAR 3371e
 word_f531c: data2 VAR 3531c

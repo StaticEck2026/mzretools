@@ -8,7 +8,7 @@
 
 int __watcall
 text_entry_loop(int param_1,int param_2,undefined4 param_3,undefined4 unaff_ECX,undefined4 param_5,
-         code *param_6,int param_7,uint param_8)
+               code *param_6,int param_7,uint param_8)
 
 {
   bool bVar1;
@@ -271,14 +271,14 @@ longlong __watcall frontend_main_menu(undefined4 param_1,uint unaff_EDX)
   *(short *)(local_28 + 1) = *(short *)(pointer_shapes + 1) + 1;
   *(short *)((int)local_28 + 6) = *(short *)((int)pointer_shapes + 6) + 1;
   if ((sound_enabled != '\0') && (dword_c721d == 0)) {
-    if (byte_c7218 == '\0') {
+    if (fe_desk_toggle == '\0') {
       puVar9 = install_path;
       if (byte_ed9ab != '\x01') {
         puVar9 = (undefined *)0x0;
       }
       local_bc[0] = 0x31cb7;
       make_path(local_98,puVar9,aTonights_c173a,&aIff_c172c);
-      byte_c7218 = '\x01';
+      fe_desk_toggle = '\x01';
     }
     else {
       puVar9 = install_path;
@@ -287,7 +287,7 @@ longlong __watcall frontend_main_menu(undefined4 param_1,uint unaff_EDX)
       }
       local_bc[0] = 0x31c87;
       make_path(local_98,puVar9,aMaindesk,&aIff_c172c);
-      byte_c7218 = '\0';
+      fe_desk_toggle = '\0';
     }
     local_bc[0] = 0x31cc7;
     dword_c721d = loadsound(local_98);
@@ -413,13 +413,14 @@ LAB_00031de2:
       iVar4 = iStack_1c;
       local_bc[0] = 0xf8;
       local_c0 = (int *)0xf9;
-      highlight_menu_item(local_88[iStack_1c] + local_78[iStack_1c] * 8,local_98[iStack_1c * 2 + -8]
-                          ,local_98[iStack_1c * 2 + -7],0xfa);
+      menu_item_draw_normal
+                (local_88[iStack_1c] + local_78[iStack_1c] * 8,local_98[iStack_1c * 2 + -8],
+                 local_98[iStack_1c * 2 + -7],0xfa);
       iVar6 = local_40;
       local_78[iVar4] = local_40;
       local_bc[0] = 0xf8;
       local_c0 = (int *)0xf9;
-      unhighlight_menu_item
+      menu_item_draw_selected
                 (local_88[iVar4] + iVar6 * 8,local_98[iVar4 * 2 + -8],local_98[iVar4 * 2 + -7],0xfa)
       ;
       iVar3 = local_3c[0];
@@ -569,14 +570,14 @@ LAB_00031de2:
       bVar1 = false;
       if ((sound_enabled != '\0') && (dword_c721d == 0)) {
         bVar1 = true;
-        if (byte_c7218 == '\0') {
+        if (fe_desk_toggle == '\0') {
           puVar9 = (undefined *)0x0;
           if (byte_ed9ab == '\x01') {
             puVar9 = install_path;
           }
           local_bc[0] = 0x32154;
           make_path(local_98,puVar9,aTonights_c173a,&aIff_c172c);
-          byte_c7218 = '\x01';
+          fe_desk_toggle = '\x01';
         }
         else {
           puVar9 = install_path;
@@ -585,7 +586,7 @@ LAB_00031de2:
           }
           local_bc[0] = 0x32128;
           make_path(local_98,puVar9,aMaindesk,&aIff_c172c);
-          byte_c7218 = '\0';
+          fe_desk_toggle = '\0';
         }
         local_bc[0] = 0x32164;
         dword_c721d = loadsound(local_98);
@@ -658,8 +659,9 @@ LAB_00031de2:
     }
     local_bc[0] = 0xf8;
     local_c0 = (int *)0xf9;
-    highlight_menu_item(local_88[local_3c[0]] + local_78[local_3c[0]] * 8,
-                        local_98[local_3c[0] * 2 + -8],local_98[local_3c[0] * 2 + -7],0xfa);
+    menu_item_draw_normal
+              (local_88[local_3c[0]] + local_78[local_3c[0]] * 8,local_98[local_3c[0] * 2 + -8],
+               local_98[local_3c[0] * 2 + -7],0xfa);
     iVar3 = local_3c[0];
     local_78[local_3c[0]] = local_40;
     local_bc[0] = 0xf8;
@@ -670,7 +672,7 @@ LAB_00031de2:
 LAB_00032364:
     local_bc[0] = 0xf8;
     local_c0 = (int *)0xf9;
-    unhighlight_menu_item(puVar7,iVar10,iVar6,0xfa);
+    menu_item_draw_selected(puVar7,iVar10,iVar6,0xfa);
   }
   local_bc[0] = local_3c[2];
   local_c0 = local_30;
@@ -1026,13 +1028,13 @@ undefined8 __watcall exhibition_mode(int *param_1,undefined4 unaff_EDX)
     dword_c65c8 = exh_hub_league_calendar;
     dword_c65cc = exh_hub_standings;
     dword_c65d0 = exh_hub_stats;
-    dword_dc234 = (int)((ulonglong)uVar4 >> 0x20);
+    league_game_number = (int)((ulonglong)uVar4 >> 0x20);
     setup_controls();
     option_flags._1_1_ = option_flags._1_1_ | 2;
     uVar3 = extraout_EDX;
     if (*param_1 < 0) {
       begin_game_session(0);
-      uVar1 = team_select_screen((int)user2_team._2_2_,(int)_away_team_id);
+      uVar1 = scouting_report_screen((int)user2_team._2_2_,(int)_away_team_id);
       ui_shutdown(uVar1,uVar1);
       uVar3 = extraout_EDX_00;
     }
@@ -2079,17 +2081,17 @@ void __watcall calendar_next_month(void)
   __CHK(0x10);
   funcptr_c85f6 = calendar_next_month;
   funcptr_c8616 = calendar_prev_month;
-  dword_dd7a0 = dword_dd7a0 + 1;
-  if (dword_dd7a0 == 0xc) {
-    dword_dd7a0 = 0;
+  calendar_month = calendar_month + 1;
+  if (calendar_month == 0xc) {
+    calendar_month = 0;
   }
-  if (dword_dd7a0 == 6) {
-    dword_dd7a0 = 5;
+  if (calendar_month == 6) {
+    calendar_month = 5;
   }
-  if (dword_dd7a0 == 5) {
+  if (calendar_month == 5) {
     funcptr_c85f6 = (undefined *)0x0;
   }
-  dword_dd780 = 0xffffffff;
+  calendar_game = 0xffffffff;
   return;
 }
 
@@ -2104,17 +2106,17 @@ void __watcall calendar_prev_month(void)
   __CHK(0xc);
   funcptr_c85f6 = calendar_next_month;
   funcptr_c8616 = calendar_prev_month;
-  dword_dd7a0 = dword_dd7a0 + -1;
-  if (dword_dd7a0 == -1) {
-    dword_dd7a0 = 0xb;
+  calendar_month = calendar_month + -1;
+  if (calendar_month == -1) {
+    calendar_month = 0xb;
   }
-  if (dword_dd7a0 == 8) {
-    dword_dd7a0 = 9;
+  if (calendar_month == 8) {
+    calendar_month = 9;
   }
-  if (dword_dd7a0 == 9) {
+  if (calendar_month == 9) {
     funcptr_c8616 = (undefined *)0x0;
   }
-  dword_dd780 = 0xffffffff;
+  calendar_game = 0xffffffff;
   return;
 }
 
@@ -2128,7 +2130,7 @@ void __watcall calendar_return(void)
 {
   __CHK(8);
   dword_dd794 = 0xffffffff;
-  dword_dd780 = 0xffffffff;
+  calendar_game = 0xffffffff;
   return;
 }
 
@@ -2138,7 +2140,8 @@ void __watcall calendar_return(void)
 // ================================================================================================
 
 void __watcall
-fade_in_bank_palette(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+fade_in_bank_palette
+          (undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   int iVar1;
@@ -2288,7 +2291,7 @@ int __watcall calendar_screen(undefined4 param_1,undefined4 param_2,uint unaff_E
   dword_c65d0 = cal_hub_stats;
   set_dialog_colors(0xc,0xc0,0x67,0xc0,0xff);
   local_2c = 0;
-  dword_dd780 = -1;
+  calendar_game = -1;
   dword_dd794 = 0;
   dword_ddd2c = 0;
   local_38 = font_main;
@@ -2332,7 +2335,7 @@ int __watcall calendar_screen(undefined4 param_1,undefined4 param_2,uint unaff_E
     sVar7 = file_read(uStack_64,&sStack_24,0);
   }
   if (sVar7 == 0) {
-    dword_dd7a0 = -1;
+    calendar_month = -1;
     sVar8 = 5;
     uStack_28 = 0xffffffff;
     uStack_22 = CONCAT22(0xffff,(undefined2)uStack_22);
@@ -2362,8 +2365,8 @@ int __watcall calendar_screen(undefined4 param_1,undefined4 param_2,uint unaff_E
           iVar9 = local_2c * 6;
           if ((abStack_4e0[iVar9] != 0xff) && (abStack_4e0[iVar9 + 1] != 0xff)) {
             if (((abStack_4e0[iVar9 + 4] == 0xff) && (abStack_4e0[iVar9 + 5] == 0xff)) &&
-               (dword_dd7a0 < 0)) {
-              dword_dd7a0 = abStack_4e0[iVar9] - 1;
+               (calendar_month < 0)) {
+              calendar_month = abStack_4e0[iVar9] - 1;
               uStack_28 = CONCAT22(uStack_16,uStack_18);
               uStack_22 = CONCAT22(local_2c,(undefined2)uStack_22);
             }
@@ -2374,8 +2377,8 @@ int __watcall calendar_screen(undefined4 param_1,undefined4 param_2,uint unaff_E
       }
       uStack_18 = uStack_18 + 1;
     }
-    if (dword_dd7a0 < 0) {
-      dword_dd7a0 = (int)sVar8;
+    if (calendar_month < 0) {
+      calendar_month = (int)sVar8;
     }
   }
   if (sVar7 != 0) {
@@ -2387,22 +2390,22 @@ int __watcall calendar_screen(undefined4 param_1,undefined4 param_2,uint unaff_E
     calendar_game_opponent(unaff_EBX,abStack_4e0,iVar9);
     dword_ddd30 = (uint)abStack_4e0[iVar9 * 6];
     dword_ddd28 = (uint)abStack_4e0[iVar9 * 6 + 1];
-    dword_dd780 = *(int *)((int)&uStack_23a + iVar9 * 2) >> 0x10;
+    calendar_game = *(int *)((int)&uStack_23a + iVar9 * 2) >> 0x10;
   }
   if (sVar7 == 0) {
-    if (dword_dd7a0 == 5) {
+    if (calendar_month == 5) {
       funcptr_c85f6 = (undefined *)0x0;
     }
     else {
       funcptr_c85f6 = calendar_next_month;
     }
-    if (dword_dd7a0 == 9) {
+    if (calendar_month == 9) {
       funcptr_c8616 = (undefined *)0x0;
     }
     else {
       funcptr_c8616 = calendar_prev_month;
     }
-    sStack_14 = (short)dword_dd7a0;
+    sStack_14 = (short)calendar_month;
     setdefaultscreen();
     local_b4[0] = aStatistics_c864c + 0xb;
     local_9c[0] = (char *)0x3;
@@ -2416,7 +2419,7 @@ int __watcall calendar_screen(undefined4 param_1,undefined4 param_2,uint unaff_E
     wait_sprite_fade();
     setdefaultscreen();
     draw_menu_items(aStatistics_c864c + 0xb,3,local_48,local_40,local_44);
-    calendar_draw_games(dword_dd7a0,auStack_154,uStack_3c,abStack_4e0,(int)local_2c,unaff_EBX,
+    calendar_draw_games(calendar_month,auStack_154,uStack_3c,abStack_4e0,(int)local_2c,unaff_EBX,
                         local_38,dword_c8992);
     if ((sound_enabled != '\0') && (dword_c721d == 0)) {
       puVar14 = install_path;
@@ -2492,9 +2495,9 @@ LAB_00035eea:
               sVar8 = (((short)((int)(local_78 + -0x11) / 0x3d << 3) -
                        (short)((int)(local_78 + -0x11) / 0x3d)) +
                       (short)(((int)local_74 + -0x52) / 0x4b)) -
-                      (ushort)(byte)(&unk_c845e)[dword_dd7a0] % 7;
+                      (ushort)(byte)(&unk_c845e)[calendar_month] % 7;
               uStack_1e = CONCAT22(sVar8,(undefined2)uStack_1e);
-              if ((-1 < sVar8) && (sVar8 < (short)(ushort)(byte)(&unk_c8445)[dword_dd7a0])) {
+              if ((-1 < sVar8) && (sVar8 < (short)(ushort)(byte)(&unk_c8445)[calendar_month])) {
                 uStack_18._0_1_ = 0;
                 uStack_18._1_1_ = 0;
                 sVar7 = 0;
@@ -2508,11 +2511,11 @@ LAB_00035eea:
                   iVar15 = CONCAT13(uStack_18._1_1_,CONCAT12((undefined)uStack_18,uStack_1a)) >>
                            0x10;
                   iVar9 = iVar15 * 6;
-                  if ((((uint)abStack_4e0[iVar9] == dword_dd7a0 + 1U) &&
-                      (CONCAT31((int3)(dword_dd7a0 + 1U >> 8),abStack_4e0[iVar9 + 1]) ==
+                  if ((((uint)abStack_4e0[iVar9] == calendar_month + 1U) &&
+                      (CONCAT31((int3)(calendar_month + 1U >> 8),abStack_4e0[iVar9 + 1]) ==
                        (uStack_1e >> 0x10) + 1)) &&
                      ((abStack_4e0[iVar9 + 4] == 0xff && (abStack_4e0[iVar9 + 5] == 0xff)))) {
-                    if (*(int *)((int)&uStack_23a + iVar15 * 2) >> 0x10 == dword_dd780) {
+                    if (*(int *)((int)&uStack_23a + iVar15 * 2) >> 0x10 == calendar_game) {
                       dword_dd794 = -1;
                     }
                     if ((sStack_24 < 0x444) ||
@@ -2542,7 +2545,7 @@ LAB_00035eea:
                       iVar9 = iVar9 / 7;
                       setclip((&dword_c895e)[iVar15] + -2,(&dword_c895e)[iVar15] + 0x4d,
                               (&dword_c897a)[iVar9] + -2,(&dword_c897a)[iVar9] + 0x3f);
-                      calendar_draw_games(dword_dd7a0,auStack_154,uStack_3c,abStack_4e0,
+                      calendar_draw_games(calendar_month,auStack_154,uStack_3c,abStack_4e0,
                                           (int)local_2c,unaff_EBX,local_38,dword_c8992);
                     }
                     iVar9 = (byte)(&unk_c845d)[dword_ddd30] + dword_ddd28 + -1;
@@ -2550,8 +2553,8 @@ LAB_00035eea:
                     iVar9 = iVar9 / 7;
                     setclip((&dword_c895e)[iVar15] + -2,(&dword_c895e)[iVar15] + 0x4d,
                             (&dword_c897a)[iVar9] + -2,(&dword_c897a)[iVar9] + 0x3f);
-                    calendar_draw_games(dword_dd7a0,auStack_154,uStack_3c,abStack_4e0,(int)local_2c,
-                                        unaff_EBX,local_38,dword_c8992);
+                    calendar_draw_games(calendar_month,auStack_154,uStack_3c,abStack_4e0,
+                                        (int)local_2c,unaff_EBX,local_38,dword_c8992);
                     setclip(0,0x280,0,0x1e0);
                     sVar7 = uStack_18;
                   }
@@ -2562,7 +2565,7 @@ LAB_00035eea:
               }
             }
             local_34 = iVar9;
-            dword_dd780 = (int)local_30;
+            calendar_game = (int)local_30;
           }
           else {
             uStack_18._0_1_ = (undefined)local_34;
@@ -2628,9 +2631,10 @@ LAB_00035eea:
               }
               uVar25 = local_40;
               uStack_18 = sVar7;
-              highlight_menu_item(local_b4[local_7c] + (int)local_b4[local_7c + 9] * 0x20,
-                                  local_d4[local_7c * 2 + 2],local_d4[local_7c * 2 + 3],local_48,
-                                  local_40,local_44);
+              menu_item_draw_normal
+                        (local_b4[local_7c] + (int)local_b4[local_7c + 9] * 0x20,
+                         local_d4[local_7c * 2 + 2],local_d4[local_7c * 2 + 3],local_48,local_40,
+                         local_44);
               iVar6 = local_7c;
               local_b4[local_7c + 9] = local_80;
               iVar9 = local_d4[iVar6 * 2 + 3];
@@ -2673,11 +2677,11 @@ LAB_00035eea:
               }
               uStack_18 = sVar7;
               local_34 = iVar9;
-              highlight_menu_item(local_b4[iVar9] + (int)local_b4[iVar9 + 9] * 0x20,
-                                  local_d4[iVar9 * 2 + 2],local_d4[iVar9 * 2 + 3],local_48,local_40,
-                                  local_44);
+              menu_item_draw_normal
+                        (local_b4[iVar9] + (int)local_b4[iVar9 + 9] * 0x20,local_d4[iVar9 * 2 + 2],
+                         local_d4[iVar9 * 2 + 3],local_48,local_40,local_44);
               local_b4[iVar9 + 9] = local_80;
-              unhighlight_menu_item
+              menu_item_draw_selected
                         (local_b4[iVar9] + (int)local_80 * 0x20,local_d4[iVar9 * 2 + 2],
                          local_d4[iVar9 * 2 + 3],local_48,local_40,local_44);
               iVar6 = local_7c;
@@ -2780,21 +2784,21 @@ LAB_00035eea:
               local_74 = local_6c;
               local_78 = local_70;
               event_queue_reset();
-              if (sStack_14 != dword_dd7a0) {
+              if (sStack_14 != calendar_month) {
                 setdefaultscreen();
                 draw_menu_items(aStatistics_c864c + 0xb,3,local_48,local_40,local_44);
-                calendar_draw_games(dword_dd7a0,auStack_154,uStack_3c,abStack_4e0,(int)local_2c,
+                calendar_draw_games(calendar_month,auStack_154,uStack_3c,abStack_4e0,(int)local_2c,
                                     unaff_EBX,local_38,dword_c8992);
               }
               if (dword_ddd2c != 0) {
                 setdefaultscreen();
                 draw_menu_items(aStatistics_c864c + 0xb,3,local_48,local_40,local_44);
-                calendar_draw_games(dword_dd7a0,auStack_154,uStack_3c,abStack_4e0,(int)local_2c,
+                calendar_draw_games(calendar_month,auStack_154,uStack_3c,abStack_4e0,(int)local_2c,
                                     unaff_EBX,local_38,dword_c8992);
                 fade_in_bank_palette(dword_c8992);
                 dword_ddd2c = 0;
               }
-              sStack_14 = (short)dword_dd7a0;
+              sStack_14 = (short)calendar_month;
               sVar7 = uStack_18;
               goto LAB_00035e6a;
             }
@@ -2829,9 +2833,10 @@ LAB_00035eea:
               local_34 = local_7c;
             }
             uStack_18 = sVar7;
-            highlight_menu_item(local_b4[local_7c] + (int)local_b4[local_7c + 9] * 0x20,
-                                local_d4[local_7c * 2 + 2],local_d4[local_7c * 2 + 3],local_48,
-                                local_40,local_44);
+            menu_item_draw_normal
+                      (local_b4[local_7c] + (int)local_b4[local_7c + 9] * 0x20,
+                       local_d4[local_7c * 2 + 2],local_d4[local_7c * 2 + 3],local_48,local_40,
+                       local_44);
             iVar6 = local_7c;
             local_b4[local_7c + 9] = local_80;
             iVar9 = local_d4[iVar6 * 2 + 3];
@@ -2840,7 +2845,7 @@ LAB_00035eea:
             uVar12 = local_48;
             uVar25 = local_40;
           }
-          unhighlight_menu_item(pcVar19,iVar15,iVar9,uVar12,uVar25,local_44);
+          menu_item_draw_selected(pcVar19,iVar15,iVar9,uVar12,uVar25,local_44);
           sVar7 = uStack_18;
         }
 LAB_00035e6a:
@@ -2871,7 +2876,7 @@ LAB_00035ef2:
   if ((sound_enabled != '\0') && (dword_c721d != 0)) {
     sound_fade(dword_d2431,3,100);
   }
-  return dword_dd780;
+  return calendar_game;
 }
 
 
@@ -3101,7 +3106,7 @@ LAB_0003642b:
   while ((local_24 < 3 && (iVar4 == 0))) {
     if (*(int *)((int)&dword_e9af4 + local_24 * 4 + 2) >> 0x10 == unaff_ECX) {
       iVar4 = file_read_b(local_44[4],auStack_f0,
-                        aiStack_3c4[*(int *)(&unk_e9af8 + local_24 * 2) >> 0x10]);
+                          aiStack_3c4[*(int *)(&unk_e9af8 + local_24 * 2) >> 0x10]);
       if (iVar4 == 0) {
         if (cStack_ee == 'G') {
           iVar4 = file_read_d(local_44[3],local_128,uStack_c4);
@@ -3387,19 +3392,19 @@ void __watcall league_calendar_flow(int *param_1)
     iStack_24 = iStack_1c;
     if (iVar2 == 0) {
       set_dialog_colors(0xf9,0xfa,0xf8,0xfa,0);
-      dword_ddd38 = league_player_id_check(&league_dir,auStack_68);
-      if ((int)dword_ddd38 < 0) {
+      league_team = league_player_id_check(&league_dir,auStack_68);
+      if ((int)league_team < 0) {
         team_info_screen(&league_dir,&dword_ddac0,&unk_ddac4,&unk_dd7b4,8,aSelectATeamToPlay,
-                         &dword_ddd38);
+                         &league_team);
         iStack_24 = -1;
       }
     }
-    if ((iVar2 == 0) && (-1 < (int)dword_ddd38)) {
-      iVar2 = league_import_export_check(&league_dir,&unk_dd7b4,dword_ddd38,0,0);
+    if ((iVar2 == 0) && (-1 < (int)league_team)) {
+      iVar2 = league_import_export_check(&league_dir,&unk_dd7b4,league_team,0,0);
       if (iVar2 == 0) {
-        sprintf(local_4c,a02d,dword_ddd38);
+        sprintf(local_4c,a02d,league_team);
         strcpy((char *)&aXx,local_4c);
-        if (((&unk_dd7ca)[dword_ddd38 * 0x1e] & 1) == 0) {
+        if (((&unk_dd7ca)[league_team * 0x1e] & 1) == 0) {
           pcVar7 = &byte_c816a;
         }
         else {
@@ -3409,7 +3414,7 @@ void __watcall league_calendar_flow(int *param_1)
         if ((dword_ddac0 == 1) || (iStack_24 == 0)) {
           set_dialog_colors(0xf9,0xfa,0xf8,0xfa,0);
         }
-        iVar2 = password_prompt(dword_ddd38,&unk_dd7b4);
+        iVar2 = password_prompt(league_team,&unk_dd7b4);
       }
       if (iVar2 == 0) {
         make_path(local_ac,&league_dir,off_c80e7,&aDB);
@@ -3436,9 +3441,9 @@ void __watcall league_calendar_flow(int *param_1)
   }
   else {
     set_dialog_colors(0xf9,0xfa,0xf8,0xfa,0);
-    sprintf(local_4c,a02d,dword_ddd38);
+    sprintf(local_4c,a02d,league_team);
     strcpy((char *)&aXx,local_4c);
-    iVar2 = password_prompt(dword_ddd38,&unk_dd7b4);
+    iVar2 = password_prompt(league_team,&unk_dd7b4);
     if (iVar2 == 0) {
       iStack_28 = -1;
     }
@@ -3446,7 +3451,7 @@ void __watcall league_calendar_flow(int *param_1)
   if (iStack_28 != 0) {
     do {
       if (((dword_ddd44 >> 0x10 == -1) && (*param_1 < 0)) || (iStack_3c != 0)) {
-        uVar1 = calendar_screen(&unk_ddd4c,&aXx,dword_ddd38);
+        uVar1 = calendar_screen(&unk_ddd4c,&aXx,league_team);
         dword_ddd44 = CONCAT22(uVar1,(undefined2)dword_ddd44);
       }
       if (-1 < dword_ddd44) {
@@ -3461,8 +3466,8 @@ void __watcall league_calendar_flow(int *param_1)
           }
           if (iVar2 == 0) {
             dword_ddd34 = (uint)byte_ddd42;
-            if (dword_ddd34 == dword_ddd38) {
-              dword_ddd34 = CONCAT31((int3)(dword_ddd38 >> 8),byte_ddd43);
+            if (dword_ddd34 == league_team) {
+              dword_ddd34 = CONCAT31((int3)(league_team >> 8),byte_ddd43);
             }
             dword_ddd3c = -1;
             if ((&unk_dd7cb)[dword_ddd34 * 0x1e] == '\0') {
@@ -3520,7 +3525,7 @@ void __watcall league_calendar_flow(int *param_1)
           if (-1 < *param_1) {
             loading_screen();
           }
-          bVar10 = byte_ddd42 != dword_ddd38;
+          bVar10 = byte_ddd42 != league_team;
           if (bVar10) {
             local_38 = 1;
             league_save_name(&byte_dd750,&unk_ddd59,&unk_dd7b4);
@@ -3539,7 +3544,7 @@ void __watcall league_calendar_flow(int *param_1)
           if (byte_dd750 == '\0') {
             strcpy(&byte_dd750,&byte_dd710);
           }
-          dword_dc234 = dword_ddd44 >> 0x10;
+          league_game_number = dword_ddd44 >> 0x10;
           if (dword_ddd44._2_2_ < 0x444) {
             option_flags._1_1_ = option_flags._1_1_ | 2;
           }
@@ -3558,7 +3563,7 @@ void __watcall league_calendar_flow(int *param_1)
             iVar2 = check_disk_space_for_game();
             if (iVar2 == 0) {
               begin_game_session(byte_dc268,byte_dc267);
-              iVar2 = team_select_screen(user2_team._2_1_,away_team_id);
+              iVar2 = scouting_report_screen(user2_team._2_1_,away_team_id);
             }
             else {
               iVar2 = 4;
@@ -3676,24 +3681,25 @@ void __watcall league_calendar_flow(int *param_1)
               make_path(local_ac,&unk_ddd4c,off_c80e7,&aXx);
               iVar2 = file_open_rw(local_ac,&local_54);
               if (iVar2 == 0) {
-                iVar2 = league_update_standings(local_40,local_54,dword_ddd44 >> 0x10);
+                iVar2 = playoff_trim_series(local_40,local_54,dword_ddd44 >> 0x10);
               }
               file_close(&local_54);
               if ((iVar2 == 0) && (dword_ddd3c != 0)) {
                 make_path(local_ac,&unk_ddd59,off_c80e7,&aXx_c8158);
                 iVar2 = file_open_rw(local_ac,&local_6c);
                 if (iVar2 == 0) {
-                  iVar2 = league_update_standings(local_50,local_6c,dword_ddd44 >> 0x10);
+                  iVar2 = playoff_trim_series(local_50,local_6c,dword_ddd44 >> 0x10);
                 }
                 file_close(&local_6c);
               }
             }
           }
           if (iVar2 == 0) {
-            iVar2 = league_play_day(&unk_ddd4c,&aXx,(dword_ddd44 >> 0x10) + -1,&unk_dd7b4,dword_ddd38,2);
+            iVar2 = league_play_day(&unk_ddd4c,&aXx,(dword_ddd44 >> 0x10) + -1,&unk_dd7b4,
+                                    league_team,2);
             if (iVar2 == 0) {
               iVar2 = season_record_result
-                                (&unk_ddd4c,&aXx,dword_ddd38,local_38,iStack_30,&unk_ddd4c);
+                                (&unk_ddd4c,&aXx,league_team,local_38,iStack_30,&unk_ddd4c);
             }
             if (iVar2 == 0) {
               if (dword_ddd3c == 0) {
@@ -3701,8 +3707,8 @@ void __watcall league_calendar_flow(int *param_1)
                 puVar11 = &unk_ddd4c;
               }
               else {
-                iVar2 = league_play_day(&unk_ddd59,&aXx_c8158,dword_ddd44 >> 0x10,&unk_dd7b4,dword_ddd34,2
-                                 );
+                iVar2 = league_play_day(&unk_ddd59,&aXx_c8158,dword_ddd44 >> 0x10,&unk_dd7b4,
+                                        dword_ddd34,2);
                 if (iVar2 != 0) goto LAB_000379f4;
                 puVar8 = &aXx_c8158;
                 puVar11 = &unk_ddd59;
@@ -3744,7 +3750,8 @@ LAB_000379f4:
         iVar2 = 0;
       }
       make_path(local_ac,&league_dir,&aGAME,&aSAV);
-    } while (((-1 < dword_ddd44) && (iVar2 == 0)) && (iVar4 = file_exists_rd(local_ac), iVar4 == 0));
+    } while (((-1 < dword_ddd44) && (iVar2 == 0)) && (iVar4 = file_exists_rd(local_ac), iVar4 == 0))
+    ;
   }
   setmouselimits(0,0,0x280,0x1e0);
   return;
@@ -3842,7 +3849,8 @@ void __watcall team_grid_draw_name(uint param_1,int unaff_EDX,undefined4 unaff_E
 // ================================================================================================
 
 void __watcall
-team_grid_save_back(uint param_1,int unaff_EDX,undefined4 unaff_EBX,int unaff_ECX,undefined4 param_5)
+team_grid_save_back(uint param_1,int unaff_EDX,undefined4 unaff_EBX,int unaff_ECX,undefined4 param_5
+                   )
 
 {
   int iVar1;
@@ -4761,9 +4769,9 @@ LAB_0003a0de:
             if (*(int *)(local_94[local_74] + local_78 * 0x20 + 0x14) == 0) {
               if (*(int *)(local_94[local_74] + local_78 * 0x20 + 0x18) == 0) {
                 drawshape(ppppppuVar4,iVar11,local_64);
-                highlight_menu_item(local_94[local_74] + local_d4[local_74 + 6] * 0x20,
-                                    local_d4[local_74 * 2 + 2],local_d4[local_74 * 2 + 3],0x40,0x41,
-                                    0x42);
+                menu_item_draw_normal
+                          (local_94[local_74] + local_d4[local_74 + 6] * 0x20,
+                           local_d4[local_74 * 2 + 2],local_d4[local_74 * 2 + 3],0x40,0x41,0x42);
                 iVar14 = local_74;
                 local_d4[local_74 + 6] = local_78;
                 iVar9 = local_d4[iVar14 * 2 + 3];
@@ -4789,11 +4797,11 @@ LAB_0003a0de:
                   local_18 = local_74;
                 }
                 local_54 = local_d4[local_18 + 6] * 0x20;
-                highlight_menu_item(local_94[local_18] + local_d4[local_18 + 6] * 0x20,
-                                    local_d4[local_18 * 2 + 2],local_d4[local_18 * 2 + 3],0x40,0x41,
-                                    0x42);
+                menu_item_draw_normal
+                          (local_94[local_18] + local_d4[local_18 + 6] * 0x20,
+                           local_d4[local_18 * 2 + 2],local_d4[local_18 * 2 + 3],0x40,0x41,0x42);
                 local_d4[local_18 + 6] = local_78;
-                unhighlight_menu_item
+                menu_item_draw_selected
                           (local_94[local_18] + local_78 * 0x20,local_d4[local_18 * 2 + 2],
                            local_d4[local_18 * 2 + 3],0x40,0x41,0x42);
                 iVar9 = local_74;
@@ -4890,9 +4898,9 @@ LAB_000393b2:
                 goto LAB_0003a06b;
               }
               drawshape(ppppppuVar4,iVar11,local_64);
-              highlight_menu_item(local_94[local_74] + local_d4[local_74 + 6] * 0x20,
-                                  local_d4[local_74 * 2 + 2],local_d4[local_74 * 2 + 3],0x40,0x41,
-                                  0x42);
+              menu_item_draw_normal
+                        (local_94[local_74] + local_d4[local_74 + 6] * 0x20,
+                         local_d4[local_74 * 2 + 2],local_d4[local_74 * 2 + 3],0x40,0x41,0x42);
               iVar2 = local_74;
               iVar14 = local_78;
               local_d4[local_74 + 6] = local_78;
@@ -4900,7 +4908,7 @@ LAB_000393b2:
               iVar11 = local_d4[iVar2 * 2 + 2];
               puVar6 = local_94[iVar2] + iVar14 * 0x20;
             }
-            unhighlight_menu_item(puVar6,iVar11,iVar9,0x40,0x41,0x42);
+            menu_item_draw_selected(puVar6,iVar11,iVar9,0x40,0x41,0x42);
           }
 LAB_0003a06b:
           grabshape(ppppppuVar4,local_60 + -4,local_64);

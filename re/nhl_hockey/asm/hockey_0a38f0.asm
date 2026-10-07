@@ -5080,7 +5080,7 @@ pcspk_hw_init:
     out 0x43, al                                 ; 0a65ea e643              port 0x43 (pit_ctrl)
     call pcspk_silence                           ; 0a65ec e827000000
     mov al, 0x7f                                 ; 0a65f1 b07f
-    mov byte ptr [byte_d6785], al                ; 0a65f3 a285670d00
+    mov byte ptr [pcspk_hw_enabled], al          ; 0a65f3 a285670d00
     mov byte ptr [byte_d6786], al                ; 0a65f8 a286670d00
     mov byte ptr [byte_d6787], al                ; 0a65fd a287670d00
     mov byte ptr [byte_d6788], al                ; 0a6602 a288670d00
@@ -5133,14 +5133,14 @@ pcspk_hw_voice_on:
     je loc_a6664                                 ; 0a664c 7416
     shl eax, 1                                   ; 0a664e d1e0
     mov esi, eax                                 ; 0a6650 8bf0
-    mov ax, word ptr [esi + unk_d6608]           ; 0a6652 668b8608660d00
+    mov ax, word ptr [esi + pcspk_divisors]      ; 0a6652 668b8608660d00
     mov ebx, dword ptr [ebp + 0xc]               ; 0a6659 8b5d0c
     mov word ptr [ebx + 4], ax                   ; 0a665c 66894304
     mov word ptr [ebx + 6], ax                   ; 0a6660 66894306
 loc_a6664:
     mov esi, dword ptr [ebp + 8]                 ; 0a6664 8b7508
     mov al, 0xff                                 ; 0a6667 b0ff
-    mov byte ptr [esi + byte_d6774], al          ; 0a6669 888674670d00
+    mov byte ptr [esi + pcspk_hw_active], al     ; 0a6669 888674670d00
     pop esi                                      ; 0a666f 5e
 loc_a6670:
     leave                                        ; 0a6670 c9
@@ -5157,7 +5157,7 @@ pcspk_hw_voice_off:
     push esi                                     ; 0a6675 56
     mov esi, dword ptr [ebp + 8]                 ; 0a6676 8b7508
     xor al, al                                   ; 0a6679 32c0
-    mov byte ptr [esi + byte_d6774], al          ; 0a667b 888674670d00
+    mov byte ptr [esi + pcspk_hw_active], al     ; 0a667b 888674670d00
     pop esi                                      ; 0a6681 5e
     leave                                        ; 0a6682 c9
     ret                                          ; 0a6683 c3
@@ -5189,7 +5189,7 @@ loc_a6692:
     mov byte ptr [byte_d6770], al                ; 0a66a8 a270670d00
     shl eax, 1                                   ; 0a66ad d1e0
     mov esi, eax                                 ; 0a66af 8bf0
-    movzx ecx, word ptr [esi + unk_d6608]        ; 0a66b1 0fb78e08660d00
+    movzx ecx, word ptr [esi + pcspk_divisors]   ; 0a66b1 0fb78e08660d00
     jmp loc_a66c9                                ; 0a66b8 eb0f
 
 loc_a66ba:
@@ -5215,7 +5215,7 @@ loc_a66e0:
     add al, byte ptr [ebx + 0x12]                ; 0a66ec 024312
     shl eax, 1                                   ; 0a66ef d1e0
     mov esi, eax                                 ; 0a66f1 8bf0
-    movzx eax, word ptr [esi + unk_d6608]        ; 0a66f3 0fb7043508660d00
+    movzx eax, word ptr [esi + pcspk_divisors]   ; 0a66f3 0fb7043508660d00
     neg eax                                      ; 0a66fb f7d8
     add eax, ecx                                 ; 0a66fd 03c1
     mov ebx, dword ptr [ebp + 0x10]              ; 0a66ff 8b5d10
@@ -5235,7 +5235,7 @@ loc_a6715:
     sub al, byte ptr [ebx + 0x12]                ; 0a671f 2a4312
     shl eax, 1                                   ; 0a6722 d1e0
     mov esi, eax                                 ; 0a6724 8bf0
-    movzx eax, word ptr [esi + unk_d6608]        ; 0a6726 0fb78608660d00
+    movzx eax, word ptr [esi + pcspk_divisors]   ; 0a6726 0fb78608660d00
     sub eax, ecx                                 ; 0a672d 2bc1
     mov ebx, dword ptr [ebp + 0x10]              ; 0a672f 8b5d10
     movzx edx, word ptr [ebx + 0x26]             ; 0a6732 0fb75326
@@ -5262,7 +5262,7 @@ loc_a6763:
     mov eax, dword ptr [ebp + 8]                 ; 0a6763 8b4508
     shl eax, 1                                   ; 0a6766 d1e0
     mov esi, eax                                 ; 0a6768 8bf0
-    mov word ptr [esi + unk_d677b], cx           ; 0a676a 66898e7b670d00
+    mov word ptr [esi + pcspk_hw_div], cx        ; 0a676a 66898e7b670d00
     mov ebx, dword ptr [ebp + 0xc]               ; 0a6771 8b5d0c
     mov dword ptr [ebx + 6], ecx                 ; 0a6774 894b06
     pop ecx                                      ; 0a6777 59
@@ -5277,15 +5277,15 @@ loc_a6763:
 ; called by: pcspk_update_voices
 ; ====================================================================================================
 pcspk_hw_update:
-    mov al, byte ptr [byte_d6774]                ; 0a677b a074670d00
+    mov al, byte ptr [pcspk_hw_active]           ; 0a677b a074670d00
     mov byte ptr [byte_d678c], al                ; 0a6780 a28c670d00
     push esi                                     ; 0a6785 56
     mov ecx, 4                                   ; 0a6786 b904000000
     mov esi, ecx                                 ; 0a678b 8bf1
 loc_a678d:
-    cmp byte ptr [esi + byte_d6785], 0           ; 0a678d 80be85670d0000
+    cmp byte ptr [esi + pcspk_hw_enabled], 0     ; 0a678d 80be85670d0000
     je loc_a67a6                                 ; 0a6794 7410
-    mov al, byte ptr [esi + byte_d6774]          ; 0a6796 8a043574670d00
+    mov al, byte ptr [esi + pcspk_hw_active]     ; 0a6796 8a043574670d00
     mov byte ptr [esi + byte_d678c], al          ; 0a679d 8804358c670d00
     jmp loc_a67af                                ; 0a67a4 eb09
 
@@ -5305,7 +5305,7 @@ loc_a67af:
     or al, bl                                    ; 0a67ce 0ac3
     or al, cl                                    ; 0a67d0 0ac1
     je loc_a6812                                 ; 0a67d2 743e
-    mov al, byte ptr [byte_d679a]                ; 0a67d4 a09a670d00
+    mov al, byte ptr [pcspk_tick_count]          ; 0a67d4 a09a670d00
     and al, 2                                    ; 0a67d9 2402
     je loc_a67fd                                 ; 0a67db 7420
     mov bl, byte ptr [byte_d678d]                ; 0a67dd 8a1d8d670d00
@@ -5352,9 +5352,9 @@ loc_a6844:
     and al, 0xfe                                 ; 0a6846 24fe
     out 0x61, al                                 ; 0a6848 e661              port 0x61 (kbd_ctrl_speaker)
 loc_a684a:
-    mov al, byte ptr [byte_d679a]                ; 0a684a a09a670d00
+    mov al, byte ptr [pcspk_tick_count]          ; 0a684a a09a670d00
     inc al                                       ; 0a684f fec0
-    mov byte ptr [byte_d679a], al                ; 0a6851 a29a670d00
+    mov byte ptr [pcspk_tick_count], al          ; 0a6851 a29a670d00
     ret                                          ; 0a6856 c3
 
     db 0x00 ; 0a6857 |.| (padding)
@@ -5398,7 +5398,7 @@ loc_a6877:
 opl_reset:
     xor eax, eax                                 ; 0a687d 33c0
     mov al, 1                                    ; 0a687f b001
-    mov dx, word ptr [word_d679c]                ; 0a6881 668b159c670d00
+    mov dx, word ptr [opl_port]                  ; 0a6881 668b159c670d00
 loc_a6888:
     call opl_write_reg                           ; 0a6888 e8cbffffff
     inc al                                       ; 0a688d fec0
@@ -5409,8 +5409,8 @@ loc_a6888:
     call opl_write_reg                           ; 0a6897 e8bcffffff
     push esi                                     ; 0a689c 56
     xor eax, eax                                 ; 0a689d 33c0
-    mov ebx, unk_d68fc                           ; 0a689f bbfc680d00
-    mov esi, unk_d69ff                           ; 0a68a4 beff690d00
+    mov ebx, opl_shadow                          ; 0a689f bbfc680d00
+    mov esi, opl_written                         ; 0a68a4 beff690d00
 loc_a68a9:
     mov byte ptr [ebx], ah                       ; 0a68a9 8823
     mov byte ptr [esi], ah                       ; 0a68ab 8826
@@ -5436,7 +5436,7 @@ loc_a68b8:
 ; called by: adlib_drv_tick, adlib_voice_off, opl_reset
 ; ====================================================================================================
 opl_flush_regs:
-    mov dx, word ptr [word_d679c]                ; 0a68c9 668b159c670d00
+    mov dx, word ptr [opl_port]                  ; 0a68c9 668b159c670d00
     push esi                                     ; 0a68d0 56
     mov al, 0x20                                 ; 0a68d1 b020
     mov ebx, unk_d691c                           ; 0a68d3 bb1c690d00
@@ -5507,7 +5507,7 @@ loc_a694d:
 ; called by: opl_reset, opl_voice_regs
 ; ====================================================================================================
 opl_set_reg:
-    mov dx, word ptr [word_d679c]                ; 0a6957 668b159c670d00
+    mov dx, word ptr [opl_port]                  ; 0a6957 668b159c670d00
     cmp al, 0x20                                 ; 0a695e 3c20
     jb loc_a697d                                 ; 0a6960 721b
     cmp al, 0xf5                                 ; 0a6962 3cf5
@@ -5518,7 +5518,7 @@ opl_set_reg:
     mov ecx, eax                                 ; 0a6969 8bc8
     xor eax, eax                                 ; 0a696b 33c0
     mov al, cl                                   ; 0a696d 8ac1
-    mov ebx, unk_d68fc                           ; 0a696f bbfc680d00
+    mov ebx, opl_shadow                          ; 0a696f bbfc680d00
     add ebx, eax                                 ; 0a6974 03d8
     mov byte ptr [ebx], ch                       ; 0a6976 882b
     pop ecx                                      ; 0a6978 59
@@ -5545,7 +5545,7 @@ opl_get_reg:
     mov ecx, eax                                 ; 0a698c 8bc8
     xor eax, eax                                 ; 0a698e 33c0
     mov al, cl                                   ; 0a6990 8ac1
-    mov ebx, unk_d68fc                           ; 0a6992 bbfc680d00
+    mov ebx, opl_shadow                          ; 0a6992 bbfc680d00
     add ebx, eax                                 ; 0a6997 03d8
     mov al, byte ptr [ebx]                       ; 0a6999 8a03
 loc_a699b:
@@ -5571,8 +5571,8 @@ opl_voice_regs:
     ret                                          ; 0a69af c3
 
 loc_a69b0:
-    mov cl, byte ptr [ebx + unk_d67a8]           ; 0a69b0 8a8ba8670d00
-    mov esi, unk_d67b4                           ; 0a69b6 beb4670d00
+    mov cl, byte ptr [ebx + opl_voice_operator]  ; 0a69b0 8a8ba8670d00
+    mov esi, opl_voice_registers                 ; 0a69b6 beb4670d00
     mov ebx, dword ptr [ebp + 0xc]               ; 0a69bb 8b5d0c
     mov ch, 0xa                                  ; 0a69be b50a
 loc_a69c0:
@@ -5606,7 +5606,7 @@ opl_init_port:
     push ebp                                     ; 0a69e8 55
     mov ebp, esp                                 ; 0a69e9 8bec
     mov eax, dword ptr [ebp + 8]                 ; 0a69eb 8b4508
-    mov word ptr [word_d679c], ax                ; 0a69ee 66a39c670d00
+    mov word ptr [opl_port], ax                  ; 0a69ee 66a39c670d00
     call opl_reset                               ; 0a69f4 e884feffff
     leave                                        ; 0a69f9 c9
     ret                                          ; 0a69fa c3
@@ -5641,7 +5641,7 @@ opl_detect:
     push ebp                                     ; 0a6a09 55
     mov ebp, esp                                 ; 0a6a0a 8bec
     mov eax, dword ptr [ebp + 8]                 ; 0a6a0c 8b4508
-    mov word ptr [word_d679c], ax                ; 0a6a0f 66a39c670d00
+    mov word ptr [opl_port], ax                  ; 0a6a0f 66a39c670d00
     mov eax, 0x20                                ; 0a6a15 b820000000
     mov dword ptr [dword_d67a0], eax             ; 0a6a1a a3a0670d00
     mov eax, 0x8c                                ; 0a6a1f b88c000000
@@ -5665,7 +5665,7 @@ opl_timer_test:
     push ax                                      ; 0a6a42 6650
     push cx                                      ; 0a6a44 6651
     push dx                                      ; 0a6a46 6652
-    mov dx, word ptr [word_d679c]                ; 0a6a48 668b159c670d00
+    mov dx, word ptr [opl_port]                  ; 0a6a48 668b159c670d00
     mov eax, 1                                   ; 0a6a4f b801000000
     call opl_write_reg                           ; 0a6a54 e8fffdffff
     mov eax, 0x6004                              ; 0a6a59 b804600000
@@ -5728,7 +5728,7 @@ opl_calibrate_delay:
     or al, 1                                     ; 0a6ada 0c01
     out 0x61, al                                 ; 0a6adc e661              port 0x61 (kbd_ctrl_speaker)
     mov ecx, 0x3e8                               ; 0a6ade b9e8030000
-    mov dx, word ptr [word_d679c]                ; 0a6ae3 668b159c670d00
+    mov dx, word ptr [opl_port]                  ; 0a6ae3 668b159c670d00
     xor eax, eax                                 ; 0a6aea 33c0
 loc_a6aec:
     in al, dx                                    ; 0a6aec ec
@@ -5783,7 +5783,7 @@ adlib_note_fnum:
     add al, dh                                   ; 0a6b47 02c6
     cbw                                          ; 0a6b49 6698
     cwde                                         ; 0a6b4b 98
-    movzx eax, word ptr [eax*2 + unk_d67f4]      ; 0a6b4c 0fb70445f4670d00
+    movzx eax, word ptr [eax*2 + adlib_fnum_table] ; 0a6b4c 0fb70445f4670d00
     xor dh, dh                                   ; 0a6b54 32f6
     shl edx, 0xa                                 ; 0a6b56 c1e20a
     or eax, edx                                  ; 0a6b59 0bc2
@@ -5802,7 +5802,7 @@ adlib_level_table:
     mov bl, byte ptr [ebp + 8]                   ; 0a6b62 8a5d08
     and ebx, 0x7c                                ; 0a6b65 83e37c
     shr ebx, 1                                   ; 0a6b68 d1eb
-    movzx eax, word ptr [ebx + unk_d683c]        ; 0a6b6a 0fb7833c680d00
+    movzx eax, word ptr [ebx + adlib_velocity_levels] ; 0a6b6a 0fb7833c680d00
     leave                                        ; 0a6b71 c9
     ret                                          ; 0a6b72 c3
 
@@ -5817,7 +5817,7 @@ adlib_controller_table:
     xor ebx, ebx                                 ; 0a6b76 33db
     mov bl, byte ptr [ebp + 8]                   ; 0a6b78 8a5d08
     and ebx, 0x7e                                ; 0a6b7b 83e37e
-    movzx eax, word ptr [ebx + unk_d687c]        ; 0a6b7e 0fb7837c680d00
+    movzx eax, word ptr [ebx + adlib_volume_table] ; 0a6b7e 0fb7837c680d00
     leave                                        ; 0a6b85 c9
     ret                                          ; 0a6b86 c3
 

@@ -1,7 +1,7 @@
 class_name Crowd
 ## The animated figures around the ice and on the benches (start_crowd_figure 0x614c2,
 ## bench_cheer 0x61576, the record part of update_effects 0x615a2, drawn by
-## draw_nets_and_effects 0x61862). Twenty records (unk_dee94, 12 bytes each): 0..16 random fans and
+## draw_nets_and_effects 0x61862). Twenty records (crowd_figures, 12 bytes each): 0..16 random fans and
 ## photographers of the 0x85 spots, 17 the same (or one of the two figures 0x85 / 0x86 that come
 ## out during a stoppage), 18 / 19 the home and away bench (0x89.. / 0x9a.. at random, 0x87 / 0x88
 ## when they cheer a goal, a big hit, the win or the cup). A record plays the frame sequence of its
@@ -14,7 +14,7 @@ const FIGURES := 0x85
 const HOME_BENCH := 0x12
 const AWAY_BENCH := 0x13
 
-## one record of unk_dee94
+## one record of crowd_figures
 class Record:
 	var id := -1         # +0 the spot (Tables.crowd_spots), -1 idle
 	var timer := 0       # +2 steps to the next frame (or to the next figure)

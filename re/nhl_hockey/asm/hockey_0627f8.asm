@@ -536,19 +536,19 @@ queue_infraction:
     jne loc_62df7                                ; 062db2 7543
     movsx edx, cx                                ; 062db4 0fbfd1
     shl edx, 2                                   ; 062db7 c1e202
-    mov eax, dword ptr [dword_cbec6]             ; 062dba a1c6be0c00
+    mov eax, dword ptr [injury_stoppage]         ; 062dba a1c6be0c00
     sar eax, 0x10                                ; 062dbf c1f810
     cmp eax, dword ptr [edx + infraction_priority] ; 062dc2 3b829cd30c00
     jge loc_62df7                                ; 062dc8 7d2d
     mov ax, word ptr [edx + infraction_priority] ; 062dca 668b829cd30c00
     mov word ptr [word_cbec8], ax                ; 062dd1 66a3c8be0c00
-    mov eax, dword ptr [dword_cbec6]             ; 062dd7 a1c6be0c00
+    mov eax, dword ptr [injury_stoppage]         ; 062dd7 a1c6be0c00
     sar eax, 0x10                                ; 062ddc c1f810
     cmp eax, -1                                  ; 062ddf 83f8ff
     je loc_62df7                                 ; 062de2 7413
     cmp word ptr [word_cbec8], 6                 ; 062de4 66833dc8be0c0006
     je loc_62df7                                 ; 062dec 7409
-    mov word ptr [dword_cbeca], 0x50             ; 062dee 66c705cabe0c0050..
+    mov word ptr [panel_clip], 0x50              ; 062dee 66c705cabe0c0050..
 loc_62df7:
     cmp cx, 7                                    ; 062df7 6683f907
     jl loc_62e47                                 ; 062dfb 7c4a
@@ -1150,7 +1150,7 @@ loc_634bc:
     mov byte ptr [byte_c90d5], 0xff              ; 06351d c605d5900c00ff
     xor ebx, ebx                                 ; 063524 31db
     mov word ptr [whistle_timer], bx             ; 063526 66891dd2900c00
-    cmp word ptr [dword_cbeca], 0                ; 06352d 66833dcabe0c0000
+    cmp word ptr [panel_clip], 0                 ; 06352d 66833dcabe0c0000
     jne loc_6353e                                ; 063535 7507
     mov word ptr [word_cbec8], di                ; 063537 66893dc8be0c00
 loc_6353e:
@@ -1243,7 +1243,7 @@ loc_63643:
     je loc_63664                                 ; 06364a 7418
     mov ax, word ptr [penalty_shot_spot_x]       ; 06364c 66a110c10c00
     mov word ptr [faceoff_spot], ax              ; 063652 66a3b2900c00
-    mov ax, word ptr [dword_cc114]               ; 063658 66a114c10c00
+    mov ax, word ptr [penalty_shot_spot_y]       ; 063658 66a114c10c00
     mov word ptr [word_c90b4], ax                ; 06365e 66a3b4900c00
 loc_63664:
     cmp word ptr [faceoff_spot], 0x60            ; 063664 66833db2900c0060
@@ -1395,11 +1395,11 @@ loc_6382b:
 
 loc_63852:
     mov word ptr [whistle_timer], 0x28           ; 063852 66c705d2900c0028..
-    mov eax, dword ptr [dword_cbec6]             ; 06385b a1c6be0c00
+    mov eax, dword ptr [injury_stoppage]         ; 06385b a1c6be0c00
     sar eax, 0x10                                ; 063860 c1f810
     cmp eax, -1                                  ; 063863 83f8ff
     je loc_63871                                 ; 063866 7409
-    mov word ptr [dword_cbeca], 0x50             ; 063868 66c705cabe0c0050..
+    mov word ptr [panel_clip], 0x50              ; 063868 66c705cabe0c0050..
 loc_63871:
     movsx eax, dx                                ; 063871 0fbfc2
     call start_stoppage                          ; 063874 e8cafcffff
@@ -1419,7 +1419,7 @@ loc_63879:
     jle loc_638b5                                ; 0638ad 7e06
     mov word ptr [stoppage_timer], ax            ; 0638af 66a3ce900c00
 loc_638b5:
-    cmp word ptr [dword_cbec6], 0                ; 0638b5 66833dc6be0c0000
+    cmp word ptr [injury_stoppage], 0            ; 0638b5 66833dc6be0c0000
     je loc_638c8                                 ; 0638bd 7409
     mov word ptr [stoppage_timer], 0x140         ; 0638bf 66c705ce900c0040..
 loc_638c8:
@@ -1624,7 +1624,7 @@ loc_63a67:
     mov edx, dword ptr [ecx + 0xee]              ; 063abd 8b91ee000000
     mov byte ptr [edx + esi], 7                  ; 063ac3 c6043207
     and byte ptr [eax + 0x7f], 0xbf              ; 063ac7 80607fbf
-    mov word ptr [dword_e03ac], 1                ; 063acb 66c705ac030e0001..
+    mov word ptr [scratch_e03ac], 1              ; 063acb 66c705ac030e0001..
 loc_63ad4:
     mov eax, dword ptr [dword_e03aa]             ; 063ad4 a1aa030e00
     sar eax, 0x10                                ; 063ad9 c1f810
@@ -1634,7 +1634,7 @@ loc_63ad4:
     mov byte ptr [ecx + eax + 0xb5], dl          ; 063ae8 889401b5000000
     test dl, dl                                  ; 063aef 84d2
     jl loc_63afc                                 ; 063af1 7c09
-    inc word ptr [dword_e03ac]                   ; 063af3 66ff05ac030e00
+    inc word ptr [scratch_e03ac]                 ; 063af3 66ff05ac030e00
     jmp loc_63ad4                                ; 063afa ebd8
 
 loc_63afc:
@@ -1662,7 +1662,7 @@ loc_63b1b:
     jmp loc_63b45                                ; 063b32 eb11
 
 loc_63b34:
-    mov eax, dword ptr [dword_e03be]             ; 063b34 a1be030e00
+    mov eax, dword ptr [scratch_b]               ; 063b34 a1be030e00
     sar eax, 0x10                                ; 063b39 c1f810
     cmp eax, -1                                  ; 063b3c 83f8ff
     jne loc_63b4f                                ; 063b3f 750e
@@ -1857,7 +1857,7 @@ loc_63d38:
 
 ; ====================================================================================================
 ; clear_infractions  [0x63d3c, 45 bytes, 16 instructions]
-; called by: game_state_clear, setup_faceoff, start_penalty_shot, simulate_game_offscreen
+; called by: game_state_clear, setup_faceoff, start_penalty_shot, league_highlight_game
 ; ====================================================================================================
 clear_infractions:
     push 0xc                                     ; 063d3c 680c000000
@@ -2474,7 +2474,7 @@ loc_643d5:
     mov dword ptr [penalty_shot_spot_x], eax     ; 064414 a310c10c00
     mov eax, dword ptr [faceoff_spot]            ; 064419 a1b2900c00
     sar eax, 0x10                                ; 06441e c1f810
-    mov dword ptr [dword_cc114], eax             ; 064421 a314c10c00
+    mov dword ptr [penalty_shot_spot_y], eax     ; 064421 a314c10c00
     xor esi, esi                                 ; 064426 31f6
     mov word ptr [faceoff_spot], si              ; 064428 668935b2900c00
     mov word ptr [word_c90b4], si                ; 06442f 668935b4900c00
@@ -2506,7 +2506,7 @@ end_penalty_shot:
     call queue_infraction                        ; 064479 e802e9ffff
     mov ax, word ptr [penalty_shot_spot_x]       ; 06447e 66a110c10c00
     mov word ptr [last_touch_x], ax              ; 064484 66a3c69a0e00
-    mov ax, word ptr [dword_cc114]               ; 06448a 66a114c10c00
+    mov ax, word ptr [penalty_shot_spot_y]       ; 06448a 66a114c10c00
     mov word ptr [last_touch_y], ax              ; 064490 66a3c49a0e00
     mov edx, 0x21                                ; 064496 ba21000000
     mov eax, referee                             ; 06449b b81c000e00
@@ -4890,7 +4890,7 @@ update_camera:
     mov ecx, 0xa                                 ; 065d19 b90a000000
     xor ebx, ebx                                 ; 065d1e 31db
     mov ax, word ptr [camera_target_y]           ; 065d20 66a1ae900c00
-    mov word ptr [dword_e03ac], ax               ; 065d26 66a3ac030e00
+    mov word ptr [scratch_e03ac], ax             ; 065d26 66a3ac030e00
     mov ax, word ptr [camera_target_x]           ; 065d2c 66a1ac900c00
     mov word ptr [dword_e03b0], ax               ; 065d32 66a3b0030e00
     test byte ptr [game_flags], 0x80             ; 065d38 f605bb900c0080
@@ -4900,12 +4900,12 @@ update_camera:
     mov word ptr [dword_e03b0], di               ; 065d51 66893db0030e00
     mov ebx, 0xf                                 ; 065d58 bb0f000000
     mov word ptr [camera_target_y], bx           ; 065d5d 66891dae900c00
-    mov word ptr [dword_e03ac], bx               ; 065d64 66891dac030e00
+    mov word ptr [scratch_e03ac], bx             ; 065d64 66891dac030e00
     mov ecx, 5                                   ; 065d6b b905000000
     mov ax, word ptr [dword_c909a]               ; 065d70 66a19a900c00
     sub ebx, eax                                 ; 065d76 29c3
     mov word ptr [dword_e03bc], bx               ; 065d78 66891dbc030e00
-    mov eax, dword ptr [dword_e03ba]             ; 065d7f a1ba030e00
+    mov eax, dword ptr [scratch_a]               ; 065d7f a1ba030e00
     sar eax, 0x10                                ; 065d84 c1f810
     cmp eax, -5                                  ; 065d87 83f8fb
     jge loc_65d97                                ; 065d8a 7d0b
@@ -4919,13 +4919,13 @@ loc_65d97:
 loc_65da5:
     cmp word ptr [dword_e03bc], 0                ; 065da5 66833dbc030e0000
     jge loc_65dbb                                ; 065dad 7d0c
-    mov eax, dword ptr [dword_e03ba]             ; 065daf a1ba030e00
+    mov eax, dword ptr [scratch_a]               ; 065daf a1ba030e00
     sar eax, 0x10                                ; 065db4 c1f810
     neg eax                                      ; 065db7 f7d8
     jmp loc_65dc3                                ; 065db9 eb08
 
 loc_65dbb:
-    mov eax, dword ptr [dword_e03ba]             ; 065dbb a1ba030e00
+    mov eax, dword ptr [scratch_a]               ; 065dbb a1ba030e00
     sar eax, 0x10                                ; 065dc0 c1f810
 loc_65dc3:
     movsx ecx, cx                                ; 065dc3 0fbfc9
@@ -4937,13 +4937,13 @@ loc_65dc3:
     mov word ptr [dword_e03c0], cx               ; 065ddd 66890dc0030e00
     test cx, cx                                  ; 065de4 6685c9
     jge loc_65df5                                ; 065de7 7d0c
-    mov eax, dword ptr [dword_e03be]             ; 065de9 a1be030e00
+    mov eax, dword ptr [scratch_b]               ; 065de9 a1be030e00
     sar eax, 0x10                                ; 065dee c1f810
     neg eax                                      ; 065df1 f7d8
     jmp loc_65dfd                                ; 065df3 eb08
 
 loc_65df5:
-    mov eax, dword ptr [dword_e03be]             ; 065df5 a1be030e00
+    mov eax, dword ptr [scratch_b]               ; 065df5 a1be030e00
     sar eax, 0x10                                ; 065dfa c1f810
 loc_65dfd:
     cmp eax, 0x20                                ; 065dfd 83f820
@@ -4977,14 +4977,14 @@ loc_65e51:
     mov word ptr [dword_e03bc], ax               ; 065e60 66a3bc030e00
     movsx ecx, dx                                ; 065e66 0fbfca
     neg ecx                                      ; 065e69 f7d9
-    mov eax, dword ptr [dword_e03ba]             ; 065e6b a1ba030e00
+    mov eax, dword ptr [scratch_a]               ; 065e6b a1ba030e00
     sar eax, 0x10                                ; 065e70 c1f810
     cmp eax, ecx                                 ; 065e73 39c8
     jge loc_65e9e                                ; 065e75 7d27
     mov ax, word ptr [dword_e03b0]               ; 065e77 66a1b0030e00
     add edx, eax                                 ; 065e7d 01c2
     mov word ptr [dword_e03c0], dx               ; 065e7f 668915c0030e00
-    mov eax, dword ptr [dword_e03be]             ; 065e86 a1be030e00
+    mov eax, dword ptr [scratch_b]               ; 065e86 a1be030e00
     sar eax, 0x10                                ; 065e8b c1f810
     cmp eax, -0x20                               ; 065e8e 83f8e0
     jge loc_65ec8                                ; 065e91 7d35
@@ -5007,13 +5007,13 @@ loc_65ec8:
     mov word ptr [dword_e03c0], dx               ; 065ed7 668915c0030e00
     test dx, dx                                  ; 065ede 6685d2
     jge loc_65eef                                ; 065ee1 7d0c
-    mov eax, dword ptr [dword_e03be]             ; 065ee3 a1be030e00
+    mov eax, dword ptr [scratch_b]               ; 065ee3 a1be030e00
     sar eax, 0x10                                ; 065ee8 c1f810
     neg eax                                      ; 065eeb f7d8
     jmp loc_65ef7                                ; 065eed eb08
 
 loc_65eef:
-    mov eax, dword ptr [dword_e03be]             ; 065eef a1be030e00
+    mov eax, dword ptr [scratch_b]               ; 065eef a1be030e00
     sar eax, 0x10                                ; 065ef4 c1f810
 loc_65ef7:
     cmp eax, 0x20                                ; 065ef7 83f820
@@ -5061,13 +5061,13 @@ loc_65f85:
     mov si, word ptr [camera_target_x]           ; 065fa6 668b35ac900c00
     mov di, word ptr [camera]                    ; 065fad 668b3d98900c00
     sub esi, edi                                 ; 065fb4 29fe
-    mov word ptr [dword_e03ac], si               ; 065fb6 668935ac030e00
+    mov word ptr [scratch_e03ac], si             ; 065fb6 668935ac030e00
     mov si, word ptr [word_e0046]                ; 065fbd 668b3546000e00
     sub esi, edi                                 ; 065fc4 29fe
     mov word ptr [dword_e03b0], si               ; 065fc6 668935b0030e00
     mov esi, dword ptr [dword_e03aa]             ; 065fcd 8b35aa030e00
     sar esi, 0x10                                ; 065fd3 c1fe10
-    mov edi, dword ptr [dword_e03ae]             ; 065fd6 8b3dae030e00
+    mov edi, dword ptr [scratch_e03ae]           ; 065fd6 8b3dae030e00
     sar edi, 0x10                                ; 065fdc c1ff10
     xor edi, esi                                 ; 065fdf 31f7
     test edi, edi                                ; 065fe1 85ff
@@ -5076,19 +5076,19 @@ loc_65f85:
     jmp loc_66022                                ; 065fec eb34
 
 loc_65fee:
-    cmp word ptr [dword_e03ac], 0                ; 065fee 66833dac030e0000
+    cmp word ptr [scratch_e03ac], 0              ; 065fee 66833dac030e0000
     jge loc_65ffa                                ; 065ff6 7d02
     neg esi                                      ; 065ff8 f7de
 loc_65ffa:
     cmp word ptr [dword_e03b0], 0                ; 065ffa 66833db0030e0000
     jge loc_66011                                ; 066002 7d0d
-    mov edi, dword ptr [dword_e03ae]             ; 066004 8b3dae030e00
+    mov edi, dword ptr [scratch_e03ae]           ; 066004 8b3dae030e00
     sar edi, 0x10                                ; 06600a c1ff10
     neg edi                                      ; 06600d f7df
     jmp loc_6601a                                ; 06600f eb09
 
 loc_66011:
-    mov edi, dword ptr [dword_e03ae]             ; 066011 8b3dae030e00
+    mov edi, dword ptr [scratch_e03ae]           ; 066011 8b3dae030e00
     sar edi, 0x10                                ; 066017 c1ff10
 loc_6601a:
     cmp esi, edi                                 ; 06601a 39fe
@@ -5100,25 +5100,25 @@ loc_66029:
     mov si, word ptr [camera_target_y]           ; 066029 668b35ae900c00
     mov di, word ptr [dword_c909a]               ; 066030 668b3d9a900c00
     sub esi, edi                                 ; 066037 29fe
-    mov word ptr [dword_e03ac], si               ; 066039 668935ac030e00
+    mov word ptr [scratch_e03ac], si             ; 066039 668935ac030e00
     mov si, word ptr [eax + 0x2c]                ; 066040 668b702c
     sub esi, edi                                 ; 066044 29fe
     mov word ptr [dword_e03b0], si               ; 066046 668935b0030e00
     mov esi, dword ptr [dword_e03aa]             ; 06604d 8b35aa030e00
     sar esi, 0x10                                ; 066053 c1fe10
-    mov edi, dword ptr [dword_e03ae]             ; 066056 8b3dae030e00
+    mov edi, dword ptr [scratch_e03ae]           ; 066056 8b3dae030e00
     sar edi, 0x10                                ; 06605c c1ff10
     xor edi, esi                                 ; 06605f 31f7
     test edi, edi                                ; 066061 85ff
     jge loc_6607c                                ; 066063 7d17
     mov si, word ptr [dword_c909a]               ; 066065 668b359a900c00
 loc_6606c:
-    mov word ptr [dword_e03ac], si               ; 06606c 668935ac030e00
+    mov word ptr [scratch_e03ac], si             ; 06606c 668935ac030e00
     mov word ptr [camera_target_y], si           ; 066073 668935ae900c00
     jmp loc_660c6                                ; 06607a eb4a
 
 loc_6607c:
-    cmp word ptr [dword_e03ac], 0                ; 06607c 66833dac030e0000
+    cmp word ptr [scratch_e03ac], 0              ; 06607c 66833dac030e0000
     jge loc_6608c                                ; 066084 7d06
     mov edi, esi                                 ; 066086 89f7
     neg edi                                      ; 066088 f7df
@@ -5129,13 +5129,13 @@ loc_6608c:
 loc_6608e:
     cmp word ptr [dword_e03b0], 0                ; 06608e 66833db0030e0000
     jge loc_660a5                                ; 066096 7d0d
-    mov esi, dword ptr [dword_e03ae]             ; 066098 8b35ae030e00
+    mov esi, dword ptr [scratch_e03ae]           ; 066098 8b35ae030e00
     sar esi, 0x10                                ; 06609e c1fe10
     neg esi                                      ; 0660a1 f7de
     jmp loc_660ae                                ; 0660a3 eb09
 
 loc_660a5:
-    mov esi, dword ptr [dword_e03ae]             ; 0660a5 8b35ae030e00
+    mov esi, dword ptr [scratch_e03ae]           ; 0660a5 8b35ae030e00
     sar esi, 0x10                                ; 0660ab c1fe10
 loc_660ae:
     cmp edi, esi                                 ; 0660ae 39f7
@@ -5145,7 +5145,7 @@ loc_660ae:
 
 loc_660b8:
     mov si, word ptr [camera_target_y]           ; 0660b8 668b35ae900c00
-    mov word ptr [dword_e03ac], si               ; 0660bf 668935ac030e00
+    mov word ptr [scratch_e03ac], si             ; 0660bf 668935ac030e00
 loc_660c6:
     mov si, word ptr [camera_target_x]           ; 0660c6 668b35ac900c00
     mov word ptr [dword_e03b0], si               ; 0660cd 668935b0030e00
@@ -5178,7 +5178,7 @@ loc_66117:
     jge loc_66249                                ; 066125 0f8d1e010000
     mov ax, word ptr [word_c90b4]                ; 06612b 66a1b4900c00
     mov word ptr [camera_target_y], ax           ; 066131 66a3ae900c00
-    mov word ptr [dword_e03ac], ax               ; 066137 66a3ac030e00
+    mov word ptr [scratch_e03ac], ax             ; 066137 66a3ac030e00
     mov ax, word ptr [faceoff_spot]              ; 06613d 66a1b2900c00
     mov word ptr [camera_target_x], ax           ; 066143 66a3ac900c00
     mov word ptr [dword_e03b0], ax               ; 066149 66a3b0030e00
@@ -5246,26 +5246,26 @@ loc_66212:
     mov esi, dword ptr [camera_target_y]         ; 066220 8b35ae900c00
     sar esi, 0x10                                ; 066226 c1fe10
     add esi, edi                                 ; 066229 01fe
-    mov word ptr [dword_e03ac], si               ; 06622b 668935ac030e00
+    mov word ptr [scratch_e03ac], si             ; 06622b 668935ac030e00
     mov word ptr [camera_target_y], si           ; 066232 668935ae900c00
     mov ax, word ptr [eax + 2]                   ; 066239 668b4002
     mov word ptr [dword_e03b0], ax               ; 06623d 66a3b0030e00
     mov word ptr [camera_target_x], ax           ; 066243 66a3ac900c00
 loc_66249:
-    mov ax, word ptr [dword_e03ac]               ; 066249 66a1ac030e00
+    mov ax, word ptr [scratch_e03ac]             ; 066249 66a1ac030e00
     mov di, word ptr [dword_c909a]               ; 06624f 668b3d9a900c00
     sub eax, edi                                 ; 066256 29f8
     mov word ptr [dword_e03bc], ax               ; 066258 66a3bc030e00
     movsx eax, cx                                ; 06625e 0fbfc1
     neg eax                                      ; 066261 f7d8
-    mov esi, dword ptr [dword_e03ba]             ; 066263 8b35ba030e00
+    mov esi, dword ptr [scratch_a]               ; 066263 8b35ba030e00
     sar esi, 0x10                                ; 066269 c1fe10
     cmp esi, eax                                 ; 06626c 39c6
     jge loc_66298                                ; 06626e 7d28
-    mov ax, word ptr [dword_e03ac]               ; 066270 66a1ac030e00
+    mov ax, word ptr [scratch_e03ac]             ; 066270 66a1ac030e00
     add eax, ecx                                 ; 066276 01c8
     mov word ptr [dword_e03c0], ax               ; 066278 66a3c0030e00
-    mov eax, dword ptr [dword_e03be]             ; 06627e a1be030e00
+    mov eax, dword ptr [scratch_b]               ; 06627e a1be030e00
     sar eax, 0x10                                ; 066283 c1f810
     cmp eax, 0xffffff44                          ; 066286 3d44ffffff
     jge loc_662d0                                ; 06628b 7d43
@@ -5277,11 +5277,11 @@ loc_66298:
     jge loc_662d0                                ; 06629f 7d2f
     test bx, bx                                  ; 0662a1 6685db
     je loc_662ae                                 ; 0662a4 7408
-    mov ax, word ptr [dword_e03ac]               ; 0662a6 66a1ac030e00
+    mov ax, word ptr [scratch_e03ac]             ; 0662a6 66a1ac030e00
     jmp loc_662b6                                ; 0662ac eb08
 
 loc_662ae:
-    mov ax, word ptr [dword_e03ac]               ; 0662ae 66a1ac030e00
+    mov ax, word ptr [scratch_e03ac]             ; 0662ae 66a1ac030e00
     sub eax, ecx                                 ; 0662b4 29c8
 loc_662b6:
     mov word ptr [dword_e03c0], ax               ; 0662b6 66a3c0030e00
@@ -5291,13 +5291,13 @@ loc_662b6:
 loc_662d0:
     cmp word ptr [dword_e03bc], 0                ; 0662d0 66833dbc030e0000
     jge loc_662e6                                ; 0662d8 7d0c
-    mov eax, dword ptr [dword_e03ba]             ; 0662da a1ba030e00
+    mov eax, dword ptr [scratch_a]               ; 0662da a1ba030e00
     sar eax, 0x10                                ; 0662df c1f810
     neg eax                                      ; 0662e2 f7d8
     jmp loc_662ee                                ; 0662e4 eb08
 
 loc_662e6:
-    mov eax, dword ptr [dword_e03ba]             ; 0662e6 a1ba030e00
+    mov eax, dword ptr [scratch_a]               ; 0662e6 a1ba030e00
     sar eax, 0x10                                ; 0662eb c1f810
 loc_662ee:
     movsx ecx, cx                                ; 0662ee 0fbfc9
@@ -5311,13 +5311,13 @@ loc_662ee:
     je loc_66352                                 ; 066316 743a
     test di, di                                  ; 066318 6685ff
     jge loc_66329                                ; 06631b 7d0c
-    mov eax, dword ptr [dword_e03be]             ; 06631d a1be030e00
+    mov eax, dword ptr [scratch_b]               ; 06631d a1be030e00
     sar eax, 0x10                                ; 066322 c1f810
     neg eax                                      ; 066325 f7d8
     jmp loc_66331                                ; 066327 eb08
 
 loc_66329:
-    mov eax, dword ptr [dword_e03be]             ; 066329 a1be030e00
+    mov eax, dword ptr [scratch_b]               ; 066329 a1be030e00
     sar eax, 0x10                                ; 06632e c1f810
 loc_66331:
     cmp eax, 0x20                                ; 066331 83f820
@@ -5356,14 +5356,14 @@ loc_66392:
     mov word ptr [dword_e03bc], ax               ; 0663a1 66a3bc030e00
     movsx eax, dx                                ; 0663a7 0fbfc2
     neg eax                                      ; 0663aa f7d8
-    mov ecx, dword ptr [dword_e03ba]             ; 0663ac 8b0dba030e00
+    mov ecx, dword ptr [scratch_a]               ; 0663ac 8b0dba030e00
     sar ecx, 0x10                                ; 0663b2 c1f910
     cmp ecx, eax                                 ; 0663b5 39c1
     jge loc_663e0                                ; 0663b7 7d27
     mov ax, word ptr [dword_e03b0]               ; 0663b9 66a1b0030e00
     add edx, eax                                 ; 0663bf 01c2
     mov word ptr [dword_e03c0], dx               ; 0663c1 668915c0030e00
-    mov eax, dword ptr [dword_e03be]             ; 0663c8 a1be030e00
+    mov eax, dword ptr [scratch_b]               ; 0663c8 a1be030e00
     sar eax, 0x10                                ; 0663cd c1f810
     cmp eax, -0x20                               ; 0663d0 83f8e0
     jge loc_6640a                                ; 0663d3 7d35
@@ -5386,13 +5386,13 @@ loc_6640a:
     mov word ptr [dword_e03c0], cx               ; 066419 66890dc0030e00
     test cx, cx                                  ; 066420 6685c9
     jge loc_66431                                ; 066423 7d0c
-    mov eax, dword ptr [dword_e03be]             ; 066425 a1be030e00
+    mov eax, dword ptr [scratch_b]               ; 066425 a1be030e00
     sar eax, 0x10                                ; 06642a c1f810
     neg eax                                      ; 06642d f7d8
     jmp loc_66439                                ; 06642f eb08
 
 loc_66431:
-    mov eax, dword ptr [dword_e03be]             ; 066431 a1be030e00
+    mov eax, dword ptr [scratch_b]               ; 066431 a1be030e00
     sar eax, 0x10                                ; 066436 c1f810
 loc_66439:
     cmp eax, 0x20                                ; 066439 83f820
@@ -5511,11 +5511,11 @@ loc_66547:
     mov edx, dword ptr [eax*4 + off_cc01d]       ; 066571 8b14851dc00c00
     mov dword ptr [dword_e0248], edx             ; 066578 891548020e00
     mov ax, word ptr [eax*4 + unk_cc054]         ; 06657e 668b048554c00c00
-    mov word ptr [dword_e9ab2], ax               ; 066586 66a3b29a0e00
+    mov word ptr [clip_script_pos], ax           ; 066586 66a3b29a0e00
     mov word ptr [word_e9ab4], 1                 ; 06658c 66c705b49a0e0001..
     mov eax, dword ptr [dword_e0248]             ; 066595 a148020e00
     movsx ax, byte ptr [eax + 1]                 ; 06659a 660fbe4001
-    mov word ptr [word_cbece], ax                ; 06659f 66a3cebe0c00
+    mov word ptr [clip_frame], ax                ; 06659f 66a3cebe0c00
 loc_665a5:
     add esp, 0x10                                ; 0665a5 83c410
     jmp loc_66490                                ; 0665a8 e9e3feffff
@@ -5556,7 +5556,7 @@ loc_665df:
 loc_665ed:
     mov word ptr [word_cbec8], 0xffff            ; 0665ed 66c705c8be0c00ff..
     xor edx, edx                                 ; 0665f6 31d2
-    mov word ptr [dword_cbeca], dx               ; 0665f8 668915cabe0c00
+    mov word ptr [panel_clip], dx                ; 0665f8 668915cabe0c00
     test di, di                                  ; 0665ff 6685ff
     jge loc_66713                                ; 066602 0f8d0b010000
     movsx ebx, di                                ; 066608 0fbfdf
@@ -5658,7 +5658,7 @@ loc_6672d:
     add word ptr [esp + 0x14], ax                ; 06677f 6601442414
     test di, di                                  ; 066784 6685ff
     jl loc_667a3                                 ; 066787 7c1a
-    mov eax, dword ptr [dword_cbeca]             ; 066789 a1cabe0c00
+    mov eax, dword ptr [panel_clip]              ; 066789 a1cabe0c00
     sar eax, 0x10                                ; 06678e c1f810
     cmp eax, -1                                  ; 066791 83f8ff
     je loc_667a3                                 ; 066794 740d
@@ -5758,7 +5758,7 @@ loc_6686b:
     jmp loc_66d81                                ; 066898 e9e4040000
 
 loc_6689d:
-    mov eax, dword ptr [dword_cbeca]             ; 06689d a1cabe0c00
+    mov eax, dword ptr [panel_clip]              ; 06689d a1cabe0c00
     sar eax, 0x10                                ; 0668a2 c1f810
     cmp eax, -1                                  ; 0668a5 83f8ff
     je loc_66ab6                                 ; 0668a8 0f8408020000
@@ -5768,7 +5768,7 @@ loc_6689d:
     je loc_66ab6                                 ; 0668b9 0f84f7010000
     cmp word ptr [dword_cbecc], 0xa              ; 0668bf 66833dccbe0c000a
     jne loc_66908                                ; 0668c7 753f
-    cmp word ptr [word_cbece], 0x10              ; 0668c9 66833dcebe0c0010
+    cmp word ptr [clip_frame], 0x10              ; 0668c9 66833dcebe0c0010
     jle loc_66908                                ; 0668d1 7e35
     mov edi, dword ptr [esp + 0x1a]              ; 0668d3 8b7c241a
     sar edi, 0x10                                ; 0668d7 c1ff10
@@ -5792,7 +5792,7 @@ loc_6689d:
 loc_66908:
     cmp word ptr [dword_cbecc], 8                ; 066908 66833dccbe0c0008
     jne loc_66956                                ; 066910 7544
-    mov bx, word ptr [word_cbece]                ; 066912 668b1dcebe0c00
+    mov bx, word ptr [clip_frame]                ; 066912 668b1dcebe0c00
     cmp bx, 0x12                                 ; 066919 6683fb12
     jl loc_66956                                 ; 06691d 7c37
     cmp bx, 0x14                                 ; 06691f 6683fb14
@@ -5830,7 +5830,7 @@ loc_66972:
     add esp, 0xc                                 ; 066977 83c40c
     cmp word ptr [dword_cbecc], 0                ; 06697a 66833dccbe0c0000
     jne loc_66d81                                ; 066982 0f85f9030000
-    cmp word ptr [word_cbece], 2                 ; 066988 66833dcebe0c0002
+    cmp word ptr [clip_frame], 2                 ; 066988 66833dcebe0c0002
     jne loc_66d81                                ; 066990 0f85eb030000
     add word ptr [esp + 0x1c], 0x23              ; 066996 668344241c23
     cmp word ptr [word_cc0de], 0x2ee             ; 06699c 66813ddec00c00ee..
@@ -5939,12 +5939,12 @@ loc_66af6:
     call settextpos                              ; 066b0f e8ac7e0200
     add esp, 8                                   ; 066b14 83c408
     mov edi, dword ptr [esp + 0x1c]              ; 066b17 8b7c241c
-    cmp byte ptr [byte_e02c8], 0                 ; 066b1b 803dc8020e0000
+    cmp byte ptr [panel_title], 0                ; 066b1b 803dc8020e0000
     je loc_66b55                                 ; 066b22 7431
     mov eax, dword ptr [esp + 0x1a]              ; 066b24 8b44241a
     sar eax, 0x10                                ; 066b28 c1f810
     push eax                                     ; 066b2b 50
-    push byte_e02c8                              ; 066b2c 68c8020e00
+    push panel_title                             ; 066b2c 68c8020e00
     call textwidth                               ; 066b31 e88e9f0200
     mov edx, eax                                 ; 066b36 89c2
     add esp, 4                                   ; 066b38 83c404
@@ -5954,7 +5954,7 @@ loc_66af6:
     movsx edx, si                                ; 066b42 0fbfd6
     sub edx, eax                                 ; 066b45 29c2
     push edx                                     ; 066b47 52
-    push byte_e02c8                              ; 066b48 68c8020e00
+    push panel_title                             ; 066b48 68c8020e00
     call printstr_at                             ; 066b4d e812ae0200
     add esp, 0xc                                 ; 066b52 83c40c
 loc_66b55:
@@ -6043,12 +6043,12 @@ loc_66c3d:
     call settextpos                              ; 066c53 e8687d0200
     add esp, 8                                   ; 066c58 83c408
     mov edi, dword ptr [esp + 0x1c]              ; 066c5b 8b7c241c
-    cmp byte ptr [byte_e02c8], 0                 ; 066c5f 803dc8020e0000
+    cmp byte ptr [panel_title], 0                ; 066c5f 803dc8020e0000
     je loc_66c99                                 ; 066c66 7431
     mov eax, dword ptr [esp + 0x1a]              ; 066c68 8b44241a
     sar eax, 0x10                                ; 066c6c c1f810
     push eax                                     ; 066c6f 50
-    push byte_e02c8                              ; 066c70 68c8020e00
+    push panel_title                             ; 066c70 68c8020e00
     call textwidth                               ; 066c75 e84a9e0200
     mov edx, eax                                 ; 066c7a 89c2
     add esp, 4                                   ; 066c7c 83c404
@@ -6058,7 +6058,7 @@ loc_66c3d:
     movsx edx, si                                ; 066c86 0fbfd6
     sub edx, eax                                 ; 066c89 29c2
     push edx                                     ; 066c8b 52
-    push byte_e02c8                              ; 066c8c 68c8020e00
+    push panel_title                             ; 066c8c 68c8020e00
     call printstr_at                             ; 066c91 e8ceac0200
     add esp, 0xc                                 ; 066c96 83c40c
 loc_66c99:
@@ -6207,7 +6207,7 @@ update_announcer:
 loc_66e45:
     cmp word ptr [dword_cbecc], 0                ; 066e45 66833dccbe0c0000
     jne loc_66eb9                                ; 066e4d 0f8566000000
-    cmp word ptr [word_cbece], 5                 ; 066e53 66833dcebe0c0005
+    cmp word ptr [clip_frame], 5                 ; 066e53 66833dcebe0c0005
     jge loc_66eb9                                ; 066e5b 7d5c
     mov ax, word ptr [word_cc0de]                ; 066e5d 66a1dec00c00
     cmp ax, 0x5dc                                ; 066e63 663ddc05
@@ -6237,16 +6237,16 @@ loc_66eb1:
 loc_66eb9:
     cmp word ptr [word_cbec0], 0x10              ; 066eb9 66833dc0be0c0010
     jne loc_66f89                                ; 066ec1 0f85c2000000
-    mov edx, dword ptr [dword_cbeca]             ; 066ec7 8b15cabe0c00
+    mov edx, dword ptr [panel_clip]              ; 066ec7 8b15cabe0c00
     sar edx, 0x10                                ; 066ecd c1fa10
     cmp edx, -1                                  ; 066ed0 83faff
     je loc_66f89                                 ; 066ed3 0f84b0000000
     mov ebx, dword ptr [dword_e0248]             ; 066ed9 8b1d48020e00
     test ebx, ebx                                ; 066edf 85db
     je loc_66f89                                 ; 066ee1 0f84a2000000
-    mov si, word ptr [dword_e9ab2]               ; 066ee7 668b35b29a0e00
+    mov si, word ptr [clip_script_pos]           ; 066ee7 668b35b29a0e00
     dec esi                                      ; 066eee 4e
-    mov word ptr [dword_e9ab2], si               ; 066eef 668935b29a0e00
+    mov word ptr [clip_script_pos], si           ; 066eef 668935b29a0e00
     test si, si                                  ; 066ef6 6685f6
     jge loc_66491                                ; 066ef9 0f8d92f5ffff
     mov eax, ebx                                 ; 066eff 89d8
@@ -6258,14 +6258,14 @@ loc_66eb9:
     push ecx                                     ; 066f17 51
     call freemem                                 ; 066f18 e8bb630200
     add esp, 4                                   ; 066f1d 83c404
-    mov eax, dword ptr [dword_cbeca]             ; 066f20 a1cabe0c00
+    mov eax, dword ptr [panel_clip]              ; 066f20 a1cabe0c00
     sar eax, 0x10                                ; 066f25 c1f810
     cmp byte ptr [eax + unk_cc049], 0            ; 066f28 80b849c00c0000
     je loc_66f3a                                 ; 066f2f 7409
     mov word ptr [word_cbec0], 0x258             ; 066f31 66c705c0be0c0058..
 loc_66f3a:
     mov eax, 0xffffffff                          ; 066f3a b8ffffffff
-    mov word ptr [word_cbece], ax                ; 066f3f 66a3cebe0c00
+    mov word ptr [clip_frame], ax                ; 066f3f 66a3cebe0c00
     mov word ptr [dword_cbecc], ax               ; 066f45 66a3ccbe0c00
     xor esi, esi                                 ; 066f4b 31f6
     mov dword ptr [dword_e0248], esi             ; 066f4d 893548020e00
@@ -6275,12 +6275,12 @@ loc_66f58:
     mov esi, ecx                                 ; 066f58 89ce
     inc esi                                      ; 066f5a 46
     mov word ptr [word_e9ab4], si                ; 066f5b 668935b49a0e00
-    mov ebx, dword ptr [dword_e9ab2]             ; 066f62 8b1db29a0e00
+    mov ebx, dword ptr [clip_script_pos]         ; 066f62 8b1db29a0e00
     sar ebx, 0x10                                ; 066f68 c1fb10
     movsx ax, byte ptr [ebx + eax]               ; 066f6b 660fbe0403
-    mov word ptr [word_cbece], ax                ; 066f70 66a3cebe0c00
+    mov word ptr [clip_frame], ax                ; 066f70 66a3cebe0c00
     mov ax, word ptr [edx*4 + unk_cc054]         ; 066f76 668b049554c00c00
-    mov word ptr [dword_e9ab2], ax               ; 066f7e 66a3b29a0e00
+    mov word ptr [clip_script_pos], ax           ; 066f7e 66a3b29a0e00
     jmp loc_66491                                ; 066f84 e908f5ffff
 
 loc_66f89:
@@ -6300,7 +6300,7 @@ loc_66fa5:
     mov byte ptr [byte_e0308], dl                ; 066fc5 881508030e00
     mov byte ptr [byte_e028c], dl                ; 066fcb 88158c020e00
     mov byte ptr [byte_e0250], dl                ; 066fd1 881550020e00
-    mov byte ptr [byte_e02c8], dl                ; 066fd7 8815c8020e00
+    mov byte ptr [panel_title], dl               ; 066fd7 8815c8020e00
     jmp loc_66491                                ; 066fdd e9aff4ffff
 
 
@@ -6511,7 +6511,7 @@ loc_67231:
     jge loc_67270                                ; 06725f 7d0f
 loc_67261:
     mov word ptr [word_cbec8], ax                ; 067261 66a3c8be0c00
-    mov word ptr [dword_cbeca], 0x50             ; 067267 66c705cabe0c0050..
+    mov word ptr [panel_clip], 0x50              ; 067267 66c705cabe0c0050..
 loc_67270:
     test bx, bx                                  ; 067270 6685db
     jge loc_672af                                ; 067273 7d3a
@@ -6640,7 +6640,7 @@ loc_673c1:
 ; ====================================================================================================
 ; load_team_palettes  [0x673c5, 415 bytes, 133 instructions]
 ; HOMEPALS.BIN / AWAYPALS.BIN jersey colours
-; called by: play_game, demo_game, savegame_io, simulate_game_offscreen, highlights_play
+; called by: play_game, demo_game, savegame_io, league_highlight_game, highlights_play
 ;   uses string "HOMEPALS"
 ;   uses string "AWAYPALS"
 ;   uses string "rinkpal"
@@ -6806,8 +6806,8 @@ loc_67545:
 replay_reset:
     push 4                                       ; 067564 6804000000
     call __CHK                                   ; 067569 e8de530200
-    mov word ptr [word_cd4fe], 1                 ; 06756e 66c705fed40c0001..
-    mov word ptr [word_cd500], 0xffff            ; 067577 66c70500d50c00ff..
+    mov word ptr [replay_half_step], 1           ; 06756e 66c705fed40c0001..
+    mov word ptr [replay_held_sfx], 0xffff       ; 067577 66c70500d50c00ff..
     ret                                          ; 067580 c3
 
 
@@ -6874,19 +6874,19 @@ replay_record_frame:
     sub esp, 4                                   ; 0675e5 83ec04
     test byte ptr [game_flags], 0x10             ; 0675e8 f605bb900c0010
     jne loc_678f7                                ; 0675ef 0f8502030000
-    mov dx, word ptr [word_cd4fe]                ; 0675f5 668b15fed40c00
+    mov dx, word ptr [replay_half_step]          ; 0675f5 668b15fed40c00
     inc edx                                      ; 0675fc 42
-    mov word ptr [word_cd4fe], dx                ; 0675fd 668915fed40c00
+    mov word ptr [replay_half_step], dx          ; 0675fd 668915fed40c00
     cmp dx, 2                                    ; 067604 6683fa02
     jge loc_67638                                ; 067608 7d2e
     test byte ptr [stop_flags], 4                ; 06760a f605be900c0004
     je loc_6761e                                 ; 067611 740b
-    mov word ptr [word_cd500], 0xffff            ; 067613 66c70500d50c00ff..
+    mov word ptr [replay_held_sfx], 0xffff       ; 067613 66c70500d50c00ff..
     jmp loc_6762a                                ; 06761c eb0c
 
 loc_6761e:
     mov ax, word ptr [crowd_noise]               ; 06761e 66a1dcc00c00
-    mov word ptr [word_cd500], ax                ; 067624 66a300d50c00
+    mov word ptr [replay_held_sfx], ax           ; 067624 66a300d50c00
 loc_6762a:
     mov word ptr [crowd_noise], 0xffff           ; 06762a 66c705dcc00c00ff..
     jmp loc_678f7                                ; 067633 e9bf020000
@@ -6894,7 +6894,7 @@ loc_6762a:
 loc_67638:
     mov edi, edx                                 ; 067638 89d7
     sub edi, 2                                   ; 06763a 83ef02
-    mov word ptr [word_cd4fe], di                ; 06763d 66893dfed40c00
+    mov word ptr [replay_half_step], di          ; 06763d 66893dfed40c00
     test byte ptr [stop_flags], 4                ; 067644 f605be900c0004
     je loc_67657                                 ; 06764b 740a
     call replay_buffer_start                     ; 06764d e84effffff
@@ -6998,7 +6998,7 @@ loc_67743:
     mov eax, dword ptr [replay_write_ptr]        ; 067777 a19c030e00
     lea ebx, [eax + 1]                           ; 06777c 8d5801
     mov dword ptr [replay_write_ptr], ebx        ; 06777f 891d9c030e00
-    mov dl, byte ptr [word_cd500]                ; 067785 8a1500d50c00
+    mov dl, byte ptr [replay_held_sfx]           ; 067785 8a1500d50c00
     mov byte ptr [eax], dl                       ; 06778b 8810
     mov eax, dword ptr [replay_write_ptr]        ; 06778d a19c030e00
     lea ebx, [eax + 1]                           ; 067792 8d5801
@@ -7007,7 +7007,7 @@ loc_67743:
     mov byte ptr [eax], dl                       ; 0677a1 8810
     mov eax, 0xffffffff                          ; 0677a3 b8ffffffff
     mov word ptr [crowd_noise], ax               ; 0677a8 66a3dcc00c00
-    mov word ptr [word_cd500], ax                ; 0677ae 66a300d50c00
+    mov word ptr [replay_held_sfx], ax           ; 0677ae 66a300d50c00
     mov dl, byte ptr [user2_slot]                ; 0677b4 8a15c4900c00
     and dl, 0xf                                  ; 0677ba 80e20f
     shl dl, 4                                    ; 0677bd c0e204
@@ -7089,7 +7089,7 @@ loc_678ac:
     mov eax, dword ptr [replay_write_ptr]        ; 0678bb a19c030e00
     lea ecx, [eax + 1]                           ; 0678c0 8d4801
     mov dword ptr [replay_write_ptr], ecx        ; 0678c3 890d9c030e00
-    mov bl, byte ptr [ebx + unk_dee94]           ; 0678c9 8a9b94ee0d00
+    mov bl, byte ptr [ebx + crowd_figures]       ; 0678c9 8a9b94ee0d00
     mov byte ptr [eax], bl                       ; 0678cf 8818
     inc edx                                      ; 0678d1 42
 loc_678d2:
@@ -7130,15 +7130,15 @@ replay_seek_frames:
     mov dword ptr [esp + 0x44], eax              ; 067916 89442444
     test ax, ax                                  ; 06791a 6685c0
     jl loc_679d6                                 ; 06791d 0f8cb3000000
-    mov ebx, dword ptr [dword_e03a4]             ; 067923 8b1da4030e00
+    mov ebx, dword ptr [controls_read]           ; 067923 8b1da4030e00
 loc_67929:
     cmp si, 1                                    ; 067929 6683fe01
     jl loc_67a1f                                 ; 06792d 0f8cec000000
     mov edx, dword ptr [replay_buffer]           ; 067933 8b1578900c00
     dec esi                                      ; 067939 4e
-    mov ebp, dword ptr [dword_e03a4]             ; 06793a 8b2da4030e00
+    mov ebp, dword ptr [controls_read]           ; 06793a 8b2da4030e00
     add ebp, 0x80                                ; 067940 81c580000000
-    mov dword ptr [dword_e03a4], ebp             ; 067946 892da4030e00
+    mov dword ptr [controls_read], ebp           ; 067946 892da4030e00
     lea eax, [edx + 0x9600]                      ; 06794c 8d8200960000
     cmp eax, ebp                                 ; 067952 39e8
     jne loc_6797b                                ; 067954 7525
@@ -7146,17 +7146,17 @@ loc_67929:
     jne loc_67975                                ; 06795d 7516
     mov esi, 0xffffffff                          ; 06795f beffffffff
     sub ebp, 0x80                                ; 067964 81ed80000000
-    mov dword ptr [dword_e03a4], ebp             ; 06796a 892da4030e00
+    mov dword ptr [controls_read], ebp           ; 06796a 892da4030e00
     jmp loc_67a1f                                ; 067970 e9aa000000
 
 loc_67975:
-    mov dword ptr [dword_e03a4], edx             ; 067975 8915a4030e00
+    mov dword ptr [controls_read], edx           ; 067975 8915a4030e00
 loc_6797b:
-    mov eax, dword ptr [dword_e03a4]             ; 06797b a1a4030e00
+    mov eax, dword ptr [controls_read]           ; 06797b a1a4030e00
     cmp eax, dword ptr [replay_write_ptr]        ; 067980 3b059c030e00
     jne loc_6799c                                ; 067986 7514
     mov esi, 0xffffffff                          ; 067988 beffffffff
-    sub dword ptr [dword_e03a4], 0x80            ; 06798d 812da4030e008000..
+    sub dword ptr [controls_read], 0x80          ; 06798d 812da4030e008000..
     jmp loc_67a1f                                ; 067997 e983000000
 
 loc_6799c:
@@ -7171,7 +7171,7 @@ loc_6799c:
     cwde                                         ; 0679b0 98
     call play_sfx                                ; 0679b1 e8ce1effff
 loc_679b6:
-    mov edx, dword ptr [dword_e03a4]             ; 0679b6 8b15a4030e00
+    mov edx, dword ptr [controls_read]           ; 0679b6 8b15a4030e00
     xor eax, eax                                 ; 0679bc 31c0
     mov al, byte ptr [edx + 0x59]                ; 0679be 8a4259
     cmp ax, 0xff                                 ; 0679c1 663dff00
@@ -7187,7 +7187,7 @@ loc_679e2:
     test si, si                                  ; 0679e2 6685f6
     jge loc_67a1f                                ; 0679e5 7d38
     inc esi                                      ; 0679e7 46
-    cmp edx, dword ptr [dword_e03a4]             ; 0679e8 3b15a4030e00
+    cmp edx, dword ptr [controls_read]           ; 0679e8 3b15a4030e00
     jne loc_67a0b                                ; 0679ee 751b
     test byte ptr [action_flags], 0x10           ; 0679f0 f605bc900c0010
     jne loc_67a00                                ; 0679f7 7507
@@ -7197,13 +7197,13 @@ loc_679f9:
 
 loc_67a00:
     lea eax, [edx + 0x9600]                      ; 067a00 8d8200960000
-    mov dword ptr [dword_e03a4], eax             ; 067a06 a3a4030e00
+    mov dword ptr [controls_read], eax           ; 067a06 a3a4030e00
 loc_67a0b:
-    mov eax, dword ptr [dword_e03a4]             ; 067a0b a1a4030e00
+    mov eax, dword ptr [controls_read]           ; 067a0b a1a4030e00
     cmp eax, ebx                                 ; 067a10 39d8
     je loc_679f9                                 ; 067a12 74e5
     lea edi, [eax - 0x80]                        ; 067a14 8d7880
-    mov dword ptr [dword_e03a4], edi             ; 067a17 893da4030e00
+    mov dword ptr [controls_read], edi           ; 067a17 893da4030e00
     jmp loc_679e2                                ; 067a1d ebc3
 
 loc_67a1f:
@@ -7211,14 +7211,14 @@ loc_67a1f:
     jmp loc_67b0c                                ; 067a21 e9e6000000
 
 loc_67a26:
-    mov edx, dword ptr [dword_e03a4]             ; 067a26 8b15a4030e00
+    mov edx, dword ptr [controls_read]           ; 067a26 8b15a4030e00
     mov ebx, dword ptr [edx]                     ; 067a2c 8b1a
     mov dword ptr [dword_e03bc], ebx             ; 067a2e 891dbc030e00
     mov bx, word ptr [dword_e03bc]               ; 067a34 668b1dbc030e00
     and bh, 3                                    ; 067a3b 80e703
     mov word ptr [dword_e03c0], bx               ; 067a3e 66891dc0030e00
     add edx, 4                                   ; 067a45 83c204
-    mov dword ptr [dword_e03a4], edx             ; 067a48 8915a4030e00
+    mov dword ptr [controls_read], edx           ; 067a48 8915a4030e00
     mov dl, byte ptr [byte_e03c1]                ; 067a4e 8a15c1030e00
     test dl, 2                                   ; 067a54 f6c202
     je loc_67a64                                 ; 067a57 740b
@@ -7268,10 +7268,10 @@ loc_67b0c:
     jmp loc_67b35                                ; 067b18 eb1b
 
 loc_67b1a:
-    mov edx, dword ptr [dword_e03a4]             ; 067b1a 8b15a4030e00
+    mov edx, dword ptr [controls_read]           ; 067b1a 8b15a4030e00
     movsx ebx, ax                                ; 067b20 0fbfd8
     lea edi, [edx + 1]                           ; 067b23 8d7a01
-    mov dword ptr [dword_e03a4], edi             ; 067b26 893da4030e00
+    mov dword ptr [controls_read], edi           ; 067b26 893da4030e00
     mov dl, byte ptr [edx]                       ; 067b2c 8a12
     mov byte ptr [ebx + unk_e9f8f], dl           ; 067b2e 88938f9f0e00
     inc eax                                      ; 067b34 40
@@ -7282,9 +7282,9 @@ loc_67b35:
     jmp loc_67bb7                                ; 067b3d e975000000
 
 loc_67b42:
-    mov edx, dword ptr [dword_e03a4]             ; 067b42 8b15a4030e00
+    mov edx, dword ptr [controls_read]           ; 067b42 8b15a4030e00
     lea ebx, [edx + 1]                           ; 067b48 8d5a01
-    mov dword ptr [dword_e03a4], ebx             ; 067b4b 891da4030e00
+    mov dword ptr [controls_read], ebx           ; 067b4b 891da4030e00
     mov dl, byte ptr [edx]                       ; 067b51 8a12
     mov byte ptr [dword_e03bc], dl               ; 067b53 8815bc030e00
     and dl, 0xf                                  ; 067b59 80e20f
@@ -7321,20 +7321,20 @@ loc_67baa:
 loc_67bb7:
     cmp ax, 6                                    ; 067bb7 663d0600
     jl loc_67b42                                 ; 067bbb 7c85
-    mov eax, dword ptr [dword_e03a4]             ; 067bbd a1a4030e00
+    mov eax, dword ptr [controls_read]           ; 067bbd a1a4030e00
     lea edx, [eax + 1]                           ; 067bc2 8d5001
-    mov dword ptr [dword_e03a4], edx             ; 067bc5 8915a4030e00
+    mov dword ptr [controls_read], edx           ; 067bc5 8915a4030e00
     movsx ax, byte ptr [eax]                     ; 067bcb 660fbe00
     mov word ptr [word_e9fa7], ax                ; 067bcf 66a3a79f0e00
     mov eax, edx                                 ; 067bd5 89d0
     inc edx                                      ; 067bd7 42
-    mov dword ptr [dword_e03a4], edx             ; 067bd8 8915a4030e00
+    mov dword ptr [controls_read], edx           ; 067bd8 8915a4030e00
     movsx ax, byte ptr [eax]                     ; 067bde 660fbe00
     mov word ptr [dword_e9fa9], ax               ; 067be2 66a3a99f0e00
     lea edi, [edx + 2]                           ; 067be8 8d7a02
-    mov dword ptr [dword_e03a4], edi             ; 067beb 893da4030e00
+    mov dword ptr [controls_read], edi           ; 067beb 893da4030e00
     lea edx, [edi + 1]                           ; 067bf1 8d5701
-    mov dword ptr [dword_e03a4], edx             ; 067bf4 8915a4030e00
+    mov dword ptr [controls_read], edx           ; 067bf4 8915a4030e00
     mov al, byte ptr [edi]                       ; 067bfa 8a07
     mov byte ptr [dword_e03bc], al               ; 067bfc a2bc030e00
     and al, 0xf                                  ; 067c01 240f
@@ -7363,14 +7363,14 @@ loc_67c3b:
     sar eax, 0x18                                ; 067c40 c1f818
 loc_67c43:
     mov byte ptr [dword_e9fac], al               ; 067c43 a2ac9f0e00
-    mov eax, dword ptr [dword_e03a4]             ; 067c48 a1a4030e00
+    mov eax, dword ptr [controls_read]           ; 067c48 a1a4030e00
     lea edx, [eax + 1]                           ; 067c4d 8d5001
-    mov dword ptr [dword_e03a4], edx             ; 067c50 8915a4030e00
+    mov dword ptr [controls_read], edx           ; 067c50 8915a4030e00
     mov al, byte ptr [eax]                       ; 067c56 8a00
     mov byte ptr [byte_e9fad], al                ; 067c58 a2ad9f0e00
     mov eax, edx                                 ; 067c5d 89d0
     inc edx                                      ; 067c5f 42
-    mov dword ptr [dword_e03a4], edx             ; 067c60 8915a4030e00
+    mov dword ptr [controls_read], edx           ; 067c60 8915a4030e00
     mov al, byte ptr [eax]                       ; 067c66 8a00
     mov byte ptr [dword_e03bc], al               ; 067c68 a2bc030e00
     and al, 0xf                                  ; 067c6d 240f
@@ -7381,7 +7381,7 @@ loc_67c43:
     mov byte ptr [byte_e9faf], al                ; 067c7f a2af9f0e00
     mov eax, edx                                 ; 067c84 89d0
     inc edx                                      ; 067c86 42
-    mov dword ptr [dword_e03a4], edx             ; 067c87 8915a4030e00
+    mov dword ptr [controls_read], edx           ; 067c87 8915a4030e00
     movsx ax, byte ptr [eax]                     ; 067c8d 660fbe00
     mov word ptr [word_e9fb0], ax                ; 067c91 66a3b09f0e00
     mov word ptr [camera], ax                    ; 067c97 66a398900c00
@@ -7390,19 +7390,19 @@ loc_67c43:
     mov word ptr [word_e9fb2], dx                ; 067ca2 668915b29f0e00
     mov word ptr [dword_c909a], dx               ; 067ca9 6689159a900c00
     add eax, 2                                   ; 067cb0 83c002
-    mov dword ptr [dword_e03a4], eax             ; 067cb3 a3a4030e00
+    mov dword ptr [controls_read], eax           ; 067cb3 a3a4030e00
     mov edx, eax                                 ; 067cb8 89c2
     mov ax, word ptr [eax]                       ; 067cba 668b00
     mov word ptr [word_cc0de], ax                ; 067cbd 66a3dec00c00
     xor eax, eax                                 ; 067cc3 31c0
     add edx, 2                                   ; 067cc5 83c202
-    mov dword ptr [dword_e03a4], edx             ; 067cc8 8915a4030e00
+    mov dword ptr [controls_read], edx           ; 067cc8 8915a4030e00
     jmp loc_67d0f                                ; 067cce eb3f
 
 loc_67cd0:
-    mov edx, dword ptr [dword_e03a4]             ; 067cd0 8b15a4030e00
+    mov edx, dword ptr [controls_read]           ; 067cd0 8b15a4030e00
     lea ebx, [edx + 1]                           ; 067cd6 8d5a01
-    mov dword ptr [dword_e03a4], ebx             ; 067cd9 891da4030e00
+    mov dword ptr [controls_read], ebx           ; 067cd9 891da4030e00
     mov dl, byte ptr [edx]                       ; 067cdf 8a12
     mov byte ptr [dword_e03bc], dl               ; 067ce1 8815bc030e00
     xor edx, edx                                 ; 067ce7 31d2
@@ -7422,9 +7422,9 @@ loc_67d0f:
     jmp loc_67d56                                ; 067d17 eb3d
 
 loc_67d19:
-    mov edx, dword ptr [dword_e03a4]             ; 067d19 8b15a4030e00
+    mov edx, dword ptr [controls_read]           ; 067d19 8b15a4030e00
     lea ebx, [edx + 1]                           ; 067d1f 8d5a01
-    mov dword ptr [dword_e03a4], ebx             ; 067d22 891da4030e00
+    mov dword ptr [controls_read], ebx           ; 067d22 891da4030e00
     mov dl, byte ptr [edx]                       ; 067d28 8a12
     xor dh, dh                                   ; 067d2a 30f6
     mov word ptr [dword_e03bc], dx               ; 067d2c 668915bc030e00
@@ -7441,7 +7441,7 @@ loc_67d56:
     jl loc_67d19                                 ; 067d5a 7cbd
     test cx, cx                                  ; 067d5c 6685c9
     je loc_67d7c                                 ; 067d5f 741b
-    mov eax, dword ptr [dword_e03a4]             ; 067d61 a1a4030e00
+    mov eax, dword ptr [controls_read]           ; 067d61 a1a4030e00
     cmp eax, dword ptr [replay_write_ptr]        ; 067d66 3b059c030e00
     je loc_67d7c                                 ; 067d6c 740e
     mov eax, dword ptr [esp + 0x44]              ; 067d6e 8b442444
@@ -7454,7 +7454,7 @@ loc_67d7c:
     call sound_pause_all                         ; 067d7c e8c719ffff
 loc_67d81:
     xor eax, eax                                 ; 067d81 31c0
-    sub dword ptr [dword_e03a4], 0x80            ; 067d83 812da4030e008000..
+    sub dword ptr [controls_read], 0x80          ; 067d83 812da4030e008000..
     jmp loc_67da7                                ; 067d8d eb18
 
 loc_67d8f:
@@ -9370,11 +9370,11 @@ loc_6932e:
 
 
 ; ====================================================================================================
-; simulate_game_offscreen  [0x69336, 3325 bytes, 763 instructions]
-; full CPU vs CPU simulation of a game without rendering
+; league_highlight_game  [0x69336, 3325 bytes, 763 instructions]
+; another game of the night played on the ice for a while (around the league), its score carried on
 ; called by: simulate_pending_games
 ; ====================================================================================================
-simulate_game_offscreen:
+league_highlight_game:
     push 0x120                                   ; 069336 6820010000
     call __CHK                                   ; 06933b e80c360200
     push esi                                     ; 069340 56
@@ -9465,7 +9465,7 @@ loc_69416:
     mov word ptr [away_team_id], ax              ; 06948a 66a3cc900c00
     mov eax, 2                                   ; 069490 b802000000
     call load_team_databases                     ; 069495 e83227fbff
-    mov eax, dword ptr [dword_cbeca]             ; 06949a a1cabe0c00
+    mov eax, dword ptr [panel_clip]              ; 06949a a1cabe0c00
     sar eax, 0x10                                ; 06949f c1f810
     cmp eax, -1                                  ; 0694a2 83f8ff
     je loc_694b6                                 ; 0694a5 740f
@@ -9603,16 +9603,16 @@ loc_69655:
     mov word ptr [word_cbec0], si                ; 0696c9 668935c0be0c00
     mov word ptr [penalty_box_mode], di          ; 0696d0 66893d44bc0c00
     mov word ptr [word_cbec8], si                ; 0696d7 668935c8be0c00
-    mov word ptr [word_cbece], si                ; 0696de 668935cebe0c00
+    mov word ptr [clip_frame], si                ; 0696de 668935cebe0c00
     mov ebx, esi                                 ; 0696e5 89f3
     mov word ptr [dword_cbecc], si               ; 0696e7 668935ccbe0c00
     xor ecx, esi                                 ; 0696ee 31f1
-    mov word ptr [dword_cbeca], cx               ; 0696f0 66890dcabe0c00
+    mov word ptr [panel_clip], cx                ; 0696f0 66890dcabe0c00
     xor esi, esi                                 ; 0696f7 31f6
-    mov word ptr [dword_cbec6], si               ; 0696f9 668935c6be0c00
+    mov word ptr [injury_stoppage], si           ; 0696f9 668935c6be0c00
     mov word ptr [word_cc0de], si                ; 069700 668935dec00c00
     xor esi, esi                                 ; 069707 31f6
-    mov dword ptr [dword_ccc88], esi             ; 069709 893588cc0c00
+    mov dword ptr [crowd_level], esi             ; 069709 893588cc0c00
     mov word ptr [word_df81a], ax                ; 06970f 66a31af80d00
     mov word ptr [word_df816], ax                ; 069715 66a316f80d00
     call entities_setup                          ; 06971b e8d740ffff
@@ -9769,11 +9769,11 @@ loc_69856:
     xor edx, edi                                 ; 0699b8 31fa
     mov word ptr [period_over], dx               ; 0699ba 66891546bc0c00
     mov word ptr [game_over], dx                 ; 0699c1 66891548bc0c00
-    mov word ptr [word_cbec4], si                ; 0699c8 668935c4be0c00
+    mov word ptr [cut_to_scene], si              ; 0699c8 668935c4be0c00
     call ticks_elapsed                           ; 0699cf e89a9f0400
     mov esi, 1                                   ; 0699d4 be01000000
     mov dword ptr [input_enabled], esi           ; 0699d9 89350c4d0c00
-    mov dword ptr [dword_c5130], esi             ; 0699df 893530510c00
+    mov dword ptr [demo_game_running], esi       ; 0699df 893530510c00
     mov dword ptr [pause_requested], edi         ; 0699e5 893d144e0c00
 loc_699eb:
     cmp word ptr [period_over], 0                ; 0699eb 66833d46bc0c0000
@@ -9876,7 +9876,7 @@ loc_69a99:
     neg eax                                      ; 069b40 f7d8
     call set_camera_offset                       ; 069b42 e850140000
     call present_frame                           ; 069b47 e85b120000
-    cmp word ptr [word_cbec4], 0                 ; 069b4c 66833dc4be0c0000
+    cmp word ptr [cut_to_scene], 0               ; 069b4c 66833dc4be0c0000
     je loc_69b9e                                 ; 069b54 7448
     mov ax, word ptr [input_enabled]             ; 069b56 66a10c4d0c00
     mov word ptr [word_e9aa0], ax                ; 069b5c 66a3a09a0e00
@@ -9934,7 +9934,7 @@ loc_69b9e:
     mov dword ptr [dword_dc28c], eax             ; 069c1d a38cc20d00
 loc_69c22:
     call draw_clock                              ; 069c22 e8cab0faff
-    mov bx, word ptr [word_cbec4]                ; 069c27 668b1dc4be0c00
+    mov bx, word ptr [cut_to_scene]              ; 069c27 668b1dc4be0c00
     test bx, bx                                  ; 069c2e 6685db
     je loc_69ca8                                 ; 069c31 7475
     mov ax, word ptr [input_enabled]             ; 069c33 66a10c4d0c00
@@ -9952,14 +9952,14 @@ loc_69c22:
     xor eax, eax                                 ; 069c69 31c0
     call fade_palette_to                         ; 069c6b e82879faff
     xor esi, esi                                 ; 069c70 31f6
-    mov word ptr [word_cbec4], si                ; 069c72 668935c4be0c00
+    mov word ptr [cut_to_scene], si              ; 069c72 668935c4be0c00
     mov eax, 0xc8                                ; 069c79 b8c8000000
     call randomrange                             ; 069c7e e8ad250200
     add eax, 0x64                                ; 069c83 0564000000
     mov word ptr [word_cc0de], ax                ; 069c88 66a3dec00c00
     mov eax, dword ptr [crowd_noise]             ; 069c8e a1dcc00c00
     sar eax, 0x10                                ; 069c93 c1f810
-    mov dword ptr [dword_ccc88], eax             ; 069c96 a388cc0c00
+    mov dword ptr [crowd_level], eax             ; 069c96 a388cc0c00
 loc_69c9b:
     mov eax, dword ptr [dword_e9a9e]             ; 069c9b a19e9a0e00
     sar eax, 0x10                                ; 069ca0 c1f810
@@ -9982,7 +9982,7 @@ loc_69ca8:
 loc_69cdf:
     xor edx, edx                                 ; 069cdf 31d2
     mov dword ptr [input_enabled], edx           ; 069ce1 89150c4d0c00
-    mov eax, dword ptr [dword_cbeca]             ; 069ce7 a1cabe0c00
+    mov eax, dword ptr [panel_clip]              ; 069ce7 a1cabe0c00
     sar eax, 0x10                                ; 069cec c1f810
     cmp eax, -1                                  ; 069cef 83f8ff
     je loc_69d03                                 ; 069cf2 740f
@@ -9993,10 +9993,10 @@ loc_69cdf:
 loc_69d03:
     mov edi, 0xffffffff                          ; 069d03 bfffffffff
     mov word ptr [word_cbec8], di                ; 069d08 66893dc8be0c00
-    mov word ptr [word_cbece], di                ; 069d0f 66893dcebe0c00
+    mov word ptr [clip_frame], di                ; 069d0f 66893dcebe0c00
     mov word ptr [dword_cbecc], di               ; 069d16 66893dccbe0c00
     xor ecx, ecx                                 ; 069d1d 31c9
-    mov dword ptr [dword_c5130], ecx             ; 069d1f 890d30510c00
+    mov dword ptr [demo_game_running], ecx       ; 069d1f 890d30510c00
     mov dword ptr [dword_ccc98], ecx             ; 069d25 890d98cc0c00
     push palette_save                            ; 069d2b 6814f00d00
     push 0x100                                   ; 069d30 6800010000
@@ -10011,7 +10011,7 @@ loc_69d03:
     xor ebx, ebx                                 ; 069d57 31db
     mov word ptr [word_cc0de], bx                ; 069d59 66891ddec00c00
     xor edi, edi                                 ; 069d60 31ff
-    mov dword ptr [dword_ccc88], edi             ; 069d62 893d88cc0c00
+    mov dword ptr [crowd_level], edi             ; 069d62 893d88cc0c00
     cmp byte ptr [sound_enabled], 0              ; 069d68 803d30240d0000
     je loc_69d8a                                 ; 069d6f 7419
     test byte ptr [settings2], 1                 ; 069d71 f60500540c0001
@@ -10160,8 +10160,8 @@ loc_69f33:
     mov word ptr [word_cbc64], cx                ; 069fb2 66890d64bc0c00
     mov word ptr [word_cbc62], cx                ; 069fb9 66890d62bc0c00
     mov word ptr [word_cbc6c], di                ; 069fc0 66893d6cbc0c00
-    mov word ptr [word_cbc6a], di                ; 069fc7 66893d6abc0c00
-    mov word ptr [word_cbec4], 1                 ; 069fce 66c705c4be0c0001..
+    mov word ptr [line_change_prompt], di        ; 069fc7 66893d6abc0c00
+    mov word ptr [cut_to_scene], 1               ; 069fce 66c705c4be0c0001..
     xor edx, edx                                 ; 069fd7 31d2
     mov dword ptr [dword_d8c78], edx             ; 069fd9 8915788c0d00
     mov word ptr [whistle_timer], di             ; 069fdf 66893dd2900c00

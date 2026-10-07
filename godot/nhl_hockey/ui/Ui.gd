@@ -20,7 +20,7 @@ var px := 320
 var py := 240
 var events: Array = []
 var active := true
-var held := 0                    # dword_ea29c: polls the arrows have been held (acceleration)
+var held := 0                    # arrow_held_polls: polls the arrows have been held (acceleration)
 var _tick_acc := 0.0
 var _enter_down := false
 var _mouse_down := false
@@ -261,8 +261,8 @@ func draw_menu(items: Array, ox: int, oy: int, light: int, face: int, dark: int)
 			scr.settextcolor(dark, 0xff)
 			scr.printstr_at(it.text, it.x0 + 3 + ox, y)
 
-## highlight_menu_item (0x6b94e) with fill = face draws an entry in its normal state,
-## unhighlight_menu_item (0x6b9eb) with fill = dark selected (the names are the other way round)
+## menu_item_draw_normal (0x6b94e) with fill = face draws an entry in its normal state,
+## menu_item_draw_selected (0x6b9eb) with fill = dark selected
 func draw_menu_entry(it: Menus.Item, ox: int, oy: int, text_color: int, fill: int) -> void:
 	if not it.enabled():
 		return

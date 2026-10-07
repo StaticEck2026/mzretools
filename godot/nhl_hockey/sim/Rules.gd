@@ -688,7 +688,7 @@ static func score_goal(sim: Sim, net: Entity) -> void:
 		puck.flags3 |= 4
 		puck.set_state(Entity.State.PUCK_IDLE)
 		Anim.set_animation(sim.shadow, 0x7fd)
-		# word_e9ab0: 1 even strength, 2 short handed, 4 power play, | 8 into an empty net
+		# goal_flags: 1 even strength, 2 short handed, 4 power play, | 8 into an empty net
 		sim.goal_flags = 2 if scoring.skaters_on_ice < conceding.skaters_on_ice else (4 if conceding.skaters_on_ice < scoring.skaters_on_ice else 1)
 		if conceding.goalie_pulled():
 			sim.goal_flags |= 8

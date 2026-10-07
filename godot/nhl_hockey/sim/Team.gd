@@ -2,7 +2,7 @@ class_name Team
 extends RefCounted
 ## One of the two team records (0xdf614 home, 0xdf714 away, 0x100 bytes each). Only the fields the
 ## simulation uses are kept; the team statistics are the counters of the Game Statistics screen
-## (team_select_screen2) and of the league files.
+## (game_statistics_screen) and of the league files.
 ## Offsets refer to re/nhl_hockey/STRUCTURES.md.
 
 const FL_LINE_CHANGE_UI := 0x02      # +0x44 bit 1: line change menu open
@@ -35,7 +35,7 @@ var extra_attacker: int = -1         # +0x2e roster index of the extra attacker 
 var carrier_history: PackedInt32Array = PackedInt32Array([-1, -1, -1])   # +0x30/+0x32/+0x34 roster idx
 var skaters_on_ice: int = 6          # +0x36 players dressed (goalie included)
 var goalie_request: int = 0          # +0x38 word: low nibble = goalie 0/1, 0xff00 = pulled by the CPU (reverts at the next faceoff), 0xfff0 = pulled by the user
-var line_change_ui: bool = false     # word_cbc6a: the line change prompt is open
+var line_change_ui: bool = false     # line_change_prompt: the line change prompt is open
 var nearest_dist: int = 0xffff       # +0x3e distance of the nearest skater to the puck
 var nearest_slot: int = -1           # +0x42
 var flags: int = 0                   # +0x44

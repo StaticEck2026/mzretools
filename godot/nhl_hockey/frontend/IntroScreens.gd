@@ -19,7 +19,7 @@ const CREDIT_END := 0xc638c          # unk_c638c: the last page, empty
 const DEMO_PAIRS := 0xc5861          # dword_c5860 + 1: 17 matchups (home, away) of the demo games
 const DEMO_PERIOD := 0x3c            # word_cbc4a during demo_game: a period of 60 seconds
 
-static var demo_kind := 0            # dword_c5886: 0 two teams at random, 1 a matchup, 2 the all-stars
+static var demo_kind := 0            # demo_kind: 0 two teams at random, 1 a matchup, 2 the all-stars
 
 func _init(f: FrontEnd) -> void:
 	fe = f

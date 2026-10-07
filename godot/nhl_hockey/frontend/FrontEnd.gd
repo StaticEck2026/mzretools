@@ -26,8 +26,8 @@ var font_kaufm: Vfn
 var loop_player: AudioStreamPlayer   # channel 3 of the original: the recordings of the menu screens (dword_c721d)
 var loop_name := ""
 var loop_volume := 0x4c
-var desk_toggle := false             # byte_c7218: TONIGHTS.IFF and MAINDESK.IFF take turns on the desk
-var loading_shown := false           # dword_c9074
+var desk_toggle := false             # fe_desk_toggle: TONIGHTS.IFF and MAINDESK.IFF take turns on the desk
+var loading_shown := false           # loading_shown
 var db: Database
 var games: GameScreens
 var stats: StatsScreens

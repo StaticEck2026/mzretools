@@ -54,7 +54,7 @@ standings_playoffs_view:
     sub esp, 0xc                                 ; 0296cb 81ec0c000000
     mov dword ptr [ebp - 0xc], eax               ; 0296d1 8945f4
     mov dword ptr [ebp - 8], edx                 ; 0296d4 8955f8
-    cmp dword ptr [dword_c695a], 0               ; 0296d7 833d5a690c0000
+    cmp dword ptr [stats_league], 0              ; 0296d7 833d5a690c0000
     jne loc_296ed                                ; 0296de 750d
     mov edx, dword ptr [ebp - 8]                 ; 0296e0 8b55f8
     mov eax, dword ptr [ebp - 0xc]               ; 0296e3 8b45f4
@@ -477,7 +477,7 @@ load_lssched_db:
     mov ebp, esp                                 ; 029aa7 89e5
     sub esp, 0x24                                ; 029aa9 81ec24000000
     mov dword ptr [ebp - 4], eax                 ; 029aaf 8945fc
-    cmp dword ptr [dword_c695a], 0               ; 029ab2 833d5a690c0000
+    cmp dword ptr [stats_league], 0              ; 029ab2 833d5a690c0000
     je loc_29ad5                                 ; 029ab9 741a
     mov ecx, aDB                                 ; 029abb b91a810c00        ".DB"
     mov ebx, dword ptr [off_c80ef]               ; 029ac0 8b1def800c00
@@ -638,7 +638,7 @@ loc_29c4f:
 ; ====================================================================================================
 ; format_team_name  [0x29c75, 139 bytes, 50 instructions]
 ; city and name, shortened to fit a width
-; called by: team_abbrev_lookup, player_stats_screen, stats_table, draw_team_logos, boxscore_screen, dbedit_draw_roster_column, roster_table
+; called by: team_abbrev_lookup, player_stats_screen, stats_table, lineups_screen, boxscore_screen, dbedit_draw_roster_column, roster_table
 ;   uses string " "
 ; ====================================================================================================
 format_team_name:
@@ -701,7 +701,7 @@ loc_29cf9:
 
 ; ====================================================================================================
 ; draw_bevel_box  [0x29d00, 533 bytes, 190 instructions]
-; called by: team_select_screen
+; called by: scouting_report_screen
 ; ====================================================================================================
 draw_bevel_box:
     push 0x38                                    ; 029d00 6838000000
@@ -904,8 +904,8 @@ jpt_29f18:
     dd loc_2a955                                 ; 029f24
 
 ; ====================================================================================================
-; team_select_screen  [0x29f28, 3255 bytes, 805 instructions]
-; arena, rink, srlogo "%s at %s"
+; scouting_report_screen  [0x29f28, 3255 bytes, 805 instructions]
+; the scouting report of the two teams before a game: arena, rink, srlogo "%s at %s"
 ; called by: exhibition_mode, league_calendar_flow, playoff_tree_screen
 ;   uses string "apal"
 ;   uses string "Pal"
@@ -919,7 +919,7 @@ jpt_29f18:
 ;   uses string ".iff"
 ;   ... and 4 more strings
 ; ====================================================================================================
-team_select_screen:
+scouting_report_screen:
     push 0x6a0                                   ; 029f28 68a0060000
     call __CHK                                   ; 029f2d e81a2a0600
     push ebx                                     ; 029f32 53
@@ -1443,7 +1443,7 @@ loc_2a69c:
     mov edx, dword ptr [esp + 0x644]             ; 02a6a1 8b942444060000
     xor eax, eax                                 ; 02a6a8 31c0
     call fade_palette                            ; 02a6aa e87abd0400
-    cmp dword ptr [dword_dc234], 0x444           ; 02a6af 813d34c20d004404..
+    cmp dword ptr [league_game_number], 0x444    ; 02a6af 813d34c20d004404..
     jge loc_2a6d7                                ; 02a6b9 7d1c
     xor edx, edx                                 ; 02a6bb 31d2
     mov dl, byte ptr [esp + 0x66c]               ; 02a6bd 8a94246c060000
@@ -1476,16 +1476,16 @@ loc_2a706:
     lea ecx, [edx + 1]                           ; 02a71a 8d4a01
 loc_2a71d:
     mov eax, 1                                   ; 02a71d b801000000
-    cmp dword ptr [dword_dc234], 0x47c           ; 02a722 813d34c20d007c04..
+    cmp dword ptr [league_game_number], 0x47c    ; 02a722 813d34c20d007c04..
     jl loc_2a733                                 ; 02a72c 7c05
     mov eax, 2                                   ; 02a72e b802000000
 loc_2a733:
-    cmp dword ptr [dword_dc234], 0x498           ; 02a733 813d34c20d009804..
+    cmp dword ptr [league_game_number], 0x498    ; 02a733 813d34c20d009804..
     jl loc_2a744                                 ; 02a73d 7c05
     mov eax, 3                                   ; 02a73f b803000000
 loc_2a744:
     push eax                                     ; 02a744 50
-    mov edx, dword ptr [dword_dc234]             ; 02a745 8b1534c20d00
+    mov edx, dword ptr [league_game_number]      ; 02a745 8b1534c20d00
     sub edx, 0x444                               ; 02a74b 81ea44040000
     mov ebx, 7                                   ; 02a751 bb07000000
     mov eax, edx                                 ; 02a756 89d0
@@ -1780,7 +1780,7 @@ loc_2ab3f:
     mov bl, byte ptr [esp + 0x670]               ; 02ab84 8a9c2470060000
     mov edx, ecx                                 ; 02ab8b 89ca
     mov eax, ebx                                 ; 02ab8d 89d8
-    call draw_team_logos                         ; 02ab8f e84b000000
+    call lineups_screen                          ; 02ab8f e84b000000
     mov dword ptr [esp + 0x640], eax             ; 02ab94 89842440060000
     mov edx, dword ptr [ecx*4 + team_abbrev]     ; 02ab9b 8b148d39540c00
     mov eax, dword ptr [ebx*4 + team_abbrev]     ; 02aba2 8b049d39540c00
@@ -1803,9 +1803,9 @@ loc_2abcc:
 
 
 ; ====================================================================================================
-; draw_team_logos  [0x2abdf, 3032 bytes, 782 instructions]
-; ctlogo, logohome, logoaway
-; called by: team_select_screen
+; lineups_screen  [0x2abdf, 3032 bytes, 782 instructions]
+; tonight's line-ups of the two teams: ctlogo, logohome, logoaway
+; called by: scouting_report_screen
 ;   uses string "ctlogo"
 ;   uses string "logohome"
 ;   uses string "logoaway"
@@ -1818,7 +1818,7 @@ loc_2abcc:
 ;   uses string "scra"
 ;   ... and 9 more strings
 ; ====================================================================================================
-draw_team_logos:
+lineups_screen:
     push 0x148                                   ; 02abdf 6848010000
     call __CHK                                   ; 02abe4 e8631d0600
     push ebx                                     ; 02abe9 53
@@ -2966,7 +2966,7 @@ loc_2bb24:
     call file_close                              ; 02bb2c e84b8afeff
     mov ecx, 0xc                                 ; 02bb31 b90c000000
     mov ebx, 0xffffffff                          ; 02bb36 bbffffffff
-    mov edx, unk_dd774                           ; 02bb3b ba74d70d00
+    mov edx, calendar_games                      ; 02bb3b ba74d70d00
     mov eax, dword ptr [esp + 0x30]              ; 02bb40 8b442430
     call file_read                               ; 02bb44 e8598afeff
     test eax, eax                                ; 02bb49 85c0
@@ -5269,7 +5269,7 @@ loc_2d553:
     push eax                                     ; 02d59d 50
     call windowdefp                              ; 02d59e e8e9790800
     add esp, 0xc                                 ; 02d5a3 83c40c
-    mov dword ptr [dword_dd66c], eax             ; 02d5a6 a36cd60d00
+    mov dword ptr [lineup_logos], eax            ; 02d5a6 a36cd60d00
     push eax                                     ; 02d5ab 50
     call setscreen                               ; 02d5ac e8bf790800
     add esp, 4                                   ; 02d5b1 83c404
@@ -5278,11 +5278,11 @@ loc_2d553:
     push esi                                     ; 02d5b8 56
     call drawshape                               ; 02d5b9 e8322e0600
     add esp, 0xc                                 ; 02d5be 83c40c
-    mov eax, dword ptr [dword_dd66c]             ; 02d5c1 a16cd60d00
+    mov eax, dword ptr [lineup_logos]            ; 02d5c1 a16cd60d00
     mov eax, dword ptr [eax + 0x2c]              ; 02d5c6 8b402c
     mov dx, word ptr [esi + 8]                   ; 02d5c9 668b5608
     mov word ptr [eax + 8], dx                   ; 02d5cd 66895008
-    mov eax, dword ptr [dword_dd66c]             ; 02d5d1 a16cd60d00
+    mov eax, dword ptr [lineup_logos]            ; 02d5d1 a16cd60d00
     mov eax, dword ptr [eax + 0x2c]              ; 02d5d6 8b402c
     mov dx, word ptr [esi + 0xa]                 ; 02d5d9 668b560a
     mov word ptr [eax + 0xa], dx                 ; 02d5dd 6689500a
@@ -5631,7 +5631,7 @@ loc_2db1f:
     jmp loc_2dbe0                                ; 02db66 e975000000
 
 loc_2db6b:
-    cmp dword ptr [dword_c541f], 8               ; 02db6b 833d1f540c0008
+    cmp dword ptr [sound_card], 8                ; 02db6b 833d1f540c0008
     jne loc_2db90                                ; 02db72 751c
     xor ecx, ecx                                 ; 02db74 31c9
     mov ebx, aMtsum                              ; 02db76 bb02160c00        "mtsum"
@@ -5689,7 +5689,7 @@ loc_2dbe0:
     call draw_team_logo_parts                    ; 02dc47 e802030500
     push 0x50                                    ; 02dc4c 6a50
     push 0x3d                                    ; 02dc4e 6a3d
-    mov eax, dword ptr [dword_dd66c]             ; 02dc50 a16cd60d00
+    mov eax, dword ptr [lineup_logos]            ; 02dc50 a16cd60d00
     mov edx, dword ptr [eax + 0x2c]              ; 02dc55 8b502c
     push edx                                     ; 02dc58 52
     call drawshape_remap_centered                ; 02dc59 e872370600
@@ -5723,7 +5723,7 @@ loc_2dcad:
     jmp loc_2dfc4                                ; 02dcbf e900030000
 
 loc_2dcc4:
-    mov al, byte ptr [ecx*2 + unk_dd774]         ; 02dcc4 8a044d74d70d00
+    mov al, byte ptr [ecx*2 + calendar_games]    ; 02dcc4 8a044d74d70d00
     mov byte ptr [esp + 0x7d4], al               ; 02dccb 888424d4070000
     mov al, byte ptr [ecx*2 + unk_dd775]         ; 02dcd2 8a044d75d70d00
     mov byte ptr [esp + 0x7e4], al               ; 02dcd9 888424e4070000
@@ -5946,7 +5946,7 @@ loc_2e01b:
     call draw_team_logo_parts                    ; 02e05a e8effe0400
     push 0x50                                    ; 02e05f 6a50
     push 0x3d                                    ; 02e061 6a3d
-    mov eax, dword ptr [esi*4 + dword_dd66c]     ; 02e063 8b04b56cd60d00
+    mov eax, dword ptr [esi*4 + lineup_logos]    ; 02e063 8b04b56cd60d00
     mov ebp, dword ptr [eax + 0x2c]              ; 02e06a 8b682c
     push ebp                                     ; 02e06d 55
     call drawshape_remap_centered                ; 02e06e e85d330600
@@ -6196,7 +6196,7 @@ loc_2e3ee:
     call draw_team_logo_parts                    ; 02e428 e821fb0400
     push 0x50                                    ; 02e42d 6a50
     push 0x3d                                    ; 02e42f 6a3d
-    mov eax, dword ptr [dword_dd66c]             ; 02e431 a16cd60d00
+    mov eax, dword ptr [lineup_logos]            ; 02e431 a16cd60d00
     mov ebp, dword ptr [eax + 0x2c]              ; 02e436 8b682c
     push ebp                                     ; 02e439 55
     call drawshape_remap_centered                ; 02e43a e8912f0600
@@ -6780,7 +6780,7 @@ loc_2ec7a:
     mov al, byte ptr [esp + 0x7cc]               ; 02ec7f 8a8424cc070000
     cmp al, byte ptr [esp + 0x7cd]               ; 02ec86 3a8424cd070000
     jne loc_2ecab                                ; 02ec8d 751c
-    cmp dword ptr [dword_dc234], 0x444           ; 02ec8f 813d34c20d004404..
+    cmp dword ptr [league_game_number], 0x444    ; 02ec8f 813d34c20d004404..
     jl loc_2ecab                                 ; 02ec99 7c10
     xor eax, eax                                 ; 02ec9b 31c0
     mov al, dh                                   ; 02ec9d 88f0
@@ -6988,7 +6988,7 @@ loc_2ef5a:
     call draw_team_logo_parts                    ; 02efa3 e8a6ef0400
     push 0x50                                    ; 02efa8 6a50
     push 0x3d                                    ; 02efaa 6a3d
-    mov eax, dword ptr [dword_dd66c]             ; 02efac a16cd60d00
+    mov eax, dword ptr [lineup_logos]            ; 02efac a16cd60d00
     mov ecx, dword ptr [eax + 0x2c]              ; 02efb1 8b482c
     push ecx                                     ; 02efb4 51
     call drawshape_remap_centered                ; 02efb5 e816240600
@@ -7074,7 +7074,7 @@ loc_2f0e8:
     mov al, byte ptr [esp + 0x7cc]               ; 02f0ed 8a8424cc070000
     cmp al, byte ptr [esp + 0x7cd]               ; 02f0f4 3a8424cd070000
     jne loc_2f11c                                ; 02f0fb 751f
-    cmp dword ptr [dword_dc234], 0x444           ; 02f0fd 813d34c20d004404..
+    cmp dword ptr [league_game_number], 0x444    ; 02f0fd 813d34c20d004404..
     jl loc_2f11c                                 ; 02f107 7c13
     xor eax, eax                                 ; 02f109 31c0
     mov al, dh                                   ; 02f10b 88f0
@@ -7167,7 +7167,7 @@ loc_2f1e3:
     push ebp                                     ; 02f24a 55
     call freemem                                 ; 02f24b e888e00500
     add esp, 4                                   ; 02f250 83c404
-    mov eax, dword ptr [dword_dd66c]             ; 02f253 a16cd60d00
+    mov eax, dword ptr [lineup_logos]            ; 02f253 a16cd60d00
     push eax                                     ; 02f258 50
     call freemem                                 ; 02f259 e87ae00500
     add esp, 4                                   ; 02f25e 83c404
@@ -7229,7 +7229,7 @@ loc_2f2f0:
     sar edx, 0x1f                                ; 02f2fe c1fa1f
     idiv ebx                                     ; 02f301 f7fb
     lea eax, [edi + edi]                         ; 02f303 8d043f
-    mov byte ptr [eax + unk_dd774], dl           ; 02f306 889074d70d00
+    mov byte ptr [eax + calendar_games], dl      ; 02f306 889074d70d00
     cmp ch, dl                                   ; 02f30c 38d5
     je loc_2f328                                 ; 02f30e 7418
     cmp dl, byte ptr [esp]                       ; 02f310 3a1424
@@ -7248,8 +7248,8 @@ loc_2f32d:
 loc_2f331:
     lea eax, [edi + edi]                         ; 02f331 8d043f
     lea ebx, [edx + edx]                         ; 02f334 8d1c12
-    mov cl, byte ptr [eax + unk_dd774]           ; 02f337 8a8874d70d00
-    cmp cl, byte ptr [ebx + unk_dd774]           ; 02f33d 3a8b74d70d00
+    mov cl, byte ptr [eax + calendar_games]      ; 02f337 8a8874d70d00
+    cmp cl, byte ptr [ebx + calendar_games]      ; 02f33d 3a8b74d70d00
     je loc_2f34d                                 ; 02f343 7408
     cmp cl, byte ptr [ebx + unk_dd775]           ; 02f345 3a8b75d70d00
     jne loc_2f352                                ; 02f34b 7505
@@ -7274,7 +7274,7 @@ loc_2f35f:
     idiv ebx                                     ; 02f370 f7fb
     lea eax, [edi + edi]                         ; 02f372 8d043f
     mov byte ptr [eax + unk_dd775], dl           ; 02f375 889075d70d00
-    cmp dl, byte ptr [eax + unk_dd774]           ; 02f37b 3a9074d70d00
+    cmp dl, byte ptr [eax + calendar_games]      ; 02f37b 3a9074d70d00
     je loc_2f38c                                 ; 02f381 7409
     cmp ch, dl                                   ; 02f383 38d5
     je loc_2f38c                                 ; 02f385 7405
@@ -7290,7 +7290,7 @@ loc_2f395:
     lea eax, [edi + edi]                         ; 02f395 8d043f
     lea ebx, [edx + edx]                         ; 02f398 8d1c12
     mov cl, byte ptr [eax + unk_dd775]           ; 02f39b 8a8875d70d00
-    cmp cl, byte ptr [ebx + unk_dd774]           ; 02f3a1 3a8b74d70d00
+    cmp cl, byte ptr [ebx + calendar_games]      ; 02f3a1 3a8b74d70d00
     je loc_2f3b3                                 ; 02f3a7 740a
     mov al, cl                                   ; 02f3a9 88c8
     cmp al, byte ptr [ebx + unk_dd775]           ; 02f3ab 3a8375d70d00
@@ -7336,7 +7336,7 @@ league_scores_advance:
     push eax                                     ; 02f3ea 50
     xor edi, edi                                 ; 02f3eb 31ff
 loc_2f3ed:
-    mov al, byte ptr [edi*2 + unk_dd774]         ; 02f3ed 8a047d74d70d00
+    mov al, byte ptr [edi*2 + calendar_games]    ; 02f3ed 8a047d74d70d00
     and eax, 0xff                                ; 02f3f4 25ff000000
     xor edx, edx                                 ; 02f3f9 31d2
     mov dl, byte ptr [eax + unk_c8922]           ; 02f3fb 8a9022890c00
@@ -7461,7 +7461,7 @@ loc_2f579:
 ; ====================================================================================================
 ; print_text_fit  [0x2f580, 110 bytes, 40 instructions]
 ; keeps a text inside its screen half
-; called by: team_select_screen2
+; called by: game_statistics_screen
 ; ====================================================================================================
 print_text_fit:
     push 0x18                                    ; 02f580 6818000000
@@ -7510,8 +7510,8 @@ loc_2f5de:
 
 
 ; ====================================================================================================
-; team_select_screen2  [0x2f5ee, 2019 bytes, 599 instructions]
-; ctbkgd/cttitle3 team selection
+; game_statistics_screen  [0x2f5ee, 2019 bytes, 599 instructions]
+; the statistics of the two teams of a game: ctbkgd/cttitle3
 ; called by: menu_game_statistics
 ;   uses string "ctbkgd"
 ;   uses string "!pal"
@@ -7525,7 +7525,7 @@ loc_2f5de:
 ;   uses string ".iff"
 ;   ... and 3 more strings
 ; ====================================================================================================
-team_select_screen2:
+game_statistics_screen:
     push 0x3a4                                   ; 02f5ee 68a4030000
     call __CHK                                   ; 02f5f3 e854d30500
     push ebx                                     ; 02f5f8 53
@@ -8073,7 +8073,7 @@ loc_2fc60:
     jmp loc_2fd0d                                ; 02fc9f e969000000
 
 loc_2fca4:
-    cmp dword ptr [dword_c541f], 8               ; 02fca4 833d1f540c0008
+    cmp dword ptr [sound_card], 8                ; 02fca4 833d1f540c0008
     jne loc_2fcc9                                ; 02fcab 751c
     xor ecx, ecx                                 ; 02fcad 31c9
     mov ebx, aMtsum_c1703                        ; 02fcaf bb03170c00        "mtsum"
@@ -9305,7 +9305,7 @@ loc_30a06:
 
 ; ====================================================================================================
 ; set_dialog_colors  [0x30a0c, 45 bytes, 9 instructions]
-; called by: pause_sports_desk_confirm, exit_game_dialog, team_select_screen, league_name_prompt, calendar_screen, league_calendar_flow, team_info_screen, league_merge_warning, league_merge_check, league_rebuild, import_game_set, player_db_sync (+16 more)
+; called by: pause_sports_desk_confirm, exit_game_dialog, scouting_report_screen, league_name_prompt, calendar_screen, league_calendar_flow, team_info_screen, league_merge_warning, league_merge_check, league_rebuild, import_game_set, player_db_sync (+16 more)
 ; ====================================================================================================
 set_dialog_colors:
     push 4                                       ; 030a0c 6804000000
@@ -9322,7 +9322,7 @@ set_dialog_colors:
 ; ====================================================================================================
 ; button_at  [0x30a39, 169 bytes, 62 instructions]
 ; the button record (0x1c bytes) under a point, pressed state
-; called by: team_select_screen, dialog_pointer_loop, database_menu, dbedit_error_dialog_loop, ratings_edit_screen
+; called by: scouting_report_screen, dialog_pointer_loop, database_menu, dbedit_error_dialog_loop, ratings_edit_screen
 ; ====================================================================================================
 button_at:
     push 0x14                                    ; 030a39 6814000000
@@ -9400,7 +9400,7 @@ loc_30adc:
 
 ; ====================================================================================================
 ; buttons_draw_all  [0x30ae2, 52 bytes, 21 instructions]
-; called by: team_select_screen, message_dialog, dbedit_draw_roster_column, player_ratings_card, dbedit_errors_screen, free_agent_card
+; called by: scouting_report_screen, message_dialog, dbedit_draw_roster_column, player_ratings_card, dbedit_errors_screen, free_agent_card
 ; ====================================================================================================
 buttons_draw_all:
     push 0xc                                     ; 030ae2 680c000000
@@ -10621,7 +10621,7 @@ loc_316d3:
     sub eax, edi                                 ; 0316d8 29f8
     test eax, eax                                ; 0316da 85c0
     jle loc_3158f                                ; 0316dc 0f8eadfeffff
-    mov esi, dword ptr [dword_d42ac]             ; 0316e2 8b35ac420d00
+    mov esi, dword ptr [text_bg_colour]          ; 0316e2 8b35ac420d00
     push esi                                     ; 0316e8 56
     movzx esi, byte ptr [byte_d42c5]             ; 0316e9 0fb635c5420d00
     sub esi, 2                                   ; 0316f0 83ee02

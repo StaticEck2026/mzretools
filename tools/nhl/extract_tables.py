@@ -103,7 +103,7 @@ def main():
     # ai_wing_offense / ai_center_offense: zones [x, dx, y, dy] per phase (0, 4, 8, 12)
     t['wing_zones'] = [shorts(le, 0xcca18 + i * 8, 4) for i in range(4)]
     t['center_zones'] = [shorts(le, 0xcca38 + i * 8, 4) for i in range(4)]
-    # ai_goalie: save animation per direction class (dword_cca58 + 2)
+    # ai_goalie: save animation per direction class (0xcca5a, the table after scorer_jumps)
     t['goalie_save_anims'] = shorts(le, 0xcca5a, 10)
     # start_poke_check: velocity vectors per facing
     t['poke_vectors'] = [shorts(le, 0xccc30 + i * 4, 2) for i in range(8)]

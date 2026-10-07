@@ -317,7 +317,7 @@ LAB_0007a1f5:
             option_flags = CONCAT31(option_flags._1_3_,(byte)option_flags) & 0xffffffdf;
             uVar5 = option_flags;
             option_flags = option_flags | (uint)((uVar6 & 0x2000) != 0) << 5;
-            if (dword_c541f != 0x10) {
+            if (sound_card != 0x10) {
               option_flags._1_3_ = SUB43(uVar5,1);
               option_flags = CONCAT31(option_flags._1_3_,(byte)option_flags) & 0xffffffbf;
               uVar5 = option_flags;
@@ -326,7 +326,7 @@ LAB_0007a1f5:
               option_flags = CONCAT31(option_flags._1_3_,(byte)option_flags) & 0xffffff7f;
               option_flags = option_flags | (uint)((dword_ed360 & 0x80) != 0) << 7;
             }
-            if ((dword_c541f & 0x22) != 0) {
+            if ((sound_card & 0x22) != 0) {
               option_flags = option_flags & 0xfffffeff;
               option_flags = option_flags | (uint)((dword_ed360 & 0x100) != 0) << 8;
             }
@@ -466,7 +466,7 @@ longlong __watcall game_settings_screen(undefined4 param_1,uint unaff_EDX)
   *(undefined2 *)((int)puVar2 + 6) = 0x101;
   grabshape(puVar2,10,0x13);
   game_settings_dialog();
-  sound_settings_dialog();
+  game_settings_show_options();
   if (dword_c53fb == 2) {
     game_settings_pointer_loop();
   }
@@ -478,7 +478,7 @@ longlong __watcall game_settings_screen(undefined4 param_1,uint unaff_EDX)
     word_cbc58 = 0;
     word_cbc56 = 0;
     word_cbc6c = 0;
-    word_cbc6a = 0;
+    line_change_prompt = 0;
     for (sVar1 = 0; sVar1 < 0xc; sVar1 = sVar1 + 1) {
       (&unk_df861)[sVar1 * 0x80] = (&unk_df861)[sVar1 * 0x80] & 0xf7;
     }
@@ -541,7 +541,7 @@ void __watcall game_settings_dialog(void)
   drawshape2_remap(uVar2);
   freemem(uVar1);
   settextpos(0xf8,0xff);
-  if (dword_c541f == 0x10) {
+  if (sound_card == 0x10) {
     printstr_at(aMusic_c331c,0x60,0xaa);
     printstr_at(aSound_c3322,0x60,0xc0);
   }
@@ -555,11 +555,11 @@ void __watcall game_settings_dialog(void)
 
 
 // ================================================================================================
-// sound_settings_dialog @ 0x7b604 [__watcall]
+// game_settings_show_options @ 0x7b604 [__watcall]
 // ================================================================================================
 
 void __watcall
-sound_settings_dialog
+game_settings_show_options
           (undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
@@ -568,19 +568,19 @@ sound_settings_dialog
   uint uVar3;
   
   __CHK(0x1c);
-  if ((dword_c541f & 0x10) == 0) {
+  if ((sound_card & 0x10) == 0) {
     uVar1 = ((option_flags << 0x19) >> 0x1f) << 6;
   }
   else {
     uVar1 = 0;
   }
-  if ((dword_c541f & 0x10) == 0) {
+  if ((sound_card & 0x10) == 0) {
     uVar2 = ((option_flags << 0x18) >> 0x1f) << 7;
   }
   else {
     uVar2 = 0;
   }
-  if ((dword_c541f & 0x22) == 0) {
+  if ((sound_card & 0x22) == 0) {
     uVar3 = 0;
   }
   else {
@@ -592,7 +592,7 @@ sound_settings_dialog
                 uVar1 | uVar2 | uVar3;
   game_settings_draw_buttons();
   settextpos(0xf8,0xff,unaff_EDX,unaff_ECX,unaff_EBX);
-  if (dword_c541f == 0x10) {
+  if (sound_card == 0x10) {
     printstr_at(aMusic_c331c,0x60,0xaa);
     printstr_at(aSound_c3322,0x60,0xc0);
   }
@@ -630,7 +630,7 @@ undefined4 __watcall game_settings_button_at(int param_1,int unaff_EDX,int *unaf
   if (iVar1 == 0xb) {
     return 0;
   }
-  if (((0xb < iVar1) && (iVar1 < 0x10)) && (dword_c541f == 0x10)) {
+  if (((0xb < iVar1) && (iVar1 < 0x10)) && (sound_card == 0x10)) {
     return 0;
   }
   if (((iVar1 == 0x10) || (iVar1 == 0x11)) && (sound_enabled == '\0')) {
@@ -867,7 +867,7 @@ LAB_0007bad7:
       option_flags = CONCAT31(option_flags._1_3_,(byte)option_flags) & 0xffffffdf;
       uVar4 = option_flags;
       option_flags = option_flags | (uint)((dword_ed360 & 0x20) != 0) << 5;
-      if (dword_c541f != 0x10) {
+      if (sound_card != 0x10) {
         option_flags._1_3_ = SUB43(uVar4,1);
         option_flags = CONCAT31(option_flags._1_3_,(byte)option_flags) & 0xffffffbf;
         uVar4 = option_flags;
@@ -989,9 +989,9 @@ longlong __watcall menu_exhibition_settings(undefined4 param_1,uint unaff_EDX)
   *(undefined2 *)((int)puVar1 + 6) = 0x129;
   grabshape(puVar1,10,0x13);
   setdefaultscreen();
-  sound_settings_draw();
-  sound_toggle_dialog();
-  sound_settings_menu();
+  exhibition_settings_draw();
+  exhibition_settings_show_options();
+  exhibition_settings_menu();
   drawshape(puVar1,10,0x13);
   freemem(puVar1);
   freemem(dword_d20a8);
@@ -1001,14 +1001,14 @@ longlong __watcall menu_exhibition_settings(undefined4 param_1,uint unaff_EDX)
 
 
 // ================================================================================================
-// sound_toggle_dialog @ 0x7bf56 [__watcall]
+// exhibition_settings_show_options @ 0x7bf56 [__watcall]
 // ================================================================================================
 
 /* WARNING: Removing unreachable block (ram,0x0007c035) */
 
 void __watcall
-sound_toggle_dialog(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,
-                   undefined4 unaff_ECX)
+exhibition_settings_show_options
+          (undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   uint uVar1;
@@ -1016,19 +1016,19 @@ sound_toggle_dialog(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX
   uint uVar3;
   
   __CHK(0x1c);
-  if ((dword_c541f & 0x10) == 0) {
+  if ((sound_card & 0x10) == 0) {
     uVar1 = ((option_flags << 0x19) >> 0x1f) << 6;
   }
   else {
     uVar1 = 0;
   }
-  if ((dword_c541f & 0x10) == 0) {
+  if ((sound_card & 0x10) == 0) {
     uVar2 = ((option_flags << 0x18) >> 0x1f) << 7;
   }
   else {
     uVar2 = 0;
   }
-  if ((dword_c541f & 0x22) == 0) {
+  if ((sound_card & 0x22) == 0) {
     uVar3 = 0;
   }
   else {
@@ -1048,12 +1048,12 @@ sound_toggle_dialog(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX
   else if (uVar1 == 2) {
     dword_ed360 = dword_ed360 | 0x200;
   }
-  sound_settings_draw_buttons();
+  exhibition_settings_draw_buttons();
   settextpos(0xf8,0xff,unaff_EDX,unaff_ECX,unaff_EBX);
   if (sound_enabled == '\0') {
     printstr_at(aDigitizedSpeech_c3349,0x60,0xd6);
   }
-  if (dword_c541f == 0x10) {
+  if (sound_card == 0x10) {
     printstr_at(aMusic_c335a,0x60,0xaa);
     printstr_at(aSound_c3360,0x60,0xc0);
   }
@@ -1062,10 +1062,10 @@ sound_toggle_dialog(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX
 
 
 // ================================================================================================
-// sound_settings_draw_buttons @ 0x7c0b9 [__watcall]
+// exhibition_settings_draw_buttons @ 0x7c0b9 [__watcall]
 // ================================================================================================
 
-void __watcall sound_settings_draw_buttons(void)
+void __watcall exhibition_settings_draw_buttons(void)
 
 {
   uint uVar1;
@@ -1127,10 +1127,10 @@ void __watcall sound_settings_draw_buttons(void)
 
 
 // ================================================================================================
-// sound_settings_draw @ 0x7c1ac [__watcall]
+// exhibition_settings_draw @ 0x7c1ac [__watcall]
 // ================================================================================================
 
-void __watcall sound_settings_draw(void)
+void __watcall exhibition_settings_draw(void)
 
 {
   undefined4 uVar1;
@@ -1149,7 +1149,7 @@ void __watcall sound_settings_draw(void)
   uVar2 = locateshape(uVar1,&aDbox_c336f,10,0x13);
   drawshape2_remap(uVar2);
   freemem(uVar1);
-  if (dword_c541f == 0x10) {
+  if (sound_card == 0x10) {
     printstr_at(aMusic_c335a,0x60,0xaa);
     printstr_at(aSound_c3360,0x60,0xc0);
   }
@@ -1162,10 +1162,10 @@ void __watcall sound_settings_draw(void)
 
 
 // ================================================================================================
-// sound_settings_button_at @ 0x7c28d [__watcall]
+// exhibition_settings_button_at @ 0x7c28d [__watcall]
 // ================================================================================================
 
-undefined4 __watcall sound_settings_button_at(int param_1,int unaff_EDX,int *unaff_EBX)
+undefined4 __watcall exhibition_settings_button_at(int param_1,int unaff_EDX,int *unaff_EBX)
 
 {
   int iVar1;
@@ -1187,7 +1187,7 @@ undefined4 __watcall sound_settings_button_at(int param_1,int unaff_EDX,int *una
   if (iVar1 == 0xb) {
     return 0;
   }
-  if (((0xb < iVar1) && (iVar1 < 0x10)) && (dword_c541f == 0x10)) {
+  if (((0xb < iVar1) && (iVar1 < 0x10)) && (sound_card == 0x10)) {
     return 0;
   }
   if (((iVar1 == 0x10) || (iVar1 == 0x11)) && (sound_enabled == '\0')) {
@@ -1199,12 +1199,12 @@ undefined4 __watcall sound_settings_button_at(int param_1,int unaff_EDX,int *una
 
 
 // ================================================================================================
-// sound_settings_menu @ 0x7c317 [__watcall]
+// exhibition_settings_menu @ 0x7c317 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-longlong __watcall sound_settings_menu(undefined4 param_1,uint unaff_EDX)
+longlong __watcall exhibition_settings_menu(undefined4 param_1,uint unaff_EDX)
 
 {
   ulonglong uVar1;
@@ -1284,7 +1284,7 @@ LAB_0007c403:
     goto LAB_0007c796;
   }
   drawshape(puVar2,iVar3,local_20);
-  iVar3 = sound_settings_button_at(local_24,local_28,&local_30);
+  iVar3 = exhibition_settings_button_at(local_24,local_28,&local_30);
   if (iVar3 != 0) {
     if (local_30 < 0x12) {
       uVar4 = local_30 / 2;
@@ -1328,7 +1328,7 @@ LAB_0007c403:
           option_flags = CONCAT31(option_flags._1_3_,(byte)option_flags) & 0xffffffdf;
           uVar4 = option_flags;
           option_flags = option_flags | (uint)((dword_ed360 & 0x20) != 0) << 5;
-          if (dword_c541f != 0x10) {
+          if (sound_card != 0x10) {
             option_flags._1_3_ = SUB43(uVar4,1);
             option_flags = CONCAT31(option_flags._1_3_,(byte)option_flags) & 0xffffffbf;
             uVar4 = option_flags;
@@ -1337,7 +1337,7 @@ LAB_0007c403:
             option_flags = CONCAT31(option_flags._1_3_,(byte)option_flags) & 0xffffff7f;
             option_flags = option_flags | (uint)((dword_ed360 & 0x80) != 0) << 7;
           }
-          if ((dword_c541f & 0x22) != 0) {
+          if ((sound_card & 0x22) != 0) {
             option_flags = option_flags & 0xfffffeff;
             option_flags = option_flags | (uint)((dword_ed360 & 0x100) != 0) << 8;
           }
@@ -1395,7 +1395,7 @@ LAB_0007bf4f:
       uVar4 = dword_ed360 & 0xf1ff | 1 << ((byte)local_30 & 0x1f);
       dword_ed360 = uVar4;
     }
-    sound_settings_draw_buttons(uVar4);
+    exhibition_settings_draw_buttons(uVar4);
   }
   drawshape_clip_save(puVar2,local_24 + -4,local_28);
   iVar3 = local_24 + -4;
@@ -2011,7 +2011,7 @@ void __watcall controls_reset_unassigned(void)
     iVar2 = (iVar5 != 0) + 1;
     if ((user1_team != iVar2) && ((short)user2_team != iVar2)) {
       (&word_cbc56)[iVar5] = 0;
-      (&word_cbc6a)[iVar5] = 0;
+      (&line_change_prompt)[iVar5] = 0;
       if (iVar5 == 0) {
         iVar2 = 0;
         do {
@@ -2779,7 +2779,7 @@ void __watcall load_music_banks(void)
     iVar9 = iVar9 + 1;
   } while (iVar9 < 3);
   puVar6 = install_path;
-  if (dword_c541f == 8) {
+  if (sound_card == 8) {
     pcVar8 = aMTROCKU;
     cVar1 = byte_ed8cc;
   }
@@ -2867,7 +2867,8 @@ void __watcall free_music_banks(void)
 // draw_team_logo_parts @ 0x7df4e [__watcall]
 // ================================================================================================
 
-void __watcall draw_team_logo_parts(uint param_1,byte unaff_DL,undefined4 param_3,undefined4 *unaff_ECX)
+void __watcall
+draw_team_logo_parts(uint param_1,byte unaff_DL,undefined4 param_3,undefined4 *unaff_ECX)
 
 {
   int iVar1;
@@ -2935,7 +2936,8 @@ undefined4 __watcall return_zero_7e032(void)
 // ================================================================================================
 
 void __watcall
-mvi_frames_current(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+mvi_frames_current(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX
+                  )
 
 {
   __CHK(0x14);
@@ -3036,19 +3038,19 @@ void __watcall instant_replay(int param_1)
   uStack_1c = CONCAT22(extraout_var,camera._2_2_);
   local_24 = (short)dword_d8c74;
   sVar1 = crowd_noise._2_2_;
-  dword_ed70c = 0;
-  dword_cd4fa = CONCAT22(0xffff,(undefined2)dword_cd4fa);
+  camera_free = 0;
+  replay_follow = CONCAT22(0xffff,(undefined2)replay_follow);
   dword_ed74c = -1;
   dword_ed6ec = -1;
   dword_ed6fc = 0;
-  word_ed758 = 0;
+  camera_speed_acc = 0;
   dword_c7444 = dword_c7444 + 1000;
   dword_c7448 = dword_c7448 + 1000;
-  dword_e03a4 = replay_oldest_frame(CONCAT22(extraout_var,(short)dword_d8c74),0);
+  controls_read = replay_oldest_frame(CONCAT22(extraout_var,(short)dword_d8c74),0);
   local_28._0_2_ = 0;
   local_28._2_2_ = 0;
   replay_seek_frames(0);
-  dword_ccc88 = crowd_noise >> 0x10;
+  crowd_level = crowd_noise >> 0x10;
   dword_d8c7c = (short)camera + 0x20;
   if (0x40 < dword_d8c7c) {
     dword_d8c7c = 0x40;
@@ -3083,17 +3085,17 @@ void __watcall instant_replay(int param_1)
     select_game_surface();
     iVar4 = replay_control_loop(&local_28);
     if (iVar4 == 0) break;
-    word_ed758 = word_ed758 + (short)local_28 * 6;
-    local_28 = (int)word_ed758 / 0x14;
-    word_ed758 = (short)((longlong)(int)word_ed758 % 0x14);
+    camera_speed_acc = camera_speed_acc + (short)local_28 * 6;
+    local_28 = (int)camera_speed_acc / 0x14;
+    camera_speed_acc = (short)((longlong)(int)camera_speed_acc % 0x14);
     sVar3 = replay_seek_frames((int)(short)local_28,((ushort)dword_ed754 & 0x3f) == 0x10);
     local_28._2_2_ = sVar3 >> 0xf;
     local_28._0_2_ = sVar3;
     setscreen_main();
-    if (dword_ed70c == 0) {
-      if (-1 < dword_cd4fa) {
-        camera._0_2_ = *(short *)(&unk_e9f18 + (dword_cd4fa >> 0x10) * 2);
-        camera._2_2_ = *(short *)(&unk_e9f3a + (dword_cd4fa >> 0x10) * 2);
+    if (camera_free == 0) {
+      if (-1 < replay_follow) {
+        camera._0_2_ = *(short *)(&unk_e9f18 + (replay_follow >> 0x10) * 2);
+        camera._2_2_ = *(short *)(&unk_e9f3a + (replay_follow >> 0x10) * 2);
         if ((short)camera < 0x21) {
           if ((short)camera < -0x20) {
             camera._0_2_ = -0x20;
@@ -3186,14 +3188,14 @@ void __watcall instant_replay(int param_1)
     local_28._2_2_ = (short)((uint)uVar5 >> 0x10);
   }
   sound_pause_all();
-  _word_cd500 = 0xffff;
+  _replay_held_sfx = 0xffff;
   camera._0_2_ = (short)local_20;
   camera._2_2_ = (short)uStack_1c;
   dword_d8c7c._2_2_ = sVar2 >> 0xf;
   dword_d8c74._0_2_ = local_24;
   dword_d8c74._2_2_ = local_24 >> 0xf;
   crowd_noise = CONCAT22(sVar1,0xffff);
-  dword_ccc88 = (int)sVar1;
+  crowd_level = (int)sVar1;
   dword_c66d4 = 1;
   dword_c66d0 = 1;
   dword_d8c7c._0_2_ = sVar2;
@@ -3337,18 +3339,18 @@ undefined8 __watcall replay_control_loop(int *param_1,undefined4 unaff_EDX)
     }
     if (uVar3 < 3) {
       if ((dword_ed754 & 2) == 0) {
-        dword_ed6e8 = 0;
+        camera_step_acc = 0;
         iVar7 = -1;
-        word_ed758 = 0xfff2;
+        camera_speed_acc = 0xfff2;
       }
       else {
-        dword_ed6e8 = dword_ed6e8 + *param_1;
-        if (dword_ed6e8 < 5) {
+        camera_step_acc = camera_step_acc + *param_1;
+        if (camera_step_acc < 5) {
           iVar7 = 0;
         }
         else {
           iVar7 = -1;
-          dword_ed6e8 = dword_ed6e8 + -5;
+          camera_step_acc = camera_step_acc + -5;
         }
       }
       bVar1 = (byte)dword_ed754 & 0x40 | 6;
@@ -3361,8 +3363,8 @@ LAB_0007eca1:
       if ((dword_ed6dc < 0xa8) &&
          (dword_ed74c = replay_sprite_at(_dword_ed704,_dword_ed708), (uStack_1c & 2) != 0)) {
         if (dword_ed74c == -1) {
-          dword_ed70c = 1;
-          dword_cd4fa._2_2_ = 0xffff;
+          camera_free = 1;
+          replay_follow._2_2_ = 0xffff;
           _dword_ed6f0 = _dword_ed704;
           _dword_ed6f4 = _dword_ed708;
           dword_ed6e0 = _dword_ed704;
@@ -3392,8 +3394,8 @@ LAB_0007eca1:
           setmousepos(dword_ed6e0,dword_ed6dc);
         }
         else {
-          dword_ed70c = 0;
-          dword_cd4fa._2_2_ = (undefined2)dword_ed74c;
+          camera_free = 0;
+          replay_follow._2_2_ = (undefined2)dword_ed74c;
           dword_ed6e0 = *(int *)((int)&word_e9f14 + dword_ed74c * 2 + 2) >> 0x10;
           dword_ed6dc = *(int *)((int)&word_e9f36 + dword_ed74c * 2 + 2) >> 0x10;
           if (dword_ed6e0 < 0x21) {
@@ -3432,18 +3434,18 @@ LAB_0007eca1:
       if (4 < uVar3) {
         if (uVar3 == 8) {
           if ((dword_ed754 & 8) == 0) {
-            dword_ed6e8 = 0;
+            camera_step_acc = 0;
             iVar7 = 1;
-            word_ed758 = 0xe;
+            camera_speed_acc = 0xe;
           }
           else {
-            dword_ed6e8 = dword_ed6e8 + *param_1;
-            if (dword_ed6e8 < 5) {
+            camera_step_acc = camera_step_acc + *param_1;
+            if (camera_step_acc < 5) {
               iVar7 = 0;
             }
             else {
               iVar7 = 1;
-              dword_ed6e8 = dword_ed6e8 + -5;
+              camera_step_acc = camera_step_acc + -5;
             }
           }
           bVar1 = (byte)dword_ed754 & 0x40 | 0xc;
@@ -3457,7 +3459,7 @@ LAB_0007eca1:
   }
   else if (uVar3 < 0x11) {
     if ((dword_ed754 & 0x3f) != 0x10) {
-      word_ed758 = 0;
+      camera_speed_acc = 0;
     }
     dword_ed754 = (uint)((byte)dword_ed754 & 0x40 | 0x10);
 LAB_0007eb85:
@@ -3484,10 +3486,10 @@ LAB_0007eb85:
     }
     dword_ed754 = dword_ed754 | 0x40;
     iVar7 = 0;
-    dword_ed70c = 0;
+    camera_free = 0;
     dword_ed74c = -1;
     dword_ed6ec = -1;
-    dword_cd4fa._2_2_ = 0xffff;
+    replay_follow._2_2_ = 0xffff;
   }
 LAB_0007eec9:
   if (((local_20 != dword_ed6e0) || (iVar6 != dword_ed6dc)) || (local_24 != dword_ed754)) {
@@ -3980,6 +3982,7 @@ highlights_screen(undefined4 param_1,int *unaff_EDX,undefined4 unaff_EBX,int una
   int iVar1;
   int iVar2;
   int iVar3;
+  size_t __nmemb;
   undefined *apuStack_1dc [26];
   int local_174 [26];
   char acStack_10c [84];
@@ -3996,47 +3999,47 @@ highlights_screen(undefined4 param_1,int *unaff_EDX,undefined4 unaff_EBX,int una
   
   __CHK(0x204);
   local_24 = 0xffffffff;
-  iVar3 = 0;
+  __nmemb = 0;
   make_path(acStack_10c,unaff_EBX,&unk_c8113,&aHI_c812d);
   iVar1 = _dos_findfirst(acStack_10c,0,auStack_6c);
   if (iVar1 == 0) {
     local_174[0] = team_abbrev_index(auStack_4e);
     apuStack_1dc[0] = (&off_c54a9)[local_174[0]];
-    iVar3 = 1;
+    __nmemb = 1;
     while (iVar1 = _dos_findnext(auStack_6c), iVar1 == 0) {
       iVar1 = team_abbrev_index(auStack_4e);
-      local_174[iVar3] = iVar1;
-      iVar3 = iVar3 + 1;
+      local_174[__nmemb] = iVar1;
+      __nmemb = __nmemb + 1;
     }
   }
-  if (iVar3 == 0) {
+  if (__nmemb == 0) {
     getmouse(&iStack_18,local_1c,local_20);
     message_dialog(0xffffffff,0xffffffff,&off_d1f4b,1,0,0,local_1c,local_20,0xffffffff);
   }
   else {
-    qsort(local_174,iVar3,4,cmp_ints);
-    for (iStack_18 = 0; iStack_18 < iVar3; iStack_18 = iStack_18 + 1) {
+    qsort(local_174,__nmemb,4,cmp_ints);
+    for (iStack_18 = 0; iStack_18 < (int)__nmemb; iStack_18 = iStack_18 + 1) {
       apuStack_1dc[iStack_18] = (&off_c54a9)[local_174[iStack_18]];
     }
-    iVar1 = listbox_dialog(apuStack_1dc,iVar3,aSelectATeam,2,0,auStack_40);
+    iVar1 = listbox_dialog(apuStack_1dc,__nmemb,aSelectATeam,2,0,auStack_40);
     if (-1 < iVar1) {
       make_path(param_1,0,(&team_abbrev)[local_174[iVar1]],&aHI_c812d);
       make_path(acStack_10c,unaff_EBX,param_1,0);
-      iVar3 = filesize(acStack_10c);
+      iVar2 = filesize(acStack_10c);
       iVar1 = file_open_read(acStack_10c,&local_24);
       if (iVar1 == 0) {
-        iVar3 = iVar3 / 0x9652;
-        iStack_14 = allocmem(&aHLTL,iVar3 << 2,0x20);
-        iStack_10 = allocmem(&aHLT,iVar3 * 0x51,0x20);
+        iVar2 = iVar2 / 0x9652;
+        iStack_14 = allocmem(&aHLTL,iVar2 << 2,0x20);
+        iStack_10 = allocmem(&aHLT,iVar2 * 0x51,0x20);
         if (unaff_ECX != 0) {
-          iVar2 = allocmem(&aHLTS,iVar3,0x20);
-          *param_5 = iVar2;
-          for (iStack_18 = 0; iStack_18 < iVar3; iStack_18 = iStack_18 + 1) {
+          iVar3 = allocmem(&aHLTS,iVar2,0x20);
+          *param_5 = iVar3;
+          for (iStack_18 = 0; iStack_18 < iVar2; iStack_18 = iStack_18 + 1) {
             *(undefined *)(*param_5 + iStack_18) = 0;
           }
         }
         iStack_18 = 0;
-        while ((iStack_18 < iVar3 && (iVar1 == 0))) {
+        while ((iStack_18 < iVar2 && (iVar1 == 0))) {
           iVar1 = file_read(local_24,auStack_b8,iStack_18 * 0x9652,0x4c);
           *(int *)(iStack_18 * 4 + iStack_14) = iStack_10 + iStack_18 * 0x51;
           format_save_description(acStack_10c,auStack_b8);
@@ -4044,13 +4047,13 @@ highlights_screen(undefined4 param_1,int *unaff_EDX,undefined4 unaff_EBX,int una
           iStack_18 = iStack_18 + 1;
         }
         if (iVar1 == 0) {
-          iVar2 = listbox_dialog(iStack_14,iVar3,aSelectAHilight,2,unaff_ECX,*param_5);
-          *unaff_EDX = iVar2;
-          if (iVar2 < 0) {
+          iVar3 = listbox_dialog(iStack_14,iVar2,aSelectAHilight,2,unaff_ECX,*param_5);
+          *unaff_EDX = iVar3;
+          if (iVar3 < 0) {
             iVar1 = -1;
           }
           if (unaff_ECX != 0) {
-            *unaff_EDX = iVar3;
+            *unaff_EDX = iVar2;
           }
         }
         freemem(iStack_10);
@@ -4212,7 +4215,8 @@ void __watcall settings_toggles(void)
 // ================================================================================================
 
 void __watcall
-draw_settings_title(int param_1,int unaff_EDX,undefined4 unaff_EBX,uint unaff_ECX,undefined4 param_5)
+draw_settings_title(int param_1,int unaff_EDX,undefined4 unaff_EBX,uint unaff_ECX,undefined4 param_5
+                   )
 
 {
   char *pcVar1;
@@ -4366,11 +4370,11 @@ undefined8 __watcall locker_room_hub(undefined4 param_1,undefined4 unaff_EDX)
   }
   loading_screen();
   getfontstate(auStack_58);
-  dword_ed794 = (undefined4 *)allocmem(aHomeBck,0x1b811,0x20);
+  lineup_room_image = (undefined4 *)allocmem(aHomeBck,0x1b811,0x20);
   dword_ed79c = (undefined4 *)allocmem(aVisBck,0x1a6f9,0x20);
-  puVar5 = dword_ed794 + (uint)bVar7 * -2 + 1;
+  puVar5 = lineup_room_image + (uint)bVar7 * -2 + 1;
   puVar3 = pointer_shapes + (uint)bVar7 * -2 + 1;
-  *dword_ed794 = *pointer_shapes;
+  *lineup_room_image = *pointer_shapes;
   puVar6 = puVar5 + (uint)bVar7 * -2 + 1;
   puVar4 = puVar3 + (uint)bVar7 * -2 + 1;
   *puVar5 = *puVar3;
@@ -4388,9 +4392,9 @@ undefined8 __watcall locker_room_hub(undefined4 param_1,undefined4 unaff_EDX)
   puVar6[(uint)bVar7 * -2 + 1] = puVar4[(uint)bVar7 * -2 + 1];
   *(undefined *)(puVar6 + (uint)bVar7 * -2 + 1 + (uint)bVar7 * -2 + 1) =
        *(undefined *)(puVar4 + (uint)bVar7 * -2 + 1 + (uint)bVar7 * -2 + 1);
-  *(undefined2 *)(dword_ed794 + 1) = 0x140;
+  *(undefined2 *)(lineup_room_image + 1) = 0x140;
   *(undefined2 *)(dword_ed79c + 1) = 0x138;
-  *(undefined2 *)((int)dword_ed794 + 6) = 0x160;
+  *(undefined2 *)((int)lineup_room_image + 6) = 0x160;
   *(undefined2 *)((int)dword_ed79c + 6) = 0x15b;
   dword_ed798 = (undefined4 *)allocmem(aHomeNameBck,0xa07,0x20);
   dword_ed7a0 = (undefined4 *)allocmem(aVisNameBck,0xa07,0x20);
@@ -4436,7 +4440,7 @@ undefined8 __watcall locker_room_hub(undefined4 param_1,undefined4 unaff_EDX)
   freemem(dword_ed790);
   freemem(dword_ed798);
   freemem(dword_ed7a0);
-  freemem(dword_ed794);
+  freemem(lineup_room_image);
   freemem(dword_ed79c);
   setfontstate(auStack_58);
   if (dword_c53fb == 0) {
@@ -4504,12 +4508,12 @@ LAB_00080b41:
   draw_bevel_box_c(0,0x1a7,0x27f,0x1e0,1);
   uStack_1c = 2;
   do {
-    draw_bevel_box_c((&unk_d227c)[uStack_1c * 4],(&unk_d2280)[uStack_1c * 4],(&unk_d2284)[uStack_1c * 4],
-              (&unk_d2288)[uStack_1c * 4],0);
+    draw_bevel_box_c((&unk_d227c)[uStack_1c * 4],(&unk_d2280)[uStack_1c * 4],
+                     (&unk_d2284)[uStack_1c * 4],(&unk_d2288)[uStack_1c * 4],0);
     uStack_1c = uStack_1c + 1;
   } while ((int)uStack_1c < 8);
   grabshape(dword_ed790,0x2d,0x11);
-  grabshape(dword_ed794,10,0x45);
+  grabshape(lineup_room_image,10,0x45);
   grabshape(dword_ed79c,0x146,0x4a);
   grabshape(dword_ed798,0x85,0x2c);
   grabshape(dword_ed7a0,0x152,0x2c);
@@ -4806,7 +4810,7 @@ void __watcall draw_jerseys(int param_1,int unaff_EDX,int unaff_EBX,int unaff_EC
     } while (iVar5 < 0xc0);
   }
   if (param_1 == 0) {
-    drawshape2(dword_ed794,10,0x45);
+    drawshape2(lineup_room_image,10,0x45);
     drawshape2(dword_ed798,0x85,0x2c);
     uVar6 = 0xc0;
   }
@@ -5326,7 +5330,7 @@ void __watcall sound_card_menu_a(void)
   int extraout_EDX_00;
   
   __CHK(0x20);
-  dword_ed360 = dword_c541f;
+  dword_ed360 = sound_card;
   iVar1 = 0;
   do {
     if ((dword_ed360 & 1 << ((byte)iVar1 & 0x1f)) == 0) {
@@ -5340,19 +5344,19 @@ void __watcall sound_card_menu_a(void)
     iVar1 = iVar1 + 1;
   } while (iVar1 < 8);
   settextpos(0xf8,0xff);
-  if (((byte)dword_c541b & 1) == 0) {
+  if (((byte)sound_cards_allowed & 1) == 0) {
     printstr_at(aPCSpeaker,dword_d23a3 + 0x18,dword_d23a7 + 0x13);
   }
-  if (((byte)dword_c541b & 2) == 0) {
+  if (((byte)sound_cards_allowed & 2) == 0) {
     printstr_at(aSoundBlaster,DAT_000d23b3 + 0xe,DAT_000d23b7 + 0x13);
   }
-  if (((byte)dword_c541b & 4) == 0) {
+  if (((byte)sound_cards_allowed & 4) == 0) {
     printstr_at(aADLib,DAT_000d23c3 + 0x29,DAT_000d23c7 + 0x13);
   }
-  if (((byte)dword_c541b & 8) == 0) {
+  if (((byte)sound_cards_allowed & 8) == 0) {
     printstr_at(aMT32,DAT_000d23d3 + 0x28,DAT_000d23d7 + 0x13);
   }
-  if (((byte)dword_c541b & 0x20) == 0) {
+  if (((byte)sound_cards_allowed & 0x20) == 0) {
     printstr_at(aUltraSound,DAT_000d23f3 + 0x18,DAT_000d23f7 + 0x13);
   }
   return;
@@ -5409,19 +5413,19 @@ void __watcall sound_card_menu_b(void)
     iVar1 = iVar1 + 1;
   } while (iVar1 < 8);
   settextpos(0xf8,0xff);
-  if (((byte)dword_c541b & 1) == 0) {
+  if (((byte)sound_cards_allowed & 1) == 0) {
     printstr_at(aPCSpeaker,dword_d23a3 + 0x18,dword_d23a7 + 0x13);
   }
-  if (((byte)dword_c541b & 2) == 0) {
+  if (((byte)sound_cards_allowed & 2) == 0) {
     printstr_at(aSoundBlaster,DAT_000d23b3 + 0xe,DAT_000d23b7 + 0x13);
   }
-  if (((byte)dword_c541b & 4) == 0) {
+  if (((byte)sound_cards_allowed & 4) == 0) {
     printstr_at(aADLib,DAT_000d23c3 + 0x29,DAT_000d23c7 + 0x13);
   }
-  if (((byte)dword_c541b & 8) == 0) {
+  if (((byte)sound_cards_allowed & 8) == 0) {
     printstr_at(aMT32,DAT_000d23d3 + 0x28,DAT_000d23d7 + 0x13);
   }
-  if (((byte)dword_c541b & 0x20) == 0) {
+  if (((byte)sound_cards_allowed & 0x20) == 0) {
     printstr_at(aUltraSound,DAT_000d23f3 + 0x18,DAT_000d23f7 + 0x13);
   }
   return;
@@ -5503,7 +5507,7 @@ LAB_00082d4e:
   iVar2 = sound_card_slot_at(local_24,local_28,&local_30);
   if (iVar2 != 0) {
     local_30 = 1 << ((byte)local_30 & 0x1f);
-    if (((dword_ed360 & local_30) == 0) && ((dword_c541b & local_30) != 0)) {
+    if (((dword_ed360 & local_30) == 0) && ((sound_cards_allowed & local_30) != 0)) {
       if (local_30 < 0x10) {
         if (local_30 < 4) {
           if ((local_30 == 0) || (2 < local_30)) goto LAB_00082d07;
@@ -5535,7 +5539,7 @@ LAB_00082b30:
           }
           iVar2 = load_sound_config(dword_ed360);
           if (iVar2 != 0) {
-            dword_c541f = dword_ed360;
+            sound_card = dword_ed360;
             freemem(puVar1);
             if ((sound_enabled != '\0') && (dword_c721d == 0)) {
               puVar3 = install_path;
@@ -5556,8 +5560,8 @@ LAB_00082b30:
             }
             goto LAB_00082d4e;
           }
-          dword_c541b = dword_c541b ^ dword_ed360;
-          dword_ed360 = dword_c541f;
+          sound_cards_allowed = sound_cards_allowed ^ dword_ed360;
+          dword_ed360 = sound_card;
           if ((sound_enabled != '\0') && (dword_c721d == 0)) {
             puVar3 = install_path;
             if (byte_ed9a7 != '\x01') {

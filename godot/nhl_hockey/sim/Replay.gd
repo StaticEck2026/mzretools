@@ -57,16 +57,16 @@ const B_EXIT := 8
 var buf := PackedByteArray()
 var write := 0               # replay_write_ptr (offset)
 var wrapped := false         # action_flags 0x10: the ring is full
-var half := 0                # word_cd4fe: frames are recorded every second step
-var held_sfx := -1           # word_cd500: the sound of the skipped step
+var half := 0                # replay_half_step: frames are recorded every second step
+var held_sfx := -1           # replay_held_sfx: the sound of the skipped step
 
 # playback (instant_replay)
-var read := 0                # dword_e03a4
+var read := 0                # controls_read
 var mode := MODE_PAUSE
-var speed_acc := 0           # word_ed758
-var step_acc := 0            # dword_ed6e8
-var follow := -1             # dword_cd4fa >> 16: the followed sprite, -1 recorded camera
-var free_camera := false     # dword_ed70c
+var speed_acc := 0           # camera_speed_acc
+var step_acc := 0            # camera_step_acc
+var follow := -1             # replay_follow >> 16: the followed sprite, -1 recorded camera
+var free_camera := false     # camera_free
 var free_x := 0
 var free_y := 0
 var frame: ReplayFrame = null

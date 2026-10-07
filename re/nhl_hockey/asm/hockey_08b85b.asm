@@ -85,7 +85,7 @@ loc_8b921:
 ; ====================================================================================================
 ; reload_mode_settings  [0x8b92f, 62 bytes, 17 instructions]
 ; load_game_set of the exhibition / league / playoff settings
-; called by: settings_menu, game_settings_menu, sound_settings_menu, controller_menu, locker_room_menu
+; called by: settings_menu, game_settings_menu, exhibition_settings_menu, controller_menu, locker_room_menu
 ; ====================================================================================================
 reload_mode_settings:
     push 4                                       ; 08b92f 6804000000
@@ -1014,7 +1014,7 @@ randomrange:
     mov dx, 0xe62d                               ; 08c23e 66ba2de6
     mul dx                                       ; 08c242 66f7e2
     mov bx, ax                                   ; 08c245 668bd8
-    mov ax, word ptr [dword_c9100]               ; 08c248 66a100910c00
+    mov ax, word ptr [random_seed]               ; 08c248 66a100910c00
     mov cx, ax                                   ; 08c24e 668bc8
     mov dx, 0xbb40                               ; 08c251 66ba40bb
     mul dx                                       ; 08c255 66f7e2
@@ -1025,7 +1025,7 @@ randomrange:
     add dx, bx                                   ; 08c265 6603d3
     add ax, 1                                    ; 08c268 6683c001
     adc dx, 0                                    ; 08c26c 6683d200
-    mov word ptr [dword_c9100], ax               ; 08c270 66a300910c00
+    mov word ptr [random_seed], ax               ; 08c270 66a300910c00
     mov word ptr [word_c9102], dx                ; 08c276 66891502910c00
     mov al, ah                                   ; 08c27d 8ac4
     mov ah, dl                                   ; 08c27f 8ae2
@@ -2977,7 +2977,7 @@ freemem:
 ; releasememblock  [0x8d2f0, 44 bytes, 13 instructions]
 ; releases a block descriptor (locked)
 ; annotations: external
-; called by: main, awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, exit_game_dialog, menu_penalty_summary, team_select_screen, draw_team_logos, boxscore_screen, team_select_screen2 (+25 more)
+; called by: main, awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, exit_game_dialog, menu_penalty_summary, scouting_report_screen, lineups_screen, boxscore_screen, game_statistics_screen (+25 more)
 ; ====================================================================================================
 releasememblock:
     mov edx, dword ptr [dword_edab0]             ; 08d2f0 8b15b0da0e00
@@ -5890,7 +5890,7 @@ settextpos:
     mov eax, dword ptr [esp + 4]                 ; 08e9c0 8b442404
     mov dword ptr [dword_d42a8], eax             ; 08e9c4 a3a8420d00
     mov eax, dword ptr [esp + 8]                 ; 08e9c9 8b442408
-    mov dword ptr [dword_d42ac], eax             ; 08e9cd a3ac420d00
+    mov dword ptr [text_bg_colour], eax          ; 08e9cd a3ac420d00
     ret                                          ; 08e9d2 c3
 
     db 0x90 ; 08e9d3 |.| (padding)
@@ -5912,7 +5912,7 @@ settextxy:
 ; ====================================================================================================
 ; getfontstate  [0x8e9e8, 21 bytes, 9 instructions]
 ; annotations: external
-; called by: awards_screen, credits_screen, pause_menu, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, standings_screen, team_select_screen, draw_team_logos (+17 more)
+; called by: awards_screen, credits_screen, pause_menu, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, standings_screen, scouting_report_screen, lineups_screen (+17 more)
 ; ====================================================================================================
 getfontstate:
     push esi                                     ; 08e9e8 56
@@ -5930,7 +5930,7 @@ getfontstate:
 ; ====================================================================================================
 ; setfontstate  [0x8ea00, 21 bytes, 9 instructions]
 ; annotations: external
-; called by: awards_screen, credits_screen, pause_menu, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, standings_screen, team_select_screen, draw_team_logos (+16 more)
+; called by: awards_screen, credits_screen, pause_menu, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, standings_screen, scouting_report_screen, lineups_screen (+16 more)
 ; ====================================================================================================
 setfontstate:
     push esi                                     ; 08ea00 56
@@ -6082,7 +6082,7 @@ rand_state:
 ; rand  [0x8eb27, 36 bytes, 12 instructions]
 ; Watcom LCG rand(): seed * 0x41c64e6d + 0x3039
 ; annotations: external
-; called by: demo_game, credits_screen, league_scores_init, league_scores_advance, league_db_load, rand_below, playoff_setup_screen, play_speech, load_music_banks, coach_clip_player
+; called by: demo_game, credits_screen, league_scores_init, league_scores_advance, league_db_load, rand_below, league_sim_game, play_speech, load_music_banks, coach_clip_player
 ; ====================================================================================================
 rand:
     push edx                                     ; 08eb27 52
@@ -6821,7 +6821,7 @@ loc_8f127:
 ; ====================================================================================================
 ; music_load_kms  [0x8f13b, 195 bytes, 65 instructions]
 ; loads a .KMS music sequence and its .CFG into a free music slot
-; called by: awards_screen, ea_sports_intro, credits_screen, boxscore_screen, team_select_screen2, load_music_banks, load_sound_config, kms_load_start
+; called by: awards_screen, ea_sports_intro, credits_screen, boxscore_screen, game_statistics_screen, load_music_banks, load_sound_config, kms_load_start
 ;   uses string "KMS"
 ;   uses string "CFG"
 ; ====================================================================================================
@@ -6905,7 +6905,7 @@ loc_8f1f8:
 ; ====================================================================================================
 ; kms_unload  [0x8f1fe, 73 bytes, 26 instructions]
 ; stops a song and frees its KMS and CFG
-; called by: awards_screen, ea_sports_intro, credits_screen, boxscore_screen, team_select_screen2, free_music_banks, load_sound_config, sound_shutdown
+; called by: awards_screen, ea_sports_intro, credits_screen, boxscore_screen, game_statistics_screen, free_music_banks, load_sound_config, sound_shutdown
 ; ====================================================================================================
 kms_unload:
     push ebx                                     ; 08f1fe 53
@@ -7383,7 +7383,7 @@ snd_play_sfx:
 ; ====================================================================================================
 ; sound_stopall  [0x8f633, 74 bytes, 25 instructions]
 ; annotations: external
-; called by: leave_match_video, handle_hotkey, game_loop, three_stars_sequence, simulate_game_offscreen
+; called by: leave_match_video, handle_hotkey, game_loop, three_stars_sequence, league_highlight_game
 ; ====================================================================================================
 sound_stopall:
     push ebx                                     ; 08f633 53
@@ -7782,7 +7782,7 @@ loc_8f950:
 ; ====================================================================================================
 ; sfx_enable  [0x8f963, 11 bytes, 2 instructions]
 ; annotations: external
-; called by: handle_hotkey, apply_settings, settings_menu, game_settings_screen, game_settings_menu, sound_settings_menu
+; called by: handle_hotkey, apply_settings, settings_menu, game_settings_screen, game_settings_menu, exhibition_settings_menu
 ; ====================================================================================================
 sfx_enable:
     mov dword ptr [dword_d4f8e], 1               ; 08f963 c7058e4f0d000100..
@@ -7792,7 +7792,7 @@ sfx_enable:
 ; ====================================================================================================
 ; sfx_disable  [0x8f96e, 11 bytes, 5 instructions]
 ; annotations: external
-; called by: handle_hotkey, apply_settings, settings_menu, game_settings_screen, game_settings_menu, sound_settings_menu
+; called by: handle_hotkey, apply_settings, settings_menu, game_settings_screen, game_settings_menu, exhibition_settings_menu
 ; ====================================================================================================
 sfx_disable:
     push edx                                     ; 08f96e 52
@@ -7805,7 +7805,7 @@ sfx_disable:
 ; ====================================================================================================
 ; music_enable  [0x8f979, 11 bytes, 2 instructions]
 ; annotations: external
-; called by: handle_hotkey, apply_settings, settings_menu, game_settings_screen, game_settings_menu, sound_settings_menu
+; called by: handle_hotkey, apply_settings, settings_menu, game_settings_screen, game_settings_menu, exhibition_settings_menu
 ; ====================================================================================================
 music_enable:
     mov dword ptr [dword_d4f92], 1               ; 08f979 c705924f0d000100..
@@ -7815,7 +7815,7 @@ music_enable:
 ; ====================================================================================================
 ; music_disable  [0x8f984, 11 bytes, 5 instructions]
 ; annotations: external
-; called by: handle_hotkey, apply_settings, settings_menu, game_settings_screen, game_settings_menu, sound_settings_menu
+; called by: handle_hotkey, apply_settings, settings_menu, game_settings_screen, game_settings_menu, exhibition_settings_menu
 ; ====================================================================================================
 music_disable:
     push edx                                     ; 08f984 52
@@ -7829,7 +7829,7 @@ music_disable:
 ; loadsound  [0x8f98f, 355 bytes, 118 instructions]
 ; loads an IFF 8SVX sample file (VHDR chunk)
 ; annotations: external
-; called by: awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, team_select_screen, draw_team_logos, boxscore_screen, team_select_screen2, frontend_main_menu, calendar_screen, team_info_screen (+3 more)
+; called by: awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, scouting_report_screen, lineups_screen, boxscore_screen, game_statistics_screen, frontend_main_menu, calendar_screen, team_info_screen (+3 more)
 ;   uses string "VHDR"
 ; ====================================================================================================
 loadsound:
@@ -8061,7 +8061,7 @@ loc_8fb87:
 ; playsample  [0x8fb8e, 87 bytes, 38 instructions]
 ; playsample(sample, rate, channel, volume)
 ; annotations: external
-; called by: awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, team_select_screen, draw_team_logos, boxscore_screen, team_select_screen2, frontend_main_menu, calendar_screen, team_info_screen (+6 more)
+; called by: awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, scouting_report_screen, lineups_screen, boxscore_screen, game_statistics_screen, frontend_main_menu, calendar_screen, team_info_screen (+6 more)
 ; ====================================================================================================
 playsample:
     push esi                                     ; 08fb8e 56
@@ -8198,7 +8198,7 @@ playsample_raw_loop:
 ; ====================================================================================================
 ; sound_channel_status  [0x8fc8a, 34 bytes, 10 instructions]
 ; annotations: external
-; called by: main, awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, exit_game_dialog, menu_penalty_summary, team_select_screen, draw_team_logos, boxscore_screen, team_select_screen2 (+19 more)
+; called by: main, awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, exit_game_dialog, menu_penalty_summary, scouting_report_screen, lineups_screen, boxscore_screen, game_statistics_screen (+19 more)
 ; ====================================================================================================
 sound_channel_status:
     cmp eax, dword ptr [dword_d4f64]             ; 08fc8a 3b05644f0d00
@@ -8250,7 +8250,7 @@ loc_8fcdc:
 ; ====================================================================================================
 ; sound_fade  [0x8fcdf, 136 bytes, 48 instructions]
 ; annotations: external
-; called by: main, awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, exit_game_dialog, menu_penalty_summary, team_select_screen, draw_team_logos, boxscore_screen, team_select_screen2 (+18 more)
+; called by: main, awards_screen, ea_sports_intro, intro_sequence, credits_screen, pause_menu, exit_game_dialog, menu_penalty_summary, scouting_report_screen, lineups_screen, boxscore_screen, game_statistics_screen (+18 more)
 ; ====================================================================================================
 sound_fade:
     push ecx                                     ; 08fcdf 51
@@ -8963,7 +8963,7 @@ loc_902e0:
 ; _memset_dwords  [0x902e7, 108 bytes, 48 instructions]
 ; aligned dword fill helper of memset
 ; annotations: external
-; called by: league_update_standings, league_db_load, playoff_round1_done, playoff_make_round2, playoff_round2_done, playoff_round3_done, playoff_final_done, savegame_io, speech_reset, schedule_advance_round1, inittimer, _memset_fill
+; called by: playoff_trim_series, league_db_load, playoff_round1_done, playoff_make_round2, playoff_round2_done, playoff_round3_done, playoff_final_done, savegame_io, speech_reset, schedule_advance_round1, inittimer, _memset_fill
 ; ====================================================================================================
 _memset_dwords:
     or ecx, ecx                                  ; 0902e7 09c9
@@ -9158,7 +9158,7 @@ remove_file:
 ; drawshape  [0x903f0, 555 bytes, 175 instructions]
 ; drawshape(shape, x, y): clipped transparent blit of an SHPI entry
 ; annotations: external
-; called by: credits_screen, pause_menu, run_menu, menu_page_a, menu_page_b, team_select_screen, draw_team_logos, league_name_entry, boxscore_screen, listbox_dialog, restore_dialog_background, dialog_pointer_loop (+47 more)
+; called by: credits_screen, pause_menu, run_menu, menu_page_a, menu_page_b, scouting_report_screen, lineups_screen, league_name_entry, boxscore_screen, listbox_dialog, restore_dialog_background, dialog_pointer_loop (+47 more)
 ; ====================================================================================================
 drawshape:
     push esi                                     ; 0903f0 56
@@ -9360,7 +9360,7 @@ loc_90614:
 ; drawshape_home  [0x9061c, 28 bytes, 11 instructions]
 ; drawshape at the position stored in the shape header
 ; annotations: external
-; called by: league_leaders_screen, awards_screen, credits_screen, pause_menu, team_select_screen, draw_team_logos, frontend_main_menu, calendar_draw_games, free_agent_card, edit_lines_screen_a, coach_clip_player, debug_shapes (+1 more)
+; called by: league_leaders_screen, awards_screen, credits_screen, pause_menu, scouting_report_screen, lineups_screen, frontend_main_menu, calendar_draw_games, free_agent_card, edit_lines_screen_a, coach_clip_player, debug_shapes (+1 more)
 ; ====================================================================================================
 drawshape_home:
     mov edx, dword ptr [esp + 4]                 ; 09061c 8b542404
@@ -10403,7 +10403,7 @@ _dos_write:
 ; fillrect  [0x90d20, 415 bytes, 131 instructions]
 ; fillrect(x, y, w, h, color)
 ; annotations: external
-; called by: draw_energy_bar, draw_line_box, draw_bevel_box, team_select_screen, league_dialog_box, league_name_entry_draw, draw_dialog_frame, listbox_draw_item, draw_penalty_box_overlay, draw_message_box, draw_box, highlight_menu_item (+20 more)
+; called by: draw_energy_bar, draw_line_box, draw_bevel_box, scouting_report_screen, league_dialog_box, league_name_entry_draw, draw_dialog_frame, listbox_draw_item, draw_penalty_box_overlay, draw_message_box, draw_box, menu_item_draw_normal (+20 more)
 ; ====================================================================================================
 fillrect:
     push esi                                     ; 090d20 56
@@ -10993,7 +10993,7 @@ loc_91283:
 ; ====================================================================================================
 ; drawshape2_remap  [0x91284, 65 bytes, 19 instructions]
 ; annotations: external
-; called by: ea_sports_intro, league_dialog_box, database_dialog, settings_screen_b, game_settings_dialog, sound_settings_draw, sound_settings_load_shapes, save_game_dialog, drawshape2_remap_home, drawshape2_remap_centered
+; called by: ea_sports_intro, league_dialog_box, database_dialog, settings_screen_b, game_settings_dialog, exhibition_settings_draw, sound_settings_load_shapes, save_game_dialog, drawshape2_remap_home, drawshape2_remap_centered
 ; ====================================================================================================
 drawshape2_remap:
     mov edx, dword ptr [esp + 4]                 ; 091284 8b542404
@@ -11123,7 +11123,7 @@ memset:
 ; drawshape_remap  [0x91370, 65 bytes, 19 instructions]
 ; drawshape through the color remap table
 ; annotations: external
-; called by: credits_screen, draw_credit_line, pause_menu, run_menu, menu_page_a, menu_page_b, team_stats_screen, player_stats_screen, stats_table, standings_table, standings_screen, team_select_screen (+37 more)
+; called by: credits_screen, draw_credit_line, pause_menu, run_menu, menu_page_a, menu_page_b, team_stats_screen, player_stats_screen, stats_table, standings_table, standings_screen, scouting_report_screen (+37 more)
 ; ====================================================================================================
 drawshape_remap:
     mov edx, dword ptr [esp + 4]                 ; 091370 8b542404
@@ -11153,7 +11153,7 @@ loc_91391:
 ; ====================================================================================================
 ; drawshape_remap_home  [0x913b4, 28 bytes, 11 instructions]
 ; annotations: external
-; called by: intro_sequence, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, standings_screen, boxscore_screen, team_select_screen2, load_rink, joystick_calibrate (+6 more)
+; called by: intro_sequence, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, standings_screen, boxscore_screen, game_statistics_screen, load_rink, joystick_calibrate (+6 more)
 ; ====================================================================================================
 drawshape_remap_home:
     mov edx, dword ptr [esp + 4]                 ; 0913b4 8b542404
@@ -11173,7 +11173,7 @@ drawshape_remap_home:
 ; drawshape_remap_centered  [0x913d0, 40 bytes, 15 instructions]
 ; x/y minus the shape hotspot
 ; annotations: external
-; called by: draw_team_logos, boxscore_screen, team_select_screen2, calendar_draw_games
+; called by: lineups_screen, boxscore_screen, game_statistics_screen, calendar_draw_games
 ; ====================================================================================================
 drawshape_remap_centered:
     mov edx, dword ptr [esp + 4]                 ; 0913d0 8b542404
@@ -11198,7 +11198,7 @@ drawshape_remap_centered:
 ; grabshape  [0x91400, 312 bytes, 101 instructions]
 ; copies a screen rectangle into a shape buffer (used to save the background under the mouse pointer)
 ; annotations: external
-; called by: credits_screen, pause_menu, run_menu, menu_page_a, menu_page_b, team_select_screen, draw_team_logos, league_select_screen, league_name_entry, listbox_dialog, save_dialog_background, dialog_pointer_loop (+42 more)
+; called by: credits_screen, pause_menu, run_menu, menu_page_a, menu_page_b, scouting_report_screen, lineups_screen, league_select_screen, league_name_entry, listbox_dialog, save_dialog_background, dialog_pointer_loop (+42 more)
 ; ====================================================================================================
 grabshape:
     push esi                                     ; 091400 56
@@ -12635,7 +12635,7 @@ loc_91f9a:
 ; ====================================================================================================
 ; fixmul16  [0x91fa4, 21 bytes, 6 instructions]
 ; 16.16 fixed point multiplication, rounded
-; called by: cdstream_open, iff_parse, printstr_rect, printstr_rect_right, printstr2_rect_right, unpackfile, adlib_env_update, adlib_voice_modulate, adlib_voice_output
+; called by: cdstream_open, iff_parse, printstr_rect, printstr_rect_right, printstr2_rect_right, unpackfile, adlib_lfo_update, adlib_voice_modulate, adlib_voice_output
 ; ====================================================================================================
 fixmul16:
     mov eax, dword ptr [esp + 4]                 ; 091fa4 8b442404
@@ -13685,7 +13685,7 @@ printstr2:
     mov dword ptr [esp + 0x10], eax              ; 0928c0 89442410
     mov eax, dword ptr [dword_d42a8]             ; 0928c4 a1a8420d00
     mov dword ptr [esp + 0x3c], eax              ; 0928c9 8944243c
-    mov eax, dword ptr [dword_d42ac]             ; 0928cd a1ac420d00
+    mov eax, dword ptr [text_bg_colour]          ; 0928cd a1ac420d00
     mov dword ptr [esp + 0xc], eax               ; 0928d2 8944240c
     cmp dword ptr [dword_d42bc], 0x464e544d      ; 0928d6 813dbc420d004d54..
     sete al                                      ; 0928e0 0f94c0

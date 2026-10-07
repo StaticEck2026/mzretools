@@ -24,7 +24,7 @@ ticks_reset:
 ; settimeout  [0xb3989, 16 bytes, 4 instructions]
 ; settimeout(ticks)
 ; annotations: external
-; called by: set_video_mode, ea_sports_intro, intro_sequence, team_select_screen2, text_entry_loop, loading_screen, wait_sprite_fade, sequence_loop, fade_ambient_audio, replay_menu, load_sound_config, broadcast_booth_screen (+4 more)
+; called by: set_video_mode, ea_sports_intro, intro_sequence, game_statistics_screen, text_entry_loop, loading_screen, wait_sprite_fade, sequence_loop, fade_ambient_audio, replay_menu, load_sound_config, broadcast_booth_screen (+4 more)
 ; ====================================================================================================
 settimeout:
     mov eax, dword ptr [esp + 4]                 ; 0b3989 8b442404
@@ -37,7 +37,7 @@ settimeout:
 ; waittimeout  [0xb3999, 14 bytes, 4 instructions]
 ; busy waits until the timeout set by settimeout expires
 ; annotations: external
-; called by: set_video_mode, intro_sequence, team_select_screen2, loading_screen, wait_sprite_fade, faceoff_wait_loop, fade_ambient_audio, replay_menu, load_sound_config, broadcast_booth_screen, stanley_cup_tree_screen, playoff_results_screen (+1 more)
+; called by: set_video_mode, intro_sequence, game_statistics_screen, loading_screen, wait_sprite_fade, faceoff_wait_loop, fade_ambient_audio, replay_menu, load_sound_config, broadcast_booth_screen, stanley_cup_tree_screen, playoff_results_screen (+1 more)
 ; ====================================================================================================
 waittimeout:
     mov eax, dword ptr [dword_d2fdc]             ; 0b3999 a1dc2f0d00
@@ -2038,7 +2038,7 @@ loc_b49e8:
     div ecx                                      ; 0b49ea f7f1
     shr eax, 0x18                                ; 0b49ec c1e818
     adc eax, 0                                   ; 0b49ef 83d000
-    movzx eax, byte ptr [eax + unk_d6074]        ; 0b49f2 0fb68074600d00
+    movzx eax, byte ptr [eax + atan_table]       ; 0b49f2 0fb68074600d00
     jmp dword ptr cs:[ebx + jpt_b4a0c]           ; 0b49f9 2effa30c4a0b00
     ; switch jump, 8 cases
 
@@ -2098,7 +2098,7 @@ loc_b4a57:
 
 ; ====================================================================================================
 ; sin_lookup  [0xb4a60, 6 bytes, 2 instructions]
-; called by: adlib_env_update, approx_distance
+; called by: adlib_lfo_update, approx_distance
 ; ====================================================================================================
 sin_lookup:
     mov eax, dword ptr [esp + 4]                 ; 0b4a60 8b442404
@@ -2117,7 +2117,7 @@ loc_b4a6c:
     and ah, 3                                    ; 0b4a6f 80e403
     jnp loc_b4a7e                                ; 0b4a72 7b0a
     jne loc_b4a96                                ; 0b4a74 7520
-    mov eax, dword ptr [eax*4 + unk_d6178]       ; 0b4a76 8b048578610d00
+    mov eax, dword ptr [eax*4 + sine_table]      ; 0b4a76 8b048578610d00
     ret                                          ; 0b4a7d c3
 
 loc_b4a7e:
@@ -2266,7 +2266,7 @@ settextmode:
 ; setpalette  [0xb4b88, 31 bytes, 17 instructions]  <vga_pel_write>
 ; setpalette(first, count, rgb) through ports 3C8h/3C9h
 ; annotations: external
-; called by: set_video_mode, setpalette_vsync, ea_sports_intro, intro_sequence, exh_hub_stats, player_card_draw_photo, standings_screen, team_select_screen2, league_calendar_flow, league_merge_and_update, load_cfg_palette, jersey_number_dialog (+20 more)
+; called by: set_video_mode, setpalette_vsync, ea_sports_intro, intro_sequence, exh_hub_stats, player_card_draw_photo, standings_screen, game_statistics_screen, league_calendar_flow, league_merge_and_update, load_cfg_palette, jersey_number_dialog (+20 more)
 ; ====================================================================================================
 setpalette:
     push ebp                                     ; 0b4b88 55
@@ -2313,7 +2313,7 @@ setdefaultscreen:
 ; setclip  [0xb4bc4, 99 bytes, 23 instructions]
 ; setclip(x0, x1, y0, y1)
 ; annotations: external
-; called by: set_video_mode, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, standings_screen, team_select_screen, draw_team_logos, boxscore_screen, frontend_main_menu (+25 more)
+; called by: set_video_mode, player_card_screen, goalie_card_screen, team_stats_screen, player_stats_screen, stats_table, standings_table, standings_screen, scouting_report_screen, lineups_screen, boxscore_screen, frontend_main_menu (+25 more)
 ; ====================================================================================================
 setclip:
     mov eax, dword ptr [esp + 4]                 ; 0b4bc4 8b442404
@@ -2873,7 +2873,7 @@ windowdefp:
 ; ====================================================================================================
 ; drawline  [0xb4fac, 60 bytes, 23 instructions]
 ; clip_line then draw_line_aa
-; called by: draw_box_frame, draw_bevel_box, team_select_screen, league_dialog_box, league_name_entry_draw, draw_dialog_frame, calendar_draw_games, draw_rect_outline, draw_box, player_ratings_card, database_dialog, database_select_draw (+10 more)
+; called by: draw_box_frame, draw_bevel_box, scouting_report_screen, league_dialog_box, league_name_entry_draw, draw_dialog_frame, calendar_draw_games, draw_rect_outline, draw_box, player_ratings_card, database_dialog, database_select_draw (+10 more)
 ; ====================================================================================================
 drawline:
     push ebp                                     ; 0b4fac 55

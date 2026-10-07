@@ -33,7 +33,7 @@ var teams_write: Callable = func(b: PackedByteArray) -> void:
 	GameFiles.write_data("teams.db", b)
 	fe.db = Database.open(b, GameFiles.read_raw("key.db"), GameFiles.read_raw("att.db"))
 var state := PackedByteArray()     # rosters[team][r]: 0 empty, 1 injured, 2 scratched, 3 dressed
-var entries: Array = []            # unk_ed0f4: [pos, number, roster, name] sorted
+var entries: Array = []            # lineup_entries: [pos, number, roster, name] sorted
 var picked := -1                   # local_60: the entry picked in the list
 var pre_game := true               # _period_num < 0
 var result := false                # the lines were taken

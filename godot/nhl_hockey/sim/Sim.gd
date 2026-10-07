@@ -10,7 +10,7 @@ extends RefCounted
 ## pos += 16 * v per step, world x across the rink (boards at +-160), y along it (boards +-264,
 ## goal lines +-232, blue lines +-78), the home team starts shooting at the +y net.
 
-const STEP_DT := 16                 # position += 16 * velocity per step (dword_e03b2 >> 16)
+const STEP_DT := 16                 # position += 16 * velocity per step (scratch_e03b2 >> 16)
 const GRAVITY := 6 * 16
 const RINK_HALF_W := 160            # boards: x = +-160 (0xa0)
 const RINK_HALF_H := 264            # boards: y = +-264 (0x108)
@@ -51,18 +51,18 @@ var intro := false                   # the anthem before the game (match_sequenc
 var stars_running := false           # the three stars after the game (three_stars_sequence)
 var match_over := false              # the three stars are over: the game is finished
 var intermission_pending := false    # end_of_period: a period ended, the front end shows the intermission
-var sequence_steps: int = 0          # dword_e9b04: steps left of the anthem / three stars
+var sequence_steps: int = 0          # sequence_steps: steps left of the anthem / three stars
 var cup_final := false               # game_over_check: this game decides the Stanley Cup
 var intermission_camera := false     # game_flags 0x80 (the cup presentation)
 var stars: Array = []                # e9af8: up to 3 x [team, roster], the 1st star first
 var game_winner := Vector2i(-1, -1)  # e9af0 / e9af4: [team, roster] of the overtime winner
-# the scoreboard panel of the stoppages (InfoPanel.gd): dword_cbebe and the clip of dword_cbeca
+# the scoreboard panel of the stoppages (InfoPanel.gd): panel_state and the clip of panel_clip
 var panel: int = -1                  # -1 closed, 0..0xf opening, 0x10 plays the clip, ..0xff open, 0x100 held, 600..0x268 closing
 var clip: int = -1                   # the clip on the scoreboard (Tables.announcer_ppv_names), -1 none
-var clip_frame: int = -1             # word_cbece: frame of the clip shown
-var clip_pos: int = 0                # dword_e9ab2 high word: position in the clip script
-var clip_time: int = 0               # dword_e9ab2 low word: steps left on this frame
-var panel_text: Array = ["", "", "", "", ""]   # byte_e02c8 (title), byte_e0250, byte_e028c, byte_e0308, byte_e0344
+var clip_frame: int = -1             # clip_frame: frame of the clip shown
+var clip_pos: int = 0                # clip_script_pos high word: position in the clip script
+var clip_time: int = 0               # clip_script_pos low word: steps left on this frame
+var panel_text: Array = ["", "", "", "", ""]   # panel_title (byte_e02c8), byte_e0250, byte_e028c, byte_e0308, byte_e0344
 var event_log: Array = []            # e9b4c: the last 8 goals / penalties / injuries of the period
 # the game summary (GSUMMARY.DB, gsummary_append_record): the header (unk_c5423: month, day, home,
 # away, the number of records), the records of 11 bytes (1 goal, 2 penalty, 3 injury, 4 the goals
@@ -72,16 +72,16 @@ var gs_records: Array = []
 var gs_trailer := PackedByteArray([4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 var ref_infraction_slot: int = -1    # ref_infraction high word: the entity the call is about
 var infraction_type_served: int = 0  # the infraction of the penalty being served (record_penalty)
-var goal_flags: int = 1             # word_e9ab0 of the last goal: 1 even, 2 short handed, 4 power play, 8 empty net
+var goal_flags: int = 1             # goal_flags of the last goal: 1 even, 2 short handed, 4 power play, 8 empty net
 var music_queue: Array = []          # play_speech ids: the organ songs and jingles (KMS) of the music driver
 var announcer_queue: Array = []      # sentences of the announcer (Speech.gd): clip names of XBRUCE2.VIV
-var goal_call: Array = []            # byte_e9ad3: [team, scorer, assist 1, assist 2] until the goal is announced
-var last_penalty_team := -1          # dword_e9aac >> 16: the team of the last penalty called
+var goal_call: Array = []            # goal_call: [team, scorer, assist 1, assist 2] until the goal is announced
+var last_penalty_team := -1          # announce_time (dword_e9aac) >> 16: the team of the last penalty called
 var sound_enabled := true            # sound_enabled
-var sound_device: int = 8            # dword_c541f: a digital device (bits 0x2a) plays the fan clip
+var sound_device: int = 8            # sound_card: a digital device (bits 0x2a) plays the fan clip
 var half_announce := false           # misc_flags 0x80: the halfway line is still to come (periods 1 and 2)
-var announce_time: int = -1          # dword_e9aac: clock time of the late game line in the 3rd period
-var scorer_jumps: int = 0            # dword_cca58: the goal scorer's jumps in ai_celebrate_goal
+var announce_time: int = -1          # announce_time (dword_e9aac): clock time of the late game line in the 3rd period
+var scorer_jumps: int = 0            # scorer_jumps: the goal scorer's jumps in ai_celebrate_goal
 # stop_flags
 var faceoff_pending := false        # bit 0: faceoff set up, waiting for the drop
 var whistle_ready := false          # bit 2
@@ -105,10 +105,10 @@ var box_count := [0, 0]            # penalized_count / byte_e9abb: players sitti
 var last_sfx := -1                 # crowd_noise low word: the last play_sfx id (recorded by the replay)
 var replay_disabled := false       # game_flags 0x10: nothing is recorded
 var replay := Replay.new()
-var crowd: Array = []              # unk_dee94: Crowd.Record x 20 (the figures around the ice and the benches)
-var crowd_busy := PackedByteArray() # unk_e9b2a: spots in use
-var injury_stoppage := false       # dword_cbec6: a player was hurt; the faceoff follows without the referee's walk
-var fade_in := false               # word_cbec4: the view cuts (fades in) to the next scene
+var crowd: Array = []              # crowd_figures: Crowd.Record x 20 (the figures around the ice and the benches)
+var crowd_busy := PackedByteArray() # crowd_spots_busy: spots in use
+var injury_stoppage := false       # injury_stoppage: a player was hurt; the faceoff follows without the referee's walk
+var fade_in := false               # cut_to_scene: the view cuts (fades in) to the next scene
 var penalty_box_mode := false      # word_c90de: a penalty is being handed out (no new calls)
 var speech_busy := false           # speech_busy(): the announcer is talking (set by the audio layer)
 var ref_phase: int = -1             # dword_c90d4: 0 = referee called, 1 = collecting, -1 = ready
@@ -148,18 +148,18 @@ var excitement: int = 0
 var step_count: int = 0
 var sfx_queue: PackedInt32Array = PackedInt32Array()
 var music_cues: Array = []         # play_sfx 0xaa on sound device 4 (kms_play)
-var seed: int = 0xabcd4321           # dword_c9100: state of randomrange (demo_game reseeds it from rand(), init_match adds the team numbers)
+var seed: int = 0xabcd4321           # random_seed: state of randomrange (demo_game reseeds it from rand(), init_match adds the team numbers)
 var puck_in_net := false            # byte_c90ba
 var bounced := false                # bounced_this_step: a net frame was hit (bounce_off_boards)
 var scored_net := -1                # the net of the last score_goal call
-var draw_list := PackedInt32Array()  # unk_e9ade: the 17 entities sorted by y (draw_order_list)
+var draw_list := PackedInt32Array()  # draw_order_slots: the 17 entities sorted by y (draw_order_list)
 var draw_pos := PackedInt32Array()   # draw_order_pos: each entity's place in draw_list
 var draw_keys := PackedInt32Array()  # draw_order_keys: the y each entity was last sorted by
 # line changes (Lines.gd)
-var req_roster: PackedInt32Array = PackedInt32Array([-1, -1, -1, -1, -1, -1])   # unk_e0384: lineup being assigned
-var req_slot: PackedInt32Array = PackedInt32Array([0, 0, 0, 0, 0, 0])          # unk_e038a: its line slots
+var req_roster: PackedInt32Array = PackedInt32Array([-1, -1, -1, -1, -1, -1])   # lineup_req_roster: lineup being assigned
+var req_slot: PackedInt32Array = PackedInt32Array([0, 0, 0, 0, 0, 0])          # lineup_req_slot: its line slots
 var line_hotkey: PackedInt32Array = PackedInt32Array([-1, -1])                 # word_e0304/word_e0380: F1-F4 / F5-F8 request per team
-# message box (word_cbec8 / dword_cbeca): index into Tables.message_strings, -1 none; the timer
+# message box (word_cbec8 / panel_clip): index into Tables.message_strings, -1 none; the timer
 # counts frames down to 0 and clears the message, 0 = stays until cleared
 var message: int = -1
 var message_timer: int = 0
@@ -172,11 +172,11 @@ var penalty_shot_slot := -1          # dword_cc0fc: the fouled player, who takes
 var penalty_shot_team := 0           # dword_cc104: 0 home, 1 away
 var penalty_shot_user := -1          # dword_cc108: 1 when user 1 controlled the shooter, else -1
 var penalty_shot_roster := -1        # dword_cc100
-var penalty_shot_spot := Vector2i()  # dword_cc110 / dword_cc114: faceoff spot after the shot
+var penalty_shot_spot := Vector2i()  # dword_cc110 / penalty_shot_spot_y: faceoff spot after the shot
 var penalty_shot_clock := 0          # dword_cc120: steps left for the shot (1000)
 var penalty_shot_away := 0           # penalty_shot_timer (cc12c): steps the loose puck moved away from the net
 var settings2: int = 0x7b           # byte_c5400 (option_flags + 1): bit 1 set = regular season game (normal penalty rate in penalty_odds, a tie after one overtime); clear = playoffs
-var crowd_toggle := false            # word_cc0da: alternates the two crowd hit sounds
+var crowd_toggle := false            # crowd_hit_toggle: alternates the two crowd hit sounds
 var injury_report: Array = []        # [team, roster, out for the game] of the last injury (announce_injury)
 var ref_hits := 0                    # word_cbec2: body checks of a user on the referee (3 = game misconduct)
 var last_impact := 0                 # word_e9b28: strength of the last collision between opponents
@@ -417,7 +417,7 @@ func centre_slot(t: int) -> int:
 func is_user_team(t: int) -> bool:
 	return user1_team == t + 1 or user2_team == t + 1
 
-## word_cbec8 / dword_cbeca: shows a message of Tables.message_strings (0 = until cleared)
+## word_cbec8 / panel_clip: shows a message of Tables.message_strings (0 = until cleared)
 func show_message(idx: int, frames: int) -> void:
 	message = idx
 	message_timer = frames
@@ -609,7 +609,7 @@ func add_crowd(amount: int, cap: int) -> void:
 func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) -> void:
 	step_count += 1
 	# match_sequence / three_stars_sequence: a button skips the anthem, the sequences run for
-	# dword_e9b04 steps
+	# sequence_steps steps
 	if intro or stars_running:
 		if intro and ((pressed_p1 | pressed_p2) & 0x30) != 0:
 			sequence_steps = 0
@@ -1168,7 +1168,7 @@ func _draw_order_move(slot: int, y: int) -> void:
 	draw_keys[slot] = y
 
 ## collide_boards (0x582c9): boards with rounded corners (radius 64); between the corners at the
-## ends the nets are checked first. a, b (dword_e03ba / dword_e03be) are the board's direction,
+## ends the nets are checked first. a, b (scratch_a / scratch_b) are the board's direction,
 ## (ny, -nx) * 256
 func collide_boards(e: Entity, px: int, py: int, hw: int, hh: int) -> void:
 	var w := RINK_HALF_W - hw

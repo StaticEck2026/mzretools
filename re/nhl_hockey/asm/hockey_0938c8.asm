@@ -4450,7 +4450,7 @@ loc_96431:
 ; ====================================================================================================
 ; drawshape_clip_save  [0x96440, 411 bytes, 130 instructions]
 ; draws a shape with clipping, keeping its position in the shape (VESA path: vesa_drawshape_clip_save)
-; called by: settings_menu, sound_settings_menu, drawshape_clip_save_home, drawshape_clip_save_centered, drawshape_clip_save_window
+; called by: settings_menu, exhibition_settings_menu, drawshape_clip_save_home, drawshape_clip_save_centered, drawshape_clip_save_window
 ; ====================================================================================================
 drawshape_clip_save:
     push esi                                     ; 096440 56

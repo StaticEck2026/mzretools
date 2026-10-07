@@ -12121,7 +12121,7 @@ loc_b2db2:
 ; ====================================================================================================
 ; setmousepos  [0xb2db4, 22 bytes, 8 instructions]
 ; annotations: external
-; called by: setup_controls, handle_hotkey, game_loop, play_game, reset_game_state, check_disk_space_for_game, pause_menu, run_menu, menu_page_a, menu_page_b, team_select_screen, league_name_entry (+25 more)
+; called by: setup_controls, handle_hotkey, game_loop, play_game, reset_game_state, check_disk_space_for_game, pause_menu, run_menu, menu_page_a, menu_page_b, scouting_report_screen, league_name_entry (+25 more)
 ; ====================================================================================================
 setmousepos:
     push ebp                                     ; 0b2db4 55
@@ -12189,7 +12189,7 @@ mouse_set_y_limits:
 ; ====================================================================================================
 ; setmouselimits  [0xb2e1b, 40 bytes, 12 instructions]
 ; annotations: external
-; called by: set_video_mode, handle_hotkey, pause_menu, run_menu, menu_page_a, menu_page_b, team_select_screen, frontend_main_menu, league_calendar_flow, database_menu, edit_lines_screen, edit_lines_screen2 (+4 more)
+; called by: set_video_mode, handle_hotkey, pause_menu, run_menu, menu_page_a, menu_page_b, scouting_report_screen, frontend_main_menu, league_calendar_flow, database_menu, edit_lines_screen, edit_lines_screen2 (+4 more)
 ; ====================================================================================================
 setmouselimits:
     push ebp                                     ; 0b2e1b 55
@@ -13261,7 +13261,7 @@ loc_b391a:
 ; clearclip  [0xb392c, 46 bytes, 15 instructions]
 ; fills the clip rectangle with a color
 ; annotations: external
-; called by: set_video_mode, awards_screen, ea_sports_intro, intro_sequence, credits_screen, draw_credit_line, exit_game_dialog, exh_hub_stats, draw_team_logos, boxscore_screen, team_select_screen2, calendar_screen (+19 more)
+; called by: set_video_mode, awards_screen, ea_sports_intro, intro_sequence, credits_screen, draw_credit_line, exit_game_dialog, exh_hub_stats, lineups_screen, boxscore_screen, game_statistics_screen, calendar_screen (+19 more)
 ; ====================================================================================================
 clearclip:
     mov eax, dword ptr [esp + 4]                 ; 0b392c 8b442404
@@ -13308,7 +13308,7 @@ ticks_since:
 ; ticks_elapsed  [0xb396e, 19 bytes, 5 instructions]
 ; ticks since the previous call
 ; annotations: external
-; called by: game_loop, ea_sports_intro, pause_menu, sequence_loop, simulate_game_offscreen, instant_replay
+; called by: game_loop, ea_sports_intro, pause_menu, sequence_loop, league_highlight_game, instant_replay
 ; ====================================================================================================
 ticks_elapsed:
     mov ebx, dword ptr [dword_d4298]             ; 0b396e 8b1d98420d00

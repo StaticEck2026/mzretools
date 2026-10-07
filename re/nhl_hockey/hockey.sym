@@ -262,8 +262,8 @@
 00029b07	func	playoff_round_screen	366	__watcall
 00029c75	func	format_team_name	139	__watcall
 00029d00	func	draw_bevel_box	533	__watcall
-00029f28	func	team_select_screen	3255	__watcall
-0002abdf	func	draw_team_logos	3032	__watcall
+00029f28	func	scouting_report_screen	3255	__watcall
+0002abdf	func	lineups_screen	3032	__watcall
 0002b7c3	func	league_select_buttons	385	__watcall
 0002b944	func	league_select_screen	978	__watcall
 0002bd16	func	league_type_menu	468	__watcall
@@ -281,7 +281,7 @@
 0002f2b1	func	league_scores_init	294	__watcall
 0002f3d7	func	league_scores_advance	425	__watcall
 0002f580	func	print_text_fit	110	__watcall
-0002f5ee	func	team_select_screen2	2019	__watcall
+0002f5ee	func	game_statistics_screen	2019	__watcall
 0002fdd1	func	choose_db_or_org	120	__watcall
 0002fe49	func	draw_dialog_frame	137	__watcall
 0002fed2	func	return_zero_2fed2	13	__watcall
@@ -425,7 +425,7 @@
 00041c79	func	date_to_day_index	34	__watcall
 00041c9b	func	day_to_month_day	41	__watcall
 00041cc4	func	league_play_day	672	__watcall
-00041f64	func	league_update_standings	671	__watcall
+00041f64	func	playoff_trim_series	671	__watcall
 00042221	func	playoff_series_count	116	__watcall
 00042295	func	league_db_load	924	__watcall
 00042631	func	schedule_play_games	634	__watcall
@@ -447,7 +447,7 @@
 00044dcf	func	new_league_dialog	1203	__watcall
 00045282	func	rand_below	36	__watcall
 000452a6	func	add_pair_max4	31	__watcall
-000452c5	func	playoff_setup_screen	9868	__watcall
+000452c5	func	league_sim_game	9868	__watcall
 00047951	func	loading_screen_timer	152	__watcall
 000479e9	func	loading_screen	584	__watcall
 00047c31	func	wait_sprite_fade	165	__watcall
@@ -790,7 +790,7 @@
 00067dcc	func	replay_draw_frame	2776	__watcall
 000688a4	func	dump_stats_log	1495	__watcall
 00068e7b	func	write_stats_table	1211	__watcall
-00069336	func	simulate_game_offscreen	3325	__watcall
+00069336	func	league_highlight_game	3325	__watcall
 0006a033	func	mark_rink_dirty	17	__watcall
 0006a044	func	zm_clear_flags	19	__watcall
 0006a057	func	zm_toggle_flags	17	__watcall
@@ -854,8 +854,8 @@
 0006b88e	func	draw_item_text	61	__watcall
 0006b8cb	func	draw_item_text_dim	69	__watcall
 0006b910	func	printstr2_copy_at	62	__watcall
-0006b94e	func	highlight_menu_item	157	__watcall
-0006b9eb	func	unhighlight_menu_item	98	__watcall
+0006b94e	func	menu_item_draw_normal	157	__watcall
+0006b9eb	func	menu_item_draw_selected	98	__watcall
 0006ba4d	func	hit_test_menus	158	__watcall
 0006baeb	func	ui_timer_callback	325	__watcall
 0006bc30	func	ui_poll_mouse	170	__watcall
@@ -999,17 +999,17 @@
 0007b39c	func	empty_func_7b39c	11	__watcall
 0007b3a7	func	game_settings_screen	325	__watcall
 0007b4ec	func	game_settings_dialog	280	__watcall
-0007b604	func	sound_settings_dialog	304	__watcall
+0007b604	func	game_settings_show_options	304	__watcall
 0007b734	func	game_settings_button_at	138	__watcall
 0007b7be	func	game_settings_draw_buttons	136	__watcall
 0007b846	func	game_settings_pointer_loop	418	__watcall
 0007b9e8	func	game_settings_menu	1235	__watcall
 0007bebb	func	menu_exhibition_settings	155	__watcall
-0007bf56	func	sound_toggle_dialog	355	__watcall
-0007c0b9	func	sound_settings_draw_buttons	243	__watcall
-0007c1ac	func	sound_settings_draw	225	__watcall
-0007c28d	func	sound_settings_button_at	138	__watcall
-0007c317	func	sound_settings_menu	1339	__watcall
+0007bf56	func	exhibition_settings_show_options	355	__watcall
+0007c0b9	func	exhibition_settings_draw_buttons	243	__watcall
+0007c1ac	func	exhibition_settings_draw	225	__watcall
+0007c28d	func	exhibition_settings_button_at	138	__watcall
+0007c317	func	exhibition_settings_menu	1339	__watcall
 0007c852	func	controller_box_draw_on	175	__watcall
 0007c901	func	controller_box_draw_off	146	__watcall
 0007c993	func	menu_p1_controls_a	14	__watcall
@@ -1829,7 +1829,7 @@
 0009d805	func	pcspk_note_off	83	__cdecl
 0009d858	func	pcspk_program	40	__cdecl
 0009d880	func	pcspk_update_voices	537	__watcall
-0009da99	func	timbre_env_sign	19	__watcall
+0009da99	func	pcspk_pick_voice	19	__watcall
 0009daac	func	pcspk_drv_send_midi	499	__watcall
 0009dc9f	func	sbdac_drv_send_midi	509	__watcall
 0009de9c	func	adlib_drv_default_port	13	__watcall
@@ -1846,10 +1846,10 @@
 0009e378	func	adlib_voice_release	24	__watcall
 0009e390	func	adlib_voice_off	129	__watcall
 0009e428	func	adlib_env_step	175	__watcall
-0009e4d7	func	adlib_lfo_init	58	__watcall
-0009e511	func	adlib_lfo_step	140	__watcall
-0009e59d	func	adlib_env_init	44	__watcall
-0009e5c9	func	adlib_env_update	173	__watcall
+0009e4d7	func	adlib_seq_init	58	__watcall
+0009e511	func	adlib_seq_step	140	__watcall
+0009e59d	func	adlib_lfo_init	44	__watcall
+0009e5c9	func	adlib_lfo_update	173	__watcall
 0009e676	func	adlib_drv_send_midi	485	__watcall
 0009e85b	func	adlib_voice_modulate	25	__watcall
 0009eaa6	func	adlib_voice_update	303	__watcall
@@ -4635,7 +4635,7 @@
 000c4e28	data	dword_c4e28	4	
 000c4e2c	data	dword_c4e2c	4	
 000c4e30	data	palette_black	0	
-000c5130	data	dword_c5130	4	
+000c5130	data	demo_game_running	4	
 000c5131	data	unk_c5131	0	
 000c5133	data	unk_c5133	0	
 000c5135	data	byte_c5135	1	
@@ -4706,8 +4706,8 @@
 000c540f	data	dword_c540f	4	
 000c5413	data	dword_c5413	4	
 000c5417	data	dword_c5417	4	
-000c541b	data	dword_c541b	4	
-000c541f	data	dword_c541f	4	
+000c541b	data	sound_cards_allowed	4	
+000c541f	data	sound_card	4	
 000c5423	data	unk_c5423	0	
 000c5424	data	byte_c5424	1	
 000c5425	data	byte_c5425	1	
@@ -4761,7 +4761,7 @@
 000c5860	data	dword_c5860	4	
 000c5861	data	unk_c5861	0	
 000c5862	data	unk_c5862	0	
-000c5886	data	dword_c5886	4	
+000c5886	data	demo_kind	4	
 000c588a	data	dword_c588a	4	
 000c588e	data	unk_c588e	0	
 000c588f	data	aOfficiallyLicensed	20	string
@@ -4901,7 +4901,7 @@
 000c6410	data	dword_c6410	4	
 000c6414	data	dword_c6414	4	
 000c6418	data	dword_c6418	4	
-000c641c	data	dword_c641c	4	
+000c641c	data	text_shadow	4	
 000c6420	data	unk_c6420	0	
 000c6430	data	unk_c6430	0	
 000c6440	data	aTheFileYouSpecifiedAlrea	39	string
@@ -4919,17 +4919,17 @@
 000c659a	data	off_c659a	4	ptr
 000c65a8	data	dword_c65a8	4	
 000c65ac	data	dword_c65ac	4	
-000c65b0	data	dword_c65b0	4	
-000c65b4	data	dword_c65b4	4	
-000c65b8	data	dword_c65b8	4	
-000c65bc	data	dword_c65bc	4	
+000c65b0	data	stats_current_arg	4	
+000c65b4	data	stats_selected_team	4	
+000c65b8	data	stats_current_screen	4	
+000c65bc	data	stats_next_screen	4	
 000c65c0	data	dword_c65c0	4	
 000c65c4	data	dword_c65c4	4	
 000c65c8	data	dword_c65c8	4	
 000c65cc	data	dword_c65cc	4	
 000c65d0	data	dword_c65d0	4	
 000c65d4	data	unk_c65d4	0	
-000c65f4	data	dword_c65f4	4	
+000c65f4	data	league_done_mask	4	
 000c65f8	data	aReturningToSportsCentral	28	string
 000c6614	data	aReturningOutOfTheGame	26	string
 000c662e	data	aReturningToThePlayoffTre	30	string
@@ -4992,8 +4992,8 @@
 000c6935	data	aEmbS_c6935	6	string
 000c693b	data	aBkgd_c693b	5	string
 000c6940	data	aEASNVfn	9	string
-000c6956	data	dword_c6956	4	
-000c695a	data	dword_c695a	4	
+000c6956	data	stats_playoffs	4	
+000c695a	data	stats_league	4	
 000c6960	data	unk_c6960	0	
 000c6a60	data	dword_c6a60	4	
 000c6a64	data	off_c6a64	4	ptr
@@ -5118,7 +5118,7 @@
 000c71fc	data	dword_c71fc	4	
 000c7208	data	dword_c7208	4	
 000c7210	data	dword_c7210	4	
-000c7218	data	byte_c7218	1	
+000c7218	data	fe_desk_toggle	1	
 000c7219	data	dword_c7219	4	
 000c721d	data	dword_c721d	4	
 000c7221	data	aInsufficientDiskSpaceAva_c7221	34	string
@@ -5462,9 +5462,9 @@
 000c8d02	data	off_c8d02	4	ptr
 000c8d06	data	unk_c8d06	0	
 000c9002	data	dword_c9002	4	
-000c900c	data	unk_c900c	0	
-000c905c	data	unk_c905c	0	
-000c9074	data	dword_c9074	4	
+000c900c	data	forward_line_order	0	
+000c905c	data	defence_pair_order	0	
+000c9074	data	loading_shown	4	
 000c9078	data	replay_buffer	4	ptr
 000c907c	data	p_puck_x	4	ptr
 000c9080	data	p_puck_vx	4	ptr
@@ -5516,7 +5516,7 @@
 000c90de	data	clock_sub	2	
 000c90e0	data	dir8_vectors	0	
 000c90e2	data	unk_c90e2	0	
-000c9100	data	dword_c9100	4	
+000c9100	data	random_seed	4	
 000c9102	data	word_c9102	2	
 000c9104	data	stoppage_duration	0	
 000c9111	data	byte_c9111	1	
@@ -5546,7 +5546,7 @@
 000cbc64	data	word_cbc64	2	
 000cbc66	data	word_cbc66	2	
 000cbc68	data	word_cbc68	2	
-000cbc6a	data	word_cbc6a	2	
+000cbc6a	data	line_change_prompt	2	
 000cbc6c	data	word_cbc6c	2	
 000cbc6e	data	unk_cbc6e	0	
 000cbc7e	data	unk_cbc7e	0	
@@ -5566,15 +5566,15 @@
 000cbe8c	data	faceoff_spots	0	
 000cbe8e	data	unk_cbe8e	0	
 000cbea8	data	faceoff_lineup	0	
-000cbebe	data	dword_cbebe	4	
+000cbebe	data	panel_state	4	
 000cbec0	data	word_cbec0	2	
 000cbec2	data	ref_hits	2	
-000cbec4	data	word_cbec4	2	
-000cbec6	data	dword_cbec6	4	
+000cbec4	data	cut_to_scene	2	
+000cbec6	data	injury_stoppage	4	
 000cbec8	data	word_cbec8	2	
-000cbeca	data	dword_cbeca	4	
+000cbeca	data	panel_clip	4	
 000cbecc	data	dword_cbecc	4	
-000cbece	data	word_cbece	2	
+000cbece	data	clip_frame	2	
 000cbed0	data	off_cbed0	4	ptr
 000cbefc	data	unk_cbefc	0	
 000cbf04	data	unk_cbf04	0	
@@ -5596,7 +5596,7 @@
 000cc0b4	data	arrow_frames	4	
 000cc0d8	data	word_cc0d8	2	
 000cc0d9	data	byte_cc0d9	1	
-000cc0da	data	word_cc0da	2	
+000cc0da	data	crowd_hit_toggle	2	
 000cc0dc	data	crowd_noise	4	
 000cc0de	data	word_cc0de	2	
 000cc0e0	data	effect_bank	4	
@@ -5611,7 +5611,7 @@
 000cc108	data	penalty_shot_user	4	
 000cc10c	data	dword_cc10c	4	
 000cc110	data	penalty_shot_spot_x	4	
-000cc114	data	dword_cc114	4	
+000cc114	data	penalty_shot_spot_y	4	
 000cc118	data	penalty_shot_phase	4	
 000cc11c	data	penalty_shot_setup	4	
 000cc120	data	penalty_shot_clock	4	
@@ -5645,7 +5645,7 @@
 000cca3a	data	unk_cca3a	0	
 000cca3c	data	unk_cca3c	0	
 000cca3e	data	unk_cca3e	0	
-000cca58	data	dword_cca58	4	
+000cca58	data	scorer_jumps	4	
 000cca5a	data	goalie_save_anims	0	
 000cca6e	data	carrier_targets	0	
 000cca70	data	unk_cca70	0	
@@ -5672,9 +5672,9 @@
 000ccc60	data	shot_targets	0	
 000ccc62	data	unk_ccc62	0	
 000ccc84	data	crowd_loop_channel	4	
-000ccc88	data	dword_ccc88	4	
-000ccc8c	data	dword_ccc8c	4	
-000ccc90	data	dword_ccc90	4	
+000ccc88	data	crowd_level	4	
+000ccc8c	data	crowd_roar	4	
+000ccc90	data	crowd_murmur	4	
 000ccc94	data	dword_ccc94	4	
 000ccc98	data	dword_ccc98	4	
 000ccc9c	data	controls_blocked	4	
@@ -5708,10 +5708,10 @@
 000cd4a0	data	off_cd4a0	4	ptr
 000cd4b0	data	unk_cd4b0	0	
 000cd4dc	data	message_strings	4	ptr
-000cd4fa	data	dword_cd4fa	4	
+000cd4fa	data	replay_follow	4	
 000cd4fc	data	word_cd4fc	2	
-000cd4fe	data	word_cd4fe	2	
-000cd500	data	word_cd500	2	
+000cd4fe	data	replay_half_step	2	
+000cd500	data	replay_held_sfx	2	
 000cd504	data	unk_cd504	0	
 000cd6e4	data	off_cd6e4	4	ptr
 000cd8c4	data	off_cd8c4	4	ptr
@@ -6070,7 +6070,7 @@
 000d0740	data	aPlayerStatistics_d0740	18	string
 000d0752	data	aDisplay	12	string
 000d075e	data	unk_d075e	0	
-000d079e	data	byte_d079e	1	
+000d079e	data	roster_team_column	1	
 000d079f	data	byte_d079f	1	
 000d07a8	data	byte_d07a8	1	
 000d07a9	data	byte_d07a9	1	
@@ -6425,7 +6425,7 @@
 000d278e	data	a2ndstarCor	12	string
 000d279a	data	a3rdstarCor	12	string
 000d27a2	data	aCor_d27a2	4	string
-000d27b2	data	dword_d27b2	4	
+000d27b2	data	speech_voice	4	
 000d27b6	data	byte_d27b6	1	
 000d27b7	data	dword_d27b7	4	
 000d27bb	data	speech_enabled	4	
@@ -6672,7 +6672,7 @@
 000d42a0	data	funcptr_d42a0	4	code_ptr
 000d42a4	data	off_d42a4	4	ptr
 000d42a8	data	dword_d42a8	4	
-000d42ac	data	dword_d42ac	4	
+000d42ac	data	text_bg_colour	4	
 000d42b0	data	dword_d42b0	4	
 000d42b4	data	dword_d42b4	4	
 000d42b8	data	dword_d42b8	4	
@@ -6901,8 +6901,8 @@
 000d5f58	data	unk_d5f58	0	
 000d5fb4	data	unk_d5fb4	0	
 000d6012	data	unk_d6012	0	
-000d6074	data	unk_d6074	0	
-000d6178	data	unk_d6178	0	
+000d6074	data	atan_table	0	
+000d6178	data	sine_table	0	
 000d6578	data	unk_d6578	0	
 000d657c	data	dword_d657c	4	
 000d65f8	data	byte_d65f8	1	
@@ -6910,19 +6910,19 @@
 000d65fc	data	word_d65fc	2	
 000d6600	data	funcptr_d6600	4	code_ptr
 000d6604	data	funcptr_d6604	4	code_ptr
-000d6608	data	unk_d6608	0	
+000d6608	data	pcspk_divisors	0	
 000d6770	data	byte_d6770	1	
-000d6774	data	byte_d6774	1	
+000d6774	data	pcspk_hw_active	1	
 000d6775	data	byte_d6775	1	
 000d6776	data	byte_d6776	1	
 000d6777	data	byte_d6777	1	
 000d6778	data	byte_d6778	1	
-000d677b	data	unk_d677b	0	
+000d677b	data	pcspk_hw_div	0	
 000d677d	data	word_d677d	2	
 000d677f	data	word_d677f	2	
 000d6781	data	word_d6781	2	
 000d6783	data	word_d6783	2	
-000d6785	data	byte_d6785	1	
+000d6785	data	pcspk_hw_enabled	1	
 000d6786	data	byte_d6786	1	
 000d6787	data	byte_d6787	1	
 000d6788	data	byte_d6788	1	
@@ -6932,20 +6932,20 @@
 000d678e	data	byte_d678e	1	
 000d678f	data	byte_d678f	1	
 000d6790	data	byte_d6790	1	
-000d679a	data	byte_d679a	1	
-000d679c	data	word_d679c	2	
+000d679a	data	pcspk_tick_count	1	
+000d679c	data	opl_port	2	
 000d67a0	data	dword_d67a0	4	
 000d67a4	data	dword_d67a4	4	
-000d67a8	data	unk_d67a8	0	
-000d67b4	data	unk_d67b4	0	
-000d67f4	data	unk_d67f4	0	
-000d683c	data	unk_d683c	0	
-000d687c	data	unk_d687c	0	
-000d68fc	data	unk_d68fc	0	
+000d67a8	data	opl_voice_operator	0	
+000d67b4	data	opl_voice_registers	0	
+000d67f4	data	adlib_fnum_table	0	
+000d683c	data	adlib_velocity_levels	0	
+000d687c	data	adlib_volume_table	0	
+000d68fc	data	opl_shadow	0	
 000d691c	data	unk_d691c	0	
 000d699c	data	unk_d699c	0	
 000d69b9	data	unk_d69b9	0	
-000d69ff	data	unk_d69ff	0	
+000d69ff	data	opl_written	0	
 000d6a1f	data	unk_d6a1f	0	
 000d6a9f	data	unk_d6a9f	0	
 000d6abc	data	unk_d6abc	0	
@@ -7526,7 +7526,7 @@
 000dc225	data	byte_dc225	1	
 000dc228	data	unk_dc228	0	
 000dc230	data	font_current_default	4	
-000dc234	data	dword_dc234	4	
+000dc234	data	league_game_number	4	
 000dc238	data	pointer_shapes	4	
 000dc23e	data	unk_dc23e	0	
 000dc240	data	word_dc240	2	
@@ -7555,29 +7555,29 @@
 000dc338	data	dword_dc338	4	
 000dc33c	data	dword_dc33c	4	
 000dc340	data	unk_dc340	0	
-000dc640	data	unk_dc640	0	
+000dc640	data	standings_order	0	
 000dc6a8	data	dword_dc6a8	4	
 000dc6ac	data	dword_dc6ac	4	
 000dc6b0	data	dword_dc6b0	4	
 000dc6b4	data	dword_dc6b4	4	
 000dc6b8	data	dword_dc6b8	4	
-000dc6bc	data	unk_dc6bc	0	
-000dc720	data	unk_dc720	0	
+000dc6bc	data	roster_skater_order	0	
+000dc720	data	roster_goalie_order	0	
 000dc734	data	dword_dc734	4	
-000dc738	data	dword_dc738	4	
+000dc738	data	stats_hub_active	4	
 000dc73c	data	unk_dc73c	0	
 000dc750	data	dword_dc750	4	
 000dc754	data	unk_dc754	0	
 000dc7b8	data	dword_dc7b8	4	
 000dc7bc	data	unk_dc7bc	0	
 000dc830	data	dword_dc830	4	
-000dc834	data	unk_dc834	0	
+000dc834	data	card_player_record	0	
 000dc836	data	byte_dc836	1	
 000dc837	data	unk_dc837	0	
 000dc847	data	unk_dc847	0	
 000dc85c	data	dword_dc85c	4	
 000dc860	data	dword_dc860	4	
-000dc868	data	unk_dc868	0	
+000dc868	data	league_status_shown	0	
 000dc888	data	dword_dc888	4	
 000dc88c	data	dword_dc88c	4	
 000dc890	data	unk_dc890	0	
@@ -7613,7 +7613,7 @@
 000dd100	data	dword_dd100	4	
 000dd104	data	dword_dd104	4	
 000dd108	data	dword_dd108	4	
-000dd10c	data	dword_dd10c	4	
+000dd10c	data	standings_rows	4	
 000dd110	data	dword_dd110	4	
 000dd114	data	dword_dd114	4	
 000dd118	data	dword_dd118	4	
@@ -7651,7 +7651,7 @@
 000dd664	data	dword_dd664	4	
 000dd668	data	dword_dd668	4	
 000dd669	data	byte_dd669	1	
-000dd66c	data	dword_dd66c	4	
+000dd66c	data	lineup_logos	4	
 000dd670	data	dword_dd670	4	
 000dd678	data	dword_dd678	4	
 000dd688	data	dword_dd688	4	
@@ -7676,16 +7676,16 @@
 000dd74c	data	dword_dd74c	4	
 000dd750	data	byte_dd750	1	
 000dd770	data	dword_dd770	4	
-000dd774	data	unk_dd774	0	
+000dd774	data	calendar_games	0	
 000dd775	data	unk_dd775	0	
-000dd780	data	dword_dd780	4	
+000dd780	data	calendar_game	4	
 000dd784	data	dword_dd784	4	
 000dd788	data	unk_dd788	0	
 000dd789	data	unk_dd789	0	
 000dd794	data	dword_dd794	4	
 000dd798	data	dword_dd798	4	
 000dd79c	data	dword_dd79c	4	
-000dd7a0	data	dword_dd7a0	4	
+000dd7a0	data	calendar_month	4	
 000dd7a4	data	dword_dd7a4	4	
 000dd7a8	data	dword_dd7a8	4	
 000dd7ac	data	dword_dd7ac	4	
@@ -7707,7 +7707,7 @@
 000ddd2c	data	dword_ddd2c	4	
 000ddd30	data	dword_ddd30	4	
 000ddd34	data	dword_ddd34	4	
-000ddd38	data	dword_ddd38	4	
+000ddd38	data	league_team	4	
 000ddd3c	data	dword_ddd3c	4	
 000ddd40	data	byte_ddd40	1	
 000ddd41	data	byte_ddd41	1	
@@ -7746,7 +7746,7 @@
 000deb78	data	unk_deb78	0	
 000deb7c	data	unk_deb7c	0	
 000deb80	data	unk_deb80	0	
-000dee94	data	unk_dee94	0	
+000dee94	data	crowd_figures	0	
 000dee96	data	unk_dee96	0	
 000dee97	data	unk_dee97	0	
 000def84	data	dword_def84	4	
@@ -7925,7 +7925,7 @@
 000e024f	data	byte_e024f	1	
 000e0250	data	byte_e0250	1	
 000e028c	data	byte_e028c	1	
-000e02c8	data	byte_e02c8	1	
+000e02c8	data	panel_title	1	
 000e0304	data	word_e0304	2	
 000e0306	data	word_e0306	2	
 000e0308	data	byte_e0308	1	
@@ -7933,8 +7933,8 @@
 000e037e	data	unk_e037e	0	
 000e0380	data	word_e0380	2	
 000e0382	data	word_e0382	2	
-000e0384	data	unk_e0384	0	
-000e038a	data	unk_e038a	0	
+000e0384	data	lineup_req_roster	0	
+000e038a	data	lineup_req_slot	0	
 000e038e	data	faceoff_ready_home	4	
 000e0390	data	word_e0390	2	
 000e0392	data	faceoff_side_home	4	
@@ -7946,21 +7946,21 @@
 000e039a	data	word_e039a	2	
 000e039c	data	replay_write_ptr	4	
 000e03a0	data	dword_e03a0	4	
-000e03a4	data	dword_e03a4	4	
+000e03a4	data	controls_read	4	
 000e03a8	data	dword_e03a8	4	
 000e03aa	data	dword_e03aa	4	
-000e03ac	data	dword_e03ac	4	
-000e03ae	data	dword_e03ae	4	
+000e03ac	data	scratch_e03ac	4	
+000e03ae	data	scratch_e03ae	4	
 000e03b0	data	dword_e03b0	4	
-000e03b2	data	dword_e03b2	4	
+000e03b2	data	scratch_e03b2	4	
 000e03b4	data	dword_e03b4	4	
-000e03b6	data	dword_e03b6	4	
+000e03b6	data	scratch_e03b6	4	
 000e03b8	data	dword_e03b8	4	
 000e03b9	data	dword_e03b9	4	
-000e03ba	data	dword_e03ba	4	
+000e03ba	data	scratch_a	4	
 000e03bc	data	dword_e03bc	4	
 000e03bd	data	dword_e03bd	4	
-000e03be	data	dword_e03be	4	
+000e03be	data	scratch_b	4	
 000e03c0	data	dword_e03c0	4	
 000e03c1	data	byte_e03c1	1	
 000e03c4	data	byte_e03c4	1	
@@ -7993,10 +7993,10 @@
 000e9aa6	data	excitement	4	
 000e9aa8	data	word_e9aa8	2	
 000e9aaa	data	word_e9aaa	2	
-000e9aac	data	dword_e9aac	4	
+000e9aac	data	announce_time	4	
 000e9aae	data	dword_e9aae	4	
-000e9ab0	data	word_e9ab0	2	
-000e9ab2	data	dword_e9ab2	4	
+000e9ab0	data	goal_flags	2	
+000e9ab2	data	clip_script_pos	4	
 000e9ab4	data	word_e9ab4	2	
 000e9ab6	data	dword_e9ab6	4	
 000e9ab7	data	dword_e9ab7	4	
@@ -8021,7 +8021,7 @@
 000e9ad0	data	byte_e9ad0	1	
 000e9ad1	data	byte_e9ad1	1	
 000e9ad2	data	byte_e9ad2	1	
-000e9ad3	data	byte_e9ad3	1	
+000e9ad3	data	goal_call	1	
 000e9ad4	data	byte_e9ad4	1	
 000e9ad5	data	byte_e9ad5	1	
 000e9ad6	data	byte_e9ad6	1	
@@ -8030,7 +8030,7 @@
 000e9adb	data	draw_order_list	0	
 000e9adc	data	unk_e9adc	0	
 000e9add	data	unk_e9add	0	
-000e9ade	data	unk_e9ade	0	
+000e9ade	data	draw_order_slots	0	
 000e9adf	data	unk_e9adf	0	
 000e9af0	data	dword_e9af0	4	
 000e9af2	data	dword_e9af2	4	
@@ -8038,9 +8038,9 @@
 000e9af6	data	unk_e9af6	0	
 000e9af8	data	unk_e9af8	0	
 000e9afa	data	unk_e9afa	0	
-000e9b04	data	dword_e9b04	4	
+000e9b04	data	sequence_steps	4	
 000e9b28	data	last_impact	2	
-000e9b2a	data	unk_e9b2a	0	
+000e9b2a	data	crowd_spots_busy	0	
 000e9b2c	data	unk_e9b2c	0	
 000e9b4c	data	unk_e9b4c	0	
 000e9ba4	data	unk_e9ba4	0	
@@ -8152,7 +8152,7 @@
 000ea0fd	data	unk_ea0fd	0	
 000ea101	data	unk_ea101	0	
 000ea298	data	dword_ea298	4	
-000ea29c	data	dword_ea29c	4	
+000ea29c	data	arrow_held_polls	4	
 000ea2a0	data	dword_ea2a0	4	
 000ea2a4	data	byte_ea2a4	1	
 000ea2a5	data	dword_ea2a5	4	
@@ -8170,18 +8170,18 @@
 000eac86	data	unk_eac86	0	
 000eaf78	data	dword_eaf78	4	
 000eaf7c	data	dword_eaf7c	4	
-000eaf80	data	unk_eaf80	0	
+000eaf80	data	editor_selected	0	
 000eaf99	data	unk_eaf99	0	
 000eaf9c	data	unk_eaf9c	0	
 000eafb5	data	unk_eafb5	0	
 000eafb8	data	unk_eafb8	0	
-000ebc68	data	dword_ebc68	4	
+000ebc68	data	editor_dirty	4	
 000ebc6c	data	dword_ebc6c	4	
 000ebc70	data	dword_ebc70	4	
 000ebc74	data	dword_ebc74	4	
 000ebc78	data	dword_ebc78	4	
 000ebc7c	data	dword_ebc7c	4	
-000ebca4	data	dword_ebca4	4	
+000ebca4	data	editor_scroll	4	
 000ebe9c	data	dword_ebe9c	4	
 000ebea0	data	dword_ebea0	4	
 000ec6b8	data	dword_ec6b8	4	
@@ -8208,7 +8208,7 @@
 000ecdec	data	dword_ecdec	4	
 000ecdf0	data	dword_ecdf0	4	
 000ecdf4	data	unk_ecdf4	0	
-000ed0f4	data	unk_ed0f4	0	
+000ed0f4	data	lineup_entries	0	
 000ed0f5	data	unk_ed0f5	0	
 000ed0f6	data	unk_ed0f6	0	
 000ed0f7	data	unk_ed0f7	0	
@@ -8231,7 +8231,7 @@
 000ed6dc	data	dword_ed6dc	4	
 000ed6e0	data	dword_ed6e0	4	
 000ed6e4	data	dword_ed6e4	4	
-000ed6e8	data	dword_ed6e8	4	
+000ed6e8	data	camera_step_acc	4	
 000ed6ec	data	dword_ed6ec	4	
 000ed6f0	data	dword_ed6f0	4	
 000ed6f4	data	dword_ed6f4	4	
@@ -8240,12 +8240,12 @@
 000ed700	data	dword_ed700	4	
 000ed704	data	dword_ed704	4	
 000ed708	data	dword_ed708	4	
-000ed70c	data	dword_ed70c	4	
+000ed70c	data	camera_free	4	
 000ed74c	data	dword_ed74c	4	
 000ed750	data	dword_ed750	4	
 000ed754	data	dword_ed754	4	
 000ed756	data	dword_ed756	4	
-000ed758	data	word_ed758	2	
+000ed758	data	camera_speed_acc	2	
 000ed75c	data	dword_ed75c	4	
 000ed760	data	dword_ed760	4	
 000ed764	data	dword_ed764	4	
@@ -8260,7 +8260,7 @@
 000ed788	data	dword_ed788	4	
 000ed78c	data	dword_ed78c	4	
 000ed790	data	dword_ed790	4	
-000ed794	data	dword_ed794	4	
+000ed794	data	lineup_room_image	4	
 000ed798	data	dword_ed798	4	
 000ed79c	data	dword_ed79c	4	
 000ed7a0	data	dword_ed7a0	4	
@@ -8470,28 +8470,28 @@
 000f24cc	data	dword_f24cc	4	
 000f24d0	data	unk_f24d0	0	
 000f24d4	data	unk_f24d4	0	
-000f24d8	data	unk_f24d8	0	
+000f24d8	data	pcspk_voices	0	
 000f24d9	data	unk_f24d9	0	
-000f27d8	data	unk_f27d8	0	
+000f27d8	data	pcspk_channels	0	
 000f27ee	data	unk_f27ee	0	
 000f27ef	data	unk_f27ef	0	
 000f27f6	data	unk_f27f6	0	
 000f27fd	data	unk_f27fd	0	
-000f2f28	data	unk_f2f28	0	
+000f2f28	data	adlib_channels	0	
 000f2f3c	data	unk_f2f3c	0	
 000f2f3e	data	unk_f2f3e	0	
 000f2f40	data	unk_f2f40	0	
 000f2f42	data	unk_f2f42	0	
 000f2f43	data	unk_f2f43	0	
 000f2f44	data	unk_f2f44	0	
-000f3108	data	unk_f3108	0	
-000f3148	data	unk_f3148	0	
+000f3108	data	adlib_channel_ptrs	0	
+000f3148	data	adlib_voices	0	
 000f3150	data	unk_f3150	0	
 000f3196	data	unk_f3196	0	
 000f3197	data	unk_f3197	0	
-000f344e	data	word_f344e	2	
-000f3450	data	word_f3450	2	
-000f3452	data	word_f3452	2	
+000f344e	data	adlib_released_mask	2	
+000f3450	data	adlib_used_mask	2	
+000f3452	data	adlib_free_mask	2	
 000f3454	data	unk_f3454	0	
 000f3456	data	unk_f3456	0	
 000f345c	data	unk_f345c	0	
@@ -8500,9 +8500,9 @@
 000f3534	data	unk_f3534	0	
 000f3538	data	unk_f3538	0	
 000f354a	data	unk_f354a	0	
-000f3714	data	word_f3714	2	
-000f3716	data	word_f3716	2	
-000f3718	data	word_f3718	2	
+000f3714	data	sbdac_released_mask	2	
+000f3716	data	sbdac_free_mask	2	
+000f3718	data	sbdac_used_mask	2	
 000f371c	data	unk_f371c	0	
 000f371e	data	unk_f371e	0	
 000f531c	data	word_f531c	2	

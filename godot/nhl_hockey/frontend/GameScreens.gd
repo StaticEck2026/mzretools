@@ -3,7 +3,7 @@ extends RefCounted
 ## The screens around a game of the front end: the team choice of the locker room
 ## (locker_room_hub 0x80830, locker_room_screen 0x80aa4, locker_room_menu 0x81c4e, draw_jerseys
 ## 0x8156f), New Exhibition Game (exhibition_mode 0x32da9) with the scouting report
-## (team_select_screen 0x29f28) and play_game (0x11d09).
+## (scouting_report_screen 0x29f28) and play_game (0x11d09).
 
 var fe: FrontEnd
 var scr: Screen8
@@ -42,7 +42,7 @@ func _box(i: int) -> Rect2i:
 # the locker room: choosing the two teams
 # ---------------------------------------------------------------------------------------------
 
-var _bg_home: Image                # dword_ed794 .. dword_ed7a0, dword_ed790: the room behind the jerseys,
+var _bg_home: Image                # lineup_room_image (dword_ed794) .. dword_ed7a0, dword_ed790: the room behind the jerseys,
 var _bg_away: Image                # the team names and the title
 var _bg_home_name: Image
 var _bg_away_name: Image
@@ -252,16 +252,16 @@ func locker_room_menu() -> int:
 func exhibition_mode() -> int:
 	Session.mode = 0
 	Session.saved_game = -1
-	var r := await team_select_screen(Session.home_team, Session.away_team)
+	var r := await scouting_report_screen(Session.home_team, Session.away_team)
 	if r != 4:
 		await fe.play_game()
 	return 2
 
-## team_select_screen (0x29f28): the scouting report of the two teams in front of ARENA.QFS: the
+## scouting_report_screen (0x29f28): the scouting report of the two teams in front of ARENA.QFS: the
 ## logos of SRLOGO.QFS, "<away> at <home>", the nine team ratings of TEAMS.DB (+0x2dc) with the
 ## better value of each line marked (0xfd), the buttons Away lines / Play / Cancel / Home lines
 ## (the line buttons only for the teams a user plays). Returns 0 to play, 4 cancelled.
-func team_select_screen(home: int, away: int) -> int:
+func scouting_report_screen(home: int, away: int) -> int:
 	await fe.leave_screen(100)
 	var teams_db := GameFiles.read_raw("teams.db")
 	var rec := [teams_db.slice(home * 0x2e8, (home + 1) * 0x2e8), teams_db.slice(away * 0x2e8, (away + 1) * 0x2e8)]
@@ -359,7 +359,7 @@ func team_select_screen(home: int, away: int) -> int:
 	ui.show_pointer(false)
 	await fe.leave_screen(100)
 	if result < 2:
-		# tonight's line-ups (draw_team_logos); Esc there cancels the game
+		# tonight's line-ups (lineups_screen); Esc there cancels the game
 		if await BoxScore.new(fe).lineups_screen(home, away) == 3:
 			result = 4
 	return result
@@ -472,7 +472,7 @@ func boxscore_screen(kind: int, from_period: int, to_period: int) -> int:
 func _period_num() -> int:
 	return fe.game.sim.period + 1 if fe.game != null else 3
 
-## menu_game_statistics (0x1a96d): the statistics of the two teams (team_select_screen2)
+## menu_game_statistics (0x1a96d): the statistics of the two teams (game_statistics_screen)
 func menu_game_statistics() -> int:
 	await fe.leave_screen(100)
 	await BoxScore.new(fe).game_statistics()

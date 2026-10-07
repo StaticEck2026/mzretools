@@ -448,7 +448,7 @@ func league_calendar_screen() -> int:
 		Session.p1_team = team
 		Session.p1_side = side
 		var db := Database.open(l.file("TEAMS"), l.file("KEY"), l.file("ATT"))
-		var r := await fe.games.team_select_screen(rec[2], rec[3])
+		var r := await fe.games.scouting_report_screen(rec[2], rec[3])
 		if r == 4:
 			continue
 		var played := await fe.play_game(db)
@@ -493,8 +493,8 @@ func _continue_saved(l: League) -> void:
 # the calendar (calendar_screen, calendar_draw_games)
 # ---------------------------------------------------------------------------------------------
 
-var _cal_month := 0                  # dword_dd7a0: the month shown (0 January)
-var _cal_game := -1                  # dword_dd780: the game chosen
+var _cal_month := 0                  # calendar_month: the month shown (0 January)
+var _cal_game := -1                  # calendar_game: the game chosen
 var _cal_games: Array = []           # the team's scheduled games: [index, record]
 var _cal_pal := PackedByteArray()
 var _cal_team := -1
@@ -895,7 +895,7 @@ func playoff_tree_screen() -> int:
 		Session.game_number = index
 		Session.option_flags &= ~0x200
 		var db := Database.open(l.file("TEAMS"), l.file("KEY"), l.file("ATT"))
-		if await fe.games.team_select_screen(rec[2], rec[3]) == 4:
+		if await fe.games.scouting_report_screen(rec[2], rec[3]) == 4:
 			continue
 		var played := await fe.play_game(db)
 		if played == 1 and fe.last_sim != null:
@@ -1075,7 +1075,7 @@ func roster_dress_done() -> int:
 	return 1
 
 ## roster_regular_season_stats / roster_playoff_stats (0x75baa / 0x75bde): the roster's statistics
-## of the regular season or the play-offs (dword_c6956)
+## of the regular season or the play-offs (stats_playoffs)
 func roster_regular_season_stats() -> int:
 	Session.stats_playoffs = false
 	fe.stats.forget_files()

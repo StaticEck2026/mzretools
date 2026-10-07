@@ -45,7 +45,7 @@ var sounds: Sounds
 var announcer: Announcer             # XBRUCE2.VIV sentences (Speech.gd)
 var music: MusicPlayer               # the FM songs and effects (KMS, PCFF000.TIM)
 var cues: MusicCues                  # play_speech: cue -> song of the home team
-var sound_card := 2                  # dword_c541f: the card the sound plays on (MusicPlayer)
+var sound_card := 2                  # sound_card: the card the sound plays on (MusicPlayer)
 var frame_ticks := 0                  # 100 Hz ticks of the last frame (update_ambient_audio's step)
 var pause_player: AudioStreamPlayer   # PAUSE.IFF on the pause screen (pause_menu, music on)
 var sfx_on := true                    # option_flags 0x80 (S)
@@ -65,7 +65,7 @@ var tick_acc := 0.0                   # 100 Hz timer ticks of the replay speed
 var replay_from_menu := false
 var end_shown := false
 var anthem := true
-var demo := false                     # dword_c5130: a demo game of the intro (demo_game), a key ends it
+var demo := false                     # demo_game_running: a demo game of the intro (demo_game), a key ends it
 
 var config: Dictionary = {}           # the front end's setup of the match (App.play_match_async): home, away,
                                       # user1, user2 (0 none, 1 home, 2 away), option_flags

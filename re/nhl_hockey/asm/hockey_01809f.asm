@@ -25,8 +25,8 @@ team_stats_penalty_killing:
     push edx                                     ; 0180ab 52
     push esi                                     ; 0180ac 56
     mov edx, 2                                   ; 0180ad ba02000000
-    mov dword ptr [dword_c65b0], edx             ; 0180b2 8915b0650c00
-    cmp dword ptr [dword_dc738], 0               ; 0180b8 833d38c70d0000
+    mov dword ptr [stats_current_arg], edx       ; 0180b2 8915b0650c00
+    cmp dword ptr [stats_hub_active], 0          ; 0180b8 833d38c70d0000
     je loc_18175                                 ; 0180bf 0f84b0000000
     push 0x20                                    ; 0180c5 6a20
     push 0x300                                   ; 0180c7 6800030000
@@ -101,8 +101,8 @@ team_stats_power_play:
     push edx                                     ; 01818e 52
     push esi                                     ; 01818f 56
     mov edx, 3                                   ; 018190 ba03000000
-    mov dword ptr [dword_c65b0], edx             ; 018195 8915b0650c00
-    cmp dword ptr [dword_dc738], 0               ; 01819b 833d38c70d0000
+    mov dword ptr [stats_current_arg], edx       ; 018195 8915b0650c00
+    cmp dword ptr [stats_hub_active], 0          ; 01819b 833d38c70d0000
     je loc_18258                                 ; 0181a2 0f84b0000000
     push 0x20                                    ; 0181a8 6a20
     push 0x300                                   ; 0181aa 6800030000
@@ -177,8 +177,8 @@ team_stats_penalties:
     push edx                                     ; 018271 52
     push esi                                     ; 018272 56
     mov edx, 4                                   ; 018273 ba04000000
-    mov dword ptr [dword_c65b0], edx             ; 018278 8915b0650c00
-    cmp dword ptr [dword_dc738], 0               ; 01827e 833d38c70d0000
+    mov dword ptr [stats_current_arg], edx       ; 018278 8915b0650c00
+    cmp dword ptr [stats_hub_active], 0          ; 01827e 833d38c70d0000
     je loc_1833b                                 ; 018285 0f84b0000000
     push 0x20                                    ; 01828b 6a20
     push 0x300                                   ; 01828d 6800030000
@@ -253,8 +253,8 @@ leaders_points:
     push edx                                     ; 018354 52
     push esi                                     ; 018355 56
     xor edx, edx                                 ; 018356 31d2
-    mov dword ptr [dword_c65b0], edx             ; 018358 8915b0650c00
-    cmp dword ptr [dword_dc738], 0               ; 01835e 833d38c70d0000
+    mov dword ptr [stats_current_arg], edx       ; 018358 8915b0650c00
+    cmp dword ptr [stats_hub_active], 0          ; 01835e 833d38c70d0000
     je loc_18418                                 ; 018365 0f84ad000000
     push 0x20                                    ; 01836b 6a20
     push 0x300                                   ; 01836d 6800030000
@@ -329,8 +329,8 @@ leaders_goals:
     push edx                                     ; 018431 52
     push esi                                     ; 018432 56
     mov edx, 1                                   ; 018433 ba01000000
-    mov dword ptr [dword_c65b0], edx             ; 018438 8915b0650c00
-    cmp dword ptr [dword_dc738], 0               ; 01843e 833d38c70d0000
+    mov dword ptr [stats_current_arg], edx       ; 018438 8915b0650c00
+    cmp dword ptr [stats_hub_active], 0          ; 01843e 833d38c70d0000
     je loc_184fb                                 ; 018445 0f84b0000000
     push 0x20                                    ; 01844b 6a20
     push 0x300                                   ; 01844d 6800030000
@@ -405,8 +405,8 @@ leaders_assists:
     push edx                                     ; 018514 52
     push esi                                     ; 018515 56
     mov edx, 2                                   ; 018516 ba02000000
-    mov dword ptr [dword_c65b0], edx             ; 01851b 8915b0650c00
-    cmp dword ptr [dword_dc738], 0               ; 018521 833d38c70d0000
+    mov dword ptr [stats_current_arg], edx       ; 01851b 8915b0650c00
+    cmp dword ptr [stats_hub_active], 0          ; 018521 833d38c70d0000
     je loc_185de                                 ; 018528 0f84b0000000
     push 0x20                                    ; 01852e 6a20
     push 0x300                                   ; 018530 6800030000
@@ -481,8 +481,8 @@ leaders_pp_goals:
     push edx                                     ; 0185f7 52
     push esi                                     ; 0185f8 56
     mov edx, 3                                   ; 0185f9 ba03000000
-    mov dword ptr [dword_c65b0], edx             ; 0185fe 8915b0650c00
-    cmp dword ptr [dword_dc738], 0               ; 018604 833d38c70d0000
+    mov dword ptr [stats_current_arg], edx       ; 0185fe 8915b0650c00
+    cmp dword ptr [stats_hub_active], 0          ; 018604 833d38c70d0000
     je loc_186c1                                 ; 01860b 0f84b0000000
     push 0x20                                    ; 018611 6a20
     push 0x300                                   ; 018613 6800030000
@@ -557,8 +557,8 @@ leaders_sh_goals:
     push edx                                     ; 0186da 52
     push esi                                     ; 0186db 56
     mov edx, 4                                   ; 0186dc ba04000000
-    mov dword ptr [dword_c65b0], edx             ; 0186e1 8915b0650c00
-    cmp dword ptr [dword_dc738], 0               ; 0186e7 833d38c70d0000
+    mov dword ptr [stats_current_arg], edx       ; 0186e1 8915b0650c00
+    cmp dword ptr [stats_hub_active], 0          ; 0186e7 833d38c70d0000
     je loc_187a4                                 ; 0186ee 0f84b0000000
     push 0x20                                    ; 0186f4 6a20
     push 0x300                                   ; 0186f6 6800030000
@@ -633,8 +633,8 @@ leaders_plus_minus:
     push edx                                     ; 0187bd 52
     push esi                                     ; 0187be 56
     mov edx, 5                                   ; 0187bf ba05000000
-    mov dword ptr [dword_c65b0], edx             ; 0187c4 8915b0650c00
-    cmp dword ptr [dword_dc738], 0               ; 0187ca 833d38c70d0000
+    mov dword ptr [stats_current_arg], edx       ; 0187c4 8915b0650c00
+    cmp dword ptr [stats_hub_active], 0          ; 0187ca 833d38c70d0000
     je loc_18887                                 ; 0187d1 0f84b0000000
     push 0x20                                    ; 0187d7 6a20
     push 0x300                                   ; 0187d9 6800030000
@@ -709,8 +709,8 @@ leaders_penalty_minutes:
     push edx                                     ; 0188a0 52
     push esi                                     ; 0188a1 56
     mov edx, 6                                   ; 0188a2 ba06000000
-    mov dword ptr [dword_c65b0], edx             ; 0188a7 8915b0650c00
-    cmp dword ptr [dword_dc738], 0               ; 0188ad 833d38c70d0000
+    mov dword ptr [stats_current_arg], edx       ; 0188a7 8915b0650c00
+    cmp dword ptr [stats_hub_active], 0          ; 0188ad 833d38c70d0000
     je loc_1896a                                 ; 0188b4 0f84b0000000
     push 0x20                                    ; 0188ba 6a20
     push 0x300                                   ; 0188bc 6800030000
@@ -785,8 +785,8 @@ leaders_shooting_pct:
     push edx                                     ; 018983 52
     push esi                                     ; 018984 56
     mov edx, 7                                   ; 018985 ba07000000
-    mov dword ptr [dword_c65b0], edx             ; 01898a 8915b0650c00
-    cmp dword ptr [dword_dc738], 0               ; 018990 833d38c70d0000
+    mov dword ptr [stats_current_arg], edx       ; 01898a 8915b0650c00
+    cmp dword ptr [stats_hub_active], 0          ; 018990 833d38c70d0000
     je loc_18a4d                                 ; 018997 0f84b0000000
     push 0x20                                    ; 01899d 6a20
     push 0x300                                   ; 01899f 6800030000
@@ -861,8 +861,8 @@ leaders_gaa:
     push edx                                     ; 018a66 52
     push esi                                     ; 018a67 56
     mov edx, 8                                   ; 018a68 ba08000000
-    mov dword ptr [dword_c65b0], edx             ; 018a6d 8915b0650c00
-    cmp dword ptr [dword_dc738], 0               ; 018a73 833d38c70d0000
+    mov dword ptr [stats_current_arg], edx       ; 018a6d 8915b0650c00
+    cmp dword ptr [stats_hub_active], 0          ; 018a73 833d38c70d0000
     je loc_18b30                                 ; 018a7a 0f84b0000000
     push 0x20                                    ; 018a80 6a20
     push 0x300                                   ; 018a82 6800030000
@@ -937,8 +937,8 @@ leaders_wins:
     push edx                                     ; 018b49 52
     push esi                                     ; 018b4a 56
     mov edx, 9                                   ; 018b4b ba09000000
-    mov dword ptr [dword_c65b0], edx             ; 018b50 8915b0650c00
-    cmp dword ptr [dword_dc738], 0               ; 018b56 833d38c70d0000
+    mov dword ptr [stats_current_arg], edx       ; 018b50 8915b0650c00
+    cmp dword ptr [stats_hub_active], 0          ; 018b56 833d38c70d0000
     je loc_18c13                                 ; 018b5d 0f84b0000000
     push 0x20                                    ; 018b63 6a20
     push 0x300                                   ; 018b65 6800030000
@@ -1013,8 +1013,8 @@ leaders_save_pct:
     push edx                                     ; 018c2c 52
     push esi                                     ; 018c2d 56
     mov edx, 0xa                                 ; 018c2e ba0a000000
-    mov dword ptr [dword_c65b0], edx             ; 018c33 8915b0650c00
-    cmp dword ptr [dword_dc738], 0               ; 018c39 833d38c70d0000
+    mov dword ptr [stats_current_arg], edx       ; 018c33 8915b0650c00
+    cmp dword ptr [stats_hub_active], 0          ; 018c39 833d38c70d0000
     je loc_18cf6                                 ; 018c40 0f84b0000000
     push 0x20                                    ; 018c46 6a20
     push 0x300                                   ; 018c48 6800030000
@@ -1096,7 +1096,7 @@ menu_show_player_stats:
     setne al                                     ; 018d1e 0f95c0
     and eax, 0xff                                ; 018d21 25ff000000
     add eax, 4                                   ; 018d26 83c004
-    mov dword ptr [dword_c65bc], eax             ; 018d29 a3bc650c00
+    mov dword ptr [stats_next_screen], eax       ; 018d29 a3bc650c00
     jmp loc_179fa                                ; 018d2e e9c7ecffff
 
 
@@ -1342,17 +1342,17 @@ loc_18fa2:
     mov ebx, dword ptr [edx + unk_dd730]         ; 018fa7 8b9a30d70d00
     cmp ebx, 5                                   ; 018fad 83fb05
     jl loc_18fc9                                 ; 018fb0 7c17
-    cmp ebx, dword ptr [edx + unk_dc868]         ; 018fb2 3b9a68c80d00
+    cmp ebx, dword ptr [edx + league_status_shown] ; 018fb2 3b9a68c80d00
     je loc_18fc9                                 ; 018fb8 740f
     mov cl, al                                   ; 018fba 88c1
     mov edx, 1                                   ; 018fbc ba01000000
     shl edx, cl                                  ; 018fc1 d3e2
-    or dword ptr [dword_c65f4], edx              ; 018fc3 0915f4650c00
+    or dword ptr [league_done_mask], edx         ; 018fc3 0915f4650c00
 loc_18fc9:
     inc eax                                      ; 018fc9 40
     cmp eax, 6                                   ; 018fca 83f806
     jl loc_18fa2                                 ; 018fcd 7cd3
-    cmp dword ptr [dword_c65f4], 0x3f            ; 018fcf 833df4650c003f
+    cmp dword ptr [league_done_mask], 0x3f       ; 018fcf 833df4650c003f
     jne loc_18fdf                                ; 018fd6 7507
     xor eax, eax                                 ; 018fd8 31c0
     jmp loc_190b4                                ; 018fda e9d5000000
@@ -1365,12 +1365,12 @@ loc_18fdf:
     mov cl, byte ptr [esp + 8]                   ; 018fee 8a4c2408
     mov eax, 1                                   ; 018ff2 b801000000
     shl eax, cl                                  ; 018ff7 d3e0
-    mov ebp, dword ptr [dword_c65f4]             ; 018ff9 8b2df4650c00
+    mov ebp, dword ptr [league_done_mask]        ; 018ff9 8b2df4650c00
     test eax, ebp                                ; 018fff 85e8
     jne loc_18fdf                                ; 019001 75dc
     mov edx, ebp                                 ; 019003 89ea
     or edx, eax                                  ; 019005 09c2
-    mov dword ptr [dword_c65f4], edx             ; 019007 8915f4650c00
+    mov dword ptr [league_done_mask], edx        ; 019007 8915f4650c00
     mov edx, dword ptr [esp + 8]                 ; 01900d 8b542408
     xor eax, eax                                 ; 019011 31c0
     mov al, byte ptr [edx*2 + unk_dd788]         ; 019013 8a045588d70d00
@@ -1392,10 +1392,10 @@ loc_19045:
     xor edx, edx                                 ; 01904c 31d2
     mov dl, byte ptr [esi + unk_dd775]           ; 01904e 8a9675d70d00
     xor eax, eax                                 ; 019054 31c0
-    mov al, byte ptr [esi + unk_dd774]           ; 019056 8a8674d70d00
+    mov al, byte ptr [esi + calendar_games]      ; 019056 8a8674d70d00
     lea ecx, [esp + 8]                           ; 01905c 8d4c2408
     lea ebx, [esp + 4]                           ; 019060 8d5c2404
-    call simulate_game_offscreen                 ; 019064 e8cd020500
+    call league_highlight_game                   ; 019064 e8cd020500
     mov ecx, eax                                 ; 019069 89c1
     mov edx, dword ptr [esp + 8]                 ; 01906b 8b542408
     shl edx, 2                                   ; 01906f c1e202
@@ -1412,7 +1412,7 @@ loc_1909c:
     xor eax, eax                                 ; 01909c 31c0
 loc_1909e:
     mov ebx, dword ptr [eax*4 + unk_dd730]       ; 01909e 8b1c8530d70d00
-    mov dword ptr [eax*4 + unk_dc868], ebx       ; 0190a5 891c8568c80d00
+    mov dword ptr [eax*4 + league_status_shown], ebx ; 0190a5 891c8568c80d00
     inc eax                                      ; 0190ac 40
     cmp eax, 6                                   ; 0190ad 83f806
     jl loc_1909e                                 ; 0190b0 7cec
@@ -1470,7 +1470,7 @@ end_match_from_period:
     cmp dword ptr [period_num], 1                ; 01914f 833d848c0d0001
     jne loc_1918c                                ; 019156 7534
     xor esi, esi                                 ; 019158 31f6
-    mov dword ptr [dword_c65f4], esi             ; 01915a 8935f4650c00
+    mov dword ptr [league_done_mask], esi        ; 01915a 8935f4650c00
     mov edx, dword ptr [dword_c90ca]             ; 019160 8b15ca900c00
     sar edx, 0x10                                ; 019166 c1fa10
     mov eax, dword ptr [user2_team]              ; 019169 a1c8900c00
@@ -1479,7 +1479,7 @@ end_match_from_period:
     xor edx, edx                                 ; 019176 31d2
 loc_19178:
     mov ebx, dword ptr [edx*4 + unk_dd730]       ; 019178 8b1c9530d70d00
-    mov dword ptr [edx*4 + unk_dc868], ebx       ; 01917f 891c9568c80d00
+    mov dword ptr [edx*4 + league_status_shown], ebx ; 01917f 891c9568c80d00
     inc edx                                      ; 019186 42
     cmp edx, 6                                   ; 019187 83fa06
     jl loc_19178                                 ; 01918a 7cec
@@ -1736,7 +1736,7 @@ loc_194a7:
     add esp, 4                                   ; 0194dc 83c404
     cmp dword ptr [esp], 2                       ; 0194df 833c2402
     jne loc_1950e                                ; 0194e3 7529
-    cmp dword ptr [dword_dc234], 0x444           ; 0194e5 813d34c20d004404..
+    cmp dword ptr [league_game_number], 0x444    ; 0194e5 813d34c20d004404..
     jl loc_194f6                                 ; 0194ef 7c05
     call speech_stop                             ; 0194f1 e85e080400
 loc_194f6:
@@ -1894,7 +1894,7 @@ loc_1975f:
     call ticks_elapsed                           ; 01975f e80aa20900
     cmp dword ptr [esp], 2                       ; 019764 833c2402
     jne loc_19844                                ; 019768 0f85d6000000
-    cmp dword ptr [dword_dc234], 0x444           ; 01976e 813d34c20d004404..
+    cmp dword ptr [league_game_number], 0x444    ; 01976e 813d34c20d004404..
     jl loc_19844                                 ; 019778 0f8cc6000000
     mov ax, word ptr [word_df624]                ; 01977e 66a124f60d00
     cmp ax, word ptr [word_df724]                ; 019784 663b0524f70d00
@@ -1932,11 +1932,11 @@ loc_197da:
     lea ebx, [edx + 1]                           ; 0197e8 8d5a01
 loc_197eb:
     mov ecx, 1                                   ; 0197eb b901000000
-    cmp dword ptr [dword_dc234], 0x47c           ; 0197f0 813d34c20d007c04..
+    cmp dword ptr [league_game_number], 0x47c    ; 0197f0 813d34c20d007c04..
     jl loc_19801                                 ; 0197fa 7c05
     mov ecx, 2                                   ; 0197fc b902000000
 loc_19801:
-    cmp dword ptr [dword_dc234], 0x498           ; 019801 813d34c20d009804..
+    cmp dword ptr [league_game_number], 0x498    ; 019801 813d34c20d009804..
     jl loc_19812                                 ; 01980b 7c05
     mov ecx, 3                                   ; 01980d b903000000
 loc_19812:
@@ -1944,7 +1944,7 @@ loc_19812:
     sar eax, 0x18                                ; 019817 c1f818
     push eax                                     ; 01981a 50
     push edi                                     ; 01981b 57
-    mov edx, dword ptr [dword_dc234]             ; 01981c 8b1534c20d00
+    mov edx, dword ptr [league_game_number]      ; 01981c 8b1534c20d00
     sub edx, 0x444                               ; 019822 81ea44040000
     mov eax, edx                                 ; 019828 89d0
     sar edx, 0x1f                                ; 01982a c1fa1f
@@ -2474,7 +2474,7 @@ loc_1a042:
     mov eax, dword ptr [esp + eax*4 + 0x3bc]     ; 01a06b 8b8484bc030000
     add eax, ecx                                 ; 01a072 01c8
     mov ecx, 0xfa                                ; 01a074 b9fa000000
-    call highlight_menu_item                     ; 01a079 e8d0180500
+    call menu_item_draw_normal                   ; 01a079 e8d0180500
     mov edx, dword ptr [esp + 0x3d0]             ; 01a07e 8b9424d0030000
     mov eax, dword ptr [esp + 0x3cc]             ; 01a085 8b8424cc030000
     mov dword ptr [esp + edx*4 + 0x394], eax     ; 01a08c 89849494030000
@@ -2490,7 +2490,7 @@ loc_1a042:
     mov edx, eax                                 ; 01a0c3 89c2
     mov eax, esi                                 ; 01a0c5 89f0
 loc_1a0c7:
-    call unhighlight_menu_item                   ; 01a0c7 e81f190500
+    call menu_item_draw_selected                 ; 01a0c7 e81f190500
     jmp loc_1a4f8                                ; 01a0cc e927040000
 
 loc_1a0d1:
@@ -2556,7 +2556,7 @@ loc_1a193:
     mov ecx, dword ptr [esp + edi*4 + 0x3bc]     ; 01a1bc 8b8cbcbc030000
     add eax, ecx                                 ; 01a1c3 01c8
     mov ecx, 0xfa                                ; 01a1c5 b9fa000000
-    call highlight_menu_item                     ; 01a1ca e87f170500
+    call menu_item_draw_normal                   ; 01a1ca e87f170500
     mov eax, dword ptr [esp + 0x3cc]             ; 01a1cf 8b8424cc030000
     mov dword ptr [esp + edi*4 + 0x394], eax     ; 01a1d6 8984bc94030000
     push 0xf8                                    ; 01a1dd 68f8000000
@@ -2567,7 +2567,7 @@ loc_1a193:
     mov ecx, dword ptr [esp + edi*4 + 0x3bc]     ; 01a1f8 8b8cbcbc030000
     add eax, ecx                                 ; 01a1ff 01c8
     mov ecx, 0xfa                                ; 01a201 b9fa000000
-    call unhighlight_menu_item                   ; 01a206 e8e0170500
+    call menu_item_draw_selected                 ; 01a206 e8e0170500
     mov eax, dword ptr [esp + 0x3d0]             ; 01a20b 8b8424d0030000
     mov ecx, dword ptr [esp + 0x3cc]             ; 01a212 8b8c24cc030000
     shl ecx, 5                                   ; 01a219 c1e105
@@ -3157,7 +3157,7 @@ menu_game_statistics:
     mov edx, palette_save                        ; 01a993 ba14f00d00
     mov eax, 1                                   ; 01a998 b801000000
     call fade_palette                            ; 01a99d e887ba0500
-    call team_select_screen2                     ; 01a9a2 e8474c0100
+    call game_statistics_screen                  ; 01a9a2 e8474c0100
     jmp loc_1aabb                                ; 01a9a7 e90f010000
 
 
@@ -4817,7 +4817,7 @@ free_match_resources:
     push ebp                                     ; 01b991 55
     call sound_pause_all                         ; 01b992 e8b1dd0300
     call set_game_over                           ; 01b997 e802240400
-    mov eax, dword ptr [dword_cbeca]             ; 01b99c a1cabe0c00
+    mov eax, dword ptr [panel_clip]              ; 01b99c a1cabe0c00
     sar eax, 0x10                                ; 01b9a1 c1f810
     cmp eax, -1                                  ; 01b9a4 83f8ff
     je loc_1b9c4                                 ; 01b9a7 741b
@@ -4960,7 +4960,7 @@ loc_1baed:
 ; ====================================================================================================
 ; ensure_free_memory  [0x1baf3, 217 bytes, 68 instructions]
 ; frees caches and sprite banks until the largest block is big enough
-; called by: leave_match_video, end_match_from_loop, pause_menu, boxscore_screen, simulate_game_offscreen
+; called by: leave_match_video, end_match_from_loop, pause_menu, boxscore_screen, league_highlight_game
 ; ====================================================================================================
 ensure_free_memory:
     push 0x20                                    ; 01baf3 6820000000
@@ -4996,7 +4996,7 @@ loc_1bb33:
     call largest_free_locked                     ; 01bb41 e8721f0700
     cmp eax, ebp                                 ; 01bb46 39e8
     jge loc_1bb0e                                ; 01bb48 7dc4
-    mov eax, dword ptr [dword_cbeca]             ; 01bb4a a1cabe0c00
+    mov eax, dword ptr [panel_clip]              ; 01bb4a a1cabe0c00
     sar eax, 0x10                                ; 01bb4f c1f810
     cmp eax, -1                                  ; 01bb52 83f8ff
     je loc_1bb71                                 ; 01bb55 741a
@@ -5045,7 +5045,7 @@ loc_1bbb4:
 ; ====================================================================================================
 ; load_team_databases  [0x1bbcc, 817 bytes, 239 instructions]
 ; the teams databases of a game (TEAMS.DB / custom league)
-; called by: begin_game_session, team_edit_screen, savegame_io, simulate_game_offscreen
+; called by: begin_game_session, team_edit_screen, savegame_io, league_highlight_game
 ;   uses string "teams"
 ;   uses string "1"
 ;   uses string "2"
@@ -6993,14 +6993,14 @@ loc_1d196:
     mov byte ptr [byte_c6759], ch                ; 01d1a5 882d59670c00
     mov byte ptr [byte_c672f], ch                ; 01d1ab 882d2f670c00
     mov byte ptr [byte_c671c], ch                ; 01d1b1 882d1c670c00
-    mov dword ptr [dword_c695a], 1               ; 01d1b7 c7055a690c000100..
-    cmp dword ptr [dword_c6956], 0               ; 01d1c1 833d56690c0000
+    mov dword ptr [stats_league], 1              ; 01d1b7 c7055a690c000100..
+    cmp dword ptr [stats_playoffs], 0            ; 01d1c1 833d56690c0000
     je loc_1d1d2                                 ; 01d1c8 7408
     xor esi, esi                                 ; 01d1ca 31f6
-    mov dword ptr [dword_c65b4], esi             ; 01d1cc 8935b4650c00
+    mov dword ptr [stats_selected_team], esi     ; 01d1cc 8935b4650c00
 loc_1d1d2:
     xor edi, edi                                 ; 01d1d2 31ff
-    mov dword ptr [dword_c6956], edi             ; 01d1d4 893d56690c00
+    mov dword ptr [stats_playoffs], edi          ; 01d1d4 893d56690c00
     jmp loc_1d223                                ; 01d1da eb47
 
 loc_1d1dc:
@@ -7011,13 +7011,13 @@ loc_1d1dc:
     mov byte ptr [byte_c6745], dl                ; 01d1ed 881545670c00
     mov byte ptr [byte_c672f], dl                ; 01d1f3 88152f670c00
     mov byte ptr [byte_c671c], dl                ; 01d1f9 88151c670c00
-    mov dword ptr [dword_c695a], 1               ; 01d1ff c7055a690c000100..
-    mov ebp, dword ptr [dword_c6956]             ; 01d209 8b2d56690c00
+    mov dword ptr [stats_league], 1              ; 01d1ff c7055a690c000100..
+    mov ebp, dword ptr [stats_playoffs]          ; 01d209 8b2d56690c00
     test ebp, ebp                                ; 01d20f 85ed
     jne loc_1d219                                ; 01d211 7506
-    mov dword ptr [dword_c65b4], ebp             ; 01d213 892db4650c00
+    mov dword ptr [stats_selected_team], ebp     ; 01d213 892db4650c00
 loc_1d219:
-    mov dword ptr [dword_c6956], 1               ; 01d219 c70556690c000100..
+    mov dword ptr [stats_playoffs], 1            ; 01d219 c70556690c000100..
 loc_1d223:
     mov ebx, 0x1f                                ; 01d223 bb1f000000
     mov edx, byte_c5386                          ; 01d228 ba86530c00
@@ -7043,13 +7043,13 @@ loc_1d270:
     mov byte ptr [byte_c6745], ch                ; 01d27f 882d45670c00
     mov byte ptr [byte_c672f], ch                ; 01d285 882d2f670c00
     mov byte ptr [byte_c671c], ch                ; 01d28b 882d1c670c00
-    mov dword ptr [dword_c695a], 1               ; 01d291 c7055a690c000100..
-    mov ebx, dword ptr [dword_c6956]             ; 01d29b 8b1d56690c00
+    mov dword ptr [stats_league], 1              ; 01d291 c7055a690c000100..
+    mov ebx, dword ptr [stats_playoffs]          ; 01d29b 8b1d56690c00
     test ebx, ebx                                ; 01d2a1 85db
     jne loc_1d2ab                                ; 01d2a3 7506
-    mov dword ptr [dword_c65b4], ebx             ; 01d2a5 891db4650c00
+    mov dword ptr [stats_selected_team], ebx     ; 01d2a5 891db4650c00
 loc_1d2ab:
-    mov dword ptr [dword_c6956], 1               ; 01d2ab c70556690c000100..
+    mov dword ptr [stats_playoffs], 1            ; 01d2ab c70556690c000100..
     mov ebx, 0x1f                                ; 01d2b5 bb1f000000
     mov edx, byte_c5311                          ; 01d2ba ba11530c00
     mov eax, unk_c65d4                           ; 01d2bf b8d4650c00
@@ -7070,13 +7070,13 @@ loc_1d2d3:
     mov byte ptr [byte_c6745], dh                ; 01d2f9 883545670c00
     mov byte ptr [byte_c672f], dh                ; 01d2ff 88352f670c00
     xor edi, edi                                 ; 01d305 31ff
-    mov dword ptr [dword_c695a], edi             ; 01d307 893d5a690c00
-    cmp dword ptr [dword_c6956], 0               ; 01d30d 833d56690c0000
+    mov dword ptr [stats_league], edi            ; 01d307 893d5a690c00
+    cmp dword ptr [stats_playoffs], 0            ; 01d30d 833d56690c0000
     je loc_1d31c                                 ; 01d314 7406
-    mov dword ptr [dword_c65b4], edi             ; 01d316 893db4650c00
+    mov dword ptr [stats_selected_team], edi     ; 01d316 893db4650c00
 loc_1d31c:
     xor edx, edx                                 ; 01d31c 31d2
-    mov dword ptr [dword_c6956], edx             ; 01d31e 891556690c00
+    mov dword ptr [stats_playoffs], edx          ; 01d31e 891556690c00
     mov ebx, 0x1f                                ; 01d324 bb1f000000
     mov edx, unk_c529c                           ; 01d329 ba9c520c00
     mov eax, unk_c65d4                           ; 01d32e b8d4650c00
@@ -7099,14 +7099,14 @@ loc_1d342:
     mov byte ptr [byte_c6759], al                ; 01d38e a259670c00
     mov byte ptr [byte_c672f], al                ; 01d393 a22f670c00
     mov byte ptr [byte_c671c], al                ; 01d398 a21c670c00
-    mov dword ptr [dword_c695a], 1               ; 01d39d c7055a690c000100..
-    cmp dword ptr [dword_c6956], 0               ; 01d3a7 833d56690c0000
+    mov dword ptr [stats_league], 1              ; 01d39d c7055a690c000100..
+    cmp dword ptr [stats_playoffs], 0            ; 01d3a7 833d56690c0000
     je loc_1d3b8                                 ; 01d3ae 7408
     xor esi, esi                                 ; 01d3b0 31f6
-    mov dword ptr [dword_c65b4], esi             ; 01d3b2 8935b4650c00
+    mov dword ptr [stats_selected_team], esi     ; 01d3b2 8935b4650c00
 loc_1d3b8:
     xor edi, edi                                 ; 01d3b8 31ff
-    mov dword ptr [dword_c6956], edi             ; 01d3ba 893d56690c00
+    mov dword ptr [stats_playoffs], edi          ; 01d3ba 893d56690c00
 loc_1d3c0:
     mov ebx, 0x1f                                ; 01d3c0 bb1f000000
     mov edx, byte_c5386                          ; 01d3c5 ba86530c00
@@ -7120,13 +7120,13 @@ loc_1d3cf:
     mov byte ptr [byte_c6745], dh                ; 01d3e0 883545670c00
     mov byte ptr [byte_c672f], dh                ; 01d3e6 88352f670c00
     mov byte ptr [byte_c671c], dh                ; 01d3ec 88351c670c00
-    mov dword ptr [dword_c695a], 1               ; 01d3f2 c7055a690c000100..
-    mov ebp, dword ptr [dword_c6956]             ; 01d3fc 8b2d56690c00
+    mov dword ptr [stats_league], 1              ; 01d3f2 c7055a690c000100..
+    mov ebp, dword ptr [stats_playoffs]          ; 01d3fc 8b2d56690c00
     test ebp, ebp                                ; 01d402 85ed
     jne loc_1d40c                                ; 01d404 7506
-    mov dword ptr [dword_c65b4], ebp             ; 01d406 892db4650c00
+    mov dword ptr [stats_selected_team], ebp     ; 01d406 892db4650c00
 loc_1d40c:
-    mov dword ptr [dword_c6956], 1               ; 01d40c c70556690c000100..
+    mov dword ptr [stats_playoffs], 1            ; 01d40c c70556690c000100..
     jmp loc_1d3c0                                ; 01d416 eba8
 
 loc_1d418:
@@ -7137,13 +7137,13 @@ loc_1d418:
     mov byte ptr [byte_c6745], cl                ; 01d429 880d45670c00
     mov byte ptr [byte_c672f], cl                ; 01d42f 880d2f670c00
     mov byte ptr [byte_c671c], cl                ; 01d435 880d1c670c00
-    mov dword ptr [dword_c695a], 1               ; 01d43b c7055a690c000100..
-    mov ebx, dword ptr [dword_c6956]             ; 01d445 8b1d56690c00
+    mov dword ptr [stats_league], 1              ; 01d43b c7055a690c000100..
+    mov ebx, dword ptr [stats_playoffs]          ; 01d445 8b1d56690c00
     test ebx, ebx                                ; 01d44b 85db
     jne loc_1d455                                ; 01d44d 7506
-    mov dword ptr [dword_c65b4], ebx             ; 01d44f 891db4650c00
+    mov dword ptr [stats_selected_team], ebx     ; 01d44f 891db4650c00
 loc_1d455:
-    mov dword ptr [dword_c6956], 1               ; 01d455 c70556690c000100..
+    mov dword ptr [stats_playoffs], 1            ; 01d455 c70556690c000100..
     mov ebx, 0x1f                                ; 01d45f bb1f000000
     mov edx, byte_c5311                          ; 01d464 ba11530c00
 loc_1d469:
@@ -7685,7 +7685,7 @@ loc_1da3d:
     mov eax, dword ptr [esp + eax*4 + 0x40]      ; 01da7d 8b448440
     add eax, ecx                                 ; 01da81 01c8
     mov ecx, dword ptr [esp + 0xc]               ; 01da83 8b4c240c
-    call highlight_menu_item                     ; 01da87 e8c2de0400
+    call menu_item_draw_normal                   ; 01da87 e8c2de0400
     mov edx, dword ptr [esp + 0x6c]              ; 01da8c 8b54246c
     mov eax, dword ptr [esp + 0x68]              ; 01da90 8b442468
     mov dword ptr [esp + edx*4 + 0x28], eax      ; 01da94 89449428
@@ -7768,7 +7768,7 @@ loc_1db5a:
     mov eax, dword ptr [esp + esi*4 + 0x40]      ; 01db7d 8b44b440
     add eax, ecx                                 ; 01db81 01c8
     mov ecx, dword ptr [esp + 0xc]               ; 01db83 8b4c240c
-    call highlight_menu_item                     ; 01db87 e8c2dd0400
+    call menu_item_draw_normal                   ; 01db87 e8c2dd0400
     mov eax, dword ptr [esp + 0x68]              ; 01db8c 8b442468
     mov dword ptr [esp + esi*4 + 0x28], eax      ; 01db90 8944b428
     mov ebx, dword ptr [esp + 0xa4]              ; 01db94 8b9c24a4000000
@@ -7781,7 +7781,7 @@ loc_1db5a:
     mov ecx, dword ptr [esp + esi*4 + 0x40]      ; 01dbac 8b4cb440
     add eax, ecx                                 ; 01dbb0 01c8
     mov ecx, dword ptr [esp + 0xc]               ; 01dbb2 8b4c240c
-    call unhighlight_menu_item                   ; 01dbb6 e830de0400
+    call menu_item_draw_selected                 ; 01dbb6 e830de0400
     mov eax, dword ptr [esp + 0x6c]              ; 01dbbb 8b44246c
     mov ebx, dword ptr [esp + 0x68]              ; 01dbbf 8b5c2468
     shl ebx, 5                                   ; 01dbc3 c1e305
@@ -7916,7 +7916,7 @@ loc_1dd34:
     mov eax, dword ptr [esp + eax*4 + 0x40]      ; 01dd74 8b448440
     add eax, ecx                                 ; 01dd78 01c8
     mov ecx, dword ptr [esp + 0xc]               ; 01dd7a 8b4c240c
-    call highlight_menu_item                     ; 01dd7e e8cbdb0400
+    call menu_item_draw_normal                   ; 01dd7e e8cbdb0400
     mov edx, dword ptr [esp + 0x6c]              ; 01dd83 8b54246c
     mov eax, dword ptr [esp + 0x68]              ; 01dd87 8b442468
     mov dword ptr [esp + edx*4 + 0x28], eax      ; 01dd8b 89449428
@@ -7932,7 +7932,7 @@ loc_1dd34:
     mov ecx, dword ptr [esp + 0xc]               ; 01ddad 8b4c240c
     mov edx, esi                                 ; 01ddb1 89f2
 loc_1ddb3:
-    call unhighlight_menu_item                   ; 01ddb3 e833dc0400
+    call menu_item_draw_selected                 ; 01ddb3 e833dc0400
 loc_1ddb8:
     mov esi, dword ptr [esp + 0x8c]              ; 01ddb8 8bb4248c000000
     push esi                                     ; 01ddbf 56
@@ -8128,12 +8128,12 @@ menu_page_a:
     sar eax, 1                                   ; 01dffa d1f8
     mov dword ptr [esp + 0x94], eax              ; 01dffc 89842494000000
     mov dword ptr [esp + 0x78], eax              ; 01e003 89442478
-    cmp dword ptr [dword_c6956], 0               ; 01e007 833d56690c0000
+    cmp dword ptr [stats_playoffs], 0            ; 01e007 833d56690c0000
     jne loc_1e0ea                                ; 01e00e 0f85d6000000
     xor esi, esi                                 ; 01e014 31f6
-    mov edx, dword ptr [dword_c65b4]             ; 01e016 8b15b4650c00
+    mov edx, dword ptr [stats_selected_team]     ; 01e016 8b15b4650c00
 loc_1e01c:
-    cmp edx, dword ptr [esi*4 + unk_dc640]       ; 01e01c 3b14b540c60d00
+    cmp edx, dword ptr [esi*4 + standings_order] ; 01e01c 3b14b540c60d00
     jne loc_1e029                                ; 01e023 7504
     mov dword ptr [esp + 0x70], esi              ; 01e025 89742470
 loc_1e029:
@@ -8141,13 +8141,13 @@ loc_1e029:
     cmp esi, 0x1a                                ; 01e02a 83fe1a
     jl loc_1e01c                                 ; 01e02d 7ced
     mov edx, dword ptr [esp + 0x70]              ; 01e02f 8b542470
-    mov edx, dword ptr [edx*4 + unk_dc640]       ; 01e033 8b149540c60d00
+    mov edx, dword ptr [edx*4 + standings_order] ; 01e033 8b149540c60d00
     mov eax, edx                                 ; 01e03a 89d0
     shl eax, 2                                   ; 01e03c c1e002
     sub eax, edx                                 ; 01e03f 29d0
     shl eax, 2                                   ; 01e041 c1e002
     add eax, edx                                 ; 01e044 01d0
-    mov edx, dword ptr [dword_dd10c]             ; 01e046 8b150cd10d00
+    mov edx, dword ptr [standings_rows]          ; 01e046 8b150cd10d00
     mov dl, byte ptr [edx + eax*2 + 0xd]         ; 01e04c 8a54420d
     and edx, 0xff                                ; 01e050 81e2ff000000
     mov ebx, 2                                   ; 01e056 bb02000000
@@ -8163,13 +8163,13 @@ loc_1e06d:
     mov esi, 0xa5                                ; 01e06d bea5000000
 loc_1e072:
     mov edx, dword ptr [esp + 0x70]              ; 01e072 8b542470
-    mov edx, dword ptr [edx*4 + unk_dc640]       ; 01e076 8b149540c60d00
+    mov edx, dword ptr [edx*4 + standings_order] ; 01e076 8b149540c60d00
     mov eax, edx                                 ; 01e07d 89d0
     shl eax, 2                                   ; 01e07f c1e002
     sub eax, edx                                 ; 01e082 29d0
     shl eax, 2                                   ; 01e084 c1e002
     add eax, edx                                 ; 01e087 01d0
-    mov edx, dword ptr [dword_dd10c]             ; 01e089 8b150cd10d00
+    mov edx, dword ptr [standings_rows]          ; 01e089 8b150cd10d00
     cmp byte ptr [edx + eax*2 + 0xd], 2          ; 01e08f 807c420d02
     jae loc_1e09a                                ; 01e094 7304
     xor ebx, ebx                                 ; 01e096 31db
@@ -8209,7 +8209,7 @@ loc_1e0bf:
     jmp loc_1e108                                ; 01e0e8 eb1e
 
 loc_1e0ea:
-    mov eax, dword ptr [dword_c65b4]             ; 01e0ea a1b4650c00
+    mov eax, dword ptr [stats_selected_team]     ; 01e0ea a1b4650c00
     mov dword ptr [esp + 0x70], eax              ; 01e0ef 89442470
     cmp dword ptr [eax*4 + dword_dc7b8], 0x1a    ; 01e0f3 833c85b8c70d001a
     je loc_1e108                                 ; 01e0fb 740b
@@ -8348,7 +8348,7 @@ loc_1e2a6:
     jne loc_1e30d                                ; 01e2a9 7562
     xor edx, edx                                 ; 01e2ab 31d2
     mov dword ptr [esp + 0x9c], edx              ; 01e2ad 8994249c000000
-    cmp dword ptr [dword_c6956], 1               ; 01e2b4 833d56690c0001
+    cmp dword ptr [stats_playoffs], 1            ; 01e2b4 833d56690c0001
     jne loc_1e1fa                                ; 01e2bb 0f8539ffffff
     mov edx, dword ptr [esp + 0x94]              ; 01e2c1 8b942494000000
     push edx                                     ; 01e2c8 52
@@ -8433,29 +8433,29 @@ loc_1e3d2:
     mov dword ptr [esp + 0x98], esi              ; 01e3d8 89b42498000000
     mov eax, dword ptr [esp + 0x70]              ; 01e3df 8b442470
     shl eax, 2                                   ; 01e3e3 c1e002
-    cmp dword ptr [dword_c6956], 0               ; 01e3e6 833d56690c0000
+    cmp dword ptr [stats_playoffs], 0            ; 01e3e6 833d56690c0000
     jne loc_1e400                                ; 01e3ed 7511
-    mov eax, dword ptr [eax + unk_dc640]         ; 01e3ef 8b8040c60d00
+    mov eax, dword ptr [eax + standings_order]   ; 01e3ef 8b8040c60d00
     mov dword ptr [esp + 0x74], eax              ; 01e3f5 89442474
-    mov dword ptr [dword_c65b0], eax             ; 01e3f9 a3b0650c00
+    mov dword ptr [stats_current_arg], eax       ; 01e3f9 a3b0650c00
     jmp loc_1e40f                                ; 01e3fe eb0f
 
 loc_1e400:
     mov eax, dword ptr [eax + dword_dc7b8]       ; 01e400 8b80b8c70d00
-    mov dword ptr [dword_c65b0], eax             ; 01e406 a3b0650c00
+    mov dword ptr [stats_current_arg], eax       ; 01e406 a3b0650c00
     mov eax, dword ptr [esp + 0x70]              ; 01e40b 8b442470
 loc_1e40f:
-    mov dword ptr [dword_c65b4], eax             ; 01e40f a3b4650c00
-    cmp dword ptr [dword_c6956], 0               ; 01e414 833d56690c0000
+    mov dword ptr [stats_selected_team], eax     ; 01e40f a3b4650c00
+    cmp dword ptr [stats_playoffs], 0            ; 01e414 833d56690c0000
     jne loc_1e4dc                                ; 01e41b 0f85bb000000
     mov edx, dword ptr [esp + 0x70]              ; 01e421 8b542470
-    mov edx, dword ptr [edx*4 + unk_dc640]       ; 01e425 8b149540c60d00
+    mov edx, dword ptr [edx*4 + standings_order] ; 01e425 8b149540c60d00
     mov eax, edx                                 ; 01e42c 89d0
     shl eax, 2                                   ; 01e42e c1e002
     sub eax, edx                                 ; 01e431 29d0
     shl eax, 2                                   ; 01e433 c1e002
     add eax, edx                                 ; 01e436 01d0
-    mov edx, dword ptr [dword_dd10c]             ; 01e438 8b150cd10d00
+    mov edx, dword ptr [standings_rows]          ; 01e438 8b150cd10d00
     mov dl, byte ptr [edx + eax*2 + 0xd]         ; 01e43e 8a54420d
     and edx, 0xff                                ; 01e442 81e2ff000000
     mov ebx, 2                                   ; 01e448 bb02000000
@@ -8471,13 +8471,13 @@ loc_1e45f:
     mov esi, 0xa5                                ; 01e45f bea5000000
 loc_1e464:
     mov edx, dword ptr [esp + 0x70]              ; 01e464 8b542470
-    mov edx, dword ptr [edx*4 + unk_dc640]       ; 01e468 8b149540c60d00
+    mov edx, dword ptr [edx*4 + standings_order] ; 01e468 8b149540c60d00
     mov eax, edx                                 ; 01e46f 89d0
     shl eax, 2                                   ; 01e471 c1e002
     sub eax, edx                                 ; 01e474 29d0
     shl eax, 2                                   ; 01e476 c1e002
     add eax, edx                                 ; 01e479 01d0
-    mov edx, dword ptr [dword_dd10c]             ; 01e47b 8b150cd10d00
+    mov edx, dword ptr [standings_rows]          ; 01e47b 8b150cd10d00
     cmp byte ptr [edx + eax*2 + 0xd], 2          ; 01e481 807c420d02
     jae loc_1e48c                                ; 01e486 7304
     xor ebx, ebx                                 ; 01e488 31db
@@ -8517,7 +8517,7 @@ loc_1e4b1:
     jmp loc_1e4fa                                ; 01e4da eb1e
 
 loc_1e4dc:
-    mov eax, dword ptr [dword_c65b4]             ; 01e4dc a1b4650c00
+    mov eax, dword ptr [stats_selected_team]     ; 01e4dc a1b4650c00
     mov dword ptr [esp + 0x70], eax              ; 01e4e1 89442470
     cmp dword ptr [eax*4 + dword_dc7b8], 0x1a    ; 01e4e5 833c85b8c70d001a
     je loc_1e4fa                                 ; 01e4ed 740b
@@ -8554,12 +8554,12 @@ loc_1e54c:
     jmp loc_1ed8b                                ; 01e556 e930080000
 
 loc_1e55b:
-    mov esi, dword ptr [dword_c6956]             ; 01e55b 8b3556690c00
+    mov esi, dword ptr [stats_playoffs]          ; 01e55b 8b3556690c00
     test esi, esi                                ; 01e561 85f6
     jne loc_1e63c                                ; 01e563 0f85d3000000
     mov eax, dword ptr [esp + 0x74]              ; 01e569 8b442474
 loc_1e56d:
-    cmp eax, dword ptr [esi*4 + unk_dc640]       ; 01e56d 3b04b540c60d00
+    cmp eax, dword ptr [esi*4 + standings_order] ; 01e56d 3b04b540c60d00
     jne loc_1e57a                                ; 01e574 7504
     mov dword ptr [esp + 0x70], esi              ; 01e576 89742470
 loc_1e57a:
@@ -8567,13 +8567,13 @@ loc_1e57a:
     cmp esi, 0x1a                                ; 01e57b 83fe1a
     jl loc_1e56d                                 ; 01e57e 7ced
     mov edx, dword ptr [esp + 0x70]              ; 01e580 8b542470
-    mov edx, dword ptr [edx*4 + unk_dc640]       ; 01e584 8b149540c60d00
+    mov edx, dword ptr [edx*4 + standings_order] ; 01e584 8b149540c60d00
     mov eax, edx                                 ; 01e58b 89d0
     shl eax, 2                                   ; 01e58d c1e002
     sub eax, edx                                 ; 01e590 29d0
     shl eax, 2                                   ; 01e592 c1e002
     add eax, edx                                 ; 01e595 01d0
-    mov edx, dword ptr [dword_dd10c]             ; 01e597 8b150cd10d00
+    mov edx, dword ptr [standings_rows]          ; 01e597 8b150cd10d00
     mov dl, byte ptr [edx + eax*2 + 0xd]         ; 01e59d 8a54420d
     and edx, 0xff                                ; 01e5a1 81e2ff000000
     mov ebx, 2                                   ; 01e5a7 bb02000000
@@ -8589,14 +8589,14 @@ loc_1e5be:
     mov esi, 0xa5                                ; 01e5be bea5000000
 loc_1e5c3:
     mov edx, dword ptr [esp + 0x70]              ; 01e5c3 8b542470
-    mov edx, dword ptr [edx*4 + unk_dc640]       ; 01e5c7 8b149540c60d00
+    mov edx, dword ptr [edx*4 + standings_order] ; 01e5c7 8b149540c60d00
     mov eax, edx                                 ; 01e5ce 89d0
     shl eax, 2                                   ; 01e5d0 c1e002
     sub eax, edx                                 ; 01e5d3 29d0
     shl eax, 2                                   ; 01e5d5 c1e002
     add edx, eax                                 ; 01e5d8 01c2
     add edx, edx                                 ; 01e5da 01d2
-    mov eax, dword ptr [dword_dd10c]             ; 01e5dc a10cd10d00
+    mov eax, dword ptr [standings_rows]          ; 01e5dc a10cd10d00
     cmp byte ptr [edx + eax + 0xd], 2            ; 01e5e1 807c020d02
     jae loc_1e5ec                                ; 01e5e6 7304
     xor ebx, ebx                                 ; 01e5e8 31db
@@ -8636,7 +8636,7 @@ loc_1e611:
     jmp loc_1e65a                                ; 01e63a eb1e
 
 loc_1e63c:
-    mov eax, dword ptr [dword_c65b4]             ; 01e63c a1b4650c00
+    mov eax, dword ptr [stats_selected_team]     ; 01e63c a1b4650c00
     mov dword ptr [esp + 0x70], eax              ; 01e641 89442470
     cmp dword ptr [eax*4 + dword_dc7b8], 0x1a    ; 01e645 833c85b8c70d001a
     je loc_1e65a                                 ; 01e64d 740b
@@ -8676,7 +8676,7 @@ loc_1e684:
     mov eax, dword ptr [esp + eax*4 + 0x60]      ; 01e6c4 8b448460
     add eax, ecx                                 ; 01e6c8 01c8
     mov ecx, dword ptr [esp + 0xc]               ; 01e6ca 8b4c240c
-    call highlight_menu_item                     ; 01e6ce e87bd20400
+    call menu_item_draw_normal                   ; 01e6ce e87bd20400
     mov edx, dword ptr [esp + 0x6c]              ; 01e6d3 8b54246c
     mov eax, dword ptr [esp + 0x68]              ; 01e6d7 8b442468
     mov dword ptr [esp + edx*4 + 0x38], eax      ; 01e6db 89449438
@@ -8693,7 +8693,7 @@ loc_1e684:
     mov edx, eax                                 ; 01e6fe 89c2
     mov eax, esi                                 ; 01e700 89f0
 loc_1e702:
-    call unhighlight_menu_item                   ; 01e702 e8e4d20400
+    call menu_item_draw_selected                 ; 01e702 e8e4d20400
     jmp loc_1ed71                                ; 01e707 e965060000
 
 loc_1e70c:
@@ -8761,7 +8761,7 @@ loc_1e7a6:
     mov ecx, dword ptr [esp + edi*4 + 0x60]      ; 01e7c9 8b4cbc60
     add eax, ecx                                 ; 01e7cd 01c8
     mov ecx, dword ptr [esp + 0xc]               ; 01e7cf 8b4c240c
-    call highlight_menu_item                     ; 01e7d3 e876d10400
+    call menu_item_draw_normal                   ; 01e7d3 e876d10400
     mov eax, dword ptr [esp + 0x68]              ; 01e7d8 8b442468
     mov dword ptr [esp + edi*4 + 0x38], eax      ; 01e7dc 8944bc38
     mov ecx, dword ptr [esp + 0xb0]              ; 01e7e0 8b8c24b0000000
@@ -8774,7 +8774,7 @@ loc_1e7a6:
     mov ecx, dword ptr [esp + edi*4 + 0x60]      ; 01e7f8 8b4cbc60
     add eax, ecx                                 ; 01e7fc 01c8
     mov ecx, dword ptr [esp + 0xc]               ; 01e7fe 8b4c240c
-    call unhighlight_menu_item                   ; 01e802 e8e4d10400
+    call menu_item_draw_selected                 ; 01e802 e8e4d10400
     mov eax, dword ptr [esp + 0x6c]              ; 01e807 8b44246c
     mov ecx, dword ptr [esp + 0x68]              ; 01e80b 8b4c2468
     shl ecx, 5                                   ; 01e80f c1e105
@@ -8908,7 +8908,7 @@ loc_1e98a:
     mov eax, dword ptr [esp + eax*4 + 0x60]      ; 01e9ca 8b448460
     add eax, ecx                                 ; 01e9ce 01c8
     mov ecx, dword ptr [esp + 0xc]               ; 01e9d0 8b4c240c
-    call highlight_menu_item                     ; 01e9d4 e875cf0400
+    call menu_item_draw_normal                   ; 01e9d4 e875cf0400
     mov edx, dword ptr [esp + 0x6c]              ; 01e9d9 8b54246c
     mov eax, dword ptr [esp + 0x68]              ; 01e9dd 8b442468
     mov dword ptr [esp + edx*4 + 0x38], eax      ; 01e9e1 89449438
@@ -8947,15 +8947,15 @@ loc_1ea10:
     mov esi, dword ptr [esp + 0x74]              ; 01ea54 8b742474
     cmp eax, esi                                 ; 01ea58 39f0
     je loc_1ec0d                                 ; 01ea5a 0f84ad010000
-    cmp dword ptr [dword_c6956], 0               ; 01ea60 833d56690c0000
+    cmp dword ptr [stats_playoffs], 0            ; 01ea60 833d56690c0000
     jne loc_1ebe0                                ; 01ea67 0f8573010000
-    mov edx, dword ptr [edx + unk_dc640]         ; 01ea6d 8b9240c60d00
+    mov edx, dword ptr [edx + standings_order]   ; 01ea6d 8b9240c60d00
     mov eax, edx                                 ; 01ea73 89d0
     shl eax, 2                                   ; 01ea75 c1e002
     sub eax, edx                                 ; 01ea78 29d0
     shl eax, 2                                   ; 01ea7a c1e002
     add eax, edx                                 ; 01ea7d 01d0
-    mov edx, dword ptr [dword_dd10c]             ; 01ea7f 8b150cd10d00
+    mov edx, dword ptr [standings_rows]          ; 01ea7f 8b150cd10d00
     mov dl, byte ptr [edx + eax*2 + 0xd]         ; 01ea85 8a54420d
     and edx, 0xff                                ; 01ea89 81e2ff000000
     mov ebx, 2                                   ; 01ea8f bb02000000
@@ -8971,14 +8971,14 @@ loc_1eaa6:
     mov esi, 0xa5                                ; 01eaa6 bea5000000
 loc_1eaab:
     mov edx, dword ptr [esp + 0x70]              ; 01eaab 8b542470
-    mov edx, dword ptr [edx*4 + unk_dc640]       ; 01eaaf 8b149540c60d00
+    mov edx, dword ptr [edx*4 + standings_order] ; 01eaaf 8b149540c60d00
     mov eax, edx                                 ; 01eab6 89d0
     shl eax, 2                                   ; 01eab8 c1e002
     sub eax, edx                                 ; 01eabb 29d0
     shl eax, 2                                   ; 01eabd c1e002
     add edx, eax                                 ; 01eac0 01c2
     add edx, edx                                 ; 01eac2 01d2
-    mov eax, dword ptr [dword_dd10c]             ; 01eac4 a10cd10d00
+    mov eax, dword ptr [standings_rows]          ; 01eac4 a10cd10d00
     cmp byte ptr [edx + eax + 0xd], 2            ; 01eac9 807c020d02
     jae loc_1ead4                                ; 01eace 7304
     xor ebx, ebx                                 ; 01ead0 31db
@@ -9017,13 +9017,13 @@ loc_1eaf7:
     add esp, 0x14                                ; 01eb1d 83c414
     mov eax, dword ptr [esp + 0x74]              ; 01eb20 8b442474
     mov dword ptr [esp + 0x70], eax              ; 01eb24 89442470
-    mov edx, dword ptr [eax*4 + unk_dc640]       ; 01eb28 8b148540c60d00
+    mov edx, dword ptr [eax*4 + standings_order] ; 01eb28 8b148540c60d00
     mov eax, edx                                 ; 01eb2f 89d0
     shl eax, 2                                   ; 01eb31 c1e002
     sub eax, edx                                 ; 01eb34 29d0
     shl eax, 2                                   ; 01eb36 c1e002
     add eax, edx                                 ; 01eb39 01d0
-    mov edx, dword ptr [dword_dd10c]             ; 01eb3b 8b150cd10d00
+    mov edx, dword ptr [standings_rows]          ; 01eb3b 8b150cd10d00
     mov dl, byte ptr [edx + eax*2 + 0xd]         ; 01eb41 8a54420d
     and edx, 0xff                                ; 01eb45 81e2ff000000
     mov ebx, 2                                   ; 01eb4b bb02000000
@@ -9039,13 +9039,13 @@ loc_1eb62:
     mov esi, 0xa5                                ; 01eb62 bea5000000
 loc_1eb67:
     mov edx, dword ptr [esp + 0x74]              ; 01eb67 8b542474
-    mov edx, dword ptr [edx*4 + unk_dc640]       ; 01eb6b 8b149540c60d00
+    mov edx, dword ptr [edx*4 + standings_order] ; 01eb6b 8b149540c60d00
     mov eax, edx                                 ; 01eb72 89d0
     shl eax, 2                                   ; 01eb74 c1e002
     sub eax, edx                                 ; 01eb77 29d0
     shl eax, 2                                   ; 01eb79 c1e002
     add eax, edx                                 ; 01eb7c 01d0
-    mov edx, dword ptr [dword_dd10c]             ; 01eb7e 8b150cd10d00
+    mov edx, dword ptr [standings_rows]          ; 01eb7e 8b150cd10d00
     cmp byte ptr [edx + eax*2 + 0xd], 2          ; 01eb84 807c420d02
     jae loc_1eb8f                                ; 01eb89 7304
     xor ebx, ebx                                 ; 01eb8b 31db
@@ -9095,7 +9095,7 @@ loc_1ebe0:
     jmp loc_1ed71                                ; 01ec08 e964010000
 
 loc_1ec0d:
-    cmp dword ptr [dword_c6956], 0               ; 01ec0d 833d56690c0000
+    cmp dword ptr [stats_playoffs], 0            ; 01ec0d 833d56690c0000
     je loc_1ec23                                 ; 01ec14 740d
     cmp dword ptr [edx + dword_dc7b8], 0x1a      ; 01ec16 83bab8c70d001a
     je loc_1ed71                                 ; 01ec1d 0f844e010000
@@ -9130,19 +9130,19 @@ loc_1ec62:
     jge loc_1ec2a                                ; 01ec64 7dc4
     mov eax, dword ptr [esp + 0x70]              ; 01ec66 8b442470
     shl eax, 2                                   ; 01ec6a c1e002
-    cmp dword ptr [dword_c6956], 0               ; 01ec6d 833d56690c0000
+    cmp dword ptr [stats_playoffs], 0            ; 01ec6d 833d56690c0000
     jne loc_1ec87                                ; 01ec74 7511
-    mov eax, dword ptr [eax + unk_dc640]         ; 01ec76 8b8040c60d00
+    mov eax, dword ptr [eax + standings_order]   ; 01ec76 8b8040c60d00
     mov dword ptr [esp + 0x74], eax              ; 01ec7c 89442474
-    mov dword ptr [dword_c65b0], eax             ; 01ec80 a3b0650c00
+    mov dword ptr [stats_current_arg], eax       ; 01ec80 a3b0650c00
     jmp loc_1ec96                                ; 01ec85 eb0f
 
 loc_1ec87:
     mov eax, dword ptr [eax + dword_dc7b8]       ; 01ec87 8b80b8c70d00
-    mov dword ptr [dword_c65b0], eax             ; 01ec8d a3b0650c00
+    mov dword ptr [stats_current_arg], eax       ; 01ec8d a3b0650c00
     mov eax, dword ptr [esp + 0x70]              ; 01ec92 8b442470
 loc_1ec96:
-    mov dword ptr [dword_c65b4], eax             ; 01ec96 a3b4650c00
+    mov dword ptr [stats_selected_team], eax     ; 01ec96 a3b4650c00
     call menu_show_team_roster                   ; 01ec9b e863a0ffff
     xor edi, edi                                 ; 01eca0 31ff
     mov dword ptr [esp + 0x64], edi              ; 01eca2 897c2464
@@ -9321,7 +9321,7 @@ loc_1eeb3:
     jmp loc_1ef19                                ; 01eeb5 eb62
 
 loc_1eeb7:
-    mov edx, dword ptr [esi*4 + unk_dc720]       ; 01eeb7 8b14b520c70d00
+    mov edx, dword ptr [esi*4 + roster_goalie_order] ; 01eeb7 8b14b520c70d00
     mov edx, dword ptr [edx*4 + unk_dc73c]       ; 01eebe 8b14953cc70d00
     mov ebx, edx                                 ; 01eec5 89d3
     shl ebx, 2                                   ; 01eec7 c1e302
@@ -9362,7 +9362,7 @@ loc_1ef26:
     jmp loc_1ef86                                ; 01ef2c eb58
 
 loc_1ef2e:
-    mov edx, dword ptr [esi*4 + unk_dc6bc]       ; 01ef2e 8b14b5bcc60d00
+    mov edx, dword ptr [esi*4 + roster_skater_order] ; 01ef2e 8b14b5bcc60d00
     mov edx, dword ptr [edx*4 + unk_dc754]       ; 01ef35 8b149554c70d00
     mov ebx, edx                                 ; 01ef3c 89d3
     shl ebx, 2                                   ; 01ef3e c1e302
@@ -9569,13 +9569,13 @@ loc_1f1ab:
     mov edi, dword ptr [dword_dc750]             ; 01f1bc 8b3d50c70d00
     cmp eax, edi                                 ; 01f1c2 39f8
     jge loc_1f1d6                                ; 01f1c4 7d10
-    mov eax, dword ptr [eax*4 + unk_dc6bc]       ; 01f1c6 8b0485bcc60d00
+    mov eax, dword ptr [eax*4 + roster_skater_order] ; 01f1c6 8b0485bcc60d00
     mov eax, dword ptr [eax*4 + unk_dc754]       ; 01f1cd 8b048554c70d00
     jmp loc_1f1e6                                ; 01f1d4 eb10
 
 loc_1f1d6:
     sub eax, edi                                 ; 01f1d6 29f8
-    mov eax, dword ptr [eax*4 + unk_dc720]       ; 01f1d8 8b048520c70d00
+    mov eax, dword ptr [eax*4 + roster_goalie_order] ; 01f1d8 8b048520c70d00
     mov eax, dword ptr [eax*4 + unk_dc73c]       ; 01f1df 8b04853cc70d00
 loc_1f1e6:
     mov edx, eax                                 ; 01f1e6 89c2
@@ -9587,7 +9587,7 @@ loc_1f1e6:
     mov esi, dword ptr [dword_dd11c]             ; 01f1f5 8b351cd10d00
     add esi, eax                                 ; 01f1fb 01c6
     mov ecx, 0xd                                 ; 01f1fd b90d000000
-    mov edi, unk_dc834                           ; 01f202 bf34c80d00
+    mov edi, card_player_record                  ; 01f202 bf34c80d00
     rep movsd dword ptr es:[edi], dword ptr [esi] ; 01f207 f3a5
     mov eax, dword ptr [esp + 0x94]              ; 01f209 8b842494000000
     mov edx, dword ptr [dword_dc750]             ; 01f210 8b1550c70d00
@@ -9654,7 +9654,7 @@ loc_1f2ba:
     jmp loc_1f32f                                ; 01f2cb eb62
 
 loc_1f2cd:
-    mov edi, dword ptr [esi*4 + unk_dc720]       ; 01f2cd 8b3cb520c70d00
+    mov edi, dword ptr [esi*4 + roster_goalie_order] ; 01f2cd 8b3cb520c70d00
     mov edi, dword ptr [edi*4 + unk_dc73c]       ; 01f2d4 8b3cbd3cc70d00
     mov ebx, edi                                 ; 01f2db 89fb
     shl ebx, 2                                   ; 01f2dd c1e302
@@ -9695,7 +9695,7 @@ loc_1f33c:
     jmp loc_1f39c                                ; 01f342 eb58
 
 loc_1f344:
-    mov edi, dword ptr [esi*4 + unk_dc6bc]       ; 01f344 8b3cb5bcc60d00
+    mov edi, dword ptr [esi*4 + roster_skater_order] ; 01f344 8b3cb5bcc60d00
     mov edi, dword ptr [edi*4 + unk_dc754]       ; 01f34b 8b3cbd54c70d00
     mov ebx, edi                                 ; 01f352 89fb
     shl ebx, 2                                   ; 01f354 c1e302
@@ -9787,7 +9787,7 @@ loc_1f421:
     mov eax, dword ptr [esp + eax*4 + 0x30]      ; 01f461 8b448430
     add eax, ecx                                 ; 01f465 01c8
     mov ecx, dword ptr [esp + 0xc]               ; 01f467 8b4c240c
-    call highlight_menu_item                     ; 01f46b e8dec40400
+    call menu_item_draw_normal                   ; 01f46b e8dec40400
     mov edx, dword ptr [esp + 0x6c]              ; 01f470 8b54246c
     mov eax, dword ptr [esp + 0x68]              ; 01f474 8b442468
     mov dword ptr [esp + edx*4 + 0x58], eax      ; 01f478 89449458
@@ -9805,7 +9805,7 @@ loc_1f482:
     mov edx, eax                                 ; 01f49b 89c2
     mov eax, esi                                 ; 01f49d 89f0
 loc_1f49f:
-    call unhighlight_menu_item                   ; 01f49f e847c50400
+    call menu_item_draw_selected                 ; 01f49f e847c50400
     jmp loc_1fa6c                                ; 01f4a4 e9c3050000
 
 loc_1f4a9:
@@ -9873,7 +9873,7 @@ loc_1f543:
     mov ecx, dword ptr [esp + esi*4 + 0x30]      ; 01f566 8b4cb430
     add eax, ecx                                 ; 01f56a 01c8
     mov ecx, dword ptr [esp + 0xc]               ; 01f56c 8b4c240c
-    call highlight_menu_item                     ; 01f570 e8d9c30400
+    call menu_item_draw_normal                   ; 01f570 e8d9c30400
     mov eax, dword ptr [esp + 0x68]              ; 01f575 8b442468
     mov dword ptr [esp + esi*4 + 0x58], eax      ; 01f579 8944b458
     mov ecx, dword ptr [esp + 0xac]              ; 01f57d 8b8c24ac000000
@@ -9887,7 +9887,7 @@ loc_1f543:
     mov eax, dword ptr [esp + esi*4 + 0x30]      ; 01f597 8b44b430
     add eax, ecx                                 ; 01f59b 01c8
     mov ecx, dword ptr [esp + 0xc]               ; 01f59d 8b4c240c
-    call unhighlight_menu_item                   ; 01f5a1 e845c40400
+    call menu_item_draw_selected                 ; 01f5a1 e845c40400
     mov eax, dword ptr [esp + 0x6c]              ; 01f5a6 8b44246c
     mov ebx, dword ptr [esp + 0x68]              ; 01f5aa 8b5c2468
     shl ebx, 5                                   ; 01f5ae c1e305
@@ -10021,7 +10021,7 @@ loc_1f723:
     mov eax, dword ptr [esp + eax*4 + 0x30]      ; 01f763 8b448430
     add eax, ecx                                 ; 01f767 01c8
     mov ecx, dword ptr [esp + 0xc]               ; 01f769 8b4c240c
-    call highlight_menu_item                     ; 01f76d e8dcc10400
+    call menu_item_draw_normal                   ; 01f76d e8dcc10400
     mov edx, dword ptr [esp + 0x6c]              ; 01f772 8b54246c
     mov eax, dword ptr [esp + 0x68]              ; 01f776 8b442468
     mov dword ptr [esp + edx*4 + 0x58], eax      ; 01f77a 89449458
@@ -10183,14 +10183,14 @@ loc_1f936:
     mov ebp, dword ptr [dword_dc750]             ; 01f93e 8b2d50c70d00
     cmp eax, ebp                                 ; 01f944 39e8
     jge loc_1f958                                ; 01f946 7d10
-    mov eax, dword ptr [eax*4 + unk_dc6bc]       ; 01f948 8b0485bcc60d00
+    mov eax, dword ptr [eax*4 + roster_skater_order] ; 01f948 8b0485bcc60d00
     mov eax, dword ptr [eax*4 + unk_dc754]       ; 01f94f 8b048554c70d00
     jmp loc_1f96a                                ; 01f956 eb12
 
 loc_1f958:
     mov esi, eax                                 ; 01f958 89c6
     sub esi, ebp                                 ; 01f95a 29ee
-    mov eax, dword ptr [esi*4 + unk_dc720]       ; 01f95c 8b04b520c70d00
+    mov eax, dword ptr [esi*4 + roster_goalie_order] ; 01f95c 8b04b520c70d00
     mov eax, dword ptr [eax*4 + unk_dc73c]       ; 01f963 8b04853cc70d00
 loc_1f96a:
     mov edx, eax                                 ; 01f96a 89c2
@@ -10202,7 +10202,7 @@ loc_1f96a:
     mov esi, dword ptr [dword_dd11c]             ; 01f979 8b351cd10d00
     add esi, eax                                 ; 01f97f 01c6
     mov ecx, 0xd                                 ; 01f981 b90d000000
-    mov edi, unk_dc834                           ; 01f986 bf34c80d00
+    mov edi, card_player_record                  ; 01f986 bf34c80d00
     rep movsd dword ptr es:[edi], dword ptr [esi] ; 01f98b f3a5
     xor edx, edx                                 ; 01f98d 31d2
     mov dword ptr [dword_c6a60], edx             ; 01f98f 8915606a0c00
@@ -10408,7 +10408,7 @@ cmp_leaders_points:
     push ecx                                     ; 01fb8a 51
     push esi                                     ; 01fb8b 56
     push edi                                     ; 01fb8c 57
-    cmp dword ptr [dword_c6956], 0               ; 01fb8d 833d56690c0000
+    cmp dword ptr [stats_playoffs], 0            ; 01fb8d 833d56690c0000
     jne loc_1fbaf                                ; 01fb94 7519
     mov ebx, dword ptr [eax]                     ; 01fb96 8b18
     mov eax, ebx                                 ; 01fb98 89d8
@@ -10432,7 +10432,7 @@ loc_1fbaf:
     add eax, ebx                                 ; 01fbc3 01d8
     add eax, 0x12                                ; 01fbc5 83c012
 loc_1fbc8:
-    cmp dword ptr [dword_c6956], 0               ; 01fbc8 833d56690c0000
+    cmp dword ptr [stats_playoffs], 0            ; 01fbc8 833d56690c0000
     jne loc_1fbe9                                ; 01fbcf 7518
     mov ebx, dword ptr [edx]                     ; 01fbd1 8b1a
     mov edx, ebx                                 ; 01fbd3 89da
@@ -10534,7 +10534,7 @@ cmp_leaders_gaa:
     push ecx                                     ; 01fc9a 51
     push esi                                     ; 01fc9b 56
     push edi                                     ; 01fc9c 57
-    cmp dword ptr [dword_c6956], 0               ; 01fc9d 833d56690c0000
+    cmp dword ptr [stats_playoffs], 0            ; 01fc9d 833d56690c0000
     jne loc_1fcc0                                ; 01fca4 751a
     mov ebx, dword ptr [eax]                     ; 01fca6 8b18
     mov eax, ebx                                 ; 01fca8 89d8
@@ -10559,7 +10559,7 @@ loc_1fcc0:
     add eax, ebx                                 ; 01fcd6 01d8
     add eax, 0x16                                ; 01fcd8 83c016
 loc_1fcdb:
-    cmp dword ptr [dword_c6956], 0               ; 01fcdb 833d56690c0000
+    cmp dword ptr [stats_playoffs], 0            ; 01fcdb 833d56690c0000
     jne loc_1fcfe                                ; 01fce2 751a
     mov ebx, dword ptr [edx]                     ; 01fce4 8b1a
     mov edx, ebx                                 ; 01fce6 89da
@@ -10907,9 +10907,9 @@ exh_hub_sports_central:
     push esi                                     ; 020023 56
     sub esp, 0x310                               ; 020024 81ec10030000
     mov esi, eax                                 ; 02002a 89c6
-    mov dword ptr [dword_dc738], 1               ; 02002c c70538c70d000100..
-    mov dword ptr [dword_c65b0], eax             ; 020036 a3b0650c00
-    mov dword ptr [dword_c65b8], team_stats_screen ; 02003b c705b8650c00be35..
+    mov dword ptr [stats_hub_active], 1          ; 02002c c70538c70d000100..
+    mov dword ptr [stats_current_arg], eax       ; 020036 a3b0650c00
+    mov dword ptr [stats_current_screen], team_stats_screen ; 02003b c705b8650c00be35..
     mov eax, esp                                 ; 020045 89e0
     push eax                                     ; 020047 50
     push 0x100                                   ; 020048 6800010000
@@ -10984,8 +10984,8 @@ loc_2012b:
     mov eax, 1                                   ; 020149 b801000000
     call fade_palette                            ; 02014e e8d6620500
     xor esi, esi                                 ; 020153 31f6
-    mov dword ptr [dword_dc738], esi             ; 020155 893538c70d00
-    mov dword ptr [dword_c65b8], esi             ; 02015b 8935b8650c00
+    mov dword ptr [stats_hub_active], esi        ; 020155 893538c70d00
+    mov dword ptr [stats_current_screen], esi    ; 02015b 8935b8650c00
     mov eax, 2                                   ; 020161 b802000000
     add esp, 0x310                               ; 020166 81c410030000
     pop esi                                      ; 02016c 5e

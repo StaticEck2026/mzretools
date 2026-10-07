@@ -24,7 +24,7 @@ func _init(file_exists: Callable = Callable()) -> void:
 	exists = file_exists
 	rng.randomize()
 
-## load_music_banks for the home team (database index) and the sound card (dword_c541f)
+## load_music_banks for the home team (database index) and the sound card (sound_card)
 func setup(home: int, card: int = 2) -> void:
 	rocku = "MTROCKU" if card == 8 else ("SBROCKU" if card == 2 or card == 0x20 else "ADROCKU")
 	var row := home if home <= 0x19 else 0xd

@@ -28,10 +28,10 @@ extends RefCounted
 ## runs at the 100 Hz of the game's timer (tick()).
 
 const CLASS := 1                      # the driver class of the FM records (+0xf of a patch record)
-const OP_OFFSET := [0, 1, 2, 8, 9, 10, 16, 17, 18]                                   # unk_d67a8
-const VOICE_REGS := [0x23, 0x43, 0x63, 0x83, 0xe3, 0x20, 0x40, 0x60, 0x80, 0xe0, 0xc0, 0xa0, 0xb0]  # unk_d67b4
-# unk_d67f4: the F-numbers of note % 12 + offset (from -12) and, after them, the velocity levels
-# (unk_d683c, (velocity & 0x7c) / 4) that offsets past 35 read; unk_d687c: controller 7's gains
+const OP_OFFSET := [0, 1, 2, 8, 9, 10, 16, 17, 18]                                   # opl_voice_operator
+const VOICE_REGS := [0x23, 0x43, 0x63, 0x83, 0xe3, 0x20, 0x40, 0x60, 0x80, 0xe0, 0xc0, 0xa0, 0xb0]  # opl_voice_registers
+# adlib_fnum_table: the F-numbers of note % 12 + offset (from -12) and, after them, the velocity levels
+# (adlib_velocity_levels, (velocity & 0x7c) / 4) that offsets past 35 read; adlib_volume_table: controller 7's gains
 const FNUM_LOW := [43, 45, 48, 51, 54, 57, 61, 64, 68, 72, 76, 81]
 const FNUM := [86, 91, 96, 102, 108, 114, 121, 128, 136, 144, 153, 162, 171, 182, 192, 204, 216, 229, 242, 257,
 	272, 288, 306, 324, 343, 363, 385, 408, 432, 458, 485, 514, 544, 577, 611, 647]
@@ -43,7 +43,7 @@ const VOL_GAIN := [0, 1232, 2463, 3695, 4926, 6158, 7389, 8621, 9852, 10060, 102
 	13888, 14023, 14157, 14289, 14419, 14547, 14674, 14799, 14922, 15044, 15164, 15282, 15399, 15515, 15629, 15742,
 	15853, 15964, 16072, 16180, 16287, 16384, 16384, 16384, 16384, 16384, 16384, 16384, 16384, 16384, 16384, 16384]
 
-class Channel:                        # unk_f2f28[ch] (0x1e bytes)
+class Channel:                        # adlib_channels[ch] (0x1e bytes)
 	var mod := 0                      # +4 controller 1 (0..0x4000)
 	var vol := 0                      # +6 controller 7 (VOL_GAIN; nothing sets it before the first)
 	var pan := 0                      # +8 controller 10 (-0x4000..0x4000, not used)
@@ -61,7 +61,7 @@ class Channel:                        # unk_f2f28[ch] (0x1e bytes)
 	var program := 0xff               # +0x1b
 	var priority := 100               # +0x1c the patch's priority (+0xc) * 16
 
-class Voice:                          # unk_f3148[i] (0x56 bytes; the routines get the state at +8)
+class Voice:                          # adlib_voices[i] (0x56 bytes; the routines get the state at +8)
 	var channel := -1                 # +0 the channel record
 	var timbre := PackedByteArray()   # +4
 	var regs := PackedByteArray()     # +0xa the 13 register bytes
@@ -102,10 +102,10 @@ var chip: Opl2
 var bank: FmBank
 var channels: Array = []
 var voices: Array = []
-var free_mask := 0x1ff                # word_f3452
-var used_mask := 0                    # word_f3450
-var released_mask := 0                # word_f344e
-var shadow := PackedByteArray()       # unk_d68fc: the registers as written (opl_flush_regs)
+var free_mask := 0x1ff                # adlib_free_mask
+var used_mask := 0                    # adlib_used_mask
+var released_mask := 0                # adlib_released_mask
+var shadow := PackedByteArray()       # opl_shadow: the registers as written (opl_flush_regs)
 
 func _init(c: Opl2, b: FmBank) -> void:
 	chip = c
@@ -399,7 +399,7 @@ func _load_timbre(v: Voice, note: int, vel: int) -> void:
 		v.env_delay = _w(t, 0x12)
 		v.env_state = 2 if v.env_delay == 0 else 1
 	if _w(t, 0x22) != 0:
-		# adlib_env_init (the LFO)
+		# adlib_lfo_init (the LFO)
 		v.lfo_phase = 0
 		v.lfo_count = 0
 		v.lfo_raw = 0
@@ -408,7 +408,7 @@ func _load_timbre(v: Voice, note: int, vel: int) -> void:
 		v.lfo_rate = _w(t, 0x2e)
 		v.lfo_state = 1
 	if _w(t, 0x32) != 0:
-		# adlib_lfo_init (the sequence)
+		# adlib_seq_init (the sequence)
 		v.seq = 0
 		v.seq_len = _w(t, 0x38)
 		v.seq_step = t[0x37]
@@ -537,7 +537,7 @@ func _env_step(v: Voice, t: PackedByteArray) -> void:
 				v.env = 0
 				v.env_state = 0
 
-## adlib_env_update (0x9e5c9, the LFO): from tick +0x24 to +0x26 the sine of the phase times the
+## adlib_lfo_update (0x9e5c9, the LFO): from tick +0x24 to +0x26 the sine of the phase times the
 ## depth, limited to +0x2a
 func _lfo_step(v: Voice, t: PackedByteArray) -> void:
 	var run := false
@@ -565,7 +565,7 @@ func _lfo_step(v: Voice, t: PackedByteArray) -> void:
 		v.lfo_out = v.lfo_raw
 	v.lfo_count = _s16(v.lfo_count + 1)
 
-## adlib_lfo_step (0x9e511, the step sequence): after the delay a value every +0x37 ticks, for
+## adlib_seq_step (0x9e511, the step sequence): after the delay a value every +0x37 ticks, for
 ## +0x38 ticks
 func _seq_step(v: Voice) -> void:
 	var t := v.timbre

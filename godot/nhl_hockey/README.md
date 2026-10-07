@@ -80,11 +80,11 @@ behaviour matches the DOS game (see "Porting conventions" below).
 | Pause screen | `view/PauseMenu.gd`, `frontend/FrontEnd.gd` | `pause_menu` (0, 1 the intermission, 2 after the game): the EA desk, the menu bar, Back to Game, the goalie choice, Go To Replay, the settings, the line editor, the statistics, Save Game, the Sports Desk, Exit (`PauseMenu.gd` is the screen of a match started without the front end) |
 | Front end | `frontend/FrontEnd.gd`, `ui/Screen8.gd`, `ui/Ui.gd`, `ui/Menus.gd` | `main`, `loading_screen`, `frontend_main_menu` (the EA SPORTS desk), `run_menu` / the menu bar (the 32 byte menu records of the executable, every callback a method of the same name), `message_dialog`, the buttons, text entry, `play_game`, `end_match_from_period` / `end_match_from_loop`: a 640x480 256 colour frame buffer with the original coordinates, colour indices and palette fades |
 | Intro, credits | `frontend/IntroScreens.gd` | `intro_sequence`, `ea_sports_intro`, `demo_game` (computer against computer, 60 second periods, until a key), `credits_screen` (the 0x1d pages of the executable's credits) |
-| Exhibition | `frontend/GameScreens.gd`, `frontend/BoxScore.gd` | the locker room (`locker_room_screen`: teams and controllers), `exhibition_mode`, the scouting report (`team_select_screen`), tonight's line-ups (`draw_team_logos`), the box score and summaries (`boxscore_screen`), the scores around the league (`league_scores_init` / `advance`), Game Statistics (`team_select_screen2`), the scratches, Save Game (`broadcast_booth_screen`, `sim/SaveGame.gd`) |
+| Exhibition | `frontend/GameScreens.gd`, `frontend/BoxScore.gd` | the locker room (`locker_room_screen`: teams and controllers), `exhibition_mode`, the scouting report (`scouting_report_screen`), tonight's line-ups (`lineups_screen`), the box score and summaries (`boxscore_screen`), the scores around the league (`league_scores_init` / `advance`), Game Statistics (`game_statistics_screen`), the scratches, Save Game (`broadcast_booth_screen`, `sim/SaveGame.gd`) |
 | Settings | `frontend/SettingsScreens.gd`, `frontend/Session.gd` | `apply_settings` / `save_settings` (the 0x75 byte block of GAME.SET), the exhibition / game / league / play-off settings dialogs, the controllers of the two players, the sound settings |
 | Line editor | `frontend/LineEditor.gd` | `edit_lines_screen_b`, `draw_lines_screen`, `edit_lines_keys`: the 40 places of the line table, before and during the game |
 | Statistics | `frontend/StatsScreens.gd` | `standings_table`, `team_stats_screen`, `stats_table` (leaders), `player_stats_screen`, `player_card_screen`, `goalie_card_screen`, the statistics hubs; '93 - '94, a league's season or play-offs |
-| Leagues | `sim/League.gd`, `frontend/LeagueScreens.gd` | New League (`new_league_mode`, `new_league_dialog`, the team grid `team_info_screen`, passwords), Open (`league_select_screen`), Next League Game (`league_calendar_screen`, `league_calendar_flow`, `calendar_screen`), the schedule (SCHEDULE.DB), the statistical game of the teams nobody plays (`0x452c5`), `league_play_day`, `season_record_result` (TEAMS / SEASON / KEY / CAREER written back), the play-offs (`playoff_make_round1..final`, `playoff_set_series`, the bracket `stanley_cup_tree_screen`), New Play-Off Series, the League Manager entries, the awards |
+| Leagues | `sim/League.gd`, `frontend/LeagueScreens.gd` | New League (`new_league_mode`, `new_league_dialog`, the team grid `team_info_screen`, passwords), Open (`league_select_screen`), Next League Game (`league_calendar_screen`, `league_calendar_flow`, `calendar_screen`), the schedule (SCHEDULE.DB), the statistical game of the teams nobody plays (`league_sim_game`), `league_play_day`, `season_record_result` (TEAMS / SEASON / KEY / CAREER written back), the play-offs (`playoff_make_round1..final`, `playoff_set_series`, the bracket `stanley_cup_tree_screen`), New Play-Off Series, the League Manager entries, the awards |
 | Central Registry | `frontend/Registry.gd` | `menu_central_registry` / `database_screen`: trades, free agents, new players, a team's lines, databases saved and loaded by name |
 
 The headless test (`tests/run_tests.gd`) checks the RefPack decoder, the tables, the animation stepping, a
@@ -98,6 +98,35 @@ rate), the speech bank and its sentences, line changes, the match rules, the cer
 and the music: the 144 FM timbres, every song of the match tables, the sequencer's first notes and their
 frequencies, the FM kick drum's sweep, the puck drop effect, the digital stomp, the cues of a Boston and a
 Montreal home game and the power play flags.
+
+## Verified against the original
+
+`tools/nhl/golden.py` runs routines of HOCKEY.EXE itself in an emulator (`tools/leemu.py`: the LE image
+mapped at its linear addresses, port I/O caught, a few routines such as `play_sfx` or `score_goal`
+replaced by recorders) on fixed and random inputs, and writes what they produce to `tests/golden/*.json`;
+the headless test feeds the same inputs to the port and compares, field by field:
+
+| Golden data | The original's routines | Cases | Compared |
+|---|---|---|---|
+| `rng.json` | `randomrange`, `rand` / `srand` | 7 seeds x 64 | every value and the final seed |
+| `fm_driver.json` | the AdLib driver (`adlib_drv_init` / `send_midi` / `tick` and the `opl_*` layer) | 4 MIDI sequences (an organ note with bend and modulation, the drum kit, the match's FM effects, 60 notes over 4 channels with stealing, sustain and all notes off) | the OPL2 registers after every 100 Hz tick |
+| `pc_speaker.json` | the PC speaker driver (`pcspk_*`) | 8 effects | the gate and the PIT divisor every tick |
+| `physics.json` | `approx_distance`, `direction8` | 200 vectors | the results |
+| | `collide_boards`, `collide_corner`, `bounce_off_boards`, `puck_spin` | 300 puck and skater states at the boards and corners | the entity record, the sounds, the seed |
+| | `apply_skating`, `skating_turn`, `skating_accelerate`, `stop_skating`, `brake`, `goalie_move` | 400 skater, goalie and referee states (100 on seeds that hit the fatigue step) | velocity, heading, animation, flags, the team's energy word, the seed |
+| | `collide_net`, `collide_player_net`, `net_push_off` | 400 states at the nets: goals, posts, the roof, the frame, nets knocked off | the record, the goal, the infractions, the net's velocity, the seed |
+| | `move_entity`, `collide_neighbours`, `collide_pair`, the draw order | 300 clusters of team mates | every record of the cluster, the draw order, the seed |
+
+All of them match. The comparisons found and fixed, among others: the distance (the original's is
+|dx| / cos of the vector's angle from its arctangent and sine tables, not an octagonal estimate), the
+corner, glass and post rules, the puck's jump and spin off the boards, the goalie turning the other way,
+a stride counter the port had invented, the draw order deciding which players collide, the net knocked
+off its pegs, and every FM register of the AdLib driver (`audio/FmDriver.gd` is a literal port).
+
+The workflow `.github/workflows/nhl.yml` runs, on every change of the tools, the port or the game files:
+the decoders of `tools/nhl/formats.py` against the game's own (`tools/nhl/test_pack.py`), `golden.py`
+again (its output must equal the committed data), the Godot tests on the committed OPL2 library, and the
+library built from source with the tests again.
 
 ## Not ported yet, and known simplifications
 

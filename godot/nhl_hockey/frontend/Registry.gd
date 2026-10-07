@@ -23,11 +23,11 @@ const SEL_X := [0x23, 0x15e]
 const ROW_Y := 0x35
 
 var files := {}                      # KEY, CAREER, ATT, CARTEAMS, TEAMS, SEASON
-var column := [12, 21]               # byte_d079e: the team of each roster (0xff the free agents)
+var column := [12, 21]               # roster_team_column: the team of each roster (0xff the free agents)
 var rows := [[], []]                 # the entries: [position, number, KEY offset, "F. Last"]
-var selected := [{}, {}]             # unk_eaf80 / dword_d07ae: the rows selected
-var scroll := 0                      # dword_ebca4: the first free agent shown
-var dirty := false                   # dword_ebc68: changes not saved
+var selected := [{}, {}]             # editor_selected / dword_d07ae: the rows selected
+var scroll := 0                      # editor_scroll: the first free agent shown
+var dirty := false                   # editor_dirty: changes not saved
 var db_name := "CURRENT"
 var _pal := PackedByteArray()
 

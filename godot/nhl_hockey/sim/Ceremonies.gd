@@ -6,7 +6,7 @@ class_name Ceremonies
 ## compute_three_stars, compare_player_stats, ai_ref_three_stars, ai_three_stars). The info panel
 ## and its clips (InfoPanel) pace the referee like in the original.
 
-const ANTHEM_STEPS := 0x708          # init_match: dword_e9b04 = 30 seconds
+const ANTHEM_STEPS := 0x708          # init_match: sequence_steps = 30 seconds
 const STARS_STEPS := 12000           # three_stars_sequence
 
 # --------------------------------------------------------------------------------------------

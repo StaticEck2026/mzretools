@@ -143,7 +143,7 @@ undefined8 __watcall goal_milestone_check(int param_1,undefined4 unaff_EDX,int u
     if (iVar5 != 0) {
       param_1 = queue_deferred_call(return_one_18f86,uVar4,uVar6,iVar5,unaff_EBX,0,0,0);
       dword_c5840 = 1;
-      dword_cbebe._2_2_ = 0xffff;
+      panel_state._2_2_ = 0xffff;
     }
   }
   return CONCAT44(unaff_EDX,param_1);
@@ -257,11 +257,11 @@ void __watcall queue_infraction(int param_1,short unaff_DX)
   __CHK(0xc);
   if (((action_flags & 0x80) == 0) && (penalty_box_mode == 0)) {
     if ((penalty_shot_setup == 0) &&
-       (_dword_cbec6 >> 0x10 < *(int *)(&infraction_priority + unaff_DX * 4))) {
+       (_injury_stoppage >> 0x10 < *(int *)(&infraction_priority + unaff_DX * 4))) {
       sVar2 = *(short *)(&infraction_priority + unaff_DX * 4);
-      _dword_cbec6 = CONCAT22(sVar2,dword_cbec6);
+      _injury_stoppage = CONCAT22(sVar2,injury_stoppage);
       if ((sVar2 != -1) && (sVar2 != 6)) {
-        dword_cbeca._0_2_ = 0x50;
+        panel_clip._0_2_ = 0x50;
       }
     }
     if (6 < unaff_DX) {
@@ -359,7 +359,7 @@ void __watcall penalty_box_update(void)
   }
   while( true ) {
     if (infraction_queue._3_1_ == '\0') {
-      if (((dword_cbeca._2_2_ != 0) && (dword_cbeca._2_2_ != 2)) && (-1 < dword_cbebe._2_2_)) {
+      if (((panel_clip._2_2_ != 0) && (panel_clip._2_2_ != 2)) && (-1 < panel_state._2_2_)) {
         return;
       }
       iVar3 = 0xdf614;
@@ -557,7 +557,7 @@ void __watcall stoppage_tick(void)
     faceoff_timer = 0x1c20;
     ref_phase._1_1_ = 0xff;
     whistle_timer = 0;
-    if ((short)dword_cbeca == 0) {
+    if ((short)panel_clip == 0) {
       _word_cbec8 = 0xffff;
     }
   }
@@ -616,7 +616,7 @@ void __watcall start_stoppage(short param_1)
     }
     if (penalty_shot_setup != 0) {
       faceoff_spot._0_2_ = penalty_shot_spot_x;
-      faceoff_spot._2_2_ = dword_cc114;
+      faceoff_spot._2_2_ = penalty_shot_spot_y;
     }
     if ((short)faceoff_spot < 0x60) {
       if ((short)faceoff_spot < -0x5f) {
@@ -710,8 +710,8 @@ LAB_00063871:
         if ((-1 < *p_puck_carrier) &&
            ((char)(&unk_e9a17)[iVar2] < '\x06' == *p_puck_carrier < '\x06')) {
           whistle_timer = 0x28;
-          if (_dword_cbec6 >> 0x10 != -1) {
-            dword_cbeca._0_2_ = 0x50;
+          if (_injury_stoppage >> 0x10 != -1) {
+            panel_clip._0_2_ = 0x50;
           }
           goto LAB_00063871;
         }
@@ -729,7 +729,7 @@ LAB_00063879:
           if (stoppage_timer < (short)((short)(char)(&stoppage_duration)[cVar1] << 5)) {
             stoppage_timer = (short)(char)(&stoppage_duration)[cVar1] << 5;
           }
-          if (dword_cbec6 != 0) {
+          if (injury_stoppage != 0) {
             stoppage_timer = 0x140;
           }
           if ((penalty_shot_setup == 0) || (cVar1 != '\x05')) {
@@ -857,15 +857,15 @@ void __watcall penalty_timers(int param_1)
   char acStackY_18 [4];
   
   __CHK(0x1c);
-  dword_e03be._2_2_ = 2;
+  scratch_b._2_2_ = 2;
   uRam000e03c2 = 0;
   ram0x000e03b0 = 2;
   sVar5 = 0;
   for (sVar4 = 0; sVar4 < 0x1c; sVar4 = sVar4 + 1) {
     cVar1 = *(char *)(param_1 + 0xb6 + (int)sVar4);
     if (cVar1 < '\0') break;
-    dword_e03be._2_2_ = dword_e03be._2_2_ + -1;
-    if (-1 < dword_e03be._2_2_) {
+    scratch_b._2_2_ = scratch_b._2_2_ + -1;
+    if (-1 < scratch_b._2_2_) {
       acStackY_18[sVar5] = cVar1;
       sVar5 = sVar5 + 1;
       iVar2 = (short)cVar1 * 2 + param_1;
@@ -878,21 +878,21 @@ void __watcall penalty_timers(int param_1)
         while (iVar2 = (ram0x000e03aa >> 0x10) + (int)sVar4,
               cVar1 = *(char *)(param_1 + 0xb6 + iVar2), *(char *)(param_1 + 0xb5 + iVar2) = cVar1,
               -1 < cVar1) {
-          dword_e03ac = dword_e03ac + 1;
+          scratch_e03ac = scratch_e03ac + 1;
         }
         sVar4 = sVar4 + -1;
       }
     }
   }
-  if (dword_e03be._2_2_ == 1) {
+  if (scratch_b._2_2_ == 1) {
     iVar2 = CONCAT13(acStackY_18[0],CONCAT21(uStackY_1a,uStackY_1b));
   }
-  else if (dword_e03be._2_2_ == 0) {
+  else if (scratch_b._2_2_ == 0) {
     penalty_expired(param_1,(int)acStackY_18[0]);
     iVar2 = CONCAT13(acStackY_18[1],CONCAT12(acStackY_18[0],6));
   }
   else {
-    if (dword_e03be._2_2_ != -1) {
+    if (scratch_b._2_2_ != -1) {
       return;
     }
     iVar2 = CONCAT13(acStackY_18[1],CONCAT12(acStackY_18[0],uStackY_1a));
@@ -1001,7 +1001,7 @@ void __watcall update_stoppage(void)
         faceoff_timer = 0x1c20;
         ref_phase._1_1_ = 0xff;
         whistle_timer = 0;
-        if ((short)dword_cbeca == 0) {
+        if ((short)panel_clip == 0) {
           _word_cbec8 = 0xffff;
         }
       }
@@ -1403,7 +1403,7 @@ void __watcall begin_penalty_shot(void)
     penalty_shot_roster = *(int *)(&unk_df860 + penalty_shot_slot * 0x80) >> 0x18;
     penalty_shot_phase = 1;
     _penalty_shot_spot_x = (int)(short)faceoff_spot;
-    _dword_cc114 = (int)faceoff_spot._2_2_;
+    _penalty_shot_spot_y = (int)faceoff_spot._2_2_;
     faceoff_spot._0_2_ = 0;
     faceoff_spot._2_2_ = 0;
   }
@@ -1426,7 +1426,7 @@ end_penalty_shot(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,un
     penalty_shot_slot = 0xffffffff;
     queue_infraction(&puck,5,unaff_EBX,0,unaff_EDX,unaff_ECX);
     last_touch_x = penalty_shot_spot_x;
-    last_touch_y = dword_cc114;
+    last_touch_y = penalty_shot_spot_y;
     set_state(&referee,0x21);
   }
   return;
@@ -2069,7 +2069,8 @@ void __watcall lineup_set_backup(short param_1,short unaff_DX)
 // lineup_fill_slots @ 0x6552e [__watcall]
 // ================================================================================================
 
-void __watcall lineup_fill_slots(short param_1,short unaff_DX,short unaff_BX,short unaff_CX,short param_5)
+void __watcall
+lineup_fill_slots(short param_1,short unaff_DX,short unaff_BX,short unaff_CX,short param_5)
 
 {
   char cVar1;
@@ -2346,7 +2347,8 @@ undefined8 __watcall injury_check(int param_1,undefined4 unaff_EDX)
 // draw_stipple_rect @ 0x65ca8 [__watcall]
 // ================================================================================================
 
-void __watcall draw_stipple_rect(int param_1,int unaff_EDX,int unaff_EBX,int unaff_ECX,undefined4 param_5)
+void __watcall
+draw_stipple_rect(int param_1,int unaff_EDX,int unaff_EBX,int unaff_ECX,undefined4 param_5)
 
 {
   int iVar1;
@@ -2387,17 +2389,17 @@ void __watcall update_camera(void)
   sVar6 = 0x28;
   sVar7 = 10;
   bVar1 = false;
-  dword_e03ac = (short)camera_target_y;
-  dword_e03ae._2_2_ = _camera_target_x;
+  scratch_e03ac = (short)camera_target_y;
+  scratch_e03ae._2_2_ = _camera_target_x;
   if ((game_flags & 0x80) != 0) {
-    dword_e03ae._2_2_ = -100;
-    dword_e03ac = 0xf;
+    scratch_e03ae._2_2_ = -100;
+    scratch_e03ac = 0xf;
     sVar7 = 0xf - camera._2_2_;
     if (sVar7 < -5) {
-      dword_e03be = CONCAT22(0x14,(undefined2)dword_e03be);
+      scratch_b = CONCAT22(0x14,(undefined2)scratch_b);
     }
     else if (5 < sVar7) {
-      dword_e03be = CONCAT22(10,(undefined2)dword_e03be);
+      scratch_b = CONCAT22(10,(undefined2)scratch_b);
     }
     if (sVar7 < 0) {
       iVar4 = -(int)sVar7;
@@ -2406,7 +2408,7 @@ void __watcall update_camera(void)
       iVar4 = (int)sVar7;
     }
     if (5 < iVar4) {
-      sVar7 = dword_e03be._2_2_ - camera._2_2_;
+      sVar7 = scratch_b._2_2_ - camera._2_2_;
       iVar4 = (int)sVar7;
       if (sVar7 < 0) {
         iVar4 = -iVar4;
@@ -2419,31 +2421,31 @@ void __watcall update_camera(void)
           sVar7 = 0x20;
         }
       }
-      dword_e03be = CONCAT22(sVar7,(undefined2)dword_e03be);
+      scratch_b = CONCAT22(sVar7,(undefined2)scratch_b);
       if (sVar7 != 0) {
-        dword_e03be = CONCAT22(sVar7 >> 5,(undefined2)dword_e03be);
+        scratch_b = CONCAT22(sVar7 >> 5,(undefined2)scratch_b);
         if (sVar7 >> 5 == 0) {
-          dword_e03be = CONCAT22(1,(undefined2)dword_e03be);
+          scratch_b = CONCAT22(1,(undefined2)scratch_b);
         }
-        camera._2_2_ = camera._2_2_ + dword_e03be._2_2_;
+        camera._2_2_ = camera._2_2_ + scratch_b._2_2_;
       }
     }
     sVar7 = -100 - (short)camera;
-    dword_e03ba = CONCAT22(sVar7,(undefined2)dword_e03ba);
+    scratch_a = CONCAT22(sVar7,(undefined2)scratch_a);
     if (sVar7 < -0x28) {
-      dword_e03be._2_2_ = -0x20;
+      scratch_b._2_2_ = -0x20;
     }
     else {
       if (sVar7 < 0x29) {
         _camera_target_x = 0xff9c;
         camera_target_y._0_2_ = 0xf;
-        dword_e03ac = 0xf;
-        dword_e03ae._2_2_ = 0xff9c;
+        scratch_e03ac = 0xf;
+        scratch_e03ae._2_2_ = 0xff9c;
         return;
       }
-      dword_e03be._2_2_ = -0x8c;
+      scratch_b._2_2_ = -0x8c;
     }
-    sVar7 = dword_e03be._2_2_ - (short)camera;
+    sVar7 = scratch_b._2_2_ - (short)camera;
     iVar4 = (int)sVar7;
     if (sVar7 < 0) {
       iVar4 = -iVar4;
@@ -2456,17 +2458,17 @@ void __watcall update_camera(void)
         sVar7 = 0x20;
       }
     }
-    dword_e03be = CONCAT22(sVar7,(undefined2)dword_e03be);
+    scratch_b = CONCAT22(sVar7,(undefined2)scratch_b);
     if (sVar7 == 0) {
       _camera_target_x = 0xff9c;
       camera_target_y._0_2_ = 0xf;
-      dword_e03ac = 0xf;
-      dword_e03ae._2_2_ = 0xff9c;
+      scratch_e03ac = 0xf;
+      scratch_e03ae._2_2_ = 0xff9c;
       return;
     }
-    dword_e03be._2_2_ = sVar7 >> 5;
-    if (dword_e03be._2_2_ == 0) {
-      dword_e03be._2_2_ = 1;
+    scratch_b._2_2_ = sVar7 >> 5;
+    if (scratch_b._2_2_ == 0) {
+      scratch_b._2_2_ = 1;
     }
     goto LAB_00066480;
   }
@@ -2480,7 +2482,7 @@ void __watcall update_camera(void)
         else {
           iVar4 = (int)*p_puck_carrier;
           puVar5 = &entities + iVar4 * 0x20;
-          dword_e03ba = CONCAT22(2,(undefined2)dword_e03ba);
+          scratch_a = CONCAT22(2,(undefined2)scratch_a);
           if (*(short *)((int)&DAT_000df884 + iVar4 * 0x80 + 2) == 0x10) {
             camera_target_y._2_2_ =
                  -(short)(char)((uint)*(undefined4 *)(&DAT_000df828 + iVar4 * 0x40) >> 0x18);
@@ -2500,9 +2502,10 @@ void __watcall update_camera(void)
             }
           }
         }
-        dword_e03ac = camera_target_y._2_2_ +
-                      (short)((uint)puVar5[1] >> 0x10) + (short)(char)((uint)puVar5[3] >> 0x18);
-        dword_e03ae._2_2_ = *(short *)((int)puVar5 + 2);
+        scratch_e03ac =
+             camera_target_y._2_2_ +
+             (short)((uint)puVar5[1] >> 0x10) + (short)(char)((uint)puVar5[3] >> 0x18);
+        scratch_e03ae._2_2_ = *(short *)((int)puVar5 + 2);
       }
     }
     else {
@@ -2511,10 +2514,10 @@ void __watcall update_camera(void)
       sVar8 = referee._2_2_ - (short)camera;
       ram0x000e03aa = CONCAT22(sVar8,dword_e03a8._2_2_);
       sVar9 = word_e0046 - (short)camera;
-      dword_e03ae = CONCAT22(sVar9,(undefined2)dword_e03ae);
+      scratch_e03ae = CONCAT22(sVar9,(undefined2)scratch_e03ae);
       iVar4 = (int)sVar8;
       sVar2 = (short)camera;
-      if ((int)(dword_e03ae ^ ram0x000e03aa) >> 0x10 < 0) {
+      if ((int)(scratch_e03ae ^ ram0x000e03aa) >> 0x10 < 0) {
 LAB_00066022:
         _camera_target_x = sVar2;
       }
@@ -2532,10 +2535,10 @@ LAB_00066022:
       sVar8 = DAT_000e0020._2_2_ - camera._2_2_;
       ram0x000e03aa = CONCAT22(sVar8,dword_e03a8._2_2_);
       sVar9 = word_e0048 - camera._2_2_;
-      dword_e03ae = CONCAT22(sVar9,(undefined2)dword_e03ae);
+      scratch_e03ae = CONCAT22(sVar9,(undefined2)scratch_e03ae);
       iVar4 = (int)sVar8;
       sVar2 = camera._2_2_;
-      if ((int)(dword_e03ae ^ ram0x000e03aa) >> 0x10 < 0) {
+      if ((int)(scratch_e03ae ^ ram0x000e03aa) >> 0x10 < 0) {
 LAB_0006606c:
         camera_target_y._0_2_ = sVar2;
       }
@@ -2550,37 +2553,37 @@ LAB_0006606c:
         sVar2 = word_e0048;
         if (iVar10 < iVar4) goto LAB_0006606c;
       }
-      dword_e03ae._2_2_ = _camera_target_x;
+      scratch_e03ae._2_2_ = _camera_target_x;
       iVar10 = (referee >> 0x10) - (int)(short)faceoff_spot;
       iVar4 = (DAT_000e0020 >> 0x10) - (int)faceoff_spot._2_2_;
-      dword_e03ac = (short)camera_target_y;
+      scratch_e03ac = (short)camera_target_y;
       if ((((&unk_e003a)[dword_e0036 >> 0x10] == '\"') || ((&unk_e003a)[dword_e0036 >> 0x10] == ',')
           ) && (iVar4 * iVar4 + iVar10 * iVar10 < 0x640)) {
-        dword_e03ac = faceoff_spot._2_2_;
-        dword_e03ae._2_2_ = (short)faceoff_spot;
+        scratch_e03ac = faceoff_spot._2_2_;
+        scratch_e03ae._2_2_ = (short)faceoff_spot;
         sVar7 = 0;
         sVar6 = 0;
       }
     }
   }
-  sVar2 = dword_e03ac - camera._2_2_;
+  sVar2 = scratch_e03ac - camera._2_2_;
   iVar4 = (int)sVar2;
   if (SBORROW4(iVar4,-(int)sVar7) == iVar4 + sVar7 < 0) {
     if (sVar7 < sVar2) {
-      sVar8 = dword_e03ac;
+      sVar8 = scratch_e03ac;
       if (!bVar1) {
-        sVar8 = dword_e03ac - sVar7;
+        sVar8 = scratch_e03ac - sVar7;
       }
-      dword_e03be = CONCAT22(sVar8,(undefined2)dword_e03be);
+      scratch_b = CONCAT22(sVar8,(undefined2)scratch_b);
       if (0xec < sVar8) {
-        dword_e03be = CONCAT22(0xec,(undefined2)dword_e03be);
+        scratch_b = CONCAT22(0xec,(undefined2)scratch_b);
       }
     }
   }
   else {
-    dword_e03be = CONCAT22(dword_e03ac + sVar7,(undefined2)dword_e03be);
-    if ((short)(dword_e03ac + sVar7) < -0xbc) {
-      dword_e03be = CONCAT22(0xff44,(undefined2)dword_e03be);
+    scratch_b = CONCAT22(scratch_e03ac + sVar7,(undefined2)scratch_b);
+    if ((short)(scratch_e03ac + sVar7) < -0xbc) {
+      scratch_b = CONCAT22(0xff44,(undefined2)scratch_b);
     }
   }
   if (sVar2 < 0) {
@@ -2590,8 +2593,8 @@ LAB_0006606c:
     iVar4 = (int)sVar2;
   }
   if (sVar7 < iVar4) {
-    sVar7 = dword_e03be._2_2_ - camera._2_2_;
-    dword_e03be = CONCAT22(sVar7,(undefined2)dword_e03be);
+    sVar7 = scratch_b._2_2_ - camera._2_2_;
+    scratch_b = CONCAT22(sVar7,(undefined2)scratch_b);
     if ((game_flags & 1) != 0) {
       iVar4 = (int)sVar7;
       if (sVar7 < 0) {
@@ -2604,38 +2607,38 @@ LAB_0006606c:
         else {
           uVar3 = 0x20;
         }
-        dword_e03be = CONCAT22(uVar3,(undefined2)dword_e03be);
+        scratch_b = CONCAT22(uVar3,(undefined2)scratch_b);
       }
     }
-    if (dword_e03be._2_2_ != 0) {
-      sVar7 = dword_e03be._2_2_ >> !bVar1 + 3;
-      dword_e03be = CONCAT22(sVar7,(undefined2)dword_e03be);
+    if (scratch_b._2_2_ != 0) {
+      sVar7 = scratch_b._2_2_ >> !bVar1 + 3;
+      scratch_b = CONCAT22(sVar7,(undefined2)scratch_b);
       if (sVar7 == 0) {
-        dword_e03be = CONCAT22(1,(undefined2)dword_e03be);
+        scratch_b = CONCAT22(1,(undefined2)scratch_b);
       }
-      camera._2_2_ = camera._2_2_ + dword_e03be._2_2_;
+      camera._2_2_ = camera._2_2_ + scratch_b._2_2_;
     }
   }
-  sVar7 = dword_e03ae._2_2_ - (short)camera;
-  dword_e03ba = CONCAT22(sVar7,(undefined2)dword_e03ba);
+  sVar7 = scratch_e03ae._2_2_ - (short)camera;
+  scratch_a = CONCAT22(sVar7,(undefined2)scratch_a);
   if (SBORROW4((int)sVar7,-(int)sVar6) == (int)sVar7 + (int)sVar6 < 0) {
     if (sVar7 <= sVar6) {
-      _camera_target_x = dword_e03ae._2_2_;
-      camera_target_y._0_2_ = dword_e03ac;
+      _camera_target_x = scratch_e03ae._2_2_;
+      camera_target_y._0_2_ = scratch_e03ac;
       return;
     }
-    dword_e03be._2_2_ = dword_e03ae._2_2_ - sVar6;
-    if (0x20 < dword_e03be._2_2_) {
-      dword_e03be._2_2_ = 0x20;
+    scratch_b._2_2_ = scratch_e03ae._2_2_ - sVar6;
+    if (0x20 < scratch_b._2_2_) {
+      scratch_b._2_2_ = 0x20;
     }
   }
   else {
-    dword_e03be._2_2_ = sVar6 + dword_e03ae._2_2_;
-    if (dword_e03be._2_2_ < -0x20) {
-      dword_e03be._2_2_ = -0x20;
+    scratch_b._2_2_ = sVar6 + scratch_e03ae._2_2_;
+    if (scratch_b._2_2_ < -0x20) {
+      scratch_b._2_2_ = -0x20;
     }
   }
-  sVar7 = dword_e03be._2_2_ - (short)camera;
+  sVar7 = scratch_b._2_2_ - (short)camera;
   iVar4 = (int)sVar7;
   if (sVar7 < 0) {
     iVar4 = -iVar4;
@@ -2648,22 +2651,22 @@ LAB_0006606c:
       sVar7 = 0x20;
     }
   }
-  dword_e03be = CONCAT22(sVar7,(undefined2)dword_e03be);
+  scratch_b = CONCAT22(sVar7,(undefined2)scratch_b);
   if (sVar7 == 0) {
-    _camera_target_x = dword_e03ae._2_2_;
-    camera_target_y._0_2_ = dword_e03ac;
+    _camera_target_x = scratch_e03ae._2_2_;
+    camera_target_y._0_2_ = scratch_e03ac;
     return;
   }
-  dword_e03be._2_2_ = sVar7 >> 4;
-  if (dword_e03be._2_2_ == 0) {
-    dword_e03be._2_2_ = 1;
+  scratch_b._2_2_ = sVar7 >> 4;
+  if (scratch_b._2_2_ == 0) {
+    scratch_b._2_2_ = 1;
   }
 LAB_00066480:
-  camera._0_2_ = (short)camera + dword_e03be._2_2_;
-  _camera_target_x = dword_e03ae._2_2_;
-  camera_target_y._0_2_ = dword_e03ac;
-  dword_e03ac = dword_e03ac;
-  dword_e03ae._2_2_ = dword_e03ae._2_2_;
+  camera._0_2_ = (short)camera + scratch_b._2_2_;
+  _camera_target_x = scratch_e03ae._2_2_;
+  camera_target_y._0_2_ = scratch_e03ac;
+  scratch_e03ac = scratch_e03ac;
+  scratch_e03ae._2_2_ = scratch_e03ae._2_2_;
   return;
 }
 
@@ -2702,10 +2705,10 @@ void __watcall load_cutscene_clip(short param_1)
     }
     _input_enabled = dword_e9a9e >> 0x10;
     dword_e0248 = (&off_cc01d)[param_1];
-    dword_e9ab2._0_2_ = *(undefined2 *)(&unk_cc054 + param_1 * 4);
-    dword_e9ab2._2_2_ = 1;
-    word_cbece = (short)*(char *)(dword_e0248 + 1);
-    dword_cbeca._2_2_ = param_1;
+    clip_script_pos._0_2_ = *(undefined2 *)(&unk_cc054 + param_1 * 4);
+    clip_script_pos._2_2_ = 1;
+    clip_frame = (short)*(char *)(dword_e0248 + 1);
+    panel_clip._2_2_ = param_1;
   }
   return;
 }
@@ -2740,17 +2743,17 @@ void __watcall draw_penalty_box_overlay(void)
   short sStack_1c;
   
   __CHK(0x60);
-  if (dword_cbebe._2_2_ < 0x10) {
-    unaff_DI = dword_cbebe._2_2_ + -0x10;
+  if (panel_state._2_2_ < 0x10) {
+    unaff_DI = panel_state._2_2_ + -0x10;
   }
-  else if (dword_cbebe._2_2_ < 0x101) {
+  else if (panel_state._2_2_ < 0x101) {
     unaff_DI = 0;
   }
-  else if (599 < dword_cbebe._2_2_) {
-    unaff_DI = 600 - dword_cbebe._2_2_;
+  else if (599 < panel_state._2_2_) {
+    unaff_DI = 600 - panel_state._2_2_;
   }
   _word_cbec8 = 0xffff;
-  dword_cbeca._0_2_ = 0;
+  panel_clip._0_2_ = 0;
   if (unaff_DI < 0) {
     iVar9 = (unaff_DI + 0x10) * 0x42;
     iVar4 = iVar9 >> 0x1f;
@@ -2780,7 +2783,7 @@ void __watcall draw_penalty_box_overlay(void)
   sStack_2c = _dword_dd6aa + 0xc + ((short)dword_d30b0 - _dword_dd6aa);
   iVar4 = (int)(short)(_dword_dd6aa + 0x57 + ((short)dword_d30b0 - _dword_dd6aa));
   iVar9 = (int)(short)(sVar7 + 0x7b + ((short)dword_d30ac - (short)dword_dd6ac));
-  if (((unaff_DI < 0) || (dword_cbeca._2_2_ == -1)) || (word_cbece == -1)) {
+  if (((unaff_DI < 0) || (panel_clip._2_2_ == -1)) || (clip_frame == -1)) {
     iVar6 = (int)sStack_2c;
     iVar5 = (int)sVar8;
     iVar2 = iVar9 - iVar5;
@@ -2797,7 +2800,7 @@ void __watcall draw_penalty_box_overlay(void)
   if (unaff_DI < 0) {
     setclip(uStack_22 >> 0x10,(int)sStack_3c,(int)sStack_28,local_3a >> 0x10);
   }
-  else if ((dword_cbeca._2_2_ == -1) || (word_cbece == -1)) {
+  else if ((panel_clip._2_2_ == -1) || (clip_frame == -1)) {
     if (byte_e0344 == '\0') {
       if (byte_e0308 == '\0') {
         sStack_1c = 0x12;
@@ -2815,9 +2818,9 @@ void __watcall draw_penalty_box_overlay(void)
     sVar8 = sVar8 + 0x3e;
     setfont(font_scor3b);
     settextpos(0x25,0xff);
-    if (byte_e02c8 != '\0') {
-      iVar9 = textwidth(&byte_e02c8,(int)sStack_2c);
-      printstr_at(&byte_e02c8,(int)sVar8 - iVar9 / 2);
+    if (panel_title != '\0') {
+      iVar9 = textwidth(&panel_title,(int)sStack_2c);
+      printstr_at(&panel_title,(int)sVar8 - iVar9 / 2);
     }
     sVar7 = sStack_2c;
     if (byte_e0250 != '\0') {
@@ -2841,9 +2844,9 @@ void __watcall draw_penalty_box_overlay(void)
     }
     setfont(font_scor2b);
     settextpos(0x27,0xff);
-    if (byte_e02c8 != '\0') {
-      iVar9 = textwidth(&byte_e02c8,(int)sStack_2c);
-      printstr_at(&byte_e02c8,(int)sVar8 - iVar9 / 2);
+    if (panel_title != '\0') {
+      iVar9 = textwidth(&panel_title,(int)sStack_2c);
+      printstr_at(&panel_title,(int)sVar8 - iVar9 / 2);
     }
     if (byte_e0250 != '\0') {
       sStack_2c = sStack_2c + sStack_1c;
@@ -2866,25 +2869,25 @@ void __watcall draw_penalty_box_overlay(void)
     }
   }
   else {
-    if ((dword_cbeca._2_2_ == 10) && (0x10 < word_cbece)) {
+    if ((panel_clip._2_2_ == 10) && (0x10 < clip_frame)) {
       blit_rle_clip(dword_df004,(int)sVar8,(int)sStack_2c);
       iVar9 = sStack_2c + 0x1f;
       iVar2 = sVar8 + 0x11;
-      uVar10 = (&unk_def8c)[word_cbece];
+      uVar10 = (&unk_def8c)[clip_frame];
     }
-    else if ((dword_cbeca._2_2_ == 8) && ((0x11 < word_cbece && (word_cbece < 0x15)))) {
+    else if ((panel_clip._2_2_ == 8) && ((0x11 < clip_frame && (clip_frame < 0x15)))) {
       iVar2 = (int)sVar8;
       blit_rle_clip(dword_defe0,iVar2,(int)sStack_2c);
       iVar9 = sStack_2c + 0x3c;
-      uVar10 = (&unk_def8c)[word_cbece];
+      uVar10 = (&unk_def8c)[clip_frame];
     }
     else {
       iVar9 = (int)sStack_2c;
       iVar2 = (int)sVar8;
-      uVar10 = (&unk_def8c)[word_cbece];
+      uVar10 = (&unk_def8c)[clip_frame];
     }
     blit_rle_clip(uVar10,iVar2,iVar9);
-    if ((dword_cbeca._2_2_ == 0) && (word_cbece == 2)) {
+    if ((panel_clip._2_2_ == 0) && (clip_frame == 2)) {
       sStack_2c = sStack_2c + 0x23;
       if (0x2ee < crowd_noise._2_2_) {
         uVar3 = (crowd_noise >> 0x10) - 0x2ee;
@@ -2892,8 +2895,8 @@ void __watcall draw_penalty_box_overlay(void)
           uVar3 = 200;
         }
         draw_stipple_rect((int)sVar8,(int)sStack_2c,
-                  (int)(short)((int)((uint)(ushort)((short)uVar3 >> 0xf) << 0x10 | uVar3 & 0xffff) /
-                              5),iVar4 - sStack_2c,0x30);
+                          (int)(short)((int)((uint)(ushort)((short)uVar3 >> 0xf) << 0x10 |
+                                            uVar3 & 0xffff) / 5),iVar4 - sStack_2c,0x30);
       }
       if (0x3b6 < crowd_noise._2_2_) {
         sVar8 = sVar8 + 0x28;
@@ -2902,8 +2905,8 @@ void __watcall draw_penalty_box_overlay(void)
           uVar3 = 200;
         }
         draw_stipple_rect((int)sVar8,(int)sStack_2c,
-                  (int)(short)((int)((uint)(ushort)((short)uVar3 >> 0xf) << 0x10 | uVar3 & 0xffff) /
-                              5),iVar4 - sStack_2c,0x27);
+                          (int)(short)((int)((uint)(ushort)((short)uVar3 >> 0xf) << 0x10 |
+                                            uVar3 & 0xffff) / 5),iVar4 - sStack_2c,0x27);
       }
       if (0x47e < crowd_noise._2_2_) {
         uVar3 = (crowd_noise >> 0x10) - 0x47e;
@@ -2911,8 +2914,8 @@ void __watcall draw_penalty_box_overlay(void)
           uVar3 = 0xd7;
         }
         draw_stipple_rect((int)(short)(sVar8 + 0x28),(int)sStack_2c,
-                  (int)(short)((int)((uint)(ushort)((short)uVar3 >> 0xf) << 0x10 | uVar3 & 0xffff) /
-                              5),iVar4 - sStack_2c,0x60);
+                          (int)(short)((int)((uint)(ushort)((short)uVar3 >> 0xf) << 0x10 |
+                                            uVar3 & 0xffff) / 5),iVar4 - sStack_2c,0x60);
       }
     }
   }
@@ -2930,11 +2933,11 @@ void __watcall info_panel_open(void)
 
 {
   __CHK(8);
-  if (dword_cbebe._2_2_ == 0x100) {
-    dword_cbebe._2_2_ = 0x10;
+  if (panel_state._2_2_ == 0x100) {
+    panel_state._2_2_ = 0x10;
     return;
   }
-  dword_cbebe._2_2_ = 0;
+  panel_state._2_2_ = 0;
   return;
 }
 
@@ -2949,49 +2952,51 @@ void __watcall update_announcer(void)
   short sVar1;
   
   __CHK(0x1c);
-  if ((-1 < dword_cbebe._2_2_) &&
+  if ((-1 < panel_state._2_2_) &&
      (((stoppage_timer < 0x100 || (0x140 < stoppage_timer)) || ((game_flags & 0x40) != 0)))) {
-    if (((dword_cbeca._2_2_ == 0) && (word_cbece < 5)) && (crowd_noise._2_2_ < 0x5dc)) {
-      if ((dword_e9ab2._2_2_ == 1) && (crowd_noise._2_2_ < 0x280)) {
+    if (((panel_clip._2_2_ == 0) && (clip_frame < 5)) && (crowd_noise._2_2_ < 0x5dc)) {
+      if ((clip_script_pos._2_2_ == 1) && (crowd_noise._2_2_ < 0x280)) {
         crowd_noise._2_2_ = 0x280;
       }
-      if (((0 < dword_e9ab2._2_2_) && (dword_e9ab2._2_2_ < 5)) ||
-         (((7 < dword_e9ab2._2_2_ && (dword_e9ab2._2_2_ < 0xd)) || (0x10 < dword_e9ab2._2_2_)))) {
+      if (((0 < clip_script_pos._2_2_) && (clip_script_pos._2_2_ < 5)) ||
+         (((7 < clip_script_pos._2_2_ && (clip_script_pos._2_2_ < 0xd)) ||
+          (0x10 < clip_script_pos._2_2_)))) {
         crowd_noise._2_2_ = crowd_noise._2_2_ + 8;
       }
     }
-    if (((dword_cbebe._2_2_ == 0x10) && (dword_cbeca >> 0x10 != -1)) && (dword_e0248 != (char *)0x0)
-       ) {
-      sVar1 = (short)dword_e9ab2 + -1;
-      dword_e9ab2 = CONCAT22(dword_e9ab2._2_2_,sVar1);
+    if (((panel_state._2_2_ == 0x10) && (panel_clip >> 0x10 != -1)) && (dword_e0248 != (char *)0x0))
+    {
+      sVar1 = (short)clip_script_pos + -1;
+      clip_script_pos = CONCAT22(clip_script_pos._2_2_,sVar1);
       if (sVar1 < 0) {
-        if (*dword_e0248 == dword_e9ab2._2_2_) {
+        if (*dword_e0248 == clip_script_pos._2_2_) {
           freemem(dword_e0244);
-          if ((&unk_cc049)[dword_cbeca >> 0x10] != '\0') {
-            dword_cbebe._2_2_ = 600;
+          if ((&unk_cc049)[panel_clip >> 0x10] != '\0') {
+            panel_state._2_2_ = 600;
           }
-          word_cbece = -1;
-          dword_cbeca = CONCAT22(0xffff,(undefined2)dword_cbeca);
+          clip_frame = -1;
+          panel_clip = CONCAT22(0xffff,(undefined2)panel_clip);
           dword_e0248 = (char *)0x0;
         }
         else {
-          word_cbece = (short)dword_e0248[(short)(dword_e9ab2._2_2_ + 1)];
-          dword_e9ab2 = CONCAT22(dword_e9ab2._2_2_ + 1,
-                                 *(undefined2 *)(&unk_cc054 + (dword_cbeca >> 0x10) * 4));
+          clip_frame = (short)dword_e0248[(short)(clip_script_pos._2_2_ + 1)];
+          clip_script_pos =
+               CONCAT22(clip_script_pos._2_2_ + 1,
+                        *(undefined2 *)(&unk_cc054 + (panel_clip >> 0x10) * 4));
         }
       }
     }
     else {
-      if ((dword_cbebe._2_2_ < 0x100) || (599 < dword_cbebe._2_2_)) {
-        dword_cbebe._2_2_ = dword_cbebe._2_2_ + 1;
+      if ((panel_state._2_2_ < 0x100) || (599 < panel_state._2_2_)) {
+        panel_state._2_2_ = panel_state._2_2_ + 1;
       }
-      if (0x268 < dword_cbebe._2_2_) {
-        dword_cbebe._2_2_ = -1;
+      if (0x268 < panel_state._2_2_) {
+        panel_state._2_2_ = -1;
         byte_e0344 = 0;
         byte_e0308 = 0;
         byte_e028c = 0;
         byte_e0250 = 0;
-        byte_e02c8 = 0;
+        panel_title = 0;
       }
     }
   }
@@ -3073,7 +3078,7 @@ void __watcall hotkey_pull_goalie(short param_1)
      (((iVar2 = param_1 + 1, user1_team == iVar2 || ((short)user2_team == iVar2)) &&
       (((int)(short)uVar1 & 0xfff0U) != 0xff00)))) {
     if (((short)_word_cbec8 < (short)(ushort)(-1 < (short)uVar1)) || ((short)_word_cbec8 < 2)) {
-      dword_cbeca._0_2_ = 0x50;
+      panel_clip._0_2_ = 0x50;
       _word_cbec8 = (ushort)(-1 < (short)uVar1);
     }
     if ((short)uVar1 < 0) {
@@ -3221,8 +3226,8 @@ void __watcall replay_reset(void)
 
 {
   __CHK(4);
-  word_cd4fe = 1;
-  _word_cd500 = 0xffff;
+  replay_half_step = 1;
+  _replay_held_sfx = 0xffff;
   return;
 }
 
@@ -3277,18 +3282,18 @@ void __watcall replay_record_frame(void)
   
   __CHK(0x1c);
   if ((game_flags & 0x10) == 0) {
-    if ((short)(word_cd4fe + 1) < 2) {
+    if ((short)(replay_half_step + 1) < 2) {
       if (((byte)stop_flags & 4) == 0) {
-        _word_cd500 = (undefined2)crowd_noise;
+        _replay_held_sfx = (undefined2)crowd_noise;
       }
       else {
-        _word_cd500 = 0xffff;
+        _replay_held_sfx = 0xffff;
       }
       crowd_noise._0_2_ = 0xffff;
-      word_cd4fe = word_cd4fe + 1;
+      replay_half_step = replay_half_step + 1;
     }
     else {
-      word_cd4fe = word_cd4fe + -1;
+      replay_half_step = replay_half_step + -1;
       if (((byte)stop_flags & 4) != 0) {
         replay_write_ptr = (uint *)replay_buffer_start();
       }
@@ -3313,19 +3318,19 @@ void __watcall replay_record_frame(void)
       sVar5 = 0;
       while( true ) {
         if (5 < sVar5) break;
-        dword_e03ba._2_2_ = *(ushort *)((int)puVar4 + 0x1a);
-        if ((short)dword_e03ba._2_2_ < 0) {
-          dword_e03ba._2_2_ = 0xf;
+        scratch_a._2_2_ = *(ushort *)((int)puVar4 + 0x1a);
+        if ((short)scratch_a._2_2_ < 0) {
+          scratch_a._2_2_ = 0xf;
         }
         if (*(short *)((int)puVar4 + 0x9a) < 0) {
-          dword_e03ba._2_2_ = dword_e03ba._2_2_ | 0xf0;
+          scratch_a._2_2_ = scratch_a._2_2_ | 0xf0;
         }
         else {
-          dword_e03ba._2_2_ = dword_e03ba._2_2_ | *(short *)((int)puVar4 + 0x9a) << 4;
+          scratch_a._2_2_ = scratch_a._2_2_ | *(short *)((int)puVar4 + 0x9a) << 4;
         }
         puVar4 = puVar4 + 0x40;
         puVar3 = (uint *)((int)replay_write_ptr + 1);
-        *(undefined *)replay_write_ptr = dword_e03ba._2_1_;
+        *(undefined *)replay_write_ptr = scratch_a._2_1_;
         replay_write_ptr = puVar3;
         sVar5 = sVar5 + 1;
       }
@@ -3336,13 +3341,13 @@ void __watcall replay_record_frame(void)
       *(undefined *)replay_write_ptr = byte_dffa6;
       replay_write_ptr = (uint *)puVar1;
       puVar1 = (undefined *)((int)replay_write_ptr + 1);
-      *(undefined *)replay_write_ptr = word_cd500;
+      *(undefined *)replay_write_ptr = replay_held_sfx;
       replay_write_ptr = (uint *)puVar1;
       pbVar2 = (byte *)((int)replay_write_ptr + 1);
       *(undefined *)replay_write_ptr = (undefined)crowd_noise;
       replay_write_ptr = (uint *)pbVar2;
       crowd_noise._0_2_ = 0xffff;
-      _word_cd500 = 0xffff;
+      _replay_held_sfx = 0xffff;
       pbVar2 = (byte *)((int)replay_write_ptr + 1);
       *(byte *)replay_write_ptr = (char)user2_slot << 4 | user1_slot & 0xf;
       replay_write_ptr = (uint *)pbVar2;
@@ -3368,7 +3373,7 @@ void __watcall replay_record_frame(void)
       }
       for (sVar5 = 0; sVar5 < 0x14; sVar5 = sVar5 + 1) {
         puVar3 = (uint *)((int)replay_write_ptr + 1);
-        *(undefined1 *)replay_write_ptr = (&unk_dee94)[sVar5 * 0xc];
+        *(undefined1 *)replay_write_ptr = (&crowd_figures)[sVar5 * 0xc];
         replay_write_ptr = puVar3;
       }
       if (replay_buffer + 0x9600 <= replay_write_ptr) {
@@ -3401,13 +3406,13 @@ int __watcall replay_seek_frames(int param_1,short unaff_DX)
   int iStack_18;
   
   __CHK(0x6c);
-  puVar2 = dword_e03a4;
+  puVar2 = controls_read;
   iStack_18 = param_1;
   if ((short)param_1 < 0) {
     while ((short)param_1 < 0) {
-      if ((uint *)replay_buffer == dword_e03a4) {
+      if ((uint *)replay_buffer == controls_read) {
         if ((action_flags & 0x10) != 0) {
-          dword_e03a4 = (uint *)(replay_buffer + 0x9600);
+          controls_read = (uint *)(replay_buffer + 0x9600);
           goto LAB_00067a0b;
         }
 LAB_000679f9:
@@ -3415,89 +3420,89 @@ LAB_000679f9:
         break;
       }
 LAB_00067a0b:
-      if (dword_e03a4 == replay_write_ptr) goto LAB_000679f9;
-      dword_e03a4 = dword_e03a4 + -0x20;
+      if (controls_read == replay_write_ptr) goto LAB_000679f9;
+      controls_read = controls_read + -0x20;
       param_1 = param_1 + 1;
     }
   }
   else {
     while (0 < (short)param_1) {
       param_1 = param_1 + -1;
-      puVar3 = dword_e03a4 + 0x20;
-      if ((uint *)(replay_buffer + 0x9600) == dword_e03a4 + 0x20) {
+      puVar3 = controls_read + 0x20;
+      if ((uint *)(replay_buffer + 0x9600) == controls_read + 0x20) {
         if ((action_flags & 0x10) == 0) {
           param_1 = -1;
           break;
         }
-        dword_e03a4 = (uint *)replay_buffer;
-        puVar3 = dword_e03a4;
+        controls_read = (uint *)replay_buffer;
+        puVar3 = controls_read;
       }
-      dword_e03a4 = puVar3;
-      if (dword_e03a4 == replay_write_ptr) {
+      controls_read = puVar3;
+      if (controls_read == replay_write_ptr) {
         param_1 = -1;
-        dword_e03a4 = dword_e03a4 + -0x20;
+        controls_read = controls_read + -0x20;
         break;
       }
-      if ((unaff_DX != 0) && (puVar2 != dword_e03a4)) {
-        if (*(byte *)(dword_e03a4 + 0x16) != 0xff) {
-          play_sfx(*(byte *)(dword_e03a4 + 0x16));
+      if ((unaff_DX != 0) && (puVar2 != controls_read)) {
+        if (*(byte *)(controls_read + 0x16) != 0xff) {
+          play_sfx(*(byte *)(controls_read + 0x16));
         }
-        if (*(byte *)((int)dword_e03a4 + 0x59) != 0xff) {
-          play_sfx(*(byte *)((int)dword_e03a4 + 0x59));
+        if (*(byte *)((int)controls_read + 0x59) != 0xff) {
+          play_sfx(*(byte *)((int)controls_read + 0x59));
         }
       }
     }
   }
   for (sVar4 = 0; sVar4 < 0x11; sVar4 = sVar4 + 1) {
-    uVar1 = *dword_e03a4;
-    dword_e03ba._2_1_ = (byte)uVar1;
-    dword_e03ba._3_1_ = (byte)(uVar1 >> 8);
-    dword_e03be._0_2_ = (short)(uVar1 >> 0x10);
+    uVar1 = *controls_read;
+    scratch_a._2_1_ = (byte)uVar1;
+    scratch_a._3_1_ = (byte)(uVar1 >> 8);
+    scratch_b._0_2_ = (short)(uVar1 >> 0x10);
     uVar6 = (ushort)uVar1 & 0x3ff;
-    dword_e03be._2_1_ = (byte)uVar6;
-    dword_e03be._3_1_ = (byte)(uVar6 >> 8);
-    dword_e03a4 = dword_e03a4 + 1;
+    scratch_b._2_1_ = (byte)uVar6;
+    scratch_b._3_1_ = (byte)(uVar6 >> 8);
+    controls_read = controls_read + 1;
     if ((uVar1 & 0x200) != 0) {
-      dword_e03be._3_1_ = dword_e03be._3_1_ | 0xfc;
+      scratch_b._3_1_ = scratch_b._3_1_ | 0xfc;
     }
-    *(ushort *)(&unk_e9f18 + sVar4 * 2) = CONCAT11(dword_e03be._3_1_,dword_e03be._2_1_);
-    uVar1 = CONCAT22((short)dword_e03be,CONCAT11(dword_e03ba._3_1_,dword_e03ba._2_1_)) >> 10;
-    dword_e03ba._2_1_ = (byte)uVar1;
-    dword_e03ba._3_1_ = (byte)(uVar1 >> 8);
-    dword_e03be._0_2_ = (short)dword_e03be >> 10;
+    *(ushort *)(&unk_e9f18 + sVar4 * 2) = CONCAT11(scratch_b._3_1_,scratch_b._2_1_);
+    uVar1 = CONCAT22((short)scratch_b,CONCAT11(scratch_a._3_1_,scratch_a._2_1_)) >> 10;
+    scratch_a._2_1_ = (byte)uVar1;
+    scratch_a._3_1_ = (byte)(uVar1 >> 8);
+    scratch_b._0_2_ = (short)scratch_b >> 10;
     uVar6 = (ushort)uVar1 & 0x3ff;
-    dword_e03be._2_1_ = (byte)uVar6;
-    dword_e03be._3_1_ = (byte)(uVar6 >> 8);
+    scratch_b._2_1_ = (byte)uVar6;
+    scratch_b._3_1_ = (byte)(uVar6 >> 8);
     if ((uVar1 & 0x200) != 0) {
-      dword_e03be._3_1_ = dword_e03be._3_1_ | 0xfc;
+      scratch_b._3_1_ = scratch_b._3_1_ | 0xfc;
     }
-    *(ushort *)(&unk_e9f3a + sVar4 * 2) = CONCAT11(dword_e03be._3_1_,dword_e03be._2_1_);
-    iVar7 = CONCAT22((short)dword_e03be,CONCAT11(dword_e03ba._3_1_,dword_e03ba._2_1_)) >> 10;
+    *(ushort *)(&unk_e9f3a + sVar4 * 2) = CONCAT11(scratch_b._3_1_,scratch_b._2_1_);
+    iVar7 = CONCAT22((short)scratch_b,CONCAT11(scratch_a._3_1_,scratch_a._2_1_)) >> 10;
     ram0x000e03b9 = (uint)ram0x000e03b9;
-    dword_e03ba._3_1_ = (byte)((uint)iVar7 >> 8);
-    dword_e03be._0_2_ = (short)dword_e03be >> 10;
+    scratch_a._3_1_ = (byte)((uint)iVar7 >> 8);
+    scratch_b._0_2_ = (short)scratch_b >> 10;
     uVar6 = (ushort)iVar7 & 0x7ff;
-    dword_e03be._2_1_ = (byte)uVar6;
-    dword_e03be._3_1_ = (byte)(uVar6 >> 8);
+    scratch_b._2_1_ = (byte)uVar6;
+    scratch_b._3_1_ = (byte)(uVar6 >> 8);
     if (uVar6 == 0x7ff) {
-      dword_e03be._2_1_ = 0xff;
-      dword_e03be._3_1_ = 0xff;
+      scratch_b._2_1_ = 0xff;
+      scratch_b._3_1_ = 0xff;
     }
-    (&unk_e9f5c)[sVar4] = CONCAT11(dword_e03be._3_1_,dword_e03be._2_1_);
-    (&unk_e9f7e)[sVar4] = (dword_e03ba._3_1_ & 8) != 0;
+    (&unk_e9f5c)[sVar4] = CONCAT11(scratch_b._3_1_,scratch_b._2_1_);
+    (&unk_e9f7e)[sVar4] = (scratch_a._3_1_ & 8) != 0;
   }
   for (sVar4 = 0; sVar4 < 0xc; sVar4 = sVar4 + 1) {
-    bVar5 = *(byte *)dword_e03a4;
-    dword_e03a4 = (uint *)((int)dword_e03a4 + 1);
+    bVar5 = *(byte *)controls_read;
+    controls_read = (uint *)((int)controls_read + 1);
     (&unk_e9f8f)[sVar4] = bVar5;
   }
   for (sVar4 = 0; sVar4 < 6; sVar4 = sVar4 + 1) {
-    ram0x000e03b9 = CONCAT13(*(byte *)dword_e03a4,ram0x000e03b9);
-    bVar5 = *(byte *)dword_e03a4 & 0xf;
+    ram0x000e03b9 = CONCAT13(*(byte *)controls_read,ram0x000e03b9);
+    bVar5 = *(byte *)controls_read & 0xf;
     if (bVar5 == 0xf) {
       bVar5 = 0xff;
     }
-    dword_e03a4 = (uint *)((int)dword_e03a4 + 1);
+    controls_read = (uint *)((int)controls_read + 1);
     (&unk_e9f9b)[sVar4 * 2] = bVar5;
     bVar5 = (byte)((int)ram0x000e03b9 >> 0x1c) & 0xf;
     if (bVar5 == 0xf) {
@@ -3505,50 +3510,50 @@ LAB_00067a0b:
     }
     (&unk_e9f9c)[sVar4 * 2] = bVar5;
   }
-  dword_e9fa5._2_2_ = (short)(char)*(byte *)dword_e03a4;
-  dword_e9fa9._0_2_ = (short)(char)*(byte *)((int)dword_e03a4 + 1);
-  dword_e9fa9._2_1_ = *(byte *)(dword_e03a4 + 1) & 0xf;
+  dword_e9fa5._2_2_ = (short)(char)*(byte *)controls_read;
+  dword_e9fa9._0_2_ = (short)(char)*(byte *)((int)controls_read + 1);
+  dword_e9fa9._2_1_ = *(byte *)(controls_read + 1) & 0xf;
   if (dword_e9fa9._2_1_ == 0xf) {
     dword_e9fa9._2_1_ = 0xff;
   }
-  dword_e03be._2_1_ = (char)*(byte *)(dword_e03a4 + 1) >> 4 & 0xf;
-  dword_e9fa9._3_1_ = dword_e03be._2_1_;
-  if (dword_e03be._2_1_ == 0xf) {
+  scratch_b._2_1_ = (char)*(byte *)(controls_read + 1) >> 4 & 0xf;
+  dword_e9fa9._3_1_ = scratch_b._2_1_;
+  if (scratch_b._2_1_ == 0xf) {
     dword_e9fa9._3_1_ = 0xff;
   }
-  byte_e9fad = *(byte *)((int)dword_e03a4 + 5);
-  dword_e03ba._2_1_ = *(byte *)((int)dword_e03a4 + 6);
-  byte_e9fae = dword_e03ba._2_1_ & 0xf;
-  byte_e9faf = (char)dword_e03ba._2_1_ >> 4 & 0xf;
-  camera._0_2_ = (short)(char)*(byte *)((int)dword_e03a4 + 7);
-  camera._2_2_ = *(undefined2 *)(dword_e03a4 + 2);
-  crowd_noise._2_2_ = *(undefined2 *)((int)dword_e03a4 + 10);
-  dword_e03a4 = dword_e03a4 + 3;
+  byte_e9fad = *(byte *)((int)controls_read + 5);
+  scratch_a._2_1_ = *(byte *)((int)controls_read + 6);
+  byte_e9fae = scratch_a._2_1_ & 0xf;
+  byte_e9faf = (char)scratch_a._2_1_ >> 4 & 0xf;
+  camera._0_2_ = (short)(char)*(byte *)((int)controls_read + 7);
+  camera._2_2_ = *(undefined2 *)(controls_read + 2);
+  crowd_noise._2_2_ = *(undefined2 *)((int)controls_read + 10);
+  controls_read = controls_read + 3;
   word_e9fb0 = (short)camera;
   word_e9fb2 = camera._2_2_;
   for (sVar4 = 0; sVar4 < 10; sVar4 = sVar4 + 1) {
-    dword_e03ba._2_1_ = *(byte *)dword_e03a4;
-    dword_e03a4 = (uint *)((int)dword_e03a4 + 1);
-    *(char *)((int)&unk_e9fd9 + sVar4 * 2 + 3) = (char)((int)(uint)dword_e03ba._2_1_ >> 4);
-    (&unk_e9fdd)[sVar4 * 2] = dword_e03ba._2_1_ & 0xf;
+    scratch_a._2_1_ = *(byte *)controls_read;
+    controls_read = (uint *)((int)controls_read + 1);
+    *(char *)((int)&unk_e9fd9 + sVar4 * 2 + 3) = (char)((int)(uint)scratch_a._2_1_ >> 4);
+    (&unk_e9fdd)[sVar4 * 2] = scratch_a._2_1_ & 0xf;
   }
   for (sVar4 = 0; sVar4 < 0x14; sVar4 = sVar4 + 1) {
-    dword_e03ba._2_1_ = *(byte *)dword_e03a4;
-    dword_e03ba._3_1_ = 0;
-    if (dword_e03ba._2_1_ == 0xff) {
-      dword_e03ba._2_1_ = 0xff;
-      dword_e03ba._3_1_ = 0xff;
+    scratch_a._2_1_ = *(byte *)controls_read;
+    scratch_a._3_1_ = 0;
+    if (scratch_a._2_1_ == 0xff) {
+      scratch_a._2_1_ = 0xff;
+      scratch_a._3_1_ = 0xff;
     }
-    dword_e03a4 = (uint *)((int)dword_e03a4 + 1);
-    (&unk_e9fb4)[sVar4] = CONCAT11(dword_e03ba._3_1_,dword_e03ba._2_1_);
+    controls_read = (uint *)((int)controls_read + 1);
+    (&unk_e9fb4)[sVar4] = CONCAT11(scratch_a._3_1_,scratch_a._2_1_);
   }
-  if ((unaff_DX == 0) || (dword_e03a4 == replay_write_ptr)) {
+  if ((unaff_DX == 0) || (controls_read == replay_write_ptr)) {
     sound_pause_all();
   }
   else {
     update_ambient_audio((int)(short)((short)iStack_18 * 2));
   }
-  dword_e03a4 = dword_e03a4 + -0x20;
+  controls_read = controls_read + -0x20;
   for (sVar4 = 0; sVar4 < 0x11; sVar4 = sVar4 + 1) {
     iVar7 = (int)sVar4;
     aiStack_5c[iVar7] = *(int *)((int)&word_e9f36 + iVar7 * 2 + 2) >> 0x10;
@@ -3844,7 +3849,7 @@ LAB_0006871d:
         if ((*(int *)(&unk_e9f5a + sVar2 * 2) >> 0x10 != -1) && (sVar2 < 0xc)) {
           if (((((byte_e9fad == -1) || (sVar2 != byte_e9fad)) && (sVar2 != (char)dword_e9fa9._2_1_))
               && ((sVar2 != (char)dword_e9fa9._3_1_ && (iVar3 = (int)sVar2, iVar3 != dword_ed74c))))
-             && (sVar2 != dword_cd4fa._2_2_)) {
+             && (sVar2 != replay_follow._2_2_)) {
             if (show_names == 0) goto LAB_00068622;
             iVar6 = *(int *)(&unk_e9f8c + iVar3);
             iVar4 = *(int *)((int)&word_e9f36 + iVar3 * 2 + 2);
@@ -4089,40 +4094,39 @@ void __watcall write_stats_table(char *param_1)
   short sVar1;
   undefined4 uVar2;
   FILE *pFVar3;
-  undefined *puVar4;
-  undefined4 extraout_ECX;
-  undefined4 extraout_ECX_00;
-  undefined4 extraout_ECX_01;
-  undefined4 extraout_ECX_02;
-  undefined4 extraout_ECX_03;
-  undefined4 extraout_ECX_04;
-  undefined4 extraout_ECX_05;
-  undefined4 extraout_ECX_06;
-  undefined4 extraout_ECX_07;
-  undefined4 extraout_ECX_08;
-  undefined4 extraout_ECX_09;
-  undefined4 extraout_ECX_10;
-  undefined4 extraout_ECX_11;
-  undefined4 extraout_ECX_12;
-  undefined4 extraout_ECX_13;
-  undefined4 extraout_ECX_14;
-  undefined4 extraout_ECX_15;
-  undefined4 extraout_ECX_16;
-  undefined4 uVar5;
-  FILE *extraout_ECX_17;
-  FILE *extraout_ECX_18;
-  short sVar6;
+  byte *pbVar4;
+  FILE *extraout_ECX;
+  FILE *extraout_ECX_00;
+  FILE *extraout_ECX_01;
+  FILE *extraout_ECX_02;
+  FILE *extraout_ECX_03;
+  FILE *extraout_ECX_04;
+  FILE *extraout_ECX_05;
+  FILE *__stream;
+  FILE *__stream_00;
+  FILE *__stream_01;
+  FILE *extraout_ECX_06;
+  FILE *extraout_ECX_07;
+  FILE *extraout_ECX_08;
+  FILE *extraout_ECX_09;
+  FILE *__stream_02;
+  FILE *__stream_03;
+  FILE *extraout_ECX_10;
+  FILE *extraout_ECX_11;
+  FILE *extraout_ECX_12;
+  FILE *extraout_ECX_13;
+  short sVar5;
   int extraout_EDX;
   int extraout_EDX_00;
-  int iVar7;
+  int iVar6;
   int extraout_EDX_01;
   int extraout_EDX_02;
   int extraout_EDX_03;
   int extraout_EDX_04;
-  undefined4 *puVar8;
-  short *psVar9;
+  undefined4 *puVar7;
+  short *psVar8;
+  int *piVar9;
   int *piVar10;
-  int *piVar11;
   
   __CHK(0x74);
   pFVar3 = fopen(param_1,(char *)&aAT);
@@ -4132,106 +4136,109 @@ void __watcall write_stats_table(char *param_1)
   else {
     fprintf(pFVar3,unk_c24c8,dword_d8c78,dword_d8c6c,dword_c53fb);
     fprintf(pFVar3,aTmstructs);
-    uVar5 = extraout_ECX;
-    for (sVar6 = 0; sVar6 < 2; sVar6 = sVar6 + 1) {
-      puVar8 = (undefined4 *)((int)&dword_df612 + sVar6 * 0x100 + 2);
-      iVar7 = 0;
-      while ((ushort)iVar7 < 0xe8) {
-        uVar2 = *puVar8;
-        puVar8 = puVar8 + 1;
-        fprintf(uVar5,&aX,uVar2);
-        uVar5 = extraout_ECX_00;
-        iVar7 = extraout_EDX + 4;
+    pFVar3 = extraout_ECX;
+    for (sVar5 = 0; sVar5 < 2; sVar5 = sVar5 + 1) {
+      puVar7 = (undefined4 *)((int)&dword_df612 + sVar5 * 0x100 + 2);
+      iVar6 = 0;
+      while ((ushort)iVar6 < 0xe8) {
+        uVar2 = *puVar7;
+        puVar7 = puVar7 + 1;
+        fprintf(pFVar3,(char *)&aX,uVar2);
+        pFVar3 = extraout_ECX_00;
+        iVar6 = extraout_EDX + 4;
       }
-      fprintf(uVar5,&unk_c24a0);
-      uVar5 = extraout_ECX_01;
+      fprintf(pFVar3,&unk_c24a0);
+      pFVar3 = extraout_ECX_01;
     }
-    fprintf(uVar5,aSortcords);
-    uVar5 = extraout_ECX_02;
-    for (sVar6 = 0; sVar6 < 0x11; sVar6 = sVar6 + 1) {
-      psVar9 = (short *)(&entities + sVar6 * 0x20);
-      iVar7 = 0;
-      while ((short)iVar7 < 0x48) {
-        sVar1 = *psVar9;
-        psVar9 = psVar9 + 1;
-        fprintf(uVar5,&aX,(int)sVar1);
-        uVar5 = extraout_ECX_03;
-        iVar7 = extraout_EDX_00 + 2;
+    fprintf(pFVar3,aSortcords);
+    pFVar3 = extraout_ECX_02;
+    for (sVar5 = 0; sVar5 < 0x11; sVar5 = sVar5 + 1) {
+      psVar8 = (short *)(&entities + sVar5 * 0x20);
+      iVar6 = 0;
+      while ((short)iVar6 < 0x48) {
+        sVar1 = *psVar8;
+        psVar8 = psVar8 + 1;
+        fprintf(pFVar3,(char *)&aX,(int)sVar1);
+        pFVar3 = extraout_ECX_03;
+        iVar6 = extraout_EDX_00 + 2;
       }
-      fprintf(uVar5,&unk_c24a0);
-      uVar5 = extraout_ECX_04;
+      fprintf(pFVar3,&unk_c24a0);
+      pFVar3 = extraout_ECX_04;
     }
-    for (sVar6 = 0; sVar6 < 0x11; sVar6 = sVar6 + 1) {
-      iVar7 = sVar6 * 0x80;
-      fprintf(uVar5,aDDDDDDDDDDDDDDDDDDX,(int)(&DAT_000df884)[sVar6 * 0x20] >> 0x10,
-                *(int *)(&unk_df860 + iVar7) >> 0x18,(&DAT_000df87a)[iVar7],(&DAT_000df872)[iVar7],
-                (&DAT_000df873)[iVar7],(&DAT_000df874)[iVar7],(&DAT_000df875)[iVar7],
-                (&DAT_000df876)[iVar7],(&DAT_000df877)[iVar7],(&DAT_000df881)[iVar7],
-                (&DAT_000df880)[iVar7],(&DAT_000df87c)[iVar7],(&DAT_000df878)[iVar7],
-                (&DAT_000df87d)[iVar7],(&DAT_000df87b)[iVar7],(&DAT_000df879)[iVar7],
-                (&DAT_000df87e)[iVar7],(&unk_df87f)[iVar7],*(int *)(&DAT_000df86e + iVar7) >> 0x10);
-      uVar5 = extraout_ECX_05;
+    for (sVar5 = 0; sVar5 < 0x11; sVar5 = sVar5 + 1) {
+      iVar6 = sVar5 * 0x80;
+      fprintf(pFVar3,aDDDDDDDDDDDDDDDDDDX,(int)(&DAT_000df884)[sVar5 * 0x20] >> 0x10,
+              *(int *)(&unk_df860 + iVar6) >> 0x18,(uint)(byte)(&DAT_000df87a)[iVar6],
+              (uint)(byte)(&DAT_000df872)[iVar6],(uint)(byte)(&DAT_000df873)[iVar6],
+              (uint)(byte)(&DAT_000df874)[iVar6],(uint)(byte)(&DAT_000df875)[iVar6],
+              (uint)(byte)(&DAT_000df876)[iVar6],(uint)(byte)(&DAT_000df877)[iVar6],
+              (uint)(byte)(&DAT_000df881)[iVar6],(uint)(byte)(&DAT_000df880)[iVar6],
+              (uint)(byte)(&DAT_000df87c)[iVar6],(uint)(byte)(&DAT_000df878)[iVar6],
+              (uint)(byte)(&DAT_000df87d)[iVar6],(uint)(byte)(&DAT_000df87b)[iVar6],
+              (uint)(byte)(&DAT_000df879)[iVar6],(uint)(byte)(&DAT_000df87e)[iVar6],
+              (uint)(byte)(&unk_df87f)[iVar6],*(int *)(&DAT_000df86e + iVar6) >> 0x10);
+      pFVar3 = extraout_ECX_05;
     }
-    fprintf(uVar5,unk_c2550);
-    fprintf(extraout_ECX_06,aShtsScoreShotsScorePpgPp);
-    fprintf(extraout_ECX_07,aHomeDDDDDDDDDDD,(int)dword_df612._2_2_,(int)dword_df622._2_2_,
-              byte_c5430,byte_c542f,(int)(short)dword_df616,(int)dword_df616._2_2_,
-              (int)(short)dword_df61e,(int)dword_df61e._2_2_,(int)(short)dword_df622,
-              (int)(short)dword_df63a,(int)dword_df63a._2_2_);
-    piVar10 = dword_df6fa;
-    fprintf(extraout_ECX_08,aIPnumGAPenPpgShgEngShtSt);
-    iVar7 = 0;
-    uVar5 = extraout_ECX_09;
-    while (piVar11 = dword_df6fe, sVar6 = (short)iVar7, sVar6 < 0x19) {
-      puVar4 = (undefined *)(dword_df702 + sVar6 * 0x27);
-      fprintf(uVar5,a3d3d3d3d3d3d3d3d3d3d3d,(int)sVar6,puVar4[5],(int)*(short *)piVar10,
-                *piVar10 >> 0x10,*(int *)((int)piVar10 + 2) >> 0x10,piVar10[1] >> 0x10,
-                *(int *)((int)piVar10 + 6) >> 0x10,piVar10[2] >> 0x10,
-                *(int *)((int)piVar10 + 10) >> 0x10,piVar10[3] >> 0x10,*puVar4);
-      piVar10 = piVar10 + 4;
-      uVar5 = extraout_ECX_10;
-      iVar7 = extraout_EDX_01 + 1;
+    fprintf(pFVar3,unk_c2550);
+    fprintf(__stream,aShtsScoreShotsScorePpgPp);
+    fprintf(__stream_00,aHomeDDDDDDDDDDD,(int)dword_df612._2_2_,(int)dword_df622._2_2_,
+            (uint)byte_c5430,(uint)byte_c542f,(int)(short)dword_df616,(int)dword_df616._2_2_,
+            (int)(short)dword_df61e,(int)dword_df61e._2_2_,(int)(short)dword_df622,
+            (int)(short)dword_df63a,(int)dword_df63a._2_2_);
+    piVar9 = dword_df6fa;
+    fprintf(__stream_01,aIPnumGAPenPpgShgEngShtSt);
+    iVar6 = 0;
+    pFVar3 = extraout_ECX_06;
+    while (piVar10 = dword_df6fe, sVar5 = (short)iVar6, sVar5 < 0x19) {
+      pbVar4 = (byte *)(dword_df702 + sVar5 * 0x27);
+      fprintf(pFVar3,a3d3d3d3d3d3d3d3d3d3d3d,(int)sVar5,(uint)pbVar4[5],(int)*(short *)piVar9,
+              *piVar9 >> 0x10,*(int *)((int)piVar9 + 2) >> 0x10,piVar9[1] >> 0x10,
+              *(int *)((int)piVar9 + 6) >> 0x10,piVar9[2] >> 0x10,*(int *)((int)piVar9 + 10) >> 0x10
+              ,piVar9[3] >> 0x10,(uint)*pbVar4);
+      piVar9 = piVar9 + 4;
+      pFVar3 = extraout_ECX_07;
+      iVar6 = extraout_EDX_01 + 1;
     }
-    fprintf(uVar5,aIPnumMinShtSavStatus);
-    iVar7 = 0;
-    uVar5 = extraout_ECX_11;
-    while (sVar6 = (short)iVar7, sVar6 < 3) {
-      puVar4 = (undefined *)(dword_df702 + (sVar6 + 0x19) * 0x27);
-      fprintf(uVar5,a3d3d5d3d3d3d,(int)sVar6,puVar4[5],(int)*(short *)piVar11,*piVar11 >> 0x10,
-                *(int *)((int)piVar11 + 2) >> 0x10,*puVar4);
-      piVar11 = (int *)((int)piVar11 + 6);
-      uVar5 = extraout_ECX_12;
-      iVar7 = extraout_EDX_02 + 1;
+    fprintf(pFVar3,aIPnumMinShtSavStatus);
+    iVar6 = 0;
+    pFVar3 = extraout_ECX_08;
+    while (sVar5 = (short)iVar6, sVar5 < 3) {
+      pbVar4 = (byte *)(dword_df702 + (sVar5 + 0x19) * 0x27);
+      fprintf(pFVar3,a3d3d5d3d3d3d,(int)sVar5,(uint)pbVar4[5],(int)*(short *)piVar10,
+              *piVar10 >> 0x10,*(int *)((int)piVar10 + 2) >> 0x10,(uint)*pbVar4);
+      piVar10 = (int *)((int)piVar10 + 6);
+      pFVar3 = extraout_ECX_09;
+      iVar6 = extraout_EDX_02 + 1;
     }
-    fprintf(uVar5,aShtsScoreShotsScorePpgPp_c2689);
-    fprintf(extraout_ECX_13,aAwayDDDDDDDDDDD,(int)dword_df712._2_2_,(int)dword_df722._2_2_,
-              byte_c5432,byte_c5431,(int)(short)dword_df716,(int)dword_df716._2_2_,
-              (int)dword_df71c._2_2_,(int)_dword_df720,(int)(short)dword_df722,
-              (int)dword_df738._2_2_,(int)(short)dword_df73c);
-    piVar10 = dword_df7fa;
-    fprintf(extraout_ECX_14,aIPnumGAPenPpgShgEngShtSt_c26fa);
-    iVar7 = 0;
-    uVar5 = extraout_ECX_15;
-    while (piVar11 = dword_df7fe, sVar6 = (short)iVar7, sVar6 < 0x19) {
-      puVar4 = (undefined *)(dword_df802 + sVar6 * 0x27);
-      fprintf(uVar5,a3d3d3d3d3d3d3d3d3d3d3d_c272a,(int)sVar6,puVar4[5],(int)*(short *)piVar10,
-                *piVar10 >> 0x10,*(int *)((int)piVar10 + 2) >> 0x10,piVar10[1] >> 0x10,
-                *(int *)((int)piVar10 + 6) >> 0x10,piVar10[2] >> 0x10,
-                *(int *)((int)piVar10 + 10) >> 0x10,piVar10[3] >> 0x10,*puVar4);
-      piVar10 = piVar10 + 4;
-      uVar5 = extraout_ECX_16;
-      iVar7 = extraout_EDX_03 + 1;
+    fprintf(pFVar3,aShtsScoreShotsScorePpgPp_c2689);
+    fprintf(__stream_02,aAwayDDDDDDDDDDD,(int)dword_df712._2_2_,(int)dword_df722._2_2_,
+            (uint)byte_c5432,(uint)byte_c5431,(int)(short)dword_df716,(int)dword_df716._2_2_,
+            (int)dword_df71c._2_2_,(int)_dword_df720,(int)(short)dword_df722,(int)dword_df738._2_2_,
+            (int)(short)dword_df73c);
+    piVar9 = dword_df7fa;
+    fprintf(__stream_03,aIPnumGAPenPpgShgEngShtSt_c26fa);
+    iVar6 = 0;
+    pFVar3 = extraout_ECX_10;
+    while (piVar10 = dword_df7fe, sVar5 = (short)iVar6, sVar5 < 0x19) {
+      pbVar4 = (byte *)(dword_df802 + sVar5 * 0x27);
+      fprintf(pFVar3,a3d3d3d3d3d3d3d3d3d3d3d_c272a,(int)sVar5,(uint)pbVar4[5],(int)*(short *)piVar9,
+              *piVar9 >> 0x10,*(int *)((int)piVar9 + 2) >> 0x10,piVar9[1] >> 0x10,
+              *(int *)((int)piVar9 + 6) >> 0x10,piVar9[2] >> 0x10,*(int *)((int)piVar9 + 10) >> 0x10
+              ,piVar9[3] >> 0x10,(uint)*pbVar4);
+      piVar9 = piVar9 + 4;
+      pFVar3 = extraout_ECX_11;
+      iVar6 = extraout_EDX_03 + 1;
     }
-    fprintf(uVar5,aIPnumMinShtSavStatus_c2757);
-    iVar7 = 0;
-    pFVar3 = extraout_ECX_17;
-    while (sVar6 = (short)iVar7, sVar6 < 3) {
-      puVar4 = (undefined *)((sVar6 + 0x19) * 0x27 + dword_df802);
-      fprintf(pFVar3,a3d3d5d3d3d3d,(int)sVar6,puVar4[5],(int)*(short *)piVar11,*piVar11 >> 0x10,
-                *(int *)((int)piVar11 + 2) >> 0x10,*puVar4);
-      piVar11 = (int *)((int)piVar11 + 6);
-      pFVar3 = extraout_ECX_18;
-      iVar7 = extraout_EDX_04 + 1;
+    fprintf(pFVar3,aIPnumMinShtSavStatus_c2757);
+    iVar6 = 0;
+    pFVar3 = extraout_ECX_12;
+    while (sVar5 = (short)iVar6, sVar5 < 3) {
+      pbVar4 = (byte *)((sVar5 + 0x19) * 0x27 + dword_df802);
+      fprintf(pFVar3,a3d3d5d3d3d3d,(int)sVar5,(uint)pbVar4[5],(int)*(short *)piVar10,
+              *piVar10 >> 0x10,*(int *)((int)piVar10 + 2) >> 0x10,(uint)*pbVar4);
+      piVar10 = (int *)((int)piVar10 + 6);
+      pFVar3 = extraout_ECX_13;
+      iVar6 = extraout_EDX_04 + 1;
     }
     fclose(pFVar3);
   }
@@ -4240,13 +4247,13 @@ void __watcall write_stats_table(char *param_1)
 
 
 // ================================================================================================
-// simulate_game_offscreen @ 0x69336 [__watcall]
+// league_highlight_game @ 0x69336 [__watcall]
 // ================================================================================================
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
 undefined4 __watcall
-simulate_game_offscreen
+league_highlight_game
           (undefined4 param_1,short unaff_DX,undefined2 *unaff_EBX,int *unaff_ECX,undefined4 param_5
           )
 
@@ -4328,7 +4335,7 @@ simulate_game_offscreen
   local_114 = 0x6949a;
   _away_team_id = unaff_DX;
   load_team_databases(2);
-  if (dword_cbeca >> 0x10 != -1) {
+  if (panel_clip >> 0x10 != -1) {
     local_114 = dword_e0244;
     freemem();
   }
@@ -4399,14 +4406,14 @@ simulate_game_offscreen
   stoppage_timer = 0xffff;
   ref_infraction = 0;
   _penalized_slot = 0xffff;
-  dword_cbebe._2_2_ = 0xffff;
+  panel_state._2_2_ = 0xffff;
   penalty_box_mode = 0;
   _word_cbec8 = 0xffff;
-  word_cbece = 0xffff;
-  dword_cbeca = -0x10000;
-  dword_cbec6 = 0;
+  clip_frame = 0xffff;
+  panel_clip = -0x10000;
+  injury_stoppage = 0;
   crowd_noise = crowd_noise & 0xffff;
-  dword_ccc88 = 0;
+  crowd_level = 0;
   word_df81a = 0xffff;
   word_df816 = 0xffff;
   local_114 = 0x69720;
@@ -4535,13 +4542,13 @@ simulate_game_offscreen
   _input_enabled = 0;
   *(undefined4 *)((int)puVar18 + -4) = 0x699b8;
   flush_key_events(puVar4,0);
-  word_cbec4 = 2;
+  cut_to_scene = 2;
   period_over = extraout_DX_01;
   game_over = extraout_DX_01;
   *(undefined4 *)((int)puVar18 + -4) = 0x699d4;
   ticks_elapsed();
   _input_enabled = 1;
-  dword_c5130 = 1;
+  demo_game_running = 1;
   pause_requested = 0;
   while (period_over == 0) {
     *(undefined4 *)((int)puVar18 + -4) = 0x699fe;
@@ -4592,7 +4599,7 @@ simulate_game_offscreen
     set_camera_offset(-(iVar12 * 8 + iVar15),-(iVar13 * 8 + iVar9));
     *(undefined4 *)((int)puVar18 + -4) = 0x69b4c;
     present_frame();
-    if (word_cbec4 != 0) {
+    if (cut_to_scene != 0) {
       dword_e9a9e = CONCAT22(input_enabled,(undefined2)dword_e9a9e);
       _input_enabled = 0;
       *(undefined **)((int)puVar18 + -4) = &palette_save;
@@ -4617,10 +4624,10 @@ simulate_game_offscreen
     }
     *(undefined4 *)((int)puVar18 + -4) = 0x69c27;
     draw_clock(iVar20);
-    if (word_cbec4 != 0) {
+    if (cut_to_scene != 0) {
       dword_e9a9e = CONCAT22(input_enabled,(undefined2)dword_e9a9e);
       _input_enabled = 0;
-      if (word_cbec4 == 2) {
+      if (cut_to_scene == 2) {
         *(undefined4 *)((int)puVar18 + -4) = 0x69c52;
         speech_stop();
         *(undefined4 *)((int)puVar18 + -4) = 0x69c5f;
@@ -4628,32 +4635,32 @@ simulate_game_offscreen
                   (*(undefined4 *)((int)puVar18 + 8),*(undefined4 *)((int)puVar18 + 4));
         *(undefined4 *)((int)puVar18 + -4) = 0x69c70;
         fade_palette_to(0,&unk_df314,0x10);
-        word_cbec4 = 0;
+        cut_to_scene = 0;
         *(undefined4 *)((int)puVar18 + -4) = 0x69c83;
         sVar6 = randomrange(200);
         crowd_noise = CONCAT22(sVar6 + 100,(undefined2)crowd_noise);
-        dword_ccc88 = (int)(short)(sVar6 + 100);
+        crowd_level = (int)(short)(sVar6 + 100);
       }
       _input_enabled = dword_e9a9e >> 0x10;
     }
     if (pause_requested != 0) break;
     *(undefined4 *)((int)puVar18 + -4) = 0x69cb6;
     read_control_p1();
-    if (((dword_e03be._2_1_ & 0x10) != 0) || ((dword_e03be._2_1_ & 0x20) != 0)) break;
+    if (((scratch_b._2_1_ & 0x10) != 0) || ((scratch_b._2_1_ & 0x20) != 0)) break;
     *(undefined4 *)((int)puVar18 + -4) = 0x69ccb;
     read_control_p2();
-    if (((dword_e03be._2_1_ & 0x10) != 0) || ((dword_e03be._2_1_ & 0x20) != 0)) break;
+    if (((scratch_b._2_1_ & 0x10) != 0) || ((scratch_b._2_1_ & 0x20) != 0)) break;
   }
   _input_enabled = 0;
-  if (dword_cbeca >> 0x10 != -1) {
+  if (panel_clip >> 0x10 != -1) {
     *(undefined4 *)((int)puVar18 + -4) = dword_e0244;
     *(undefined4 *)((int)puVar18 + -8) = 0x69d00;
     freemem();
   }
   _word_cbec8 = 0xffff;
-  word_cbece = 0xffff;
-  dword_cbeca = CONCAT22(0xffff,(undefined2)dword_cbeca);
-  dword_c5130 = 0;
+  clip_frame = 0xffff;
+  panel_clip = CONCAT22(0xffff,(undefined2)panel_clip);
+  demo_game_running = 0;
   dword_ccc98 = 0;
   *(undefined **)((int)puVar18 + -4) = &palette_save;
   *(undefined4 *)((int)puVar18 + -8) = 0x100;
@@ -4665,7 +4672,7 @@ simulate_game_offscreen
   *(undefined4 *)((int)puVar18 + -4) = 0x69d57;
   fade_ambient_audio();
   crowd_noise = crowd_noise & 0xffff;
-  dword_ccc88 = 0;
+  crowd_level = 0;
   if ((sound_enabled == '\0') || ((option_flags & 0x100) == 0)) {
     *(undefined4 *)((int)puVar18 + -4) = 0x69d8f;
     sound_stopall();
@@ -4755,7 +4762,7 @@ simulate_game_offscreen
   _action_flags = 0;
   stop_flags = (undefined2)puVar18[0x3f];
   *(undefined *)CONCAT22(p_puck_carrier._2_2_,(undefined2)p_puck_carrier) = 0xff;
-  dword_cbebe._2_2_ = 0xffff;
+  panel_state._2_2_ = 0xffff;
   camera._0_2_ = 0;
   camera._2_2_ = 0;
   puVar18[-1] = 0x69f91;
@@ -4767,8 +4774,8 @@ simulate_game_offscreen
   word_cbc64 = 0xffff;
   word_cbc62 = 0xffff;
   word_cbc6c = 0;
-  word_cbc6a = 0;
-  word_cbec4 = 1;
+  line_change_prompt = 0;
+  cut_to_scene = 1;
   dword_d8c78._0_2_ = 0;
   dword_d8c78._2_2_ = 0;
   whistle_timer = 0;
@@ -5008,7 +5015,8 @@ void __watcall zm_copy_rect_from_hidden(int *param_1)
 // ================================================================================================
 
 void __watcall
-zm_copy_playfield_from_hidden(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+zm_copy_playfield_from_hidden
+          (undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   __CHK(0x20);
@@ -5052,7 +5060,7 @@ void __watcall empty_func_6a2bc(void)
 
 void __watcall
 draw_rect_outline(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX,
-         undefined4 param_5)
+                 undefined4 param_5)
 
 {
   __CHK(0x28);
@@ -5073,7 +5081,7 @@ void __watcall zm_outline_rect(int *param_1,undefined4 unaff_EDX)
 {
   __CHK(0x14);
   draw_rect_outline(*param_1 + dword_ea0b8,param_1[2] + dword_ea0bc,param_1[1] + dword_ea0b8 + -1,
-            param_1[3] + dword_ea0bc + -1,unaff_EDX);
+                    param_1[3] + dword_ea0bc + -1,unaff_EDX);
   return;
 }
 

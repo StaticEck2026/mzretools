@@ -57,46 +57,48 @@ undefined8 __watcall __fill_buffer(undefined4 *param_1,undefined4 unaff_EDX)
 // ungetc @ 0x9b996 [__watcall]
 // ================================================================================================
 
-uint __watcall ungetc(uint param_1,int *unaff_EDX)
+int __watcall ungetc(int __c,FILE *__stream)
 
 {
-  int iVar1;
+  byte *pbVar1;
   undefined *puVar2;
-  int *extraout_EDX;
+  FILE *extraout_EDX;
+  uint uVar3;
   
-  if (param_1 == 0xffffffff) {
-    return 0xffffffff;
+  if (__c == -1) {
+    return -1;
   }
-  if (((*(byte *)((int)unaff_EDX + 0xd) & 0x10) == 0) && ((*(byte *)(unaff_EDX + 3) & 1) != 0)) {
-    if (unaff_EDX[2] == 0) {
-      __ioalloc(unaff_EDX);
-      unaff_EDX = extraout_EDX;
+  if (((*(byte *)((int)&__stream->_IO_read_base + 1) & 0x10) == 0) &&
+     ((*(byte *)&__stream->_IO_read_base & 1) != 0)) {
+    if (__stream->_IO_read_end == (char *)0x0) {
+      __ioalloc(__stream);
+      __stream = extraout_EDX;
     }
-    if (unaff_EDX[1] == 0) {
-      *unaff_EDX = unaff_EDX[2] + unaff_EDX[5] + -1;
-      *(byte *)(unaff_EDX + 3) = *(byte *)(unaff_EDX + 3) | 4;
-      puVar2 = (undefined *)*unaff_EDX;
-      unaff_EDX[1] = 1;
+    if (__stream->_IO_read_ptr == (char *)0x0) {
+      __stream->_flags = (int)(__stream->_IO_read_end + (int)__stream->_IO_write_ptr + -1);
+      *(byte *)&__stream->_IO_read_base = *(byte *)&__stream->_IO_read_base | 4;
+      puVar2 = (undefined *)__stream->_flags;
+      __stream->_IO_read_ptr = (char *)0x1;
     }
     else {
-      if (*unaff_EDX == unaff_EDX[2]) goto LAB_0009b9aa;
-      iVar1 = *unaff_EDX;
-      unaff_EDX[1] = unaff_EDX[1] + 1;
-      *unaff_EDX = iVar1 + -1;
-      if (*(byte *)(iVar1 + -1) != param_1) {
-        *(byte *)(unaff_EDX + 3) = *(byte *)(unaff_EDX + 3) | 4;
+      if ((char *)__stream->_flags == __stream->_IO_read_end) goto LAB_0009b9aa;
+      pbVar1 = (byte *)(__stream->_flags + -1);
+      __stream->_IO_read_ptr = __stream->_IO_read_ptr + 1;
+      __stream->_flags = (int)pbVar1;
+      if ((uint)*pbVar1 != __c) {
+        *(byte *)&__stream->_IO_read_base = *(byte *)&__stream->_IO_read_base | 4;
       }
-      puVar2 = (undefined *)*unaff_EDX;
+      puVar2 = (undefined *)__stream->_flags;
     }
-    *puVar2 = (char)param_1;
-    *(byte *)(unaff_EDX + 3) = *(byte *)(unaff_EDX + 3) & 0xef;
-    param_1 = param_1 & 0xff;
+    *puVar2 = (char)__c;
+    *(byte *)&__stream->_IO_read_base = *(byte *)&__stream->_IO_read_base & 0xef;
+    uVar3 = __c & 0xff;
   }
   else {
 LAB_0009b9aa:
-    param_1 = 0xffffffff;
+    uVar3 = 0xffffffff;
   }
-  return param_1;
+  return uVar3;
 }
 
 
@@ -903,7 +905,7 @@ int __watcall __radix_value(int param_1)
   if ((0x2f < param_1) && (param_1 < 0x3a)) {
     return param_1 + -0x30;
   }
-  iVar1 = tolower();
+  iVar1 = tolower(param_1);
   if ((0x60 < iVar1) && (iVar1 < 0x67)) {
     return iVar1 + -0x57;
   }
@@ -2052,7 +2054,8 @@ void __watcall _set_EM_MP_bits(void)
 // ================================================================================================
 
 void __watcall
-__fini_387_emulator(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+__fini_387_emulator(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,
+                   undefined4 unaff_ECX)
 
 {
   code *pcVar1;
@@ -2092,7 +2095,8 @@ __fini_387_emulator(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX
 // ================================================================================================
 
 void __watcall
-__fini_387_emulator_body(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+__fini_387_emulator_body
+          (undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   code *pcVar1;
@@ -2351,11 +2355,11 @@ undefined * __watcall __get_doserrno_ptr(void)
 // strerror @ 0x9d677 [__watcall]
 // ================================================================================================
 
-char * __watcall strerror(int param_1)
+char * __watcall strerror(int __errnum)
 
 {
-  if ((-1 < param_1) && (param_1 < 0x10)) {
-    return (&off_d51e4)[param_1];
+  if ((-1 < __errnum) && (__errnum < 0x10)) {
+    return (&off_d51e4)[__errnum];
   }
   return aUnknownError;
 }
@@ -2443,14 +2447,14 @@ void pcspk_note_on(byte param_1,char param_2)
     iVar2 = *(int *)(&unk_f27f6 + iVar1);
   }
   if (iVar2 != 0) {
-    uVar5 = timbre_env_sign(iVar2);
+    uVar5 = pcspk_pick_voice(iVar2);
     iVar4 = (int)((ulonglong)uVar5 >> 0x20);
     iVar2 = (int)(short)uVar5;
     if (iVar2 != -1) {
       iVar3 = iVar2 * 0x30;
       (&DAT_000f24e8)[iVar2 * 0xc] = iVar4;
-      (&unk_f24d8)[iVar3] = param_1;
-      (&DAT_000f2502)[iVar2 * 0xc] = &unk_f27d8 + iVar1;
+      (&pcspk_voices)[iVar3] = param_1;
+      (&DAT_000f2502)[iVar2 * 0xc] = &pcspk_channels + iVar1;
       (&unk_f24d9)[iVar3] = 1;
       (&DAT_000f24ee)[iVar3] = 1;
       (&DAT_000f24ec)[iVar2 * 0x18] = *(undefined2 *)((&DAT_000f24e8)[iVar2 * 0xc] + 0x1c);
@@ -2469,8 +2473,8 @@ void pcspk_note_on(byte param_1,char param_2)
       (&DAT_000f24fa)[iVar3] = 0;
       (&DAT_000f2501)[iVar3] = 0;
       (&DAT_000f2506)[iVar3] = (char)uVar5;
-      pcspk_hw_voice_on((uint)uVar5 & 0xff,&unk_f24d8 + iVar3,(int)(char)(param_2 + *(char *)(iVar4 + 0x10))
-               );
+      pcspk_hw_voice_on((uint)uVar5 & 0xff,&pcspk_voices + iVar3,
+                        (int)(char)(param_2 + *(char *)(iVar4 + 0x10)));
     }
   }
   return;
@@ -2489,12 +2493,12 @@ void pcspk_note_off(byte param_1,char param_2)
   empty_func_902a0();
   sVar1 = 0;
   while ((sVar1 < 0x10 &&
-         (((unk_f24d9 == '\0' || (param_2 != DAT_000f24db)) || (param_1 != unk_f24d8))))) {
+         (((unk_f24d9 == '\0' || (param_2 != DAT_000f24db)) || (param_1 != pcspk_voices))))) {
     sVar1 = sVar1 + 1;
   }
   if (sVar1 < 0x10) {
     unk_f24d9 = '\x02';
-    if ((&unk_f27fd)[(uint)unk_f24d8 * 0x4e] != '\0') {
+    if ((&unk_f27fd)[(uint)pcspk_voices * 0x4e] != '\0') {
       DAT_000f24ee = 3;
       return;
     }
@@ -2527,136 +2531,139 @@ void pcspk_program(byte param_1)
 void __watcall pcspk_update_voices(void)
 
 {
-  int iVar1;
-  ushort uVar2;
-  uint uVar3;
-  short sVar4;
-  short sVar5;
-  byte *pbVar6;
-  undefined8 uVar7;
+  ushort uVar1;
+  int iVar2;
+  ushort uVar3;
+  int iVar4;
+  uint uVar5;
+  short sVar6;
+  short sVar7;
+  byte *pbVar8;
   
-  pbVar6 = &unk_f24d8;
-  uVar2 = 0;
+  pbVar8 = &pcspk_voices;
+  uVar3 = 0;
   do {
-    if (byte_d5224 <= uVar2) {
+    if (byte_d5224 <= uVar3) {
       pcspk_hw_update();
       return;
     }
-    if (pbVar6[1] != 0) {
-      *(int *)(pbVar6 + 8) = *(int *)(pbVar6 + 8) + 1;
-      iVar1 = *(int *)(pbVar6 + 0x10);
-      if (pbVar6[0x16] == 1) {
-        sVar4 = *(short *)(pbVar6 + 0x14) + *(short *)(iVar1 + 0x20);
-        *(short *)(pbVar6 + 0x14) = sVar4;
-        sVar5 = *(short *)(iVar1 + 0x1e);
-        if (sVar5 <= sVar4) {
-          *(short *)(pbVar6 + 0x14) = sVar5;
-          if (*(short *)(iVar1 + 0x24) < sVar5) {
-            pbVar6[0x16] = 2;
+    if (pbVar8[1] != 0) {
+      *(int *)(pbVar8 + 8) = *(int *)(pbVar8 + 8) + 1;
+      iVar2 = *(int *)(pbVar8 + 0x10);
+      if (pbVar8[0x16] == 1) {
+        sVar6 = *(short *)(pbVar8 + 0x14) + *(short *)(iVar2 + 0x20);
+        *(short *)(pbVar8 + 0x14) = sVar6;
+        sVar7 = *(short *)(iVar2 + 0x1e);
+        if (sVar7 <= sVar6) {
+          *(short *)(pbVar8 + 0x14) = sVar7;
+          if (*(short *)(iVar2 + 0x24) < sVar7) {
+            pbVar8[0x16] = 2;
           }
           else {
-            pbVar6[0x16] = 3;
+            pbVar8[0x16] = 3;
           }
         }
       }
-      if (pbVar6[0x16] == 2) {
-        sVar5 = *(short *)(pbVar6 + 0x14) - *(short *)(iVar1 + 0x22);
-        *(short *)(pbVar6 + 0x14) = sVar5;
-        if (sVar5 <= *(short *)(iVar1 + 0x24)) {
-          pbVar6[0x16] = 3;
-          *(undefined2 *)(pbVar6 + 0x14) = *(undefined2 *)(iVar1 + 0x24);
+      if (pbVar8[0x16] == 2) {
+        sVar7 = *(short *)(pbVar8 + 0x14) - *(short *)(iVar2 + 0x22);
+        *(short *)(pbVar8 + 0x14) = sVar7;
+        if (sVar7 <= *(short *)(iVar2 + 0x24)) {
+          pbVar8[0x16] = 3;
+          *(undefined2 *)(pbVar8 + 0x14) = *(undefined2 *)(iVar2 + 0x24);
         }
       }
-      if ((pbVar6[0x16] == 3) && (*(short *)(iVar1 + 0x24) == 0)) {
-        pbVar6[0x16] = 4;
+      if ((pbVar8[0x16] == 3) && (*(short *)(iVar2 + 0x24) == 0)) {
+        pbVar8[0x16] = 4;
       }
-      if (pbVar6[0x16] == 4) {
-        sVar5 = *(short *)(pbVar6 + 0x14) - *(short *)(iVar1 + 0x26);
-        *(short *)(pbVar6 + 0x14) = sVar5;
-        if (sVar5 < 1) {
-          pbVar6[0x14] = 0;
-          pbVar6[0x15] = 0;
-          pbVar6[0x16] = 0;
-          pbVar6[1] = 0;
-          (&unk_f27ee)[(uint)*pbVar6 * 0x4e] = (&unk_f27ee)[(uint)*pbVar6 * 0x4e] + -1;
-          pcspk_hw_voice_off(pbVar6[0x2e]);
+      if (pbVar8[0x16] == 4) {
+        sVar7 = *(short *)(pbVar8 + 0x14) - *(short *)(iVar2 + 0x26);
+        *(short *)(pbVar8 + 0x14) = sVar7;
+        if (sVar7 < 1) {
+          pbVar8[0x14] = 0;
+          pbVar8[0x15] = 0;
+          pbVar8[0x16] = 0;
+          pbVar8[1] = 0;
+          (&unk_f27ee)[(uint)*pbVar8 * 0x4e] = (&unk_f27ee)[(uint)*pbVar8 * 0x4e] + -1;
+          pcspk_hw_voice_off(pbVar8[0x2e]);
         }
       }
-      if (*(char *)(iVar1 + 0x28) != '\0') {
-        if (*(short *)(pbVar6 + 0x18) == 0) {
-          sVar5 = *(short *)(pbVar6 + 0x1a);
-          if (sVar5 != 0) {
-            if (sVar5 != 0x7fff) {
-              *(short *)(pbVar6 + 0x1a) = sVar5 + -1;
+      if (*(char *)(iVar2 + 0x28) != '\0') {
+        if (*(short *)(pbVar8 + 0x18) == 0) {
+          sVar7 = *(short *)(pbVar8 + 0x1a);
+          if (sVar7 != 0) {
+            if (sVar7 != 0x7fff) {
+              *(short *)(pbVar8 + 0x1a) = sVar7 + -1;
             }
-            if (pbVar6[0x27] == 0) {
-              pbVar6[0x27] = *(byte *)(iVar1 + 0x29);
-              if (pbVar6[0x26] == 2) {
-                *(short *)(pbVar6 + 0x1c) = *(short *)(pbVar6 + 0x1c) - *(short *)(pbVar6 + 0x24);
-                uVar7 = abs((int)*(short *)(pbVar6 + 0x1c),*(undefined2 *)(iVar1 + 0x2e));
-                if ((int)((ulonglong)uVar7 >> 0x20) <= (int)uVar7) {
-                  if ((*(byte *)(iVar1 + 0x34) & 1) == 0) {
+            if (pbVar8[0x27] == 0) {
+              pbVar8[0x27] = *(byte *)(iVar2 + 0x29);
+              if (pbVar8[0x26] == 2) {
+                *(short *)(pbVar8 + 0x1c) = *(short *)(pbVar8 + 0x1c) - *(short *)(pbVar8 + 0x24);
+                uVar1 = *(ushort *)(iVar2 + 0x2e);
+                iVar4 = abs((int)*(short *)(pbVar8 + 0x1c));
+                if ((int)(uint)uVar1 <= iVar4) {
+                  if ((*(byte *)(iVar2 + 0x34) & 1) == 0) {
 LAB_0009d9c8:
-                    pbVar6[0x1c] = 0;
-                    pbVar6[0x1d] = 0;
+                    pbVar8[0x1c] = 0;
+                    pbVar8[0x1d] = 0;
                   }
                   else {
-                    pbVar6[0x26] = 1;
+                    pbVar8[0x26] = 1;
                   }
                 }
               }
               else {
-                sVar5 = *(short *)(pbVar6 + 0x1c);
-                *(short *)(pbVar6 + 0x1c) = sVar5 + *(short *)(pbVar6 + 0x24);
-                uVar7 = abs((int)(short)(sVar5 + *(short *)(pbVar6 + 0x24)),
-                                  *(undefined2 *)(iVar1 + 0x2e));
-                if ((int)((ulonglong)uVar7 >> 0x20) <= (int)uVar7) {
-                  if ((*(byte *)(iVar1 + 0x34) & 2) == 0) goto LAB_0009d9c8;
-                  pbVar6[0x26] = 2;
+                sVar7 = *(short *)(pbVar8 + 0x1c);
+                *(short *)(pbVar8 + 0x1c) = sVar7 + *(short *)(pbVar8 + 0x24);
+                uVar1 = *(ushort *)(iVar2 + 0x2e);
+                iVar4 = abs((int)(short)(sVar7 + *(short *)(pbVar8 + 0x24)));
+                if ((int)(uint)uVar1 <= iVar4) {
+                  if ((*(byte *)(iVar2 + 0x34) & 2) == 0) goto LAB_0009d9c8;
+                  pbVar8[0x26] = 2;
                 }
               }
             }
             else {
-              pbVar6[0x27] = pbVar6[0x27] - 1;
+              pbVar8[0x27] = pbVar8[0x27] - 1;
             }
           }
         }
         else {
-          *(short *)(pbVar6 + 0x18) = *(short *)(pbVar6 + 0x18) + -1;
+          *(short *)(pbVar8 + 0x18) = *(short *)(pbVar8 + 0x18) + -1;
         }
       }
-      if (*(char *)(iVar1 + 0x35) != '\0') {
-        if (*(short *)(pbVar6 + 0x1e) == 0) {
-          if (*(short *)(pbVar6 + 0x20) != 0) {
-            *(short *)(pbVar6 + 0x20) = *(short *)(pbVar6 + 0x20) + -1;
-            if (pbVar6[0x28] == 0) {
-              pbVar6[0x28] = *(byte *)(iVar1 + 0x3a);
-              uVar3 = CONCAT11(pbVar6[0x29],pbVar6[0x29]) & 0xffff07ff;
-              pbVar6[0x29] = (char)uVar3 + 1;
-              pbVar6[0x22] = *(byte *)((uVar3 >> 8) + 0x3b + iVar1);
+      if (*(char *)(iVar2 + 0x35) != '\0') {
+        if (*(short *)(pbVar8 + 0x1e) == 0) {
+          if (*(short *)(pbVar8 + 0x20) != 0) {
+            *(short *)(pbVar8 + 0x20) = *(short *)(pbVar8 + 0x20) + -1;
+            if (pbVar8[0x28] == 0) {
+              pbVar8[0x28] = *(byte *)(iVar2 + 0x3a);
+              uVar5 = CONCAT11(pbVar8[0x29],pbVar8[0x29]) & 0xffff07ff;
+              pbVar8[0x29] = (char)uVar5 + 1;
+              pbVar8[0x22] = *(byte *)((uVar5 >> 8) + 0x3b + iVar2);
             }
             else {
-              pbVar6[0x28] = pbVar6[0x28] - 1;
+              pbVar8[0x28] = pbVar8[0x28] - 1;
             }
           }
         }
         else {
-          *(short *)(pbVar6 + 0x1e) = *(short *)(pbVar6 + 0x1e) + -1;
+          *(short *)(pbVar8 + 0x1e) = *(short *)(pbVar8 + 0x1e) + -1;
         }
       }
-      pcspk_hw_voice_pitch(pbVar6[0x2e],pbVar6,*(undefined4 *)(pbVar6 + 0x2a),*(undefined4 *)(pbVar6 + 0x10));
+      pcspk_hw_voice_pitch
+                (pbVar8[0x2e],pbVar8,*(undefined4 *)(pbVar8 + 0x2a),*(undefined4 *)(pbVar8 + 0x10));
     }
-    pbVar6 = pbVar6 + 0x30;
-    uVar2 = uVar2 + 1;
+    pbVar8 = pbVar8 + 0x30;
+    uVar3 = uVar3 + 1;
   } while( true );
 }
 
 
 // ================================================================================================
-// timbre_env_sign @ 0x9da99 [__watcall]
+// pcspk_pick_voice @ 0x9da99 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall timbre_env_sign(int param_1)
+undefined4 __watcall pcspk_pick_voice(int param_1)
 
 {
   if (*(short *)(param_1 + 0xc) == 0) {
@@ -2813,8 +2820,8 @@ void __watcall sbdac_drv_send_midi(void)
               sbdac_program(local_1c,*pbVar4);
             }
             else if (local_14 == 0xe0) {
-              sbdac_pitch_bend(local_1c,(int)(short)((ushort)(byte)(&DAT_000f21fd)[iVar3] * 0x100 + -0x4000
-                                             ));
+              sbdac_pitch_bend(local_1c,(int)(short)((ushort)(byte)(&DAT_000f21fd)[iVar3] * 0x100 +
+                                                    -0x4000));
             }
           }
         }
@@ -2881,14 +2888,14 @@ void __watcall adlib_drv_init(void)
   undefined4 in_stack_00000004;
   
   empty_func_902a0();
-  word_f3452 = 0x1ff;
-  word_f3450 = 0;
-  word_f344e = 0;
+  adlib_free_mask = 0x1ff;
+  adlib_used_mask = 0;
+  adlib_released_mask = 0;
   for (uVar2 = 0; uVar2 < 0x10; uVar2 = uVar2 + 1) {
     uVar3 = (uint)uVar2;
     iVar1 = uVar3 * 0x1e;
-    (&unk_f3108)[uVar3] = (int)&unk_f2f28 + iVar1;
-    *(undefined4 *)((int)&unk_f2f28 + iVar1) = 0;
+    (&adlib_channel_ptrs)[uVar3] = (int)&adlib_channels + iVar1;
+    *(undefined4 *)((int)&adlib_channels + iVar1) = 0;
     (&unk_f2f3c)[uVar3 * 0xf] = 0;
     (&unk_f2f40)[uVar3 * 0xf] = 0;
     (&unk_f2f3e)[uVar3 * 0xf] = 0x1ff;
@@ -2936,18 +2943,18 @@ void __watcall adlib_drv_tick(void)
   empty_func_902a0();
   uVar6 = 1;
   for (uVar7 = 0; uVar7 < 9; uVar7 = uVar7 + 1) {
-    if ((uVar6 & word_f3450) != 0) {
+    if ((uVar6 & adlib_used_mask) != 0) {
       uVar4 = (uint)uVar7;
       iVar5 = uVar4 * 0x56;
       if ((&DAT_000f3170)[uVar4 * 0x2b] == 0) {
         adlib_voice_off(*(undefined4 *)((int)&DAT_000f314c + iVar5),&unk_f3150 + uVar4 * 0x2b,1);
         uVar2 = ~uVar6;
-        word_f3450 = word_f3450 & uVar2;
-        word_f344e = word_f344e & uVar2;
-        word_f3452 = word_f3452 | uVar6;
-        puVar1 = (ushort *)(*(int *)((int)&unk_f3148 + iVar5) + 0x14);
+        adlib_used_mask = adlib_used_mask & uVar2;
+        adlib_released_mask = adlib_released_mask & uVar2;
+        adlib_free_mask = adlib_free_mask | uVar6;
+        puVar1 = (ushort *)(*(int *)((int)&adlib_voices + iVar5) + 0x14);
         *puVar1 = *puVar1 & uVar2;
-        puVar1 = (ushort *)(*(int *)((int)&unk_f3148 + iVar5) + 0x18);
+        puVar1 = (ushort *)(*(int *)((int)&adlib_voices + iVar5) + 0x18);
         *puVar1 = *puVar1 & uVar2;
       }
       else {
@@ -3011,7 +3018,7 @@ void __watcall adlib_channel_release(uint param_1,char unaff_DL)
   short sVar4;
   ushort uVar5;
   
-  iVar1 = (&unk_f3108)[param_1 & 0xff];
+  iVar1 = (&adlib_channel_ptrs)[param_1 & 0xff];
   sVar4 = 0;
   uVar5 = 1;
   while( true ) {
@@ -3019,8 +3026,8 @@ void __watcall adlib_channel_release(uint param_1,char unaff_DL)
       return;
     }
     if ((((uVar5 & *(ushort *)(iVar1 + 0x14)) != 0) &&
-        (iVar2 = (int)sVar4, iVar3 = iVar2 * 0x56, iVar1 == *(int *)((int)&unk_f3148 + iVar3))) &&
-       (unaff_DL == (&unk_f3197)[iVar3])) break;
+        (iVar2 = (int)sVar4, iVar3 = iVar2 * 0x56, iVar1 == *(int *)((int)&adlib_voices + iVar3)))
+       && (unaff_DL == (&unk_f3197)[iVar3])) break;
     uVar5 = uVar5 * 2;
     sVar4 = sVar4 + 1;
   }
@@ -3028,7 +3035,7 @@ void __watcall adlib_channel_release(uint param_1,char unaff_DL)
     *(ushort *)(iVar1 + 0x18) = *(ushort *)(iVar1 + 0x18) | uVar5;
     return;
   }
-  word_f344e = word_f344e | uVar5;
+  adlib_released_mask = adlib_released_mask | uVar5;
   (&DAT_000f319c)[iVar2 * 0x2b] = (short)(&DAT_000f319c)[iVar2 * 0x2b] >> 1;
   adlib_voice_release(*(undefined4 *)((int)&DAT_000f314c + iVar3),&unk_f3150 + iVar2 * 0x2b);
   return;
@@ -3050,7 +3057,7 @@ void __watcall adlib_controller(byte param_1,byte unaff_DL,byte unaff_BL)
   ushort uVar6;
   bool bVar7;
   
-  iVar1 = (&unk_f3108)[param_1];
+  iVar1 = (&adlib_channel_ptrs)[param_1];
   if (unaff_DL < 0x40) {
     if (unaff_DL < 7) {
       if (unaff_DL == 1) {
@@ -3102,11 +3109,11 @@ void __watcall adlib_controller(byte param_1,byte unaff_DL,byte unaff_BL)
     for (uVar5 = 0; uVar5 < 9; uVar5 = uVar5 + 1) {
       if ((uVar6 & uVar3) != 0) {
         adlib_voice_off(*(undefined4 *)((int)&DAT_000f314c + (uint)uVar5 * 0x56),
-                  &unk_f3150 + (uint)uVar5 * 0x2b,1);
+                        &unk_f3150 + (uint)uVar5 * 0x2b,1);
         uVar4 = ~uVar6;
-        word_f3450 = word_f3450 & uVar4;
-        word_f344e = word_f344e & uVar4;
-        word_f3452 = word_f3452 | uVar6;
+        adlib_used_mask = adlib_used_mask & uVar4;
+        adlib_released_mask = adlib_released_mask & uVar4;
+        adlib_free_mask = adlib_free_mask | uVar6;
         *(ushort *)(iVar1 + 0x14) = *(ushort *)(iVar1 + 0x14) & uVar4;
         *(ushort *)(iVar1 + 0x18) = *(ushort *)(iVar1 + 0x18) & uVar4;
       }
@@ -3124,7 +3131,7 @@ void __watcall adlib_controller(byte param_1,byte unaff_DL,byte unaff_BL)
 void __watcall adlib_program(uint param_1,undefined unaff_DL)
 
 {
-  *(undefined *)((&unk_f3108)[param_1 & 0xff] + 0x1b) = unaff_DL;
+  *(undefined *)((&adlib_channel_ptrs)[param_1 & 0xff] + 0x1b) = unaff_DL;
   return;
 }
 
@@ -3136,7 +3143,7 @@ void __watcall adlib_program(uint param_1,undefined unaff_DL)
 void __watcall adlib_pitch_bend(uint param_1,short unaff_DX)
 
 {
-  *(short *)((&unk_f3108)[param_1 & 0xff] + 0xc) = unaff_DX * 2;
+  *(short *)((&adlib_channel_ptrs)[param_1 & 0xff] + 0xc) = unaff_DX * 2;
   return;
 }
 
@@ -3145,7 +3152,8 @@ void __watcall adlib_pitch_bend(uint param_1,short unaff_DX)
 // adlib_voice_load_timbre @ 0x9e2b1 [__watcall]
 // ================================================================================================
 
-void __watcall adlib_voice_load_timbre(int param_1,int unaff_EDX,undefined unaff_BL,undefined unaff_CL)
+void __watcall
+adlib_voice_load_timbre(int param_1,int unaff_EDX,undefined unaff_BL,undefined unaff_CL)
 
 {
   char cVar1;
@@ -3160,10 +3168,10 @@ void __watcall adlib_voice_load_timbre(int param_1,int unaff_EDX,undefined unaff
     *(char *)(unaff_EDX + 0x26) = (sVar2 == 0) + '\x01';
   }
   if (*(short *)(param_1 + 0x22) != 0) {
-    adlib_env_init(param_1 + 0x24,unaff_EDX + 0x28);
+    adlib_lfo_init(param_1 + 0x24,unaff_EDX + 0x28);
   }
   if (*(short *)(param_1 + 0x32) != 0) {
-    adlib_lfo_init(param_1 + 0x34,unaff_EDX + 0x36);
+    adlib_seq_init(param_1 + 0x34,unaff_EDX + 0x36);
   }
   *(undefined2 *)(unaff_EDX + 0x1c) = 0;
   *(undefined2 *)(unaff_EDX + 0x1a) = *(undefined2 *)(unaff_EDX + 0x1c);
@@ -3284,10 +3292,10 @@ joined_r0x0009e4c7:
 
 
 // ================================================================================================
-// adlib_lfo_init @ 0x9e4d7 [__watcall]
+// adlib_seq_init @ 0x9e4d7 [__watcall]
 // ================================================================================================
 
-void __watcall adlib_lfo_init(short *param_1,undefined2 *unaff_EDX)
+void __watcall adlib_seq_init(short *param_1,undefined2 *unaff_EDX)
 
 {
   short sVar1;
@@ -3303,16 +3311,16 @@ void __watcall adlib_lfo_init(short *param_1,undefined2 *unaff_EDX)
     return;
   }
   *(undefined *)(unaff_EDX + 1) = 2;
-  adlib_lfo_step();
+  adlib_seq_step();
   return;
 }
 
 
 // ================================================================================================
-// adlib_lfo_step @ 0x9e511 [__watcall]
+// adlib_seq_step @ 0x9e511 [__watcall]
 // ================================================================================================
 
-void __watcall adlib_lfo_step(int param_1,undefined2 *unaff_EDX)
+void __watcall adlib_seq_step(int param_1,undefined2 *unaff_EDX)
 
 {
   byte bVar1;
@@ -3362,10 +3370,10 @@ void __watcall adlib_lfo_step(int param_1,undefined2 *unaff_EDX)
 
 
 // ================================================================================================
-// adlib_env_init @ 0x9e59d [__watcall]
+// adlib_lfo_init @ 0x9e59d [__watcall]
 // ================================================================================================
 
-void __watcall adlib_env_init(int param_1,undefined2 *unaff_EDX)
+void __watcall adlib_lfo_init(int param_1,undefined2 *unaff_EDX)
 
 {
   undefined2 uVar1;
@@ -3383,10 +3391,10 @@ void __watcall adlib_env_init(int param_1,undefined2 *unaff_EDX)
 
 
 // ================================================================================================
-// adlib_env_update @ 0x9e5c9 [__watcall]
+// adlib_lfo_update @ 0x9e5c9 [__watcall]
 // ================================================================================================
 
-void __watcall adlib_env_update(short *param_1,short *unaff_EDX)
+void __watcall adlib_lfo_update(short *param_1,short *unaff_EDX)
 
 {
   byte bVar1;
@@ -3500,8 +3508,8 @@ void __watcall adlib_drv_send_midi(void)
             }
             else if (local_1c == 0xe0) {
               adlib_pitch_bend(local_14,(int)(short)((ushort)*pbVar4 +
-                                              (ushort)(byte)(&DAT_000f21fd)[iVar3] * 0x80 + -0x2000)
-                       );
+                                                     (ushort)(byte)(&DAT_000f21fd)[iVar3] * 0x80 +
+                                                    -0x2000));
             }
           }
         }
@@ -3607,17 +3615,20 @@ void __watcall adlib_voice_update(int param_1,int unaff_EDX)
   *(undefined2 *)(unaff_EDX + 0x16) = *(undefined2 *)(unaff_EDX + 0x14);
   *(undefined2 *)(unaff_EDX + 0x12) = *(undefined2 *)(unaff_EDX + 0x10);
   if (*(short *)(param_1 + 0x32) != 0) {
-    adlib_lfo_step(param_1 + 0x34,unaff_EDX + 0x36);
-    adlib_voice_modulate(param_1,unaff_EDX,*(undefined2 *)(param_1 + 0x32),(int)*(short *)(unaff_EDX + 0x36));
+    adlib_seq_step(param_1 + 0x34,unaff_EDX + 0x36);
+    adlib_voice_modulate
+              (param_1,unaff_EDX,*(undefined2 *)(param_1 + 0x32),(int)*(short *)(unaff_EDX + 0x36));
   }
   adlib_voice_modulate(param_1,unaff_EDX,7,(int)*(short *)(iVar1 + 8));
   if (*(short *)(param_1 + 0x10) != 0) {
     adlib_env_step(param_1 + 0x12,unaff_EDX + 0x22);
-    adlib_voice_modulate(param_1,unaff_EDX,*(undefined2 *)(param_1 + 0x10),(int)*(short *)(unaff_EDX + 0x22));
+    adlib_voice_modulate
+              (param_1,unaff_EDX,*(undefined2 *)(param_1 + 0x10),(int)*(short *)(unaff_EDX + 0x22));
   }
   if (*(short *)(param_1 + 0x22) != 0) {
-    adlib_env_update(param_1 + 0x24,unaff_EDX + 0x28);
-    adlib_voice_modulate(param_1,unaff_EDX,*(undefined2 *)(param_1 + 0x22),(int)*(short *)(unaff_EDX + 0x28));
+    adlib_lfo_update(param_1 + 0x24,unaff_EDX + 0x28);
+    adlib_voice_modulate
+              (param_1,unaff_EDX,*(undefined2 *)(param_1 + 0x22),(int)*(short *)(unaff_EDX + 0x28));
   }
   psVar2 = *(short **)(unaff_EDX + 0x42);
   adlib_voice_modulate(param_1,unaff_EDX,5,(int)*psVar2);
@@ -3638,12 +3649,12 @@ void __watcall adlib_voice_output(int param_1,short *unaff_EDX)
   adlib_voice_update(param_1,unaff_EDX);
   if ((*(byte *)(unaff_EDX + 6) & 1) == 1) {
     cVar1 = fixmul16((int)unaff_EDX[9] << 2,
-                      (int)(short)(0x3f - (ushort)(*(byte *)(param_1 + 8) & 0x3f)));
+                     (int)(short)(0x3f - (ushort)(*(byte *)(param_1 + 8) & 0x3f)));
     *(byte *)(unaff_EDX + 4) = *(byte *)(unaff_EDX + 4) & 0xc0;
     *(byte *)(unaff_EDX + 4) = *(byte *)(unaff_EDX + 4) | 0x3fU - cVar1 & 0x3f;
   }
   cVar1 = fixmul16((int)unaff_EDX[9] << 2,
-                    (int)(short)(0x3f - (ushort)(*(byte *)(param_1 + 3) & 0x3f)));
+                   (int)(short)(0x3f - (ushort)(*(byte *)(param_1 + 3) & 0x3f)));
   *(byte *)((int)unaff_EDX + 3) = *(byte *)((int)unaff_EDX + 3) & 0xc0;
   *(byte *)((int)unaff_EDX + 3) = *(byte *)((int)unaff_EDX + 3) | 0x3fU - cVar1 & 0x3f;
   *(short *)((int)unaff_EDX + 0xd) = unaff_EDX[0xb];
@@ -3678,7 +3689,7 @@ void __watcall adlib_note_on(byte param_1,byte unaff_DL,undefined unaff_BL)
   uint local_28;
   byte local_20;
   
-  iVar3 = (&unk_f3108)[param_1];
+  iVar3 = (&adlib_channel_ptrs)[param_1];
   local_20 = unaff_DL;
   if (param_1 == 9) {
     if (unaff_DL < 0x24) {
@@ -3700,41 +3711,43 @@ void __watcall adlib_note_on(byte param_1,byte unaff_DL,undefined unaff_BL)
         uVar1 = uVar1 + 1;
       }
       if ((uVar1 < *(byte *)(iVar3 + 0x1a)) &&
-         (uVar4 = word_f3452 & *(ushort *)(iVar3 + 0x16), uVar4 != 0)) {
+         (uVar4 = adlib_free_mask & *(ushort *)(iVar3 + 0x16), uVar4 != 0)) {
         local_38 = 0;
         for (uVar1 = uVar4; (uVar1 & 1) == 0; uVar1 = (short)uVar1 >> 1) {
           local_38 = local_38 + 1;
         }
         iVar6 = (local_38 & 0xffff) * 0x56;
         uVar4 = uVar4 & -uVar4;
-        word_f3452 = word_f3452 & ~uVar4;
-        word_f344e = word_f344e & ~uVar4;
-        word_f3450 = word_f3450 | uVar4;
+        adlib_free_mask = adlib_free_mask & ~uVar4;
+        adlib_released_mask = adlib_released_mask & ~uVar4;
+        adlib_used_mask = adlib_used_mask | uVar4;
         *(ushort *)(iVar3 + 0x14) = *(ushort *)(iVar3 + 0x14) | uVar4;
         *(ushort *)(iVar3 + 0x18) = *(ushort *)(iVar3 + 0x18) & ~uVar4;
-        *(int *)((int)&unk_f3148 + iVar6) = iVar3;
+        *(int *)((int)&adlib_voices + iVar6) = iVar3;
         (&unk_f3197)[iVar6] = unaff_DL;
         *(int *)(&DAT_000f3192 + iVar6) = iVar3 + 4;
-        adlib_voice_patch(iVar3,(int *)((int)&unk_f3148 + iVar6));
-        adlib_voice_load_timbre(*(undefined4 *)((int)&DAT_000f314c + iVar6),
-                  &unk_f3150 + (local_38 & 0xffff) * 0x2b,
-                  *(char *)(*(int *)(&DAT_000f3198 + iVar6) + 7) + local_20,unaff_BL);
+        adlib_voice_patch(iVar3,(int *)((int)&adlib_voices + iVar6));
+        adlib_voice_load_timbre
+                  (*(undefined4 *)((int)&DAT_000f314c + iVar6),
+                   &unk_f3150 + (local_38 & 0xffff) * 0x2b,
+                   *(char *)(*(int *)(&DAT_000f3198 + iVar6) + 7) + local_20,unaff_BL);
       }
       else {
-        uVar4 = word_f344e & *(ushort *)(iVar3 + 0x16);
+        uVar4 = adlib_released_mask & *(ushort *)(iVar3 + 0x16);
         if (uVar4 == 0) {
           adlib_voice_off(local_44[1],local_44 + 2,1);
           uVar4 = (ushort)local_28;
-          word_f3452 = word_f3452 & ~uVar4;
-          word_f344e = word_f344e & ~uVar4;
-          word_f3450 = word_f3450 | uVar4;
+          adlib_free_mask = adlib_free_mask & ~uVar4;
+          adlib_released_mask = adlib_released_mask & ~uVar4;
+          adlib_used_mask = adlib_used_mask | uVar4;
           *(ushort *)(iVar3 + 0x14) = *(ushort *)(iVar3 + 0x14) | uVar4;
           *(ushort *)(iVar3 + 0x18) = *(ushort *)(iVar3 + 0x18) & ~uVar4;
           *local_44 = iVar3;
           *(byte *)((int)local_44 + 0x4f) = unaff_DL;
           *(int *)((int)local_44 + 0x4a) = iVar3 + 4;
           adlib_voice_patch(iVar3,local_44);
-          adlib_voice_load_timbre(local_44[1],local_44 + 2,*(char *)(local_44[0x14] + 7) + local_20,unaff_BL);
+          adlib_voice_load_timbre
+                    (local_44[1],local_44 + 2,*(char *)(local_44[0x14] + 7) + local_20,unaff_BL);
         }
         else {
           local_38 = 0;
@@ -3743,19 +3756,21 @@ void __watcall adlib_note_on(byte param_1,byte unaff_DL,undefined unaff_BL)
           }
           local_38 = local_38 & 0xffff;
           iVar6 = local_38 * 0x56;
-          adlib_voice_off(*(undefined4 *)((int)&DAT_000f314c + iVar6),&unk_f3150 + local_38 * 0x2b,1);
+          adlib_voice_off(*(undefined4 *)((int)&DAT_000f314c + iVar6),&unk_f3150 + local_38 * 0x2b,1
+                         );
           uVar4 = uVar4 & -uVar4;
-          word_f3452 = word_f3452 & ~uVar4;
-          word_f344e = word_f344e & ~uVar4;
-          word_f3450 = word_f3450 | uVar4;
+          adlib_free_mask = adlib_free_mask & ~uVar4;
+          adlib_released_mask = adlib_released_mask & ~uVar4;
+          adlib_used_mask = adlib_used_mask | uVar4;
           *(ushort *)(iVar3 + 0x14) = *(ushort *)(iVar3 + 0x14) | uVar4;
           *(ushort *)(iVar3 + 0x18) = *(ushort *)(iVar3 + 0x18) & ~uVar4;
-          *(int *)((int)&unk_f3148 + iVar6) = iVar3;
+          *(int *)((int)&adlib_voices + iVar6) = iVar3;
           (&unk_f3197)[iVar6] = unaff_DL;
           *(int *)(&DAT_000f3192 + iVar6) = iVar3 + 4;
-          adlib_voice_patch(iVar3,(int *)((int)&unk_f3148 + iVar6));
-          adlib_voice_load_timbre(*(undefined4 *)((int)&DAT_000f314c + iVar6),&unk_f3150 + local_38 * 0x2b,
-                    *(char *)(*(int *)(&DAT_000f3198 + iVar6) + 7) + local_20,unaff_BL);
+          adlib_voice_patch(iVar3,(int *)((int)&adlib_voices + iVar6));
+          adlib_voice_load_timbre
+                    (*(undefined4 *)((int)&DAT_000f314c + iVar6),&unk_f3150 + local_38 * 0x2b,
+                     *(char *)(*(int *)(&DAT_000f3198 + iVar6) + 7) + local_20,unaff_BL);
         }
       }
       local_3c = 0;
@@ -3768,19 +3783,19 @@ void __watcall adlib_note_on(byte param_1,byte unaff_DL,undefined unaff_BL)
         local_34 = 1;
         for (uVar4 = 0; uVar4 < 9; uVar4 = uVar4 - 1) {
           uVar5 = (uint)uVar4;
-          if ((((ushort)local_34 & word_f3450) != 0) &&
+          if ((((ushort)local_34 & adlib_used_mask) != 0) &&
              ((short)(&DAT_000f319c)[uVar5 * 0x2b] < sVar2)) {
             sVar2 = (&DAT_000f319c)[uVar5 * 0x2b];
             local_28 = local_34;
-            local_44 = (int *)((int)&unk_f3148 + uVar5 * 0x56);
+            local_44 = (int *)((int)&adlib_voices + uVar5 * 0x56);
           }
           local_34 = (uint)(ushort)((ushort)local_34 << 1);
         }
         adlib_voice_off(local_44[1],local_44 + 2,0);
         uVar4 = (ushort)local_28;
-        word_f3452 = word_f3452 & ~uVar4;
-        word_f344e = word_f344e & ~uVar4;
-        word_f3450 = word_f3450 | uVar4;
+        adlib_free_mask = adlib_free_mask & ~uVar4;
+        adlib_released_mask = adlib_released_mask & ~uVar4;
+        adlib_used_mask = adlib_used_mask | uVar4;
         *(ushort *)(iVar3 + 0x14) = *(ushort *)(iVar3 + 0x14) | uVar4;
         *(ushort *)(iVar3 + 0x18) = *(ushort *)(iVar3 + 0x18) & ~uVar4;
       }
@@ -3788,8 +3803,9 @@ void __watcall adlib_note_on(byte param_1,byte unaff_DL,undefined unaff_BL)
     }
     uVar5 = (uint)uVar4;
     iVar6 = uVar5 * 0x56;
-    piVar7 = (int *)((int)&unk_f3148 + iVar6);
-    if ((((ushort)local_34 & word_f3450) != 0) && ((short)(&DAT_000f319c)[uVar5 * 0x2b] < sVar2)) {
+    piVar7 = (int *)((int)&adlib_voices + iVar6);
+    if ((((ushort)local_34 & adlib_used_mask) != 0) &&
+       ((short)(&DAT_000f319c)[uVar5 * 0x2b] < sVar2)) {
       sVar2 = (&DAT_000f319c)[uVar5 * 0x2b];
       local_28 = local_34;
       local_44 = piVar7;
@@ -3800,14 +3816,15 @@ void __watcall adlib_note_on(byte param_1,byte unaff_DL,undefined unaff_BL)
     local_34 = local_34 << 1;
   }
   adlib_voice_off(*(undefined4 *)((int)&DAT_000f314c + iVar6),&unk_f3150 + uVar5 * 0x2b,1);
-  word_f3450 = word_f3450 | (ushort)local_34;
-  word_f3452 = word_f3452 & ~(ushort)local_34;
-  word_f344e = word_f344e & ~(ushort)local_34;
+  adlib_used_mask = adlib_used_mask | (ushort)local_34;
+  adlib_free_mask = adlib_free_mask & ~(ushort)local_34;
+  adlib_released_mask = adlib_released_mask & ~(ushort)local_34;
   *(ushort *)(iVar3 + 0x18) = *(ushort *)(iVar3 + 0x18) & ~(ushort)local_34;
   *(ushort *)(iVar3 + 0x14) = *(ushort *)(iVar3 + 0x14) | (ushort)local_34;
   adlib_voice_patch(iVar3,piVar7);
-  adlib_voice_load_timbre(*(undefined4 *)((int)&DAT_000f314c + iVar6),&unk_f3150 + uVar5 * 0x2b,
-            *(char *)(*(int *)(&DAT_000f3198 + iVar6) + 7) + local_20,unaff_BL);
+  adlib_voice_load_timbre
+            (*(undefined4 *)((int)&DAT_000f314c + iVar6),&unk_f3150 + uVar5 * 0x2b,
+             *(char *)(*(int *)(&DAT_000f3198 + iVar6) + 7) + local_20,unaff_BL);
   return;
 }
 
@@ -3905,21 +3922,21 @@ LAB_0009f2d1:
 // blaster_parse_hex @ 0x9f34c [__watcall]
 // ================================================================================================
 
-int __watcall blaster_parse_hex(int param_1,undefined4 *unaff_EDX)
+int __watcall blaster_parse_hex(int param_1,ulong *unaff_EDX,int unaff_EBX)
 
 {
   char cVar1;
-  undefined4 uVar2;
+  ulong uVar2;
   int iVar3;
   char local_18 [8];
-  undefined local_10 [4];
+  char *local_10;
   
   for (iVar3 = 0; (cVar1 = *(char *)(param_1 + iVar3), cVar1 != '\0' && (cVar1 != ' '));
       iVar3 = iVar3 + 1) {
     local_18[iVar3] = cVar1;
   }
   local_18[iVar3] = '\0';
-  uVar2 = strtoul(local_18,local_10);
+  uVar2 = strtoul(local_18,&local_10,unaff_EBX);
   *unaff_EDX = uVar2;
   return iVar3;
 }
@@ -3968,9 +3985,9 @@ void __watcall sbdac_drv_reset_voices(void)
   
   empty_func_902a0();
   if (dword_d5250 != 0) {
-    word_f3716 = 0xf;
-    word_f3718 = 0;
-    word_f3714 = 0;
+    sbdac_free_mask = 0xf;
+    sbdac_used_mask = 0;
+    sbdac_released_mask = 0;
     iVar1 = 0;
     do {
       (&unk_f3454)[iVar1 * 0x11] = (short)(1 << ((byte)iVar1 & 0x1f));
@@ -4026,7 +4043,7 @@ void __watcall sbdac_drv_tick(void)
   empty_func_902a0();
   uVar1 = 1;
   for (iVar3 = 0; iVar3 < 4; iVar3 = iVar3 + 1) {
-    if ((uVar1 & word_f3714) != 0) {
+    if ((uVar1 & sbdac_released_mask) != 0) {
       sVar2 = mix_voice_free(iVar3);
       if (sVar2 != 0) {
         sbdac_voice_free(&unk_f3454 + iVar3 * 0x11);
@@ -4043,7 +4060,7 @@ void __watcall sbdac_drv_tick(void)
   for (iVar3 = 0; iVar3 < 4; iVar3 = iVar3 + 1) {
     if ((&DAT_000f34e6)[iVar3 * 0xb] != 0) {
       mix_voice_position(iVar3,0,0,(int)*(short *)(*(int *)((int)&unk_f34dc + iVar3 * 0x16) + 4),
-                (int)(short)(&DAT_000f34ec)[iVar3 * 0xb]);
+                         (int)(short)(&DAT_000f34ec)[iVar3 * 0xb]);
     }
   }
   mix_fill_buffer();
@@ -4134,8 +4151,8 @@ void __watcall sbdac_play_sample(void)
   undefined4 in_stack_00000024;
   
   empty_func_902a0();
-  mix_play_sample((int)param_5,param_6 + param_7,param_8,param_9,in_stack_00000018,in_stack_0000001c,
-            in_stack_00000020,in_stack_00000024);
+  mix_play_sample((int)param_5,param_6 + param_7,param_8,param_9,in_stack_00000018,in_stack_0000001c
+                  ,in_stack_00000020,in_stack_00000024);
   return;
 }
 
@@ -4167,7 +4184,7 @@ void __watcall sbdac_channel_notes_off(short param_1,short unaff_DX)
           *(ushort *)(&DAT_000f3536 + iVar1) = *(ushort *)(&DAT_000f3536 + iVar1) | uVar3;
           return;
         }
-        word_f3714 = word_f3714 | uVar3;
+        sbdac_released_mask = sbdac_released_mask | uVar3;
         (&DAT_000f345a)[iVar4 * 0x11] = (short)(&DAT_000f345a)[iVar4 * 0x11] >> 1;
         (&DAT_000f34e6)[iVar4 * 0xb] = 1;
         if (sVar2 < 2) {
@@ -4225,7 +4242,7 @@ void __watcall sbdac_note_on(short param_1,short unaff_DX,short unaff_BX)
   uVar3 = 1;
   for (sVar6 = 0; sVar6 < 4; sVar6 = sVar6 + 1) {
     iVar4 = (int)sVar6;
-    if (((word_f3718 & uVar3 & *(ushort *)(&unk_f3538 + iVar1)) != 0) &&
+    if (((sbdac_used_mask & uVar3 & *(ushort *)(&unk_f3538 + iVar1)) != 0) &&
        ((short)(&DAT_000f345a)[iVar4 * 0x11] < sVar7)) {
       sVar7 = (&DAT_000f345a)[iVar4 * 0x11];
       local_20 = &unk_f3454 + iVar4 * 0x11;
@@ -4241,14 +4258,14 @@ void __watcall sbdac_note_on(short param_1,short unaff_DX,short unaff_BX)
     sVar7 = sVar7 + 1;
   }
   if ((sVar7 < *(short *)(&DAT_000f353c + iVar1)) &&
-     (uVar3 = word_f3716 & *(ushort *)(&unk_f3538 + iVar1), uVar3 != 0)) {
+     (uVar3 = sbdac_free_mask & *(ushort *)(&unk_f3538 + iVar1), uVar3 != 0)) {
     sVar7 = -1;
     for (uVar3 = uVar3 & -uVar3; uVar3 != 0; uVar3 = (short)uVar3 >> 1) {
       sVar7 = sVar7 + 1;
     }
   }
   else {
-    uVar3 = word_f3714 & *(ushort *)(&unk_f3538 + iVar1);
+    uVar3 = sbdac_released_mask & *(ushort *)(&unk_f3538 + iVar1);
     puVar8 = local_20;
     if (uVar3 == 0) goto LAB_0009f8b3;
     sVar7 = -1;
@@ -4282,18 +4299,19 @@ sbdac_voice_start(short param_1,ushort unaff_DX,ushort unaff_BX,ushort *unaff_EC
   iVar1 = *(int *)(unaff_ECX + 7);
   *(int *)(param_5 + 0xb) = iVar1;
   sbdac_voice_setup((int)(short)param_5[1],*(undefined4 *)(param_5 + 9),(int)*(char *)(iVar1 + 8),
-            (int)*(char *)(iVar1 + 10),*(undefined *)(iVar1 + 0xd));
+                    (int)*(char *)(iVar1 + 10),*(undefined *)(iVar1 + 0xd));
   param_5[3] = (ushort)*(byte *)(*(int *)(param_5 + 0xb) + 0xc) << 6;
   param_5[4] = unaff_DX;
   param_5[5] = unaff_BX;
-  word_f3716 = word_f3716 & ~*param_5;
-  word_f3718 = word_f3718 | *param_5;
-  word_f3714 = word_f3714 & ~*param_5;
+  sbdac_free_mask = sbdac_free_mask & ~*param_5;
+  sbdac_used_mask = sbdac_used_mask | *param_5;
+  sbdac_released_mask = sbdac_released_mask & ~*param_5;
   *unaff_ECX = *unaff_ECX | *param_5;
   unaff_ECX[1] = unaff_ECX[1] & ~*param_5;
   sbdac_voice_set_timbre((int)(short)param_5[1],unaff_ECX + 9);
-  sbdac_voice_volume((int)(short)param_5[1],(int)(short)(*(char *)(*(int *)(unaff_ECX + 7) + 7) + param_1),
-            (int)(short)unaff_BX);
+  sbdac_voice_volume((int)(short)param_5[1],
+                     (int)(short)(*(char *)(*(int *)(unaff_ECX + 7) + 7) + param_1),
+                     (int)(short)unaff_BX);
   sbdac_voice_controller((int)(short)param_5[1],1,(int)*(char *)((int)unaff_ECX + 0x15));
   sbdac_voice_controller((int)(short)param_5[1],7,(int)*(char *)(unaff_ECX + 9));
   return;
@@ -4305,7 +4323,8 @@ sbdac_voice_start(short param_1,ushort unaff_DX,ushort unaff_BX,ushort *unaff_EC
 // ================================================================================================
 
 void __watcall
-sbdac_voice_setup(short param_1,int unaff_EDX,undefined2 unaff_BX,undefined2 unaff_CX,undefined2 param_5)
+sbdac_voice_setup(short param_1,int unaff_EDX,undefined2 unaff_BX,undefined2 unaff_CX,
+                 undefined2 param_5)
 
 {
   int iVar1;
@@ -4319,7 +4338,7 @@ sbdac_voice_setup(short param_1,int unaff_EDX,undefined2 unaff_BX,undefined2 una
   *(undefined2 *)(&DAT_000f34f0 + iVar2) = param_5;
   mix_voice_pitch(iVar1,*(undefined2 *)(unaff_EDX + 0x12));
   mix_voice_sample(iVar1,*(undefined4 *)(unaff_EDX + 0xc),*(undefined4 *)(unaff_EDX + 0x14),
-            *(undefined4 *)(unaff_EDX + 0x18),*(undefined4 *)(unaff_EDX + 0x1c));
+                   *(undefined4 *)(unaff_EDX + 0x18),*(undefined4 *)(unaff_EDX + 0x1c));
   return;
 }
 
@@ -4416,7 +4435,8 @@ void __watcall sbdac_controller(short param_1,ushort unaff_DX,short unaff_BX)
 // sbdac_voice_controller @ 0x9fb93 [__watcall]
 // ================================================================================================
 
-void __watcall sbdac_voice_controller(short param_1,short unaff_DX,short unaff_BX,undefined4 unaff_ECX)
+void __watcall
+sbdac_voice_controller(short param_1,short unaff_DX,short unaff_BX,undefined4 unaff_ECX)
 
 {
   if (unaff_DX == 7) {
@@ -4442,16 +4462,17 @@ void __watcall sbdac_voice_set_timbre(short param_1,undefined4 unaff_EDX)
 // sbdac_voice_free @ 0x9fbb5 [__watcall]
 // ================================================================================================
 
-void __watcall sbdac_voice_free(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+void __watcall
+sbdac_voice_free(int param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   ushort *extraout_EDX;
   
   sbdac_voice_stop((int)*(short *)(param_1 + 2),param_1,unaff_EBX,unaff_ECX,unaff_EDX,unaff_EBX);
   extraout_EDX[3] = 0;
-  word_f3716 = word_f3716 | *extraout_EDX;
-  word_f3718 = word_f3718 & ~*extraout_EDX;
-  word_f3714 = word_f3714 & ~*extraout_EDX;
+  sbdac_free_mask = sbdac_free_mask | *extraout_EDX;
+  sbdac_used_mask = sbdac_used_mask & ~*extraout_EDX;
+  sbdac_released_mask = sbdac_released_mask & ~*extraout_EDX;
   **(ushort **)(extraout_EDX + 7) = **(ushort **)(extraout_EDX + 7) & ~*extraout_EDX;
   *(ushort *)(*(int *)(extraout_EDX + 7) + 2) =
        *(ushort *)(*(int *)(extraout_EDX + 7) + 2) & ~*extraout_EDX;
@@ -4902,7 +4923,7 @@ void __watcall gus_load_patches(void)
       if (9 < (int)((uint)uStack_f7 + local_28)) break;
       local_34 = *local_2c;
       iVar1 = gus_load_patch(acStack_8c,auStack_14c,&unk_f371c + local_34 * 0x1c,&local_3c,0x800,
-                        &unk_f55f8 + local_28 * 0x49,local_30);
+                             &unk_f55f8 + local_28 * 0x49,local_30);
       if (iVar1 == 0) {
         local_28 = local_28 + (uint)uStack_f7;
       }
@@ -4969,7 +4990,7 @@ void __watcall gus_open(void)
         _dword_f55e4 = _dword_f55e4 + 1;
       }
       dword_f55e8 = gus_mem_alloc(0x801);
-      __src = (char *)getenv(aULTRADIR);
+      __src = getenv(aULTRADIR);
       if (__src != (char *)0x0) {
         strcpy(aCULTRASNDMIDI,__src);
         strcat(aCULTRASNDMIDI,aMIDI);
@@ -5177,7 +5198,7 @@ void __watcall gus_drv_tick(void)
     iVar2 = local_1c * 0x16;
     if (*(short *)(&DAT_000f5596 + iVar2) != 0) {
       gus_dig_update(local_1c,0,0,*(int *)(*(int *)(&unk_f558c + iVar2) + 2) >> 0x10,
-                *(int *)(&DAT_000f559a + iVar2) >> 0x10);
+                     *(int *)(&DAT_000f559a + iVar2) >> 0x10);
     }
   }
   gus_stream_tick();
@@ -5269,7 +5290,7 @@ void __watcall gus_play_sample(void)
   empty_func_902a0();
   if (dword_d53a8 != 0) {
     gus_dig_play(in_stack_00000002 >> 0x10,param_6 + param_7,param_8,in_stack_00000014,
-              in_stack_00000018,in_stack_0000001c,in_stack_00000020,in_stack_00000024);
+                 in_stack_00000018,in_stack_0000001c,in_stack_00000020,in_stack_00000024);
   }
   return;
 }
@@ -5349,9 +5370,9 @@ gus_voice_start(short param_1,ushort unaff_DX,ushort unaff_BX,ushort *unaff_ECX,
   *(undefined4 *)(param_5 + 9) = *(undefined4 *)(unaff_ECX + 5);
   *(undefined4 *)(param_5 + 0xb) = *(undefined4 *)(unaff_ECX + 7);
   gus_voice_setup(*(int *)param_5 >> 0x10,*(undefined4 *)(param_5 + 9),
-            (int)(short)*(char *)(*(int *)(param_5 + 0xb) + 8),
-            (int)(short)*(char *)(*(int *)(param_5 + 0xb) + 10),
-            *(undefined *)(*(int *)(param_5 + 0xb) + 0xd));
+                  (int)(short)*(char *)(*(int *)(param_5 + 0xb) + 8),
+                  (int)(short)*(char *)(*(int *)(param_5 + 0xb) + 10),
+                  *(undefined *)(*(int *)(param_5 + 0xb) + 0xd));
   param_5[3] = (ushort)*(byte *)(*(int *)(param_5 + 0xb) + 0xc) << 6;
   param_5[4] = unaff_DX;
   param_5[5] = unaff_BX;
@@ -5361,8 +5382,9 @@ gus_voice_start(short param_1,ushort unaff_DX,ushort unaff_BX,ushort *unaff_ECX,
   *unaff_ECX = *unaff_ECX | *param_5;
   unaff_ECX[1] = unaff_ECX[1] & ~*param_5;
   gus_voice_set_timbre(*(int *)param_5 >> 0x10,unaff_ECX + 9);
-  gus_voice_volume(*(int *)param_5 >> 0x10,(int)(short)(*(char *)(*(int *)(unaff_ECX + 7) + 7) + param_1),
-            (int)(short)unaff_BX);
+  gus_voice_volume(*(int *)param_5 >> 0x10,
+                   (int)(short)(*(char *)(*(int *)(unaff_ECX + 7) + 7) + param_1),
+                   (int)(short)unaff_BX);
   gus_voice_controller(*(int *)param_5 >> 0x10,1,(int)(short)*(char *)((int)unaff_ECX + 0x15));
   gus_voice_controller(*(int *)param_5 >> 0x10,7,(int)(short)*(char *)(unaff_ECX + 9));
   return;
@@ -5375,7 +5397,7 @@ gus_voice_start(short param_1,ushort unaff_DX,ushort unaff_BX,ushort *unaff_ECX,
 
 void __watcall
 gus_voice_setup(short param_1,undefined4 unaff_EDX,undefined2 unaff_BX,undefined2 unaff_CX,
-         undefined2 param_5)
+               undefined2 param_5)
 
 {
   int iVar1;
@@ -5490,8 +5512,8 @@ void __watcall gus_patch_drv_send_midi(void)
                   gus_midi_voice_start(*pbVar4,bStack_14);
                 }
                 else if (bStack_14 == 9) {
-                  gus_midi_note_on(&unk_f371c + (*pbVar4 + 0x80) * 0x1c,1,*pbVar4,(&DAT_000f21fd)[iVar3],9)
-                  ;
+                  gus_midi_note_on(&unk_f371c + (*pbVar4 + 0x80) * 0x1c,1,*pbVar4,
+                                   (&DAT_000f21fd)[iVar3],9);
                 }
                 else {
                   gus_midi_note_on(0,1,*pbVar4,(&DAT_000f21fd)[iVar3],bStack_14);
@@ -5607,7 +5629,8 @@ void __watcall gus_drv_send_midi(void)
               }
               else if (local_1c == 0xe0) {
                 gus_pitch_bend(bStackY_14,
-                          (int)(short)((ushort)(byte)(&DAT_000f21fd)[iVar3] * 0x100 + -0x4000));
+                               (int)(short)((ushort)(byte)(&DAT_000f21fd)[iVar3] * 0x100 + -0x4000))
+                ;
               }
             }
           }
@@ -5702,20 +5725,23 @@ void __watcall gus_note_on(short param_1,short unaff_DX,short unaff_BX)
         for (local_24 = local_24 & -local_24; local_24 != 0; local_24 = (short)local_24 >> 1) {
           local_20 = local_20 + 1;
         }
-        gus_voice_start((int)sStack_14,(int)unaff_DX,(int)unaff_BX,puVar5,&unk_f5324 + local_20 * 0x22);
+        gus_voice_start((int)sStack_14,(int)unaff_DX,(int)unaff_BX,puVar5,
+                        &unk_f5324 + local_20 * 0x22);
         return;
       }
     }
     local_24 = dword_f58d0._2_2_ & *(ushort *)(&unk_f53b0 + iVar3);
     if (local_24 == 0) {
-      gus_voice_start((int)sStack_14,(int)unaff_DX,(int)unaff_BX,puVar5,CONCAT22(uStack_3a,local_3c));
+      gus_voice_start((int)sStack_14,(int)unaff_DX,(int)unaff_BX,puVar5,CONCAT22(uStack_3a,local_3c)
+                     );
     }
     else {
       local_20 = -1;
       for (local_24 = local_24 & -local_24; local_24 != 0; local_24 = (short)local_24 >> 1) {
         local_20 = local_20 + 1;
       }
-      gus_voice_start((int)sStack_14,(int)unaff_DX,(int)unaff_BX,puVar5,&unk_f5324 + local_20 * 0x22);
+      gus_voice_start((int)sStack_14,(int)unaff_DX,(int)unaff_BX,puVar5,&unk_f5324 + local_20 * 0x22
+                     );
     }
   }
   return;
@@ -5863,8 +5889,9 @@ void __watcall gus_controller(undefined4 param_1,undefined4 unaff_EDX,undefined4
   sStackY_1c = 1;
   for (sStackY_18 = 0; sStackY_18 < 4; sStackY_18 = sStackY_18 + 1) {
     if ((int)(CONCAT22(sStackY_1c,uStackY_1e) & CONCAT22(uVar2,uStackY_16)) >> 0x10 != 0) {
-      gus_voice_controller((int)sStackY_18,(int)(short)local_28,
-                CONCAT13(uStackY_23,CONCAT12(local_24,uStackY_26)) >> 0x10);
+      gus_voice_controller
+                ((int)sStackY_18,(int)(short)local_28,
+                 CONCAT13(uStackY_23,CONCAT12(local_24,uStackY_26)) >> 0x10);
     }
     sStackY_1c = sStackY_1c << 1;
   }
@@ -6115,7 +6142,7 @@ undefined8 __watcall __file_exists_attr(undefined4 param_1,undefined4 unaff_EDX)
 
 void __watcall
 __spawn_with_args(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX,
-         undefined4 param_5)
+                 undefined4 param_5)
 
 {
   __ccmdline(unaff_EDX,param_5,unaff_EBX,0,param_1,unaff_ECX);
@@ -6132,47 +6159,44 @@ __spawn_with_args(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,u
 /* WARNING: Removing unreachable block (ram,0x000a1f9d) */
 /* WARNING: Type propagation algorithm not settling */
 
-undefined4 __watcall
-spawnve(uint param_1,char *unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+undefined4 __watcall spawnve(uint param_1,char *unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
-  char **ppcVar1;
+  void *pvVar1;
+  undefined *__ptr;
   int iVar2;
   size_t sVar3;
-  undefined *puVar4;
-  uint uVar5;
-  undefined4 uVar6;
+  uint uVar4;
+  size_t sVar5;
+  int *piVar6;
+  undefined4 uVar7;
+  char *pcVar8;
   undefined4 extraout_EDX;
   undefined4 extraout_EDX_00;
-  char *pcVar7;
   undefined4 extraout_EDX_01;
-  undefined4 extraout_EDX_02;
-  undefined4 uVar8;
-  char **ppcVar9;
+  uint *puVar9;
   uint *puVar10;
-  uint *puVar11;
   undefined2 in_DS;
-  byte bVar12;
-  undefined8 uVar13;
-  undefined8 uVar14;
+  byte bVar11;
+  undefined8 uVar12;
   uint local_c4 [28];
   undefined4 local_54;
   char *local_50;
   char *local_4c;
-  char **local_48;
+  char *local_48;
   undefined local_44 [4];
-  int local_40;
+  size_t local_40;
   undefined local_3c [4];
   undefined local_38 [4];
-  undefined4 local_34;
-  char **local_30;
-  int local_2c;
+  void *local_34;
+  undefined *local_30;
+  char *local_2c;
   char *local_28;
-  char **local_20;
+  undefined *local_20;
   undefined4 local_1c;
   char *local_18;
   
-  bVar12 = 0;
+  bVar11 = 0;
   __CHK(0xe4);
   local_c4[0] = param_1;
   if (1 < param_1) {
@@ -6180,173 +6204,162 @@ spawnve(uint param_1,char *unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
     return 0xffffffff;
   }
   iVar2 = __cenvarg(unaff_EBX,unaff_ECX,&local_34,local_38,local_3c,&local_40,0);
+  puVar9 = local_c4;
   puVar10 = local_c4;
-  puVar11 = local_c4;
   if (iVar2 == -1) {
     return 0xffffffff;
   }
   sVar3 = strlen(unaff_EDX);
-  uVar13 = malloc(sVar3 + 0x9a);
-  local_2c = (int)uVar13;
-  if (local_2c == 0) {
-    uVar5 = (int)((ulonglong)uVar13 >> 0x20) + 3U & 0xfffffffc;
-    uVar13 = stackavail();
-    if (uVar5 < (uint)uVar13) {
-      iVar2 = -uVar5;
-      puVar10 = (uint *)((int)local_c4 + iVar2);
-      puVar4 = (undefined *)((int)local_c4 + iVar2);
+  sVar5 = sVar3 + 0x9a;
+  local_2c = (char *)malloc(sVar5);
+  local_18 = local_2c;
+  if (local_2c == (char *)0x0) {
+    uVar4 = sVar3 + 0x9d & 0xfffffffc;
+    uVar12 = stackavail();
+    sVar5 = (size_t)((ulonglong)uVar12 >> 0x20);
+    if (uVar4 < (uint)uVar12) {
+      iVar2 = -uVar4;
+      puVar9 = (uint *)((int)local_c4 + iVar2);
+      local_18 = (char *)((int)local_c4 + iVar2);
     }
     else {
-      puVar4 = (undefined *)0x0;
+      local_18 = (char *)0x0;
     }
-    uVar13 = CONCAT44((int)((ulonglong)uVar13 >> 0x20),puVar4);
-    puVar11 = puVar10;
-    if (puVar4 == (undefined *)0x0) {
-      *(undefined4 *)((int)puVar10 + -4) = 0xa1d98;
+    puVar10 = puVar9;
+    if (local_18 == (char *)0x0) {
+      *(undefined4 *)((int)puVar9 + -4) = 0xa1d98;
       free(local_34);
       return 0xffffffff;
     }
   }
-  local_18 = (char *)uVar13;
-  *(char ***)((int)puVar11 + -4) = &local_50;
-  *(undefined4 **)((int)puVar11 + -8) = &local_54;
-  *(undefined4 *)((int)puVar11 + -0xc) = 0xa1dbb;
-  __splitpath_drive(unaff_EDX,local_18 + (int)((ulonglong)uVar13 >> 0x20) + -0x93,&local_4c,&local_48);
-  *(undefined4 *)((int)puVar11 + -4) = 0xa1dc4;
+  *(char ***)((int)puVar10 + -4) = &local_50;
+  *(undefined4 **)((int)puVar10 + -8) = &local_54;
+  *(undefined4 *)((int)puVar10 + -0xc) = 0xa1dbb;
+  __splitpath_drive(unaff_EDX,local_18 + (sVar5 - 0x93),&local_4c,&local_48);
+  *(undefined4 *)((int)puVar10 + -4) = 0xa1dc4;
   (*(code *)funcptr_d6600)();
-  iVar2 = local_40;
-  *(undefined4 *)((int)puVar11 + -4) = 0xa1dcc;
-  local_30 = (char **)malloc(iVar2);
+  sVar5 = local_40;
+  *(undefined4 *)((int)puVar10 + -4) = 0xa1dcc;
+  local_30 = (undefined *)malloc(sVar5);
   local_20 = local_30;
-  if (local_30 == (char **)0x0) {
-    uVar5 = local_40 + 3U & 0xfffffffc;
-    *(undefined4 *)((int)puVar11 + -4) = 0xa1de4;
-    uVar13 = stackavail(uVar5,uVar5);
-    if ((uint)((ulonglong)uVar13 >> 0x20) < (uint)uVar13) {
-      iVar2 = -(local_40 + 3U & 0xfffffffc);
-      local_20 = (char **)((int)puVar11 + iVar2);
-      puVar11 = (uint *)((int)puVar11 + iVar2);
+  if (local_30 == (undefined *)0x0) {
+    uVar4 = local_40 + 3 & 0xfffffffc;
+    *(undefined4 *)((int)puVar10 + -4) = 0xa1de4;
+    uVar12 = stackavail(uVar4,uVar4);
+    if ((uint)((ulonglong)uVar12 >> 0x20) < (uint)uVar12) {
+      iVar2 = -(local_40 + 3 & 0xfffffffc);
+      local_20 = (undefined *)((int)puVar10 + iVar2);
+      puVar10 = (uint *)((int)puVar10 + iVar2);
     }
     else {
-      local_20 = (char **)0x0;
+      local_20 = (undefined *)0x0;
     }
-    if (local_20 == (char **)0x0) {
-      *(undefined4 *)((int)puVar11 + -4) = 0xa1e09;
+    if (local_20 == (undefined *)0x0) {
+      *(undefined4 *)((int)puVar10 + -4) = 0xa1e09;
       __set_errno(2);
-      *(undefined4 *)((int)puVar11 + -4) = 0xa1e1a;
+      local_1c = 0xffffffff;
+      *(undefined4 *)((int)puVar10 + -4) = 0xa1e1a;
       __set_doserrno(10);
-      uVar13 = CONCAT44(extraout_EDX,0xffffffff);
-      ppcVar9 = &local_4c;
       goto LAB_000a1fc3;
     }
   }
-  if (((2 < byte_d4d0f) && (*local_4c == '\0')) && (*(char *)local_48 == '\0')) {
-    local_48 = (char **)&unk_c4ab4;
+  if (((2 < byte_d4d0f) && (*local_4c == '\0')) && (*local_48 == '\0')) {
+    local_48 = &unk_c4ab4;
   }
-  *(char **)((int)puVar11 + -4) = local_50;
-  ppcVar9 = local_48;
-  *(undefined4 *)((int)puVar11 + -8) = 0xa1e56;
-  _makepath(local_18,local_4c,ppcVar9,local_54);
-  *(undefined4 *)((int)puVar11 + -4) = 0xa1e60;
+  *(char **)((int)puVar10 + -4) = local_50;
+  pcVar8 = local_48;
+  *(undefined4 *)((int)puVar10 + -8) = 0xa1e56;
+  _makepath(local_18,local_4c,pcVar8,local_54);
+  *(undefined4 *)((int)puVar10 + -4) = 0xa1e60;
   __set_errno(1);
   if (*local_50 == '\0') {
-    *(undefined4 *)((int)puVar11 + -4) = 0xa1ebd;
-    sVar3 = strlen(local_18);
-    pcVar7 = local_18 + sVar3;
-    local_28 = pcVar7;
-    *(undefined2 *)((int)puVar11 + -4) = in_DS;
-    *(undefined4 *)pcVar7 = aCom;
-    pcVar7[(uint)bVar12 * -8 + 4] = (&DAT_000c4ac0)[(uint)bVar12 * -8];
-    *(undefined4 *)((int)puVar11 + -4) = 0xa1eec;
+    *(undefined4 *)((int)puVar10 + -4) = 0xa1ebd;
+    sVar5 = strlen(local_18);
+    pcVar8 = local_18 + sVar5;
+    local_28 = pcVar8;
+    *(undefined2 *)((int)puVar10 + -4) = in_DS;
+    *(undefined4 *)pcVar8 = aCom;
+    pcVar8[(uint)bVar11 * -8 + 4] = (&DAT_000c4ac0)[(uint)bVar11 * -8];
+    *(undefined4 *)((int)puVar10 + -4) = 0xa1eec;
     __set_errno(0,local_18,local_20);
-    *(undefined4 *)((int)puVar11 + -4) = unaff_EBX;
-    uVar6 = local_34;
-    uVar5 = local_c4[0];
-    *(undefined4 *)((int)puVar11 + -8) = 0xa1efa;
-    uVar6 = __spawn_with_args(uVar5,extraout_EDX_01,local_20,uVar6);
-    *(undefined4 *)((int)puVar11 + -4) = 0xa1f02;
-    uVar14 = __get_errno_ptr();
-    pcVar7 = local_28;
-    uVar13 = CONCAT44((int)((ulonglong)uVar14 >> 0x20),uVar6);
-    ppcVar9 = local_20;
-    if (*(int *)uVar14 != 1) goto LAB_000a1fc3;
-    *(undefined4 *)((int)puVar11 + -4) = 0xa1f1b;
+    *(undefined4 *)((int)puVar10 + -4) = unaff_EBX;
+    pvVar1 = local_34;
+    uVar4 = local_c4[0];
+    *(undefined4 *)((int)puVar10 + -8) = 0xa1efa;
+    local_1c = __spawn_with_args(uVar4,extraout_EDX_00,local_20,pvVar1);
+    *(undefined4 *)((int)puVar10 + -4) = 0xa1f02;
+    piVar6 = (int *)__get_errno_ptr();
+    pcVar8 = local_28;
+    if (*piVar6 != 1) goto LAB_000a1fc3;
+    *(undefined4 *)((int)puVar10 + -4) = 0xa1f1b;
     __set_errno(0,local_18,local_20);
-    *(undefined2 *)((int)puVar11 + -4) = in_DS;
-    *(undefined4 *)((int)puVar11 + -4) = unaff_EBX;
-    *(undefined4 *)pcVar7 = aExe;
-    uVar6 = local_34;
-    uVar5 = local_c4[0];
-    pcVar7[(uint)bVar12 * -8 + 4] = (&DAT_000c4ac5)[(uint)bVar12 * -8];
-    *(undefined4 *)((int)puVar11 + -8) = 0xa1f32;
-    uVar6 = __spawn_with_args(uVar5,extraout_EDX_02,local_20,uVar6);
-    *(undefined4 *)((int)puVar11 + -4) = 0xa1f3a;
-    uVar14 = __get_errno_ptr();
-    pcVar7 = local_28;
-    uVar8 = (undefined4)((ulonglong)uVar14 >> 0x20);
-    uVar13 = CONCAT44(uVar8,uVar6);
-    if (*(int *)uVar14 != 1) goto LAB_000a1fc3;
-    *(undefined4 *)((int)puVar11 + -4) = 0xa1f52;
-    __set_errno(0,uVar8,local_20);
-    *(undefined4 *)pcVar7 = aBat;
-    pcVar7[(uint)bVar12 * -8 + 4] = (&DAT_000c4abb)[(uint)bVar12 * -8];
-    *(undefined4 *)((int)puVar11 + -4) = 0xa1f5c;
-    uVar14 = __file_exists_attr(local_18);
-    uVar13 = CONCAT44((int)((ulonglong)uVar14 >> 0x20),uVar6);
-    iVar2 = (int)uVar14;
+    *(undefined2 *)((int)puVar10 + -4) = in_DS;
+    *(undefined4 *)((int)puVar10 + -4) = unaff_EBX;
+    *(undefined4 *)pcVar8 = aExe;
+    pvVar1 = local_34;
+    uVar4 = local_c4[0];
+    pcVar8[(uint)bVar11 * -8 + 4] = (&DAT_000c4ac5)[(uint)bVar11 * -8];
+    *(undefined4 *)((int)puVar10 + -8) = 0xa1f32;
+    local_1c = __spawn_with_args(uVar4,extraout_EDX_01,local_20,pvVar1);
+    *(undefined4 *)((int)puVar10 + -4) = 0xa1f3a;
+    uVar12 = __get_errno_ptr();
+    pcVar8 = local_28;
+    if (*(int *)uVar12 != 1) goto LAB_000a1fc3;
+    *(undefined4 *)((int)puVar10 + -4) = 0xa1f52;
+    __set_errno(0,(int)((ulonglong)uVar12 >> 0x20),local_20);
+    *(undefined4 *)pcVar8 = aBat;
+    pcVar8[(uint)bVar11 * -8 + 4] = (&DAT_000c4abb)[(uint)bVar11 * -8];
+    *(undefined4 *)((int)puVar10 + -4) = 0xa1f5c;
+    iVar2 = __file_exists_attr(local_18);
   }
   else {
-    *(undefined4 *)((int)puVar11 + -4) = 0xa1e72;
+    *(undefined4 *)((int)puVar10 + -4) = 0xa1e72;
     iVar2 = stricmp(local_50,&aBat);
     if (iVar2 != 0) {
-      *(undefined4 *)((int)puVar11 + -4) = 0xa1e9f;
+      *(undefined4 *)((int)puVar10 + -4) = 0xa1e9f;
       __set_errno(0,local_18,local_20);
-      *(undefined4 *)((int)puVar11 + -4) = unaff_EBX;
-      uVar6 = local_34;
-      uVar5 = local_c4[0];
-      *(undefined4 *)((int)puVar11 + -8) = 0xa1ead;
-      uVar13 = __spawn_with_args(uVar5,extraout_EDX_00,local_20,uVar6);
-      ppcVar9 = local_20;
+      *(undefined4 *)((int)puVar10 + -4) = unaff_EBX;
+      pvVar1 = local_34;
+      uVar4 = local_c4[0];
+      *(undefined4 *)((int)puVar10 + -8) = 0xa1ead;
+      local_1c = __spawn_with_args(uVar4,extraout_EDX,local_20,pvVar1);
       goto LAB_000a1fc3;
     }
-    *(undefined4 *)((int)puVar11 + -4) = 0xa1e85;
-    uVar14 = __file_exists_attr(local_18);
-    uVar13 = CONCAT44((int)((ulonglong)uVar14 >> 0x20),0xffffffff);
-    iVar2 = (int)uVar14;
+    local_1c = 0xffffffff;
+    *(undefined4 *)((int)puVar10 + -4) = 0xa1e85;
+    iVar2 = __file_exists_attr(local_18);
   }
   if (iVar2 != 0) {
-    *(undefined4 *)((int)puVar11 + -4) = 0xa1f73;
-    free(local_34,unaff_EBX,local_20,1);
-    local_34 = 0;
-    *(undefined4 *)((int)puVar11 + -4) = 0xa1f82;
-    __ccmdline(local_18);
-    *(undefined4 *)((int)puVar11 + -4) = 0;
-    *(char ***)((int)puVar11 + -8) = local_20;
-    *(char **)((int)puVar11 + -0xc) = local_18;
-    *(undefined4 *)((int)puVar11 + -0x10) = 0xa1f96;
-    uVar6 = __Slash_C(local_44,0);
-    *(undefined4 *)((int)puVar11 + -0x10) = uVar6;
-    *(char **)((int)puVar11 + -0x14) = aCOMMAND;
-    *(undefined4 *)((int)puVar11 + -0x18) = 0xa1fb4;
-    uVar6 = getenv(aCOMSPEC);
-    *(undefined4 *)((int)puVar11 + -0x18) = uVar6;
-    *(uint *)((int)puVar11 + -0x1c) = local_c4[0];
-    *(undefined4 *)((int)puVar11 + -0x20) = 0xa1fbd;
-    uVar13 = spawnl();
-    ppcVar9 = local_20;
+    *(undefined4 *)((int)puVar10 + -4) = 0xa1f73;
+    free(local_34);
+    local_34 = (void *)0x0;
+    *(undefined4 *)((int)puVar10 + -4) = 0xa1f82;
+    __ccmdline(local_18,unaff_EBX,local_20,1);
+    *(undefined4 *)((int)puVar10 + -4) = 0;
+    *(undefined **)((int)puVar10 + -8) = local_20;
+    *(char **)((int)puVar10 + -0xc) = local_18;
+    *(undefined4 *)((int)puVar10 + -0x10) = 0xa1f96;
+    uVar7 = __Slash_C(local_44,0);
+    *(undefined4 *)((int)puVar10 + -0x10) = uVar7;
+    *(char **)((int)puVar10 + -0x14) = aCOMMAND;
+    *(undefined4 *)((int)puVar10 + -0x18) = 0xa1fb4;
+    pcVar8 = getenv(aCOMSPEC);
+    *(char **)((int)puVar10 + -0x18) = pcVar8;
+    *(uint *)((int)puVar10 + -0x1c) = local_c4[0];
+    *(undefined4 *)((int)puVar10 + -0x20) = 0xa1fbd;
+    local_1c = spawnl();
   }
 LAB_000a1fc3:
-  ppcVar1 = local_30;
-  local_1c = (undefined4)uVar13;
-  *(undefined4 *)((int)puVar11 + -4) = 0xa1fcb;
-  free(ppcVar1,(int)((ulonglong)uVar13 >> 0x20),ppcVar9);
-  iVar2 = local_2c;
-  *(undefined4 *)((int)puVar11 + -4) = 0xa1fd3;
-  free(iVar2);
-  uVar6 = local_34;
-  *(undefined4 *)((int)puVar11 + -4) = 0xa1fdb;
-  free(uVar6);
-  *(undefined4 *)((int)puVar11 + -4) = 0xa1fe4;
+  __ptr = local_30;
+  *(undefined4 *)((int)puVar10 + -4) = 0xa1fcb;
+  free(__ptr);
+  pcVar8 = local_2c;
+  *(undefined4 *)((int)puVar10 + -4) = 0xa1fd3;
+  free(pcVar8);
+  pvVar1 = local_34;
+  *(undefined4 *)((int)puVar10 + -4) = 0xa1fdb;
+  free(pvVar1);
+  *(undefined4 *)((int)puVar10 + -4) = 0xa1fe4;
   (*(code *)funcptr_d6604)();
   return local_1c;
 }
@@ -6525,7 +6538,7 @@ LAB_000a22e5:
         }
         if ((0 < iVar16) && (dword_d30b0 < iVar17)) {
           texture_span(iVar14 + *(int *)(off_d30cc + local_20),
-                    (iVar5 >> 0x10) + iVar11 * (local_18 >> 0x10) + (&unk_f6138)[iVar12],iVar16);
+                       (iVar5 >> 0x10) + iVar11 * (local_18 >> 0x10) + (&unk_f6138)[iVar12],iVar16);
         }
         iVar5 = iVar5 + local_2c;
         local_18 = local_18 + local_30;
@@ -6584,7 +6597,7 @@ LAB_000a22e5:
       }
       if ((0 < iVar3) && (dword_d30b0 <= iVar17)) {
         texture_span(iVar4 + *(int *)(off_d30cc + local_28),
-                  (iVar5 >> 0x10) + iVar11 * (local_18 >> 0x10) + (&unk_f6138)[iVar10],iVar3);
+                     (iVar5 >> 0x10) + iVar11 * (local_18 >> 0x10) + (&unk_f6138)[iVar10],iVar3);
       }
       iVar5 = iVar5 + local_2c;
       local_18 = local_18 + local_30;
@@ -6623,7 +6636,7 @@ char * __watcall find_file_ext(void)
     pcVar4[1] = cVar1;
     pcVar4 = pcVar4 + 2;
   } while (cVar1 != '\0');
-  pcVar4 = (char *)strrchr(in_stack_00000008,0x2e);
+  pcVar4 = strrchr(in_stack_00000008,0x2e);
   if (pcVar4 == (char *)0x0) {
     uVar3 = 0xffffffff;
     pcVar4 = in_stack_00000008;
@@ -6929,13 +6942,13 @@ void packed_size(undefined4 param_1)
 // abs @ 0xa2ac8 [__watcall]
 // ================================================================================================
 
-int __watcall abs(int param_1)
+int __watcall abs(int __x)
 
 {
-  if (param_1 < 0) {
-    param_1 = -param_1;
+  if (__x < 0) {
+    __x = -__x;
   }
-  return param_1;
+  return __x;
 }
 
 
@@ -6956,7 +6969,8 @@ void __watcall __init_amblksiz(void)
 // ================================================================================================
 
 void __watcall
-__float_not_loaded(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+__float_not_loaded(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX
+                  )
 
 {
   __fatal_runtime_error(aFloatingPointSupportNotL,1,unaff_EBX,unaff_ECX,unaff_EDX);
@@ -7015,13 +7029,13 @@ undefined * __watcall ltoa(int param_1,undefined *unaff_EDX,int unaff_EBX)
 // toupper @ 0xa2b77 [__watcall]
 // ================================================================================================
 
-int __watcall toupper(int param_1)
+int __watcall toupper(int __c)
 
 {
-  if ((0x60 < param_1) && (param_1 < 0x7b)) {
-    param_1 = param_1 + -0x20;
+  if ((0x60 < __c) && (__c < 0x7b)) {
+    __c = __c + -0x20;
   }
-  return param_1;
+  return __c;
 }
 
 
@@ -7044,7 +7058,7 @@ undefined8 __watcall _heapenable(undefined4 param_1,undefined4 unaff_EDX)
 // sbrk @ 0xa2b95 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall sbrk(int param_1)
+void * __watcall sbrk(intptr_t __delta)
 
 {
   code *pcVar1;
@@ -7052,36 +7066,34 @@ undefined8 __watcall sbrk(int param_1)
   uint uVar3;
   undefined2 *puVar4;
   undefined4 *puVar5;
+  void *pvVar6;
   undefined2 extraout_CX;
+  int iVar7;
   undefined4 extraout_EDX;
-  undefined4 uVar6;
-  undefined *puVar7;
-  undefined *puVar8;
+  undefined4 uVar8;
   undefined2 unaff_SI;
   undefined2 unaff_DI;
   ushort in_DS;
   byte bVar9;
   undefined8 uVar10;
   
-  puVar7 = &stack0xffffffec;
-  puVar8 = &stack0xffffffec;
   if (((byte_d4d06 == 1) && (byte_d4d07 == '\0')) || (byte_d4d06 == 9)) {
-    if (param_1 < 1) {
+    if (__delta < 1) {
       puVar5 = (undefined4 *)__get_errno_ptr();
       *puVar5 = 9;
     }
     else {
-      param_1 = param_1 + 0xfff;
+      iVar7 = __delta + 0xfff;
       bVar9 = byte_d4d06 == 0;
       if (byte_d4d06 == 1) {
-        uVar3 = param_1 >> 0x10;
-        bVar9 = (param_1 >> 0xf & 1U) != 0;
+        uVar3 = iVar7 >> 0x10;
+        bVar9 = (iVar7 >> 0xf & 1U) != 0;
         pcVar1 = (code *)swi(0x31);
         (*pcVar1)();
         puVar4 = (undefined2 *)(1 - bVar9);
-        uVar6 = extraout_EDX;
+        uVar8 = extraout_EDX;
         if (puVar4 != (undefined2 *)0x0) {
-          puVar4 = (undefined2 *)CONCAT22((short)((uint)param_1 >> 0x10),extraout_CX);
+          puVar4 = (undefined2 *)CONCAT22((short)((uint)iVar7 >> 0x10),extraout_CX);
           *puVar4 = unaff_DI;
           puVar4[1] = unaff_SI;
         }
@@ -7089,28 +7101,26 @@ undefined8 __watcall sbrk(int param_1)
       else {
         pcVar1 = (code *)swi(0x21);
         uVar10 = (*pcVar1)();
-        uVar6 = (undefined4)((ulonglong)uVar10 >> 0x20);
+        uVar8 = (undefined4)((ulonglong)uVar10 >> 0x20);
         uVar3 = ~-(uint)bVar9;
         puVar4 = (undefined2 *)((uint)uVar10 & uVar3);
       }
-      puVar8 = &stack0xfffffff0;
-      if (puVar4 != (undefined2 *)0x0) goto LAB_000a2c4e;
-      puVar5 = (undefined4 *)__get_errno_ptr(0,uVar6,uVar3);
+      if (puVar4 != (undefined2 *)0x0) {
+        return puVar4;
+      }
+      puVar5 = (undefined4 *)__get_errno_ptr(0,uVar8,uVar3);
       *puVar5 = 5;
-      puVar7 = &stack0xfffffff0;
     }
-    puVar4 = (undefined2 *)0xffffffff;
-    puVar8 = puVar7;
+    pvVar6 = (void *)0xffffffff;
   }
   else {
     if ((1 < byte_d4d06) && (byte_d4d06 < 9)) {
       uVar2 = SegmentLimit((uint)in_DS);
       dword_d4cd8 = (ushort)uVar2 + 1;
     }
-    puVar4 = (undefined2 *)__brk(dword_d4cd8 + param_1);
+    pvVar6 = (void *)__brk(dword_d4cd8 + __delta);
   }
-LAB_000a2c4e:
-  return CONCAT44(*(undefined4 *)(puVar8 + 8),puVar4);
+  return pvVar6;
 }
 
 
@@ -7463,7 +7473,7 @@ void drawshape_alt_centered(int param_1,int param_2,int param_3)
 
 {
   drawshape_alt(param_1,param_2 - (*(int *)(param_1 + 6) >> 0x10),
-            param_3 - (*(int *)(param_1 + 8) >> 0x10));
+                param_3 - (*(int *)(param_1 + 8) >> 0x10));
   return;
 }
 
@@ -7562,7 +7572,7 @@ void shape_recolor(int param_1)
 
 {
   translate_bytes(param_1 + 0x10,&unk_d42e4,
-            (*(int *)(param_1 + 4) >> 0x10) * (*(int *)(param_1 + 2) >> 0x10));
+                  (*(int *)(param_1 + 4) >> 0x10) * (*(int *)(param_1 + 2) >> 0x10));
   return;
 }
 
@@ -7646,7 +7656,7 @@ LAB_000a319e:
     *(undefined4 *)(unaff_EBX + 8) = 6;
   }
   __cvt_float(param_1,&local_1c,*(undefined4 *)(unaff_EBX + 8),0,0x27,uVar3,3,bVar2,
-            *(byte *)(unaff_EBX + 0x15) & 0x5f);
+              *(byte *)(unaff_EBX + 0x15) & 0x5f);
   if (*param_1 == '*') {
     *(undefined *)(unaff_EBX + 0x16) = 0x2a;
   }
@@ -7844,15 +7854,17 @@ void __watcall emu387_decode(void)
     uVar2 = empty_func_902a0();
                     /* WARNING: Could not recover jumptable at 0x000a37ab. Too many branches */
                     /* WARNING: Treating indirect jump as call */
-    (*(code *)(&PTR_sub_a41e6_000a34ec)[(byte)((byte)((ushort)uVar2 >> 8) & 0x38 | (byte)uVar2)])();
+    (*(code *)(&PTR_emu387_fadd_st_000a34ec)
+              [(byte)((byte)((ushort)uVar2 >> 8) & 0x38 | (byte)uVar2)])();
     return;
   }
   uVar3 = CONCAT11(bVar1 >> 3,bVar1) & 0x1807;
-  uVar2 = (*(code *)(&PTR_sub_a38de_000a332c)[(byte)((byte)uVar3 | (byte)(uVar3 >> 8))])();
+  uVar2 = (*(code *)(&PTR_emu387_ea_eax_000a332c)[(byte)((byte)uVar3 | (byte)(uVar3 >> 8))])();
   empty_func_902a0();
                     /* WARNING: Could not recover jumptable at 0x000a36fe. Too many branches */
                     /* WARNING: Treating indirect jump as call */
-  (*(code *)(&PTR_sub_a39dd_000a33ec)[(byte)((byte)((ushort)uVar2 >> 8) & 0x38 | (byte)uVar2)])();
+  (*(code *)(&PTR_emu387_fadd_m32_000a33ec)[(byte)((byte)((ushort)uVar2 >> 8) & 0x38 | (byte)uVar2)]
+  )();
   return;
 }
 

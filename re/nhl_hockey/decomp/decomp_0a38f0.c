@@ -246,7 +246,7 @@ void __watcall emu387_ea_sib(undefined4 param_1,undefined4 param_2,undefined4 un
   uVar1 = CONCAT31((int3)((uint)unaff_EBX >> 8),*unaff_ESI) & 0xffffff07;
   uVar1 = CONCAT22((short)(uVar1 >> 0x10),CONCAT11((byte)((uint)param_1 >> 8) >> 3,(char)uVar1)) &
           0xffff18ff;
-  (*(code *)(&PTR_sub_a38de_000a338c)
+  (*(code *)(&PTR_emu387_ea_eax_000a338c)
             [CONCAT22((short)(uVar1 >> 0x10),(ushort)(byte)((byte)uVar1 | (byte)(uVar1 >> 8)))])();
   return;
 }
@@ -280,15 +280,17 @@ void __watcall emu387_reserved(void)
     uVar2 = empty_func_902a0();
                     /* WARNING: Could not recover jumptable at 0x000a37ab. Too many branches */
                     /* WARNING: Treating indirect jump as call */
-    (*(code *)(&PTR_sub_a41e6_000a34ec)[(byte)((byte)((ushort)uVar2 >> 8) & 0x38 | (byte)uVar2)])();
+    (*(code *)(&PTR_emu387_fadd_st_000a34ec)
+              [(byte)((byte)((ushort)uVar2 >> 8) & 0x38 | (byte)uVar2)])();
     return;
   }
   uVar3 = CONCAT11(bVar1 >> 3,bVar1) & 0x1807;
-  uVar2 = (*(code *)(&PTR_sub_a38de_000a332c)[(byte)((byte)uVar3 | (byte)(uVar3 >> 8))])();
+  uVar2 = (*(code *)(&PTR_emu387_ea_eax_000a332c)[(byte)((byte)uVar3 | (byte)(uVar3 >> 8))])();
   empty_func_902a0();
                     /* WARNING: Could not recover jumptable at 0x000a36fe. Too many branches */
                     /* WARNING: Treating indirect jump as call */
-  (*(code *)(&PTR_sub_a39dd_000a33ec)[(byte)((byte)((ushort)uVar2 >> 8) & 0x38 | (byte)uVar2)])();
+  (*(code *)(&PTR_emu387_fadd_m32_000a33ec)[(byte)((byte)((ushort)uVar2 >> 8) & 0x38 | (byte)uVar2)]
+  )();
   return;
 }
 
@@ -1407,7 +1409,7 @@ void __watcall emu387_fist_m16(undefined4 param_1,undefined4 unaff_EDX)
   uVar3 = puVar1[1];
   uVar4 = *(undefined4 *)((int)puVar1 + 6);
   __ext_round(unaff_EDI + 0x1c + (int)unaff_EBP,
-            CONCAT22((short)((uint)unaff_EDX >> 0x10),*unaff_EBP) & 0xffff0c00);
+              CONCAT22((short)((uint)unaff_EDX >> 0x10),*unaff_EBP) & 0xffff0c00);
   iVar6 = __ext_to_i32(unaff_EDI + 0x1c + (int)unaff_EBP);
   sVar5 = (short)iVar6;
   if (sVar5 != iVar6) {
@@ -1438,7 +1440,7 @@ void __watcall emu387_fistp_m16(undefined4 param_1,undefined4 unaff_EDX)
   int unaff_EDI;
   
   __ext_round(unaff_EDI + 0x1c + (int)unaff_EBP,
-            CONCAT22((short)((uint)unaff_EDX >> 0x10),*unaff_EBP) & 0xffff0c00);
+              CONCAT22((short)((uint)unaff_EDX >> 0x10),*unaff_EBP) & 0xffff0c00);
   iVar3 = __ext_to_i32(unaff_EDI + 0x1c + (int)unaff_EBP);
   sVar2 = (short)iVar3;
   if (sVar2 != iVar3) {
@@ -1483,15 +1485,17 @@ void __watcall emu387_fbld(void)
     uVar2 = empty_func_902a0();
                     /* WARNING: Could not recover jumptable at 0x000a37ab. Too many branches */
                     /* WARNING: Treating indirect jump as call */
-    (*(code *)(&PTR_sub_a41e6_000a34ec)[(byte)((byte)((ushort)uVar2 >> 8) & 0x38 | (byte)uVar2)])();
+    (*(code *)(&PTR_emu387_fadd_st_000a34ec)
+              [(byte)((byte)((ushort)uVar2 >> 8) & 0x38 | (byte)uVar2)])();
     return;
   }
   uVar3 = CONCAT11(bVar1 >> 3,bVar1) & 0x1807;
-  uVar2 = (*(code *)(&PTR_sub_a38de_000a332c)[(byte)((byte)uVar3 | (byte)(uVar3 >> 8))])();
+  uVar2 = (*(code *)(&PTR_emu387_ea_eax_000a332c)[(byte)((byte)uVar3 | (byte)(uVar3 >> 8))])();
   empty_func_902a0();
                     /* WARNING: Could not recover jumptable at 0x000a36fe. Too many branches */
                     /* WARNING: Treating indirect jump as call */
-  (*(code *)(&PTR_sub_a39dd_000a33ec)[(byte)((byte)((ushort)uVar2 >> 8) & 0x38 | (byte)uVar2)])();
+  (*(code *)(&PTR_emu387_fadd_m32_000a33ec)[(byte)((byte)((ushort)uVar2 >> 8) & 0x38 | (byte)uVar2)]
+  )();
   return;
 }
 
@@ -1595,15 +1599,17 @@ void __watcall emu387_invalid(void)
     uVar2 = empty_func_902a0();
                     /* WARNING: Could not recover jumptable at 0x000a37ab. Too many branches */
                     /* WARNING: Treating indirect jump as call */
-    (*(code *)(&PTR_sub_a41e6_000a34ec)[(byte)((byte)((ushort)uVar2 >> 8) & 0x38 | (byte)uVar2)])();
+    (*(code *)(&PTR_emu387_fadd_st_000a34ec)
+              [(byte)((byte)((ushort)uVar2 >> 8) & 0x38 | (byte)uVar2)])();
     return;
   }
   uVar3 = CONCAT11(bVar1 >> 3,bVar1) & 0x1807;
-  uVar2 = (*(code *)(&PTR_sub_a38de_000a332c)[(byte)((byte)uVar3 | (byte)(uVar3 >> 8))])();
+  uVar2 = (*(code *)(&PTR_emu387_ea_eax_000a332c)[(byte)((byte)uVar3 | (byte)(uVar3 >> 8))])();
   empty_func_902a0();
                     /* WARNING: Could not recover jumptable at 0x000a36fe. Too many branches */
                     /* WARNING: Treating indirect jump as call */
-  (*(code *)(&PTR_sub_a39dd_000a33ec)[(byte)((byte)((ushort)uVar2 >> 8) & 0x38 | (byte)uVar2)])();
+  (*(code *)(&PTR_emu387_fadd_m32_000a33ec)[(byte)((byte)((ushort)uVar2 >> 8) & 0x38 | (byte)uVar2)]
+  )();
   return;
 }
 
@@ -1633,7 +1639,8 @@ void __watcall emu387_fadd_st(void)
   int unaff_ESI;
   int unaff_EDI;
   
-  emu387_add(unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP);
+  emu387_add(unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP)
+  ;
                     /* WARNING: Could not recover jumptable at 0x000a41f7. Too many branches */
                     /* WARNING: Treating indirect jump as call */
   (**(code **)(unaff_EBP + 0x76))();
@@ -1652,7 +1659,8 @@ void __watcall emu387_fmul_st(void)
   int unaff_ESI;
   int unaff_EDI;
   
-  emu387_mul(unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP);
+  emu387_mul(unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP)
+  ;
                     /* WARNING: Could not recover jumptable at 0x000a420c. Too many branches */
                     /* WARNING: Treating indirect jump as call */
   (**(code **)(unaff_EBP + 0x76))();
@@ -1705,7 +1713,8 @@ void __watcall emu387_fsub_st(void)
   int unaff_ESI;
   int unaff_EDI;
   
-  emu387_sub(unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP);
+  emu387_sub(unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP)
+  ;
                     /* WARNING: Could not recover jumptable at 0x000a4245. Too many branches */
                     /* WARNING: Treating indirect jump as call */
   (**(code **)(unaff_EBP + 0x76))();
@@ -1724,7 +1733,8 @@ void __watcall emu387_fsubr_st(void)
   int unaff_ESI;
   int unaff_EDI;
   
-  emu387_sub(unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP);
+  emu387_sub(unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP)
+  ;
                     /* WARNING: Could not recover jumptable at 0x000a425a. Too many branches */
                     /* WARNING: Treating indirect jump as call */
   (**(code **)(unaff_EBP + 0x76))();
@@ -1743,7 +1753,8 @@ void __watcall emu387_fdiv_st(void)
   int unaff_ESI;
   int unaff_EDI;
   
-  emu387_div(unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP);
+  emu387_div(unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP)
+  ;
                     /* WARNING: Could not recover jumptable at 0x000a426f. Too many branches */
                     /* WARNING: Treating indirect jump as call */
   (**(code **)(unaff_EBP + 0x76))();
@@ -1762,7 +1773,8 @@ void __watcall emu387_fdivr_st(void)
   int unaff_ESI;
   int unaff_EDI;
   
-  emu387_div(unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP);
+  emu387_div(unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP)
+  ;
                     /* WARNING: Could not recover jumptable at 0x000a4284. Too many branches */
                     /* WARNING: Treating indirect jump as call */
   (**(code **)(unaff_EBP + 0x76))();
@@ -1946,7 +1958,8 @@ void __watcall emu387_fadd_to_st(void)
   int unaff_ESI;
   int unaff_EDI;
   
-  emu387_add(unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP);
+  emu387_add(unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP)
+  ;
                     /* WARNING: Could not recover jumptable at 0x000a48aa. Too many branches */
                     /* WARNING: Treating indirect jump as call */
   (**(code **)(unaff_EBP + 0x76))();
@@ -1965,7 +1978,8 @@ void __watcall emu387_fmul_to_st(void)
   int unaff_ESI;
   int unaff_EDI;
   
-  emu387_mul(unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP);
+  emu387_mul(unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP)
+  ;
                     /* WARNING: Could not recover jumptable at 0x000a48bf. Too many branches */
                     /* WARNING: Treating indirect jump as call */
   (**(code **)(unaff_EBP + 0x76))();
@@ -1984,7 +1998,8 @@ void __watcall emu387_fsubr_to_st(void)
   int unaff_ESI;
   int unaff_EDI;
   
-  emu387_sub(unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP);
+  emu387_sub(unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP)
+  ;
                     /* WARNING: Could not recover jumptable at 0x000a48d4. Too many branches */
                     /* WARNING: Treating indirect jump as call */
   (**(code **)(unaff_EBP + 0x76))();
@@ -2003,7 +2018,8 @@ void __watcall emu387_fsub_to_st(void)
   int unaff_ESI;
   int unaff_EDI;
   
-  emu387_sub(unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP);
+  emu387_sub(unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP)
+  ;
                     /* WARNING: Could not recover jumptable at 0x000a48e9. Too many branches */
                     /* WARNING: Treating indirect jump as call */
   (**(code **)(unaff_EBP + 0x76))();
@@ -2022,7 +2038,8 @@ void __watcall emu387_fdivr_to_st(void)
   int unaff_ESI;
   int unaff_EDI;
   
-  emu387_div(unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP);
+  emu387_div(unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP)
+  ;
                     /* WARNING: Could not recover jumptable at 0x000a48fe. Too many branches */
                     /* WARNING: Treating indirect jump as call */
   (**(code **)(unaff_EBP + 0x76))();
@@ -2041,7 +2058,8 @@ void __watcall emu387_fdiv_to_st(void)
   int unaff_ESI;
   int unaff_EDI;
   
-  emu387_div(unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP);
+  emu387_div(unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP)
+  ;
                     /* WARNING: Could not recover jumptable at 0x000a4913. Too many branches */
                     /* WARNING: Treating indirect jump as call */
   (**(code **)(unaff_EBP + 0x76))();
@@ -2158,7 +2176,8 @@ void __watcall emu387_faddp(void)
   int unaff_ESI;
   int unaff_EDI;
   
-  emu387_add(unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP);
+  emu387_add(unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP)
+  ;
   *(ushort *)(unaff_EBP + 8) = *(ushort *)(unaff_EBP + 8) & *(ushort *)(&unk_a32ce + unaff_EDI);
   *(ushort *)(unaff_EBP + 8) = *(ushort *)(unaff_EBP + 8) | *(ushort *)(unk_a32d6 + unaff_EDI);
   uVar1 = *(ushort *)(&unk_a3282 + *(ushort *)(&unk_a327e + unaff_EDI));
@@ -2183,7 +2202,8 @@ void __watcall emu387_fmulp(void)
   int unaff_ESI;
   int unaff_EDI;
   
-  emu387_mul(unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP);
+  emu387_mul(unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP)
+  ;
   *(ushort *)(unaff_EBP + 8) = *(ushort *)(unaff_EBP + 8) & *(ushort *)(&unk_a32ce + unaff_EDI);
   *(ushort *)(unaff_EBP + 8) = *(ushort *)(unaff_EBP + 8) | *(ushort *)(unk_a32d6 + unaff_EDI);
   uVar1 = *(ushort *)(&unk_a3282 + *(ushort *)(&unk_a327e + unaff_EDI));
@@ -2205,7 +2225,7 @@ void __watcall emu387_fcompp(undefined4 param_1,undefined4 param_2,int unaff_EBX
 {
                     /* WARNING: Could not recover jumptable at 0x000a4a48. Too many branches */
                     /* WARNING: Treating indirect jump as call */
-  (*(code *)(&PTR_sub_a41b4_000a4a50)[unaff_EBX])();
+  (*(code *)(&PTR_emu387_invalid_000a4a50)[unaff_EBX])();
   return;
 }
 
@@ -2222,7 +2242,8 @@ void __watcall emu387_fsubrp(void)
   int unaff_ESI;
   int unaff_EDI;
   
-  emu387_sub(unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP);
+  emu387_sub(unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP)
+  ;
   *(ushort *)(unaff_EBP + 8) = *(ushort *)(unaff_EBP + 8) & *(ushort *)(&unk_a32ce + unaff_EDI);
   *(ushort *)(unaff_EBP + 8) = *(ushort *)(unaff_EBP + 8) | *(ushort *)(unk_a32d6 + unaff_EDI);
   uVar1 = *(ushort *)(&unk_a3282 + *(ushort *)(&unk_a327e + unaff_EDI));
@@ -2247,7 +2268,8 @@ void __watcall emu387_fsubp(void)
   int unaff_ESI;
   int unaff_EDI;
   
-  emu387_sub(unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP);
+  emu387_sub(unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP)
+  ;
   *(ushort *)(unaff_EBP + 8) = *(ushort *)(unaff_EBP + 8) & *(ushort *)(&unk_a32ce + unaff_EDI);
   *(ushort *)(unaff_EBP + 8) = *(ushort *)(unaff_EBP + 8) | *(ushort *)(unk_a32d6 + unaff_EDI);
   uVar1 = *(ushort *)(&unk_a3282 + *(ushort *)(&unk_a327e + unaff_EDI));
@@ -2272,7 +2294,8 @@ void __watcall emu387_fdivrp(void)
   int unaff_ESI;
   int unaff_EDI;
   
-  emu387_div(unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP);
+  emu387_div(unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP)
+  ;
   *(ushort *)(unaff_EBP + 8) = *(ushort *)(unaff_EBP + 8) & *(ushort *)(&unk_a32ce + unaff_EDI);
   *(ushort *)(unaff_EBP + 8) = *(ushort *)(unaff_EBP + 8) | *(ushort *)(unk_a32d6 + unaff_EDI);
   uVar1 = *(ushort *)(&unk_a3282 + *(ushort *)(&unk_a327e + unaff_EDI));
@@ -2297,7 +2320,8 @@ void __watcall emu387_fdivp(void)
   int unaff_ESI;
   int unaff_EDI;
   
-  emu387_div(unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP);
+  emu387_div(unaff_ESI + 0x1c + unaff_EBP,unaff_EDI + 0x1c + unaff_EBP,unaff_ESI + 0x1c + unaff_EBP)
+  ;
   *(ushort *)(unaff_EBP + 8) = *(ushort *)(unaff_EBP + 8) & *(ushort *)(&unk_a32ce + unaff_EDI);
   *(ushort *)(unaff_EBP + 8) = *(ushort *)(unaff_EBP + 8) | *(ushort *)(unk_a32d6 + unaff_EDI);
   uVar1 = *(ushort *)(&unk_a3282 + *(ushort *)(&unk_a327e + unaff_EDI));
@@ -3270,7 +3294,7 @@ uint __watcall __ext_to_f64(uint *param_1)
     uVar2 = uVar2 >> 0xb | uVar8 << 0x15;
     if (uVar7 != 0x43ff) {
       emu387_exception(CONCAT22((short)(uVar2 >> 0x10),0x8408),
-                uVar8 * 2 >> 0xc | (uint)CARRY2(uVar5,uVar5) << 0x1f | 0x7ff00000,uVar5 * 2);
+                       uVar8 * 2 >> 0xc | (uint)CARRY2(uVar5,uVar5) << 0x1f | 0x7ff00000,uVar5 * 2);
     }
   }
   else if ((short)uVar7 < -0x34) {
@@ -3795,7 +3819,7 @@ __log2_ext(uint *param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 un
   }
   else {
     uVar7 = __add_ext_core((int)uVar7,(int)((ulonglong)uVar7 >> 0x20),0,0x80000000,iVar2,unaff_EBX,
-                      unaff_ECX,unaff_EDX);
+                           unaff_ECX,unaff_EDX);
   }
   uVar8 = __add_ext_core(*param_1,param_1[1],0,0x80000000);
   uVar7 = __div_ext((int)uVar7,(int)((ulonglong)uVar7 >> 0x20),(int)uVar8,
@@ -3814,7 +3838,7 @@ __log2_ext(uint *param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 un
                     (int)((ulonglong)uVar7 >> 0x20));
   uVar4 = CONCAT22(uVar1,0x3ffe) << 0x10 | (uint)uVar1;
   uVar7 = __add_ext_core((int)uVar8,(int)((ulonglong)uVar8 >> 0x20),(int)uVar7,
-                    (int)((ulonglong)uVar7 >> 0x20));
+                         (int)((ulonglong)uVar7 >> 0x20));
   if (iVar2 != 0) {
     __i32_to_ext(iVar2,param_1);
     __mul_ext(*param_1,param_1[1],0x865435c,0xde8082e3,uVar4,(int)((ulonglong)uVar7 >> 0x20),
@@ -3824,7 +3848,7 @@ __log2_ext(uint *param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 un
     uVar8 = __mul_ext(*param_1,param_1[1],0,0xb1800000);
     uVar4 = (uint)uVar1;
     uVar7 = __add_ext_core((int)uVar8,(int)((ulonglong)uVar8 >> 0x20),(int)uVar7,
-                      (int)((ulonglong)uVar7 >> 0x20));
+                           (int)((ulonglong)uVar7 >> 0x20));
   }
   *(undefined8 *)param_1 = uVar7;
   *(short *)(param_1 + 2) = (short)uVar4;
@@ -3862,8 +3886,8 @@ void __watcall __sincos_ext(longlong *param_1)
   uVar3 = *(undefined2 *)(param_1 + 1);
   cVar9 = -2;
   local_2c = param_1;
-  lVar11 = __fprem_reduce(*(undefined4 *)param_1,*(undefined4 *)((int)param_1 + 4),0x2168c235,0xc90fdaa2)
-  ;
+  lVar11 = __fprem_reduce(*(undefined4 *)param_1,*(undefined4 *)((int)param_1 + 4),0x2168c235,
+                          0xc90fdaa2);
   plVar1 = local_2c;
   *local_2c = lVar11;
   *(undefined2 *)(local_2c + 1) = uVar3;
@@ -3902,7 +3926,7 @@ void __watcall __sincos_ext(longlong *param_1)
       uVar12 = __mul_ext(*(undefined4 *)plVar1,*(undefined4 *)((int)plVar1 + 4),
                          *(undefined4 *)plVar1,*(undefined4 *)((int)plVar1 + 4));
       lVar13 = __normalize_ext((int)uVar12,(int)((ulonglong)uVar12 >> 0x20),8 - (int)local_2c,
-                         &unk_a5e90 + (int)local_2c * 10);
+                               &unk_a5e90 + (int)local_2c * 10);
     }
     pplVar7 = &local_2c;
     if (((char)uVar3 == '\0') || ((char)((ushort)uVar3 >> 8) == '\x01')) {
@@ -3979,8 +4003,7 @@ void __watcall __fptan(void)
 // __f2xm1 @ 0xa6140 [__watcall]
 // ================================================================================================
 
-void __watcall
-__f2xm1(uint *param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+void __watcall __f2xm1(uint *param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   uint uVar1;
@@ -4070,7 +4093,8 @@ __f2xm1(uint *param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff
   UNLOCK();
   LOCK();
   UNLOCK();
-  uVar14 = __add_ext_core((int)uVar14,uVar7,uVar17,uVar6,uVar4 << 0x10 | (uVar4 ^ 0x80000000) >> 0x10);
+  uVar14 = __add_ext_core((int)uVar14,uVar7,uVar17,uVar6,
+                          uVar4 << 0x10 | (uVar4 ^ 0x80000000) >> 0x10);
   uVar14 = __div_ext((int)uVar14,(int)((ulonglong)uVar14 >> 0x20),(int)uVar15,
                      (int)((ulonglong)uVar15 >> 0x20));
   uVar7 = (undefined4)((ulonglong)uVar14 >> 0x20);
@@ -4180,15 +4204,16 @@ LAB_000a6346:
 // ================================================================================================
 
 void __watcall
-__normalize_ext_ptr(undefined8 *param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+__normalize_ext_ptr(undefined8 *param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,
+                   undefined4 unaff_ECX)
 
 {
   undefined2 uVar1;
   undefined8 uVar2;
   
   uVar1 = *(undefined2 *)(param_1 + 1);
-  uVar2 = __normalize_ext(*(undefined4 *)param_1,*(undefined4 *)((int)param_1 + 4),unaff_EBX,unaff_EDX,
-                    param_1,unaff_ECX);
+  uVar2 = __normalize_ext(*(undefined4 *)param_1,*(undefined4 *)((int)param_1 + 4),unaff_EBX,
+                          unaff_EDX,param_1,unaff_ECX);
   *param_1 = uVar2;
   *(undefined2 *)(param_1 + 1) = uVar1;
   return;
@@ -4209,7 +4234,8 @@ __normalize_ext(undefined4 param_1,undefined4 unaff_EDX,int unaff_EBX,undefined8
   do {
     uVar1 = __mul_ext((int)uVar1,(int)((ulonglong)uVar1 >> 0x20),param_1,unaff_EDX);
     uVar1 = __add_ext_core((int)uVar1,(int)((ulonglong)uVar1 >> 0x20),
-                      *(undefined4 *)((int)unaff_ECX + 10),*(undefined4 *)((int)unaff_ECX + 0xe));
+                           *(undefined4 *)((int)unaff_ECX + 10),
+                           *(undefined4 *)((int)unaff_ECX + 0xe));
     unaff_EBX = unaff_EBX + -1;
     unaff_ECX = (undefined8 *)((int)unaff_ECX + 10);
   } while (unaff_EBX != 0);
@@ -4363,7 +4389,7 @@ undefined4 __watcall pcspk_hw_init(void)
 {
   out(0x43,0xb6);
   pcspk_silence(0xb6);
-  byte_d6785 = 0x7f;
+  pcspk_hw_enabled = 0x7f;
   byte_d6786 = 0x7f;
   byte_d6787 = 0x7f;
   byte_d6788 = 0x7f;
@@ -4415,11 +4441,11 @@ void pcspk_hw_voice_on(int param_1,int param_2,byte param_3)
   if (param_1 != 0) {
     *(byte *)(param_2 + 3) = param_3;
     if (param_3 != 0xff) {
-      uVar1 = *(undefined2 *)(&unk_d6608 + (uint)param_3 * 2);
+      uVar1 = *(undefined2 *)(&pcspk_divisors + (uint)param_3 * 2);
       *(undefined2 *)(param_2 + 4) = uVar1;
       *(undefined2 *)(param_2 + 6) = uVar1;
     }
-    (&byte_d6774)[param_1] = 0xff;
+    (&pcspk_hw_active)[param_1] = 0xff;
   }
   return;
 }
@@ -4432,7 +4458,7 @@ void pcspk_hw_voice_on(int param_1,int param_2,byte param_3)
 void pcspk_hw_voice_off(int param_1)
 
 {
-  (&byte_d6774)[param_1] = 0;
+  (&pcspk_hw_active)[param_1] = 0;
   return;
 }
 
@@ -4450,7 +4476,7 @@ void pcspk_hw_voice_pitch(int param_1,int param_2,int param_3,int param_4)
   if (*(char *)(param_2 + 1) != '\0') {
     if (*(char *)(param_4 + 0x35) == '\x01') {
       byte_d6770 = *(char *)(param_2 + 0x22) + *(char *)(param_2 + 3);
-      uVar1 = *(ushort *)(&unk_d6608 + (uint)byte_d6770 * 2);
+      uVar1 = *(ushort *)(&pcspk_divisors + (uint)byte_d6770 * 2);
     }
     else {
       uVar1 = *(ushort *)(param_2 + 4);
@@ -4461,14 +4487,14 @@ void pcspk_hw_voice_pitch(int param_1,int param_2,int param_3,int param_4)
       if (*(short *)(param_3 + 0x26) < 0) {
         iVar2 = iVar2 + (int)(((ulonglong)
                                ((uint)*(ushort *)
-                                       (&unk_d6608 +
+                                       (&pcspk_divisors +
                                        (uint)(byte)(byte_d6770 - *(char *)(param_4 + 0x12)) * 2) -
                                iVar2) * (ulonglong)-(uint)*(ushort *)(param_3 + 0x26)) / 0x1f80);
       }
       else {
         iVar2 = iVar2 - (int)(((ulonglong)
                                (iVar2 - (uint)*(ushort *)
-                                               (&unk_d6608 +
+                                               (&pcspk_divisors +
                                                (uint)(byte)(byte_d6770 + *(char *)(param_4 + 0x12))
                                                * 2)) * (ulonglong)*(ushort *)(param_3 + 0x26)) /
                              0x1f80);
@@ -4480,7 +4506,7 @@ void pcspk_hw_voice_pitch(int param_1,int param_2,int param_3,int param_4)
     if (*(char *)(param_4 + 0x19) == '\x02') {
       iVar2 = iVar2 + *(int *)(param_2 + 0x14);
     }
-    *(short *)(&unk_d677b + param_1 * 2) = (short)iVar2;
+    *(short *)(&pcspk_hw_div + param_1 * 2) = (short)iVar2;
     *(int *)(param_2 + 6) = iVar2;
     return;
   }
@@ -4500,22 +4526,22 @@ void pcspk_hw_update(void)
   int iVar3;
   int iVar4;
   
-  byte_d678c = byte_d6774;
+  byte_d678c = pcspk_hw_active;
   iVar3 = 4;
   iVar4 = 4;
   do {
-    if ((&byte_d6785)[iVar4] == '\0') {
+    if ((&pcspk_hw_enabled)[iVar4] == '\0') {
       (&byte_d678c)[iVar4] = 0;
     }
     else {
-      (&byte_d678c)[iVar4] = (&byte_d6774)[iVar4];
+      (&byte_d678c)[iVar4] = (&pcspk_hw_active)[iVar4];
     }
     iVar4 = iVar4 + -1;
     iVar3 = iVar3 + -1;
   } while (iVar3 != 0);
   if (byte_d678c == '\0') {
     if ((byte_d678f == '\0' && byte_d6790 == '\0') ||
-       (((byte_d679a & 2) != 0 && (byte_d678d != '\0' || byte_d678e != '\0')))) {
+       (((pcspk_tick_count & 2) != 0 && (byte_d678d != '\0' || byte_d678e != '\0')))) {
       uVar2 = word_d677d;
       if ((byte_d678d == '\0') && (uVar2 = word_d677f, byte_d678e == '\0')) {
         bVar1 = in(0x61);
@@ -4535,7 +4561,7 @@ void pcspk_hw_update(void)
     out(0x61,bVar1 | 3);
   }
 LAB_000a684a:
-  byte_d679a = byte_d679a + 1;
+  pcspk_tick_count = pcspk_tick_count + 1;
   return;
 }
 
@@ -4579,7 +4605,7 @@ void __watcall opl_reset(void)
   undefined6 uVar5;
   
   cVar1 = '\x01';
-  uVar2 = word_d679c;
+  uVar2 = opl_port;
   do {
     uVar5 = opl_write_reg(cVar1,uVar2);
     uVar2 = (undefined2)((uint6)uVar5 >> 0x20);
@@ -4587,8 +4613,8 @@ void __watcall opl_reset(void)
   } while (cVar1 != -10);
   opl_write_reg(0x2001);
   cVar1 = '\0';
-  puVar3 = &unk_d68fc;
-  puVar4 = &unk_d69ff;
+  puVar3 = &opl_shadow;
+  puVar4 = &opl_written;
   do {
     *puVar3 = 0;
     *puVar4 = 0;
@@ -4626,7 +4652,7 @@ void __watcall opl_flush_regs(void)
   cVar1 = ' ';
   pcVar4 = &unk_d691c;
   pcVar5 = &unk_d6a1f;
-  uVar3 = word_d679c;
+  uVar3 = opl_port;
   do {
     cVar2 = *pcVar4;
     if (cVar2 != *pcVar5) {
@@ -4680,10 +4706,10 @@ uint __watcall opl_set_reg(uint param_1)
 
 {
   if (((byte)param_1 < 0x20) || (0xf5 < (byte)param_1)) {
-    param_1 = opl_write_reg(param_1,word_d679c);
+    param_1 = opl_write_reg(param_1,opl_port);
   }
   else {
-    (&unk_d68fc)[param_1 & 0xff] = (char)(param_1 >> 8);
+    (&opl_shadow)[param_1 & 0xff] = (char)(param_1 >> 8);
   }
   return param_1;
 }
@@ -4697,7 +4723,7 @@ uint __watcall opl_get_reg(uint param_1)
 
 {
   if ((0x1f < (byte)param_1) && ((byte)param_1 < 0xf6)) {
-    param_1 = (uint)(byte)(&unk_d68fc)[param_1 & 0xff];
+    param_1 = (uint)(byte)(&opl_shadow)[param_1 & 0xff];
   }
   return param_1;
 }
@@ -4721,9 +4747,9 @@ void opl_voice_regs(ushort param_1)
     segment(in_SS,(short)auStack_6);
     return;
   }
-  cVar2 = (&unk_d67a8)[param_1];
+  cVar2 = (&opl_voice_operator)[param_1];
   cVar1 = '\n';
-  pcVar3 = &unk_d67b4;
+  pcVar3 = &opl_voice_registers;
   do {
     pcVar4 = pcVar3 + 1;
     opl_set_reg(*pcVar3 + cVar2);
@@ -4748,7 +4774,7 @@ void opl_voice_regs(ushort param_1)
 void opl_init_port(undefined2 param_1)
 
 {
-  word_d679c = param_1;
+  opl_port = param_1;
   opl_reset();
   return;
 }
@@ -4786,7 +4812,7 @@ bool opl_detect(undefined2 param_1)
 {
   undefined in_CF;
   
-  word_d679c = param_1;
+  opl_port = param_1;
   dword_d67a0 = 0x20;
   dword_d67a4 = 0x8c;
   opl_timer_test();
@@ -4821,7 +4847,7 @@ opl_timer_test(undefined2 param_1,undefined2 unaff_DX,undefined4 param_3,undefin
   uStack_6 = unaff_DX;
   uStack_4 = unaff_CX;
   uStack_2 = param_1;
-  opl_write_reg(1,word_d679c);
+  opl_write_reg(1,opl_port);
   opl_write_reg(0x6004);
   opl_write_reg(0x8004);
   in(extraout_DX);
@@ -4869,7 +4895,7 @@ undefined8 __watcall opl_calibrate_delay(void)
   out(0x61,bVar3 | 1);
   iVar6 = 1000;
   do {
-    in(word_d679c);
+    in(opl_port);
     iVar6 = iVar6 + -1;
   } while (iVar6 != 0);
   bVar3 = in(0x61);
@@ -4896,8 +4922,8 @@ uint __watcall adlib_note_fnum(void)
   char in_stack_00000008;
   
   return (uint)*(ushort *)
-                (&unk_d67f4 + (short)(char)(in_stack_00000004 % 0xc + in_stack_00000008) * 2) |
-         (uint)(ushort)(in_stack_00000004 / 0xc) << 10;
+                (&adlib_fnum_table + (short)(char)(in_stack_00000004 % 0xc + in_stack_00000008) * 2)
+         | (uint)(ushort)(in_stack_00000004 / 0xc) << 10;
 }
 
 
@@ -4908,7 +4934,7 @@ uint __watcall adlib_note_fnum(void)
 undefined2 adlib_level_table(byte param_1)
 
 {
-  return *(undefined2 *)(&unk_d683c + ((param_1 & 0x7c) >> 1));
+  return *(undefined2 *)(&adlib_velocity_levels + ((param_1 & 0x7c) >> 1));
 }
 
 
@@ -4919,7 +4945,7 @@ undefined2 adlib_level_table(byte param_1)
 undefined2 adlib_controller_table(byte param_1)
 
 {
-  return *(undefined2 *)(&unk_d687c + (param_1 & 0x7e));
+  return *(undefined2 *)(&adlib_volume_table + (param_1 & 0x7e));
 }
 
 
@@ -4927,7 +4953,7 @@ undefined2 adlib_controller_table(byte param_1)
 // getenv @ 0xa6b87 [__watcall]
 // ================================================================================================
 
-undefined8 __watcall getenv(char *param_1,undefined4 unaff_EDX)
+char * __watcall getenv(char *__name)
 
 {
   char cVar1;
@@ -4938,9 +4964,9 @@ undefined8 __watcall getenv(char *param_1,undefined4 unaff_EDX)
   int *piVar6;
   char *pcVar7;
   
-  if ((dword_d5444 != (int *)0x0) && (param_1 != (char *)0x0)) {
+  if ((dword_d5444 != (int *)0x0) && (__name != (char *)0x0)) {
     uVar4 = 0xffffffff;
-    pcVar7 = param_1;
+    pcVar7 = __name;
     do {
       if (uVar4 == 0) break;
       uVar4 = uVar4 - 1;
@@ -4948,17 +4974,14 @@ undefined8 __watcall getenv(char *param_1,undefined4 unaff_EDX)
       pcVar7 = pcVar7 + 1;
     } while (cVar1 != '\0');
     iVar5 = ~uVar4 - 1;
-    for (piVar6 = dword_d5444; iVar3 = *piVar6, iVar3 != 0; piVar6 = piVar6 + 1) {
-      iVar2 = strnicmp_ascii(iVar3,param_1,iVar5);
-      if ((iVar2 == 0) && (*(char *)(iVar3 + iVar5) == '=')) {
-        iVar3 = ~uVar4 + iVar3;
-        goto LAB_000a6bda;
+    for (piVar6 = dword_d5444; iVar2 = *piVar6, iVar2 != 0; piVar6 = piVar6 + 1) {
+      iVar3 = strnicmp_ascii(iVar2,__name,iVar5);
+      if ((iVar3 == 0) && (*(char *)(iVar2 + iVar5) == '=')) {
+        return (char *)(~uVar4 + iVar2);
       }
     }
   }
-  iVar3 = 0;
-LAB_000a6bda:
-  return CONCAT44(unaff_EDX,iVar3);
+  return (char *)0x0;
 }
 
 
@@ -5054,11 +5077,13 @@ uint __watcall __strtol(char *param_1,undefined4 *unaff_EDX,int unaff_EBX,int un
 // strtol @ 0xa6d1a [__watcall]
 // ================================================================================================
 
-void __watcall strtol(void)
+long __watcall strtol(char *__nptr,char **__endptr,int __base)
 
 {
-  __strtol();
-  return;
+  long lVar1;
+  
+  lVar1 = __strtol();
+  return lVar1;
 }
 
 
@@ -5066,11 +5091,13 @@ void __watcall strtol(void)
 // strtoul @ 0xa6d24 [__watcall]
 // ================================================================================================
 
-void __watcall strtoul(void)
+ulong __watcall strtoul(char *__nptr,char **__endptr,int __base)
 
 {
-  __strtol();
-  return;
+  ulong uVar1;
+  
+  uVar1 = __strtol();
+  return uVar1;
 }
 
 
@@ -5082,18 +5109,20 @@ undefined8 __watcall __strtol_radix_value(byte param_1,undefined4 unaff_EDX)
 
 {
   byte bVar1;
+  uint uVar2;
   
   if ((0x2f < param_1) && (param_1 < 0x3a)) {
     return CONCAT44(unaff_EDX,param_1 - 0x30);
   }
-  bVar1 = tolower(param_1);
+  uVar2 = tolower((uint)param_1);
+  bVar1 = (byte)uVar2;
   if ((0x60 < bVar1) && (bVar1 < 0x6a)) {
-    return CONCAT44(unaff_EDX,bVar1 - 0x57);
+    return CONCAT44(unaff_EDX,(uVar2 & 0xff) - 0x57);
   }
   if (((bVar1 < 0x6a) || (0x72 < bVar1)) && ((bVar1 < 0x73 || (0x7a < bVar1)))) {
     return CONCAT44(unaff_EDX,0x25);
   }
-  return CONCAT44(unaff_EDX,bVar1 - 0x57);
+  return CONCAT44(unaff_EDX,(uVar2 & 0xff) - 0x57);
 }
 
 
@@ -5391,7 +5420,7 @@ void mix_voice_sample(int param_1,int param_2,int param_3,int param_4,int param_
 // ================================================================================================
 
 int mix_play_sample(int param_1,byte *param_2,undefined4 param_3,uint param_4,undefined4 param_5,
-             int param_6,undefined4 param_7,int param_8)
+                   int param_6,undefined4 param_7,int param_8)
 
 {
   byte bVar1;
@@ -8219,7 +8248,7 @@ undefined8 __watcall outp(undefined4 param_1,undefined unaff_DL)
 // gus_patch_check_header @ 0xaa210 [__watcall]
 // ================================================================================================
 
-undefined4 __watcall gus_patch_check_header(undefined4 param_1,int unaff_EDX)
+undefined4 __watcall gus_patch_check_header(undefined4 param_1,char *unaff_EDX)
 
 {
   short sVar1;
@@ -8248,7 +8277,7 @@ undefined4 __watcall gus_patch_check_header(undefined4 param_1,int unaff_EDX)
       gus_file_close(iVar2);
       return 0xe;
     }
-    iVar4 = strcmp((char *)(unaff_EDX + 8),(char *)&a110);
+    iVar4 = strcmp(unaff_EDX + 8,(char *)&a110);
     if (iVar4 < 0) {
       gus_file_close(iVar2);
       return 0xf;
@@ -8270,8 +8299,8 @@ undefined4 __watcall gus_patch_check_header(undefined4 param_1,int unaff_EDX)
 // ================================================================================================
 
 undefined4 __watcall
-gus_load_patch(undefined4 param_1,int param_2,int unaff_EBX,int *unaff_ECX,ushort param_5,uint *param_6,
-         byte param_7)
+gus_load_patch(undefined4 param_1,int param_2,int unaff_EBX,int *unaff_ECX,ushort param_5,
+              uint *param_6,byte param_7)
 
 {
   byte bVar1;
@@ -8485,7 +8514,8 @@ LAB_000aa69c:
 // ================================================================================================
 
 void __watcall
-gus_patch_download_wave(undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_ECX)
+gus_patch_download_wave
+          (undefined4 param_1,undefined4 param_2,undefined4 unaff_EBX,undefined4 unaff_ECX)
 
 {
   int iVar1;
@@ -8506,9 +8536,10 @@ gus_patch_download_wave(undefined4 param_1,undefined4 param_2,undefined4 unaff_E
   byte in_NT;
   
   gus_irq_lock(param_1,param_1,unaff_EBX,unaff_ECX,
-            (ushort)(in_NT & 1) * 0x4000 | (ushort)(in_OF & 1) * 0x800 | (ushort)(in_IF & 1) * 0x200
-            | (ushort)(in_TF & 1) * 0x100 | (ushort)(in_SF & 1) * 0x80 | (ushort)(in_ZF & 1) * 0x40
-            | (ushort)(in_AF & 1) * 0x10 | (ushort)(in_PF & 1) * 4 | (ushort)(in_CF & 1));
+               (ushort)(in_NT & 1) * 0x4000 | (ushort)(in_OF & 1) * 0x800 |
+               (ushort)(in_IF & 1) * 0x200 | (ushort)(in_TF & 1) * 0x100 |
+               (ushort)(in_SF & 1) * 0x80 | (ushort)(in_ZF & 1) * 0x40 | (ushort)(in_AF & 1) * 0x10
+               | (ushort)(in_PF & 1) * 4 | (ushort)(in_CF & 1));
   gus_voice_kill(extraout_EDX);
   puVar2 = extraout_EDX_00;
   for (iVar1 = 0; iVar1 < *(int *)(puVar2 + -1) >> 0x10; iVar1 = iVar1 + 1) {
@@ -8546,7 +8577,8 @@ void __watcall gus_set_param_1a(int param_1,undefined2 unaff_DX)
 // ================================================================================================
 
 void __watcall
-gus_stop_dma_timers(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX)
+gus_stop_dma_timers(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,
+                   undefined4 unaff_ECX)
 
 {
   int iVar1;
@@ -8611,8 +8643,8 @@ void __watcall gus_hook_irqs(int param_1,undefined4 unaff_EDX)
 // ================================================================================================
 
 int __watcall
-gus_init_hardware(undefined4 param_1,byte unaff_DL,byte unaff_BL,undefined unaff_CL,undefined param_5,
-         undefined4 param_6)
+gus_init_hardware(undefined4 param_1,byte unaff_DL,byte unaff_BL,undefined unaff_CL,
+                 undefined param_5,undefined4 param_6)
 
 {
   int iVar1;
@@ -8742,8 +8774,9 @@ undefined8 __watcall gus_open_card(undefined2 *param_1,undefined4 unaff_EDX,unde
     }
     byte_f79a5 = 3;
     outp(param_1[1],3,unaff_EBX,0,uVar2);
-    iVar1 = gus_init_hardware(param_1[1],*(undefined *)(param_1 + 2),*(undefined *)((int)param_1 + 5),
-                      *(undefined *)((int)param_1 + 7),*(undefined *)(param_1 + 3),*param_1);
+    iVar1 = gus_init_hardware(param_1[1],*(undefined *)(param_1 + 2),
+                              *(undefined *)((int)param_1 + 5),*(undefined *)((int)param_1 + 7),
+                              *(undefined *)(param_1 + 3),*param_1);
     if (iVar1 != 0) {
       return CONCAT44(unaff_EDX,iVar1);
     }
@@ -8830,9 +8863,9 @@ void __watcall gus_set_irq_dma_latches(void)
     bVar1 = (&unk_d877a)[byte_f79a4] | (&unk_d877a)[byte_f79a6] << 3;
   }
   outp(word_d876a,5,bVar2,bVar1,
-            (ushort)(in_NT & 1) * 0x4000 | (ushort)(in_IF & 1) * 0x200 | (ushort)(in_TF & 1) * 0x100
-            | (ushort)((char)bVar1 < '\0') * 0x80 | (ushort)(bVar1 == 0) * 0x40 |
-            (ushort)(in_AF & 1) * 0x10 | (ushort)((POPCOUNT(bVar1) & 1U) == 0) * 4);
+       (ushort)(in_NT & 1) * 0x4000 | (ushort)(in_IF & 1) * 0x200 | (ushort)(in_TF & 1) * 0x100 |
+       (ushort)((char)bVar1 < '\0') * 0x80 | (ushort)(bVar1 == 0) * 0x40 |
+       (ushort)(in_AF & 1) * 0x10 | (ushort)((POPCOUNT(bVar1) & 1U) == 0) * 4);
   outp(word_d8760,byte_f79a5);
   outp(word_d8768,0);
   outp(word_d876a,0);
@@ -8879,10 +8912,10 @@ void __watcall gus_reset(uint param_1,undefined4 param_2,undefined4 param_3,unde
   }
   word_f79a0 = 0x20;
   outp(word_d8772,0x4c,param_1,unaff_ECX,
-            (ushort)(in_NT & 1) * 0x4000 | (ushort)bVar4 * 0x800 | (ushort)(in_IF & 1) * 0x200 |
-            (ushort)(in_TF & 1) * 0x100 | (ushort)((int)uVar1 < 0) * 0x80 |
-            (ushort)(uVar1 == 0) * 0x40 | (ushort)(in_AF & 1) * 0x10 |
-            (ushort)((POPCOUNT(uVar1 & 0xff) & 1U) == 0) * 4 | (ushort)bVar3);
+       (ushort)(in_NT & 1) * 0x4000 | (ushort)bVar4 * 0x800 | (ushort)(in_IF & 1) * 0x200 |
+       (ushort)(in_TF & 1) * 0x100 | (ushort)((int)uVar1 < 0) * 0x80 | (ushort)(uVar1 == 0) * 0x40 |
+       (ushort)(in_AF & 1) * 0x10 | (ushort)((POPCOUNT(uVar1 & 0xff) & 1U) == 0) * 4 | (ushort)bVar3
+      );
   outp(word_d8776,0);
   gus_delay();
   gus_delay();
@@ -9315,7 +9348,8 @@ void __watcall gus_midi_open_voices(uint param_1)
   gus_irq_lock();
   for (uVar2 = 0; uVar2 < word_f79a0; uVar2 = uVar2 + 1) {
     if ((*(byte *)((int)puVar1 + 0x13) & 1) != 0) {
-      gus_midi_voices_init(uVar2,(&unk_f59f9)[(uint)*(byte *)((int)puVar1 + 0x1d) * 0x10],uVar2,puVar1,uVar8);
+      gus_midi_voices_init
+                (uVar2,(&unk_f59f9)[(uint)*(byte *)((int)puVar1 + 0x1d) * 0x10],uVar2,puVar1,uVar8);
     }
     puVar1 = (undefined4 *)((int)puVar1 + 0x21);
   }

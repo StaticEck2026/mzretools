@@ -67,7 +67,7 @@ func _title(kind: int) -> void:
 	scr.settextcolor(0xfa, 0xff)
 	scr.printstr_at(t[m], x + dx[m], DY + 0x16)
 
-## the settings bits of the pairs (sound_toggle_dialog / sound_settings_dialog)
+## the settings bits of the pairs (exhibition_settings_show_options / game_settings_show_options)
 func _flags_to_bits(with_length: bool) -> int:
 	var f := Session.option_flags
 	var bits := f & 0x3f
@@ -85,7 +85,7 @@ func _flags_to_bits(with_length: bool) -> int:
 				bits |= 0x200
 	return bits
 
-## game_settings_draw_buttons / sound_settings_draw_buttons: the On / Off picture of each pair at
+## game_settings_draw_buttons / exhibition_settings_draw_buttons: the On / Off picture of each pair at
 ## its "on" rectangle, the period length picture at the first period rectangle
 func _draw_pairs(list: Array, bits: int, with_length: bool) -> void:
 	for k in 9:

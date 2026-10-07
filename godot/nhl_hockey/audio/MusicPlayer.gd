@@ -43,9 +43,9 @@ var read_file: Callable           # name -> PackedByteArray
 var dc_in := 0.0                  # the output's coupling capacitor: a DC blocking high pass
 var dc_out := 0.0
 # update_ambient_audio: the crowd on channels 8 (the roar, 0x7d) and 7 (the murmur, 0x7e)
-var crowd_level := 0              # dword_ccc88
-var roar := 0                     # dword_ccc8c
-var murmur := 0                   # dword_ccc90
+var crowd_level := 0              # crowd_level
+var roar := 0                     # crowd_roar
+var murmur := 0                   # crowd_murmur
 var rng := RandomNumberGenerator.new()
 
 ## the Sound Blaster's FM bank and digital programs (the setup the tests and older callers use)

@@ -964,7 +964,7 @@ uint approx_distance(int param_1,int param_2)
 
 void __watcall
 dump_registers(undefined4 param_1,undefined4 unaff_EDX,undefined4 unaff_EBX,undefined4 unaff_ECX,
-         char *param_5,char *param_6)
+              char *param_5,char *param_6)
 
 {
   undefined4 unaff_ESI;
@@ -1940,7 +1940,7 @@ undefined * sin_lookup(ushort param_1)
     return (undefined *)-*(int *)(&unk_d5d78 + uVar1 * 4);
   }
   if (cVar2 == '\0') {
-    return *(undefined **)(&unk_d6178 + (uint)param_1 * 4);
+    return *(undefined **)(&sine_table + (uint)param_1 * 4);
   }
   return (undefined *)-*(int *)(&unk_d7178 + (uint)param_1 * -4);
 }
@@ -1967,7 +1967,7 @@ undefined * cos_lookup(undefined4 param_1)
     return (undefined *)-*(int *)(&unk_d5d78 + uVar2 * 4);
   }
   if (cVar3 == '\0') {
-    return *(undefined **)(&unk_d6178 + (uint)uVar1 * 4);
+    return *(undefined **)(&sine_table + (uint)uVar1 * 4);
   }
   return (undefined *)-*(int *)(&unk_d7178 + (uint)uVar1 * -4);
 }
@@ -3000,7 +3000,7 @@ undefined4 windowdefp(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 // ================================================================================================
 
 void drawline(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,
-              undefined4 param_5)
+             undefined4 param_5)
 
 {
   int iVar1;
@@ -11945,7 +11945,7 @@ void __watcall vesa_drawshape_clip_save_home(void)
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
 void window_setclip(int param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,
-              undefined4 param_5)
+                   undefined4 param_5)
 
 {
   if (dword_d30d0 != *(int *)(param_1 + 0x2c)) {

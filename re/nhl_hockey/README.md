@@ -167,8 +167,9 @@ like `defo defd wingo wingd cento centd goalie puckc nearest shoot passrec`.
 
 ## Named routines
 
-All 2593 routines are named, and 190 variables (the other variables keep their `dword_<address>` style
-names). Library names in lower case without prefix (`reservemem`, `locateshape`, `initgraphics`,
+All 2593 routines are named, and 291 variables (the other variables keep their `dword_<address>` style
+names; the named ones are the state of the match, the front end and league screens, the sound drivers
+and the tables the port reads). Library names in lower case without prefix (`reservemem`, `locateshape`, `initgraphics`,
 `addtimer`, `unpack`, ...) are EA's own names recovered from their error messages; C runtime functions
 carry the names of the Watcom C library (`__` prefixed internals such as `__prtf_convert`, `__InitFiles`,
 `__MemAllocator`), placed by comparing the code with the Open Watcom 1.9 libraries (`tools/omflib.py`,

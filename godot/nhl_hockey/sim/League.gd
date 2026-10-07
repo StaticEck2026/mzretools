@@ -5,9 +5,9 @@ extends RefCounted
 ## 105 play-off games, the statistical simulation of the games nobody plays and the statistics the
 ## played games write back. Ports of new_league_dialog's file work (league_copy_files,
 ## pinfo_db_create, league_db_load), league_play_day / schedule_play_games, the game simulator at
-## 0x452c5 (named playoff_setup_screen in the map), season_record_result, the play-off series
+## league_sim_game (0x452c5), season_record_result, the play-off series
 ## routines (schedule_rank_teams, playoff_make_round1..final, playoff_round1..final_done,
-## playoff_advance, schedule_screen, schedule_screen2) and league_update_standings (the end of a
+## playoff_advance, schedule_screen, schedule_screen2) and playoff_trim_series (the end of a
 ## decided series).
 ##
 ## The original lets several people play one league: every human team plays in its own copies of
@@ -280,8 +280,8 @@ static func _set16(b: PackedByteArray, at: int, v: int) -> void:
 # a bonus; the statistics go into the season (or play-off) blocks of SEASON.DB and TEAMS.DB
 # ---------------------------------------------------------------------------------------------
 
-static var fwd_order := [[0, 1, 2, 3, 0, 1, 2, 0, 1, 0], [0, 1, 2, 3, 0, 1, 2, 0, 1, 0]]   # unk_c900c
-static var def_order := [[0, 1, 2], [0, 1, 2]]                                            # unk_c905c
+static var fwd_order := [[0, 1, 2, 3, 0, 1, 2, 0, 1, 0], [0, 1, 2, 3, 0, 1, 2, 0, 1, 0]]   # forward_line_order
+static var def_order := [[0, 1, 2], [0, 1, 2]]                                            # defence_pair_order
 var best_assist := 0                 # the value of the last assist chosen (kept between the goals)
 
 ## the career record of a skater scaled to 84 games (GP, G, A, PTS = G + A, PPG, SHG, PIM, SOG)
@@ -1000,7 +1000,7 @@ func _playoff_progress(team: int, mode: int, career: PackedByteArray) -> void:
 	if not humans_next:
 		_advance(po, r + 1, career)
 
-## league_update_standings (0x41f64): a decided series does not need its remaining games
+## playoff_trim_series (0x41f64): a decided series does not need its remaining games
 func trim_series(index: int) -> void:
 	if index < SEASON_GAMES:
 		return

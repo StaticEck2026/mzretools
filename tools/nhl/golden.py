@@ -38,7 +38,7 @@ from unicorn.x86_const import (UC_X86_INS_IN, UC_X86_INS_OUT, UC_X86_REG_GDTR, U
 RANDOMRANGE = 0x8c230
 RAND = 0x8eb27
 SRAND = 0x8eb4b
-SEED = 0xc9100                                # dword_c9100, the state of randomrange
+SEED = 0xc9100                                # random_seed, the state of randomrange
 SND_PATCH_BANK = 0xede5c
 OPL_DELAY = (0xd67a0, 0xd67a4)                # the delay loops of opl_write_reg (opl_calibrate_delay)
 ADLIB_INIT = 0x9debe

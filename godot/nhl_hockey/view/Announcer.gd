@@ -20,7 +20,7 @@ var cooldown := 0.0
 var playing := false
 var enabled := true
 var music: MusicPlayer = null      # the sound card (its digital driver plays the clips)
-var voice := 0                     # dword_d27b2
+var voice := 0                     # speech_voice
 
 func setup(s: Sim, bank: Viv) -> void:
 	sim = s

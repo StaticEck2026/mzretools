@@ -15,9 +15,9 @@ var dac := PackedByteArray()         # 768 bytes, the 6 bit DAC values on screen
 var clip := Rect2i(0, 0, W, H)
 var font: Vfn
 var text_fg := 0xfa                  # settextcolor (dword_d42a8)
-var text_bg := 0xff                  # dword_d42ac: 0xff = the glyph cells stay transparent
+var text_bg := 0xff                  # text_bg_colour: 0xff = the glyph cells stay transparent
 var text_color := 0xfa               # set_text_colors: dword_c6418 (text)
-var text_shadow := 0                 # dword_c641c (shadow / outline)
+var text_shadow := 0                 # text_shadow (shadow / outline)
 var capture: Array = []              # text_capture_add: [x, y, text] while capturing (Output Current Data)
 var capturing := false
 

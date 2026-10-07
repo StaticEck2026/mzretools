@@ -476,7 +476,7 @@ static func release_puck_random(sim: Sim) -> void:
 	puck_spin(sim, puck, puck.vz)
 
 ## puck_spin / puck_flat: puck frame bookkeeping (flat disc vs rolling)
-## a: the value in dword_e03ba of the caller (its low bit flips the spin)
+## a: the value in scratch_a of the caller (its low bit flips the spin)
 static func puck_spin(sim: Sim, puck: Entity, a: int) -> void:
 	# the original adds the two velocity words (+0xc, +0xe) as they are
 	if puck.vx + puck.vy < 0x14:

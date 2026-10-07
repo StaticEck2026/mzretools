@@ -26,14 +26,14 @@ const C_LIGHT := 0x40               # the menu colours of the statistics screens
 const C_FACE := 0x41
 const C_DARK := 0x42
 
-var hub_active := false             # dword_dc738: a statistics hub is up (the entries redraw in it)
-var current := Callable()           # dword_c65b8: the screen drawn, redrawn when the source changes
-var current_arg := 0                # dword_c65b0
-var selected_team := 0              # dword_c65b4: the team picked in the standings
-var next_screen := 0                # dword_c65bc: 1 leave, 2 standings, 3 roster, 4 goalie card, 5 player card
-var player: PackedByteArray         # unk_dc834: the KEY.DB record of the player picked for a card
-var roster_order: Array = []        # unk_dc6bc / dc754: the skaters of the roster in the order shown
-var goalie_order: Array = []        # unk_dc720 / dc73c
+var hub_active := false             # stats_hub_active: a statistics hub is up (the entries redraw in it)
+var current := Callable()           # stats_current_screen: the screen drawn, redrawn when the source changes
+var current_arg := 0                # stats_current_arg
+var selected_team := 0              # stats_selected_team: the team picked in the standings
+var next_screen := 0                # stats_next_screen: 1 leave, 2 standings, 3 roster, 4 goalie card, 5 player card
+var player: PackedByteArray         # card_player_record: the KEY.DB record of the player picked for a card
+var roster_order: Array = []        # roster_skater_order (unk_dc6bc) / unk_dc754: the skaters of the roster in the order shown
+var goalie_order: Array = []        # roster_goalie_order (unk_dc720) / unk_dc73c
 var roster_keys: Array = []         # the KEY.DB records of the roster (25 skaters, 3 goalies)
 var _files: Dictionary = {}
 
@@ -43,8 +43,8 @@ func _init(f: FrontEnd) -> void:
 	ui = f.ui
 
 # ---------------------------------------------------------------------------------------------
-# the data (unk_c65d4: the directory of the statistics shown, dword_c695a: a league's files,
-# dword_c6956: the play-offs)
+# the data (unk_c65d4: the directory of the statistics shown, stats_league: a league's files,
+# stats_playoffs: the play-offs)
 # ---------------------------------------------------------------------------------------------
 
 ## the file of the statistics source: the installation for the '93 - '94 statistics, the league's
@@ -164,8 +164,8 @@ func format_name(first: String, last: String, width: int) -> String:
 # the standings (standings_table 0x27080)
 # ---------------------------------------------------------------------------------------------
 
-var standings_rows: Array = []      # dword_dd10c: per team [short name, division, GP, W, L, T, GF, GA, PTS, PCT]
-var standings_order: Array = []     # unk_dc640: teams sorted (division, points, ...)
+var standings_rows: Array = []      # standings_rows: per team [short name, division, GP, W, L, T, GF, GA, PTS, PCT]
+var standings_order: Array = []     # standings_order: teams sorted (division, points, ...)
 
 func standings_table() -> void:
 	standings_rows.clear()

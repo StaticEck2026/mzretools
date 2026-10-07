@@ -3,7 +3,7 @@ extends RefCounted
 ## The game summary screens of the front end, drawn from GSUMMARY.DB like the original reads it
 ## back: boxscore_screen (0x2d35a) with the scoring summary (kind 1), the penalty summary (2), the
 ## scratches of both teams (4) and the scores around the league (0x20), and the Game Statistics
-## of the two teams (team_select_screen2 0x2f5ee). Assets: CTBKGD (background and palette),
+## of the two teams (game_statistics_screen 0x2f5ee). Assets: CTBKGD (background and palette),
 ## CTLOGO (the logos), CTTITLE1 (def / fowa / scra / tlu / top), CTTITLE2 (summ / ot / per1..3 /
 ## top), CTTITLE3 (ots / colm / gsta), the INDUS030 font; GAMESUM.IFF plays meanwhile.
 
@@ -92,7 +92,7 @@ static func ordinal(n: int) -> String:
 var _bkgd: Shpi.Shape
 var _pal := PackedByteArray()
 var _titles: Shpi                  # CTTITLE1 / 2 / 3
-var _logos: Array = [null, null]   # dword_dd66c / dword_dd670: the logos of the two teams
+var _logos: Array = [null, null]   # lineup_logos / dword_dd670: the logos of the two teams
 var _font: Vfn
 var _fh := 0
 
@@ -335,7 +335,7 @@ func _scratch_pages(teams: Array) -> int:
 			break
 	return r
 
-## draw_team_logos (0x2abdf): tonight's line-ups before the game, for each team the forwards (four
+## lineups_screen (0x2abdf): tonight's line-ups before the game, for each team the forwards (four
 ## lines of three in columns of 0x96 from x 0x91, clipped above y 0x154), the defence (three pairs
 ## in columns of 0xf0) and the scratches ("Injured" for a player hurt for the game), each page
 ## 1000 ticks or until a click; the first page fades in and the announcer says the line-ups
@@ -435,9 +435,9 @@ func _injured_for_game(side: int, idx: int) -> bool:
 
 const TEAM_RATING := 0xc8922       # unk_c8922: a strength per team (the order of the games' finish)
 
-static var games: Array = []       # unk_dd774 / dd775 / dd730 / dd788 / dd789: 6 x [a, b, status, score a, score b]
-static var shown: Array = [0, 0, 0, 0, 0, 0]   # unk_dc868: the status last shown
-static var done_mask := 0          # dword_c65f4: the games already simulated to the end
+static var games: Array = []       # calendar_games (unk_dd774 / dd775), unk_dd730, unk_dd788 / dd789: 6 x [a, b, status, score a, score b]
+static var shown: Array = [0, 0, 0, 0, 0, 0]   # league_status_shown: the status last shown
+static var done_mask := 0          # league_done_mask: the games already simulated to the end
 
 ## league_scores_init: six other games of the night, between teams not stronger than the home team
 static func league_scores_init(home: int, away: int) -> void:
@@ -548,7 +548,7 @@ func league_scores_pages() -> int:
 	return r
 
 # ---------------------------------------------------------------------------------------------
-# Game Statistics (team_select_screen2 0x2f5ee)
+# Game Statistics (game_statistics_screen 0x2f5ee)
 # ---------------------------------------------------------------------------------------------
 
 const STAT_LABELS := 0xc719c       # off_c719c: Score, Shots, One Timers, ...

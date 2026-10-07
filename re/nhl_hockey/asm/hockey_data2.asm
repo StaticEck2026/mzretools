@@ -1174,64 +1174,64 @@ aAdn1:                                           ; xref standings_screen
 asc_c136d:                                       ; xref playoff_round_screen
     db ' ', 0 ; 0c136d
     db 0x00 ; 0c136f |.|
-aApal:                                           ; xref team_select_screen
+aApal:                                           ; xref scouting_report_screen
     db 'apal', 0 ; 0c1370
-aPal_c1375:                                      ; xref team_select_screen
+aPal_c1375:                                      ; xref scouting_report_screen
     db 'Pal', 0 ; 0c1375
-aArena:                                          ; xref team_select_screen
+aArena:                                          ; xref scouting_report_screen
     db 'arena', 0 ; 0c1379
-aPal_c137f:                                      ; xref team_select_screen
+aPal_c137f:                                      ; xref scouting_report_screen
     db '!pal', 0 ; 0c137f
-aRink:                                           ; xref team_select_screen
+aRink:                                           ; xref scouting_report_screen
     db 'rink', 0 ; 0c1384
-aSrlogo:                                         ; xref team_select_screen
+aSrlogo:                                         ; xref scouting_report_screen
     db 'srlogo', 0 ; 0c1389
-aSAtS:                                           ; xref team_select_screen
+aSAtS:                                           ; xref scouting_report_screen
     db '%s   at   %s', 0 ; 0c1390
-aD_c139d:                                        ; xref team_select_screen
+aD_c139d:                                        ; xref scouting_report_screen
     db '%d', 0 ; 0c139d
-aPointer_c13a0:                                  ; xref team_select_screen
+aPointer_c13a0:                                  ; xref scouting_report_screen
     db 'Pointer', 0 ; 0c13a0
-aIff_c13a8:                                      ; xref team_select_screen
+aIff_c13a8:                                      ; xref scouting_report_screen
     db '.iff', 0 ; 0c13a8
-aScouting:                                       ; xref team_select_screen
+aScouting:                                       ; xref scouting_report_screen
     db 'scouting', 0 ; 0c13ad
-aScreen:                                         ; xref team_select_screen
+aScreen:                                         ; xref scouting_report_screen
     db 'Screen', 0 ; 0c13b6
     db 0x00, 0x00, 0x00 ; 0c13bd |...|
-aCtlogo:                                         ; xref draw_team_logos
+aCtlogo:                                         ; xref lineups_screen
     db 'ctlogo', 0 ; 0c13c0
-aLogohome:                                       ; xref draw_team_logos
+aLogohome:                                       ; xref lineups_screen
     db 'logohome', 0 ; 0c13c7
-aLogoaway:                                       ; xref draw_team_logos
+aLogoaway:                                       ; xref lineups_screen
     db 'logoaway', 0 ; 0c13d0
-aCtbkgd:                                         ; xref draw_team_logos
+aCtbkgd:                                         ; xref lineups_screen
     db 'ctbkgd', 0 ; 0c13d9
-aBkgd_c13e0:                                     ; xref draw_team_logos
+aBkgd_c13e0:                                     ; xref lineups_screen
     db 'bkgd', 0 ; 0c13e0
-aPal_c13e5:                                      ; xref draw_team_logos
+aPal_c13e5:                                      ; xref lineups_screen
     db '!pal', 0 ; 0c13e5
-aCttitle1:                                       ; xref draw_team_logos
+aCttitle1:                                       ; xref lineups_screen
     db 'cttitle1', 0 ; 0c13ea
-aDef:                                            ; xref draw_team_logos
+aDef:                                            ; xref lineups_screen
     db 'def ', 0 ; 0c13f3
-aFowa:                                           ; xref draw_team_logos
+aFowa:                                           ; xref lineups_screen
     db 'fowa', 0 ; 0c13f8
-aScra:                                           ; xref draw_team_logos
+aScra:                                           ; xref lineups_screen
     db 'scra', 0 ; 0c13fd
-aTlu:                                            ; xref draw_team_logos
+aTlu:                                            ; xref lineups_screen
     db 'tlu ', 0 ; 0c1402
-aTop:                                            ; xref draw_team_logos
+aTop:                                            ; xref lineups_screen
     db 'top ', 0 ; 0c1407
-aIndus030:                                       ; xref draw_team_logos
+aIndus030:                                       ; xref lineups_screen
     db 'indus030', 0 ; 0c140c
-aGIPK:                                           ; xref draw_team_logos
+aGIPK:                                           ; xref lineups_screen
     db 'GIPK', 0 ; 0c1415
-aIff_c141a:                                      ; xref draw_team_logos
+aIff_c141a:                                      ; xref lineups_screen
     db '.iff', 0 ; 0c141a
-aTonights:                                       ; xref draw_team_logos
+aTonights:                                       ; xref lineups_screen
     db 'tonights', 0 ; 0c141f
-aInjured:                                        ; xref draw_team_logos
+aInjured:                                        ; xref lineups_screen
     db 'Injured', 0 ; 0c1428
 aNHL:
     db '.NHL', 0 ; 0c1430
@@ -1457,35 +1457,35 @@ aShotsOnGoal:                                    ; xref boxscore_screen
 aSDD:                                            ; xref boxscore_screen
     db '%s %d/%d', 0 ; 0c16a1
     db 0x00, 0x00 ; 0c16aa |..|
-aCtbkgd_c16ac:                                   ; xref team_select_screen2
+aCtbkgd_c16ac:                                   ; xref game_statistics_screen
     db 'ctbkgd', 0 ; 0c16ac
-aPal_c16b3:                                      ; xref team_select_screen2
+aPal_c16b3:                                      ; xref game_statistics_screen
     db '!pal', 0 ; 0c16b3
-aBkgd_c16b8:                                     ; xref team_select_screen2
+aBkgd_c16b8:                                     ; xref game_statistics_screen
     db 'bkgd', 0 ; 0c16b8
-aCttitle3_c16bd:                                 ; xref team_select_screen2
+aCttitle3_c16bd:                                 ; xref game_statistics_screen
     db 'cttitle3', 0 ; 0c16bd
-aColm_c16c6:                                     ; xref team_select_screen2
+aColm_c16c6:                                     ; xref game_statistics_screen
     db 'colm', 0 ; 0c16c6
-aGsta:                                           ; xref team_select_screen2
+aGsta:                                           ; xref game_statistics_screen
     db 'gsta', 0 ; 0c16cb
-aCtlogo_c16d0:                                   ; xref team_select_screen2
+aCtlogo_c16d0:                                   ; xref game_statistics_screen
     db 'ctlogo', 0 ; 0c16d0
-aD_c16d7:                                        ; xref team_select_screen2
+aD_c16d7:                                        ; xref game_statistics_screen
     db '%d', 0 ; 0c16d7
-unk_c16da:                                       ; xref team_select_screen2
+unk_c16da:                                       ; xref game_statistics_screen
     db '%d/%d', 0 ; 0c16da
-aD02d:                                           ; xref team_select_screen2
+aD02d:                                           ; xref game_statistics_screen
     db '%d:%02d', 0 ; 0c16e0
-unk_c16e8:                                       ; xref team_select_screen2
+unk_c16e8:                                       ; xref game_statistics_screen
     db '%d/%d (%d%%)', 0 ; 0c16e8
-aIff_c16f5:                                      ; xref team_select_screen2
+aIff_c16f5:                                      ; xref game_statistics_screen
     db '.iff', 0 ; 0c16f5
-aLeaguetm:                                       ; xref team_select_screen2
+aLeaguetm:                                       ; xref game_statistics_screen
     db 'leaguetm', 0 ; 0c16fa
-aMtsum_c1703:                                    ; xref team_select_screen2
+aMtsum_c1703:                                    ; xref game_statistics_screen
     db 'mtsum', 0 ; 0c1703
-aAdsum_c1709:                                    ; xref team_select_screen2
+aAdsum_c1709:                                    ; xref game_statistics_screen
     db 'adsum', 0 ; 0c1709
     db 0x00 ; 0c170f |.|
 aPointer_c1710:                                  ; xref listbox_dialog, dialog_pointer_loop
@@ -1749,29 +1749,29 @@ aGameSet_c1a7c:                                  ; xref new_league_dialog
     db 'game.set', 0 ; 0c1a7c
 a4dKbytesOfFreeDiskSpace:                        ; xref new_league_dialog
     db '%4d Kbytes of free disk space.', 0 ; 0c1a85
-aT_c1aa4:                                        ; xref playoff_setup_screen
+aT_c1aa4:                                        ; xref league_sim_game
     db 't', 0 ; 0c1aa4
-aAt:                                             ; xref playoff_setup_screen
+aAt:                                             ; xref league_sim_game
     db 'at', 0 ; 0c1aa6
-aPk:                                             ; xref playoff_setup_screen
+aPk:                                             ; xref league_sim_game
     db 'pk', 0 ; 0c1aa9
-aPs:                                             ; xref playoff_setup_screen
+aPs:                                             ; xref league_sim_game
     db 'ps', 0 ; 0c1aac
-aPset:                                           ; xref playoff_setup_screen
+aPset:                                           ; xref league_sim_game
     db 'pset', 0 ; 0c1aaf
-aAps:                                            ; xref playoff_setup_screen
+aAps:                                            ; xref league_sim_game
     db 'aps', 0 ; 0c1ab4
-aApset:                                          ; xref playoff_setup_screen
+aApset:                                          ; xref league_sim_game
     db 'apset', 0 ; 0c1ab8
-aGk:                                             ; xref playoff_setup_screen
+aGk:                                             ; xref league_sim_game
     db 'gk', 0 ; 0c1abe
-aGs:                                             ; xref playoff_setup_screen
+aGs:                                             ; xref league_sim_game
     db 'gs', 0 ; 0c1ac1
-aGset:                                           ; xref playoff_setup_screen
+aGset:                                           ; xref league_sim_game
     db 'gset', 0 ; 0c1ac4
-aAgs:                                            ; xref playoff_setup_screen
+aAgs:                                            ; xref league_sim_game
     db 'ags', 0 ; 0c1ac9
-aAgset:                                          ; xref playoff_setup_screen
+aAgset:                                          ; xref league_sim_game
     db 'agset', 0 ; 0c1acd
     db 0x00 ; 0c1ad3 |.|
 aLoad:                                           ; xref loading_screen
@@ -2998,28 +2998,28 @@ aSetting4:                                       ; xref game_settings_dialog
     db 'setting4', 0 ; 0c330e
 aDbox_c3317:                                     ; xref game_settings_dialog
     db 'dbox', 0 ; 0c3317
-aMusic_c331c:                                    ; xref game_settings_dialog, sound_settings_dialog
+aMusic_c331c:                                    ; xref game_settings_dialog, game_settings_show_options
     db 'Music', 0 ; 0c331c
-aSound_c3322:                                    ; xref game_settings_dialog, sound_settings_dialog
+aSound_c3322:                                    ; xref game_settings_dialog, game_settings_show_options
     db 'Sound', 0 ; 0c3322
-aDigitizedSpeech_c3328:                          ; xref game_settings_dialog, sound_settings_dialog
+aDigitizedSpeech_c3328:                          ; xref game_settings_dialog, game_settings_show_options
     db 'Digitized Speech', 0 ; 0c3328
 aPointer_c3339:                                  ; xref game_settings_pointer_loop, game_settings_menu
     db 'Pointer', 0 ; 0c3339
     db 0x00, 0x00, 0x00 ; 0c3341 |...|
 aBKGD_c3344:                                     ; xref menu_exhibition_settings
     db 'BKGD', 0 ; 0c3344
-aDigitizedSpeech_c3349:                          ; xref sound_toggle_dialog, sound_settings_draw
+aDigitizedSpeech_c3349:                          ; xref exhibition_settings_show_options, exhibition_settings_draw
     db 'Digitized Speech', 0 ; 0c3349
-aMusic_c335a:                                    ; xref sound_toggle_dialog, sound_settings_draw
+aMusic_c335a:                                    ; xref exhibition_settings_show_options, exhibition_settings_draw
     db 'Music', 0 ; 0c335a
-aSound_c3360:                                    ; xref sound_toggle_dialog, sound_settings_draw
+aSound_c3360:                                    ; xref exhibition_settings_show_options, exhibition_settings_draw
     db 'Sound', 0 ; 0c3360
-aSetting6:                                       ; xref sound_settings_draw
+aSetting6:                                       ; xref exhibition_settings_draw
     db 'setting6', 0 ; 0c3366
-aDbox_c336f:                                     ; xref sound_settings_draw
+aDbox_c336f:                                     ; xref exhibition_settings_draw
     db 'dbox', 0 ; 0c336f
-aPointer_c3374:                                  ; xref sound_settings_menu
+aPointer_c3374:                                  ; xref exhibition_settings_menu
     db 'Pointer', 0 ; 0c3374
 aBKGD_c337c:                                     ; xref menu_p2_controls_a, menu_p2_controls_b, menu_p1_controls_c, menu_p2_controls_d
     db 'BKGD', 0 ; 0c337c
@@ -4153,7 +4153,7 @@ byte_c4d1e:                                      ; xref scan_keyboard_control, r
     times 46 db 0 ; 0c4dde
 dword_c4e0c:                                     ; xref setup_controls, controls_apply_user_change, menu_p2_controls_d
     db 0x00, 0x00, 0x00, 0x00 ; 0c4e0c |....|
-control_steps_left:                              ; xref run_sim_steps, game_loop, reset_game_state, init_match, three_stars_sequence, simulate_game_offscreen
+control_steps_left:                              ; xref run_sim_steps, game_loop, reset_game_state, init_match, three_stars_sequence, league_highlight_game
     db 0x00, 0x00, 0x00, 0x00 ; 0c4e10 |....|
 pause_requested:                                 ; xref handle_hotkey, game_loop, play_game, pause_menu, faceoff_wait_loop, sequence_loop +1
     db 0x00, 0x00, 0x00, 0x00 ; 0c4e14 |....|
@@ -4168,7 +4168,7 @@ dword_c4e2c:                                     ; xref set_video_mode
     db 0xe0, 0x01, 0x00, 0x00 ; 0c4e2c |....|
 palette_black:                                   ; xref set_video_mode, intro_sequence, credits_screen
     times 768 db 0 ; 0c4e30
-dword_c5130:                                     ; xref control_timer_tick, game_loop, demo_game, intro_sequence, simulate_game_offscreen, broadcast_booth_screen
+demo_game_running:                               ; xref control_timer_tick, game_loop, demo_game, intro_sequence, league_highlight_game, broadcast_booth_screen
     db 0x00 ; 0c5130 |.|
 unk_c5131:                                       ; xref fade_palette_to
     db 0x00, 0x00 ; 0c5131 |..|
@@ -4359,11 +4359,11 @@ dword_c53fb:                                     ; xref play_game, game_over_che
 option_flags:                                    ; xref handle_hotkey, awards_screen, play_match_from_start, game_over_check, demo_game, pause_menu +57
     db 0xff ; 0c53ff |.|
 ; second options byte (bit 1: normal penalty rate in penalty_odds), default 0x7b
-settings2:                                       ; xref play_game, demo_game, pause_menu, begin_game_session, db_load_team_roster, team_select_screen +37
+settings2:                                       ; xref play_game, demo_game, pause_menu, begin_game_session, db_load_team_roster, scouting_report_screen +37
     db 0x7b, 0x00, 0x00 ; 0c5400 |{..|
-dword_c5403:                                     ; xref setup_controls, pause_menu, team_select_screen, save_settings, apply_settings, load_game_set +13
+dword_c5403:                                     ; xref setup_controls, pause_menu, scouting_report_screen, save_settings, apply_settings, load_game_set +13
     db 0xff, 0xff, 0xff, 0xff ; 0c5403 |....|
-dword_c5407:                                     ; xref setup_controls, pause_menu, team_select_screen, save_settings, apply_settings, load_game_set +10
+dword_c5407:                                     ; xref setup_controls, pause_menu, scouting_report_screen, save_settings, apply_settings, load_game_set +10
     db 0xfe, 0xff, 0xff, 0xff ; 0c5407 |....|
 dword_c540b:                                     ; xref setup_controls, save_settings, apply_settings, load_game_set, save_game, savegame_io +4
     db 0x10, 0x00, 0x00, 0x00 ; 0c540b |....|
@@ -4373,9 +4373,9 @@ dword_c5413:                                     ; xref setup_controls, save_set
     db 0x00, 0x00, 0x00, 0x00 ; 0c5413 |....|
 dword_c5417:                                     ; xref setup_controls, save_settings, apply_settings, load_game_set, controls_apply_user_change, menu_p2_controls_d +4
     db 0x01, 0x00, 0x00, 0x00 ; 0c5417 |....|
-dword_c541b:                                     ; xref sound_card_menu_a, sound_card_menu_b, sound_setup_screen
+sound_cards_allowed:                             ; xref sound_card_menu_a, sound_card_menu_b, sound_setup_screen
     db 0xff, 0x00, 0x00, 0x00 ; 0c541b |....|
-dword_c541f:                                     ; xref awards_screen, ea_sports_intro, credits_screen, boxscore_screen, team_select_screen2, ref_check_announcements +23
+sound_card:                                      ; xref awards_screen, ea_sports_intro, credits_screen, boxscore_screen, game_statistics_screen, ref_check_announcements +23
     db 0x10, 0x00, 0x00, 0x00 ; 0c541f |....|
 unk_c5423:                                       ; xref begin_game_session, save_game, savegame_io, gsummary_append_record, gsummary_write_header, gsummary_write_final
     db 0x00 ; 0c5423 |.|
@@ -4400,7 +4400,7 @@ byte_c5431:                                      ; xref end_match_from_period, b
 byte_c5432:                                      ; xref end_match_from_period, begin_game_session, shot_landed, write_stats_table
     db 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ; 0c5432 |.......|
 ; 3 letter team abbreviations
-team_abbrev:                                     ; xref game_loop, play_game, demo_game, team_select_screen, enter_league, apply_settings +10
+team_abbrev:                                     ; xref game_loop, play_game, demo_game, scouting_report_screen, enter_league, apply_settings +10
     dd aBOS                                      ; 0c5439
     dd aBUF                                      ; 0c543d
 off_c5441:                                       ; xref enter_league
@@ -4467,7 +4467,7 @@ unk_c5519:                                       ; xref alloc_cup_banner, team_s
     db 0x04, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00 ; 0c5559 |................|
     db 0x02, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00 ; 0c5569 |................|
     db 0x01, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00 ; 0c5579 |........|
-unk_c5581:                                       ; xref pause_menu, team_stats_screen, standings_screen, team_select_screen, cup_tree_seed_bracket, load_schedule_db +2
+unk_c5581:                                       ; xref pause_menu, team_stats_screen, standings_screen, scouting_report_screen, cup_tree_seed_bracket, load_schedule_db +2
     db 0x0c, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00 ; 0c5581 |................|
     db 0x03, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00 ; 0c5591 |................|
     db 0x03, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x00 ; 0c55a1 |................|
@@ -4553,7 +4553,7 @@ off_c579c:                                       ; xref show_scoreboard
     dd a300                                      ; 0c57c4
 off_c57c8:                                       ; xref show_scoreboard
     dd aOT                                       ; 0c57c8
-off_c57cc:                                       ; xref show_scoreboard, team_select_screen, draw_team_logos, boxscore_screen, team_select_screen2, calendar_draw_games +3
+off_c57cc:                                       ; xref show_scoreboard, scouting_report_screen, lineups_screen, boxscore_screen, game_statistics_screen, calendar_draw_games +3
     dd aBOS_c06f8                                ; 0c57cc
     dd aBUF_c06fd                                ; 0c57d0
     dd aCGY_c0702                                ; 0c57d4
@@ -4608,7 +4608,7 @@ unk_c5862:                                       ; xref demo_game
     db 0x00, 0x00, 0x08, 0x11, 0x04, 0x12, 0x02, 0x15, 0x14, 0x03, 0x0f, 0x16, 0x0c, 0x15, 0x0c, 0x0b ; 0c5862 |................|
     db 0x00, 0x09, 0x0a, 0x01, 0x08, 0x15, 0x14, 0x12, 0x0c, 0x15, 0x0c, 0x16, 0x0a, 0x00, 0x0c, 0x0a ; 0c5872 |................|
     db 0x14, 0x15, 0x0c, 0x15 ; 0c5882 |....|
-dword_c5886:                                     ; xref demo_game
+demo_kind:                                       ; xref demo_game
     db 0x02, 0x00, 0x00, 0x00 ; 0c5886 |....|
 dword_c588a:                                     ; xref ea_sports_intro
     db 0x01, 0x00, 0x00, 0x00 ; 0c588a |....|
@@ -5083,7 +5083,7 @@ dword_c6414:                                     ; xref text_capture_begin, text
     db 0x00, 0x00, 0x00, 0x00 ; 0c6414 |....|
 dword_c6418:                                     ; xref set_text_colors, print_centered_shadow, print_text_at, print_outlined
     db 0x0f, 0x00, 0x00, 0x00 ; 0c6418 |....|
-dword_c641c:                                     ; xref set_text_colors, print_centered_shadow, print_text_at, print_outlined
+text_shadow:                                     ; xref set_text_colors, print_centered_shadow, print_text_at, print_outlined
     db 0x00, 0x00, 0x00, 0x00 ; 0c641c |....|
 unk_c6420:                                       ; xref print_outlined
     db 0xff, 0xff, 0xff, 0xff, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ; 0c6420 |................|
@@ -5128,13 +5128,13 @@ dword_c65a8:                                     ; xref stats_free_buffers, exh_
     db 0x00, 0x00, 0x00, 0x00 ; 0c65a8 |....|
 dword_c65ac:                                     ; xref stats_free_buffers, exh_hub_standings, hub_standings, cal_hub_standings, standings_screen, stanley_cup_tree_screen +3
     db 0x00, 0x00, 0x00, 0x00 ; 0c65ac |....|
-dword_c65b0:                                     ; xref stats_source_9394_season, stats_source_9394_playoffs, stats_source_league_season, team_stats_standings, team_stats_scoring, team_stats_defense +29
+stats_current_arg:                               ; xref stats_source_9394_season, stats_source_9394_playoffs, stats_source_league_season, team_stats_standings, team_stats_scoring, team_stats_defense +29
     db 0x00, 0x00, 0x00, 0x00 ; 0c65b0 |....|
-dword_c65b4:                                     ; xref stats_source_9394_season, stats_source_9394_playoffs, stats_source_league_season, stats_source_league_season_playoffs, stats_source_league_playoffs, set_menu_mode +4
+stats_selected_team:                             ; xref stats_source_9394_season, stats_source_9394_playoffs, stats_source_league_season, stats_source_league_season_playoffs, stats_source_league_playoffs, set_menu_mode +4
     db 0x00, 0x00, 0x00, 0x00 ; 0c65b4 |....|
-dword_c65b8:                                     ; xref stats_source_9394_season, stats_source_9394_playoffs, stats_source_league_season, exh_hub_sports_central, exh_hub_playoff_tree, exh_hub_league_calendar +11
+stats_current_screen:                            ; xref stats_source_9394_season, stats_source_9394_playoffs, stats_source_league_season, exh_hub_sports_central, exh_hub_playoff_tree, exh_hub_league_calendar +11
     db 0x00, 0x00, 0x00, 0x00 ; 0c65b8 |....|
-dword_c65bc:                                     ; xref hub_sports_desk, hub_overall_standings, hub_team_roster, menu_show_player_stats, exh_hub_stats, hub_stats +1
+stats_next_screen:                               ; xref hub_sports_desk, hub_overall_standings, hub_team_roster, menu_show_player_stats, exh_hub_stats, hub_stats +1
     db 0x00, 0x00, 0x00, 0x00 ; 0c65bc |....|
 dword_c65c0:                                     ; xref team_stats_standings, team_stats_scoring, team_stats_defense, team_stats_penalty_killing, team_stats_power_play, team_stats_penalties +6
     db 0x00, 0x00, 0x00, 0x00 ; 0c65c0 |....|
@@ -5148,7 +5148,7 @@ dword_c65d0:                                     ; xref frontend_main_menu, exhi
     db 0x00, 0x00, 0x00, 0x00 ; 0c65d0 |....|
 unk_c65d4:                                       ; xref stats_source_9394_season, stats_source_9394_playoffs, stats_source_league_season, stats_source_league_season_playoffs, stats_source_league_playoffs, set_menu_mode +9
     times 32 db 0 ; 0c65d4
-dword_c65f4:                                     ; xref simulate_pending_games, end_match_from_period
+league_done_mask:                                ; xref simulate_pending_games, end_match_from_period
     db 0x00, 0x00, 0x00, 0x00 ; 0c65f4 |....|
 aReturningToSportsCentral:                       ; xref pause_sports_desk_confirm
     db 'Returning to sports central', 0 ; 0c65f8
@@ -5317,9 +5317,9 @@ aBkgd_c693b:                                     ; xref player_card_screen, goal
 aEASNVfn:                                        ; xref exh_hub_standings, hub_standings, cal_hub_standings
     db 'EASN.vfn', 0 ; 0c6940
     db 'wittle06.vfn', 0 ; 0c6949
-dword_c6956:                                     ; xref stats_source_9394_season, stats_source_9394_playoffs, stats_source_league_season, stats_source_league_season_playoffs, stats_source_league_playoffs, set_menu_mode +35
+stats_playoffs:                                  ; xref stats_source_9394_season, stats_source_9394_playoffs, stats_source_league_season, stats_source_league_season_playoffs, stats_source_league_playoffs, set_menu_mode +35
     db 0x00, 0x00, 0x00, 0x00 ; 0c6956 |....|
-dword_c695a:                                     ; xref stats_source_9394_season, stats_source_9394_playoffs, stats_source_league_season, stats_source_league_season_playoffs, stats_source_league_playoffs, set_menu_mode +8
+stats_league:                                    ; xref stats_source_9394_season, stats_source_9394_playoffs, stats_source_league_season, stats_source_league_season_playoffs, stats_source_league_playoffs, set_menu_mode +8
     db 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ; 0c695a |......|
 unk_c6960:                                       ; xref player_card_draw_photo
     db 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, 0x50, 0x51, 0x52, 0x53 ; 0c6960 |DEFGHIJKLMNOPQRS|
@@ -5576,12 +5576,12 @@ aCancel_c6e6c:
     db 'Cancel', 0 ; 0c6e6c
 aHomeLines:
     db 'Home lines', 0 ; 0c6e73
-a0:                                              ; xref team_select_screen
+a0:                                              ; xref scouting_report_screen
     db '0', 0 ; 0c6e7e
     db 0x00, 0x00, 0xbc, 0x01, 0x00, 0x00, 0x64, 0x00, 0x00, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00 ; 0c6e80 |......d.........|
     db 0x00, 0x00, 0x05, 0x00, 0x00, 0x00 ; 0c6e90 |......|
     dd aAwayLines                                ; 0c6e96
-unk_c6e9a:                                       ; xref team_select_screen
+unk_c6e9a:                                       ; xref scouting_report_screen
     db 0xc4, 0x00, 0x00, 0x00, 0xbc, 0x01, 0x00, 0x00, 0x64, 0x00, 0x00, 0x00, 0x18, 0x00, 0x00, 0x00 ; 0c6e9a |........d.......|
     db 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00 ; 0c6eaa |........|
     dd aPlay                                     ; 0c6eb2
@@ -5609,7 +5609,7 @@ aGoaltending_c6f33:
     db 'Goaltending', 0 ; 0c6f33
 aOverAll_c6f3f:
     db 'Over all', 0 ; 0c6f3f
-off_c6f48:                                       ; xref team_select_screen
+off_c6f48:                                       ; xref scouting_report_screen
     dd aPenaltyKilling_c6eee                     ; 0c6f48
     dd aPowerPlay_c6efe                          ; 0c6f4c
     dd aShooting_c6f09                           ; 0c6f50
@@ -5619,7 +5619,7 @@ off_c6f48:                                       ; xref team_select_screen
     dd aChecking_c6f2a                           ; 0c6f60
     dd aGoaltending_c6f33                        ; 0c6f64
     dd aOverAll_c6f3f                            ; 0c6f68
-unk_c6f6c:                                       ; xref team_select_screen
+unk_c6f6c:                                       ; xref scouting_report_screen
     db 0x00, 0x01, 0x04, 0x05, 0x06, 0x07, 0x08, 0x0a, 0x0b, 0x00, 0x00, 0x00 ; 0c6f6c |............|
 dword_c6f78:                                     ; xref league_select_buttons, league_select_screen, database_buttons, menu_load_database
     db 0x00, 0x00, 0x00, 0x00 ; 0c6f78 |....|
@@ -5716,7 +5716,7 @@ aPowerPlayShots:
     db 'Power Play Shots', 0 ; 0c7174
 aOffensiveFaceoffsWon:
     db 'Offensive Faceoffs won', 0 ; 0c7185
-off_c719c:                                       ; xref team_select_screen2
+off_c719c:                                       ; xref game_statistics_screen
     dd aScore_c7108                              ; 0c719c
     dd aShots_c710e                              ; 0c71a0
     dd aOneTimers                                ; 0c71a4
@@ -5729,11 +5729,11 @@ off_c719c:                                       ; xref team_select_screen2
     dd aBodyChecks                               ; 0c71c0
     dd aAttackZone                               ; 0c71c4
     dd aPassing_c714e                            ; 0c71c8
-dword_c71cc:                                     ; xref menu_output_current_data, draw_bevel_box, team_select_screen, text_entry_dialog, listbox_draw_item, listbox_dialog +7
+dword_c71cc:                                     ; xref menu_output_current_data, draw_bevel_box, scouting_report_screen, text_entry_dialog, listbox_draw_item, listbox_dialog +7
     db 0x2a, 0x00, 0x00, 0x00 ; 0c71cc |*...|
-dword_c71d0:                                     ; xref menu_output_current_data, draw_bevel_box, team_select_screen, text_entry_dialog, listbox_dialog, set_dialog_colors +6
+dword_c71d0:                                     ; xref menu_output_current_data, draw_bevel_box, scouting_report_screen, text_entry_dialog, listbox_dialog, set_dialog_colors +6
     db 0x3f, 0x00, 0x00, 0x00 ; 0c71d0 |?...|
-dword_c71d4:                                     ; xref menu_output_current_data, draw_bevel_box, team_select_screen, text_entry_dialog, listbox_dialog, set_dialog_colors +6
+dword_c71d4:                                     ; xref menu_output_current_data, draw_bevel_box, scouting_report_screen, text_entry_dialog, listbox_dialog, set_dialog_colors +6
     db 0x17, 0x00, 0x00, 0x00 ; 0c71d4 |....|
 dword_c71d8:                                     ; xref menu_output_current_data, text_entry_dialog, listbox_item_colors, listbox_draw_item, listbox_dialog, set_dialog_colors +5
     db 0x3f, 0x00, 0x00, 0x00 ; 0c71d8 |?...|
@@ -5757,7 +5757,7 @@ dword_c7208:                                     ; xref listbox_dialog
     db 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ; 0c7208 |........|
 dword_c7210:                                     ; xref listbox_dialog
     db 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ; 0c7210 |........|
-byte_c7218:                                      ; xref frontend_main_menu
+fe_desk_toggle:                                  ; xref frontend_main_menu
     db 0x01 ; 0c7218 |.|
 dword_c7219:                                     ; xref hub_sports_central, hub_playoff_tree, hub_league_calendar, hub_stats, frontend_main_menu
     db 0x00, 0x00, 0x00, 0x00 ; 0c7219 |....|
@@ -6248,7 +6248,7 @@ aSEASON:
     db 'SEASON', 0 ; 0c80c7
 aSCHEDULE:
     db 'SCHEDULE', 0 ; 0c80ce
-off_c80d7:                                       ; xref load_award_stats, db_file_sizes_kb, draw_team_logos, boxscore_screen, season_record_result, merge_team_databases +20
+off_c80d7:                                       ; xref load_award_stats, db_file_sizes_kb, lineups_screen, boxscore_screen, season_record_result, merge_team_databases +20
     dd aKEY                                      ; 0c80d7
 off_c80db:                                       ; xref league_play_day, dbedit_load_databases, database_disk_check, dbedit_save_databases, create_player_menu, player_temp_file +5
     dd aCAREER                                   ; 0c80db
@@ -6256,7 +6256,7 @@ off_c80df:                                       ; xref dbedit_load_databases, d
     dd aATT                                      ; 0c80df
 off_c80e3:                                       ; xref league_play_day, dbedit_load_databases, database_disk_check, dbedit_save_databases, player_temp_file, dbedit_remove_temp_files +4
     dd aCARTEAMS                                 ; 0c80e3
-off_c80e7:                                       ; xref load_award_stats, playoff_series_status, team_select_screen, boxscore_screen, season_record_result, league_calendar_flow +21
+off_c80e7:                                       ; xref load_award_stats, playoff_series_status, scouting_report_screen, boxscore_screen, season_record_result, league_calendar_flow +21
     dd aTEAMS                                    ; 0c80e7
 off_c80eb:                                       ; xref load_award_stats, boxscore_screen, season_record_result, merge_team_databases, league_merge_check, league_play_day +13
     dd aSEASON                                   ; 0c80eb
@@ -6279,7 +6279,7 @@ unk_c8115:                                       ; xref make_path, delete_matchi
     db 0x5c, 0x00 ; 0c8115 |\.|
 aS_c8117:                                        ; xref league_save_name, team_edit_screen
     db '%s', 0 ; 0c8117
-aDB:                                             ; xref load_award_stats, playoff_series_status, load_lssched_db, team_select_screen, draw_team_logos, boxscore_screen +37
+aDB:                                             ; xref load_award_stats, playoff_series_status, load_lssched_db, scouting_report_screen, lineups_screen, boxscore_screen +37
     db '.DB', 0 ; 0c811a
 aORG:                                            ; xref choose_db_or_org, database_load_selected
     db '.ORG', 0 ; 0c811e
@@ -6296,7 +6296,7 @@ aKMS_c8140:                                      ; xref ea_sports_intro, credits
     db '.KMS', 0 ; 0c8140
 aCFG_c8145:                                      ; xref load_cfg_palette, load_sound_config
     db '.CFG', 0 ; 0c8145
-aVFN:                                            ; xref main, load_player_graphics, load_highlight_assets, draw_team_logos, boxscore_screen, line_editor
+aVFN:                                            ; xref main, load_player_graphics, load_highlight_assets, lineups_screen, boxscore_screen, line_editor
     db '.VFN', 0 ; 0c814a
 aBIN:                                            ; xref load_crests, team_roster_load_palettes, set_team_palette_homepals, load_team_palettes, draw_lines_screen, load_homepals
     db '.BIN', 0 ; 0c814f
@@ -6397,7 +6397,7 @@ unk_c8444:                                       ; xref day_to_month_day
 unk_c8445:                                       ; xref calendar_draw_games, calendar_screen
     db 0x1f, 0x1c, 0x1f, 0x1e, 0x1f, 0x1e, 0x1f, 0x1f, 0x1e, 0x1f, 0x1e, 0x1f ; 0c8445 |............|
 ; current league directory name
-league_dir:                                      ; xref play_game, load_award_stats, check_disk_space_for_game, gsummary_path, team_select_screen, draw_team_logos +31
+league_dir:                                      ; xref play_game, load_award_stats, check_disk_space_for_game, gsummary_path, scouting_report_screen, lineups_screen +31
     db 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ; 0c8451 |............|
 unk_c845d:                                       ; xref calendar_screen
     db 0x00 ; 0c845d |.|
@@ -6773,16 +6773,16 @@ unk_c8d06:                                       ; xref new_league_dialog
     db 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00 ; 0c8ff6 |............|
 dword_c9002:                                     ; xref new_league_dialog
     db 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ; 0c9002 |..........|
-unk_c900c:                                       ; xref playoff_setup_screen
+forward_line_order:                              ; xref league_sim_game
     db 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00 ; 0c900c |................|
     db 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ; 0c901c |................|
     db 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00 ; 0c902c |................|
     db 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00 ; 0c903c |................|
     db 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ; 0c904c |................|
-unk_c905c:                                       ; xref playoff_setup_screen
+defence_pair_order:                              ; xref league_sim_game
     db 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ; 0c905c |................|
     db 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00 ; 0c906c |........|
-dword_c9074:                                     ; xref loading_screen, wait_sprite_fade
+loading_shown:                                   ; xref loading_screen, wait_sprite_fade
     db 0x00, 0x00, 0x00, 0x00 ; 0c9074 |....|
 ; 0x9600 bytes of packed replay frames
 replay_buffer:                                   ; xref replay_buffer_empty, period_init, savegame_io, replay_oldest_frame, replay_buffer_start, replay_record_frame +3
@@ -6911,7 +6911,7 @@ dir8_vectors:                                    ; xref faceoff_resolve, body_ch
 unk_c90e2:                                       ; xref faceoff_resolve, body_check, skating_accelerate
     db 0xc8, 0x00, 0x8d, 0x00, 0x8d, 0x00, 0xc8, 0x00, 0x00, 0x00, 0x8d, 0x00, 0x73, 0xff, 0x00, 0x00 ; 0c90e2 |............s...|
     db 0x38, 0xff, 0x73, 0xff, 0x73, 0xff, 0x38, 0xff, 0x00, 0x00, 0x73, 0xff, 0x8d, 0x00 ; 0c90f2 |8.s.s.8...s...|
-dword_c9100:                                     ; xref demo_game, init_match, save_game, savegame_io, randomrange
+random_seed:                                     ; xref demo_game, init_match, save_game, savegame_io, randomrange
     db 0x21, 0x43 ; 0c9100 |!C|
 word_c9102:                                      ; xref randomrange
     db 0xcd, 0xab ; 0c9102 |..|
@@ -7691,13 +7691,13 @@ word_cbc60:                                      ; xref reset_game_state, draw_l
     db 0x00, 0x00 ; 0cbc60 |..|
 word_cbc62:                                      ; xref reset_game_state, start_line_change_ui, line_change_bench_step, end_of_period, save_game, savegame_io +1
     db 0x00, 0x00 ; 0cbc62 |..|
-word_cbc64:                                      ; xref reset_game_state, end_of_period, save_game, savegame_io, simulate_game_offscreen
+word_cbc64:                                      ; xref reset_game_state, end_of_period, save_game, savegame_io, league_highlight_game
     db 0x00, 0x00 ; 0cbc64 |..|
 word_cbc66:                                      ; xref reset_game_state, start_line_change_ui, line_change_bench_step, save_game, savegame_io
     db 0x00, 0x00 ; 0cbc66 |..|
 word_cbc68:                                      ; xref reset_game_state, save_game, savegame_io
     db 0x00, 0x00 ; 0cbc68 |..|
-word_cbc6a:                                      ; xref reset_game_state, draw_clock, draw_line_box, three_stars_sequence, start_line_change_ui, line_change_bench_step +9
+line_change_prompt:                              ; xref reset_game_state, draw_clock, draw_line_box, three_stars_sequence, start_line_change_ui, line_change_bench_step +9
     db 0x00, 0x00 ; 0cbc6a |..|
 word_cbc6c:                                      ; xref reset_game_state, draw_clock, three_stars_sequence, ai_puck_faceoff, end_of_period, save_game +3
     db 0x00, 0x00 ; 0cbc6c |..|
@@ -7771,24 +7771,24 @@ unk_cbe8e:                                       ; xref setup_demo_faceoff, ai_p
 faceoff_lineup:                                  ; xref setup_demo_faceoff, ai_puck_faceoff2, ai_all_goto_faceoff
     db 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x00, 0x00, 0x01, 0x05, 0x03, 0x04, 0x02, 0x00, 0x00 ; 0cbea8 |................|
     db 0x00, 0x03, 0x05, 0x01, 0x04, 0x00 ; 0cbeb8 |......|
-dword_cbebe:                                     ; xref ai_ref_three_stars, ref_check_announcements, record_penalty
+panel_state:                                     ; xref ai_ref_three_stars, ref_check_announcements, record_penalty
     db 0x00, 0x00 ; 0cbebe |..|
 word_cbec0:                                      ; xref reset_game_state, ai_ref_three_stars, ai_puck_give_cup, ai_ref_get_new_puck, ai_ref_pickup_puck, ai_puck_faceoff2 +11
     db 0xff, 0xff ; 0cbec0 |..|
 ; body checks of a user on the referee, 3 = abuse of official
 ref_hits:                                        ; xref reset_game_state, resolve_body_check, save_game, savegame_io
     db 0x00, 0x00 ; 0cbec2 |..|
-word_cbec4:                                      ; xref handle_hotkey, game_loop, play_game, load_player_graphics, play_match_from_start, play_demo_match +7
+cut_to_scene:                                    ; xref handle_hotkey, game_loop, play_game, load_player_graphics, play_match_from_start, play_demo_match +7
     db 0x00, 0x00 ; 0cbec4 |..|
-dword_cbec6:                                     ; xref reset_game_state, three_stars_sequence, ai_ref_faceoff, ai_ref_get_new_puck, ai_ref_pickup_puck, ai_puck_faceoff2 +7
+injury_stoppage:                                 ; xref reset_game_state, three_stars_sequence, ai_ref_faceoff, ai_ref_get_new_puck, ai_ref_pickup_puck, ai_puck_faceoff2 +7
     db 0x00, 0x00 ; 0cbec6 |..|
 word_cbec8:                                      ; xref reset_game_state, three_stars_sequence, ai_puck_faceoff2, pull_goalie_logic, period_init, draw_sprites +8
     db 0xff, 0xff ; 0cbec8 |..|
-dword_cbeca:                                     ; xref game_loop, play_game, reset_game_state, free_match_resources, ensure_free_memory, init_match +19
+panel_clip:                                      ; xref game_loop, play_game, reset_game_state, free_match_resources, ensure_free_memory, init_match +19
     db 0x00, 0x00 ; 0cbeca |..|
 dword_cbecc:                                     ; xref game_loop, play_game, reset_game_state, faceoff_wait_loop, three_stars_sequence, ai_ref_pickup_puck +9
     db 0xff, 0xff ; 0cbecc |..|
-word_cbece:                                      ; xref reset_game_state, three_stars_sequence, ai_puck_faceoff2, save_game, savegame_io, load_cutscene_clip +3
+clip_frame:                                      ; xref reset_game_state, three_stars_sequence, ai_puck_faceoff2, save_game, savegame_io, load_cutscene_clip +3
     db 0xff, 0xff ; 0cbece |..|
 off_cbed0:                                       ; xref game_loop, play_game, load_cutscene_clip
     dd aFanom                                    ; 0cbed0
@@ -7873,7 +7873,7 @@ word_cc0d8:                                      ; xref sim_game_state, game_sta
     db 0x00 ; 0cc0d8 |.|
 byte_cc0d9:                                      ; xref sim_game_state
     db 0x00 ; 0cc0d9 |.|
-word_cc0da:                                      ; xref crowd_reaction_sfx, game_state_clear, save_game, savegame_io
+crowd_hit_toggle:                                ; xref crowd_reaction_sfx, game_state_clear, save_game, savegame_io
     db 0x00, 0x00 ; 0cc0da |..|
 ; high word crowd noise 0..2000, low word pending replay sound event
 crowd_noise:                                     ; xref update_ambient_audio, fade_ambient_audio, play_sfx, period_init, update_crowd_random, game_state_clear +7
@@ -7908,7 +7908,7 @@ dword_cc10c:                                     ; xref save_game, savegame_io
 ; faceoff spot after the penalty shot (cc114 y)
 penalty_shot_spot_x:                             ; xref score_goal, save_game, savegame_io, start_stoppage, begin_penalty_shot, end_penalty_shot
     db 0x00, 0x00, 0x00, 0x00 ; 0cc110 |....|
-dword_cc114:                                     ; xref score_goal, save_game, savegame_io, start_stoppage, begin_penalty_shot, end_penalty_shot
+penalty_shot_spot_y:                             ; xref score_goal, save_game, savegame_io, start_stoppage, begin_penalty_shot, end_penalty_shot
     db 0x00, 0x00, 0x00, 0x00 ; 0cc114 |....|
 penalty_shot_phase:                              ; xref reset_game_state, ai_ref_goto_faceoff, control_player, send_team_to_faceoff, all_goto_positions, ai_puck_faceoff +14
     db 0x00, 0x00, 0x00, 0x00 ; 0cc118 |....|
@@ -8120,7 +8120,7 @@ unk_cca3c:                                       ; xref ai_center_offense
 unk_cca3e:                                       ; xref ai_center_offense
     db 0x0a, 0x00, 0x00, 0x00, 0x46, 0x00, 0x34, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x3c, 0x00, 0xa0, 0x00 ; 0cca3e |....F.4.....<...|
     db 0x1e, 0x00, 0x00, 0x00, 0x64, 0x00, 0x9b, 0x00, 0x14, 0x00 ; 0cca4e |....d.....|
-dword_cca58:                                     ; xref ai_celebrate_goal
+scorer_jumps:                                    ; xref ai_celebrate_goal
     db 0x00, 0x00 ; 0cca58 |..|
 ; save animation per direction class
 goalie_save_anims:                               ; xref ai_goalie
@@ -8206,15 +8206,15 @@ unk_ccc62:                                       ; xref do_shot
     db 0x06, 0x00 ; 0ccc82 |..|
 crowd_loop_channel:                              ; xref stop_crowd_loop_fade, stop_crowd_loop, play_sample_by_ptr, sfx_set_volume
     db 0xff, 0xff, 0xff, 0xff ; 0ccc84 |....|
-dword_ccc88:                                     ; xref play_match_from_start, play_demo_match, update_ambient_audio, sound_resume_all, savegame_io, simulate_game_offscreen +1
+crowd_level:                                     ; xref play_match_from_start, play_demo_match, update_ambient_audio, sound_resume_all, savegame_io, league_highlight_game +1
     db 0x00, 0x00, 0x00, 0x00 ; 0ccc88 |....|
-dword_ccc8c:                                     ; xref update_ambient_audio, sound_pause_all, sound_resume_all
+crowd_roar:                                      ; xref update_ambient_audio, sound_pause_all, sound_resume_all
     db 0x00, 0x00, 0x00, 0x00 ; 0ccc8c |....|
-dword_ccc90:                                     ; xref update_ambient_audio, sound_pause_all, sound_resume_all
+crowd_murmur:                                    ; xref update_ambient_audio, sound_pause_all, sound_resume_all
     db 0x00, 0x00, 0x00, 0x00 ; 0ccc90 |....|
-dword_ccc94:                                     ; xref intro_sequence, boxscore_screen, team_select_screen2, load_sound_data, load_sound_file_try, menu_central_registry +4
+dword_ccc94:                                     ; xref intro_sequence, boxscore_screen, game_statistics_screen, load_sound_data, load_sound_file_try, menu_central_registry +4
     db 0x00, 0x00, 0x00, 0x00 ; 0ccc94 |....|
-dword_ccc98:                                     ; xref play_sfx, simulate_game_offscreen, say_one_minute_left
+dword_ccc98:                                     ; xref play_sfx, league_highlight_game, say_one_minute_left
     db 0x00, 0x00, 0x00, 0x00 ; 0ccc98 |....|
 ; users cannot move during the whistle phase of a stoppage
 controls_blocked:                                ; xref line_change_bench_step, control_player, sim_update_players, draw_sprites
@@ -8436,9 +8436,9 @@ message_strings:                                 ; xref draw_message_box
     dd aPENALTYSHOT                              ; 0cd4f8
 word_cd4fc:                                      ; xref replay_draw_frame, instant_replay, replay_control_loop
     db 0xff, 0xff ; 0cd4fc |..|
-word_cd4fe:                                      ; xref replay_reset, replay_record_frame
+replay_half_step:                                ; xref replay_reset, replay_record_frame
     db 0x01, 0x00 ; 0cd4fe |..|
-word_cd500:                                      ; xref replay_reset, replay_record_frame, instant_replay
+replay_held_sfx:                                 ; xref replay_reset, replay_record_frame, instant_replay
     db 0xff, 0xff, 0x00, 0x00 ; 0cd500 |....|
 unk_cd504:                                       ; xref dump_stats_log
     db 0x01, 0x00, 0x00, 0x00, 0x99, 0x00, 0x00, 0x00, 0xb1, 0x00, 0x00, 0x00, 0xc9, 0x00, 0x00, 0x00 ; 0cd504 |................|
@@ -8649,7 +8649,7 @@ off_cd984:                                       ; xref dump_stats_log
     dd unk_c2343                                 ; 0cd994
     dd aRW                                       ; 0cd998
     dd aXC                                       ; 0cd99c
-unk_cd9a0:                                       ; xref simulate_game_offscreen
+unk_cd9a0:                                       ; xref league_highlight_game
     db 0x00, 0x00, 0x24, 0xff, 0xb0, 0xff, 0x79, 0xff, 0x19, 0x00, 0x9c, 0xff, 0x92, 0xff, 0xc9, 0xff ; 0cd9a0 |..$...y.........|
     db 0x1e, 0x00, 0xdc, 0xff, 0x50, 0x00, 0xb8, 0xff, 0x00, 0x00, 0xdc, 0x00, 0x28, 0x00, 0x52, 0x00 ; 0cd9b0 |....P.......(.R.|
     db 0xc2, 0xff, 0x48, 0x00, 0x6e, 0x00, 0x24, 0x00, 0xf1, 0xff, 0x09, 0x00, 0xc9, 0xff, 0x00, 0x00 ; 0cd9c0 |..H.n.$.........|
@@ -9390,12 +9390,12 @@ funcptr_cef23:                                   ; xref pause_menu
 unk_cef2f:
     db 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x6e, 0x00, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00 ; 0cef2f |........n.......|
     dd aHomeTeam_cdd88                           ; 0cef3f
-funcptr_cef43:                                   ; xref team_select_screen, setup_pause_menu_teams
+funcptr_cef43:                                   ; xref scouting_report_screen, setup_pause_menu_teams
     dd menu_edit_lines_home                      ; 0cef43
     db 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x12, 0x00, 0x00, 0x00 ; 0cef47 |................|
     db 0x6e, 0x00, 0x00, 0x00, 0x24, 0x00, 0x00, 0x00 ; 0cef57 |n...$...|
     dd aVisitingTeam_cdd96                       ; 0cef5f
-funcptr_cef63:                                   ; xref team_select_screen, setup_pause_menu_teams
+funcptr_cef63:                                   ; xref scouting_report_screen, setup_pause_menu_teams
     dd menu_edit_lines_away                      ; 0cef63
     db 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ; 0cef67 |........|
 unk_cef6f:
@@ -9486,7 +9486,7 @@ dword_cf00b:                                     ; xref set_menu_mode
     db 0x00, 0x00, 0x00, 0x00 ; 0cf1a3 |....|
     dd unk_cf2cf                                 ; 0cf1a7
     db 0x01, 0x00, 0x00, 0x00 ; 0cf1ab |....|
-unk_cf1af:                                       ; xref team_select_screen
+unk_cf1af:                                       ; xref scouting_report_screen
     db 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4d, 0x00, 0x00, 0x00, 0x12, 0x00, 0x00, 0x00 ; 0cf1af |........M.......|
     dd aLineEditor_ce0b5                         ; 0cf1bf
     db 0x00, 0x00, 0x00, 0x00 ; 0cf1c3 |....|
@@ -10324,7 +10324,7 @@ unk_d075e:                                       ; xref roster_screen, roster_ta
     db 0x00, 0x00, 0x00, 0x00 ; 0d0792 |....|
     dd unk_d068a                                 ; 0d0796
     db 0x02, 0x00, 0x00, 0x00 ; 0d079a |....|
-byte_d079e:                                      ; xref dbedit_select_team, dbedit_free_agents, dbedit_build_team_roster, dbedit_edit_team_lines, roster_move_players, free_agent_move_dialog +5
+roster_team_column:                              ; xref dbedit_select_team, dbedit_free_agents, dbedit_build_team_roster, dbedit_edit_team_lines, roster_move_players, free_agent_move_dialog +5
     db 0x0c ; 0d079e |.|
 byte_d079f:                                      ; xref dbedit_edit_team_lines
     db 0x15, 0x7d, 0x00, 0x00, 0x00, 0xb7, 0x01, 0x00, 0x00 ; 0d079f |.}.......|
@@ -10340,7 +10340,7 @@ dword_d07b2:                                     ; xref database_build_list, dbe
     db 0x00, 0x00, 0x00, 0x00 ; 0d07b2 |....|
 aTMP:                                            ; xref create_player_menu, player_temp_file, dbedit_remove_temp_files
     db '.TMP', 0 ; 0d07b6
-dword_d07bb:                                     ; xref league_play_day, schedule_screen, playoff_advance, schedule_screen2, playoff_setup_screen, dbedit_load_databases +9
+dword_d07bb:                                     ; xref league_play_day, schedule_screen, playoff_advance, schedule_screen2, league_sim_game, dbedit_load_databases +9
     db 0x00, 0x00, 0x00, 0x00 ; 0d07bb |....|
 dword_d07bf:                                     ; xref league_play_day, dbedit_load_databases, database_disk_check, dbedit_save_databases, dbedit_free_databases, dbedit_career_ptr +5
     db 0x00, 0x00, 0x00, 0x00 ; 0d07bf |....|
@@ -10820,7 +10820,7 @@ unk_d14fc:                                       ; xref settings_button_at
     db 0x22, 0x01, 0x00, 0x00, 0x35, 0x00, 0x00, 0x00, 0x35, 0x01, 0x00, 0x00, 0x66, 0x00, 0x00, 0x00 ; 0d167c |"...5...5...f...|
     db 0x45, 0x01, 0x00, 0x00, 0x7f, 0x00, 0x00, 0x00, 0x35, 0x01, 0x00, 0x00, 0xb0, 0x00, 0x00, 0x00 ; 0d168c |E.......5.......|
     db 0x45, 0x01, 0x00, 0x00 ; 0d169c |E...|
-unk_d16a0:                                       ; xref settings_pointer_loop, settings_menu, game_settings_pointer_loop, game_settings_menu, sound_settings_menu
+unk_d16a0:                                       ; xref settings_pointer_loop, settings_menu, game_settings_pointer_loop, game_settings_menu, exhibition_settings_menu
     db 0x00, 0x00, 0x00, 0x14, 0x14, 0x14, 0x2e, 0x2e, 0x2e, 0x3f, 0x3f, 0x3f ; 0d16a0 |.........???|
 unk_d16ac:                                       ; xref game_settings_button_at, game_settings_draw_buttons
     db 0x18, 0x00, 0x00, 0x00 ; 0d16ac |....|
@@ -10849,13 +10849,13 @@ unk_d16b8:                                       ; xref game_settings_button_at
     db 0xd2, 0x00, 0x00, 0x00, 0x2d, 0x00, 0x00, 0x00, 0xe5, 0x00, 0x00, 0x00, 0x5e, 0x00, 0x00, 0x00 ; 0d17c8 |....-.......^...|
     db 0xf5, 0x00, 0x00, 0x00, 0x77, 0x00, 0x00, 0x00, 0xe5, 0x00, 0x00, 0x00, 0xa8, 0x00, 0x00, 0x00 ; 0d17d8 |....w...........|
     db 0xf5, 0x00, 0x00, 0x00 ; 0d17e8 |....|
-unk_d17ec:                                       ; xref sound_settings_draw_buttons, sound_settings_button_at
+unk_d17ec:                                       ; xref exhibition_settings_draw_buttons, exhibition_settings_button_at
     db 0x18, 0x00, 0x00, 0x00 ; 0d17ec |....|
-unk_d17f0:                                       ; xref sound_settings_button_at
+unk_d17f0:                                       ; xref exhibition_settings_button_at
     db 0x28, 0x00, 0x00, 0x00 ; 0d17f0 |(...|
-unk_d17f4:                                       ; xref sound_settings_button_at
+unk_d17f4:                                       ; xref exhibition_settings_button_at
     db 0x32, 0x00, 0x00, 0x00 ; 0d17f4 |2...|
-unk_d17f8:                                       ; xref sound_settings_button_at
+unk_d17f8:                                       ; xref exhibition_settings_button_at
     db 0x38, 0x00, 0x00, 0x00, 0x36, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x50, 0x00, 0x00, 0x00 ; 0d17f8 |8...6...(...P...|
     db 0x38, 0x00, 0x00, 0x00, 0x18, 0x00, 0x00, 0x00, 0x3e, 0x00, 0x00, 0x00, 0x32, 0x00, 0x00, 0x00 ; 0d1808 |8.......>...2...|
     db 0x4e, 0x00, 0x00, 0x00, 0x36, 0x00, 0x00, 0x00, 0x3e, 0x00, 0x00, 0x00, 0x50, 0x00, 0x00, 0x00 ; 0d1818 |N...6...>...P...|
@@ -11513,7 +11513,7 @@ a3rdstarCor:
     dd a1ststarCor                               ; 0d27a6
     dd a2ndstarCor                               ; 0d27aa
     dd a3rdstarCor                               ; 0d27ae
-dword_d27b2:                                     ; xref speech_timer, speech_init
+speech_voice:                                    ; xref speech_timer, speech_init
     db 0x00, 0x00, 0x00, 0x00 ; 0d27b2 |....|
 byte_d27b6:                                      ; xref speech_init
     db 0x00 ; 0d27b6 |.|
@@ -12349,7 +12349,7 @@ off_d42a4:                                       ; xref getfontstate, setfontsta
     dd unk_d45d8                                 ; 0d42a4
 dword_d42a8:                                     ; xref print_centered_shadow, print_text_at, print_outlined, text_entry_draw_cursor, calendar_draw_games, replay_save_dialog +3
     db 0x0f, 0x00, 0x00, 0x00 ; 0d42a8 |....|
-dword_d42ac:                                     ; xref text_entry_draw, database_dialog_box, settextpos, printstr2
+text_bg_colour:                                  ; xref text_entry_draw, database_dialog_box, settextpos, printstr2
     db 0x00, 0x00, 0x00, 0x00 ; 0d42ac |....|
 dword_d42b0:                                     ; xref settextxy, printstr, printstr2
     db 0x00, 0x00, 0x00, 0x00 ; 0d42b0 |....|
@@ -12365,7 +12365,7 @@ byte_d42c1:                                      ; xref setfont, textwidthn, pri
     db 0x8e ; 0d42c1 |.|
 byte_d42c2:                                      ; xref setfont, textwidthn, printstr, printstr2
     db 0x08 ; 0d42c2 |.|
-byte_d42c3:                                      ; xref league_leaders_screen, credits_screen, draw_credit_line, team_select_screen, draw_team_logos, boxscore_screen +18
+byte_d42c3:                                      ; xref league_leaders_screen, credits_screen, draw_credit_line, scouting_report_screen, lineups_screen, boxscore_screen +18
     db 0x08 ; 0d42c3 |.|
 byte_d42c4:                                      ; xref setfont, textwidthn, printstr, printstr2
     db 0x00 ; 0d42c4 |.|
@@ -13228,7 +13228,7 @@ unk_d6012:
     db 0x2f, 0xa7, 0x68, 0xac, 0xa1, 0xb1, 0xdb, 0xb6, 0x14, 0xbc, 0x4e, 0xc1, 0x87, 0xc6, 0xc1, 0xcb ; 0d6052 |/.h.......N.....|
     db 0xfa, 0xd0, 0x34, 0xd6, 0x6d, 0xdb, 0xa7, 0xe0, 0xe0, 0xe5, 0x1a, 0xeb, 0x53, 0xf0, 0x8d, 0xf5 ; 0d6062 |..4.m.......S...|
     db 0xc6, 0xfa ; 0d6072 |..|
-unk_d6074:                                       ; xref vector_octant
+atan_table:                                      ; xref vector_octant
     db 0x00, 0x01, 0x01, 0x02, 0x03, 0x03, 0x04, 0x04, 0x05, 0x06, 0x06, 0x07, 0x08, 0x08, 0x09, 0x0a ; 0d6074 |................|
     db 0x0a, 0x0b, 0x0b, 0x0c, 0x0d, 0x0d, 0x0e, 0x0f, 0x0f, 0x10, 0x10, 0x11, 0x12, 0x12, 0x13, 0x14 ; 0d6084 |................|
     db 0x14, 0x15, 0x16, 0x16, 0x17, 0x17, 0x18, 0x19, 0x19, 0x1a, 0x1b, 0x1b, 0x1c, 0x1c, 0x1d, 0x1e ; 0d6094 |................|
@@ -13246,7 +13246,7 @@ unk_d6074:                                       ; xref vector_octant
     db 0x75, 0x76, 0x76, 0x76, 0x77, 0x77, 0x77, 0x78, 0x78, 0x78, 0x79, 0x79, 0x79, 0x7a, 0x7a, 0x7a ; 0d6154 |uvvvwwwxxxyyyzzz|
     db 0x7b, 0x7b, 0x7b, 0x7c, 0x7c, 0x7c, 0x7d, 0x7d, 0x7d, 0x7e, 0x7e, 0x7e, 0x7f, 0x7f, 0x7f, 0x80 ; 0d6164 |{{{|||}}}~~~....|
     db 0x80, 0x00, 0x00, 0x00 ; 0d6174 |....|
-unk_d6178:                                       ; xref cos_lookup
+sine_table:                                      ; xref cos_lookup
     db 0x00, 0x00, 0x00, 0x00, 0x92, 0x01, 0x00, 0x00, 0x24, 0x03, 0x00, 0x00, 0xb6, 0x04, 0x00, 0x00 ; 0d6178 |........$.......|
     db 0x48, 0x06, 0x00, 0x00, 0xda, 0x07, 0x00, 0x00, 0x6c, 0x09, 0x00, 0x00, 0xfe, 0x0a, 0x00, 0x00 ; 0d6188 |H.......l.......|
     db 0x8f, 0x0c, 0x00, 0x00, 0x21, 0x0e, 0x00, 0x00, 0xb2, 0x0f, 0x00, 0x00, 0x44, 0x11, 0x00, 0x00 ; 0d6198 |....!.......D...|
@@ -13325,7 +13325,7 @@ funcptr_d6600:                                   ; xref __init_8087, spawnve
     dd unk_a65bd                                 ; 0d6600
 funcptr_d6604:                                   ; xref __init_8087, spawnve
     dd unk_a65bd                                 ; 0d6604
-unk_d6608:                                       ; xref pcspk_hw_voice_on, pcspk_hw_voice_pitch
+pcspk_divisors:                                  ; xref pcspk_hw_voice_on, pcspk_hw_voice_pitch
     db 0x00, 0x00, 0x00, 0x00, 0xf1, 0xfd, 0xb0, 0xef, 0x3d, 0xe2, 0x8a, 0xd5, 0x8e, 0xc9, 0x3e, 0xbe ; 0d6608 |........=.....>.|
     db 0x90, 0xb3, 0x7c, 0xa9, 0xf9, 0x9f, 0xff, 0x96, 0x85, 0x8e, 0x85, 0x86, 0xf9, 0x7e, 0xd8, 0x77 ; 0d6618 |..|..........~.w|
     db 0x1e, 0x71, 0xc5, 0x6a, 0xc7, 0x64, 0x1f, 0x5f, 0xc8, 0x59, 0xbe, 0x54, 0xfd, 0x4f, 0x7f, 0x4b ; 0d6628 |.q.j.d._.Y.T.O.K|
@@ -13351,7 +13351,7 @@ unk_d6608:                                       ; xref pcspk_hw_voice_on, pcspk
     db 0xd4, 0x67, 0x00, 0x6e, 0x8a, 0x74, 0x79, 0x7b ; 0d6768 |.g.n.ty{|
 byte_d6770:                                      ; xref pcspk_hw_voice_pitch
     db 0x00, 0x00, 0x00, 0x00 ; 0d6770 |....|
-byte_d6774:                                      ; xref pcspk_hw_voice_on, pcspk_hw_voice_off, pcspk_hw_update
+pcspk_hw_active:                                 ; xref pcspk_hw_voice_on, pcspk_hw_voice_off, pcspk_hw_update
     db 0x00 ; 0d6774 |.|
 byte_d6775:                                      ; xref pcspk_silence
     db 0x00 ; 0d6775 |.|
@@ -13361,7 +13361,7 @@ byte_d6777:                                      ; xref pcspk_silence
     db 0x00 ; 0d6777 |.|
 byte_d6778:                                      ; xref pcspk_silence
     db 0x00, 0x00, 0x00 ; 0d6778 |...|
-unk_d677b:                                       ; xref pcspk_hw_voice_pitch
+pcspk_hw_div:                                    ; xref pcspk_hw_voice_pitch
     db 0x00, 0x00 ; 0d677b |..|
 word_d677d:                                      ; xref pcspk_hw_update
     db 0x00, 0x00 ; 0d677d |..|
@@ -13371,7 +13371,7 @@ word_d6781:                                      ; xref pcspk_hw_update
     db 0x00, 0x00 ; 0d6781 |..|
 word_d6783:                                      ; xref pcspk_hw_update
     db 0x00, 0x00 ; 0d6783 |..|
-byte_d6785:                                      ; xref pcspk_hw_init, pcspk_hw_update
+pcspk_hw_enabled:                                ; xref pcspk_hw_init, pcspk_hw_update
     db 0x00 ; 0d6785 |.|
 byte_d6786:                                      ; xref pcspk_hw_init
     db 0x00 ; 0d6786 |.|
@@ -13391,33 +13391,33 @@ byte_d678f:                                      ; xref pcspk_hw_update
     db 0x00 ; 0d678f |.|
 byte_d6790:                                      ; xref pcspk_hw_update
     db 0x00, 0x00, 0x00, 0x9c, 0x2e, 0x00, 0x00, 0x00, 0x00, 0x00 ; 0d6790 |..........|
-byte_d679a:                                      ; xref pcspk_hw_update
+pcspk_tick_count:                                ; xref pcspk_hw_update
     db 0x00, 0x00 ; 0d679a |..|
-word_d679c:                                      ; xref opl_reset, opl_flush_regs, opl_set_reg, opl_init_port, opl_detect, opl_timer_test +1
+opl_port:                                        ; xref opl_reset, opl_flush_regs, opl_set_reg, opl_init_port, opl_detect, opl_timer_test +1
     db 0x88, 0x03, 0x00, 0x00 ; 0d679c |....|
 dword_d67a0:                                     ; xref opl_write_reg, opl_detect
     db 0x20, 0x00, 0x00, 0x00 ; 0d67a0 | ...|
 dword_d67a4:                                     ; xref opl_write_reg, opl_detect
     db 0x8c, 0x00, 0x00, 0x00 ; 0d67a4 |....|
-unk_d67a8:                                       ; xref opl_voice_regs
+opl_voice_operator:                              ; xref opl_voice_regs
     db 0x00, 0x01, 0x02, 0x08, 0x09, 0x0a, 0x10, 0x11, 0x12, 0x00, 0x00, 0x00 ; 0d67a8 |............|
-unk_d67b4:                                       ; xref opl_voice_regs
+opl_voice_registers:                             ; xref opl_voice_regs
     db 0x23, 0x43, 0x63, 0x83, 0xe3, 0x20, 0x40, 0x60, 0x80, 0xe0, 0xc0, 0xa0, 0xb0, 0x00, 0x00, 0x00 ; 0d67b4 |#Cc.. @`........|
     db 0x15, 0x00, 0x17, 0x00, 0x18, 0x00, 0x19, 0x00, 0x1b, 0x00, 0x1d, 0x00, 0x1e, 0x00, 0x20, 0x00 ; 0d67c4 |.............. .|
     db 0x22, 0x00, 0x24, 0x00, 0x26, 0x00, 0x28, 0x00, 0x2b, 0x00, 0x2d, 0x00, 0x30, 0x00, 0x33, 0x00 ; 0d67d4 |".$.&.(.+.-.0.3.|
     db 0x36, 0x00, 0x39, 0x00, 0x3d, 0x00, 0x40, 0x00, 0x44, 0x00, 0x48, 0x00, 0x4c, 0x00, 0x51, 0x00 ; 0d67e4 |6.9.=.@.D.H.L.Q.|
-unk_d67f4:                                       ; xref adlib_note_fnum
+adlib_fnum_table:                                ; xref adlib_note_fnum
     db 0x56, 0x00, 0x5b, 0x00, 0x60, 0x00, 0x66, 0x00, 0x6c, 0x00, 0x72, 0x00, 0x79, 0x00, 0x80, 0x00 ; 0d67f4 |V.[.`.f.l.r.y...|
     db 0x88, 0x00, 0x90, 0x00, 0x99, 0x00, 0xa2, 0x00, 0xab, 0x00, 0xb6, 0x00, 0xc0, 0x00, 0xcc, 0x00 ; 0d6804 |................|
     db 0xd8, 0x00, 0xe5, 0x00, 0xf2, 0x00, 0x01, 0x01, 0x10, 0x01, 0x20, 0x01, 0x32, 0x01, 0x44, 0x01 ; 0d6814 |.......... .2.D.|
     db 0x57, 0x01, 0x6b, 0x01, 0x81, 0x01, 0x98, 0x01, 0xb0, 0x01, 0xca, 0x01, 0xe5, 0x01, 0x02, 0x02 ; 0d6824 |W.k.............|
     db 0x20, 0x02, 0x41, 0x02, 0x63, 0x02, 0x87, 0x02 ; 0d6834 | .A.c...|
-unk_d683c:                                       ; xref adlib_level_table
+adlib_velocity_levels:                           ; xref adlib_level_table
     db 0x28, 0x28, 0x15, 0x29, 0xfe, 0x29, 0xe4, 0x2a, 0xc7, 0x2b, 0xa7, 0x2c, 0x84, 0x2d, 0x5e, 0x2e ; 0d683c |((.).).*.+.,.-^.|
     db 0x35, 0x2f, 0x0a, 0x30, 0xdb, 0x30, 0xaa, 0x31, 0x77, 0x32, 0x40, 0x33, 0x08, 0x34, 0xcd, 0x34 ; 0d684c |5/.0.0.1w2@3.4.4|
     db 0x90, 0x35, 0x50, 0x36, 0x0e, 0x37, 0xca, 0x37, 0x84, 0x38, 0x3c, 0x39, 0xf1, 0x39, 0xa5, 0x3a ; 0d685c |.5P6.7.7.8<9.9.:|
     db 0x57, 0x3b, 0x07, 0x3c, 0xb5, 0x3c, 0x61, 0x3d, 0x0b, 0x3e, 0xb4, 0x3e, 0x5b, 0x3f, 0x00, 0x40 ; 0d686c |W;.<.<a=.>.>[?.@|
-unk_d687c:                                       ; xref adlib_controller_table
+adlib_volume_table:                              ; xref adlib_controller_table
     db 0x00, 0x00, 0xd0, 0x04, 0x9f, 0x09, 0x6f, 0x0e, 0x3e, 0x13, 0x0e, 0x18, 0xdd, 0x1c, 0xad, 0x21 ; 0d687c |......o.>......!|
     db 0x7c, 0x26, 0x4c, 0x27, 0x17, 0x28, 0xde, 0x28, 0xa1, 0x29, 0x60, 0x2a, 0x1b, 0x2b, 0xd2, 0x2b ; 0d688c ||&L'.(.(.)`*.+.+|
     db 0x86, 0x2c, 0x37, 0x2d, 0xe4, 0x2d, 0x8e, 0x2e, 0x35, 0x2f, 0xd9, 0x2f, 0x7b, 0x30, 0x19, 0x31 ; 0d689c |.,7-.-..5/./{0.1|
@@ -13426,7 +13426,7 @@ unk_d687c:                                       ; xref adlib_controller_table
     db 0x4a, 0x3a, 0xc4, 0x3a, 0x3c, 0x3b, 0xb2, 0x3b, 0x27, 0x3c, 0x9b, 0x3c, 0x0d, 0x3d, 0x7e, 0x3d ; 0d68cc |J:.:<;.;'<.<.=~=|
     db 0xed, 0x3d, 0x5c, 0x3e, 0xc8, 0x3e, 0x34, 0x3f, 0x9f, 0x3f, 0x00, 0x40, 0x00, 0x40, 0x00, 0x40 ; 0d68dc |.=\>.>4?.?.@.@.@|
     db 0x00, 0x40, 0x00, 0x40, 0x00, 0x40, 0x00, 0x40, 0x00, 0x40, 0x00, 0x40, 0x00, 0x40, 0x00, 0x40 ; 0d68ec |.@.@.@.@.@.@.@.@|
-unk_d68fc:                                       ; xref opl_reset, opl_set_reg, opl_get_reg
+opl_shadow:                                      ; xref opl_reset, opl_set_reg, opl_get_reg
     times 32 db 0 ; 0d68fc
 unk_d691c:                                       ; xref opl_flush_regs
     times 128 db 0 ; 0d691c
@@ -13434,7 +13434,7 @@ unk_d699c:                                       ; xref opl_flush_regs
     times 29 db 0 ; 0d699c
 unk_d69b9:                                       ; xref opl_flush_regs
     times 70 db 0 ; 0d69b9
-unk_d69ff:                                       ; xref opl_reset
+opl_written:                                     ; xref opl_reset
     times 32 db 0 ; 0d69ff
 unk_d6a1f:                                       ; xref opl_flush_regs
     times 128 db 0 ; 0d6a1f
@@ -14650,7 +14650,7 @@ control_ring:                                    ; xref control_timer_tick, get_
 ; numshp.PPV "%04d" digits 0-9
 digit_shapes:                                    ; xref draw_player_number, load_player_graphics, load_highlight_assets
     times 40 db 0 ; 0d8c18
-dword_d8c40:                                     ; xref game_loop, blit_sprite, faceoff_wait_loop, draw_penalty_box_overlay, draw_message_box, simulate_game_offscreen +1
+dword_d8c40:                                     ; xref game_loop, blit_sprite, faceoff_wait_loop, draw_penalty_box_overlay, draw_message_box, league_highlight_game +1
     db 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ; 0d8c40 |............|
 ; G D D L C R X
 position_letter_shapes:                          ; xref draw_player_number, load_player_graphics
@@ -14663,15 +14663,15 @@ dword_d8c6c:                                     ; xref game_loop, reset_game_st
 ; trinknd '0000'
 rinkend_shape:                                   ; xref draw_rink_end, load_rink_end_shapes
     db 0x00, 0x00 ; 0d8c70 |..|
-dword_d8c72:                                     ; xref game_loop, faceoff_wait_loop, simulate_game_offscreen, instant_replay
+dword_d8c72:                                     ; xref game_loop, faceoff_wait_loop, league_highlight_game, instant_replay
     db 0x00, 0x00 ; 0d8c72 |..|
-dword_d8c74:                                     ; xref game_loop, init_match, faceoff_wait_loop, sequence_loop, simulate_game_offscreen, instant_replay
+dword_d8c74:                                     ; xref game_loop, init_match, faceoff_wait_loop, sequence_loop, league_highlight_game, instant_replay
     db 0x00, 0x00, 0x00, 0x00 ; 0d8c74 |....|
 dword_d8c78:                                     ; xref run_sim_steps, game_loop, reset_game_state, save_game, savegame_io, write_stats_table +1
     db 0x00, 0x00 ; 0d8c78 |..|
-dword_d8c7a:                                     ; xref game_loop, faceoff_wait_loop, simulate_game_offscreen, instant_replay
+dword_d8c7a:                                     ; xref game_loop, faceoff_wait_loop, league_highlight_game, instant_replay
     db 0x00, 0x00 ; 0d8c7a |..|
-dword_d8c7c:                                     ; xref game_loop, init_match, faceoff_wait_loop, sequence_loop, simulate_game_offscreen, instant_replay
+dword_d8c7c:                                     ; xref game_loop, init_match, faceoff_wait_loop, sequence_loop, league_highlight_game, instant_replay
     db 0x00, 0x00, 0x00, 0x00 ; 0d8c7c |....|
 ; numshp.PPV: digits and position letters drawn under the players
 numshp_bank:                                     ; xref load_player_graphics, load_highlight_assets, free_match_resources, highlights_play
@@ -14735,7 +14735,7 @@ sprite_banks:                                    ; xref fill_sprite_frames, load
 ; 1134 shape pointers indexed by Entity.frame
 sprite_frames:                                   ; xref draw_sprite_world, fill_sprite_frames
     resb 4536                                    ; 0d9a38 (bss)
-unk_dabf0:                                       ; xref menu_edit_lines_away, load_team_databases, team_select_screen, draw_team_logos, boxscore_screen, season_record_result +14
+unk_dabf0:                                       ; xref menu_edit_lines_away, load_team_databases, scouting_report_screen, lineups_screen, boxscore_screen, season_record_result +14
     resb 36                                      ; 0dabf0 (bss)
 byte_dac14:                                      ; xref set_goalie_menu_labels
     resb 1                                       ; 0dac14 (bss)
@@ -14779,7 +14779,7 @@ word_db096:                                      ; xref begin_game_session, seas
 unk_db218:                                       ; xref team_state_clear, savegame_io
     resb 400                                     ; 0db218 (bss)
 ; 2 teams x 28 players x 0x27 bytes: +5 jersey number, +7 first name, +0x17 last name
-rosters:                                         ; xref load_team_databases, db_load_team_roster, set_goalie_menu_labels, draw_team_logos, boxscore_screen, compute_three_stars +23
+rosters:                                         ; xref load_team_databases, db_load_team_roster, set_goalie_menu_labels, lineups_screen, boxscore_screen, compute_three_stars +23
     resb 5                                       ; 0db3a8 (bss)
 unk_db3ad:                                       ; xref db_load_team_roster, ai_ref_three_stars, ai_ref_pickup_puck, show_penalty, record_penalty, edit_lines_screen2 +7
     resb 1                                       ; 0db3ad (bss)
@@ -14790,11 +14790,11 @@ unk_db7ec:                                       ; xref load_team_databases, set
 unk_db7f1:                                       ; xref replay_save_highlight, highlights_play
     resb 1087                                    ; 0db7f1 (bss)
 ; 0xba byte team records
-team_names:                                      ; xref load_team_databases, team_select_screen2, ai_ref_three_stars, team_state_clear, savegame_io, show_penalty +6
+team_names:                                      ; xref load_team_databases, game_statistics_screen, ai_ref_three_stars, team_state_clear, savegame_io, show_penalty +6
     resb 5                                       ; 0dbc30 (bss)
 unk_dbc35:                                       ; xref replay_save_dialog
     resb 71                                      ; 0dbc35 (bss)
-unk_dbc7c:                                       ; xref db_load_team_roster, draw_team_logos, boxscore_screen, edit_lines_keys
+unk_dbc7c:                                       ; xref db_load_team_roster, lineups_screen, boxscore_screen, edit_lines_keys
     resb 100                                     ; 0dbc7c (bss)
 unk_dbce0:                                       ; xref db_load_team_roster, edit_lines_keys
     resb 12                                      ; 0dbce0 (bss)
@@ -14808,7 +14808,7 @@ unk_dbf1d:                                       ; xref replay_save_dialog
     resb 183                                     ; 0dbf1d (bss)
 unk_dbfd4:                                       ; xref load_team_databases
     resb 556                                     ; 0dbfd4 (bss)
-unk_dc200:                                       ; xref menu_edit_lines_home, load_team_databases, team_select_screen, draw_team_logos, boxscore_screen, season_record_result +14
+unk_dc200:                                       ; xref menu_edit_lines_home, load_team_databases, scouting_report_screen, lineups_screen, boxscore_screen, season_record_result +14
     resb 36                                      ; 0dc200 (bss)
 byte_dc224:                                      ; xref set_goalie_menu_labels
     resb 1                                       ; 0dc224 (bss)
@@ -14818,7 +14818,7 @@ unk_dc228:                                       ; xref load_team_databases
     resb 8                                       ; 0dc228 (bss)
 font_current_default:                            ; xref main, leave_match_video, game_loop, pause_menu, menu_go_to_replay, free_match_resources +3
     resb 4                                       ; 0dc230 (bss)
-dword_dc234:                                     ; xref pause_menu, team_select_screen, boxscore_screen, exhibition_mode, league_calendar_flow, playoff_tree_screen
+league_game_number:                              ; xref pause_menu, scouting_report_screen, boxscore_screen, exhibition_mode, league_calendar_flow, playoff_tree_screen
     resb 4                                       ; 0dc234 (bss)
 ; mouse pointer shape bank
 pointer_shapes:                                  ; xref main, credits_screen, pause_menu, run_menu, menu_page_a, menu_page_b +45
@@ -14850,7 +14850,7 @@ byte_dc268:                                      ; xref begin_game_session, db_l
 ; 'lin1'..'lin4' 'PP1' 'PP2' 'PK1' 'PK2' labels
 shapes_lines:                                    ; xref draw_line_indicator, show_scoreboard, load_scoreboard_shapes
     resb 32                                      ; 0dc26c (bss)
-dword_dc28c:                                     ; xref game_loop, draw_clock, savegame_io, simulate_game_offscreen
+dword_dc28c:                                     ; xref game_loop, draw_clock, savegame_io, league_highlight_game
     resb 4                                       ; 0dc28c (bss)
 ; penalty clock digits 0..9
 small_digit_shapes:                              ; xref draw_penalty_clocks, load_scoreboard_shapes
@@ -14887,7 +14887,7 @@ dword_dc33c:                                     ; xref ea_sports_intro
     resb 4                                       ; 0dc33c (bss)
 unk_dc340:                                       ; xref stats_source_9394_season, stats_source_9394_playoffs, stats_source_league_season
     resb 768                                     ; 0dc340 (bss)
-unk_dc640:                                       ; xref menu_page_a, exh_hub_standings, hub_standings, cal_hub_standings
+standings_order:                                 ; xref menu_page_a, exh_hub_standings, hub_standings, cal_hub_standings
     resb 104                                     ; 0dc640 (bss)
 dword_dc6a8:                                     ; xref team_stats_standings, team_stats_scoring, team_stats_defense, team_stats_penalty_killing, team_stats_power_play, team_stats_penalties +11
     resb 4                                       ; 0dc6a8 (bss)
@@ -14899,13 +14899,13 @@ dword_dc6b4:                                     ; xref stats_source_9394_season
     resb 4                                       ; 0dc6b4 (bss)
 dword_dc6b8:                                     ; xref menu_page_b, stats_row_at, player_stats_screen
     resb 4                                       ; 0dc6b8 (bss)
-unk_dc6bc:                                       ; xref menu_page_b, player_stats_screen, roster_table
+roster_skater_order:                             ; xref menu_page_b, player_stats_screen, roster_table
     resb 100                                     ; 0dc6bc (bss)
-unk_dc720:                                       ; xref menu_page_b, player_stats_screen, roster_table
+roster_goalie_order:                             ; xref menu_page_b, player_stats_screen, roster_table
     resb 20                                      ; 0dc720 (bss)
 dword_dc734:                                     ; xref exh_hub_stats, hub_stats, cal_hub_stats, player_stats_screen, roster_stats_table
     resb 4                                       ; 0dc734 (bss)
-dword_dc738:                                     ; xref stats_source_9394_season, stats_source_9394_playoffs, stats_source_league_season, team_stats_standings, team_stats_scoring, team_stats_defense +28
+stats_hub_active:                                ; xref stats_source_9394_season, stats_source_9394_playoffs, stats_source_league_season, team_stats_standings, team_stats_scoring, team_stats_defense +28
     resb 4                                       ; 0dc738 (bss)
 unk_dc73c:                                       ; xref menu_page_b, player_stats_screen, roster_table
     resb 20                                      ; 0dc73c (bss)
@@ -14919,7 +14919,7 @@ unk_dc7bc:                                       ; xref playoff_round_screen, pl
     resb 116                                     ; 0dc7bc (bss)
 dword_dc830:                                     ; xref playoff_series_status, playoff_round_screen, playoff_results_screen, season_standings_db, playoff_tree_screen
     resb 4                                       ; 0dc830 (bss)
-unk_dc834:                                       ; xref menu_page_b, exh_hub_stats, hub_stats, cal_hub_stats, player_card_screen, goalie_card_screen
+card_player_record:                              ; xref menu_page_b, exh_hub_stats, hub_stats, cal_hub_stats, player_card_screen, goalie_card_screen
     resb 2                                       ; 0dc834 (bss)
 byte_dc836:                                      ; xref menu_show_player_stats, menu_page_b, exh_hub_stats, hub_stats, cal_hub_stats
     resb 1                                       ; 0dc836 (bss)
@@ -14931,7 +14931,7 @@ dword_dc85c:                                     ; xref player_card_screen, goal
     resb 4                                       ; 0dc85c (bss)
 dword_dc860:                                     ; xref player_card_screen, goalie_card_screen
     resb 8                                       ; 0dc860 (bss)
-unk_dc868:                                       ; xref simulate_pending_games, end_match_from_period
+league_status_shown:                             ; xref simulate_pending_games, end_match_from_period
     resb 32                                      ; 0dc868 (bss)
 dword_dc888:                                     ; xref pause_menu, broadcast_booth_screen
     resb 4                                       ; 0dc888 (bss)
@@ -15005,7 +15005,7 @@ dword_dd104:                                     ; xref exh_hub_sports_central, 
     resb 4                                       ; 0dd104 (bss)
 dword_dd108:                                     ; xref cmp_team_standings, cmp_team_scoring, cmp_team_defense, cmp_team_power_play, cmp_team_penalty_killing, cmp_team_penalties +1
     resb 4                                       ; 0dd108 (bss)
-dword_dd10c:                                     ; xref menu_page_a, exh_hub_standings, exh_hub_stats, hub_standings, hub_stats, cal_hub_standings +4
+standings_rows:                                  ; xref menu_page_a, exh_hub_standings, exh_hub_stats, hub_standings, hub_stats, cal_hub_standings +4
     resb 4                                       ; 0dd10c (bss)
 dword_dd110:                                     ; xref cmp_leaders_points, exh_hub_stats, hub_stats, cal_hub_stats, player_stats_screen, cmp_leaders_goals +9
     resb 4                                       ; 0dd110 (bss)
@@ -15081,7 +15081,7 @@ dword_dd668:                                     ; xref league_type_menu, league
     resb 1                                       ; 0dd668 (bss)
 byte_dd669:                                      ; xref league_dialog_box, league_name_entry_draw, league_name_entry, database_dialog, database_select_draw, database_select_screen
     resb 3                                       ; 0dd669 (bss)
-dword_dd66c:                                     ; xref boxscore_screen
+lineup_logos:                                    ; xref boxscore_screen
     resb 4                                       ; 0dd66c (bss)
 dword_dd670:                                     ; xref boxscore_screen
     resb 8                                       ; 0dd670 (bss)
@@ -15105,15 +15105,15 @@ dword_dd6a4:                                     ; xref text_entry_draw_cursor, 
     resb 2                                       ; 0dd6a4 (bss)
 dword_dd6a6:                                     ; xref load_rink, load_rink_tiles
     resb 2                                       ; 0dd6a6 (bss)
-dword_dd6a8:                                     ; xref game_loop, load_rink, faceoff_wait_loop, simulate_game_offscreen, instant_replay
+dword_dd6a8:                                     ; xref game_loop, load_rink, faceoff_wait_loop, league_highlight_game, instant_replay
     resb 2                                       ; 0dd6a8 (bss)
 dword_dd6aa:                                     ; xref game_loop, pause_menu, load_rink, draw_rink, faceoff_wait_loop, draw_penalty_box_overlay +4
     resb 2                                       ; 0dd6aa (bss)
 dword_dd6ac:                                     ; xref pause_menu, load_rink, draw_rink, draw_penalty_box_overlay, draw_message_box, vgax_flip_page
     resb 2                                       ; 0dd6ac (bss)
-dword_dd6ae:                                     ; xref game_loop, load_rink, faceoff_wait_loop, simulate_game_offscreen, instant_replay
+dword_dd6ae:                                     ; xref game_loop, load_rink, faceoff_wait_loop, league_highlight_game, instant_replay
     resb 2                                       ; 0dd6ae (bss)
-dword_dd6b0:                                     ; xref game_loop, load_rink, draw_rink, faceoff_wait_loop, simulate_game_offscreen, instant_replay
+dword_dd6b0:                                     ; xref game_loop, load_rink, draw_rink, faceoff_wait_loop, league_highlight_game, instant_replay
     resb 2                                       ; 0dd6b0 (bss)
 word_dd6b2:                                      ; xref load_rink, draw_rink, vgax_latch_copy_wrap, vgax_latch_copy_playfield
     resb 90                                      ; 0dd6b2 (bss)
@@ -15131,11 +15131,11 @@ byte_dd750:                                      ; xref load_team_databases, box
     resb 32                                      ; 0dd750 (bss)
 dword_dd770:                                     ; xref choose_db_or_org, new_league_dialog, stanley_cup_tree_screen
     resb 4                                       ; 0dd770 (bss)
-unk_dd774:                                       ; xref simulate_pending_games, league_select_screen, boxscore_screen, league_scores_init, league_scores_advance, broadcast_booth_screen
+calendar_games:                                  ; xref simulate_pending_games, league_select_screen, boxscore_screen, league_scores_init, league_scores_advance, broadcast_booth_screen
     resb 1                                       ; 0dd774 (bss)
 unk_dd775:                                       ; xref simulate_pending_games, boxscore_screen, league_scores_init
     resb 11                                      ; 0dd775 (bss)
-dword_dd780:                                     ; xref calendar_next_month, calendar_prev_month, calendar_return, calendar_screen
+calendar_game:                                   ; xref calendar_next_month, calendar_prev_month, calendar_return, calendar_screen
     resb 4                                       ; 0dd780 (bss)
 dword_dd784:                                     ; xref player_id_write, player_id_read
     resb 4                                       ; 0dd784 (bss)
@@ -15149,7 +15149,7 @@ dword_dd798:                                     ; xref dialog_done, dialog_canc
     resb 4                                       ; 0dd798 (bss)
 dword_dd79c:                                     ; xref line_editor_done, line_editor_cancel, line_editor_screen
     resb 4                                       ; 0dd79c (bss)
-dword_dd7a0:                                     ; xref calendar_next_month, calendar_prev_month, calendar_screen
+calendar_month:                                  ; xref calendar_next_month, calendar_prev_month, calendar_screen
     resb 4                                       ; 0dd7a0 (bss)
 dword_dd7a4:                                     ; xref reset_dialog_choice, player_id_write, player_id_read
     resb 4                                       ; 0dd7a4 (bss)
@@ -15193,7 +15193,7 @@ dword_ddd30:                                     ; xref calendar_draw_games, cal
     resb 4                                       ; 0ddd30 (bss)
 dword_ddd34:                                     ; xref league_calendar_flow, league_save_db, league_db_read_header
     resb 4                                       ; 0ddd34 (bss)
-dword_ddd38:                                     ; xref league_calendar_flow, league_save_db, league_db_read_header
+league_team:                                     ; xref league_calendar_flow, league_save_db, league_db_read_header
     resb 4                                       ; 0ddd38 (bss)
 dword_ddd3c:                                     ; xref league_calendar_flow, league_save_db, league_db_read_header
     resb 4                                       ; 0ddd3c (bss)
@@ -15271,7 +15271,7 @@ unk_deb7c:                                       ; xref db_load_team_roster, sho
     resb 4                                       ; 0deb7c (bss)
 unk_deb80:                                       ; xref db_load_team_roster, goal_milestone_check
     resb 788                                     ; 0deb80 (bss)
-unk_dee94:                                       ; xref reset_game_state, save_game, savegame_io, start_crowd_figure, update_effects, draw_nets_and_effects +1
+crowd_figures:                                   ; xref reset_game_state, save_game, savegame_io, start_crowd_figure, update_effects, draw_nets_and_effects +1
     resb 2                                       ; 0dee94 (bss)
 unk_dee96:                                       ; xref save_game
     resb 1                                       ; 0dee96 (bss)
@@ -15293,52 +15293,52 @@ dword_df010:                                     ; xref handle_hotkey, game_loop
     resb 4                                       ; 0df010 (bss)
 palette_save:                                    ; xref leave_match_video, handle_hotkey, game_loop, play_match_from_start, end_match_from_loop, reload_match_graphics +17
     resb 768                                     ; 0df014 (bss)
-unk_df314:                                       ; xref game_loop, play_game, demo_game, faceoff_wait_loop, savegame_io, simulate_game_offscreen +2
+unk_df314:                                       ; xref game_loop, play_game, demo_game, faceoff_wait_loop, savegame_io, league_highlight_game +2
     resb 766                                     ; 0df314 (bss)
-dword_df612:                                     ; xref team_select_screen2, write_stats_table
+dword_df612:                                     ; xref game_statistics_screen, write_stats_table
     resb 2                                       ; 0df612 (bss)
 ; team record, 0x100 bytes
-team_home:                                       ; xref team_select_screen2, init_match, start_line_change_ui, ai_ref_call_penalty, reset_bench_slots, dress_line_if_start +35
+team_home:                                       ; xref game_statistics_screen, init_match, start_line_change_ui, ai_ref_call_penalty, reset_bench_slots, dress_line_if_start +35
     resb 2                                       ; 0df614 (bss)
-dword_df616:                                     ; xref team_select_screen2, season_record_result, write_stats_table
+dword_df616:                                     ; xref game_statistics_screen, season_record_result, write_stats_table
     resb 2                                       ; 0df616 (bss)
-unk_df618:                                       ; xref team_select_screen2, season_record_result
+unk_df618:                                       ; xref game_statistics_screen, season_record_result
     resb 2                                       ; 0df618 (bss)
-unk_df61a:                                       ; xref team_select_screen2
+unk_df61a:                                       ; xref game_statistics_screen
     resb 2                                       ; 0df61a (bss)
-dword_df61c:                                     ; xref team_select_screen2, write_stats_table
+dword_df61c:                                     ; xref game_statistics_screen, write_stats_table
     resb 2                                       ; 0df61c (bss)
-dword_df61e:                                     ; xref team_select_screen2, write_stats_table
+dword_df61e:                                     ; xref game_statistics_screen, write_stats_table
     resb 2                                       ; 0df61e (bss)
-dword_df620:                                     ; xref team_select_screen2, season_record_result, write_stats_table
+dword_df620:                                     ; xref game_statistics_screen, season_record_result, write_stats_table
     resb 2                                       ; 0df620 (bss)
-dword_df622:                                     ; xref show_scoreboard, team_select_screen2, season_record_result, compare_player_stats, compute_three_stars, setup_faceoff +3
+dword_df622:                                     ; xref show_scoreboard, game_statistics_screen, season_record_result, compare_player_stats, compute_three_stars, setup_faceoff +3
     resb 2                                       ; 0df622 (bss)
-word_df624:                                      ; xref pause_menu, team_select_screen2, season_record_result, league_calendar_flow, compute_three_stars, ai_three_stars +12
+word_df624:                                      ; xref pause_menu, game_statistics_screen, season_record_result, league_calendar_flow, compute_three_stars, ai_three_stars +12
     resb 2                                       ; 0df624 (bss)
-unk_df626:                                       ; xref team_select_screen2
+unk_df626:                                       ; xref game_statistics_screen
     resb 4                                       ; 0df626 (bss)
-unk_df62a:                                       ; xref team_select_screen2
+unk_df62a:                                       ; xref game_statistics_screen
     resb 12                                      ; 0df62a (bss)
-unk_df636:                                       ; xref team_select_screen2
+unk_df636:                                       ; xref game_statistics_screen
     resb 2                                       ; 0df636 (bss)
-dword_df638:                                     ; xref team_select_screen2, write_stats_table
+dword_df638:                                     ; xref game_statistics_screen, write_stats_table
     resb 2                                       ; 0df638 (bss)
-dword_df63a:                                     ; xref team_select_screen2, write_stats_table
+dword_df63a:                                     ; xref game_statistics_screen, write_stats_table
     resb 2                                       ; 0df63a (bss)
 dword_df63c:                                     ; xref show_scoreboard, dump_stats_log, controls_reset_unassigned
     resb 2                                       ; 0df63c (bss)
-word_df63e:                                      ; xref ai_puck_faceoff, period_strategy_init, simulate_game_offscreen, controls_reset_unassigned
+word_df63e:                                      ; xref ai_puck_faceoff, period_strategy_init, league_highlight_game, controls_reset_unassigned
     resb 2                                       ; 0df63e (bss)
 word_df640:                                      ; xref ai_puck_faceoff, period_strategy_init
     resb 2                                       ; 0df640 (bss)
 word_df642:                                      ; xref compute_three_stars, team_state_clear
     resb 2                                       ; 0df642 (bss)
-word_df644:                                      ; xref goal_milestone_check, simulate_game_offscreen
+word_df644:                                      ; xref goal_milestone_check, league_highlight_game
     resb 2                                       ; 0df644 (bss)
-word_df646:                                      ; xref goal_milestone_check, simulate_game_offscreen
+word_df646:                                      ; xref goal_milestone_check, league_highlight_game
     resb 2                                       ; 0df646 (bss)
-dword_df648:                                     ; xref ref_check_announcements, simulate_game_offscreen, controls_reset_unassigned
+dword_df648:                                     ; xref ref_check_announcements, league_highlight_game, controls_reset_unassigned
     resb 2                                       ; 0df648 (bss)
 dword_df64a:                                     ; xref setup_demo_faceoff, set_goalie_menu_labels, update_carrier, penalty_time_left, update_power_play, begin_penalty_shot +2
     resb 2                                       ; 0df64a (bss)
@@ -15402,7 +15402,7 @@ dword_df71e:                                     ; xref write_stats_table
     resb 2                                       ; 0df71e (bss)
 dword_df720:                                     ; xref write_stats_table
     resb 2                                       ; 0df720 (bss)
-dword_df722:                                     ; xref show_scoreboard, season_record_result, compute_three_stars, setup_faceoff, write_stats_table, simulate_game_offscreen
+dword_df722:                                     ; xref show_scoreboard, season_record_result, compute_three_stars, setup_faceoff, write_stats_table, league_highlight_game
     resb 2                                       ; 0df722 (bss)
 word_df724:                                      ; xref pause_menu, season_record_result, league_calendar_flow, compute_three_stars, ai_three_stars, ai_ref_get_new_puck +11
     resb 20                                      ; 0df724 (bss)
@@ -15412,21 +15412,21 @@ dword_df73a:                                     ; xref write_stats_table
     resb 2                                       ; 0df73a (bss)
 dword_df73c:                                     ; xref show_scoreboard, dump_stats_log
     resb 2                                       ; 0df73c (bss)
-word_df73e:                                      ; xref ai_puck_faceoff, period_strategy_init, simulate_game_offscreen
+word_df73e:                                      ; xref ai_puck_faceoff, period_strategy_init, league_highlight_game
     resb 2                                       ; 0df73e (bss)
 word_df740:                                      ; xref ai_puck_faceoff, period_strategy_init
     resb 2                                       ; 0df740 (bss)
 word_df742:                                      ; xref team_state_clear
     resb 2                                       ; 0df742 (bss)
-word_df744:                                      ; xref simulate_game_offscreen
+word_df744:                                      ; xref league_highlight_game
     resb 2                                       ; 0df744 (bss)
-word_df746:                                      ; xref simulate_game_offscreen
+word_df746:                                      ; xref league_highlight_game
     resb 2                                       ; 0df746 (bss)
-dword_df748:                                     ; xref ref_check_announcements, simulate_game_offscreen
+dword_df748:                                     ; xref ref_check_announcements, league_highlight_game
     resb 2                                       ; 0df748 (bss)
 dword_df74a:                                     ; xref setup_demo_faceoff, set_goalie_menu_labels, update_carrier, penalty_time_left, update_power_play, begin_penalty_shot +2
     resb 2                                       ; 0df74a (bss)
-word_df74c:                                      ; xref set_goalie_menu_labels, season_record_result, score_goal, team_state_clear, simulate_game_offscreen
+word_df74c:                                      ; xref set_goalie_menu_labels, season_record_result, score_goal, team_state_clear, league_highlight_game
     resb 6                                       ; 0df74c (bss)
 dword_df752:                                     ; xref puck_update, sim_update_players
     resb 4                                       ; 0df752 (bss)
@@ -15471,11 +15471,11 @@ goal_prediction:                                 ; xref try_block_shot, two_line
     resb 2                                       ; 0df812 (bss)
 unk_df814:                                       ; xref ai_goalie, predict_puck_goal_line, save_game, savegame_io
     resb 2                                       ; 0df814 (bss)
-word_df816:                                      ; xref puck_update, simulate_game_offscreen
+word_df816:                                      ; xref puck_update, league_highlight_game
     resb 1                                       ; 0df816 (bss)
 byte_df817:                                      ; xref ai_puck_faceoff2, score_goal
     resb 3                                       ; 0df817 (bss)
-word_df81a:                                      ; xref puck_update, simulate_game_offscreen
+word_df81a:                                      ; xref puck_update, league_highlight_game
     resb 1                                       ; 0df81a (bss)
 byte_df81b:                                      ; xref ai_puck_faceoff2, score_goal
     resb 1                                       ; 0df81b (bss)
@@ -15519,23 +15519,23 @@ word_dfe2a:                                      ; xref ai_puck_faceoff2
 ; entities[14]
 puck:                                            ; xref init_match, three_stars_sequence, ai_celebrate_goal, ai_ref_get_new_puck, ai_ref_pickup_puck, score_goal +9
     resb 2                                       ; 0dff1c (bss)
-word_dff1e:                                      ; xref init_match, three_stars_sequence, simulate_game_offscreen
+word_dff1e:                                      ; xref init_match, three_stars_sequence, league_highlight_game
     resb 2                                       ; 0dff1e (bss)
 dword_dff20:                                     ; xref draw_sprites
     resb 2                                       ; 0dff20 (bss)
-word_dff22:                                      ; xref init_match, three_stars_sequence, score_goal, simulate_game_offscreen
+word_dff22:                                      ; xref init_match, three_stars_sequence, score_goal, league_highlight_game
     resb 2                                       ; 0dff22 (bss)
 dword_dff24:                                     ; xref draw_sprites
     resb 2                                       ; 0dff24 (bss)
-word_dff26:                                      ; xref draw_sprites, simulate_game_offscreen
+word_dff26:                                      ; xref draw_sprites, league_highlight_game
     resb 2                                       ; 0dff26 (bss)
-word_dff28:                                      ; xref init_match, three_stars_sequence, simulate_game_offscreen
+word_dff28:                                      ; xref init_match, three_stars_sequence, league_highlight_game
     resb 2                                       ; 0dff28 (bss)
-word_dff2a:                                      ; xref init_match, three_stars_sequence, simulate_game_offscreen
+word_dff2a:                                      ; xref init_match, three_stars_sequence, league_highlight_game
     resb 2                                       ; 0dff2a (bss)
 dword_dff2c:                                     ; xref draw_sprites
     resb 2                                       ; 0dff2c (bss)
-word_dff2e:                                      ; xref ai_puck_faceoff2, sim_update_players, simulate_game_offscreen
+word_dff2e:                                      ; xref ai_puck_faceoff2, sim_update_players, league_highlight_game
     resb 8                                       ; 0dff2e (bss)
 dword_dff36:                                     ; xref ai_celebrate_goal, control_player, setup_faceoff, penalty_box_update, controls_apply_user_change
     resb 4                                       ; 0dff36 (bss)
@@ -15544,7 +15544,7 @@ unk_dff3a:                                       ; xref control_player, controls
 ; steps until the drop
 faceoff_timer:                                   ; xref ai_faceoff, faceoff_control, stoppage_tick, controls_apply_user_change
     resb 2                                       ; 0dff42 (bss)
-word_dff44:                                      ; xref init_match, three_stars_sequence, simulate_game_offscreen
+word_dff44:                                      ; xref init_match, three_stars_sequence, league_highlight_game
     resb 22                                      ; 0dff44 (bss)
 word_dff5a:                                      ; xref pass_to_entity, pass_lead
     resb 4                                       ; 0dff5a (bss)
@@ -15552,7 +15552,7 @@ unk_dff5e:
     resb 3                                       ; 0dff5e (bss)
 byte_dff61:                                      ; xref ai_skate_towards
     resb 15                                      ; 0dff61 (bss)
-word_dff70:                                      ; xref ai_puck_faceoff2, simulate_game_offscreen
+word_dff70:                                      ; xref ai_puck_faceoff2, league_highlight_game
     resb 44                                      ; 0dff70 (bss)
 dword_dff9c:                                     ; xref ai_get_cup, draw_sprites, setup_faceoff, draw_nets_and_effects
     resb 2                                       ; 0dff9c (bss)
@@ -15581,13 +15581,13 @@ word_dfff0:                                      ; xref ai_puck_faceoff2
 ; entities[16]
 referee:                                         ; xref init_match, three_stars_sequence, faceoff_resolve, ai_puck_faceoff2, score_goal, ref_announce +3
     resb 2                                       ; 0e001c (bss)
-word_e001e:                                      ; xref init_match, three_stars_sequence, faceoff_resolve, ai_puck_faceoff2, update_camera, simulate_game_offscreen
+word_e001e:                                      ; xref init_match, three_stars_sequence, faceoff_resolve, ai_puck_faceoff2, update_camera, league_highlight_game
     resb 4                                       ; 0e001e (bss)
-word_e0022:                                      ; xref init_match, three_stars_sequence, update_camera, simulate_game_offscreen
+word_e0022:                                      ; xref init_match, three_stars_sequence, update_camera, league_highlight_game
     resb 6                                       ; 0e0022 (bss)
-word_e0028:                                      ; xref init_match, three_stars_sequence, faceoff_resolve, simulate_game_offscreen
+word_e0028:                                      ; xref init_match, three_stars_sequence, faceoff_resolve, league_highlight_game
     resb 2                                       ; 0e0028 (bss)
-word_e002a:                                      ; xref init_match, three_stars_sequence, simulate_game_offscreen
+word_e002a:                                      ; xref init_match, three_stars_sequence, league_highlight_game
     resb 4                                       ; 0e002a (bss)
 word_e002e:                                      ; xref init_match, three_stars_sequence
     resb 8                                       ; 0e002e (bss)
@@ -15603,7 +15603,7 @@ word_e0048:                                      ; xref init_match, three_stars_
     resb 2                                       ; 0e0048 (bss)
 word_e004a:                                      ; xref init_match
     resb 8                                       ; 0e004a (bss)
-word_e0052:                                      ; xref init_match, ai_puck_faceoff2, entities_init, simulate_game_offscreen
+word_e0052:                                      ; xref init_match, ai_puck_faceoff2, entities_init, league_highlight_game
     resb 32                                      ; 0e0052 (bss)
 byte_e0072:                                      ; xref entities_init
     resb 1                                       ; 0e0072 (bss)
@@ -15636,7 +15636,7 @@ byte_e0250:                                      ; xref reset_game_state, init_m
     resb 60                                      ; 0e0250 (bss)
 byte_e028c:                                      ; xref reset_game_state, init_match, three_stars_sequence, ai_ref_three_stars, ai_puck_faceoff2, show_penalty +2
     resb 60                                      ; 0e028c (bss)
-byte_e02c8:                                      ; xref reset_game_state, init_match, three_stars_sequence, ai_ref_three_stars, ai_puck_faceoff2, show_penalty +2
+panel_title:                                     ; xref reset_game_state, init_match, three_stars_sequence, ai_ref_three_stars, ai_puck_faceoff2, show_penalty +2
     resb 60                                      ; 0e02c8 (bss)
 word_e0304:                                      ; xref handle_hotkey, game_loop, reset_game_state, three_stars_sequence, control_player, period_init +2
     resb 2                                       ; 0e0304 (bss)
@@ -15652,9 +15652,9 @@ word_e0380:                                      ; xref handle_hotkey, reset_gam
     resb 2                                       ; 0e0380 (bss)
 word_e0382:                                      ; xref handle_hotkey, reset_game_state, save_game, savegame_io
     resb 2                                       ; 0e0382 (bss)
-unk_e0384:                                       ; xref player_available, assign_line_positions, apply_line_change, save_game, savegame_io
+lineup_req_roster:                               ; xref player_available, assign_line_positions, apply_line_change, save_game, savegame_io
     resb 6                                       ; 0e0384 (bss)
-unk_e038a:                                       ; xref assign_line_positions, apply_line_change
+lineup_req_slot:                                 ; xref assign_line_positions, apply_line_change
     resb 4                                       ; 0e038a (bss)
 ; readiness of the home centre (1..6) set by ai_faceoff
 faceoff_ready_home:                              ; xref faceoff_resolve
@@ -15679,35 +15679,35 @@ replay_write_ptr:                                ; xref replay_buffer_empty, per
     resb 4                                       ; 0e039c (bss)
 dword_e03a0:                                     ; xref collide_pair, sim_update_players, game_state_clear
     resb 4                                       ; 0e03a0 (bss)
-dword_e03a4:                                     ; xref replay_seek_frames, instant_replay
+controls_read:                                   ; xref replay_seek_frames, instant_replay
     resb 4                                       ; 0e03a4 (bss)
 dword_e03a8:                                     ; xref game_state_clear
     resb 2                                       ; 0e03a8 (bss)
 dword_e03aa:                                     ; xref ai_center_defense, ai_goalie, carrier_scan_opponents, puck_player_interaction, puck_hits_player, bounce_off_boards +7
     resb 2                                       ; 0e03aa (bss)
-dword_e03ac:                                     ; xref setup_demo_faceoff, ai_ref_anthem, ai_defense_defense, ai_wing_defense, ai_center_defense, ai_penalty_box +33
+scratch_e03ac:                                   ; xref setup_demo_faceoff, ai_ref_anthem, ai_defense_defense, ai_wing_defense, ai_center_defense, ai_penalty_box +33
     resb 2                                       ; 0e03ac (bss)
-dword_e03ae:                                     ; xref ai_wing_offense, ai_bench, ai_goalie, carrier_scan_opponents, collide_net, bounce_off_boards +2
+scratch_e03ae:                                   ; xref ai_wing_offense, ai_bench, ai_goalie, carrier_scan_opponents, collide_net, bounce_off_boards +2
     resb 2                                       ; 0e03ae (bss)
 dword_e03b0:                                     ; xref ai_defense_defense, ai_wing_offense, ai_bench, goalie_clamp_target, ai_goalie, carrier_scan_opponents +14
     resb 2                                       ; 0e03b0 (bss)
-dword_e03b2:                                     ; xref setup_demo_faceoff, ai_game_misconduct, ai_penalty_box, ai_goalie, carrier_scan_opponents, ai_puck_faceoff2 +5
+scratch_e03b2:                                   ; xref setup_demo_faceoff, ai_game_misconduct, ai_penalty_box, ai_goalie, carrier_scan_opponents, ai_puck_faceoff2 +5
     resb 2                                       ; 0e03b2 (bss)
 dword_e03b4:                                     ; xref setup_demo_faceoff, ai_game_misconduct, ai_penalty_box, ai_goalie, carrier_scan_opponents, ai_nearest_to_puck +12
     resb 2                                       ; 0e03b4 (bss)
-dword_e03b6:                                     ; xref collide_net, collide_pair
+scratch_e03b6:                                   ; xref collide_net, collide_pair
     resb 2                                       ; 0e03b6 (bss)
 dword_e03b8:                                     ; xref ai_offense_decision, collide_boards, collide_net, collide_pair, game_state_clear
     resb 1                                       ; 0e03b8 (bss)
 dword_e03b9:                                     ; xref puck_hits_player, replay_seek_frames
     resb 1                                       ; 0e03b9 (bss)
-dword_e03ba:                                     ; xref three_stars_skate_to_spot, ai_defense_offense, ai_defense_defense, ai_wing_defense, ai_wing_offense, ai_center_offense +40
+scratch_a:                                       ; xref three_stars_skate_to_spot, ai_defense_offense, ai_defense_defense, ai_wing_defense, ai_wing_offense, ai_center_offense +40
     resb 2                                       ; 0e03ba (bss)
 dword_e03bc:                                     ; xref setup_demo_faceoff, ai_ref_anthem, three_stars_skate_to_spot, ai_three_stars, ai_get_cup, ai_defense_offense +87
     resb 1                                       ; 0e03bc (bss)
 dword_e03bd:                                     ; xref puck_hits_player, replay_seek_frames
     resb 1                                       ; 0e03bd (bss)
-dword_e03be:                                     ; xref setup_demo_faceoff, three_stars_skate_to_spot, ai_get_cup, ai_defense_defense, ai_celebrate_goal, ai_game_misconduct +38
+scratch_b:                                       ; xref setup_demo_faceoff, three_stars_skate_to_spot, ai_get_cup, ai_defense_defense, ai_celebrate_goal, ai_game_misconduct +38
     resb 2                                       ; 0e03be (bss)
 dword_e03c0:                                     ; xref setup_demo_faceoff, faceoff_wait_loop, ai_ref_anthem, three_stars_skate_to_spot, ai_three_stars, ai_get_cup +71
     resb 1                                       ; 0e03c0 (bss)
@@ -15775,13 +15775,13 @@ word_e9aa8:                                      ; xref reset_game_state, shot_l
     resb 2                                       ; 0e9aa8 (bss)
 word_e9aaa:                                      ; xref reset_game_state, save_game, savegame_io
     resb 2                                       ; 0e9aaa (bss)
-dword_e9aac:                                     ; xref ref_check_announcements, period_clock_init, save_game, savegame_io, record_penalty
+announce_time:                                   ; xref ref_check_announcements, period_clock_init, save_game, savegame_io, record_penalty
     resb 2                                       ; 0e9aac (bss)
 dword_e9aae:                                     ; xref reset_game_state, ai_ref_call_penalty, ai_puck_faceoff2, save_game, savegame_io, record_penalty
     resb 2                                       ; 0e9aae (bss)
-word_e9ab0:                                      ; xref score_goal, save_game, savegame_io
+goal_flags:                                      ; xref score_goal, save_game, savegame_io
     resb 2                                       ; 0e9ab0 (bss)
-dword_e9ab2:                                     ; xref save_game, savegame_io, load_cutscene_clip, update_announcer
+clip_script_pos:                                 ; xref save_game, savegame_io, load_cutscene_clip, update_announcer
     resb 2                                       ; 0e9ab2 (bss)
 word_e9ab4:                                      ; xref save_game, savegame_io, load_cutscene_clip, update_announcer
     resb 2                                       ; 0e9ab4 (bss)
@@ -15803,7 +15803,7 @@ icing_state:                                     ; xref update_carrier, read_con
     resb 2                                       ; 0e9abe (bss)
 dword_e9ac0:                                     ; xref ai_goalie, update_carrier, ai_puck_faceoff2, two_line_pass_check, check_icing, collide_corner +3
     resb 1                                       ; 0e9ac0 (bss)
-byte_e9ac1:                                      ; xref update_carrier, simulate_game_offscreen
+byte_e9ac1:                                      ; xref update_carrier, league_highlight_game
     resb 1                                       ; 0e9ac1 (bss)
 ; last player to touch the puck (word), y at +2, x at +4
 last_touch_slot:                                 ; xref compute_three_stars, faceoff_resolve, carrier_zone_entry, update_carrier, two_line_pass_check, check_offside +4
@@ -15834,7 +15834,7 @@ byte_e9ad1:                                      ; xref announce_goal
     resb 1                                       ; 0e9ad1 (bss)
 byte_e9ad2:                                      ; xref announce_goal
     resb 1                                       ; 0e9ad2 (bss)
-byte_e9ad3:                                      ; xref reset_game_state, ai_ref_pickup_puck, period_init, save_game, savegame_io, announce_goal
+goal_call:                                       ; xref reset_game_state, ai_ref_pickup_puck, period_init, save_game, savegame_io, announce_goal
     resb 1                                       ; 0e9ad3 (bss)
 byte_e9ad4:                                      ; xref ai_ref_pickup_puck
     resb 1                                       ; 0e9ad4 (bss)
@@ -15852,7 +15852,7 @@ unk_e9adc:                                       ; xref puck_check_players, move
     resb 1                                       ; 0e9adc (bss)
 unk_e9add:                                       ; xref puck_check_players, move_entity, collide_neighbours
     resb 1                                       ; 0e9add (bss)
-unk_e9ade:                                       ; xref move_entity, draw_rink_marks, entities_init, savegame_io
+draw_order_slots:                                ; xref move_entity, draw_rink_marks, entities_init, savegame_io
     resb 1                                       ; 0e9ade (bss)
 unk_e9adf:                                       ; xref puck_check_players, move_entity, collide_neighbours
     resb 17                                      ; 0e9adf (bss)
@@ -15868,12 +15868,12 @@ unk_e9af8:                                       ; xref season_record_result, th
     resb 2                                       ; 0e9af8 (bss)
 unk_e9afa:                                       ; xref three_stars_add_unique, compute_three_stars, ai_ref_three_stars
     resb 10                                      ; 0e9afa (bss)
-dword_e9b04:                                     ; xref init_match, sequence_loop, ai_ref_anthem, three_stars_sequence, ai_ref_three_stars
+sequence_steps:                                  ; xref init_match, sequence_loop, ai_ref_anthem, three_stars_sequence, ai_ref_three_stars
     resb 36                                      ; 0e9b04 (bss)
 ; strength of the last collision between opponents (collide_pair)
 last_impact:                                     ; xref goalie_collision, injure_player, crowd_reaction_sfx, collide_pair
     resb 2                                       ; 0e9b28 (bss)
-unk_e9b2a:                                       ; xref savegame_io, start_crowd_figure, update_effects
+crowd_spots_busy:                                ; xref savegame_io, start_crowd_figure, update_effects
     resb 2                                       ; 0e9b2a (bss)
 unk_e9b2c:                                       ; xref reset_game_state, savegame_io, start_crowd_figure, update_effects
     resb 32                                      ; 0e9b2c (bss)
@@ -16083,7 +16083,7 @@ dword_ea0cc:                                     ; xref set_view_rect
     resb 4                                       ; 0ea0cc (bss)
 dword_ea0d0:                                     ; xref set_view_rect
     resb 12                                      ; 0ea0d0 (bss)
-ui_poll_callback:                                ; xref pause_menu, run_menu, menu_page_a, menu_page_b, team_select_screen, league_name_entry +27
+ui_poll_callback:                                ; xref pause_menu, run_menu, menu_page_a, menu_page_b, scouting_report_screen, league_name_entry +27
     resb 24                                      ; 0ea0dc (bss)
 ; 1 mouse, 2 joystick 1, 4 joystick 2, 8 keyboard present
 input_devices:                                   ; xref main, read_menu_buttons, intro_skip_pressed, apply_settings, new_league_mode, ui_init +5
@@ -16098,7 +16098,7 @@ unk_ea101:                                       ; xref ui_timer_callback
     resb 407                                     ; 0ea101 (bss)
 dword_ea298:                                     ; xref ui_timer_callback
     resb 4                                       ; 0ea298 (bss)
-dword_ea29c:                                     ; xref ui_poll_events, ui_timer_callback
+arrow_held_polls:                                ; xref ui_poll_events, ui_timer_callback
     resb 4                                       ; 0ea29c (bss)
 dword_ea2a0:                                     ; xref ui_timer_callback
     resb 4                                       ; 0ea2a0 (bss)
@@ -16134,7 +16134,7 @@ dword_eaf78:                                     ; xref player_ratings_card, dbe
     resb 4                                       ; 0eaf78 (bss)
 dword_eaf7c:                                     ; xref roster_count_check
     resb 4                                       ; 0eaf7c (bss)
-unk_eaf80:                                       ; xref dbedit_draw_roster_column, dbedit_build_team_roster, dbedit_roster_click, roster_move_players, free_agent_move_dialog, roster_count_check +2
+editor_selected:                                 ; xref dbedit_draw_roster_column, dbedit_build_team_roster, dbedit_roster_click, roster_move_players, free_agent_move_dialog, roster_count_check +2
     resb 25                                      ; 0eaf80 (bss)
 unk_eaf99:                                       ; xref roster_count_check
     resb 3                                       ; 0eaf99 (bss)
@@ -16144,7 +16144,7 @@ unk_eafb5:                                       ; xref roster_count_check
     resb 3                                       ; 0eafb5 (bss)
 unk_eafb8:                                       ; xref dbedit_snapshot_rosters
     resb 3248                                    ; 0eafb8 (bss)
-dword_ebc68:                                     ; xref database_disk_check, database_menu, roster_move_players, create_player_menu, free_agent_move_dialog, roster_count_check +1
+editor_dirty:                                    ; xref database_disk_check, database_menu, roster_move_players, create_player_menu, free_agent_move_dialog, roster_count_check +1
     resb 4                                       ; 0ebc68 (bss)
 dword_ebc6c:                                     ; xref roster_screen, cmp_roster_goalies, roster_table
     resb 4                                       ; 0ebc6c (bss)
@@ -16156,7 +16156,7 @@ dword_ebc78:                                     ; xref jersey_number_prompt, da
     resb 4                                       ; 0ebc78 (bss)
 dword_ebc7c:                                     ; xref jersey_number_prompt, create_player_menu, free_agent_move_dialog, roster_edit_screen, roster_dress_screen
     resb 40                                      ; 0ebc7c (bss)
-dword_ebca4:                                     ; xref dbedit_draw_roster_column, dbedit_build_free_agent_list, dbedit_roster_click, database_menu, dbedit_find_player_by_name
+editor_scroll:                                   ; xref dbedit_draw_roster_column, dbedit_build_free_agent_list, dbedit_roster_click, database_menu, dbedit_find_player_by_name
     resb 504                                     ; 0ebca4 (bss)
 dword_ebe9c:                                     ; xref database_screen, database_menu, dbedit_error_dialog_loop, ratings_edit_screen, edit_lines_screen
     resb 4                                       ; 0ebe9c (bss)
@@ -16210,7 +16210,7 @@ dword_ecdf0:                                     ; xref screen_update_rect
     resb 4                                       ; 0ecdf0 (bss)
 unk_ecdf4:                                       ; xref roster_stats_table
     resb 768                                     ; 0ecdf4 (bss)
-unk_ed0f4:                                       ; xref edit_lines_screen_b, edit_lines_screen2, edit_lines_keys, lines_draw_list, roster_dress_table, roster_stats_table +2
+lineup_entries:                                  ; xref edit_lines_screen_b, edit_lines_screen2, edit_lines_keys, lines_draw_list, roster_dress_table, roster_stats_table +2
     resb 1                                       ; 0ed0f4 (bss)
 unk_ed0f5:                                       ; xref edit_lines_screen2, edit_lines_keys, lines_draw_list, roster_stats_table, lines_scratch_player_b, lines_dress_player_b
     resb 1                                       ; 0ed0f5 (bss)
@@ -16226,9 +16226,9 @@ unk_ed0fa:                                       ; xref edit_lines_keys
     resb 610                                     ; 0ed0fa (bss)
 dword_ed35c:                                     ; xref play_speech, settings_screen_b, set_settings_context
     resb 4                                       ; 0ed35c (bss)
-dword_ed360:                                     ; xref settings_flags_to_buttons, settings_draw_buttons, settings_menu, sound_settings_dialog, game_settings_draw_buttons, game_settings_menu +10
+dword_ed360:                                     ; xref settings_flags_to_buttons, settings_draw_buttons, settings_menu, game_settings_show_options, game_settings_draw_buttons, game_settings_menu +10
     resb 1                                       ; 0ed360 (bss)
-byte_ed361:                                      ; xref settings_flags_to_buttons, settings_menu, game_settings_menu, sound_toggle_dialog, sound_settings_menu
+byte_ed361:                                      ; xref settings_flags_to_buttons, settings_menu, game_settings_menu, exhibition_settings_show_options, exhibition_settings_menu
     resb 3                                       ; 0ed361 (bss)
 dword_ed364:                                     ; xref controller_select_dialog, controller_menu
     resb 4                                       ; 0ed364 (bss)
@@ -16256,7 +16256,7 @@ dword_ed6e0:                                     ; xref instant_replay, replay_c
     resb 4                                       ; 0ed6e0 (bss)
 dword_ed6e4:                                     ; xref instant_replay, replay_control_loop, replay_menu
     resb 4                                       ; 0ed6e4 (bss)
-dword_ed6e8:                                     ; xref replay_control_loop
+camera_step_acc:                                 ; xref replay_control_loop
     resb 4                                       ; 0ed6e8 (bss)
 dword_ed6ec:                                     ; xref instant_replay, replay_control_loop
     resb 4                                       ; 0ed6ec (bss)
@@ -16274,7 +16274,7 @@ dword_ed704:                                     ; xref instant_replay, replay_c
     resb 4                                       ; 0ed704 (bss)
 dword_ed708:                                     ; xref instant_replay, replay_control_loop
     resb 4                                       ; 0ed708 (bss)
-dword_ed70c:                                     ; xref instant_replay, replay_control_loop
+camera_free:                                     ; xref instant_replay, replay_control_loop
     resb 64                                      ; 0ed70c (bss)
 dword_ed74c:                                     ; xref replay_draw_frame, instant_replay, replay_control_loop
     resb 4                                       ; 0ed74c (bss)
@@ -16284,13 +16284,13 @@ dword_ed754:                                     ; xref instant_replay, replay_c
     resb 2                                       ; 0ed754 (bss)
 dword_ed756:                                     ; xref instant_replay
     resb 2                                       ; 0ed756 (bss)
-word_ed758:                                      ; xref instant_replay, replay_control_loop
+camera_speed_acc:                                ; xref instant_replay, replay_control_loop
     resb 4                                       ; 0ed758 (bss)
-dword_ed75c:                                     ; xref settings_draw_buttons, sound_settings_draw_buttons, settings_toggles
+dword_ed75c:                                     ; xref settings_draw_buttons, exhibition_settings_draw_buttons, settings_toggles
     resb 4                                       ; 0ed75c (bss)
-dword_ed760:                                     ; xref settings_draw_buttons, sound_settings_draw_buttons, settings_toggles
+dword_ed760:                                     ; xref settings_draw_buttons, exhibition_settings_draw_buttons, settings_toggles
     resb 4                                       ; 0ed760 (bss)
-dword_ed764:                                     ; xref settings_draw_buttons, sound_settings_draw_buttons, settings_toggles
+dword_ed764:                                     ; xref settings_draw_buttons, exhibition_settings_draw_buttons, settings_toggles
     resb 4                                       ; 0ed764 (bss)
 dword_ed768:                                     ; xref settings_draw_buttons, settings_toggles
     resb 4                                       ; 0ed768 (bss)
@@ -16298,23 +16298,23 @@ dword_ed76c:                                     ; xref settings_dialog, setting
     resb 4                                       ; 0ed76c (bss)
 dword_ed770:                                     ; xref settings_draw_buttons, settings_toggles
     resb 4                                       ; 0ed770 (bss)
-dword_ed774:                                     ; xref settings_menu, game_settings_menu, sound_settings_menu, settings_toggles
+dword_ed774:                                     ; xref settings_menu, game_settings_menu, exhibition_settings_menu, settings_toggles
     resb 4                                       ; 0ed774 (bss)
 dword_ed778:                                     ; xref settings_dialog, settings_toggles
     resb 4                                       ; 0ed778 (bss)
 dword_ed77c:                                     ; xref settings_draw_buttons, settings_toggles
     resb 4                                       ; 0ed77c (bss)
-dword_ed780:                                     ; xref settings_draw_buttons, game_settings_draw_buttons, sound_settings_draw_buttons, settings_toggles
+dword_ed780:                                     ; xref settings_draw_buttons, game_settings_draw_buttons, exhibition_settings_draw_buttons, settings_toggles
     resb 4                                       ; 0ed780 (bss)
 dword_ed784:                                     ; xref settings_draw_buttons, settings_toggles
     resb 4                                       ; 0ed784 (bss)
-dword_ed788:                                     ; xref settings_draw_buttons, game_settings_draw_buttons, sound_settings_draw_buttons, settings_toggles
+dword_ed788:                                     ; xref settings_draw_buttons, game_settings_draw_buttons, exhibition_settings_draw_buttons, settings_toggles
     resb 4                                       ; 0ed788 (bss)
 dword_ed78c:                                     ; xref settings_dialog, settings_toggles
     resb 4                                       ; 0ed78c (bss)
 dword_ed790:                                     ; xref locker_room_hub, locker_room_screen, draw_jerseys
     resb 4                                       ; 0ed790 (bss)
-dword_ed794:                                     ; xref locker_room_hub, locker_room_screen, draw_jerseys
+lineup_room_image:                               ; xref locker_room_hub, locker_room_screen, draw_jerseys
     resb 4                                       ; 0ed794 (bss)
 dword_ed798:                                     ; xref locker_room_hub, locker_room_screen, draw_jerseys
     resb 4                                       ; 0ed798 (bss)
@@ -16347,11 +16347,11 @@ byte_ed7e6:                                      ; xref awards_screen
     resb 5                                       ; 0ed7e6 (bss)
 byte_ed7eb:                                      ; xref load_music_banks
     resb 2                                       ; 0ed7eb (bss)
-byte_ed7ed:                                      ; xref boxscore_screen, team_select_screen2
+byte_ed7ed:                                      ; xref boxscore_screen, game_statistics_screen
     resb 3                                       ; 0ed7ed (bss)
 byte_ed7f0:                                      ; xref ea_sports_intro
     resb 3                                       ; 0ed7f0 (bss)
-byte_ed7f3:                                      ; xref team_select_screen
+byte_ed7f3:                                      ; xref scouting_report_screen
     resb 4                                       ; 0ed7f3 (bss)
 byte_ed7f7:                                      ; xref team_roster_load_palettes, load_team_palettes
     resb 42                                      ; 0ed7f7 (bss)
@@ -16359,15 +16359,15 @@ byte_ed821:                                      ; xref load_crests
     resb 2                                       ; 0ed821 (bss)
 byte_ed823:                                      ; xref show_scoreboard
     resb 1                                       ; 0ed823 (bss)
-byte_ed824:                                      ; xref draw_team_logos, boxscore_screen, team_select_screen2
+byte_ed824:                                      ; xref lineups_screen, boxscore_screen, game_statistics_screen
     resb 1                                       ; 0ed824 (bss)
-byte_ed825:                                      ; xref draw_team_logos, boxscore_screen, team_select_screen2
+byte_ed825:                                      ; xref lineups_screen, boxscore_screen, game_statistics_screen
     resb 1                                       ; 0ed825 (bss)
-byte_ed826:                                      ; xref draw_team_logos, boxscore_screen
+byte_ed826:                                      ; xref lineups_screen, boxscore_screen
     resb 1                                       ; 0ed826 (bss)
 byte_ed827:                                      ; xref boxscore_screen
     resb 1                                       ; 0ed827 (bss)
-byte_ed828:                                      ; xref boxscore_screen, team_select_screen2
+byte_ed828:                                      ; xref boxscore_screen, game_statistics_screen
     resb 7                                       ; 0ed828 (bss)
 byte_ed82f:                                      ; xref league_dialog_box
     resb 1                                       ; 0ed82f (bss)
@@ -16409,7 +16409,7 @@ byte_ed8c8:                                      ; xref awards_screen
     resb 4                                       ; 0ed8c8 (bss)
 byte_ed8cc:                                      ; xref load_music_banks
     resb 2                                       ; 0ed8cc (bss)
-byte_ed8ce:                                      ; xref boxscore_screen, team_select_screen2
+byte_ed8ce:                                      ; xref boxscore_screen, game_statistics_screen
     resb 2                                       ; 0ed8ce (bss)
 byte_ed8d0:                                      ; xref ea_sports_intro, credits_screen
     resb 7                                       ; 0ed8d0 (bss)
@@ -16461,7 +16461,7 @@ byte_ed940:                                      ; xref game_settings_dialog
     resb 1                                       ; 0ed940 (bss)
 byte_ed941:                                      ; xref settings_screen_a, settings_screen_b
     resb 1                                       ; 0ed941 (bss)
-byte_ed942:                                      ; xref sound_settings_draw
+byte_ed942:                                      ; xref exhibition_settings_draw
     resb 1                                       ; 0ed942 (bss)
 byte_ed943:                                      ; xref game_settings_dialog
     resb 24                                      ; 0ed943 (bss)
@@ -16501,15 +16501,15 @@ byte_ed9a9:                                      ; xref locker_room_screen
     resb 1                                       ; 0ed9a9 (bss)
 byte_ed9aa:                                      ; xref awards_screen
     resb 1                                       ; 0ed9aa (bss)
-byte_ed9ab:                                      ; xref draw_team_logos, frontend_main_menu
+byte_ed9ab:                                      ; xref lineups_screen, frontend_main_menu
     resb 1                                       ; 0ed9ab (bss)
-byte_ed9ac:                                      ; xref team_select_screen2, team_info_screen
+byte_ed9ac:                                      ; xref game_statistics_screen, team_info_screen
     resb 1                                       ; 0ed9ac (bss)
 byte_ed9ad:                                      ; xref credits_screen
     resb 1                                       ; 0ed9ad (bss)
 byte_ed9ae:                                      ; xref calendar_screen
     resb 1                                       ; 0ed9ae (bss)
-byte_ed9af:                                      ; xref team_select_screen
+byte_ed9af:                                      ; xref scouting_report_screen
     resb 1                                       ; 0ed9af (bss)
 byte_ed9b0:                                      ; xref boxscore_screen
     resb 2                                       ; 0ed9b0 (bss)
@@ -16517,9 +16517,9 @@ byte_ed9b2:                                      ; xref coach_clip_player
     resb 1                                       ; 0ed9b2 (bss)
 unk_ed9b3:                                       ; xref coach_clip_player
     resb 50                                      ; 0ed9b3 (bss)
-byte_ed9e5:                                      ; xref team_select_screen
+byte_ed9e5:                                      ; xref scouting_report_screen
     resb 1                                       ; 0ed9e5 (bss)
-byte_ed9e6:                                      ; xref draw_team_logos, boxscore_screen
+byte_ed9e6:                                      ; xref lineups_screen, boxscore_screen
     resb 1                                       ; 0ed9e6 (bss)
 byte_ed9e7:                                      ; xref edit_lines_screen, edit_lines_screen2, draw_lines_screen
     resb 1                                       ; 0ed9e7 (bss)
@@ -16736,11 +16736,11 @@ unk_f24d0:                                       ; xref __get_doserrno_ptr
     resb 4                                       ; 0f24d0 (bss)
 unk_f24d4:                                       ; xref __get_errno_ptr
     resb 4                                       ; 0f24d4 (bss)
-unk_f24d8:                                       ; xref pcspk_note_on, pcspk_note_off, pcspk_update_voices
+pcspk_voices:                                    ; xref pcspk_note_on, pcspk_note_off, pcspk_update_voices
     resb 1                                       ; 0f24d8 (bss)
 unk_f24d9:                                       ; xref pcspk_drv_init
     resb 767                                     ; 0f24d9 (bss)
-unk_f27d8:                                       ; xref pcspk_note_on
+pcspk_channels:                                  ; xref pcspk_note_on
     resb 22                                      ; 0f27d8 (bss)
 unk_f27ee:                                       ; xref pcspk_drv_init, pcspk_update_voices
     resb 1                                       ; 0f27ee (bss)
@@ -16750,7 +16750,7 @@ unk_f27f6:                                       ; xref pcspk_program
     resb 7                                       ; 0f27f6 (bss)
 unk_f27fd:                                       ; xref pcspk_note_off
     resb 1835                                    ; 0f27fd (bss)
-unk_f2f28:                                       ; xref adlib_drv_init
+adlib_channels:                                  ; xref adlib_drv_init
     resb 20                                      ; 0f2f28 (bss)
 unk_f2f3c:                                       ; xref adlib_drv_init
     resb 2                                       ; 0f2f3c (bss)
@@ -16764,9 +16764,9 @@ unk_f2f43:                                       ; xref adlib_drv_init
     resb 1                                       ; 0f2f43 (bss)
 unk_f2f44:                                       ; xref adlib_drv_init
     resb 452                                     ; 0f2f44 (bss)
-unk_f3108:                                       ; xref adlib_drv_init, adlib_channel_release, adlib_controller, adlib_program, adlib_pitch_bend, adlib_note_on
+adlib_channel_ptrs:                              ; xref adlib_drv_init, adlib_channel_release, adlib_controller, adlib_program, adlib_pitch_bend, adlib_note_on
     resb 64                                      ; 0f3108 (bss)
-unk_f3148:                                       ; xref adlib_drv_tick, adlib_channel_release, adlib_controller, adlib_note_on
+adlib_voices:                                    ; xref adlib_drv_tick, adlib_channel_release, adlib_controller, adlib_note_on
     resb 8                                       ; 0f3148 (bss)
 unk_f3150:                                       ; xref adlib_drv_init
     resb 70                                      ; 0f3150 (bss)
@@ -16774,11 +16774,11 @@ unk_f3196:                                       ; xref adlib_drv_init
     resb 1                                       ; 0f3196 (bss)
 unk_f3197:                                       ; xref adlib_controller
     resb 695                                     ; 0f3197 (bss)
-word_f344e:                                      ; xref adlib_drv_init, adlib_drv_tick, adlib_channel_release, adlib_controller, adlib_note_on
+adlib_released_mask:                             ; xref adlib_drv_init, adlib_drv_tick, adlib_channel_release, adlib_controller, adlib_note_on
     resb 2                                       ; 0f344e (bss)
-word_f3450:                                      ; xref adlib_drv_init, adlib_drv_tick, adlib_controller, adlib_note_on
+adlib_used_mask:                                 ; xref adlib_drv_init, adlib_drv_tick, adlib_controller, adlib_note_on
     resb 2                                       ; 0f3450 (bss)
-word_f3452:                                      ; xref adlib_drv_init, adlib_drv_tick, adlib_controller, adlib_note_on
+adlib_free_mask:                                 ; xref adlib_drv_init, adlib_drv_tick, adlib_controller, adlib_note_on
     resb 2                                       ; 0f3452 (bss)
 unk_f3454:                                       ; xref sbdac_drv_reset_voices, sbdac_drv_tick, sbdac_channel_notes_off, sbdac_note_on, sbdac_controller
     resb 2                                       ; 0f3454 (bss)
@@ -16796,11 +16796,11 @@ unk_f3538:                                       ; xref sbdac_set_channel_volume
     resb 18                                      ; 0f3538 (bss)
 unk_f354a:                                       ; xref sbdac_pitch_bend
     resb 458                                     ; 0f354a (bss)
-word_f3714:                                      ; xref sbdac_drv_reset_voices, sbdac_drv_tick, sbdac_channel_notes_off, sbdac_note_on, sbdac_voice_start, sbdac_voice_free
+sbdac_released_mask:                             ; xref sbdac_drv_reset_voices, sbdac_drv_tick, sbdac_channel_notes_off, sbdac_note_on, sbdac_voice_start, sbdac_voice_free
     resb 2                                       ; 0f3714 (bss)
-word_f3716:                                      ; xref sbdac_drv_reset_voices, sbdac_note_on, sbdac_voice_start, sbdac_voice_free
+sbdac_free_mask:                                 ; xref sbdac_drv_reset_voices, sbdac_note_on, sbdac_voice_start, sbdac_voice_free
     resb 2                                       ; 0f3716 (bss)
-word_f3718:                                      ; xref sbdac_drv_reset_voices, sbdac_note_on, sbdac_voice_start, sbdac_voice_free
+sbdac_used_mask:                                 ; xref sbdac_drv_reset_voices, sbdac_note_on, sbdac_voice_start, sbdac_voice_free
     resb 4                                       ; 0f3718 (bss)
 unk_f371c:                                       ; xref gus_load_patches, gus_patch_drv_send_midi
     resb 2                                       ; 0f371c (bss)
