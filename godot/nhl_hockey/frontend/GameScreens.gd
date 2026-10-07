@@ -491,3 +491,44 @@ func menu_team_scratches() -> int:
 	await fe.leave_screen(100)
 	await boxscore_screen(4, 0, 0)
 	return 2
+
+## Save Game ... of the pause screen (broadcast_booth_screen 0x85924): an exhibition under a name
+## (save_game_dialog: NAME.NHL), a league or play-off game as the league's GAME.SAV; the game is
+## left and goes on from there later
+func broadcast_booth_screen() -> int:
+	if fe.game == null:
+		return 0
+	var sim: Sim = fe.game.sim
+	var data := {
+		"settings": Session.save_block(),
+		"summary": sim.summary_bytes(),
+		"scores": BoxScore.games.duplicate(true),
+		"index": Session.game_number,
+		"lines": Session.line_override.duplicate(),
+		"scratches": Session.scratches.duplicate(),
+		"sim": SaveGame.capture(sim),
+	}
+	fe.set_dialog_colors(0xf9, 0xfa, 0xf8, 0xfa, 0)
+	var path := ""
+	if Session.mode == 0 or Session.league == null:
+		var name := (await fe.text_entry_dialog("Enter a name for the saved game", 8)).to_upper()
+		if name == "":
+			return 0
+		path = SaveGame.saves_dir().path_join(name + ".NHL")
+	else:
+		path = (Session.league as League).dir.path_join("GAME.SAV")
+	if not SaveGame.write(path, data):
+		await fe.message_dialog(["Error while saving the game!"])
+		return 0
+	await fe.message_dialog(["The game is saved."])
+	return 5
+
+## a saved game continued: its settings, then the match from the saved state; true when it was
+## played to the end
+func continue_saved(data: Dictionary, db: Database = null) -> int:
+	Session.apply_block(data.get("settings", Session.save_block()))
+	Session.line_override = data.get("lines", {})
+	Session.scratches = data.get("scratches", {})
+	BoxScore.games = data.get("scores", [])
+	return await fe.play_game(db, data.get("sim", {}))
+

@@ -469,11 +469,12 @@ func save_game_set() -> void:
 		f.store_buffer(Session.save_block())
 
 ## play_game (0x11d09): the match with the teams, users and options of the session
-func play_game(db_override: Database = null) -> int:
+func play_game(db_override: Database = null, restore: Dictionary = {}) -> int:
 	await leave_screen(100)
 	last_sim = null
 	var setup := {
 		"db": db_override,
+		"restore": restore,
 		"home": Session.home_team, "away": Session.away_team,
 		"user1": Session.user_side(0), "user2": Session.user_side(1),
 		"option_flags": Session.option_flags,

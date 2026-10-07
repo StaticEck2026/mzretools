@@ -874,6 +874,12 @@ func _load_assets() -> void:
 		for side in 2:
 			for r in scratches.get(side, []):
 				sim.teams[side].entity_of[r] = -3
+		# a saved game continues where it was left (savegame_io)
+		var saved: Dictionary = config.get("restore", {})
+		if not saved.is_empty():
+			SaveGame.restore(sim, saved)
+			sim.replay.reset()
+			anthem = false
 	# palette with the jersey colours (load_team_palettes)
 	palette = GamePalette.build(GameFiles.read_raw("rinkpal.qfs"), GameFiles.read_raw("homepals.bin"), GameFiles.read_raw("awaypals.bin"), mini(home_team, 25), mini(away_team, 25))
 	if palette == null:

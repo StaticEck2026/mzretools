@@ -349,10 +349,12 @@ func league_select_screen() -> int:
 	var names := League.list_leagues()
 	for n in League.list_leagues(".PO"):
 		names.append(n + " (Play-Offs)")
+	for n in SaveGame.list_saves():
+		names.append(n + " (Saved Game)")
 	if names.is_empty():
-		await fe.message_dialog(["There are no leagues to open."])
+		await fe.message_dialog(["There is nothing to open."])
 		return 0
-	var lines: Array = ["Open which league?"]
+	var lines: Array = ["Open which league or game?"]
 	var labels: Array = []
 	for n in names.slice(0, 6):
 		labels.append(n)
@@ -374,6 +376,17 @@ func league_select_screen() -> int:
 	var r := await fe.message_dialog_buttons(lines, list)
 	if r < 0 or r >= labels.size() - 1:
 		return 0
+	if labels[r].ends_with(" (Saved Game)"):
+		var path := SaveGame.saves_dir().path_join(labels[r].trim_suffix(" (Saved Game)") + ".NHL")
+		var data := SaveGame.read(path)
+		if data.is_empty():
+			await fe.message_dialog(["Error while reading the saved game!"])
+			return 0
+		DirAccess.remove_absolute(path)
+		var keep := Session.save_block()
+		await fe.games.continue_saved(data)
+		Session.apply_block(keep)
+		return 2
 	var series: bool = labels[r].ends_with(" (Play-Offs)")
 	var l := League.open(labels[r].trim_suffix(" (Play-Offs)"), ".PO" if series else ".LP")
 	if l == null:
@@ -418,6 +431,7 @@ func league_calendar_screen() -> int:
 		Session.apply_block(l.game_set)
 	Session.mode = 2
 	fe.set_hub_title(2)
+	await _continue_saved(l)
 	while true:
 		var index := await calendar_screen(team)
 		if index < 0:
@@ -452,6 +466,28 @@ func league_calendar_screen() -> int:
 	Session.mode = 0
 	fe.set_hub_title(0)
 	return 2
+
+## GAME.SAV of the league (league_calendar_screen: a saved game is continued first)
+func _continue_saved(l: League) -> void:
+	var path := l.dir.path_join("GAME.SAV")
+	if not FileAccess.file_exists(path):
+		return
+	var data := SaveGame.read(path)
+	DirAccess.remove_absolute(path)
+	if data.is_empty():
+		return
+	var index: int = data.get("index", -1)
+	var keep := Session.save_block()
+	var db := Database.open(l.file("TEAMS"), l.file("KEY"), l.file("ATT"))
+	var played := await fe.games.continue_saved(data, db)
+	Session.apply_block(keep)
+	if played == 1 and fe.last_sim != null and index >= 0:
+		l.game_played(index, fe.last_sim)
+		l.save()
+		fe.stats.forget_files()
+		if l.season_over:
+			await awards_screen()
+	fe.last_sim = null
 
 # ---------------------------------------------------------------------------------------------
 # the calendar (calendar_screen, calendar_draw_games)
@@ -844,6 +880,7 @@ func playoff_tree_screen() -> int:
 		Session.apply_block(l.game_set)
 	Session.mode = 1
 	fe.set_hub_title(1)
+	await _continue_saved(l)
 	while true:
 		var code := await _tree_menu(l)
 		if code != 4:

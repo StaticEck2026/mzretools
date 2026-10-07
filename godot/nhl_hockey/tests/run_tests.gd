@@ -388,6 +388,7 @@ func asset_tests() -> void:
 		ceremony_tests(bos, det)
 		replay_tests(bos, det)
 		crowd_tests(bos, det)
+		save_tests(bos, det)
 		speech_tests(bos, det, gf)
 	# sound effects: 30 digital samples found by their ids, the goal horn (0x9c) is the 7 second
 	# sample; the post (0xac) is the 22050 Hz recording played at 11025 Hz two semitones down
@@ -509,6 +510,36 @@ func league_tests(gf: Node) -> void:
 			met = true
 	if not met:
 		fail("play-off series: Rangers and Bruins should meet in the first round")
+
+## a saved game (SaveGame.gd): the state restored into a new simulation goes on exactly the same
+func save_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
+	var a := Sim.new()
+	a.user1_team = 0
+	a.user2_team = 0
+	a.set_teams(bos, det)
+	a.assign_users()
+	for i in 3000:
+		a.step(8, 8, 0, 0)
+	var data := var_to_bytes(SaveGame.capture(a))
+	var b := Sim.new()
+	b.user1_team = 0
+	b.user2_team = 0
+	b.set_teams(bos, det)
+	SaveGame.restore(b, bytes_to_var(data))
+	var same := true
+	for i in 2000:
+		a.step(8, 8, 0, 0)
+		b.step(8, 8, 0, 0)
+		for k in 17:
+			if a.entities[k].x != b.entities[k].x or a.entities[k].y != b.entities[k].y:
+				same = false
+		if not same:
+			fail("saved game diverges after %d steps" % i)
+			return
+	if a.clock_seconds != b.clock_seconds or a.teams[0].shots != b.teams[0].shots:
+		fail("saved game: clock %d / %d" % [a.clock_seconds, b.clock_seconds])
+	else:
+		print("saved game: identical for 2000 steps after the restore")
 
 ## line changes, fatigue and goalie pulling (Lines.gd)
 func line_change_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
