@@ -1345,7 +1345,27 @@ AI_GLOBALS = (('game_flags', GAME_FLAGS, 1), ('stop_flags', STOP_FLAGS, 1), ('mi
               ('scorer_jumps', 0xcca58, -4), ('sequence_steps', 0xe9b04, -4), ('match_over', 0xcbc48, -2),
               ('star0_team', 0xe9af8, -2), ('star0_roster', 0xe9afa, -2), ('star1_team', 0xe9afc, -2),
               ('star1_roster', 0xe9afe, -2), ('star2_team', 0xe9b00, -2), ('star2_roster', 0xe9b02, -2),
-              ('buttons_prev0', 0xe9abe, -2), ('buttons_prev1', 0xe9abc, -2))
+              ('buttons_prev0', 0xe9abe, -2), ('buttons_prev1', 0xe9abc, -2), ('clip_time', 0xe9ab2, -2),
+              ('clip_pos', 0xe9ab4, -2))
+CLIP_SCRIPTS = 0xcc01d                        # off_cc01d: the clips' frame scripts (a count, then the frames)
+CLIP_SCRIPT = 0xe0248                         # dword_e0248: the script of the clip loaded
+
+
+def write_globals(emu, g):
+    '''the globals of a case into memory; the loaded clip's script pointer (dword_e0248) goes with
+    the clip, its frame counter within the script'''
+    clip = g.get('clip', -1)
+    ptr = 0
+    if 0 <= clip < 11:
+        ptr = struct.unpack('<I', emu.read(CLIP_SCRIPTS + 4 * clip, 4))[0]
+        n = emu.read(ptr, 1)[0]
+        if not 1 <= g.get('clip_pos', 0) <= n:
+            g['clip_pos'] = 1 + g.get('clip_pos', 0) % n
+    emu.write(CLIP_SCRIPT, struct.pack('<I', ptr))
+    for n_, a, sz in AI_GLOBALS:
+        emu.write(a, struct.pack('<' + _FMT[abs(sz)], g[n_] & ((1 << (8 * abs(sz))) - 1)))
+
+
 FORMAT_PLAYER_NAME = 0x61d48                   # stubbed: a player's name for the panel (the font measures it); ret 8
 SAY_STAR = 0x59b0f                             # stubbed: the announcer names a star
 SAY_GOAL = 0x59ad0                             # stubbed: the announcer says the goal (the goal_call bytes)
@@ -1353,14 +1373,14 @@ GOAL_MILESTONE_CHECK = 0x62807                 # stubbed: its deferred call is e
 RECORD_PENALTY = 0x624b9                       # stubbed (the event log, the summary, the panel, the announcer); ret 0xc
 ADD_PENALTY_DISPLAY = 0x14c22                  # stubbed: the scoreboard's penalty clock entry
 PENALTY_LIST_FIND = 0x14ca0                    # stubbed: the entry of a player released by a goal
-UPDATE_ANNOUNCER = 0x66e06                     # stubbed: the scoreboard panel and its clips
+UPDATE_ANNOUNCER = 0x66e06                     # the scoreboard panel and its clips
 UPDATE_EFFECTS = 0x615a2                       # stubbed: the crowd noise and figures
 SETUP_FACEOFF = 0x5d852                        # stubbed for now: the end of a period
 ANNOUNCE_ONE_MINUTE = 0x6280a                  # stubbed: the announcer's last minute line
 PICK_PLAYER_FOR_POSITION = 0x655cc             # stubbed: the line table rebuilt around a lost player; (team, roster)
 PUT_PLAYER_ON_ICE = 0x5b2c5                    # stubbed: the ratings copy (no roster data here); (entity, roster)
 PLAY_SPEECH = 0x59a11                          # stubbed: the announcer (a sample)
-LOAD_CUTSCENE_CLIP = 0x66497                   # stubbed: the clip on the scoreboard (loaded: dword_cbecc = the clip)
+LOAD_CUTSCENE_CLIP = 0x66497                   # stubbed: the clip's frames from its PPV file (the clip and its script set as loaded)
 ANNOUNCE_GOAL = 0x62343                        # stubbed (the panel): (team, scorer, assist, assist)
 SPEECH_BUSY = 0x59aad                          # stubbed: the announcer talking (a case input)
 AI_TEAM_FIELDS = TEAM_FIELDS + (('goals', 0x10, -2), ('hits', 0x24, -2), ('breakaways', 0x1c, -2), ('passes', 0x26, -2),
@@ -1520,10 +1540,10 @@ def ai_world(emu, rnd, base, tables):
               'penalty_shot_clock': rnd.choice((0, 1, 1000)), 'goal_flags': 1, 'puck_in_net': 0, 'penalty_shot_roster': -1,
               'penalty_shot_spot_x': 0, 'penalty_shot_spot_y': 0, 'series_announce': 0, 'camera_x': 0, 'camera_y': 0,
               'camera_lead': 0, 'faceoff_digit': 7, 'faceoff_side0': 0x8800 - 0x10000, 'faceoff_side1': 0xa000 - 0x10000, 'fade_in': 0,
-              'clip_frame': -1, 'scorer_jumps': 0, 'sequence_steps': 0, 'match_over': 0, 'star0_team': 0, 'star0_roster': 0,
+              'clip_frame': -1, 'clip_time': rnd.choice((0, 1, 3, 8)), 'clip_pos': rnd.randrange(1, 12),
+              'scorer_jumps': 0, 'sequence_steps': 0, 'match_over': 0, 'star0_team': 0, 'star0_roster': 0,
               'star1_team': 0, 'star1_roster': 0, 'star2_team': 0, 'star2_roster': 0, 'buttons_prev0': 0, 'buttons_prev1': 0})
-    for n, a, sz in AI_GLOBALS:
-        emu.write(a, struct.pack('<' + _FMT[sz], g[n] if sz < 0 else g[n] & ((1 << (8 * sz)) - 1)))
+    write_globals(emu, g)
     emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
     return g, teams, carrier
 
@@ -1867,8 +1887,7 @@ def ai_prepare(emu, rnd, state, actor, g):
     puck[0x42] = carrier & 0xff
     emu.write(PUCK, puck)
     emu.write(ENTITIES + actor * 0x80, rec)
-    for n, a, sz in AI_GLOBALS:
-        emu.write(a, struct.pack('<' + _FMT[sz], g[n] if sz < 0 else g[n] & ((1 << (8 * sz)) - 1)))
+    write_globals(emu, g)
     return carrier
 
 
@@ -1904,7 +1923,7 @@ def ai_cases(exe):
     emu.stub(RECORD_PENALTY, on_record_penalty, pop=12)
     emu.stub(ADD_PENALTY_DISPLAY, lambda eax: calls.append(['add_penalty_display', eax & 0xffff, reg(UC_X86_REG_EDX), reg(UC_X86_REG_EBX)]))
     emu.stub(PENALTY_LIST_FIND, lambda eax: calls.append(['penalty_list_find', eax & 0xffff, reg(UC_X86_REG_EDX) & 0xffff]))
-    emu.stub(UPDATE_ANNOUNCER, lambda eax: calls.append(['update_announcer']))
+    emu.stub(FREEMEM, lambda eax: None)
     fixed_stubs += [emu.stub(UPDATE_EFFECTS, lambda eax: calls.append(['update_effects'])),
                     emu.stub(SETUP_FACEOFF, lambda eax: calls.append(['setup_faceoff']))]
     emu.stub(ANNOUNCE_ONE_MINUTE, lambda eax: calls.append(['announce_one_minute_left']))
@@ -1918,8 +1937,15 @@ def ai_cases(exe):
     emu.stub(PLAY_SPEECH, lambda eax: calls.append(['play_speech', s32(eax & 0xffffffff)]))
 
     def on_clip(eax):
+        # (the frames from the clip's PPV file, then the script as load_cutscene_clip sets it)
+        clip = struct.unpack('<h', struct.pack('<H', eax & 0xffff))[0]
         calls.append(['load_clip', s32(eax & 0xffffffff)])
-        emu.write(0xcbecc, struct.pack('<h', eax & 0xffff))
+        emu.write(0xcbecc, struct.pack('<h', clip))
+        ptr = struct.unpack('<I', emu.read(CLIP_SCRIPTS + 4 * clip, 4))[0]
+        emu.write(CLIP_SCRIPT, struct.pack('<I', ptr))
+        emu.write(0xe9ab2, emu.read(0xcc054 + 4 * clip, 2))
+        emu.write(0xe9ab4, struct.pack('<h', 1))
+        emu.write(0xcbece, struct.pack('<h', struct.unpack('<b', emu.read(ptr + 1, 1))[0]))
     emu.stub(LOAD_CUTSCENE_CLIP, on_clip)
     ppi_stub = emu.stub(PUT_PLAYER_ON_ICE, lambda eax: calls.append(['put_player_on_ice', ((eax & 0xffffffff) - ENTITIES) // 0x80,
                                                                     s32(emu.uc.reg_read(UC_X86_REG_EDX)) & 0xffff]))
@@ -2095,8 +2121,7 @@ def rules_cases(emu, rnd, base, tables, calls, base_fields, speech):
         emu.write(INFRACTION_QUEUE, bytes(raw))
         g['infraction0'] = raw[0]
         random_boxes(emu, rnd, teams)
-        for n_, a, sz in AI_GLOBALS:
-            emu.write(a, struct.pack('<' + _FMT[abs(sz)], g[n_] & ((1 << (8 * abs(sz))) - 1)))
+        write_globals(emu, g)
         emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
         emu.write(PERIOD_NUM, struct.pack('<h', g['period'] + 1))
         emu.write(PANEL_LINE4, b'\0' * 0x20)
@@ -2376,8 +2401,7 @@ def goals_cases(emu, rnd, base, tables, calls, base_fields, speech):
             raw[2 * i + 1] = s_
         emu.write(INFRACTION_QUEUE, bytes(raw))
         g['infraction0'] = raw[0]
-        for n_, a, sz in AI_GLOBALS:
-            emu.write(a, struct.pack('<' + _FMT[abs(sz)], g[n_] & ((1 << (8 * abs(sz))) - 1)))
+        write_globals(emu, g)
         emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
         emu.write(PERIOD_NUM, struct.pack('<h', g['period'] + 1))
         emu.write(PANEL_LINE4, b'\0' * 0x20)
@@ -2456,8 +2480,7 @@ def pface_cases(emu, rnd, base, tables, calls, base_fields, speech):
              emu.stub(STOP_CROWD_LOOP, lambda eax: calls.append(['stop_crowd_loop'])),
              emu.stub(CENTER_MOUSE, lambda eax: calls.append(['center_mouse'])),
              emu.stub(GSUMMARY_FLUSH, lambda eax: calls.append(['gsummary_flush'])),
-             emu.stub(PERIOD_CLEANUP, lambda eax: calls.append(['period_cleanup'])),
-             emu.stub(FREEMEM, lambda eax: None)]
+             emu.stub(PERIOD_CLEANUP, lambda eax: calls.append(['period_cleanup']))]
     order_names = [n for n in names for _ in range(weights[n])]
     cases = []
     for k in range(100 * len(order_names)):
@@ -2536,8 +2559,7 @@ def pface_cases(emu, rnd, base, tables, calls, base_fields, speech):
         emu.write(PUCK, puck)
         emu.write(PUCK + 0x42, bytes([carrier & 0xff]))
         g['infraction0'] = 0
-        for n_, a, sz in AI_GLOBALS:
-            emu.write(a, struct.pack('<' + _FMT[abs(sz)], g[n_] & ((1 << (8 * abs(sz))) - 1)))
+        write_globals(emu, g)
         emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
         emu.write(PERIOD_NUM, struct.pack('<h', g['period'] + 1))
         emu.write(PANEL_LINE4, b'\0' * 0x20)
@@ -2606,7 +2628,6 @@ def steps_cases(emu, rnd, base, tables, calls, base_fields, speech, count=1000, 
              emu.stub(STOP_CROWD_LOOP, lambda eax: calls.append(['stop_crowd_loop'])),
              emu.stub(CENTER_MOUSE, lambda eax: calls.append(['center_mouse'])),
              emu.stub(GSUMMARY_FLUSH, lambda eax: calls.append(['gsummary_flush'])),
-             emu.stub(FREEMEM, lambda eax: None),
              emu.stub(REPLAY_RECORD, lambda eax: None)]
     event = emu.alloc(b'\0' * 4)
     emu.write(CONTROL_ENTRY, struct.pack('<I', event))
@@ -2640,8 +2661,7 @@ def steps_cases(emu, rnd, base, tables, calls, base_fields, speech, count=1000, 
             emu.write(CROWD_FIGURES + i * 12, struct.pack('<hbbbhhhb', -1, rnd.choice((5, 30, 60)), 0, 0, 0, 0, 0, 0))
         emu.write(CROWD_BUSY, b'\0' * 22)
         g['infraction0'] = 0
-        for n_, a, sz in AI_GLOBALS:
-            emu.write(a, struct.pack('<' + _FMT[abs(sz)], g[n_] & ((1 << (8 * abs(sz))) - 1)))
+        write_globals(emu, g)
         emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
         emu.write(PERIOD_NUM, struct.pack('<h', g['period'] + 1))
         emu.write(PANEL_LINE4, b'\0' * 0x20)
@@ -2742,7 +2762,6 @@ def periods_cases(emu, rnd, base, tables, calls, base_fields, speech):
              emu.stub(STOP_CROWD_LOOP, lambda eax: calls.append(['stop_crowd_loop'])),
              emu.stub(CENTER_MOUSE, lambda eax: calls.append(['center_mouse'])),
              emu.stub(GSUMMARY_FLUSH, lambda eax: calls.append(['gsummary_flush'])),
-             emu.stub(FREEMEM, lambda eax: None),
              emu.stub(REPLAY_RECORD, lambda eax: None),
              emu.stub(LEAVE_MATCH_VIDEO, on_leave),
              emu.stub(FLUSH_KEY_EVENTS, lambda eax: None),
@@ -2849,8 +2868,7 @@ def periods_cases(emu, rnd, base, tables, calls, base_fields, speech):
         team_ids = [rnd.randrange(26), rnd.randrange(26)]
         emu.write(TEAM_IDS, struct.pack('<hh', *team_ids))
         g['infraction0'] = 0
-        for n_, a, sz in AI_GLOBALS:
-            emu.write(a, struct.pack('<' + _FMT[abs(sz)], g[n_] & ((1 << (8 * abs(sz))) - 1)))
+        write_globals(emu, g)
         emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
         emu.write(PERIOD_NUM, struct.pack('<i', period_num))
         emu.write(PANEL_LINE4, b'\0' * 0x20)
@@ -2959,8 +2977,7 @@ def dress_cases(emu, rnd, base, tables, calls, base_fields):
             dress['ratings'].append(ratings)
             dress['goalie_ratings'].append(gr)
             dress['factors'].append(factors)
-        for n_, a, sz in AI_GLOBALS:
-            emu.write(a, struct.pack('<' + _FMT[abs(sz)], g[n_] & ((1 << (8 * abs(sz))) - 1)))
+        write_globals(emu, g)
         emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
         emu.write(PERIOD_NUM, struct.pack('<h', g['period'] + 1))
         slot = rnd.randrange(12)
@@ -3057,8 +3074,7 @@ def lineup_cases(emu, rnd, base, tables, calls, base_fields, teams_path):
             lines_in['positions'].append(''.join(pos))
             lines_in['ratings'].append(ratings)
             teams[ti]['roster_status'] = status
-        for n_, a, sz in AI_GLOBALS:
-            emu.write(a, struct.pack('<' + _FMT[sz], g[n_] if sz < 0 else g[n_] & ((1 << (8 * sz)) - 1)))
+        write_globals(emu, g)
         emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
         emu.write(PERIOD_NUM, struct.pack('<h', g['period'] + 1))
         emu.call(LINE_ROUTINES['build_lines'])
@@ -3267,8 +3283,7 @@ def controls_cases(emu, rnd, base, tables, calls, base_fields):
         if rnd.random() < 0.05:
             g['penalty_shot_phase'] = 1
             g['penalty_shot_active'] = rnd.choice((0, 1))
-        for n_, a, sz in AI_GLOBALS:
-            emu.write(a, struct.pack('<' + _FMT[abs(sz)], g[n_] & ((1 << (8 * abs(sz))) - 1)))
+        write_globals(emu, g)
         emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
         seed = rnd.getrandbits(32)
         emu.write(SEED, struct.pack('<I', seed))
@@ -3393,8 +3408,7 @@ def lines_cases(emu, rnd, base, tables, calls, base_fields, teams_path):
                 put_fields(rec, {'next_roster': rnd.choice((roster, rnd.randrange(28))), 'next_line': rnd.randrange(-1, 7),
                                  'timer_b': rnd.choice((0, 0, -100))})
                 emu.write(ENTITIES + slot * 0x80, rec)
-        for n_, a, sz in AI_GLOBALS:
-            emu.write(a, struct.pack('<' + _FMT[sz], g[n_] if sz < 0 else g[n_] & ((1 << (8 * sz)) - 1)))
+        write_globals(emu, g)
         emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
         emu.write(PERIOD_NUM, struct.pack('<h', g['period'] + 1))
         emu.call(LINE_ROUTINES['build_lines'])

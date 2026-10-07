@@ -36,11 +36,10 @@ static func set_text(sim: Sim, lines: Array) -> void:
 	for i in 5:
 		sim.panel_text[i] = lines[i] if i < lines.size() else ""
 
-## load_cutscene_clip (0x66497): the clip's frames are loaded and its script starts
+## load_cutscene_clip (0x66497): the clip's frames are loaded (by the view; a hook) and its script
+## starts: the first frame, the steps it shows
 static func load_clip(sim: Sim, id: int) -> void:
-	if sim.stubbed("load_clip", [id]):
-		sim.clip = id
-		return
+	sim.stubbed("load_clip", [id])
 	var script: Array = Tables.clip_scripts[id]
 	sim.clip = id
 	sim.clip_pos = 1

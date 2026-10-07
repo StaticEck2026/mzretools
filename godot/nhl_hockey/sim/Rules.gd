@@ -689,7 +689,8 @@ static func queue_infraction(sim: Sim, e: Entity, type: int) -> void:
 	for i in 32:
 		if inf_type(sim, i) != 0:
 			continue
-		inf_set(sim, i, type, e.slot)
+		# (the slot byte +0x6a; before the entities the low byte of a team record's pointer)
+		inf_set(sim, i, type, e.slot if e.slot >= 0 else 0)
 		if _is_penalty(type) == 0:
 			return
 		if e.flags2 & Entity.F2_PENALIZED:
@@ -1348,7 +1349,14 @@ static func two_line_pass_check(sim: Sim, receiver: Entity) -> bool:
 	# the last touch by a team mate (the original takes any slot below 6, -1 included, as home)
 	if (receiver.slot < 6) == (sim.last_touch_slot < 6):
 		return false
-	queue_infraction(sim, sim.entities[maxi(0, sim.last_touch_slot)], INF_OFFSIDE)
+	# (nobody touched it: the original passes the record before the entities, whose flags byte is
+	# the away team's box queue entry 22)
+	var culprit: Entity = sim.entities[sim.last_touch_slot] if sim.last_touch_slot >= 0 else null
+	if culprit == null:
+		culprit = Entity.new()
+		culprit.slot = -1
+		culprit.flags = sim.teams[1].box_queue[22] & 0xff
+	queue_infraction(sim, culprit, INF_OFFSIDE)
 	return true
 
 ## count_defenders_ahead (0x640c6): true when the carrier has nobody between him and the net

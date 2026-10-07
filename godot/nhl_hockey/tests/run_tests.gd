@@ -767,7 +767,7 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 		"injure_player": true, "bench_cheer": true, "announce_goal": true, "play_speech": true, "load_clip": true,
 		"say_goal": true, "goal_milestone_check": true, "put_player_on_ice": true,
 		"pick_player_for_position": true, "draw_line_indicator": true, "record_penalty": true,
-		"add_penalty_display": true, "penalty_list_find": true, "update_announcer": true, "update_effects": true,
+		"add_penalty_display": true, "penalty_list_find": true, "update_effects": true,
 		"setup_faceoff": true, "announce_one_minute_left": true}
 	if group == "rules" or group == "goals":
 		sim.stubs.erase("queue_infraction")
@@ -1360,6 +1360,8 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	sim.faceoff_side = [int(g.get("faceoff_side0", 0x8800)) & 0xffff, int(g.get("faceoff_side1", 0xa000)) & 0xffff]
 	sim.fade_in = int(g.get("fade_in", 0)) != 0
 	sim.clip_frame = int(g.get("clip_frame", -1))
+	sim.clip_time = int(g.get("clip_time", 0))
+	sim.clip_pos = int(g.get("clip_pos", 0))
 	sim.scorer_jumps = int(g.get("scorer_jumps", 0))
 	sim.sequence_steps = int(g.get("sequence_steps", 0))
 	sim.match_over = int(g.get("match_over", 0)) != 0
@@ -1485,6 +1487,7 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 		"camera_x": sim.camera_x, "camera_y": sim.camera_y, "camera_lead": sim.camera_offset_y,
 		"faceoff_digit": sim.faceoff_digit, "faceoff_side0": Entity.to_s16(sim.faceoff_side[0]),
 		"faceoff_side1": Entity.to_s16(sim.faceoff_side[1]), "fade_in": 1 if sim.fade_in else 0, "clip_frame": sim.clip_frame,
+		"clip_time": Entity.to_s16(sim.clip_time), "clip_pos": sim.clip_pos,
 		"scorer_jumps": sim.scorer_jumps, "sequence_steps": sim.sequence_steps, "match_over": 1 if sim.match_over else 0,
 		"star0_team": _star(sim, 0, 0), "star0_roster": _star(sim, 0, 1), "star1_team": _star(sim, 1, 0),
 		"star1_roster": _star(sim, 1, 1), "star2_team": _star(sim, 2, 0), "star2_roster": _star(sim, 2, 1),
