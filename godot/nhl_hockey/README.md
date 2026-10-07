@@ -11,11 +11,20 @@ key `files/game_dir`). Without the files it runs with coloured placeholders.
 ![Toronto at the net](screenshots/tor_mtl_net.png)
 
 ```
-godot --path godot/nhl_hockey            # run (Boston against Detroit; NHL_HOME / NHL_AWAY pick other teams, 0..27)
+godot --path godot/nhl_hockey            # run: the intro, demo games until a key, then the EA SPORTS desk
+NHL_NO_INTRO=1 godot --path godot/nhl_hockey                            # straight to the desk
+NHL_HOME=0 NHL_AWAY=4 godot --path godot/nhl_hockey                     # a match without the front end (0..27)
 godot --path godot/nhl_hockey --headless --import                       # first run: build the class cache
 godot --path godot/nhl_hockey --headless --script tests/run_tests.gd    # self test (exit code 0 = pass)
 NHL_HOME=5 NHL_AWAY=9 NHL_FAST_STEPS=600 NHL_SCREENSHOT=out.png godot --path godot/nhl_hockey   # screenshot and quit
+NHL_UI_SCRIPT="wait:400;click:52,8;wait:60;shot:menu.png;quit" godot --path godot/nhl_hockey       # scripted front end
 ```
+
+The front end works with the mouse like the original (the arrow keys and the joystick move the pointer too,
+Enter / the first button clicks, Esc / the second button cancels). Leagues, play-off series, saved games
+and edited databases are kept under `user://` (`leagues/NAME.LP`, `leagues/NAME.PO`, `saves/NAME.NHL`,
+`databases/NAME`), `GAME.SET` holds the settings of the desk. The commands of `NHL_UI_SCRIPT` are listed in
+`view/App.gd`.
 
 Controls (player 1, home team): arrows skate, Alt = A (pass / switch player), Space = B (shoot / body
 check), Ctrl = C (hook, poke check). Player 2 (`NHL_USER2`): I J K L skate, U = A, O = B, P = C. At the
@@ -65,7 +74,15 @@ behaviour matches the DOS game (see "Porting conventions" below).
 | Info panel | `sim/InfoPanel.gd`, `view/PanelView.gd` | the panel of the stoppages (`info_panel_open`, `load_cutscene_clip`, `show_penalty`, `announce_goal`, `ref_check_announcements`), the music cues (`play_speech`) |
 | Replay | `sim/Replay.gd`, `sim/ReplayFrame.gd`, `view/VcrView.gd` | `replay_record_frame`, `replay_seek_frames`, `instant_replay` / `replay_control_loop` with the VCR panel of GADGET5.PPV |
 | Crowd | `sim/Crowd.gd` | the fans, photographers and benches (`start_crowd_figure`, `bench_cheer`, `update_effects`) |
-| Pause screen | `view/PauseMenu.gd` | `pause_menu`: the EA desk, the menu bar, Back to Game, Exit, the goalie choice, Go To Replay |
+| Pause screen | `view/PauseMenu.gd`, `frontend/FrontEnd.gd` | `pause_menu` (0, 1 the intermission, 2 after the game): the EA desk, the menu bar, Back to Game, the goalie choice, Go To Replay, the settings, the line editor, the statistics, Save Game, the Sports Desk, Exit (`PauseMenu.gd` is the screen of a match started without the front end) |
+| Front end | `frontend/FrontEnd.gd`, `ui/Screen8.gd`, `ui/Ui.gd`, `ui/Menus.gd` | `main`, `loading_screen`, `frontend_main_menu` (the EA SPORTS desk), `run_menu` / the menu bar (the 32 byte menu records of the executable, every callback a method of the same name), `message_dialog`, the buttons, text entry, `play_game`, `end_match_from_period` / `end_match_from_loop`: a 640x480 256 colour frame buffer with the original coordinates, colour indices and palette fades |
+| Intro, credits | `frontend/IntroScreens.gd` | `intro_sequence`, `ea_sports_intro`, `demo_game` (computer against computer, 60 second periods, until a key), `credits_screen` (the 0x1d pages of the executable's credits) |
+| Exhibition | `frontend/GameScreens.gd`, `frontend/BoxScore.gd` | the locker room (`locker_room_screen`: teams and controllers), `exhibition_mode`, the scouting report (`team_select_screen`), tonight's line-ups (`draw_team_logos`), the box score and summaries (`boxscore_screen`), the scores around the league (`league_scores_init` / `advance`), Game Statistics (`team_select_screen2`), the scratches, Save Game (`broadcast_booth_screen`, `sim/SaveGame.gd`) |
+| Settings | `frontend/SettingsScreens.gd`, `frontend/Session.gd` | `apply_settings` / `save_settings` (the 0x75 byte block of GAME.SET), the exhibition / game / league / play-off settings dialogs, the controllers of the two players, the sound settings |
+| Line editor | `frontend/LineEditor.gd` | `edit_lines_screen_b`, `draw_lines_screen`, `edit_lines_keys`: the 40 places of the line table, before and during the game |
+| Statistics | `frontend/StatsScreens.gd` | `standings_table`, `team_stats_screen`, `stats_table` (leaders), `player_stats_screen`, `player_card_screen`, `goalie_card_screen`, the statistics hubs; '93 - '94, a league's season or play-offs |
+| Leagues | `sim/League.gd`, `frontend/LeagueScreens.gd` | New League (`new_league_mode`, `new_league_dialog`, the team grid `team_info_screen`, passwords), Open (`league_select_screen`), Next League Game (`league_calendar_screen`, `league_calendar_flow`, `calendar_screen`), the schedule (SCHEDULE.DB), the statistical game of the teams nobody plays (`0x452c5`), `league_play_day`, `season_record_result` (TEAMS / SEASON / KEY / CAREER written back), the play-offs (`playoff_make_round1..final`, `playoff_set_series`, the bracket `stanley_cup_tree_screen`), New Play-Off Series, the League Manager entries, the awards |
+| Central Registry | `frontend/Registry.gd` | `menu_central_registry` / `database_screen`: trades, free agents, new players, a team's lines, databases saved and loaded by name |
 
 The headless test (`tests/run_tests.gd`) checks the RefPack decoder, the tables, the animation stepping, a
 complete game start (opening faceoff after about 4 seconds, CPU players moving, the clock running), the
@@ -81,15 +98,22 @@ Montreal home game and the power play flags.
 
 ## Not ported yet, and known simplifications
 
-- The front end: the menus, team selection, settings, line editor, statistics and standings screens, season and
-  playoff mode, save games. The pause screen shows their entries but only Back to Game, Exit, the goalie
-  choice and Go To Replay work. Teams are picked with `NHL_HOME` / `NHL_AWAY`.
+- The files that are on the CD only are replaced: the intro logos and the title video (the loading screen
+  with the title song stands in), the credits' background and photographs (the NHL emblem), the calendar's
+  pictures (drawn cells), the play-off tree's logos (SRLOGO at half size), the mouse pointer (an arrow), the
+  front end recordings that the floppy files lack, and the .INT clips of the announcer (goodnight, the
+  line-ups).
+- The multi-player league of the original (every human team plays from its own copy of the league files,
+  `league_merge_files` puts them together) is folded into one set of files: the games of the computer
+  teams are simulated after each human game, so there is nothing to merge.
+- Injuries do not carry over from one league game to the next; neither do they in the original, whose
+  roster loader reads a return date (SEASON.DB +0x26 / +0x27) that nothing but the multi-player merge writes.
 - Sound: the port plays what the Sound Blaster plays (SBDAC.SCN: FM music and FM effects through the OPL2,
   digital effects, speech and the stomp through the DAC); the Adlib, MT-32 and speaker variants are not
   modelled. The OPL2 is a model, not a cycle exact emulation (envelope generator per 16 samples, 22050 Hz
   output). The ambient crowd is one looping sample whose volume follows `crowd_noise` (the original fades
   several channels in `update_ambient_audio`). The pause screen plays its recording (PAUSE.IFF, packed two
-  samples per byte, see FORMATS.md); the other front end recordings wait for the front end.
+  samples per byte, see FORMATS.md) and the front end plays the recordings of its screens.
 - The period label under the clock is an addition (the original shows the period on the pause screen).
 
 ## Porting conventions
