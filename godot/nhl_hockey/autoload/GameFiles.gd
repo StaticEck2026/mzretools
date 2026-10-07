@@ -6,8 +6,10 @@ extends Node
 ## Lookups are case insensitive because DOS file names were upper case and most dumps are not.
 
 const SETTINGS_PATH := "user://settings.cfg"
+const DATA_DIR := "user://data"
 
 var game_dir: String = ""
+var use_data := true          # read the copies of user://data first (the tests read the installation)
 var _index: Dictionary = {}   # lower case name -> real path
 
 func _ready() -> void:
@@ -64,12 +66,41 @@ func read(name: String) -> PackedByteArray:
 	var data := FileAccess.get_file_as_bytes(p)
 	return RefPack.unpack(data)
 
-## Reads a file without unpacking it (databases, palettes, tiles)
+## Reads a file without unpacking it (databases, palettes, tiles); a copy the port wrote into
+## user://data (the databases the front end changes) comes first
 func read_raw(name: String) -> PackedByteArray:
+	var u := DATA_DIR.path_join(name.to_lower())
+	if use_data and FileAccess.file_exists(u):
+		return FileAccess.get_file_as_bytes(u)
 	var p := path_of(name)
 	if p == "":
 		return PackedByteArray()
 	return FileAccess.get_file_as_bytes(p)
+
+## the original file, never the copy in user://data
+func read_original(name: String) -> PackedByteArray:
+	var p := path_of(name)
+	return FileAccess.get_file_as_bytes(p) if p != "" else PackedByteArray()
+
+## writes a database of the installation: the port keeps its changes in user://data (the game
+## directory stays as installed)
+func write_data(name: String, data: PackedByteArray) -> bool:
+	DirAccess.make_dir_recursive_absolute(DATA_DIR)
+	var f := FileAccess.open(DATA_DIR.path_join(name.to_lower()), FileAccess.WRITE)
+	if f == null:
+		return false
+	f.store_buffer(data)
+	return true
+
+## the copies of user://data are dropped (the databases as installed again)
+func reset_data(name: String = "") -> void:
+	if name != "":
+		DirAccess.remove_absolute(DATA_DIR.path_join(name.to_lower()))
+		return
+	var d := DirAccess.open(DATA_DIR)
+	if d != null:
+		for f in d.get_files():
+			d.remove(f)
 
 ## loadfile_auto(): tries the .fsh/.qfs/.vsh/.qvs variants of a shape bank name
 func read_bank(base: String) -> PackedByteArray:

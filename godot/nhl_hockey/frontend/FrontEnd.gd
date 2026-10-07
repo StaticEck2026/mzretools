@@ -474,6 +474,8 @@ func play_game() -> int:
 		"option_flags": Session.option_flags,
 		"period_length": Session.period_seconds(1),
 		"anthem": true,
+		"lines": Session.line_override.duplicate(),
+		"scratches": Session.scratches.duplicate(),
 	}
 	var r: int = await app.play_match_async(setup)
 	game = null
@@ -552,9 +554,14 @@ func game_end(m: Node) -> void:
 	var code := await pause_menu(2, m)
 	game = null
 
-## the line editor of a team (edit_lines_screen_b): from the scouting report and the pause screen
+## the line editor of a team before the game (the scouting report's buttons: edit_lines_screen_b
+## with the menu of unk_cf1af), then the screen it came from again
 func edit_lines_for(team: int, pal: PackedByteArray) -> void:
-	await message_dialog(["The line editor is not available yet."], ["OK"])
+	var keep := scr.snapshot()
+	var ed := LineEditor.new(self)
+	await ed.edit(0 if team == Session.home_team else 1, 0xcf1af, 3)
+	scr.restore(keep)
+	await scr.fade_in(pal, 16)
 
 ## text_entry_dialog (0x2fedf): a prompt over a field of `maxlen` characters; Enter takes the text,
 ## Esc gives "" (the original returns 0x1b)

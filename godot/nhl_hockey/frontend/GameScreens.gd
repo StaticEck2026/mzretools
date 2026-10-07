@@ -224,6 +224,9 @@ func locker_room_menu() -> int:
 				ap = _step(ap, hp, -1, n)
 				draw_jerseys(true, hp, ap)
 			6:
+				if Session.home_team != pos_team(hp) or Session.away_team != pos_team(ap):
+					Session.line_override.clear()
+					Session.scratches.clear()
 				Session.home_team = pos_team(hp)
 				Session.away_team = pos_team(ap)
 				if Session.p1_team >= 0:
@@ -441,6 +444,21 @@ func menu_away_goalie2() -> int:
 
 func menu_away_no_goalie() -> int:
 	return _goalie(1, -1)
+
+## menu_edit_lines_home / menu_edit_lines_away (0x1a8aa / 0x1a922): the line editor of the pause
+## screen (unk_cf2ef) for a team of the match
+func menu_edit_lines_home() -> int:
+	return await _edit_lines(0)
+
+func menu_edit_lines_away() -> int:
+	return await _edit_lines(1)
+
+func _edit_lines(side: int) -> int:
+	if fe.game == null:
+		return 0
+	var ed := LineEditor.new(fe)
+	await ed.edit(side, 0xcf2ef, 2, fe.game.sim.teams[side])
+	return 2
 
 ## the box score between the periods and after the game (boxscore_screen 0x2d35a)
 func boxscore_screen(kind: int, from_period: int, to_period: int) -> int:

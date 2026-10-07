@@ -860,7 +860,17 @@ func _load_assets() -> void:
 	if db != null:
 		home_team = clampi(home_team, 0, db.team_count() - 1)
 		away_team = clampi(away_team, 0, db.team_count() - 1)
-		sim.set_teams(db.load_team(home_team), db.load_team(away_team))
+		var ti := [db.load_team(home_team), db.load_team(away_team)]
+		# the lines and scratches of the line editor before the game (the front end)
+		var lines: Dictionary = config.get("lines", {})
+		for side in 2:
+			if lines.has(side) and ti[side] != null:
+				ti[side].line_table = lines[side]
+		sim.set_teams(ti[0], ti[1])
+		var scratches: Dictionary = config.get("scratches", {})
+		for side in 2:
+			for r in scratches.get(side, []):
+				sim.teams[side].entity_of[r] = -3
 	# palette with the jersey colours (load_team_palettes)
 	palette = GamePalette.build(GameFiles.read_raw("rinkpal.qfs"), GameFiles.read_raw("homepals.bin"), GameFiles.read_raw("awaypals.bin"), mini(home_team, 25), mini(away_team, 25))
 	if palette == null:

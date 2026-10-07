@@ -46,6 +46,8 @@ static var stats_playoffs := false      # dword_c6956: the play-offs (else the r
 static var stats_dir := ""              # unk_c65d4: the directory of the league's files
 static var game_number := 0             # dword_dc234: the league game being played (>= 0x444 play-offs)
 static var saved_game := -1             # the saved game to continue (play_game param, -1 a new game)
+static var line_override: Dictionary = {}   # side -> the line table edited before the game (unk_dc200 / unk_dabf0)
+static var scratches: Dictionary = {}       # side -> roster indices scratched for the game
 
 ## apply_settings: the block (GAME.SET or settings_exhibition) into the globals
 static func apply_block(b: PackedByteArray) -> void:

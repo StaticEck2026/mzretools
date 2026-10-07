@@ -269,6 +269,7 @@ func asset_tests() -> void:
 	# the autoload is not a global identifier in --script mode: instantiate the script directly
 	var GF := load("res://autoload/GameFiles.gd")
 	var gf: Node = GF.new()
+	gf.use_data = false
 	var dir := OS.get_environment("NHL_GAME_DIR")
 	if dir == "" or not DirAccess.dir_exists_absolute(dir):
 		dir = GF.repository_game_dir()
