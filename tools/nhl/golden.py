@@ -14,7 +14,8 @@
 #                    apply_skating (skating_turn, skating_accelerate, stop_skating, brake, goalie_move)
 #                    on skater, goalie and referee states with a direction; collide_boards at the nets
 #                    (collide_net, collide_player_net, net_push_off; score_goal, queue_infraction stubbed);
-#                    move_entity among team mates (the draw order, collide_pair, stepping around)
+#                    move_entity among team mates (the draw order, collide_pair, stepping around);
+#                    advance_animation (frames, durations, the frame countdown, the stride sound)
 #
 # The patch bank is put in the emulator's memory the way loadpatches leaves it: the .PAT file at
 # snd_patch_bank, each record's +0x10 pointing at its timbre from the .TIM files.
@@ -321,7 +322,8 @@ ENTITY_FIELDS = (('x', 0, -4), ('y', 4, -4), ('z', 8, -4), ('vx', 0xc, -2), ('vy
                  ('want_dir', 0x28, 1), ('target_x', 0x2a, -2), ('target_y', 0x2c, -2), ('push_x', 0x30, -2),
                  ('push_y', 0x32, -2), ('heading', 0x34, -4), ('spin', 0x36, 1), ('anim', 0x38, -2),
                  ('anim_pos', 0x3a, -2), ('anim_hold', 0x3c, -2), ('flags', 0x44, 1), ('flags2', 0x45, 1),
-                 ('roster', 0x47, 1), ('flags4', 0x55, 1), ('weight', 0x56, 1), ('speed_skill', 0x57, 1),
+                 ('frame_wait', 0x46, -1), ('roster', 0x47, 1), ('flags4', 0x55, 1), ('weight', 0x56, 1),
+                 ('speed_skill', 0x57, 1),
                  ('stamina', 0x58, 1), ('endurance', 0x61, 1))
 APPLY_SKATING = 0x5e16d
 PUCK = ENTITIES + 14 * 0x80
@@ -339,6 +341,11 @@ DRAW_KEYS = 0xe9a58                           # short[17]
 DRAW_POS = 0xe9a7a                            # short[17]
 DRAW_LIST = 0xe9ade                           # byte[17]
 _FMT = {1: 'B', -1: 'b', 2: 'H', -2: 'h', 4: 'I', -4: 'i'}
+ADVANCE_ANIMATION = 0x5caef
+ANIM_SEQUENCES = 0xc921d                      # anim_sequences: words, an animation id is a word index
+# animation ids set by the original (its set_animation constants, the port's, the check / save /
+# signal tables) and the two board pins
+ANIM_IDS = [1, 153, 177, 201, 257, 281, 305, 345, 385, 497, 569, 649, 673, 745, 817, 841, 865, 1017, 1169, 1321, 1345, 1417, 1473, 1497, 1521, 1545, 1569, 1593, 1641, 1841, 1953, 1983, 2013, 2033, 2045, 2081, 2099, 2123, 2163, 2259, 2571, 2651, 2675, 2747, 2771, 2795, 2835, 2891, 2915, 2987, 3011, 3035, 3075, 3099, 3139, 3159, 3171, 3187, 3211, 3227, 3243, 3259, 3275, 3289, 3303, 3317, 3333, 3479, 3715, 3735, 3753, 3765, 3787, 4227, 4245, 4405, 4509, 4565, 4637, 5349, 5369] + [0x1027, 0x1055]
 
 
 def entity_fields(emu, slot):
@@ -567,6 +574,63 @@ def contact_cases(emu, rnd, base, sfx):
     return out
 
 
+def anim_word(emu, i):
+    return struct.unpack('<h', emu.read(ANIM_SEQUENCES + i * 2, 2))[0]
+
+
+def animation_cases(emu, rnd, base, sfx):
+    '''advance_animation: the frames, their durations, the end of an animation, the frame shown at
+    most every 5 steps and the stride sound'''
+    def stride(f):
+        return ((0x112 <= f <= 0x14e and (f - 0x112) & 3 == 0) or (0x207 <= f <= 0x215 and f & 1)
+                or (0x314 < f < 0x32b and f % 3 == 0) or (0x389 < f < 0x3ae and (f - 0x38a) % 5 == 0)
+                or f in (0x36f, 0x373, 0x377, 0x3bf, 0x3c3, 0x3ce, 0x3d1))
+    # the animations with frames that play the stride sound
+    stride_ids = []
+    for a in ANIM_IDS:
+        head = anim_word(emu, a) & 0xffff
+        for d in range(8):
+            lst = a + ((head & 0x7fff) if d == 0 else anim_word(emu, a + d) & 0xffff) + 8
+            if any(stride(anim_word(emu, lst + 2 * i)) for i in range(12)):
+                stride_ids.append(a)
+                break
+    out = []
+    for k in range(500):
+        emu.write(ENTITIES, base)
+        slot = (2, 9, 0, 16, 14)[k % 5]
+        anim = rnd.choice(ANIM_IDS) if rnd.random() < 0.96 else 0
+        if k % 3 == 1:
+            anim = rnd.choice(stride_ids)
+        facing = rnd.randrange(8)
+        mirror = rnd.choice((0, 8))
+        d = (8 - facing) & 7 if mirror else facing
+        head = anim_word(emu, anim) & 0xffff
+        off = (head & 0x7fff) if d == 0 else anim_word(emu, anim + d) & 0xffff
+        lst = anim + off + 8
+        frames = []
+        while len(frames) < 40:
+            fr, du = anim_word(emu, lst + 2 * len(frames)), anim_word(emu, lst + 2 * len(frames) + 1)
+            frames.append((fr, du))
+            if du < 0:
+                break
+        pos = rnd.randrange(len(frames)) if rnd.random() < 0.7 else len(frames) - 1
+        dur = abs(frames[pos][1])
+        f = {'anim': anim, 'anim_pos': 2 * pos, 'anim_hold': rnd.choice((-1, 0, 0, rnd.randrange(0, dur + 1))),
+             'heading': facing << 16 | rnd.randrange(0x10000), 'flags4': mirror,
+             'frame': frames[pos][0] if rnd.random() < 0.3 else rnd.choice((frames[0][0], -1, rnd.randrange(0, 0x468))),
+             'frame_wait': rnd.choice((-1, 0, 0, 0, 1, 4)) if k % 3 != 1 else 0, 'flags': rnd.choice((0, 0x20, 0x22)),
+             'flags2': rnd.choice((0, 2)), 'x': rnd.randrange(-150, 150) << 16 | rnd.randrange(0x10000),
+             'vx': rnd.randrange(-0x800, 0x800), 'vy': rnd.randrange(-0x800, 0x800)}
+        rec = bytearray(emu.read(ENTITIES + slot * 0x80, 0x80))
+        put_fields(rec, f)
+        emu.write(ENTITIES + slot * 0x80, rec)
+        del sfx[:]
+        before = entity_fields(emu, slot)
+        emu.call(ADVANCE_ANIMATION, eax=ENTITIES + slot * 0x80)
+        out.append({'slot': slot, 'before': before, 'after': entity_fields(emu, slot), 'sfx': list(sfx)})
+    return out
+
+
 def physics_cases(exe):
     emu = PortEmu(exe)
     rnd = random.Random(1993)
@@ -636,6 +700,7 @@ def physics_cases(exe):
     out['skating'] = skating_cases(emu, rnd, base)
     out['nets'] = net_cases(emu, rnd, base, sfx, goals, infractions)
     out['contacts'] = contact_cases(emu, rnd, base, sfx)
+    out['animation'] = animation_cases(emu, rnd, base, sfx)
     # the entities as entities_init leaves them (every case starts from these)
     emu.write(ENTITIES, base)
     out['base'] = [dict(entity_fields(emu, i), prev=list(struct.unpack('<iii', emu.read(ENTITIES + i * 0x80 + 0x74, 12))))

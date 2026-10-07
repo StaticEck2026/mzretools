@@ -369,6 +369,7 @@ static func puck_give_cup(sim: Sim, e: Entity) -> void:
 		if sim.camera_x > -0x20 or absi(sim.camera_y) > 0x14:
 			return
 		e.flags &= ~Entity.F_STATE_ENTERED
+		e.frame_wait = 0
 		e.set_pos(-0xbe, 3)
 		e.timer_a = 0
 		e.vx = 0
@@ -392,6 +393,7 @@ static func get_cup(sim: Sim, e: Entity) -> void:
 		return
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
+		e.frame_wait = 0
 		e.want_dir = 8
 		e.target_y = 6
 		e.target_x = -0x91
@@ -440,6 +442,7 @@ static func stanley_cup(sim: Sim, e: Entity) -> void:
 		return
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
+		e.frame_wait = 0
 		e.target_x = -0x50
 		e.target_y = 0
 		e.timer_a = 0

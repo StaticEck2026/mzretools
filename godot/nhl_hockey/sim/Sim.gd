@@ -634,7 +634,7 @@ func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) ->
 		var team: Team = teams[e.team] if e.slot < 12 else null
 		if team != null and e.roster_idx >= 0:
 			e.energy = team.energy[e.roster_idx]      # the energy lives in the team record (+0x46)
-		Anim.advance(e)
+		Anim.advance(e, self)
 		e.timer_c = maxi(0, e.timer_c - 1)
 		e.timer_d = maxi(0, e.timer_d - 1)
 		integrate(e)

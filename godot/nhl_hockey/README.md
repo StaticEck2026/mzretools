@@ -116,12 +116,14 @@ the headless test feeds the same inputs to the port and compares, field by field
 | | `apply_skating`, `skating_turn`, `skating_accelerate`, `stop_skating`, `brake`, `goalie_move` | 400 skater, goalie and referee states (100 on seeds that hit the fatigue step) | velocity, heading, animation, flags, the team's energy word, the seed |
 | | `collide_net`, `collide_player_net`, `net_push_off` | 400 states at the nets: goals, posts, the roof, the frame, nets knocked off | the record, the goal, the infractions, the net's velocity, the seed |
 | | `move_entity`, `collide_neighbours`, `collide_pair`, the draw order | 300 clusters of team mates | every record of the cluster, the draw order, the seed |
+| | `advance_animation` | 500 animation states of 81 animations (frames, durations, the ends, the board pins) | the record, the stride sounds |
 
 All of them match. The comparisons found and fixed, among others: the distance (the original's is
 |dx| / cos of the vector's angle from its arctangent and sine tables, not an octagonal estimate), the
 corner, glass and post rules, the puck's jump and spin off the boards, the goalie turning the other way,
 a stride counter the port had invented, the draw order deciding which players collide, the net knocked
-off its pegs, and every FM register of the AdLib driver (`audio/FmDriver.gd` is a literal port).
+off its pegs, the frame shown at most every 5 steps with the skate stride sound, and every FM register
+of the AdLib driver (`audio/FmDriver.gd` is a literal port).
 
 The workflow `.github/workflows/nhl.yml` runs, on every change of the tools, the port or the game files:
 the decoders of `tools/nhl/formats.py` against the game's own (`tools/nhl/test_pack.py`), `golden.py`

@@ -886,7 +886,26 @@ func physics_golden() -> void:
 				fail("move_entity slot %d: %s" % [mover.slot, ", ".join(diff.slice(0, 6))])
 	sim.play_stopped = false
 	sim.sort_draw_order()
-	print("golden physics: %d / %d distances, collide_boards %d / %d, apply_skating %d / %d, at the nets %d / %d, move_entity %d / %d" % [ph["distance"].size() - dbad, ph["distance"].size(), ok, ph["boards"].size(), sk_ok, ph["skating"].size(), n_ok, ph["nets"].size(), c_ok, ph["contacts"].size()])
+	# advance_animation: frames, durations, the end of an animation, the frame countdown, strides
+	var a_ok := 0
+	var a_bad := 0
+	for c: Dictionary in ph["animation"]:
+		var e: Entity = sim.entities[int(c["slot"])]
+		_entity_set(e, c["before"])
+		sim.sfx_queue.clear()
+		sim.speech_busy = false
+		Anim.advance(e, sim)
+		var diff := _entity_diff(e, c["after"])
+		var sfx: Array = c["sfx"]
+		if sim.sfx_queue.size() != sfx.size():
+			diff.append("sounds %s (original %s)" % [str(sim.sfx_queue), str(sfx)])
+		if diff.is_empty():
+			a_ok += 1
+		else:
+			a_bad += 1
+			if a_bad <= 6:
+				fail("advance_animation anim %x pos %d hold %d wait %d: %s" % [int(c["before"]["anim"]), int(c["before"]["anim_pos"]), int(c["before"]["anim_hold"]), int(c["before"]["frame_wait"]), ", ".join(diff)])
+	print("golden physics: %d / %d distances, collide_boards %d / %d, apply_skating %d / %d, at the nets %d / %d, move_entity %d / %d, advance_animation %d / %d" % [ph["distance"].size() - dbad, ph["distance"].size(), ok, ph["boards"].size(), sk_ok, ph["skating"].size(), n_ok, ph["nets"].size(), c_ok, ph["contacts"].size(), a_ok, ph["animation"].size()])
 
 ## the fields of physics.json (ENTITY_FIELDS of golden.py) to and from an entity of the port (the
 ## puck keeps its spin bits, +0x36, in flags3; the others' +0x36 is the facing in heading)
@@ -914,6 +933,7 @@ static func _entity_set(e: Entity, f: Dictionary) -> void:
 	e.anim_hold = int(f["anim_hold"])
 	e.flags = int(f["flags"])
 	e.flags2 = int(f["flags2"])
+	e.frame_wait = int(f["frame_wait"])
 	e.roster_idx = int(f["roster"]) if int(f["roster"]) < 0x80 else -1
 	e.flags4 = int(f["flags4"])
 	e.weight = int(f["weight"])
@@ -927,7 +947,7 @@ static func _entity_get(e: Entity) -> Dictionary:
 		"target_y": e.target_y, "push_x": e.push_x, "push_y": e.push_y,
 		"heading": e.heading, "spin": e.flags3 if e.slot == Entity.Slot.PUCK else (e.heading >> 16) & 0xff,
 		"anim": e.anim, "anim_pos": e.anim_pos, "anim_hold": e.anim_hold, "flags": e.flags, "flags2": e.flags2,
-		"roster": e.roster_idx & 0xff, "flags4": e.flags4, "weight": e.weight, "speed_skill": e.speed_skill,
+		"frame_wait": e.frame_wait, "roster": e.roster_idx & 0xff, "flags4": e.flags4, "weight": e.weight, "speed_skill": e.speed_skill,
 		"stamina": e.stamina, "endurance": e.endurance}
 
 ## the fields of an entity that differ from the original's (heading: the 32 bit word)

@@ -1082,14 +1082,15 @@ static func one_timer_step(sim: Sim, e: Entity) -> void:
 		var d2 := dx * dx + dy * dy
 		if (e.anim_pos == 0 and (e.react_timer < -4 or d2 < 400)) or (e.anim_pos == 2 and d2 < 0x100):
 			e.anim_hold = 0
-			Anim.advance(e)
+			Anim.advance(e, sim)
 		if d2 < 0x65 or (d2 < 0x91 and e.react_timer < -10):
 			if sim.pending_dir > 8:
 				sim.pending_dir = 8
 			sim.shot_power = e.shot_skill / 2 + 0x1e
 			e.anim_pos = 4
 			e.anim_hold = 4
-			Anim.advance(e)
+			e.frame_wait = 0
+			Anim.advance(e, sim)
 			sim.team_of(e).one_timers += 1
 			sim.crowd_noise += 100
 			PuckLogic.update_carrier(sim, e)
@@ -1162,7 +1163,7 @@ static func breakaway(sim: Sim, e: Entity) -> void:
 			var goal_y := 0xe8 if up else -0xe8
 			var dir := Tables.direction8(-e.xi, goal_y - e.yi)
 			Anim.set_animation(e, 0xdd3 if PuckLogic.shot_is_backhand(e, dir) else 0xe2b)
-			Anim.advance(e)
+			Anim.advance(e, sim)
 			e.anim_hold = 2
 			PuckLogic.do_shot(sim, e)
 			return

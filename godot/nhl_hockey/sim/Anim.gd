@@ -39,41 +39,65 @@ static func set_animation(e: Entity, id: int) -> void:
 		e.anim = id
 		e.anim_hold = -1
 
-## One step of the animation; returns true when a frame boundary was crossed
-static func advance(e: Entity) -> bool:
+## advance_animation (0x5caef): one step of the animation. The frame shown (+0x12) is the one the
+## step starts on, and it changes at most every 5 steps (frame_wait, +0x46); a new frame of the
+## skating cycles plays the stride sound (0xb3). A board pin (0x1027..0x1055) that ends leaves the
+## player at the left boards facing the bench (0x7a1)
+static func advance(e: Entity, sim: Sim = null) -> void:
 	if e.anim == 0:
 		e.flags &= ~Entity.F_BUSY
 		e.flags2 &= ~Entity.F2_TURNING
-		return false
-	var base := e.anim      # word index of the entry
+		return
 	var dir := e.facing
 	if e.flags4 & Entity.F4_MIRROR:
 		dir = (8 - dir) & 7
+	var base := e.anim      # word index of the entry
 	var head := Tables.anim_word(base)
 	var off := (head & 0x7fff) if dir == 0 else Tables.anim_word(base + dir)
 	var list := base + off + 8
-	var changed := false
+	var frame := Tables.anim_sword(list + e.anim_pos)
 	if e.anim_hold < 0:
-		# first visit of a frame: load its duration
-		var d := Tables.anim_sword(list + e.anim_pos + 1)
-		e.anim_hold = absi(d)
-		changed = true
+		# first visit of a frame: its duration
+		e.anim_hold = absi(Tables.anim_sword(list + e.anim_pos + 1))
 	else:
 		e.anim_hold -= 1
 		if e.anim_hold < 0:
 			e.anim_pos += 2
-			# duration of the frame we just left: negative = it was the last one
+			# the duration of the frame left: negative = it was the last one
 			if Tables.anim_sword(list + e.anim_pos - 1) < 0:
 				e.anim_pos = 0
 				e.flags &= ~Entity.F_BUSY
 				e.flags2 &= ~Entity.F2_TURNING
+				if e.anim > 0x1026 and e.anim < 0x1056:
+					e.vx = 0
+					e.vy = 0
+					e.x = -0xa0 * 0x10000 + (e.x & 0xffff)
+					e.facing = 2
+					e.flags |= Entity.F_BUSY
+					set_animation(e, 0x7a1)
+					return
 				if (head & 0x8000) == 0:
 					e.anim = 0
-					return true
-			var d := Tables.anim_sword(list + e.anim_pos + 1)
-			e.anim_hold = absi(d)
-			changed = true
-	var f := Tables.anim_word(list + e.anim_pos)
-	if f < 0x46e:
-		e.frame = f
-	return changed
+			e.anim_hold = absi(Tables.anim_sword(list + e.anim_pos + 1))
+	e.frame_wait -= 1
+	if e.frame_wait >= 0:
+		return
+	e.frame_wait = 0
+	if frame == e.frame:
+		return
+	e.frame = frame
+	if sim != null and stride_frame(frame):
+		sim.play_sfx(0xb3)
+	e.frame_wait = 4
+
+## the frames of the skating cycles that put a skate down
+static func stride_frame(f: int) -> bool:
+	if f >= 0x112 and f <= 0x14e and ((f - 0x112) & 3) == 0:
+		return true
+	if f >= 0x207 and f <= 0x215 and (f & 1) != 0:
+		return true
+	if f > 0x314 and f < 0x32b and f % 3 == 0:
+		return true
+	if f > 0x389 and f < 0x3ae and (f - 0x38a) % 5 == 0:
+		return true
+	return f in [0x36f, 0x373, 0x377, 0x3bf, 0x3c3, 0x3ce, 0x3d1]

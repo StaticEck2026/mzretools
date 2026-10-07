@@ -67,7 +67,7 @@ def main():
     # direction word offsets to a list of (frame, duration) pairs starting at entry + 8 words; a
     # negative duration marks the last frame, bit 15 of entry[0] means the animation loops
     t['anim_sequences_base'] = 0xc921d
-    t['anim_sequences'] = shorts(le, 0xc921d, 10777 // 2)
+    t['anim_sequences'] = shorts(le, 0xc921d, 10778 // 2)     # the last duration (of a referee signal) ends at 0xcbc36
     t['dir8_vectors'] = [shorts(le, 0xc90e0 + i * 4, 2) for i in range(8)]
     t['frame_offsets'] = [list(struct.unpack('<2b', le.read(0xcc148 + i * 2, 2))) for i in range(0x2db)]
     # do_shot: aim point per pending_dir as (x, z) pairs; the y is the goal line (+-0xe8)
