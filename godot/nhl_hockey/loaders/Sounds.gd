@@ -19,7 +19,7 @@ const MIX_RATE := 11025
 
 var effects: Dictionary = {}    # sound id -> AudioStreamWAV
 var lengths: Dictionary = {}    # sound id -> note length in seconds
-var programs: Dictionary = {}   # digital timbre program -> [PackedFloat32Array -1..1, loop start, loop end] (DacDriver)
+var programs: Dictionary = {}   # digital timbre program -> [PackedByteArray signed, rate, loop start, loop length] (DacDriver)
 var timbre_count: int = 0
 var sample_count: int = 0
 
@@ -52,13 +52,8 @@ static func load_bank(pat: PackedByteArray, tim: PackedByteArray, dig: PackedByt
 		var length := t.decode_u32(0x14)
 		if length > 0 and length < raw.size():
 			raw = raw.slice(0, length)
-		var f := PackedFloat32Array()
-		f.resize(raw.size())
-		for i in raw.size():
-			var v := raw[i]
-			f[i] = (v - 256 if v >= 128 else v) / 128.0
-		var le := t.decode_u32(0x1c)
-		s.programs[prog] = [f, t.decode_u32(0x18) if le > 0 else 0, le if le <= raw.size() else 0]
+		# load_timbre_file: the sample at +0xc, 11025 at +0x12; the loop from +0x18 for +0x1c samples
+		s.programs[prog] = [raw, MIX_RATE, t.decode_u32(0x18), t.decode_u32(0x1c)]
 	var bank := FmBank.load_bank(pat, [])
 	for id in 256:
 		var rec := bank.record(id)
@@ -79,11 +74,11 @@ static func load_bank(pat: PackedByteArray, tim: PackedByteArray, dig: PackedByt
 		wav.mix_rate = int(round(MIX_RATE * pow(2.0, transpose / 12.0)))
 		wav.data = smp
 		var loop_start := t.decode_u32(0x18)
-		var loop_end := t.decode_u32(0x1c)
-		if loop_end > 0 and loop_end <= smp.size():
+		var loop_len := t.decode_u32(0x1c)
+		if loop_len > 0 and loop_start + loop_len <= smp.size():
 			wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
 			wav.loop_begin = loop_start
-			wav.loop_end = loop_end
+			wav.loop_end = loop_start + loop_len
 		s.effects[id] = wav
 		s.lengths[id] = (rec[0xe] * 6 if rec[0xe] != 0 else 0xa0) / 100.0
 	return s

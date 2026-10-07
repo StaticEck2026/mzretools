@@ -45,9 +45,8 @@ var sounds: Sounds
 var announcer: Announcer             # XBRUCE2.VIV sentences (Speech.gd)
 var music: MusicPlayer               # the FM songs and effects (KMS, PCFF000.TIM)
 var cues: MusicCues                  # play_speech: cue -> song of the home team
-var sfx_left: Dictionary = {}        # AudioStreamPlayer -> seconds until its note ends
-var sfx_players: Array[AudioStreamPlayer] = []
-var crowd_player: AudioStreamPlayer
+var sound_card := 2                  # dword_c541f: the card the sound plays on (MusicPlayer)
+var frame_ticks := 0                  # 100 Hz ticks of the last frame (update_ambient_audio's step)
 var pause_player: AudioStreamPlayer   # PAUSE.IFF on the pause screen (pause_menu, music on)
 var sfx_on := true                    # option_flags 0x80 (S)
 var music_on := true                  # option_flags 0x40 (M)
@@ -220,7 +219,7 @@ func _physics_process(delta: float) -> void:
 	tick_acc += delta * 100.0
 	var ticks := int(tick_acc)
 	tick_acc -= ticks
-	_sfx_lengths(delta)
+	frame_ticks = ticks
 	if front_busy:
 		return
 	match mode:
@@ -300,8 +299,6 @@ func _front_pause(variant: int) -> void:
 	mode = Mode.PAUSED
 	front_busy = true
 	_stop_sounds()
-	if crowd_player != null:
-		crowd_player.stream_paused = true
 	app.front_over_match(true)
 	var code: int = await front.pause_menu(variant, self)
 	_after_front(code)
@@ -312,8 +309,6 @@ func _front_intermission(period_done: int) -> void:
 	mode = Mode.PAUSED
 	front_busy = true
 	_stop_sounds()
-	if crowd_player != null:
-		crowd_player.stream_paused = true
 	app.front_over_match(true)
 	var code: int = await front.intermission(self, period_done)
 	_after_front(code)
@@ -335,8 +330,6 @@ func _after_front(code: int) -> void:
 		return
 	app.front_over_match(false)
 	front_busy = false
-	if crowd_player != null:
-		crowd_player.stream_paused = not sfx_on
 	if code == 7:
 		_start_replay(true)
 		return
@@ -460,9 +453,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			sim.replay.click(int(pos.x) + origin.x - WORLD_X, WORLD_Y - (int(pos.y) + origin.y))
 
 func _stop_sounds() -> void:
-	for p in sfx_players:
-		p.stop()
-	sfx_left.clear()
 	sim.sfx_queue.clear()
 	if announcer != null:
 		announcer.stop()
@@ -480,8 +470,6 @@ func _hotkeys() -> void:
 		sfx_on = not sfx_on
 		if not sfx_on:
 			_stop_sounds()
-		if crowd_player != null:
-			crowd_player.stream_paused = not sfx_on
 	if Input.is_action_just_pressed("toggle_music"):
 		# option_flags 0x40: off stops the song and the sequencer's notes (music_disable)
 		music_on = not music_on
@@ -512,45 +500,19 @@ func _screenshot() -> void:
 
 ## play_sfx of the original queues sound ids; update_ambient_audio keeps the crowd loop running
 func _play_queued_sfx() -> void:
-	if sounds == null or not sfx_on:
+	if music == null or not sfx_on:
 		sim.sfx_queue.clear()
 		return
+	# play_sfx -> snd_play_patch: the effect on the driver of its record (the digital driver's
+	# voices, the OPL2, the speaker or the MT-32), the note ending after the record's length
 	for id in sim.sfx_queue:
-		var stream := sounds.stream(id)
-		if stream == null:
-			# an FM instrument (the puck drop 0xab, 0x94, 0x96)
-			if music != null:
-				music.play_effect(id)
-			continue
-		var p: AudioStreamPlayer = null
-		for cand in sfx_players:
-			if not cand.playing:
-				p = cand
-				break
-		if p == null and sfx_players.size() < 8:
-			p = AudioStreamPlayer.new()
-			add_child(p)
-			sfx_players.append(p)
-		if p != null:
-			p.stream = stream
-			p.play()
-			sfx_left[p] = sounds.lengths.get(id, 0.0)
+		music.play_effect(id)
 	sim.sfx_queue.clear()
-	if crowd_player != null:
-		var crowd := sim.crowd_noise
-		if mode == Mode.REPLAY and sim.replay.frame != null:
-			crowd = sim.replay.frame.crowd
-		crowd_player.volume_db = linear_to_db(clampf(0.15 + crowd / 4000.0, 0.0, 1.0))
-
-## snd_play_patch gives each effect note a length (+0xe of its patch x 6 ticks): the note off
-## ends the sample
-func _sfx_lengths(delta: float) -> void:
-	for p in sfx_left.keys():
-		sfx_left[p] -= delta
-		if sfx_left[p] <= 0.0:
-			if p.playing:
-				p.stop()
-			sfx_left.erase(p)
+	# update_ambient_audio: the crowd of the frame (the replay's recorded crowd)
+	var crowd := sim.crowd_noise
+	if mode == Mode.REPLAY and sim.replay.frame != null:
+		crowd = sim.replay.frame.crowd
+	music.ambient(crowd, maxi(frame_ticks, 1), sfx_on)
 
 ## play_speech / stop_crowd_loop of the simulation: the organ songs (MusicCues)
 func _play_music() -> void:
@@ -934,29 +896,43 @@ func _load_assets() -> void:
 	announcer = Announcer.new()
 	add_child(announcer)
 	announcer.setup(sim, Viv.parse(GameFiles.read_raw("xbruce2.viv")))
-	# sound effects (PCFF001.PAT / .TIM / .DIG)
+	# the sound card (load_sound_config): the card chosen in the front end (NHL.CFG), NHL_SOUND
+	# (sb, adlib, mt32, speaker, gus, none) for a match without it; its banks and drivers play the
+	# songs, the effects, the crowd and (with digitised sound) the speech
+	sound_card = _sound_card()
 	sounds = Sounds.load_bank(GameFiles.read_raw("pcff001.pat"), GameFiles.read_raw("pcff001.tim"), GameFiles.read_raw("pcff001.dig"))
-	if sounds != null and sounds.has(Sounds.CROWD_LOOP):
-		crowd_player = AudioStreamPlayer.new()
-		crowd_player.stream = sounds.stream(Sounds.CROWD_LOOP)
-		crowd_player.volume_db = linear_to_db(0.15)
-		add_child(crowd_player)
-		crowd_player.play()
 	# the recording of the pause screen (PAUSE.IFF, packed 8SVX)
 	var pause_wav := Sounds.load_sample(GameFiles.read_raw("pause.iff"))
 	if pause_wav != null:
 		pause_player = AudioStreamPlayer.new()
 		pause_player.stream = pause_wav
 		add_child(pause_player)
-	# the music driver: PCFF001.PAT with the FM timbres of PCFF000.TIM (SBDAC.SCN), the songs
-	# of the home team (load_music_banks)
-	var fm := FmBank.load_bank(GameFiles.read_raw("pcff001.pat"), [GameFiles.read_raw("pcff000.tim")])
-	if fm != null:
-		music = MusicPlayer.new()
-		add_child(music)
-		music.setup(fm, func(n: String) -> PackedByteArray: return GameFiles.read_raw(n), sounds.programs if sounds != null else {})
-		cues = MusicCues.new(func(n: String) -> bool: return GameFiles.has(n + ".kms"))
-		cues.setup(home_team)
+	music = MusicPlayer.new()
+	add_child(music)
+	music.setup_card(sound_card, func(n: String) -> PackedByteArray: return GameFiles.read_raw(n))
+	music.ambient_resume()
+	announcer.music = music
+	announcer.enabled = music.digital()
+	# the songs of the home team (load_music_banks)
+	cues = MusicCues.new(func(n: String) -> bool: return GameFiles.has(n + ".kms"))
+	cues.setup(home_team, sound_card)
+
+## the card of the match: the front end's choice, else NHL_SOUND, else the Sound Blaster
+func _sound_card() -> int:
+	if front != null:
+		return Session.sound_device
+	match OS.get_environment("NHL_SOUND").to_lower():
+		"adlib":
+			return 4
+		"mt32":
+			return 8
+		"speaker":
+			return 1
+		"gus":
+			return 0x20
+		"none":
+			return 0x10
+	return 2
 
 func _placeholder_rink() -> Texture2D:
 	var img := Image.create(RINK_W, RINK_H, false, Image.FORMAT_RGBA8)

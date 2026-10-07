@@ -131,16 +131,13 @@ func stop_loop() -> void:
 	loop_player.stop()
 	loop_name = ""
 
-## the music driver of the front end: PCFF001.PAT with the FM timbres of PCFF000.TIM, like
-## load_music_banks for the match
+## the sound card of the front end (load_sound_config with the card of NHL.CFG): the title song of
+## the intro and the credits
 func fm_music() -> MusicPlayer:
 	if music == null:
-		var fm := FmBank.load_bank(GameFiles.read_raw("pcff001.pat"), [GameFiles.read_raw("pcff000.tim")])
-		if fm == null:
-			return null
 		music = MusicPlayer.new()
 		add_child(music)
-		music.setup(fm, func(n: String) -> PackedByteArray: return GameFiles.read_raw(n))
+		music.setup_card(Session.sound_device, func(n: String) -> PackedByteArray: return GameFiles.read_raw(n))
 	return music
 
 ## music_load_kms + play_sample_by_ptr: a song (the title song ADTITLE / MTTITLE) when the music is on

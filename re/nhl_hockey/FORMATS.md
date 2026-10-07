@@ -153,7 +153,7 @@ number of timbre files and their numbers at +0x14 (`%0.3sFF%03d.PAT/.TIM`): the 
 with `PCFF000.TIM` (FM) and `PCFF001.TIM` (digital), the Adlib `PCFF004.PAT` with `PCFF000.TIM` and `PCFF002.TIM`.
 
 ```
-.PAT  +0 u16, +2 u8[256] sound / program id -> record index (0 = none, except id 0), records of 0x14 bytes from
+.PAT  +0 u16, +2 u8[256] sound / program id -> record index (0 = none: snd_patch_record), records of 0x14 bytes from
       +0x102: +0 type (0 FM timbre, 1 digital timbre), +1 timbre program, +2 u16 voice mask (0x1ff: any of the 9
       FM voices), +6 voices at most, +7 s8 transpose, +8 s8 fine tune (F-number units), +0xa pitch bend range in
       semitones, +0xc priority (<< 4), +0xe note length of a sound effect (x 6 ticks, 0 = 0xa0 ticks), +0xf driver
@@ -238,8 +238,10 @@ puck drop (`faceoff_resolve`) and before a penalty shot.
 The clips referenced in the code (`pause.cor`, `goalnum.cor`, `scor1per.bar`, `nhl.int`, `roughing.pen`, ...) are
 entries of the speech bank `XBRUCE2.VIV`, an EA `0xC0FB` archive: u16 BE `0xC0FB`, u16 BE size of the index,
 u16 BE entry count (344), then per entry a 24 bit BE offset, a 24 bit BE size (`read_be32` reads three bytes)
-and a zero terminated name (eight `.int` names appear twice). An entry is either raw unsigned 8 bit PCM played
-at 5512 Hz (`speech_load_bank`: duration = size * 100 / 5512 ticks) or packed with pack code `0x47 0xFB`
+and a zero terminated name (eight `.int` names appear twice). An entry is either coded with the 4 bit Fibonacci
+delta code of the menu recordings (two samples a byte, see Sound; `speech_timer` plays these with
+`playsample_raw_loop`, which sets the mixer's packed flag, at 11025 Hz, so a byte lasts 1 / 5512 s:
+`speech_load_bank` counts size * 100 / 5512 ticks) or packed with pack code `0x47 0xFB`
 (`unpack` -> `bytepair_decode`, 0x97a38): 3 bytes, the unpacked size (24 bit BE), the escape byte, the number
 of byte pairs and the pairs (code, left, right); in the data a pair code expands recursively (`bytepair_expand`),
 the escape byte is followed by a literal, an escape followed by 0 ends it. The unpacked data skips a 5 byte

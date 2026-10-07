@@ -4,7 +4,8 @@ extends RefCounted
 ## play_speech (0x59a11) picks one for a cue of the simulation (Sim.music_queue):
 ##   0..5  the home team's songs (Tables.music_team_songs; none: one of the random songs)
 ##   6..8  three songs drawn from Tables.music_pool, none of the team's and no two alike
-##   9     the "rock" stomp of the sound card (SBROCKU for the Sound Blaster), with the clapping
+##   9     the "rock" stomp of the sound card (SBROCKU with digitised sound, MTROCKU for the MT-32,
+##         ADROCKU for the others), with the clapping
 ##   10    the anthem of the home team's country (CANADA / USA)
 ##   11    ROCKDITI
 ## The simulation queues the cues; -1 stops the song (stop_crowd_loop at the faceoff).
@@ -17,13 +18,15 @@ var random_songs: Array = ["", "", ""]
 var anthem := ""
 var rng := RandomNumberGenerator.new()
 var exists: Callable              # name -> bool (the .KMS file is there)
+var rocku := ROCKU
 
 func _init(file_exists: Callable = Callable()) -> void:
 	exists = file_exists
 	rng.randomize()
 
-## load_music_banks for the home team (database index)
-func setup(home: int) -> void:
+## load_music_banks for the home team (database index) and the sound card (dword_c541f)
+func setup(home: int, card: int = 2) -> void:
+	rocku = "MTROCKU" if card == 8 else ("SBROCKU" if card == 2 or card == 0x20 else "ADROCKU")
 	var row := home if home <= 0x19 else 0xd
 	var ids: Array = Tables.music_team_songs[row] if row < Tables.music_team_songs.size() else [-1, -1, -1, -1, -1, -1]
 	for k in 6:
@@ -59,7 +62,7 @@ func song_for(id: int) -> String:
 	if id < 9:
 		return random_songs[id - 6]
 	match id:
-		9: return ROCKU
+		9: return rocku
 		10: return anthem
 		11: return ROCKDITI
 	return ""

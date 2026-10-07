@@ -5,6 +5,8 @@ extends Node
 ## starts 0x1a ticks (100 Hz) before the current one ends, and after the last one the announcer
 ## stays busy another 0x1a ticks. A new sentence interrupts the running one (speech_reset). While
 ## busy, Sim.speech_busy holds the stoppage (penalty_box_update) and the cup presentation.
+## The clips play on the digital driver's mixer, voices 0 and 1 in turn at 11025 Hz and full
+## volume (playsample_raw / playsample_raw_loop), where the effects also take their voices.
 
 const TRIM_TICKS := 0x1a
 
@@ -17,6 +19,8 @@ var wait := 0.0          # seconds until the next clip
 var cooldown := 0.0
 var playing := false
 var enabled := true
+var music: MusicPlayer = null      # the sound card (its digital driver plays the clips)
+var voice := 0                     # dword_d27b2
 
 func setup(s: Sim, bank: Viv) -> void:
 	sim = s
@@ -56,8 +60,13 @@ func _next() -> void:
 		return
 	var name := clips[index]
 	index += 1
-	player.stream = viv.stream(name)
-	player.play()
+	if music != null and music.digital():
+		var smp := viv.samples(name)
+		voice = (voice + 1) & 1
+		music.play_sample(voice, smp[0], smp[1], 0x7f)
+	else:
+		player.stream = viv.stream(name)
+		player.play()
 	wait += maxi(viv.ticks(name) - TRIM_TICKS, 1) / 100.0
 
 func stop() -> void:

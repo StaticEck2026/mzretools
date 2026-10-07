@@ -26,6 +26,7 @@ const VOL_GAIN := [0, 1232, 2463, 3695, 4926, 6158, 7389, 8621, 9852, 10060, 102
 	15853, 15964, 16072, 16180, 16287, 16384, 16384, 16384, 16384, 16384, 16384, 16384, 16384, 16384, 16384, 16384]
 const OP_REGS := [0x23, 0x43, 0x63, 0x83, 0xe3, 0x20, 0x40, 0x60, 0x80, 0xe0]
 const OP_OFFSET := [0, 1, 2, 8, 9, 10, 16, 17, 18]
+const CLASS := 1                      # the driver class of the FM records (+0xf of a patch record)
 
 class Channel:
 	var program := 0
@@ -177,9 +178,9 @@ func note_on(ch: int, note: int, vel: int) -> void:
 		program = note + 0x5c
 		play = 0x3c
 	var patch := bank.record(program)
-	if patch.is_empty() or patch[0] != 0:
+	if patch.is_empty() or (patch[0xf] & 0x7f) != CLASS:
 		return
-	var timbre := bank.timbre(patch[1])
+	var timbre := bank.timbre(patch[1], patch[0])
 	if timbre.is_empty():
 		return
 	var v: Voice = null

@@ -2,13 +2,15 @@ class_name Viv
 ## The announcer's speech bank XBRUCE2.VIV (speech_load_bank 0x83897): an EA 0xC0FB archive.
 ##   +0 u16 BE 0xC0FB, +2 u16 BE size of the index, +4 u16 BE entry count, then per entry a 24 bit
 ##   BE offset, a 24 bit BE size (read_be32 reads three bytes) and a zero terminated name.
-## An entry is either raw unsigned 8 bit PCM played at 5512 Hz (the duration is size * 100 / 5512
-## ticks) or packed with code 0x47 0xFB (unpack -> bytepair_decode 0x97a38: an escape byte, a
+## An entry is either coded with the 4 bit Fibonacci delta code of the menu recordings (two samples a
+## byte, low nibble first: speech_timer plays it with playsample_raw_loop, i.e. the mixer's packed
+## flag, at 11025 Hz, so a byte lasts 1 / 5512 s; the duration is size * 100 / 5512 ticks) or packed
+## with code 0x47 0xFB (unpack -> bytepair_decode 0x97a38: an escape byte, a
 ## table of byte pairs that expand recursively, the escape followed by 0 ends the data); the
 ## unpacked data skips a 5 byte header and is a running sum (speech_delta_decode) of signed 8 bit samples
 ## played at 11025 Hz.
 
-const RAW_RATE := 5512
+const RAW_RATE := 5512               # bytes a second of a delta coded clip (two samples a byte at 11025 Hz)
 const PACKED_RATE := 11025
 
 var data: PackedByteArray
@@ -110,11 +112,7 @@ func samples(name: String) -> Array:
 			acc = (acc + un[i + 5]) & 0xff
 			pcm[i] = acc
 		return [pcm, PACKED_RATE]
-	var s := PackedByteArray()
-	s.resize(raw.size())
-	for i in raw.size():
-		s[i] = raw[i] ^ 0x80
-	return [s, RAW_RATE]
+	return [Sounds.fibdelta_decode(raw), PACKED_RATE]
 
 ## the clip as an AudioStreamWAV (cached), null when the bank has no such clip
 func stream(name: String) -> AudioStreamWAV:

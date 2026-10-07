@@ -400,7 +400,8 @@ func asset_tests() -> void:
 		if horn == null or horn.data.size() != 77078 or horn.mix_rate != 11025:
 			fail("goal horn sample")
 		var crowd := snd.stream(0x7d)
-		if crowd == null or crowd.loop_mode != AudioStreamWAV.LOOP_FORWARD or crowd.loop_begin != 3856 or crowd.loop_end != 9971:
+		# the timbre's +0x18 is the loop start, +0x1c its length (mix_voice_sample)
+		if crowd == null or crowd.loop_mode != AudioStreamWAV.LOOP_FORWARD or crowd.loop_begin != 3856 or crowd.loop_end != 3856 + 9971:
 			fail("crowd loop")
 		var post := snd.stream(0xac)
 		if post == null or post.data.size() != 7040 or post.mix_rate != 9822:
@@ -410,7 +411,100 @@ func asset_tests() -> void:
 		if absf(snd.lengths.get(0x97, 0.0) - 0.36) > 0.001 or absf(snd.lengths.get(0x7b, 0.0) - 1.6) > 0.001:
 			fail("effect note lengths")
 		audio_tests(gf, snd)
+		sound_card_tests(gf)
 	league_tests(gf)
+
+## the sound cards (load_sound_config): the Sound Blaster's digital driver and its mixer (the
+## effects on voices 0 / 1, the crowd's roar and murmur on 2 / 3), the AdLib's FM effects, the PC
+## speaker driver and the MT-32's MIDI stream
+func sound_card_tests(gf: Node) -> void:
+	var reader := func(n: String) -> PackedByteArray: return gf.read_raw(n)
+	var sb := MusicPlayer.new()
+	if not sb.setup_card(2, reader) or sb.dac == null or sb.driver == null:
+		fail("Sound Blaster setup")
+		sb.free()
+		return
+	# the goal horn: drum note 0x40 on channel 9 plays record 0x9c (voices 0 / 1)
+	sb.play_effect(0x9c)
+	var m0: DacDriver.MixVoice = sb.dac.mix[0]
+	if m0.active != 1 or sb.dac.voices[0].owner != 9 or m0.data.size() != 77078 or m0.step != 0x10000:
+		fail("goal horn voice: %s" % str([m0.active, sb.dac.voices[0].owner, m0.data.size(), m0.step]))
+	# update_ambient_audio: crowd 0x300 -> roar volume 25 on voice 2, murmur 74 on voice 3 bent to 56
+	sb.ambient(0x300, 50, true)
+	var m2: DacDriver.MixVoice = sb.dac.mix[2]
+	var m3: DacDriver.MixVoice = sb.dac.mix[3]
+	if m2.active != 1 or m2.volume != 25 or m3.active != 1 or m3.volume != 74 or sb.dac.channels[7].bend != 56 * 256 - 0x4000:
+		fail("crowd voices: %s" % str([m2.active, m2.volume, m3.active, m3.volume, sb.dac.channels[7].bend]))
+	if m2.loop_start != 3856 or m2.loop_end != 3856 + 9971:
+		fail("roar loop %d..%d" % [m2.loop_start, m2.loop_end])
+	var out := sb.render(int(MusicPlayer.RATE))
+	var peak := 0.0
+	var energy := 0.0
+	for x in out:
+		peak = maxf(peak, absf(x))
+		energy += x * x
+	if sqrt(energy / out.size()) < 0.01 or peak > 1.0:
+		fail("Sound Blaster output: rms %.3f peak %.3f" % [sqrt(energy / out.size()), peak])
+	# the level falls by 30 a tick: the roar stops (voice 2 stops at its note off), the murmur stays
+	sb.ambient(0, 1000, true)
+	if m2.active != 0 or m3.active != 1 or m3.volume != 10:
+		fail("crowd down: %s" % str([m2.active, m3.active, m3.volume]))
+	# a speech clip on voice 1 (playsample_raw_loop: the delta coded clip at 11025 Hz)
+	var viv := Viv.parse(gf.read_raw("xbruce2.viv"))
+	var clip := viv.samples("goalnum.cor")
+	sb.play_sample(1, clip[0], clip[1], 0x7f)
+	if (sb.dac.mix[1] as DacDriver.MixVoice).active != 1 or sb.sample_done(1):
+		fail("speech voice")
+	sb.free()
+	# the AdLib: the horn is an FM timbre of PCFF002.TIM (type 2) on the OPL2, no crowd
+	var ad := MusicPlayer.new()
+	if not ad.setup_card(4, reader) or ad.dac != null or ad.driver == null:
+		fail("AdLib setup")
+	else:
+		ad.play_effect(0x9c)
+		var horn := false
+		for v: FmDriver.Voice in ad.driver.voices:
+			if v.allocated and v.channel == 9 and v.program == 0x9c:
+				horn = true
+		if not horn:
+			fail("AdLib horn")
+		ad.ambient(0x300, 50, true)
+		if ad.roar != 0 or ad.murmur != 0:
+			fail("AdLib has no crowd")
+	ad.free()
+	# the PC speaker: one voice, the envelope ends the note; the gate opens with the note's divisor
+	var pc := MusicPlayer.new()
+	if not pc.setup_card(1, reader) or pc.speaker == null:
+		fail("PC speaker setup")
+	else:
+		pc.play_effect(0x9c)
+		var v1: PcSpeaker.Voice = pc.speaker.voices[1]
+		if v1.active != 1 or v1.timbre.size() < 0x43:
+			fail("speaker voice")
+		pc._tick()
+		if not pc.speaker.gate or pc.speaker.out_div <= 0:
+			fail("speaker gate")
+		var t := 0
+		while v1.active != 0 and t < 1000:
+			pc._tick()
+			t += 1
+		pc._tick()
+		if v1.active != 0 or pc.speaker.gate:
+			fail("speaker note did not end (%d ticks)" % t)
+	pc.free()
+	# the MT-32: MT32HOCK.KMS's system exclusive messages at the start, the horn a rhythm note
+	var mt := MusicPlayer.new()
+	if not mt.setup_card(8, reader) or mt.mt32 == null:
+		fail("MT-32 setup")
+	else:
+		if mt.mt32.sysex_count < 10:
+			fail("MT32HOCK set-up: %d messages" % mt.mt32.sysex_count)
+		mt.play_effect(0x9c)
+		var st := mt.mt32.stream
+		if st.size() < 3 or Array(st.slice(st.size() - 3)) != [0x99, 0x40, 0x7f]:
+			fail("MT-32 horn bytes: %s" % str(Array(st.slice(maxi(st.size() - 6, 0)))))
+		print("sound cards: SB / AdLib / speaker / MT-32 checked (%d MT-32 set-up messages)" % mt.mt32.sysex_count)
+	mt.free()
 
 ## a league of computer teams: the schedule, a whole season of simulated games, the play-offs
 func league_tests(gf: Node) -> void:
@@ -1033,7 +1127,7 @@ func crowd_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 		fail("away bench cheer: spot %d at y %d" % [bench.id, bench.y])
 	print("crowd: %d figures after 300 steps" % active)
 
-## the announcer: XBRUCE2.VIV clips (raw 5512 Hz and byte pair packed 11025 Hz) and the sentences
+## the announcer: XBRUCE2.VIV clips (4 bit delta coded and byte pair packed, both 11025 Hz) and the sentences
 func speech_tests(bos: Database.TeamInfo, det: Database.TeamInfo, gf: Node) -> void:
 	var viv := Viv.parse(gf.read_raw("xbruce2.viv"))
 	if viv == null or viv.count != 344 or viv.entries.size() != 336:
@@ -1041,8 +1135,18 @@ func speech_tests(bos: Database.TeamInfo, det: Database.TeamInfo, gf: Node) -> v
 		return
 	var raw := viv.samples("goalnum.cor")
 	var packed := viv.samples("la.rnk")
-	if raw.is_empty() or raw[1] != 5512 or raw[0].size() != 8192:
-		fail("raw speech clip")
+	if raw.is_empty() or raw[1] != 11025 or raw[0].size() != 16384:
+		fail("delta coded speech clip")
+	else:
+		# decoded, the clip never wraps the accumulator (as 8 bit PCM it would be noise)
+		var lo := 0
+		var hi := 0
+		for b in raw[0]:
+			var v: int = b - 256 if b >= 128 else b
+			lo = mini(lo, v)
+			hi = maxi(hi, v)
+		if lo < -120 or hi > 120:
+			fail("delta coded speech clip range %d..%d" % [lo, hi])
 	if packed.is_empty() or packed[1] != 11025 or packed[0].size() != 23768 or packed[0][11] != 0xff:
 		fail("packed speech clip: %s" % str(packed[0].size() if not packed.is_empty() else -1))
 	# every clip a sentence can name exists in the bank

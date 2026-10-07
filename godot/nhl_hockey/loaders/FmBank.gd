@@ -4,7 +4,7 @@ extends RefCounted
 ## names a patch file and its timbre files, `%.3sFF%03d.PAT/.TIM` (SBDAC.SCN: PCFF001.PAT with
 ## PCFF000.TIM for the FM instruments and PCFF001.TIM for the digital ones).
 ##
-##   .PAT  +0 u16, +2 u8[256] sound / program id -> record index (0 = none, except id 0),
+##   .PAT  +0 u16, +2 u8[256] sound / program id -> record index (0 = none),
 ##         records of 0x14 bytes from +0x102: +0 type (0 FM timbre, 1 digital timbre), +1 timbre
 ##         program, +2 u16 voice mask, +6 voices at most, +7 s8 transpose, +8 s8 fine tune,
 ##         +0xa pitch bend range (semitones), +0xc priority, +0xe note length of a sound effect
@@ -58,7 +58,7 @@ func record(id: int) -> PackedByteArray:
 	if id < 0 or id > 0xff:
 		return PackedByteArray()
 	var r := pat[2 + id]
-	if r == 0 and id != 0:
+	if r == 0:
 		return PackedByteArray()
 	var o := 0x102 + r * 0x14
 	if o + 0x14 > pat.size():

@@ -755,8 +755,10 @@ def bytepair_decode(src):
     return bytes(out)
 
 def viv_clip(data, off, size):
-    '''A speech clip as a Sample: raw entries are unsigned 8 bit at 5512 Hz, packed ones (0x47 0xFB)
-    unpack to a 5 byte header and a running sum of signed 8 bit samples at 11025 Hz.'''
+    '''A speech clip as a Sample at 11025 Hz: the entries without a pack code hold the 4 bit
+    Fibonacci delta code of the menu recordings (two samples a byte; speech_timer plays them with the
+    mixer's packed flag), packed ones (0x47 0xFB) unpack to a 5 byte header and a running sum of
+    signed 8 bit samples.'''
     raw = data[off:off + size]
     if raw[0:2] == b'\x47\xfb':
         un = bytepair_decode(raw)
@@ -766,7 +768,7 @@ def viv_clip(data, off, size):
             acc = (acc + b) & 0xff
             pcm.append(acc)
         return Sample(11025, bytes(pcm))
-    return Sample(5512, bytes(b ^ 0x80 for b in raw))
+    return Sample(11025, fibdelta_decode(raw))
 
 # ----------------------------------------------------------------------------------------------
 # Rink tiles (.til) and tile map (.map)
