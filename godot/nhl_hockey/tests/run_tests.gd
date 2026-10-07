@@ -717,14 +717,7 @@ func physics_golden() -> void:
 		sim.sfx_queue.clear()
 		sim.play_stopped = false
 		sim.collide_boards(e, int(c["px"]), int(c["py"]), e.half_w, e.half_h)
-		var want: Dictionary = c["after"]
-		var got := _entity_get(e)
-		var diff := []
-		for k in want:
-			if k == "spin" and e.slot != Entity.Slot.PUCK:
-				continue
-			if int(got[k]) != int(want[k]):
-				diff.append("%s %d (original %d)" % [k, got[k], want[k]])
+		var diff := _entity_diff(e, c["after"])
 		var sfx: Array = c["sfx"]
 		if sim.sfx_queue.size() != sfx.size() or (sfx.size() > 0 and sim.sfx_queue[0] != int(sfx[0])):
 			diff.append("sounds %s (original %s)" % [str(sim.sfx_queue), str(sfx)])
@@ -736,9 +729,48 @@ func physics_golden() -> void:
 			bad += 1
 			if bad <= 6:
 				fail("collide_boards slot %d at %d,%d v %d,%d: %s" % [e.slot, int(c["px"]), int(c["py"]), int(before["vx"]), int(before["vy"]), ", ".join(diff)])
-	print("golden physics: %d / %d distances, collide_boards %d / %d" % [ph["distance"].size() - dbad, ph["distance"].size(), ok, ph["boards"].size()])
+	# apply_skating: turning, accelerating, braking, the goalie's steps, the fatigue
+	var sk_ok := 0
+	var sk_bad := 0
+	for c: Dictionary in ph["skating"]:
+		var e: Entity = sim.entities[int(c["slot"])]
+		_entity_set(e, c["before"])
+		var team: Team = sim.teams[e.team] if e.slot < 12 else null
+		if team != null and e.roster_idx >= 0:
+			team.energy[e.roster_idx] = int(c["energy"])
+		e.energy = int(c["energy"])
+		var p: Array = c["puck"]
+		sim.puck.x = int(p[0]) << 16
+		sim.puck.y = int(p[1]) << 16
+		sim.puck.vy = int(p[2])
+		sim.puck_carrier = int(c["carrier"])
+		var gfl := int(c["game_flags"])
+		sim.play_stopped = (gfl & 1) != 0
+		sim.delayed_call = (gfl & 8) != 0
+		sim.offside_warning = (int(c["stop_flags"]) & 0x80) != 0
+		sim.whistle_timer = int(c["whistle"])
+		sim.opt_line_changes = (int(c["options"]) & 4) != 0
+		sim.seed = int(c["seed"])
+		sim.apply_skating(e, int(c["dir"]))
+		var diff := _entity_diff(e, c["after"])
+		if team != null and e.roster_idx >= 0 and e.energy != int(c["energy_after"]):
+			diff.append("energy %d (original %d)" % [e.energy, int(c["energy_after"])])
+		if sim.seed != int(c["final_seed"]):
+			diff.append("seed")
+		if diff.is_empty():
+			sk_ok += 1
+		else:
+			sk_bad += 1
+			if sk_bad <= 8:
+				fail("apply_skating slot %d line %d dir %d v %d,%d facing %d: %s" % [e.slot, e.line_slot, int(c["dir"]), int(c["before"]["vx"]), int(c["before"]["vy"]), (int(c["before"]["heading"]) >> 16) & 7, ", ".join(diff)])
+	sim.play_stopped = false
+	sim.delayed_call = false
+	sim.offside_warning = false
+	sim.whistle_timer = 0
+	print("golden physics: %d / %d distances, collide_boards %d / %d, apply_skating %d / %d" % [ph["distance"].size() - dbad, ph["distance"].size(), ok, ph["boards"].size(), sk_ok, ph["skating"].size()])
 
-## the fields of physics.json (ENTITY_FIELDS of golden.py) to and from an entity of the port
+## the fields of physics.json (ENTITY_FIELDS of golden.py) to and from an entity of the port (the
+## puck keeps its spin bits, +0x36, in flags3; the others' +0x36 is the facing in heading)
 static func _entity_set(e: Entity, f: Dictionary) -> void:
 	e.x = int(f["x"])
 	e.y = int(f["y"])
@@ -748,23 +780,47 @@ static func _entity_set(e: Entity, f: Dictionary) -> void:
 	e.vz = int(f["vz"])
 	e.frame = int(f["frame"])
 	e.speed = int(f["speed"])
+	e.line_slot = int(f["line_slot"])
 	e.push_x = int(f["push_x"])
 	e.push_y = int(f["push_y"])
+	e.heading = int(f["heading"]) & 0xffffffff
 	if e.slot == Entity.Slot.PUCK:
 		e.flags3 = int(f["spin"])
-	else:
-		e.heading = (e.heading & 0xffff) | (int(f["spin"]) << 16)
 	e.anim = int(f["anim"])
 	e.anim_pos = int(f["anim_pos"])
 	e.anim_hold = int(f["anim_hold"])
 	e.flags = int(f["flags"])
+	e.flags2 = int(f["flags2"])
+	e.roster_idx = int(f["roster"]) if int(f["roster"]) < 0x80 else -1
 	e.flags4 = int(f["flags4"])
+	e.weight = int(f["weight"])
+	e.speed_skill = int(f["speed_skill"])
+	e.stamina = int(f["stamina"])
+	e.endurance = int(f["endurance"])
 
 static func _entity_get(e: Entity) -> Dictionary:
 	return {"x": e.x, "y": e.y, "z": e.z, "vx": e.vx, "vy": e.vy, "vz": e.vz, "frame": e.frame,
-		"speed": e.speed, "push_x": e.push_x, "push_y": e.push_y,
-		"spin": e.flags3 if e.slot == Entity.Slot.PUCK else (e.heading >> 16) & 0xff,
-		"anim": e.anim, "anim_pos": e.anim_pos, "anim_hold": e.anim_hold, "flags": e.flags, "flags4": e.flags4}
+		"speed": e.speed, "line_slot": e.line_slot, "push_x": e.push_x, "push_y": e.push_y,
+		"heading": e.heading, "spin": e.flags3 if e.slot == Entity.Slot.PUCK else (e.heading >> 16) & 0xff,
+		"anim": e.anim, "anim_pos": e.anim_pos, "anim_hold": e.anim_hold, "flags": e.flags, "flags2": e.flags2,
+		"roster": e.roster_idx & 0xff, "flags4": e.flags4, "weight": e.weight, "speed_skill": e.speed_skill,
+		"stamina": e.stamina, "endurance": e.endurance}
+
+## the fields of an entity that differ from the original's (heading: the 32 bit word)
+static func _entity_diff(e: Entity, want: Dictionary) -> Array:
+	var got := _entity_get(e)
+	var diff := []
+	for k in want:
+		if k == "heading" and e.slot == Entity.Slot.PUCK:
+			continue
+		if k == "spin" and e.slot != Entity.Slot.PUCK:
+			continue
+		var w := int(want[k])
+		if k == "heading":
+			w &= 0xffffffff
+		if int(got[k]) != w:
+			diff.append("%s %d (original %d)" % [k, got[k], w])
+	return diff
 
 ## a league of computer teams: the schedule, a whole season of simulated games, the play-offs
 func league_tests(gf: Node) -> void:

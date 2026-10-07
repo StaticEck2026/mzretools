@@ -10,7 +10,9 @@
 #   pc_speaker.json  the PC speaker driver (pcspk_*): the PIT divisor and the speaker gate every tick
 #   physics.json     approx_distance and direction8 on vectors; collide_boards (with collide_corner,
 #                    bounce_off_boards, puck_spin) on puck and skater states at the boards: the entity
-#                    record after the call, the sound effects asked for (play_sfx stubbed), the seed
+#                    record after the call, the sound effects asked for (play_sfx stubbed), the seed;
+#                    apply_skating (skating_turn, skating_accelerate, stop_skating, brake, goalie_move)
+#                    on skater, goalie and referee states with a direction
 #
 # The patch bank is put in the emulator's memory the way loadpatches leaves it: the .PAT file at
 # snd_patch_bank, each record's +0x10 pointing at its timbre from the .TIM files.
@@ -313,15 +315,99 @@ def pc_cases(exe, gamedir):
 
 # the fields of an entity record compared (STRUCTURES.md): name, offset, size (negative: signed)
 ENTITY_FIELDS = (('x', 0, -4), ('y', 4, -4), ('z', 8, -4), ('vx', 0xc, -2), ('vy', 0xe, -2), ('vz', 0x10, -2),
-                 ('frame', 0x12, -2), ('speed', 0x18, -2), ('push_x', 0x30, -2), ('push_y', 0x32, -2),
-                 ('spin', 0x36, 1), ('anim', 0x38, -2), ('anim_pos', 0x3a, -2), ('anim_hold', 0x3c, -2),
-                 ('flags', 0x44, 1), ('flags4', 0x55, 1))
+                 ('frame', 0x12, -2), ('speed', 0x18, -2), ('line_slot', 0x1a, -2), ('push_x', 0x30, -2),
+                 ('push_y', 0x32, -2), ('heading', 0x34, -4), ('spin', 0x36, 1), ('anim', 0x38, -2),
+                 ('anim_pos', 0x3a, -2), ('anim_hold', 0x3c, -2), ('flags', 0x44, 1), ('flags2', 0x45, 1),
+                 ('roster', 0x47, 1), ('flags4', 0x55, 1), ('weight', 0x56, 1), ('speed_skill', 0x57, 1),
+                 ('stamina', 0x58, 1), ('endurance', 0x61, 1))
+APPLY_SKATING = 0x5e16d
+PUCK = ENTITIES + 14 * 0x80
+GAME_FLAGS = 0xc90bb
+STOP_FLAGS = 0xc90be
+WHISTLE_TIMER = 0xc90d2
+OPTION_FLAGS = 0xc53ff
+TEAM_RECORDS = (0xdf614, 0xdf714)             # +0x46: the energy word of each roster player
 _FMT = {1: 'B', -1: 'b', 2: 'H', -2: 'h', 4: 'I', -4: 'i'}
 
 
 def entity_fields(emu, slot):
     rec = emu.read(ENTITIES + slot * 0x80, 0x80)
     return {n: struct.unpack_from('<' + _FMT[k], rec, o)[0] for n, o, k in ENTITY_FIELDS}
+
+
+def put_fields(rec, fields):
+    for n, o, sz in ENTITY_FIELDS:
+        if n in fields:
+            v = fields[n]
+            struct.pack_into('<' + _FMT[sz], rec, o, v if sz < 0 else v & ((1 << (8 * sz)) - 1))
+
+
+def skating_cases(emu, rnd, base):
+    '''apply_skating (skating_turn, skating_accelerate, stop_skating, brake, goalie_move)'''
+    out = []
+    anims = (0, 0x289, 0x2a1, 0x2e9, 0x331, 0x349, 0x361, 0x529, 0x541, 0x99, 0xa5b, 0xad3)
+    for k in range(400):
+        emu.write(ENTITIES, base)
+        slot = (2, 3, 8, 10, 0, 6, 16)[k % 7]
+        rec = bytearray(emu.read(ENTITIES + slot * 0x80, 0x80))
+        line_slot = 0 if slot in (0, 6) else (rnd.randrange(1, 6) if slot < 12 else -1)
+        lim = rnd.choice((0x300, 0x1800, 0x3000))
+        f = {'x': rnd.randrange(-150, 150) << 16 | rnd.randrange(0x10000),
+             'y': rnd.randrange(-250, 250) << 16 | rnd.randrange(0x10000),
+             'vx': rnd.randrange(-lim, lim) if rnd.random() < 0.85 else 0,
+             'vy': rnd.randrange(-lim, lim) if rnd.random() < 0.85 else 0,
+             'line_slot': line_slot, 'heading': rnd.randrange(8) << 16 | rnd.randrange(0x10000),
+             'speed': rnd.randrange(0, 21),
+             'anim': rnd.choice(anims), 'anim_pos': rnd.randrange(0, 6), 'anim_hold': rnd.randrange(-1, 4),
+             'flags': (rnd.choice((0, 0x10)) | rnd.choice((0, 0x80)) | (0x40 if 6 <= slot < 12 else 0)),
+             'flags2': rnd.choice((0, 0, 2, 0x40)), 'flags4': rnd.choice((0, 8)),
+             'roster': rnd.randrange(0, 20), 'weight': rnd.randrange(140, 230),
+             'speed_skill': rnd.randrange(0, 16), 'stamina': rnd.randrange(0, 16),
+             'endurance': rnd.randrange(0, 0x40)}
+        put_fields(rec, f)
+        emu.write(ENTITIES + slot * 0x80, rec)
+        energy = rnd.choice((0x1000, rnd.randrange(0, 0x1001), 0xc10, 0xbf0))
+        team = TEAM_RECORDS[1 if f['flags'] & 0x40 else 0]
+        emu.write(team + 0x46 + f['roster'] * 2, struct.pack('<h', energy))
+        puck = bytearray(emu.read(PUCK, 0x80))
+        put_fields(puck, {'x': rnd.randrange(-150, 150) << 16, 'y': rnd.randrange(-250, 250) << 16,
+                          'vy': rnd.randrange(-0x3000, 0x3000)})
+        carrier = rnd.choice((-1, -1, slot, 4 if slot != 4 else 9))
+        puck[0x42] = carrier & 0xff
+        emu.write(PUCK, puck)
+        game = rnd.choice((0, 0, 1, 8))
+        stop = rnd.choice((0, 0, 0x80))
+        whistle = rnd.choice((0, 0, 0, 5))
+        options = rnd.choice((0, 4))
+        emu.write(GAME_FLAGS, bytes([game]))
+        emu.write(STOP_FLAGS, struct.pack('<H', stop))
+        emu.write(WHISTLE_TIMER, struct.pack('<I', whistle))
+        emu.write(OPTION_FLAGS, struct.pack('<I', options))
+        seed = rnd.getrandbits(32)
+        if k >= 300:
+            # the next randomrange(0x80) gives 0: the fatigue step of skating_accelerate
+            nxt = (rnd.getrandbits(8) | (rnd.randrange(2) << 8)) << 8 | rnd.getrandbits(8) | rnd.getrandbits(8) << 24
+            seed = ((nxt - 1) * pow(0xbb40e62d, -1, 1 << 32)) & 0xffffffff
+            options = 4
+            game = 0
+            emu.write(GAME_FLAGS, bytes([game]))
+            emu.write(OPTION_FLAGS, struct.pack('<I', options))
+        emu.write(SEED, struct.pack('<I', seed))
+        d = rnd.choice((0, 1, 2, 3, 4, 5, 6, 7, 8, 9))
+        before = entity_fields(emu, slot)
+        emu.call(APPLY_SKATING, eax=ENTITIES + slot * 0x80, edx=d)
+        out.append({'slot': slot, 'dir': d, 'energy': energy, 'carrier': carrier,
+                    'puck': [struct.unpack_from('<h', puck, 2)[0], struct.unpack_from('<h', puck, 6)[0],
+                             struct.unpack_from('<h', puck, 0xe)[0]],
+                    'game_flags': game, 'stop_flags': stop, 'whistle': whistle, 'options': options,
+                    'seed': seed, 'before': before, 'after': entity_fields(emu, slot),
+                    'energy_after': struct.unpack('<h', emu.read(team + 0x46 + f['roster'] * 2, 2))[0],
+                    'final_seed': struct.unpack('<I', emu.read(SEED, 4))[0]})
+        emu.write(GAME_FLAGS, b'\0')
+        emu.write(STOP_FLAGS, b'\0\0')
+        emu.write(WHISTLE_TIMER, b'\0' * 4)
+        emu.write(OPTION_FLAGS, b'\0' * 4)
+    return out
 
 
 def physics_cases(exe):
@@ -385,6 +471,7 @@ def physics_cases(exe):
                               'prev_x': fields['prev_x'], 'prev_y': fields['prev_y'], 'before': before,
                               'after': entity_fields(emu, slot), 'sfx': list(sfx),
                               'final_seed': struct.unpack('<I', emu.read(SEED, 4))[0]})
+    out['skating'] = skating_cases(emu, rnd, base)
     return out
 
 

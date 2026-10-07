@@ -986,7 +986,6 @@ func skating_accelerate(e: Entity, dir: int) -> void:
 	if sp2 <= limit:
 		e.vx = nvx
 		e.vy = nvy
-	e.speed = 20
 	# fatigue (end of skating_accelerate): now and then a skater loses 0x28 energy; a fresh one
 	# (>= 0xc00 left) gets his endurance rating back
 	if e.slot < 12 and opt_line_changes and not play_stopped and e.line_slot != 0 and random(0x80) == 0:
@@ -1034,12 +1033,13 @@ func goalie_move(e: Entity, dir: int) -> void:
 			return
 		Anim.set_animation(e, 1)
 		return
+	# while he goes for the puck (GOALIE_GET_PUCK) he turns towards it, else towards the input;
+	# one step a call, the shorter way (clockwise when it is behind him)
 	var target_dir := dir
-	if not play_stopped and puck_carrier != e.slot and e.state() == Entity.State.GOALIE:
+	if not play_stopped and puck_carrier != e.slot and e.state() == Entity.State.GOALIE_GET_PUCK:
 		target_dir = e.puck_dir
-	var diff := (target_dir - e.facing) & 7
-	if diff != 0:
-		e.facing = (e.facing + (1 if diff < 4 else -1)) & 7
+	if target_dir != e.facing:
+		e.facing = (e.facing + (1 if ((e.facing - target_dir) & 4) != 0 else -1)) & 7
 	Anim.set_animation(e, Anim.GOALIE_IDLE)
 	skating_accelerate(e, e.facing)
 
