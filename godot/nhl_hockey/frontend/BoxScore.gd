@@ -29,8 +29,16 @@ func summary() -> PackedByteArray:
 		return fe.game.sim.summary_bytes()
 	return GameFiles.read_raw("gsummary.db")
 
+## TEAMS.DB / KEY.DB: the league's during a league or play-off game, else the game directory's
 func _teams_db() -> PackedByteArray:
-	return GameFiles.read_raw("teams.db")
+	return _db_file("TEAMS")
+
+func _db_file(n: String) -> PackedByteArray:
+	if Session.mode != 0 and Session.league != null:
+		var d: PackedByteArray = Session.league.file(n)
+		if not d.is_empty():
+			return d
+	return GameFiles.read_raw(n.to_lower() + ".db")
 
 func _team_record(t: int) -> PackedByteArray:
 	var d := _teams_db()
@@ -42,7 +50,7 @@ func _player_key(team_rec: PackedByteArray, r: int) -> PackedByteArray:
 	if r < 0 or r > 27 or at + 4 > team_rec.size():
 		return PackedByteArray()
 	var k := team_rec.decode_s32(at)
-	var key := GameFiles.read_raw("key.db")
+	var key := _db_file("KEY")
 	if k < 0 or k + 0x34 > key.size():
 		return PackedByteArray()
 	return key.slice(k, k + 0x34)
@@ -151,6 +159,10 @@ func _page(kind: int, period: int, logos: bool) -> void:
 	if logos:
 		_centered(_logos[0], 0x3d, 0x50)
 		_centered(_logos[1], 0x221, 0x50)
+
+func _draw_bkgd() -> void:
+	if _bkgd != null:
+		scr.drawshape_remap(_bkgd, _bkgd.x, _bkgd.y)
 
 ## the rows of a page are cleared by drawing the background into the clip (0x80, 0x8c)..
 func _clear_rows() -> void:
@@ -321,6 +333,86 @@ func _scratch_pages(teams: Array) -> int:
 		r = await ui.wait_ticks_or_input(1000)
 		if r >= 2:
 			break
+	return r
+
+## draw_team_logos (0x2abdf): tonight's line-ups before the game, for each team the forwards (four
+## lines of three in columns of 0x96 from x 0x91, clipped above y 0x154), the defence (three pairs
+## in columns of 0xf0) and the scratches ("Injured" for a player hurt for the game), each page
+## 1000 ticks or until a click; the first page fades in and the announcer says the line-ups
+## (say_lineups: LINEUPS.INT, in the CD's speech bank).
+## TONIGHTS.IFF plays meanwhile. Returns the last wait: 2 a double click skips the rest, 3 (Esc
+## or the right button) cancels the game; the loading screen follows unless cancelled.
+func lineups_screen(home: int, away: int) -> int:
+	ui.reset_events()
+	_load(8, home, away)
+	var teams := [_team_record(home), _team_record(away)]
+	scr.set_text_colors(0x40, 0)
+	fe.play_loop("tonights")
+	var faded := false
+	var r := 0
+	for t in 2:
+		if r > 1:
+			break
+		var lt := _line_table(t, teams[t])
+		var name := func(idx: int) -> String:
+			return _fit(_last_name(_player_key(teams[t], idx)), 200)
+		# the forwards: the whole background for the first team, the rows and the logo for the second
+		if t == 0:
+			scr.clearclip()
+			_draw_bkgd()
+		else:
+			_clear_rows()
+			scr.setclip(0, 0, 0x80, 0x8c)
+			_draw_bkgd()
+			scr.clearclip()
+		draw_title_parts(8, 0)
+		_centered(_logos[t], 0x3d, 0x50)
+		scr.setclip(0, 0, 0x280, 0x154)
+		var y := _fh + 0xa6
+		for row in 4:
+			for pos in 3:
+				var s: String = name.call(lt[row * 3 + pos] if lt.size() > row * 3 + pos else 0xff)
+				scr.print_text_at(pos * 0x96 + 0x91 + (0x96 - scr.textwidth(s)) / 2, y, s)
+			y += _fh + 0xe
+		scr.clearclip()
+		if not faded:
+			faded = true
+			await scr.fade_in(_pal, 16)
+			fe.say_clip("lineups.int")
+		r = await ui.wait_ticks_or_input(1000)
+		if r > 1:
+			break
+		# the defence
+		_clear_rows()
+		draw_title_parts(0x10, 0)
+		_centered(_logos[t], 0x3d, 0x50)
+		y = _fh + 0xa6
+		for row in 3:
+			for pos in 2:
+				var s: String = name.call(lt[0xc + row * 2 + pos] if lt.size() > 0xc + row * 2 + pos else 0xff)
+				scr.print_text_at(pos * 0xf0 + 0x91 + (0xf0 - scr.textwidth(s)) / 2, y, s)
+			y += _fh + 0xe
+		r = await ui.wait_ticks_or_input(1000)
+		if r > 1:
+			break
+		# the scratches
+		_clear_rows()
+		draw_title_parts(4, 0)
+		_centered(_logos[t], 0x3d, 0x50)
+		y = _fh + 0x7e
+		for k in 8:
+			var idx: int = lt[0x28 + k] if lt.size() > 0x28 + k else 0xff
+			if idx >= 100:
+				continue
+			scr.print_text_at(0xb4, y, name.call(idx))
+			if _injured_for_game(t, idx):
+				scr.print_text_at(0x226, y, "Injured")
+			y += _fh + 0xe
+		r = await ui.wait_ticks_or_input(1000)
+	await fe.leave_screen(100)
+	scr.setfont(fe.font_main)
+	if r < 3:
+		await fe.loading_screen()
 	return r
 
 func _line_table(side: int, rec: PackedByteArray) -> PackedByteArray:

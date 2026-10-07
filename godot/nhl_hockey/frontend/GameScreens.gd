@@ -358,6 +358,10 @@ func team_select_screen(home: int, away: int) -> int:
 		ui.reset_events()
 	ui.show_pointer(false)
 	await fe.leave_screen(100)
+	if result < 2:
+		# tonight's line-ups (draw_team_logos); Esc there cancels the game
+		if await BoxScore.new(fe).lineups_screen(home, away) == 3:
+			result = 4
 	return result
 
 # ---------------------------------------------------------------------------------------------

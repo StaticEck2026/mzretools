@@ -156,16 +156,20 @@ func stop_song() -> void:
 	if music != null:
 		music.stop_song()
 
-## say_goodnight (0x59c3e): the announcer's GOODNITE.INT with speech on (option_flags 0x100), when
-## the speech bank has it (the bank of the floppy version does not)
+## say_goodnight (0x59c3e): the announcer's GOODNITE.INT
 func say_goodnight() -> void:
+	say_clip("goodnite.int")
+
+## a clip of the announcer with speech on (option_flags 0x100), when the speech bank has it (the
+## .int clips of say_goodnite_int / say_lineups_int are not in the bank of the floppy version)
+func say_clip(clip: String) -> void:
 	if not Session.sound_enabled or Session.option_flags & 0x100 == 0:
 		return
 	var v := Viv.parse(GameFiles.read_raw("xbruce2.viv"))
-	if v == null or not v.has("goodnite.int"):
+	if v == null or not v.has(clip):
 		return
 	var p := AudioStreamPlayer.new()
-	p.stream = v.stream("goodnite.int")
+	p.stream = v.stream(clip)
 	add_child(p)
 	p.finished.connect(p.queue_free)
 	p.play()
