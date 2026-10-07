@@ -484,6 +484,7 @@ func _hotkeys() -> void:
 		for k in 4:
 			if Input.is_action_just_pressed("p%d_line%d" % [p + 1, k + 1]):
 				sim.line_hotkey[team] = k
+				sim.line_hotkey_req[team] = 1
 		if Input.is_action_just_pressed("p%d_pull_goalie" % (p + 1)):
 			Lines.toggle_pull_goalie(sim, team)
 

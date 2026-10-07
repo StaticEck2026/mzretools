@@ -109,6 +109,10 @@ def main():
     t['goalie_save_anims'] = shorts(le, 0xcca5a, 10)
     # start_poke_check: velocity vectors per facing
     t['poke_vectors'] = [shorts(le, 0xccc30 + i * 4, 2) for i in range(8)]
+    # start_poke_check indexes the table with a word left in timer_e (a user's poke after
+    # try_block_shot answered 10 keeps an old one): the memory around it as words, from 0x200 words
+    # before to 0x400 after
+    t['poke_vectors_raw'] = shorts(le, 0xccc30 - 0x400, 0x600)
     # ai_breakaway: waypoints (x, y, trigger y)
     t['breakaway_waypoints'] = [list(struct.unpack('<3i', le.read(0xccb18 + i * 12, 12))) for i in range(4)]
     # referee: signal direction and animation per infraction (ai_ref_call_penalty)

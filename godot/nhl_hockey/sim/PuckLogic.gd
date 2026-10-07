@@ -647,18 +647,19 @@ static func net_push_off(sim: Sim, e: Entity, net: Entity) -> bool:
 # passing (pass_button, do_pass, pass_to_entity, pass_lead)
 # --------------------------------------------------------------------------------------------
 
-## pass_button (0x50a1a): the pass goes out in the direction held when A is released
-static func pass_button(sim: Sim, e: Entity, control: int, _pressed: int) -> void:
-	if (control & 0x10) == 0:
-		if control & 8:
-			sim.pending_dir = e.facing
-		else:
-			sim.pending_dir = control & 7
-		do_pass(sim, e)
-		return
-	# still held: keep aiming
-	if (control & 8) == 0:
-		sim.pending_dir = control & 7
+## pass_button (0x5514e): while the pass is aimed: when A changes (is released) it goes out; a
+## direction held is taken as the aim (the scratch control byte then marked "no direction") and
+## the pass goes out at once, except for a user on the mouse, who releases A
+static func pass_button(sim: Sim, e: Entity) -> void:
+	if (sim.scratch_ac & 0x10) == 0:
+		if sim.scratch_a & 8:
+			return
+		sim.pending_dir = sim.scratch_a & 7
+		sim.scratch_a |= 8
+		if e.flags & Entity.F_USER:
+			if sim.controller_type[0 if e.slot == sim.user1_slot else 1] == 1:
+				return
+	do_pass(sim, e)
 
 ## do_pass (0x54df4): the carrier lets the puck go. A computer player with a lane picked
 ## (ai_choose_pass_target: pass_ok, the target in +0x48) passes to him directly; otherwise the
@@ -790,6 +791,9 @@ static func pass_lead(sim: Sim, target: Entity) -> void:
 	puck.timer_c = target.react_timer - 6
 	var lx := ((tvx * t) >> 1) + dx
 	var ly := ((tvy * t) >> 1) + dy
+	# (the lead is computed in the scratch dwords e03bc / e03c0)
+	sim.scratch_a = Sim._s16(lx)
+	sim.scratch_b = Sim._s16(ly)
 	target.target_x = Sim._s16(puck.xi + lx)
 	target.target_y = Sim._s16(puck.yi + ly)
 	var tt := Sim._s16(t * 0x78)
@@ -838,6 +842,8 @@ static func start_shot(sim: Sim, e: Entity) -> void:
 	sim.action_shot = true
 	var target_y := 0xf0 if (e.flags & Entity.F_ATTACK_UP) else -0xf0
 	var dir := Tables.direction8(Sim._s16(-e.xi), Sim._s16(target_y - e.yi))
+	sim.scratch_a = dir           # (the aim at the net's centre in the scratch words)
+	sim.scratch_b = target_y
 	sim.shot_power = 0xf
 	# the player is not "busy" during the wind up: shot_control runs every step until the release
 	Anim.set_animation(e, Anim.SHOT_BACKHAND if shot_is_backhand(e, dir) else Anim.SHOT_FOREHAND)
@@ -1002,131 +1008,161 @@ static func shot_is_backhand(e: Entity, dir: int) -> bool:
 # opponent_in_reach, resolve_body_check, knock_down)
 # --------------------------------------------------------------------------------------------
 
-## body_check (0x532bd): velocity burst in the heading direction, costs energy
+## body_check (0x532bd): a burst in the facing direction, energy / 128 (with line changes on a
+## check costs 0xcc of the player's energy, in the team record); the scratch word e03bc keeps the burst
 static func body_check(sim: Sim, e: Entity) -> void:
-	var en := e.energy
+	var team := sim.team_of(e)
+	var r := Entity.to_s8(e.roster_idx)
+	sim.scratch_a = Entity.to_s16(Lines.energy_word(team, r))
 	if sim.opt_line_changes:
-		en = maxi(0, en - 0xcc)
-		e.energy = en
-	var burst := en >> 7
-	var v: Array = Tables.dir8_vectors[e.facing]
-	e.vx += v[0] * burst
-	e.vy += v[1] * burst
+		sim.scratch_a = Entity.to_s16(sim.scratch_a - 0xcc)
+		var en := 0 if sim.scratch_a < 0 else sim.scratch_a
+		if r >= 0 and r < 28:
+			team.energy[r] = en
+			e.energy = en
+		if sim.scratch_a < 0:
+			sim.scratch_a = 0
+	sim.scratch_a >>= 7
+	var v: Array = Tables.dir8_vectors[e.facing & 7]
+	e.vx = Entity.to_s16(e.vx + int(v[0]) * sim.scratch_a)
+	e.vy = Entity.to_s16(e.vy + int(v[1]) * sim.scratch_a)
 	e.flags |= Entity.F_BUSY
 	Anim.set_animation(e, Anim.BODY_CHECK)
 
-## hook_button (0x4fff0): C without the puck: hook, poke check or block depending on the situation
-static func hook_button(sim: Sim, e: Entity) -> void:
+## lunge_for_puck (0x532a2): the dive at the puck (A with nobody nearer to switch to)
+static func lunge_for_puck(_sim: Sim, e: Entity) -> void:
+	e.flags |= Entity.F_BUSY
+	Anim.set_animation(e, 0x589)
+
+## hook_button (0x503cd): C without the puck. Standing still (no contact lately): an opponent in
+## reach is hooked (0x873), a shot on his net is poked at (try_block_shot); otherwise the player who
+## touched him last (hit_by) is hooked. The original does not pass try_block_shot's answer to
+## start_poke_check: the kind it reads is what control_player left in edx (the player's flags in the
+## second byte, the user in the first), so a user always pokes forward, never drops to block.
+static func hook_button(sim: Sim, e: Entity, player: int = 0) -> void:
 	e.flags |= Entity.F_BUSY
 	if e.speed == 0:
 		if opponent_in_reach(sim, e):
 			Anim.set_animation(e, Anim.HOOK_B)
 			return
-		var r := try_block_shot(sim, e)
-		if r != 0:
-			start_poke_check(sim, e, r)
+		if try_block_shot(sim, e) != 0:
+			start_poke_check(sim, e, (e.flags << 8) | (player & 0xff))
 			return
-	var c := sim.carrier()
-	start_hook(sim, e, c if c != null else e)
+	start_hook(sim, e, sim.entities[e.hit_by] if e.hit_by >= 0 and e.hit_by < 17 else null)
 
+## opponent_in_reach (0x5033d): an opponent less than 0x1e away in front of the player (within
+## two directions of his facing). The original measures only the x difference, for the direction
+## too (direction8(dx, dx)).
 static func opponent_in_reach(sim: Sim, e: Entity) -> bool:
-	var opp := sim.opponents_of(e)
+	var first := 6 if e.slot < 6 else 0
 	for i in 6:
-		var p := sim.entities[opp.first_slot + i]
+		var p := sim.entities[first + i]
 		var dx := p.xi - e.xi
-		var dy := p.yi - e.yi
-		var d := Tables.direction8(dx, dy)
-		if ((d - e.facing + 2) & 7) < 5 and absi(dx) < 0x1e and absi(dy) < 0x1e:
+		var d := Tables.direction8(Entity.to_s16(dx), Entity.to_s16(dx))
+		if ((d - e.facing + 2) & 7) <= 4 and absi(dx) < 0x1e:
 			return true
 	return false
 
-## try_block_shot (0x50068): 0 none, 1..9 poke direction class, 10 drop to block
+## try_block_shot (0x4ffee): a shot on his own net he can block or poke at: 0 none, 10 drop to
+## block (facing the puck, the puck coming straight), else 1..9 (the direction class of the poke,
+## the direction from the net kept in timer_e)
 static func try_block_shot(sim: Sim, e: Entity) -> int:
 	var puck := sim.puck
-	if sim.puck_carrier >= 0 and sim.same_team(sim.puck_carrier, e.slot):
+	var c := Entity.to_s8(sim.puck_carrier)
+	if c >= 0 and (e.slot < 6) == (c < 6):
 		return 0
-	var ay := absi(puck.yi)
-	if ay >= 0xe9 or ay <= 0x4d or e.puck_dist >= 0x51:
+	var ay := absi(Entity.to_s16(puck.yi))
+	if ay > 0xe8 or ay < 0x4e or e.puck_dist > 0x50:
 		return 0
 	var up := (e.flags & Entity.F_ATTACK_UP) != 0
-	var own_goal_pred: Array = sim.goal_prediction[1 if up else 0]
-	if own_goal_pred[1] <= 9:
+	if int(sim.goal_prediction[1 if up else 0][1]) < 0xa:
 		return 0
-	var shooter_slot := sim.puck_carrier
-	if shooter_slot < 0:
-		if (up and puck.vy > 0) or (not up and puck.vy < 0):
+	var shooter_slot := c
+	if c < 0:
+		if up and puck.vy > 0:
 			return 0
-		if sim.last_shooter < 0 or sim.same_team(sim.last_shooter, e.slot):
+		if not up and puck.vy < 0:
+			return 0
+		if sim.last_shooter < 0 or (e.slot < 6) == (sim.last_shooter < 6):
 			return 0
 		shooter_slot = sim.last_shooter
-	var shooter := sim.entities[shooter_slot]
-	var sa := shooter.anim
+	var sa := sim.entities[shooter_slot].anim
 	if not (sa == 0x3f9 or sa == 0x491 or sa == 0xdd3 or sa == 0xe2b or sa == 0x1265 or sa == 0x12dd or sa == 0x1355 or sa == 0x138d):
 		return 0
 	var net := sim.entities[Entity.Slot.NET_BOTTOM if up else Entity.Slot.NET_TOP]
-	var pd := Sim.approx_distance(puck.xi - net.xi, puck.yi - net.yi)
-	var pdir := Tables.direction8(puck.xi - net.xi, puck.yi - net.yi)
-	var between := false
+	var pdx := Entity.to_s16(puck.xi) - net.xi
+	var pdy := Entity.to_s16(puck.yi) - net.yi
+	var pd := Sim.approx_distance(pdx, pdy)
+	var pdir := Tables.direction8(Entity.to_s16(pdx), Entity.to_s16(pdy))
+	var ey := e.yi
 	if up:
-		between = e.yi < -0x4e and e.yi > -0xe8 and e.yi < puck.yi
-	else:
-		between = e.yi > 0x4e and e.yi < 0xe8 and puck.yi < e.yi
-	if not between:
+		if not (ey < -0x4e and ey > -0xe8 and ey < Entity.to_s16(puck.yi)):
+			return 0
+	elif not (ey > 0x4e and ey < 0xe8 and ey > Entity.to_s16(puck.yi)):
 		return 0
-	var ed := Sim.approx_distance(e.xi - net.xi, e.yi - net.yi)
-	var edir := Tables.direction8(e.xi - net.xi, e.yi - net.yi)
-	if (e.flags & Entity.F_USER) == 0 and edir != 2 and edir != 6:
-		if not (absi(e.yi) > 0x7f and absi(e.xi) < 0x65):
+	var edx := e.xi - net.xi
+	var edy := ey - net.yi
+	var ed := Sim.approx_distance(edx, edy)
+	var edir := Tables.direction8(Entity.to_s16(edx), Entity.to_s16(edy))
+	if (e.flags & Entity.F_USER) == 0:
+		if edir == 2 or edir == 6:
+			return 0
+		if absi(e.yi) < 0x80 or absi(e.xi) > 0x64:
 			return 0
 	var rel_face := (e.puck_dir - e.facing + 2) & 7
 	var rel_dir := (pdir - edir + 2) & 7
-	if ((e.puck_dir - pdir + 1) & 7) >= 3:
+	if ((e.puck_dir - pdir + 1) & 7) > 2:
 		return 0
-	var ok := false
-	if e.flags & Entity.F_USER:
-		ok = rel_face < 5 and rel_dir < 5
-	else:
-		ok = rel_face != 0 and rel_dir != 0 and rel_face < 4 and rel_dir < 4
-	if not ok or ed >= pd or ed + e.puck_dist >= pd * 2:
+	if not ((e.flags & Entity.F_USER) and rel_face <= 4 and rel_dir <= 4):
+		if e.flags & Entity.F_USER:
+			return 0
+		if rel_face < 1 or rel_dir < 1 or rel_face > 3 or rel_dir > 3:
+			return 0
+	if ed >= pd or ed + e.puck_dist >= pd * 2:
 		return 0
 	if rel_face == 2 and rel_dir == 2:
 		return 10
 	e.timer_e = pdir
 	return rel_dir + 1
 
-## start_poke_check (0x533be)
+## start_poke_check (0x53387): `kind` 10 or 3 drops to block the shot (0x14ad low, 0x1475 high),
+## else a poke in the direction kept in timer_e: the velocity nudged by the poke vector (backwards
+## for kinds below 3), the forehand or backhand animation by his hand
 static func start_poke_check(sim: Sim, e: Entity, kind: int) -> void:
 	e.flags |= Entity.F_BUSY
-	e.facing = e.puck_dir
+	AI._set_heading_word(e, Entity.to_s8(e.puck_dir) & 0xffff)
 	if kind == 10 or kind == 3:
-		Anim.set_animation(e, 0x14ad if (sim.puck.zi < 3 and sim.puck.vz < 2000) else 0x1475)
+		Anim.set_animation(e, 0x14ad if (Entity.to_s16(sim.puck.zi) < 3 and sim.puck.vz < 0x7d0) else 0x1475)
 		return
-	e.facing = e.timer_e
-	var v: Array = Tables.poke_vectors[e.timer_e & 7]
-	var py: int = v[1]
-	var px: int = v[0]
+	AI._set_heading_word(e, e.timer_e & 0xffff)
+	var k := Entity.to_s16(e.timer_e * 2) + 0x200
+	var raw := Tables.poke_vectors_raw
+	var py: int = raw[k + 1] if k >= 0 and k + 1 < raw.size() else 0
+	var px: int = raw[k] if k >= 0 and k < raw.size() else 0
 	if kind < 3:
-		py = -py
-		px = -px
+		py = Entity.to_s16(-py)
+		px = Entity.to_s16(-px)
 	if (py ^ e.vy) < 0 or absi(e.vy) <= absi(py):
 		e.vy >>= 3
 	else:
 		e.vy >>= 1
-	e.vy += py
+	e.vy = Entity.to_s16(e.vy + py)
+	var anim := 0x13c5 if (e.left_handed == 0) != (kind < 3) else 0x141d
 	if (px ^ e.vx) < 0 or absi(e.vx) <= absi(px):
 		e.vx >>= 3
 	else:
 		e.vx >>= 1
-	e.vx += px
-	Anim.set_animation(e, 0x141d if (kind < 3) == (e.left_handed == 0) else 0x13c5)
+	e.vx = Entity.to_s16(e.vx + px)
+	Anim.set_animation(e, anim)
 
-## start_hook (0x4ffa4)
-static func start_hook(sim: Sim, e: Entity, target: Entity) -> void:
+## start_hook (0x4ffae): moving (a contact lately) the stick hook at the player behind him (0x639),
+## else the hold (0x873); the target outside the records reads as y 0
+static func start_hook(_sim: Sim, e: Entity, target: Entity) -> void:
 	e.flags |= Entity.F_BUSY
 	if e.speed != 0:
-		var dy := e.yi - target.yi
+		var dy := Entity.to_s16(e.yi - (target.yi if target != null else 0))
 		if e.flags & Entity.F_ATTACK_UP:
-			dy = -dy
+			dy = Entity.to_s16(-dy)
 		if dy >= 0:
 			Anim.set_animation(e, Anim.HOOK_A)
 			return

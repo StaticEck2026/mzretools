@@ -684,6 +684,90 @@ static func pick_next_line(sim: Sim, e: Entity) -> void:
 	var i := Entity.to_s16(sim.scratch_a + team.current_line * 4) + 0x20
 	sim.scratch_a = Tables.line_rotation_raw[i] if i >= 0 and i < Tables.line_rotation_raw.size() else -1
 
+# unk_ccb4a: the line the prompt offers next (forward lines 0-3 in turn, the two units of each
+# special team in turn)
+const LINE_CYCLE := [1, 2, 3, 0, 5, 4, 7, 6]
+
+## request_line_change_button (0x4d9fc): C with the puck (or the stoppage's prompt): with line
+## changes on and the prompt not open yet the prompt opens (no pass or shot under way any more)
+static func request_line_change_button(sim: Sim, e: Entity) -> void:
+	if not sim.opt_line_changes:
+		return
+	var team := sim.team_of(e)
+	if team.flags & Team.FL_LINE_CHANGE_UI:
+		return
+	team.flags |= Team.FL_LINE_CHANGE_UI
+	sim.action_pass = false
+	sim.action_shot = false
+	e.flags2 |= Entity.F2_LINE_CHANGE
+	start_line_change_ui(sim, e)
+
+## start_line_change_ui (0x4d938): the prompt opens on the first line of the rotation after the
+## current one (place 1; none: the current line, place 0)
+static func start_line_change_ui(sim: Sim, e: Entity) -> void:
+	var t := 1 if e.flags & Entity.F_PLAYER2 else 0
+	sim.scratch_a = 1
+	pick_next_line(sim, e)
+	if sim.scratch_a < 0:
+		sim.lc_place[t] = 0
+		sim.lc_line[t] = sim.teams[t].current_line
+	else:
+		sim.lc_place[t] = 1
+		sim.lc_line[t] = sim.scratch_a
+	sim.lc_timer[t] = 0x3c
+	sim.lc_show[t] = 1
+	sim.lc_blink[t] = 0xc
+	sim.teams[t].line_change_ui = true
+
+## line_change_bench_step (0x4fd8e), control_player while the prompt is open: (re)opened when the
+## team asks (team flags & 1); C (changed) takes the line offered; every 0x3c steps the next line is
+## offered (4 places, 2 on special teams), the prompt blinks every 0xc steps; he can still skate
+static func line_change_bench_step(sim: Sim, e: Entity) -> void:
+	var team := sim.team_of(e)
+	if team.flags & 1:
+		team.flags &= ~1
+		start_line_change_ui(sim, e)
+	var t := 1 if e.flags & Entity.F_PLAYER2 else 0
+	if sim.scratch_ac & 0x40:
+		sim.scratch_ac = (sim.scratch_ac & ~0xffff) | (sim.lc_place[t] & 0xffff)
+		cpu_line_change_select(sim, e)
+		sim.lc_show[t] = 0
+		sim.teams[t].line_change_ui = false
+		return
+	var old := sim.lc_timer[t]
+	sim.lc_timer[t] = Entity.to_s16(old - 1)
+	if old == 0:
+		sim.lc_timer[t] += 0x3c
+		var n := 2 if sim.lc_line[t] > 3 else 4
+		sim.lc_place[t] = (sim.lc_place[t] + 1) % n
+		var l := sim.lc_line[t]
+		sim.lc_line[t] = LINE_CYCLE[l] if l >= 0 and l < 8 else 0
+		sim.lc_show[t] = 1
+		sim.lc_blink[t] = 0xc
+	old = sim.lc_blink[t]
+	sim.lc_blink[t] = Entity.to_s16(old - 1)
+	if old == 0:
+		sim.lc_blink[t] += 0xc
+		sim.lc_show[t] = 1 if sim.lc_show[t] == 0 else 0
+	if (e.flags & Entity.F_USER) and not sim.controls_blocked and (e.flags & Entity.F_BUSY) == 0 \
+			and (e.flags2 & Entity.F2_KNOCKED) == 0:
+		sim.apply_skating(e, sim.scratch_a)
+
+## user_line_change_prompt (0x4da37), at a stoppage for each user: the prompt opens; it closes by
+## itself after 0x258 steps (home, timer_a of the puck) or 0x168 (away, word +0x28), the user's slot
+## kept in target_x / target_y
+static func user_line_change_prompt(sim: Sim, puck: Entity, e: Entity) -> void:
+	e.flags2 &= ~Entity.F2_LINE_CHANGE
+	request_line_change_button(sim, e)
+	if (e.flags2 & Entity.F2_LINE_CHANGE) == 0:
+		return
+	if e.flags & Entity.F_PLAYER2:
+		sim.puck_stuck_timer = 0x168
+		puck.target_y = e.slot
+	else:
+		puck.timer_a = 0x258
+		puck.target_x = e.slot
+
 ## cpu_line_change_select (0x50975): the line chosen at the prompt (place scratch_ac) for the team
 ## of `e`: the player is the user's again, the prompt closes and the line comes on
 static func cpu_line_change_select(sim: Sim, e: Entity) -> void:

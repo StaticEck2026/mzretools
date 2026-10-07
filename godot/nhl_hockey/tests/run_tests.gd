@@ -710,8 +710,8 @@ func ai_golden() -> void:
 	for group in data:
 		if group == "base":
 			continue
-		if group == "lines":
-			counts.append(_lines_golden(data[group], base))
+		if group == "lines" or group == "controls":
+			counts.append(_lines_golden(data[group], base, group))
 			continue
 		var sim := Sim.new()
 		sim.stubs = {"play_sfx": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
@@ -753,9 +753,12 @@ func ai_golden() -> void:
 	print("golden AI: ", "; ".join(counts))
 
 ## the line change routines (ai.json "lines"): called directly on random teams
-func _lines_golden(cases: Array, base: Array) -> String:
+func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 	var sim := Sim.new()
-	sim.stubs = {"play_sfx": true, "put_player_on_ice": true, "pick_player_for_position": true, "draw_line_indicator": true}
+	sim.stubs = {"play_sfx": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
+		"injure_player": true, "bench_cheer": true, "announce_goal": true, "play_speech": true, "load_clip": true,
+		"say_goal": true, "goal_milestone_check": true, "put_player_on_ice": true,
+		"pick_player_for_position": true, "draw_line_indicator": true}
 	var per := {}
 	var ok := 0
 	var shown := 0
@@ -764,8 +767,8 @@ func _lines_golden(cases: Array, base: Array) -> String:
 	for c: Dictionary in cases:
 		index += 1
 		_ai_world_set(sim, c, base)
-		var li: Dictionary = c["lines"]
-		for t in 2:
+		var li: Dictionary = c.get("lines", {})
+		for t in (2 if not li.is_empty() else 0):
 			var team: Team = sim.teams[t]
 			var info := Database.TeamInfo.new()
 			var pos: String = li["positions"][t]
@@ -789,10 +792,11 @@ func _lines_golden(cases: Array, base: Array) -> String:
 				team.pos_lists[k] = PackedInt32Array(_ints(li["pos_lists"][t][k]))
 			for i in 3:
 				team.goalie_menu[i] = int(li["menu"][t * 3 + i])
-		var req: Array = li["req"]
-		for i in 6:
-			sim.req_roster[i] = int(req[i])
-			sim.req_slot[i] = int(req[6 + i])
+		if not li.is_empty():
+			var req: Array = li["req"]
+			for i in 6:
+				sim.req_roster[i] = int(req[i])
+				sim.req_slot[i] = int(req[6 + i])
 		var name: String = c["routine"]
 		var args: Array = _ints(c["args"])
 		var a0: int = args[0] if args.size() > 0 else 0
@@ -820,6 +824,7 @@ func _lines_golden(cases: Array, base: Array) -> String:
 			"hotkey_pull_goalie": Lines.toggle_pull_goalie(sim, a0)
 			"controls_goalie_pull_request": Lines.user_goalie_back(sim, a0)
 			"choose_goalie": Lines.choose_goalie(sim, a0, a1)
+			"control_player": sim.control_player(sim.entities[a0], a1)
 		var diff := _ai_world_diff(sim, c, base)
 		var la: Dictionary = c["lines_after"]
 		if ret != null:
@@ -828,7 +833,7 @@ func _lines_golden(cases: Array, base: Array) -> String:
 				want = 1 if (want & 0xffff) != 0 else 0
 			if int(ret) != want:
 				diff.append("returns %d (original %d)" % [int(ret), want])
-		for t in 2:
+		for t in (2 if la.has("pos_lists") else 0):
 			for k in 11:
 				if str(Array(sim.teams[t].pos_lists[k])) != str(_ints(la["pos_lists"][t][k])):
 					diff.append("team %d list %d %s (original %s)" % [t, k, str(sim.teams[t].pos_lists[k]), str(la["pos_lists"][t][k])])
@@ -836,16 +841,21 @@ func _lines_golden(cases: Array, base: Array) -> String:
 				if sim.teams[t].goalie_menu[i] != int(la["menu"][t * 3 + i]):
 					diff.append("team %d goalie menu %s (original %s)" % [t, str(sim.teams[t].goalie_menu), str(la["menu"])])
 					break
-		var got_req := []
-		for i in 6:
-			got_req.append(Entity.to_s8(sim.req_roster[i]))
-		for i in 6:
-			got_req.append(Entity.to_s8(sim.req_slot[i]))
-		if str(got_req) != str(_ints(la["req"])):
-			diff.append("lineup request %s (original %s)" % [str(got_req), str(la["req"])])
+		if la.has("req"):
+			var got_req := []
+			for i in 6:
+				got_req.append(Entity.to_s8(sim.req_roster[i]))
+			for i in 6:
+				got_req.append(Entity.to_s8(sim.req_slot[i]))
+			if str(got_req) != str(_ints(la["req"])):
+				diff.append("lineup request %s (original %s)" % [str(got_req), str(la["req"])])
+		if la.has("scratch_ac") and (sim.scratch_ac & 0xffff) != (int(la["scratch_ac"]) & 0xffff):
+			diff.append("scratch e03ac %x (original %x)" % [sim.scratch_ac & 0xffff, int(la["scratch_ac"]) & 0xffff])
 		var sc: Array = la["scratch"]
 		if Sim._s16(sim.scratch_a) != int(sc[0]) or Sim._s16(sim.scratch_b) != int(sc[1]):
 			diff.append("scratch %d %d (original %s)" % [Sim._s16(sim.scratch_a), Sim._s16(sim.scratch_b), str(sc)])
+		if c.has("scen"):
+			name = str(c["scen"])
 		if not per.has(name):
 			per[name] = [0, 0]
 		if diff.is_empty():
@@ -857,11 +867,11 @@ func _lines_golden(cases: Array, base: Array) -> String:
 				failures += 1
 			elif shown < 10:
 				shown += 1
-				fail("lines %s %s%s: %s" % [name, str(args), " (case %d)" % index if only != "" else "", ", ".join(diff.slice(0, 8))])
+				fail("%s %s %s%s: %s" % [group, name, str(args), " (case %d)" % index if only != "" else "", ", ".join(diff.slice(0, 8))])
 	var parts := []
 	for n in per:
 		parts.append("%s %d/%d" % [n, per[n][0], per[n][0] + per[n][1]])
-	return "lines %d / %d (%s)" % [ok, cases.size(), ", ".join(parts)]
+	return "%s %d / %d (%s)" % [group, ok, cases.size(), ", ".join(parts)]
 
 ## update_camera against the original (golden.py camera_cases)
 func _camera_golden(cases: Array) -> int:
@@ -1033,6 +1043,18 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	sim.infractions = [[int(g["infraction0"]), -1, false]] if int(g.get("infraction0", 0)) != 0 else []
 	sim.message = int(g.get("message", -1))
 	sim.message_timer = int(g.get("message_timer", 0))
+	for t in 2:
+		sim.lc_show[t] = int(g.get("lc_show%d" % t, 0))
+		sim.lc_blink[t] = int(g.get("lc_blink%d" % t, 0))
+		sim.lc_place[t] = int(g.get("lc_place%d" % t, 0))
+		sim.lc_line[t] = int(g.get("lc_line%d" % t, 0))
+		sim.lc_timer[t] = int(g.get("lc_timer%d" % t, 0))
+		sim.line_hotkey_req[t] = int(g.get("hotkey%d" % t, 0))
+		sim.line_hotkey[t] = int(g.get("hotkey_line%d" % t, 0))
+		sim.controller_type[t] = int(g.get("controller%d" % t, 8))
+		sim.faceoff_dir[t] = int(g.get("faceoff_dir%d" % t, -1))
+	sim.controls_blocked = int(g.get("controls_blocked", 0)) != 0
+	sim.skip_wait = int(g.get("skip_wait", 0)) != 0
 	var teams: Array = c["teams"]
 	for t in 2:
 		var team: Team = sim.teams[t]
@@ -1057,6 +1079,7 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 		team.mode = int(f["mode"])
 		team.energy_threshold = int(f["energy_threshold"])
 		team.dpair_counter = int(f.get("dpair", 0))
+		team.line_change_ui = int(c["globals"].get("lc_prompt%d" % t, 0)) != 0
 		team.extra_attacker = int(f.get("extra_attacker", -1))
 		for i in 28:
 			team.entity_of[i] = int(f["entity_of"][i])
@@ -1111,7 +1134,16 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 		"period_length": sim.period_length, "deferred": 1 if sim.deferred else 0, "infraction_events": sim.infraction_events,
 		"save_clip_shown": 1 if sim.save_clip_shown else 0, "period_over": 1 if sim.period_over else 0,
 		"goal_call": 0 if sim.goal_call.is_empty() else 1, "infraction0": 0 if sim.infractions.is_empty() else 1,
-		"message": sim.message, "message_timer": sim.message_timer}
+		"message": sim.message, "message_timer": sim.message_timer,
+		"lc_show0": sim.lc_show[0], "lc_show1": sim.lc_show[1], "lc_blink0": sim.lc_blink[0], "lc_blink1": sim.lc_blink[1],
+		"lc_place0": sim.lc_place[0], "lc_place1": sim.lc_place[1], "lc_line0": sim.lc_line[0], "lc_line1": sim.lc_line[1],
+		"lc_timer0": sim.lc_timer[0], "lc_timer1": sim.lc_timer[1],
+		"lc_prompt0": 1 if sim.teams[0].line_change_ui else 0, "lc_prompt1": 1 if sim.teams[1].line_change_ui else 0,
+		"hotkey0": sim.line_hotkey_req[0], "hotkey1": sim.line_hotkey_req[1],
+		"hotkey_line0": sim.line_hotkey[0], "hotkey_line1": sim.line_hotkey[1],
+		"controls_blocked": 1 if sim.controls_blocked else 0, "skip_wait": 1 if sim.skip_wait else 0,
+		"controller0": sim.controller_type[0], "controller1": sim.controller_type[1],
+		"faceoff_dir0": sim.faceoff_dir[0], "faceoff_dir1": sim.faceoff_dir[1]}
 
 static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 	var diff := []
@@ -2171,6 +2203,7 @@ func line_change_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 	run_until_play(sim, 1200)
 	var before := _dressed(sim, 0)
 	sim.line_hotkey[0] = 1
+	sim.line_hotkey_req[0] = 1
 	var changed := false
 	for i in 1500:
 		sim.step(8, 8, 0, 0)

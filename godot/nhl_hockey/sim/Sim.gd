@@ -132,6 +132,15 @@ var last_shooter: int = -1          # word_c90a0
 var pass_target: int = -1           # shot_power high word
 var shot_power: int = 0             # shot_power low word
 var pending_dir: int = 8            # pending_dir
+var controller_type := PackedByteArray([8, 8])   # per user: 1 mouse, 2 / 4 joystick, 8 keyboard
+# the line change prompt per team (start_line_change_ui, line_change_bench_step): shown (it
+# blinks), the blink countdown, the place of the line offered (0..3), that line, the countdown to
+# the next offer; team.line_change_ui is line_change_prompt
+var lc_show := PackedInt32Array([0, 0])     # word_cbc56
+var lc_blink := PackedInt32Array([0, 0])    # word_cbc5a
+var lc_place := PackedInt32Array([0, 0])    # word_cbc5e
+var lc_line := PackedInt32Array([0, 0])     # word_cbc62
+var lc_timer := PackedInt32Array([0, 0])    # word_cbc66
 # the scratch words of the original that some routines read as an earlier one left them:
 # sim_update_players leaves the entity's vy (or its height step) in e03bc and its friction shift in
 # e03ac before the AI handler runs, read_control_p1/p2 the control byte, the pressed and the
@@ -183,7 +192,8 @@ var draw_keys := PackedInt32Array()  # draw_order_keys: the y each entity was la
 # line changes (Lines.gd)
 var req_roster: PackedInt32Array = PackedInt32Array([-1, -1, -1, -1, -1, -1])   # lineup_req_roster: lineup being assigned
 var req_slot: PackedInt32Array = PackedInt32Array([0, 0, 0, 0, 0, 0])          # lineup_req_slot: its line slots
-var line_hotkey: PackedInt32Array = PackedInt32Array([-1, -1])                 # word_e0304/word_e0380: F1-F4 / F5-F8 request per team
+var line_hotkey_req: PackedInt32Array = PackedInt32Array([0, 0])   # word_e0304: an F1-F4 / F5-F8 request per team
+var line_hotkey: PackedInt32Array = PackedInt32Array([0, 0])       # word_e0380: the line it asks for
 # message box (word_cbec8 / panel_clip): index into Tables.message_strings, -1 none; the timer
 # counts frames down to 0 and clears the message, 0 = stays until cleared
 var message: int = -1
@@ -709,12 +719,12 @@ func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) ->
 			buttons_changed = (control_p1 & 0x70) ^ buttons_prev[0]    # read_control_p1
 			buttons_prev[0] = control_p1 & 0x70
 			_read_control_scratch(control_p1)
-			control_player(e, control_p1, pressed_p1, 0)
+			control_player(e, 0)
 		elif e.slot == user2_slot:
 			buttons_changed = (control_p2 & 0x70) ^ buttons_prev[1]
 			buttons_prev[1] = control_p2 & 0x70
 			_read_control_scratch(control_p2)
-			control_player(e, control_p2, pressed_p2, 1)
+			control_player(e, 2)
 		if e.state() != Entity.State.NONE:
 			AI.dispatch(self, e)
 		clamp_goalie_to_crease(e)
@@ -835,120 +845,154 @@ func clamp_goalie_to_crease(e: Entity) -> void:
 # controls (control_player, apply_skating, skating_turn, skating_accelerate, stop_skating, brake)
 # --------------------------------------------------------------------------------------------
 
-## control_player (0x504da) for the player controlled by `player` (0/1); `control` is the sampled
-## control byte, `pressed` the buttons that just went down
-func control_player(e: Entity, control: int, pressed: int, player: int) -> void:
-	e.flags |= Entity.F_USER
-	# F1-F4 / F5-F8: a line change request for the team (word_e0304); with both users on one team
-	# only user 1 changes lines
-	var t := e.team
-	if line_hotkey[t] >= 0 and not penalty_shot and (user1_team != user2_team or e.slot == user1_slot):
-		if not play_stopped or (e.flags2 & Entity.F2_LINE_CHANGE) or faceoff_pending:
-			Lines.request_line_change(self, e, line_hotkey[t])
-		line_hotkey[t] = -1
-	if play_stopped:
-		if faceoff_pending:
-			faceoff_control(e, control, pressed)
-			return
-		if puck.state() == Entity.State.PUCK_FACEOFF2 and (pressed & 0x30):
-			skip_wait = true   # a button press shortens the wait before the drop
-			return
+## control_player (0x504da): the user's player `e` (user `player`, 0 / 1) for one step. The inputs
+## are in the scratch words as read_control leaves them: e03bc the control byte (direction 0-7, 8
+## none, buttons 0x10 A, 0x20 B, 0x40 C), e03c0 the buttons pressed this step, e03ac the buttons
+## that changed. A line hotkey (F1-F8) changes lines (with both users on one team user 1's only);
+## at a faceoff the user times the drop; with the line change prompt open the prompt runs; while
+## the puck waits to be dropped a button skips the wait. A busy player can still switch (A) or aim
+## a one timer; the carrier passes (A, released or aimed), shoots (B), opens the prompt (C); without
+## the puck A switches, B checks or takes over a pass on its way for a one timer, C hooks.
+func control_player(e: Entity, player: int) -> void:
+	var t := 1 if e.flags & Entity.F_PLAYER2 else 0
+	if (penalty_shot_phase != 0 or penalty_shot) and play_stopped:
+		return
+	if line_hotkey_req[t] != 0 and not penalty_shot and (user1_team != user2_team or e.slot == user1_slot):
+		if not play_stopped or (e.flags2 & Entity.F2_LINE_CHANGE):
+			if Lines.request_line_change(self, e, line_hotkey[t]):
+				lc_show[t] = 0
+				teams[t].line_change_ui = false
+		line_hotkey_req[t] = 0
+	if faceoff_pending:
+		faceoff_control(e)
+		return
+	if e.flags2 & Entity.F2_LINE_CHANGE:
+		Lines.line_change_bench_step(self, e)
+		return
+	if puck.state() == Entity.State.PUCK_FACEOFF2 and penalty_shot_phase == 0:
+		if scratch_b & 0x30:
+			skip_wait = true
+		return
 	if (e.flags & Entity.F_USER) == 0:
 		return
-	var dir := control & 0xf
-	var carrying := puck_carrier == e.slot
-	if (e.flags & Entity.F_BUSY) == 0:
-		if carrying:
-			Lines.offside_warning_check(self, e)
-			if e.line_slot == 0 and (e.flags2 & Entity.F2_TURNING):
-				return
-			if action_pass:
-				PuckLogic.pass_button(self, e, control, pressed)
-				return
-			if action_shot:
-				PuckLogic.shot_control(self, e, control, pressed, buttons_changed)
-				return
-			if pressed & 0x10:          # A: pass (released next step, in the pushed direction)
-				pending_dir = e.facing
-				action_pass = true
-				return
-			if (pressed & 0x40) and not penalty_shot:
-				# C as the carrier: the line change prompt (request_line_change_button); the prompt
-				# itself is not ported, the next line of the rotation is taken at once
-				if opt_line_changes:
-					scratch_ac = (scratch_ac & ~0xffff) | 1
-					Lines.cpu_line_change_select(self, e)
-				return
-			if e.line_slot == 0:
-				return
-			if pressed & 0x20:          # B: start the shot animation, power builds while it is held
-				PuckLogic.start_shot(self, e)
-				return
-		else:
-			if controls_blocked:
-				return
-			if pressed & 0x40:
-				PuckLogic.hook_button(self, e)
-				return
-			if pressed & 0x10:
-				switch_to_nearest(e, player)
-				return
-			if e.line_slot == 0:
-				return
-			if e.slot == pass_target:
-				if pressed & 0x20:
-					PuckLogic.body_check(self, e)
-				if one_timer:
-					pending_dir = dir
-					return
-			else:
-				if puck_carrier < 0 and (pressed & 0x20) and pass_target >= 0 and same_team(pass_target, e.slot) \
-						and (entities[pass_target].flags & Entity.F_USER) == 0 \
-						and (entities[pass_target].flags2 & Entity.F2_UNSELECTABLE) == 0:
-					# one timer: take over the receiver, he shoots as soon as the pass arrives
-					if player == 0:
-						user1_slot = find_switch_target(pass_target, user1_slot)
-					else:
-						user2_slot = find_switch_target(pass_target, user2_slot)
-					one_timer = true
-					return
-				if pressed & 0x20:
-					PuckLogic.body_check(self, e)
-					return
-		apply_skating(e, dir)
-	elif not carrying and not controls_blocked:
-		if pressed & 0x10:
+	if e.flags & Entity.F_BUSY:
+		if Entity.to_s8(puck_carrier) == e.slot or controls_blocked:
+			return
+		if scratch_b & 0x10:
 			switch_to_nearest(e, player)
-		elif e.slot == pass_target and one_timer:
-			pending_dir = dir
+			return
+		if pass_target == e.slot:
+			if one_timer:
+				pending_dir = scratch_a & 0xf
+			return
+		if Entity.to_s8(puck_carrier) >= 0 or (scratch_b & 0x20) == 0 or pass_target < 0:
+			return
+		var pt := entities[pass_target]
+		if pt.line_slot <= 0:
+			return
+		_take_one_timer(e, pt)
+		return
+	if Entity.to_s8(puck_carrier) == e.slot:
+		Lines.offside_warning_check(self, e)
+		if e.line_slot == 0 and (e.flags2 & Entity.F2_TURNING):
+			return
+		if action_pass:
+			PuckLogic.pass_button(self, e)
+			return
+		if action_shot:
+			PuckLogic.shot_control(self, e, scratch_a, scratch_b, scratch_ac & 0xffff)
+			return
+		if scratch_b & 0x10:
+			# shoot_button (0x551af): the pass is aimed where he faces until A is released
+			pending_dir = e.facing & 7
+			action_pass = true
+			return
+		if (scratch_b & 0x40) and not penalty_shot:
+			Lines.request_line_change_button(self, e)
+			return
+		if e.line_slot == 0:
+			return
+		if scratch_b & 0x20:
+			PuckLogic.start_shot(self, e)
+			return
+		apply_skating(e, scratch_a)
+		return
+	if controls_blocked:
+		return
+	if scratch_b & 0x40:
+		PuckLogic.hook_button(self, e, player)
+		return
+	if scratch_b & 0x10:
+		switch_to_nearest(e, player)
+		return
+	if e.line_slot == 0:
+		return
+	if e.slot == pass_target:
+		if scratch_b & 0x20:
+			PuckLogic.body_check(self, e)
+		if one_timer:
+			pending_dir = scratch_a & 0xf
+			return
+		if scratch_b & 0x10:
+			switch_to_nearest(e, player)
+			return
+		if controls_blocked:
+			return
+		apply_skating(e, scratch_a)
+		return
+	if Entity.to_s8(puck_carrier) < 0 and (scratch_b & 0x20) and pass_target >= 0:
+		if _take_one_timer(e, entities[pass_target]):
+			return
+	if scratch_b & 0x20:
+		PuckLogic.body_check(self, e)
+		return
+	if controls_blocked:
+		return
+	apply_skating(e, scratch_a)
 
-## faceoff_control (0x50f8d): the users time the drop; A commits to a direction
-func faceoff_control(e: Entity, control: int, pressed: int) -> void:
+## the one timer of control_player: the user takes over the team mate the pass goes to (not
+## another user's, nor one who cannot be selected); he shoots as soon as it arrives
+func _take_one_timer(e: Entity, pt: Entity) -> bool:
+	if (e.slot < 6) != (pt.slot < 6) or (pt.flags & Entity.F_USER) or (pt.flags2 & Entity.F2_UNSELECTABLE):
+		return false
+	if e.slot == user1_slot:
+		if pt.slot != user1_slot:
+			user1_slot = find_switch_target(pt.slot, user1_slot)
+	elif pt.slot != user2_slot:
+		user2_slot = find_switch_target(pt.slot, user2_slot)
+	one_timer = true
+	return true
+
+## faceoff_control (0x4ff0d): at the dot the users time the drop: the direction they hold is kept
+## for faceoff_resolve (the attacking-up side's in the second word); A commits: too early (before
+## 0x11 steps of the countdown are left) he swings and misses
+func faceoff_control(e: Entity) -> void:
 	if e.state() != Entity.State.FACEOFF:
 		return
 	if e.flags & Entity.F_ATTACK_UP:
-		faceoff_dir[0] = control & 0xf
+		faceoff_dir[1] = Entity.to_s16(scratch_a)
 	else:
-		faceoff_dir[1] = control & 0xf
+		faceoff_dir[0] = Entity.to_s16(scratch_a)
 	if e.flags2 & Entity.F2_TURNING:
 		return
-	if (pressed & 0x10) == 0:
-		e.timer_b -= 1
+	if (scratch_b & 0x10) == 0:
+		e.timer_b = Entity.to_s16(e.timer_b - 1)
 		if e.timer_b < 0:
-			Anim.set_animation(e, 0x7f1)      # idle shuffle at the dot
+			Anim.set_animation(e, 0x7f1)
 		return
 	e.flags2 |= Entity.F2_TURNING
 	if faceoff_timer < 0x11:
 		e.flags |= Entity.F_BUSY
-		Anim.set_animation(e, 0x7dd)          # swing at the drop
+		Anim.set_animation(e, 0x7dd)
 	else:
-		Anim.set_animation(e, 0xd05)          # too early
+		Anim.set_animation(e, 0xd05)
 	e.timer_b = -1
 
 func apply_skating(e: Entity, dir: int) -> void:
 	if e.line_slot == 0:
 		goalie_move(e, dir)
 		return
+	dir &= 0xf
 	# animation without movement input: glide (one frame per direction)
 	var idle_anim := Anim.GLIDE
 	if e.flags & Entity.F_BACKWARDS:
@@ -1159,37 +1203,40 @@ func goalie_move(e: Entity, dir: int) -> void:
 	Anim.set_animation(e, Anim.GOALIE_IDLE)
 	skating_accelerate(e, e.facing)
 
-## switch_to_nearest (0x59e69): the user takes the skater nearest to where the puck is going
+## switch_to_nearest (0x59e69): the user takes the skater of his team nearest to where the puck
+## is going (its position plus 1/256 of its velocity), not one who is busy, cannot be selected or is
+## the other user's; when that is himself he lunges for the puck (lunge_for_puck). (A user without a
+## team, 0, gets the away team's skaters, as in the original.)
 func switch_to_nearest(e: Entity, player: int) -> void:
-	var team_no := user1_team if player == 0 else user2_team
-	if team_no == 0:
-		return
-	var first := (team_no - 1) * 6
-	var other := user2_slot if player == 0 else user1_slot
+	var px := Entity.to_s16(puck.xi + (puck.vx >> 8))
+	var py := Entity.to_s16(puck.yi + (puck.vy >> 8))
+	var team_no := user2_team if player != 0 else user1_team
+	var first := 0 if team_no == 1 else 6
+	var other := user1_slot if player != 0 else user2_slot
 	var best := e.slot
-	var best_d := 0x7fffffff
+	var best_d := 0xffffffff
 	for i in 6:
 		var p := entities[first + i]
 		if p.line_slot <= 0 or (p.flags2 & Entity.F2_UNSELECTABLE) or (p.flags & Entity.F_BUSY):
 			continue
-		var dx := puck.xi + (puck.vx >> 8) - p.xi
-		var dy := puck.yi + (puck.vy >> 8) - p.yi
-		var d := dx * dx + dy * dy
-		if d <= best_d and p.slot != other:
-			best_d = d
-			best = p.slot
-	var cur := user1_slot if player == 0 else user2_slot
+		var dx := px - p.xi
+		var dy := py - p.yi
+		var d := (dx * dx + dy * dy) & 0xffffffff
+		if d > best_d or p.slot == other:
+			continue
+		best_d = d
+		best = p.slot
+	var cur := user2_slot if player != 0 else user1_slot
 	if cur == best:
-		# nobody else: the current player lunges for the puck instead (lunge_for_puck)
-		e.flags |= Entity.F_BUSY
-		Anim.set_animation(e, 0x589)
+		PuckLogic.lunge_for_puck(self, e)
 		return
 	if player == 0:
-		user1_slot = find_switch_target(best, user1_slot)
-	else:
+		if best != user1_slot:
+			user1_slot = find_switch_target(best, user1_slot)
+	elif best != user2_slot:
 		user2_slot = find_switch_target(best, user2_slot)
 
-## find_switch_target (0x59f1a): moves the user flag from `cur` to `target`, returns the new slot
+## find_switch_target (0x59fe1): moves the user flag from `cur` to `target`, returns the new slot
 func find_switch_target(target: int, cur: int) -> int:
 	if cur >= 0 and cur < 12:
 		var c := entities[cur]

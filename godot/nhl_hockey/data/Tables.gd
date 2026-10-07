@@ -31,6 +31,7 @@ static var wing_zones: Array = []                 # 4 x [x, dx, y, dy]
 static var center_zones: Array = []
 static var goalie_save_anims: PackedInt32Array
 static var poke_vectors: Array = []               # 8 x [vx, vy]
+static var poke_vectors_raw: PackedInt32Array     # the words around it (index 0x200 is poke_vectors[0].x)
 static var breakaway_waypoints: Array = []        # 4 x [x, y, trigger]
 static var ref_signal_dir: PackedInt32Array
 static var ref_signal_anim: PackedInt32Array
@@ -112,6 +113,7 @@ static func load_tables() -> void:
 	center_zones = _ints(t["center_zones"])
 	goalie_save_anims = PackedInt32Array(t["goalie_save_anims"])
 	poke_vectors = _ints(t["poke_vectors"])
+	poke_vectors_raw = PackedInt32Array(t["poke_vectors_raw"])
 	breakaway_waypoints = _ints(t["breakaway_waypoints"])
 	ref_signal_dir = PackedInt32Array(t["ref_signal_dir"])
 	ref_signal_anim = PackedInt32Array(t["ref_signal_anim"])

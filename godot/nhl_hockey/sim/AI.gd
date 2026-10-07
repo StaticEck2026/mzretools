@@ -1950,11 +1950,11 @@ static func puck_faceoff(sim: Sim, e: Entity) -> void:
 			var other := sim.teams[1 - t]
 			if sim.opt_line_changes:
 				if sim.is_user_team(t):
-					if sim.line_hotkey[t] >= 0:
+					if sim.line_hotkey_req[t] != 0:
 						var slot := sim.user1_slot if sim.user1_team == t + 1 else sim.user2_slot
 						if slot >= 0:
 							Lines.request_line_change(sim, sim.entities[slot], sim.line_hotkey[t])
-						sim.line_hotkey[t] = -1
+						sim.line_hotkey_req[t] = 0
 					else:
 						Lines.apply_line_change(sim, team)
 				else:

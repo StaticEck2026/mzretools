@@ -1091,8 +1091,8 @@ static func faceoff_resolve(sim: Sim) -> void:
 	var dir := 8
 	var vy_bias := 0x800 if (side & 0x800) == 0 else -0x800
 	var held: int = sim.faceoff_dir[0 if (side & 0x800) == 0 else 1]
-	if held >= 0 and held < 8 and (held & 8) == 0:
-		dir = held
+	if (held & 8) == 0:
+		dir = held & 7
 		if sim.random(4) == 0:
 			dir = (dir + sim.random(5) - 2) & 7
 	else:
