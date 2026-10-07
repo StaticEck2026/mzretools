@@ -2740,12 +2740,13 @@ static func ref_pickup(sim: Sim, e: Entity) -> void:
 		if sim.panel < 0xec or sim.goal_call.is_empty():
 			return
 		var g: Array = sim.goal_call
-		if not sim.stubbed("say_goal", [int(g[0]) & 0xff, int(g[1]) & 0xff, int(g[2]) & 0xff, int(g[3]) & 0xff]):
-			var assists: Array = []
-			for k in [2, 3]:
-				if g[k] >= 0:
-					assists.append(Speech.number(sim, g[0], g[k]))
-			Speech.say(sim, Speech.goal(Speech.abbrev(sim, g[0]), Speech.number(sim, g[0], g[1]), assists))
+		# say_goal_wrapper: with sound and speech on, in a game with statistics
+		# (the assists counted as the bytes not 0xff, the first one's number said first: a second
+		# assist without a first says the number of record 0xff)
+		if sim.sound_enabled and (sim.settings2 & 1) != 0 and not sim.no_stats:
+			var count := (1 if (int(g[2]) & 0xff) != 0xff else 0) + (1 if (int(g[3]) & 0xff) != 0xff else 0)
+			var assists: Array = [Speech.number(sim, g[0], int(g[2]) & 0xff), Speech.number(sim, g[0], int(g[3]) & 0xff)]
+			Speech.say(sim, Speech.goal(Speech.abbrev(sim, g[0]), Speech.number(sim, g[0], int(g[1]) & 0xff), assists.slice(0, count)))
 		sim.goal_call = []
 		if sim.period >= 3:
 			sim.panel = 0x38

@@ -144,7 +144,12 @@ So do the event records: `announce_goal`, `record_penalty` and `announce_injury`
 of the event (`dword_e9ac8`, the bytes a kind does not write keep the last one's) into the
 stoppage's eight events, which `gsummary_flush` puts into GSUMMARY.DB; every case compares the record,
 the events and their count, and the `rules` group calls `record_penalty` and `announce_goal` directly
-(100 cases each). Only the panel's text (`show_penalty`) and the announcer's sentences are stubbed.
+(100 cases each). Only the panel's text (`show_penalty`) is stubbed. The announcer's sentences run
+too (`say_goal`, `say_penalty` with `say_time_remaining` and `speech_minutes_clip`, `say_penalty_shot`,
+`say_star`, `say_one_minute_left` and their wrappers' conditions): the speech driver is replaced by a
+recorder of the clips `speech_release_clip` appends to the playback list, so every sentence is
+compared clip by clip (the team abbreviations from `team_ids`, the jersey numbers from byte 5 of the
+player records, which every case now carries; the announcer is on in every other world).
 `play_sfx` runs in every group too (the last sound kept for the replay, the goal horn over the
 announcer, the crowd's roar, the organ with a wave table card; only the sound driver's
 `snd_play_sfx` and the music's `kms_play` record their calls), the instant replay records its frames

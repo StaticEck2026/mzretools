@@ -206,8 +206,7 @@ static func record_penalty(sim: Sim, team: int, roster: int, kind: int, minutes:
 	if kind == 0x11:
 		var st := sim.penalty_shot_team
 		var num := Speech.number(sim, st, sim.penalty_shot_roster)
-		if not sim.stubbed("say_penalty_shot", [num & 0xff, mm, ss]):
-			Speech.say(sim, Speech.penalty_shot(Speech.abbrev(sim, st), num, mm, ss))
+		Speech.say(sim, Speech.penalty_shot(Speech.abbrev(sim, st), num, mm, ss))
 		return
 	var mode := 2
 	if sim.last_penalty_team != team:
@@ -220,8 +219,7 @@ static func record_penalty(sim: Sim, team: int, roster: int, kind: int, minutes:
 			count += 1
 	var last := queue_index == 0
 	var number := Speech.number(sim, team, roster)
-	if not sim.stubbed("say_penalty", [number & 0xff, minutes, mm, ss, mode, count, 1 if last else 0]):
-		Speech.say(sim, Speech.penalty(Speech.abbrev(sim, team), number, minutes, kind + 9, mm, ss, mode == 1, count, last))
+	Speech.say(sim, Speech.penalty(Speech.abbrev(sim, team), number, minutes, kind + 9, mm, ss, mode == 1, count, last))
 	if last:
 		sim.last_penalty_team = -1
 

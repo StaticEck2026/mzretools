@@ -571,8 +571,7 @@ static func goal_ends_penalty(sim: Sim, t: int) -> void:
 	conceding.entity_of[r] = 0
 	conceding.roster_status[r] = 7
 	release_from_box(sim, conceding, r)
-	var p: Database.Player = conceding.info.player(r) if conceding.info != null else null
-	penalty_list_find(sim, 1 if t == 0 else 0, p.number if p != null else 0)
+	penalty_list_find(sim, 1 if t == 0 else 0, Speech.number(sim, conceding.index, r))
 	var k := b
 	while k + 1 < 0x1c:
 		conceding.box_queue[k] = conceding.box_queue[k + 1]
@@ -923,8 +922,6 @@ static func game_clock_tick(sim: Sim) -> void:
 ## say_one_minute_left (0x854ac) says the last minute line, which sets dword_ccc98
 static func announce_one_minute_left(sim: Sim) -> void:
 	if not sim.sound_enabled or (sim.settings2 & 1) == 0 or sim.no_stats:
-		return
-	if sim.stubbed("say_one_minute_left", []):
 		return
 	Speech.say(sim, Speech.one_minute())
 	sim.one_minute_said = true

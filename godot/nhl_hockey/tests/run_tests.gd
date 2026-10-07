@@ -729,8 +729,8 @@ func ai_golden() -> void:
 			continue
 		var sim := Sim.new()
 		sim.stubs = {"snd_play_sfx": true, "kms_play": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
-			"injure_player": true, "show_penalty": true, "say_penalty": true, "say_penalty_shot": true, "play_speech": true, "load_clip": true,
-			"say_goal": true, "goal_milestone_check": true, "put_player_on_ice": true,
+			"injure_player": true, "show_penalty": true, "say": true, "play_speech": true, "load_clip": true,
+			"goal_milestone_check": true, "put_player_on_ice": true,
 			"pick_player_for_position": true, "draw_line_indicator": true}
 		var ok := 0
 		var bad := 0
@@ -770,11 +770,11 @@ func ai_golden() -> void:
 func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 	var sim := Sim.new()
 	sim.stubs = {"snd_play_sfx": true, "kms_play": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
-		"injure_player": true, "show_penalty": true, "say_penalty": true, "say_penalty_shot": true, "play_speech": true, "load_clip": true,
-		"say_goal": true, "goal_milestone_check": true, "put_player_on_ice": true,
+		"injure_player": true, "show_penalty": true, "say": true, "play_speech": true, "load_clip": true,
+		"goal_milestone_check": true, "put_player_on_ice": true,
 		"pick_player_for_position": true, "draw_line_indicator": true,
 		"update_effects": true,
-		"setup_faceoff": true, "say_one_minute_left": true}
+		"setup_faceoff": true}
 	if group == "rules" or group == "goals":
 		sim.stubs.erase("queue_infraction")
 		sim.stubs.erase("maybe_queue_infraction")
@@ -1290,6 +1290,8 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	sim.action_hold_camera = (int(g["action_flags"]) & 0x40) != 0
 	sim.action_replay = (int(g["action_flags"]) & 0x80) != 0
 	sim.replay.wrapped = (int(g["action_flags"]) & 0x10) != 0
+	if g.has("team_ids"):
+		sim.team_ids = _ints(g["team_ids"])
 	if g.has("hud"):
 		_hud_set(sim, g["hud"])
 	sim.last_sfx = int(g.get("last_sfx", -1))
@@ -1477,6 +1479,7 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 			team.roster_status[i] = int(f["roster_status"][i])
 			if f.has("energies"):
 				team.energy[i] = int(f["energies"][i])
+			team.numbers[i] = int(f["numbers"][i]) if f.has("numbers") else 0
 	for i in 12:
 		var e: Entity = sim.entities[i]
 		e.team = 0 if i < 6 else 1
@@ -3297,7 +3300,7 @@ func speech_tests(bos: Database.TeamInfo, det: Database.TeamInfo, gf: Node) -> v
 	sim.panel = 0xf0
 	sim.referee.set_state(Entity.State.REF_PICKUP)
 	AI.ref_pickup(sim, sim.referee)
-	if sim.announcer_queue.size() != 1 or sim.announcer_queue[0][0] != "bos.tea" or not sim.goal_call.is_empty():
+	if sim.announcer_queue.size() != 1 or sim.announcer_queue[0][0] != "BOS.tea" or not sim.goal_call.is_empty():
 		fail("goal sentence: %s" % str(sim.announcer_queue))
 	else:
 		print("speech: ", " ".join(sim.announcer_queue[0]))

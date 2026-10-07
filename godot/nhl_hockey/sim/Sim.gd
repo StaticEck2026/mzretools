@@ -466,8 +466,11 @@ func set_teams(home: Database.TeamInfo, away: Database.TeamInfo, scratches: Dict
 		var team := teams[t]
 		team.info = team_info[t]
 		team_ids[t] = team_info[t].index if team_info[t] != null else t
+		team.numbers.resize(28)
 		for r in 28:
 			team.roster_status[r] = 3 if Lines.roster_exists(team, r) else 0
+			var p: Database.Player = team.info.player(r) if team.info != null else null
+			team.numbers[r] = p.number if p != null else 0
 		for r in scratches.get(t, []):
 			team.roster_status[r] = 2
 	new_game(anthem)

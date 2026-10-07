@@ -16,7 +16,7 @@ static func _num(n: int) -> String:
 
 ## say_goal: "Boston goal ... number 12, assisted by number 77 and number 8"
 static func goal(abbrev: String, scorer: int, assists: Array) -> PackedStringArray:
-	var out := PackedStringArray([abbrev.to_lower() + ".tea", "goalnum.cor", _num(scorer)])
+	var out := PackedStringArray([abbrev + ".tea", "goalnum.cor", _num(scorer)])
 	if assists.size() > 0:
 		out.append_array(["pause.cor", "asstnum.cor", _num(assists[0])])
 	if assists.size() > 1:
@@ -57,7 +57,7 @@ static func penalty(abbrev: String, number: int, minutes: int, type: int, mm: in
 		first: bool, count: int, with_time: bool) -> PackedStringArray:
 	var out := PackedStringArray()
 	if first:
-		out.append(abbrev.to_lower() + ".tea")
+		out.append(abbrev + ".tea")
 		out.append("pennum.cor" if count < 2 else "pensnum.cor")
 	else:
 		out.append("andnum.cor")
@@ -70,14 +70,14 @@ static func penalty(abbrev: String, number: int, minutes: int, type: int, mm: in
 
 ## say_penalty_shot: "Boston, penalty shot, number 12, at ..."
 static func penalty_shot(abbrev: String, number: int, mm: int, ss: int) -> PackedStringArray:
-	var out := PackedStringArray([abbrev.to_lower() + ".tea", "penshot.cor", _num(number), "pause.cor"])
+	var out := PackedStringArray([abbrev + ".tea", "penshot.cor", _num(number), "pause.cor"])
 	out.append_array(time(mm, ss))
 	return out
 
 ## say_star: "the third star, from Boston, number 12" (index 1..3)
 static func star(index: int, abbrev: String, number: int) -> PackedStringArray:
 	var names := ["", "1ststar.cor", "2ndstar.cor", "3rdstar.cor"]
-	return PackedStringArray([names[clampi(index, 1, 3)], abbrev.to_lower() + ".frm", "pause.cor", "number.cor", _num(number)])
+	return PackedStringArray([names[clampi(index, 1, 3)], abbrev + ".frm", "pause.cor", "number.cor", _num(number)])
 
 ## say_one_minute_left: one minute left in the period
 static func one_minute() -> PackedStringArray:
@@ -85,27 +85,26 @@ static func one_minute() -> PackedStringArray:
 
 ## say_game_intro: "tonight at <arena>, an EA Sports game between <away> and <home>"
 static func game_intro(home: String, away: String) -> PackedStringArray:
-	return PackedStringArray(["tonight.bar", home.to_lower() + ".rnk", "easports.bar", "gamebtwn.bar",
-		away.to_lower() + ".awa", "and.bar", home.to_lower() + ".hom"])
+	return PackedStringArray(["tonight.bar", home + ".rnk", "easports.bar", "gamebtwn.bar",
+		away + ".awa", "and.bar", home + ".hom"])
 
-## the speech_busy() of the simulation: a sentence is queued for the audio layer; nothing is
-## said with the speech option off (option byte 2 bit 0) or without sound
+## a sentence for the audio layer (the wrappers' speech_stop_channels: it replaces the one being
+## said); nothing is said with the speech option off (option byte 2 bit 0) or without sound
 static func say(sim: Sim, clips: PackedStringArray) -> void:
 	if not InfoPanel.speech_on(sim):
 		return
+	if sim.stubbed("say", [Array(clips)]):
+		return
 	sim.announcer_queue.append(clips)
 
-## team_abbrev of the team's id (the clip names)
+## team_abbrev of the team's id (team_ids: the clip names)
 static func abbrev(sim: Sim, t: int) -> String:
-	var info: Database.TeamInfo = sim.team_info[t] if t < sim.team_info.size() else null
-	var id: int = info.index if info != null else t
+	var id: int = sim.team_ids[t] if t >= 0 and t < 2 else t
 	return Tables.team_abbrev[clampi(id, 0, Tables.team_abbrev.size() - 1)]
 
-## the jersey number of roster player r of team t
+## the jersey number of roster player r of team t (byte 5 of the player's record)
 static func number(sim: Sim, t: int, r: int) -> int:
 	var team := sim.teams[t]
-	if team.info != null and r >= 0:
-		var p: Database.Player = team.info.player(r)
-		if p != null:
-			return p.number
+	if r >= 0 and r < team.numbers.size():
+		return team.numbers[r]
 	return 0

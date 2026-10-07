@@ -1379,6 +1379,7 @@ def write_globals(emu, g):
         v = g.setdefault(n_, GLOBAL_DEFAULTS.get(n_, 0))
         emu.write(a, struct.pack('<' + _FMT[abs(sz)], v & ((1 << (8 * abs(sz))) - 1)))
     hud_write(emu, g.setdefault('hud', hud_default()))
+    emu.write(TEAM_IDS, struct.pack('<hh', *g.setdefault('team_ids', [0, 1])))
 
 
 HUD_LISTS = (0xc571c, 0xc575c)                 # the penalty lists: 8 x (number, minutes, seconds, hundredths) words
@@ -1464,13 +1465,17 @@ def replay_read(emu):
 
 
 FORMAT_PLAYER_NAME = 0x61d48                   # stubbed: a player's name for the panel (the font measures it); ret 8
-SAY_STAR = 0x59b0f                             # stubbed: the announcer names a star
-SAY_GOAL = 0x59ad0                             # stubbed: the announcer says the goal (the goal_call bytes)
+SPEECH_ENABLED = 0xd27bb                       # speech_enabled: the speech bank is loaded
+SPEECH_DRIVER = (0xed7ac, 0xed7b0)             # the speech driver's records (the sentences write their flags there)
+SPEECH_AVAILABLE = 0x83711                     # stubbed: 1, a voice is free
+SPEECH_BEGIN = 0x83520                         # stubbed: a sentence begins (recorded)
+SPEECH_RESET = 0x833fa                         # stubbed
+SPEECH_QUEUE_CLIP = 0x83faf                    # stubbed: a clip loaded
+SPEECH_PLAY_SENTENCE = 0x8426f                 # stubbed
+SPEECH_RELEASE_CLIP = 0x84418                  # stubbed: the clip appended to the playback list (recorded)
 GOAL_MILESTONE_CHECK = 0x62807                 # stubbed: its deferred call is empty in this build
 RECORD_PENALTY = 0x624b9                       # (team, roster, kind, minutes) + mm, ss, queue index; ret 0xc
 SHOW_PENALTY = 0x61e99                         # stubbed: the panel's lines for the event record (sprintf, the names)
-SAY_PENALTY_WRAPPER = 0x59b3c                  # stubbed: the announcer; (abbrev, number, minutes, name) + mm, ss, mode, count, last
-SAY_PENALTY_SHOT_WRAPPER = 0x59b88             # stubbed: the announcer; (abbrev, number, mm, ss)
 EVENT_REC = 0xe9ac8                            # dword_e9ac8: the record of the last event (11 bytes)
 EVENT_BUF = 0xe9b4c                            # unk_e9b4c: the stoppage's events, 8 x 11 bytes
 EVENT_COUNT = 0xcd34c                          # dword_cd34c
@@ -1480,7 +1485,6 @@ UPDATE_ANNOUNCER = 0x66e06                     # the scoreboard panel and its cl
 UPDATE_EFFECTS = 0x615a2                       # stubbed: the crowd noise and figures
 SETUP_FACEOFF = 0x5d852                        # stubbed for now: the end of a period
 ANNOUNCE_ONE_MINUTE = 0x6280a                  # the announcer's last minute line (with sound, speech and statistics)
-SAY_ONE_MINUTE = 0x854ac                       # stubbed: the sentence (it sets dword_ccc98)
 SPEECH_STOP_CHANNELS = 0x837a8                 # stubbed: the voices stop
 PICK_PLAYER_FOR_POSITION = 0x655cc             # stubbed: the line table rebuilt around a lost player; (team, roster)
 PUT_PLAYER_ON_ICE = 0x5b2c5                    # stubbed: the ratings copy (no roster data here); (entity, roster)
@@ -1497,6 +1501,9 @@ AI_TEAM_FIELDS = TEAM_FIELDS + (('goals', 0x10, -2), ('hits', 0x24, -2), ('break
                                 ('penalty_minutes', 0xc, -2), ('zone_time', 0xe, -2), ('one_timer_goals', 0x1a, -2),
                                 ('breakaway_goals', 0x1e, -2), ('penalty_shots', 0x20, -2), ('penalty_shot_goals', 0x22, -2))
 DEFAULT_STATES = (14, 2, 2, 3, 5, 3, 5)
+
+
+WORLDS = {'n': 0}                              # the random worlds made so far
 
 
 def ai_world(emu, rnd, base, tables):
@@ -1526,6 +1533,12 @@ def ai_world(emu, rnd, base, tables):
             f['roster_status'][rnd.randrange(28)] = 7
         for i, st in enumerate(f['roster_status']):
             emu.write(ROSTERS + ti * 0x444 + i * 0x27, bytes([st]))
+        # the jersey numbers of the records (byte 5: the announcer, the penalty clocks), varied
+        # from case to case without drawing on the random numbers
+        WORLDS['n'] += 1
+        f['numbers'] = [(WORLDS['n'] * 37 + ti * 53 + i * 11) % 99 + 1 for i in range(28)]
+        for i, num in enumerate(f['numbers']):
+            emu.write(ROSTERS + ti * 0x444 + i * 0x27 + 5, bytes([num]))
         for n, o, sz in AI_TEAM_FIELDS:
             emu.write(t + o, struct.pack('<' + _FMT[sz], f[n] if sz < 0 else f[n] & ((1 << (8 * sz)) - 1)))
         emu.write(t + 0x46, struct.pack('<28h', *([f['energy']] * 28)))
@@ -1651,6 +1664,7 @@ def ai_world(emu, rnd, base, tables):
               'star1_team': 0, 'star1_roster': 0, 'star2_team': 0, 'star2_roster': 0, 'buttons_prev0': 0, 'buttons_prev1': 0})
     if g['stop_flags'] & 0x10 and g['last_shooter'] < 0:
         g['last_shooter'] = 2                  # (a shot in flight has a shooter: shot_landed credits him)
+    g['settings2'] |= (WORLDS['n'] >> 1) & 1   # the announcer on in every other world (option byte 2 bit 0)
     write_globals(emu, g)
     emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
     return g, teams, carrier
@@ -2010,6 +2024,7 @@ def ai_cases(exe):
     its handler called; everything the handler may change recorded"""
     emu = PortEmu(exe)
     rnd = random.Random(2593)
+    WORLDS['n'] = 0
     calls = []
 
     def on_infraction(name):
@@ -2030,19 +2045,28 @@ def ai_cases(exe):
         v = emu.uc.reg_read(r)
         return v - (1 << 32) if v & 0x80000000 else v
 
-    def on_say_penalty(eax):
-        sp = emu.uc.reg_read(UC_X86_REG_ESP)
-        stack = struct.unpack('<5i', emu.read(sp + 4, 20))
-        calls.append(['say_penalty', reg(UC_X86_REG_EDX) & 0xff, reg(UC_X86_REG_EBX)] + list(stack))
-    emu.stub(SAY_PENALTY_WRAPPER, on_say_penalty, pop=0x14)
-    emu.stub(SAY_PENALTY_SHOT_WRAPPER, lambda eax: calls.append(['say_penalty_shot', reg(UC_X86_REG_EDX) & 0xff,
-                                                                reg(UC_X86_REG_EBX), reg(UC_X86_REG_ECX)]))
+    # the announcer's sentences run (say_goal, say_penalty, say_penalty_shot, say_star,
+    # say_one_minute_left with their wrappers): the speech driver is replaced, speech_begin starts a
+    # sentence and speech_release_clip appends each clip to it, as it does to the playback list
+    emu.write(SPEECH_ENABLED, struct.pack('<i', 1))
+    for a in SPEECH_DRIVER:
+        emu.write(a, struct.pack('<I', emu.alloc(b'\0' * 0x4000)))
+    emu.stub(SPEECH_AVAILABLE, lambda eax: 1)
+    emu.stub(SPEECH_BEGIN, lambda eax: calls.append(['say', []]))
+    for a in (SPEECH_RESET, SPEECH_QUEUE_CLIP, SPEECH_PLAY_SENTENCE):
+        emu.stub(a, lambda eax: None)
+
+    def on_release(eax):
+        name = bytes(emu.read(eax & 0xffffffff, 16)).split(b'\0')[0].decode('latin-1')
+        if calls and calls[-1][0] == 'say':
+            calls[-1][1].append(name)
+        else:
+            calls.append(['say_release', name])
+    emu.stub(SPEECH_RELEASE_CLIP, on_release)
     emu.stub(SHOW_PENALTY, lambda eax: calls.append(['show_penalty']))
     emu.stub(FREEMEM, lambda eax: None)
     fixed_stubs += [emu.stub(UPDATE_EFFECTS, lambda eax: calls.append(['update_effects'])),
                     emu.stub(SETUP_FACEOFF, lambda eax: calls.append(['setup_faceoff']))]
-    # the announcer's last minute line (announce_one_minute_left runs; the voices' stop is the sound driver's)
-    emu.stub(SAY_ONE_MINUTE, lambda eax: calls.append(['say_one_minute_left']))
     emu.stub(SPEECH_STOP_CHANNELS, lambda eax: None)
     emu.stub(DRAW_LINE_INDICATOR, lambda eax: calls.append(['draw_line_indicator', eax & 0xffff,
                                                            struct.unpack('<i', struct.pack('<I', emu.uc.reg_read(UC_X86_REG_EDX)))[0]]))
@@ -2068,9 +2092,7 @@ def ai_cases(exe):
                                                                     s32(emu.uc.reg_read(UC_X86_REG_EDX)) & 0xffff]))
     pp4p_stub = emu.stub(PICK_PLAYER_FOR_POSITION, lambda eax: calls.append(['pick_player_for_position', s32(eax & 0xffffffff),
                                                                              s32(emu.uc.reg_read(UC_X86_REG_EDX))]))
-    emu.stub(SAY_GOAL, lambda eax: calls.append(['say_goal'] + list(emu.read(0xe9ad4, 4))), pop=4)
     emu.stub(GOAL_MILESTONE_CHECK, lambda eax: calls.append(['goal_milestone_check']))
-    emu.stub(SAY_STAR, lambda eax: None)
     emu.stub(FORMAT_PLAYER_NAME, lambda eax: None, pop=8)
     emu.call(ENTITIES_INIT)
     tables = []
@@ -3110,7 +3132,7 @@ def periods_cases(emu, rnd, base, tables, calls, base_fields, speech):
             emu.write(CROWD_FIGURES + i * 12, struct.pack('<hbbbhhhb', -1, rnd.choice((5, 30, 60)), 0, 0, 0, 0, 0, 0))
         emu.write(CROWD_BUSY, b'\0' * 22)
         team_ids = [rnd.randrange(26), rnd.randrange(26)]
-        emu.write(TEAM_IDS, struct.pack('<hh', *team_ids))
+        g['team_ids'] = team_ids
         g['infraction0'] = 0
         rp = replay_setup(emu, rnd, g)
         write_globals(emu, g)
