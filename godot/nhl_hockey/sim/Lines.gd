@@ -252,9 +252,8 @@ static func assign_line_positions(sim: Sim, team: Team) -> void:
 		mode = 1
 	else:
 		team.extra_attacker = -1
-	var types: Array = Tables.lineup_slot_types[mode]
 	for k in range(team.skaters_on_ice - 1, -1, -1):
-		var type: int = types[k]
+		var type: int = Tables.lineup_slot_types_raw[mode + k]
 		sim.req_slot[k] = type
 		var off: int
 		if type == 0:

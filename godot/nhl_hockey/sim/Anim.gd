@@ -48,7 +48,10 @@ static func advance(e: Entity, sim: Sim = null) -> void:
 		e.flags &= ~Entity.F_BUSY
 		e.flags2 &= ~Entity.F2_TURNING
 		return
-	var dir := e.facing
+	var dir := Entity.to_s16(e.heading >> 16)
+	# (action_flags 0x80: the players and the referee are drawn a quarter turn round)
+	if sim != null and sim.action_replay and (e.slot < 12 or e.slot == Entity.Slot.REFEREE):
+		dir = (dir - 2) & 7
 	if e.flags4 & Entity.F4_MIRROR:
 		dir = (8 - dir) & 7
 	var base := e.anim      # word index of the entry
@@ -57,10 +60,10 @@ static func advance(e: Entity, sim: Sim = null) -> void:
 	var list := base + off + 8
 	var frame := Tables.anim_sword(list + e.anim_pos)
 	if e.anim_hold < 0:
-		# first visit of a frame: its duration
-		e.anim_hold = absi(Tables.anim_sword(list + e.anim_pos + 1))
+		# first visit of a frame: its duration (-0x8000 stays negative: the frame is held)
+		e.anim_hold = Entity.to_s16(absi(Tables.anim_sword(list + e.anim_pos + 1)))
 	else:
-		e.anim_hold -= 1
+		e.anim_hold = Entity.to_s16(e.anim_hold - 1)
 		if e.anim_hold < 0:
 			e.anim_pos += 2
 			# the duration of the frame left: negative = it was the last one
@@ -78,8 +81,8 @@ static func advance(e: Entity, sim: Sim = null) -> void:
 					return
 				if (head & 0x8000) == 0:
 					e.anim = 0
-			e.anim_hold = absi(Tables.anim_sword(list + e.anim_pos + 1))
-	e.frame_wait -= 1
+			e.anim_hold = Entity.to_s16(absi(Tables.anim_sword(list + e.anim_pos + 1)))
+	e.frame_wait = Entity.to_s8(e.frame_wait - 1)
 	if e.frame_wait >= 0:
 		return
 	e.frame_wait = 0

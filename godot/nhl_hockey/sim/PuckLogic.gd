@@ -572,15 +572,18 @@ static func shot_landed(sim: Sim) -> void:
 	if not sim.shot_in_flight:
 		return
 	sim.shot_in_flight = false
-	if sim.play_stopped or sim.last_shooter < 0:
+	if sim.play_stopped:
 		return
-	var s := sim.entities[sim.last_shooter]
-	if ((s.flags & Entity.F_ATTACK_UP) != 0) != (sim.puck.yi > 0):
+	# no shooter (-1, a goal nobody touched the puck for): the original reads the record before
+	# the entities, whose flags byte is the away team's box queue entry 22
+	var flags: int = sim.teams[1].box_queue[22] & 0xff if sim.last_shooter < 0 else sim.entities[sim.last_shooter].flags
+	if ((flags & Entity.F_ATTACK_UP) != 0) != (sim.puck.yi > 0):
 		return
 	sim.add_crowd(100, 1000)
-	sim.excitement += 10
-	if sim.no_stats:
+	sim.excitement = Entity.to_s16(sim.excitement + 10)
+	if sim.no_stats or sim.last_shooter < 0:
 		return
+	var s := sim.entities[sim.last_shooter]
 	var team := sim.team_of(s)
 	var opp := sim.opponents_of(s)
 	team.shots += 1

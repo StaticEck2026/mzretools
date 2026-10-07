@@ -246,6 +246,7 @@ func _physics_process(delta: float) -> void:
 	_hotkeys()
 	var c := controls.step()
 	sim.step(c[0], c[1], c[2], c[3])
+	sim.message_frame()
 	steps_done += 1
 	_play_queued_sfx()
 	_play_music()

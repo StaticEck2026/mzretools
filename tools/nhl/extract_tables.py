@@ -198,6 +198,9 @@ def main():
     # lineup_slot_types[mode][k]: position type of the k-th player of the lineup (mode 0 with a
     # goalie: G LD RD C LW RW, mode 1 goalie pulled: LD RD C LW RW extra attacker)
     t['lineup_slot_types'] = [list(le.read(0xcbc37 + i, 6)) for i in range(2)]
+    # (the rows overlap: mode 1 starts a byte later; read flat, past the six of a row, as the
+    # original does with more than six players dressed)
+    t['lineup_slot_types_raw'] = list(le.read(0xcbc37, 11))
     # line_table_lists: per position type the preference list of line table offsets (TEAMS.DB +0xbc)
     # indexed by line 0..7 first, then the other positions, -1 terminated
     bases = struct.unpack('<8h', le.read(0xcccb8, 16))[1:]

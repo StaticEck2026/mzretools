@@ -77,7 +77,7 @@ static func default_skate(_sim: Sim, e: Entity) -> void:
 	e.push_state()
 
 ## the usual preamble of a positional handler; returns false when the handler must stop
-static func role_preamble(sim: Sim, e: Entity) -> bool:
+static func role_preamble(sim: Sim, e: Entity, offense_entry := false) -> bool:
 	if e.flags & Entity.F_BUSY:
 		return false
 	if Lines.handle_line_change(sim, e):
@@ -89,6 +89,9 @@ static func role_preamble(sim: Sim, e: Entity) -> bool:
 		return false
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
+		if offense_entry:
+			# ai_wing_offense / ai_center_offense: the high byte of +0x2e set, the zone unknown
+			e.timer_b = Entity.to_s16((e.timer_b & 0xff) | 0xff00)
 		e.timer_a = 0
 		e.want_dir = 8           # (the word +0x28: the direction timer too)
 		e.dir_timer = 0
@@ -715,9 +718,7 @@ static func wing_defense(sim: Sim, e: Entity) -> void:
 ## line) whose box of wing_zones gives a random target (one time in 128 a new one in the same zone);
 ## the left wing mirrors it. A change of state forgets the zone (+0x2f = 0xff).
 static func wing_offense(sim: Sim, e: Entity) -> void:
-	if (e.flags & Entity.F_STATE_ENTERED) and (e.flags & (Entity.F_BUSY | Entity.F_USER)) == 0 and not sim.play_stopped:
-		e.timer_b = Entity.to_s16((e.timer_b & 0xff) | 0xff00)
-	if not role_preamble(sim, e):
+	if not role_preamble(sim, e, true):
 		return
 	e.react_timer -= 1
 	if e.react_timer < 0:
@@ -774,9 +775,7 @@ static func center_defense(sim: Sim, e: Entity) -> void:
 ## ai_center_offense (0x4a65c): like the wing (center_zones, the zone by the puck's position alone,
 ## not mirrored in x)
 static func center_offense(sim: Sim, e: Entity) -> void:
-	if (e.flags & Entity.F_STATE_ENTERED) and (e.flags & (Entity.F_BUSY | Entity.F_USER)) == 0 and not sim.play_stopped:
-		e.timer_b = Entity.to_s16((e.timer_b & 0xff) | 0xff00)
-	if not role_preamble(sim, e):
+	if not role_preamble(sim, e, true):
 		return
 	e.react_timer -= 1
 	if e.react_timer < 0:
@@ -1900,17 +1899,29 @@ static func puck_normal(sim: Sim, e: Entity) -> void:
 		sim.penalty_shot_away = 0
 	PuckLogic.puck_update(sim)
 
-## ai_puck_shadow (0x56ecf): the shadow sits under the puck (slot 15)
+## ai_puck_shadow (0x56ecf): the shadow sits under the puck (slot 15), a step down the screen (or
+## to the side in the turned view of action_flags 0x80); after a goal (its animation 0x7fd) it
+## stays as the net's bulge behind the goal line of the net scored on
 static func puck_shadow(sim: Sim, e: Entity) -> void:
 	var puck := sim.puck
-	if puck.frame != 0x189:
-		if e.timer_d != -1 and e.anim == 0x7fd:
-			e.set_pos(0, 0x122 if puck.yi >= 0 else -0x10a)
-			e.vx = 0xe if puck.yi >= 0 else 0xd
+	if e.frame == 0x189:
+		e.x = (puck.xi << 16) | (e.x & 0xffff)
+		e.y = (puck.yi << 16) | (e.y & 0xffff)
+		e.z &= 0xffff
+		if sim.action_replay:
+			e.x = (Entity.to_s16(e.xi + 1) << 16) | (e.x & 0xffff)
+		else:
+			e.y = (Entity.to_s16(e.yi + 1) << 16) | (e.y & 0xffff)
 		return
-	e.set_pos(puck.xi, puck.yi)
-	e.vx = 0
-	e.y += 1 << 16
+	if e.frame != -1 and e.anim == 0x7fd:
+		e.x &= 0xffff
+		e.y = (0x122 << 16) | (e.y & 0xffff)
+		e.z = (0xe << 16) | (e.z & 0xffff)
+		if puck.yi < 0:
+			e.side = 0
+			e.flags4 = 0x80
+			e.y = (e.y & 0xffff) - (0x10a << 16)
+			e.z = (0xd << 16) | (e.z & 0xffff)
 
 ## the line change countdown of team t on the puck's record while the faceoff is set up (+0x26
 ## home, +0x28 away: the steps the user has to pick a line at the prompt; its high byte set to
@@ -2626,9 +2637,10 @@ static func ref_faceoff(sim: Sim, e: Entity) -> void:
 		e.flags &= ~Entity.F_ARRIVED
 		e.flags2 &= ~Entity.F2_NO_COLLIDE
 	if not sim.faceoff_pending:
-		e.set_pos(sim.faceoff_x + (-0xf if sim.faceoff_x <= 0 else 0xf), sim.faceoff_y)
-		e.vx = 0
+		e.x = ((sim.faceoff_x + (-0xf if sim.faceoff_x <= 0 else 0xf)) << 16) | (e.x & 0xffff)
+		e.y = (sim.faceoff_y << 16) | (e.y & 0xffff)
 		e.vy = 0
+		e.vx = 0
 
 ## ai_ref_normal (0x4e0bd): keeps up with the play along the boards
 static func ref_normal(sim: Sim, e: Entity) -> void:

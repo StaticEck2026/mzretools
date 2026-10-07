@@ -718,7 +718,7 @@ func ai_golden() -> void:
 	for group in data:
 		if group == "base":
 			continue
-		if group == "lines" or group == "controls" or group == "rules" or group == "goals" or group == "faceoffs":
+		if group in ["lines", "controls", "rules", "goals", "faceoffs", "steps", "runs"]:
 			counts.append(_lines_golden(data[group], base, group))
 			continue
 		var sim := Sim.new()
@@ -772,12 +772,12 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 	if group == "rules" or group == "goals":
 		sim.stubs.erase("queue_infraction")
 		sim.stubs.erase("maybe_queue_infraction")
-	if group == "goals" or group == "faceoffs":
+	if group in ["goals", "faceoffs", "steps", "runs"]:
 		for n in ["setup_faceoff", "injury_check", "update_effects"]:
 			sim.stubs.erase(n)
 		for n in ["draw_score_digits", "game_over_check"]:
 			sim.stubs[n] = true
-	if group == "faceoffs":
+	if group in ["faceoffs", "steps", "runs"]:
 		sim.stubs.erase("queue_infraction")
 		sim.stubs.erase("maybe_queue_infraction")
 		for n in ["stop_crowd_loop", "center_mouse", "gsummary_flush", "period_cleanup"]:
@@ -892,6 +892,11 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 			"ai_puck_faceoff": AI.puck_faceoff(sim, sim.puck)
 			"ai_puck_faceoff2": AI.puck_faceoff2(sim, sim.puck)
 			"end_of_period": Rules.end_of_period(sim)
+			"sim_steps":
+				sim.buttons_prev[0] = int(c["globals"].get("buttons_prev0", 0))
+				sim.buttons_prev[1] = int(c["globals"].get("buttons_prev1", 0))
+				for st: Array in c["controls"]:
+					sim.run_sim_step(int(st[0]), int(st[1]))
 		var diff := _ai_world_diff(sim, c, base)
 		var la: Dictionary = c["lines_after"]
 		if la.has("infq"):
@@ -1383,7 +1388,8 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 		"faceoff_side1": Entity.to_s16(sim.faceoff_side[1]), "fade_in": 1 if sim.fade_in else 0, "clip_frame": sim.clip_frame,
 		"scorer_jumps": sim.scorer_jumps, "sequence_steps": sim.sequence_steps, "match_over": 1 if sim.match_over else 0,
 		"star0_team": _star(sim, 0, 0), "star0_roster": _star(sim, 0, 1), "star1_team": _star(sim, 1, 0),
-		"star1_roster": _star(sim, 1, 1), "star2_team": _star(sim, 2, 0), "star2_roster": _star(sim, 2, 1)}
+		"star1_roster": _star(sim, 1, 1), "star2_team": _star(sim, 2, 0), "star2_roster": _star(sim, 2, 1),
+		"buttons_prev0": sim.buttons_prev[0], "buttons_prev1": sim.buttons_prev[1]}
 
 static func _star(sim: Sim, k: int, f: int) -> int:
 	return int(sim.stars[k][f]) if k < sim.stars.size() else 0
@@ -1408,6 +1414,7 @@ static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 			"action_flags": w &= 0xcc
 			"goal_call": w = 1 if w == 1 else 0
 			"infraction0": w = 1 if w != 0 else 0
+			"puck_in_net": w = 1 if w != 0 else 0
 		if int(got[k]) != w:
 			diff.append("%s %d (original %d)" % [k, int(got[k]), w])
 	var tas: Array = wa["teams"]

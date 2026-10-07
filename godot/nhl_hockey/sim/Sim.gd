@@ -717,14 +717,47 @@ func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) ->
 			else:
 				stars_running = false
 				match_over = true
-	# run_sim_steps: the clock, then sim_tick (sim_game_state, sim_update_players, the camera, the replay)
+	run_sim_step(control_p1, control_p2)
+	replay.record(self)
+	# game_loop: a period over (end_period_flag, ai_ref_pickup_puck) ends after this frame, after
+	# the intermission (end_of_period)
+	if period_over and not stars_running and not match_over:
+		Rules.end_of_period(self)
+
+## a step of run_sim_steps (0x1149a): the clock while play is on (game_clock_tick), then sim_tick
+## (0x5c1c4): sim_game_state, sim_update_players and update_camera (the replay frame is recorded
+## by the caller); the controls are the bytes read_control_p1 / read_control_p2 read
+func run_sim_step(control_p1: int, control_p2: int) -> void:
 	if not play_stopped:
 		Rules.game_clock_tick(self)
 	Rules.sim_game_state(self)
-	if second_tick:
-		Rules.goalie_time_stats(self)
-	# dword_ccc9c: the users cannot move during the whistle / announcement phase of a stoppage
-	controls_blocked = play_stopped and (game_over or (not faceoff_pending and stoppage_timer < 0 and Rules.inf_type(self, 0) == 0))
+	sim_update_players(control_p1, control_p2)
+	update_camera()
+
+## draw_sprites (0x5ce12), every drawn frame: the message box counts its frames down and closes
+func message_frame() -> void:
+	if message != -1 and message_timer > 0:
+		message_timer -= 1
+		if message_timer <= 0:
+			message_timer = 0
+			message = -1
+
+## sim_update_players (0x5c40f), every step after sim_game_state: whether the users may move
+## (controls_blocked), the distances to the puck, then for every record on the ice (the referee
+## always): the previous position, the animation, the pick-up and second timers, the goalie's
+## time on the ice, friction, gravity and the move, the user's controls (control_player), the AI
+## state, the goalie kept out of the posts, the collisions (move_entity) and the hit strength
+## fading; finally the carried puck is kept inside the boards and in front of the end boards
+func sim_update_players(control_p1: int = 8, control_p2: int = 8) -> void:
+	var rstate := referee.state()
+	var blocked := false
+	if play_stopped:
+		if intermission_camera:
+			blocked = true
+		elif not faceoff_pending and stoppage_timer < 0 and Rules.inf_type(self, 0) == 0 \
+				and rstate != Entity.State.REF_CALL_PENALTY and rstate != Entity.State.REF_POINT_GOAL:
+			blocked = clip == 2 or clip == 0 or panel < 0 or panel >= 0x100
+	controls_blocked = blocked
 	update_puck_distances()
 	for i in 17:
 		var e := entities[i]
@@ -732,13 +765,23 @@ func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) ->
 		e.prev_y = e.y
 		e.prev_z = e.z
 		if e.line_slot < 0 and e.slot != Entity.Slot.REFEREE:
+			e.speed_prev = e.speed
 			continue
 		var team: Team = teams[e.team] if e.slot < 12 else null
-		if team != null and e.roster_idx >= 0:
+		if team != null and e.roster_idx >= 0 and e.roster_idx < 28:
 			e.energy = team.energy[e.roster_idx]      # the energy lives in the team record (+0x46)
 		Anim.advance(e, self)
-		e.timer_c = maxi(0, e.timer_c - 1)
-		e.timer_d = maxi(0, e.timer_d - 1)
+		e.timer_c = Entity.to_s16(e.timer_c - 1)
+		if e.timer_c < 0:
+			e.timer_c = 0
+		e.timer_d = Entity.to_s16(e.timer_d - 1)
+		if e.timer_d < 0:
+			e.timer_d = 0
+		# the goalie's time on the ice (the second tick of sim_game_state)
+		var r := Entity.to_s8(e.roster_idx)
+		if e.slot != Entity.Slot.REFEREE and second_tick and r >= 0 and e.line_slot == 0 and r >= 0x19 and r < 0x1c \
+				and not no_stats:
+			teams[e.team].goalie_stats[r - 0x19][0] += 1
 		integrate(e)
 		if e.slot == user1_slot:
 			buttons_changed = (control_p1 & 0x70) ^ buttons_prev[0]    # read_control_p1
@@ -757,50 +800,43 @@ func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) ->
 		e.push_y = 0
 		if e.xi != e.prev_x >> 16 or e.yi != e.prev_y >> 16 or e.slot == Entity.Slot.PUCK:
 			move_entity(e)
-		e.speed = maxi(0, e.speed - 2)
-		if team != null and e.roster_idx >= 0:
+		e.speed = Entity.to_s16(e.speed - 2)
+		if e.speed < 0:
+			e.speed = 0
+		e.speed_prev = e.speed
+		if team != null and e.roster_idx >= 0 and e.roster_idx < 28:
 			team.energy[e.roster_idx] = e.energy
-	if message_timer > 0:
-		message_timer -= 1
-		if message_timer < 1:
-			message_timer = 0
-			message = -1
-	# the carrier cannot drag the puck through the boards or behind the goal line (end of sim_update_players)
+	# the carrier cannot drag the puck through the boards or behind the goal line
 	if puck.zi < 0x18 and absi(puck.xi) > 0xa0 and puck_carrier >= 0:
-		puck.x = (-0xa0 if puck.xi < 0 else 0xa0) * 0x10000
+		puck.x = ((-0xa0 if puck.xi < 0 else 0xa0) << 16) | (puck.x & 0xffff)
 		puck.frame = 0x18a
-	if puck.zi < 1 and puck_carrier >= 0 and (puck.yi < -0x104 or puck.yi > 0x108):
-		puck.y = (-0x104 if puck.yi < 0 else 0x108) * 0x10000
+	if puck.zi <= 0 and puck_carrier >= 0 and (puck.yi < -0x104 or puck.yi > 0x108):
+		puck.y = ((-0x104 if puck.yi < 0 else 0x108) << 16) | (puck.y & 0xffff)
 		puck.frame = 0x18a
-	update_camera()
-	replay.record(self)
-	# game_loop: a period over (end_period_flag, ai_ref_pickup_puck) ends after this frame, after
-	# the intermission (end_of_period)
-	if period_over and not stars_running and not match_over:
-		Rules.end_of_period(self)
 
-## first loop of sim_update_players: distance/direction of every skater to the puck and the nearest
-## skater of each team (team.nearest_slot)
+## the first loop of sim_update_players: distance, direction and squared quarter distance of
+## every player to the puck; the goalie on the ice and the skater nearest to the puck (by the
+## squared distance, not busy or unselectable) of each team
 func update_puck_distances() -> void:
-	teams[0].reset_nearest()
-	teams[1].reset_nearest()
-	teams[0].goalie_slot = -1     # word_df70e / word_df80e: no goalie until one is found
-	teams[1].goalie_slot = -1
+	for t in 2:
+		teams[t].goalie_slot = -1        # word_df70e / word_df80e: no goalie until one is found
+		teams[t].nearest_dist = 0xffff
+		teams[t].nearest_slot = -1
 	for i in 12:
 		var e := entities[i]
 		var dx := puck.xi - e.xi
 		var dy := puck.yi - e.yi
 		e.puck_dist = approx_distance(dx, dy)
-		e.puck_dir = Tables.direction8(dx, dy)
+		e.puck_dir = Tables.direction8(Entity.to_s16(dx), Entity.to_s16(dy))
 		var qx := dx >> 2
 		var qy := dy >> 2
-		e.puck_dist_sq = qx * qx + qy * qy
+		e.puck_dist_sq = Entity.to_s16(qx * qx + qy * qy)
 		var team := teams[e.team]
 		if e.line_slot == 0:
 			team.goalie_slot = i
 		elif e.line_slot > 0 and (e.flags2 & Entity.F2_UNSELECTABLE) == 0 and (e.flags & Entity.F_BUSY) == 0:
-			if e.puck_dist < team.nearest_dist:
-				team.nearest_dist = e.puck_dist
+			if e.puck_dist_sq < team.nearest_dist:
+				team.nearest_dist = e.puck_dist_sq
 				team.nearest_slot = i
 
 ## friction, speed clamp, gravity and the position update of sim_update_players
@@ -830,7 +866,7 @@ func integrate(e: Entity) -> void:
 		e.y += STEP_DT * e.vy
 	scratch_a = _s16(e.vy)
 	if e.zi >= 0 and (e.zi != 0 or e.vz != 0):
-		e.vz -= GRAVITY
+		e.vz = _s16(e.vz - GRAVITY)
 		scratch_a = _s16(STEP_DT * e.vz)
 		var nz := e.z + STEP_DT * e.vz
 		if nz < 0:
@@ -856,18 +892,18 @@ func clamp_goalie_to_crease(e: Entity) -> void:
 	var px := e.xi
 	if px < -0x2b:
 		if px > -0x32:
-			e.x = -0x2b * 0x10000
+			e.x = (e.x & 0xffff) - (0x2b << 16)
 			e.vx = 0
 	elif px > 0x2b and px < 0x31:
-		e.x = 0x2b << 16
+		e.x = (0x2b << 16) | (e.x & 0xffff)
 		e.vx = 0
 	var py := e.yi
 	if py < 0:
 		if py > -0xc6 and py < -0xc0:
-			e.y = -0xc6 * 0x10000
+			e.y = (e.y & 0xffff) - (0xc6 << 16)
 			e.vy = 0
 	elif py > 0xc0 and py < 0xc6:
-		e.y = 0xc6 << 16
+		e.y = (0xc6 << 16) | (e.y & 0xffff)
 		e.vy = 0
 
 # --------------------------------------------------------------------------------------------
@@ -1355,27 +1391,34 @@ func collide_boards(e: Entity, px: int, py: int, hw: int, hh: int) -> void:
 		if px < -cw or px > cw:
 			var dy := py - (-ch if py <= -ch else ch)
 			var dx := px - (-cw if px < -cw else cw)
+			scratch_b = _s16(dx)
+			scratch_a = _s16(dy)
 			# the original passes (dy, dx)
 			var dist := _s16(approx_distance(dy, dx))
+			scratch_b = _s16(-scratch_b)
 			if dist > CORNER_RADIUS - 1:
-				collide_corner(e, _s16((dy << 8) / dist), _s16((-dx << 8) / dist))
+				scratch_a = _s16((dy << 8) / dist)
+				scratch_b = _s16((-dx << 8) / dist)
+				collide_corner(e, scratch_a, scratch_b)
 		else:
 			collide_net(e, entities[Entity.Slot.NET_BOTTOM if py <= -ch else Entity.Slot.NET_TOP], px, py, hw, hh)
-	if ((e.push_x | e.push_y) & 0xffff) != 0:
+	# the boards: the normal (scratch_a, scratch_b) of the side hit
+	var push := (e.push_x | e.push_y) & 0xffff
+	if push != 0:
+		scratch_a = _s16(push)
 		return
-	var a := 0
-	var b := 0
-	if py >= h:
-		a = 0x100
-	elif py <= -h:
-		a = -0x100
-	elif px >= w:
-		b = -0x100
-	elif px <= -w:
-		b = 0x100
-	else:
-		return
-	collide_corner(e, a, b)
+	scratch_a = 0x100
+	scratch_b = 0
+	if py < h:
+		scratch_a = -0x100
+		if py > -h:
+			scratch_a = 0
+			scratch_b = -0x100
+			if px < w:
+				scratch_b = 0x100
+				if px > -w:
+					return
+	collide_corner(e, scratch_a, scratch_b)
 
 ## a 32 bit signed value (the original's registers wrap)
 static func _s32(v: int) -> int:
@@ -1427,10 +1470,13 @@ func collide_corner(e: Entity, a: int, b: int) -> void:
 ## the puck a quarter and loses 1/64 + 1/128 of vt, a hard puck jumps and spins. After a net frame
 ## (bounced) a skater does not cross the posts' line
 func bounce_off_boards(e: Entity, a: int, b: int) -> void:
+	scratch_a = _s16(a)
+	scratch_b = _s16(b)
 	e.push_x = a
 	e.push_y = b
 	var vn := -_s16((a * e.vy - e.vx * b) >> 8)
 	var vt := _s16((b * e.vy + e.vx * a) >> 8)
+	scratch_ac = (scratch_ac & ~0xffff) | (vn & 0xffff)
 	if e.slot != Entity.Slot.PUCK:
 		if vn > 1000:
 			bounced = false
@@ -1440,6 +1486,7 @@ func bounce_off_boards(e: Entity, a: int, b: int) -> void:
 		vn >>= 2
 		if vn > -0x385:
 			vn = -1000
+		scratch_ac = (scratch_ac & ~0xffff) | (vn & 0xffff)
 		e.vx = _s16((a * vt - vn * b) >> 8)
 		e.vy = _s16((vn * a + b * vt) >> 8)
 		if bounced:
@@ -1459,6 +1506,7 @@ func bounce_off_boards(e: Entity, a: int, b: int) -> void:
 			bounced = false
 			return
 		vn >>= 2
+		scratch_ac = (scratch_ac & ~0xffff) | (vn & 0xffff)
 		if vn < -0x3ff:
 			e.vz = _s16(-random(0x800))
 			PuckLogic.puck_spin(self, e, a)
@@ -1520,6 +1568,8 @@ func collide_net(e: Entity, net: Entity, px: int, py: int, hw: int, hh: int) -> 
 	var a := -0x100
 	var b := 0
 	var dyv := (e.y - e.prev_y) >> 8
+	scratch_a = a
+	scratch_b = _s16(dyv)
 	if dyv != 0:
 		var depth := -h
 		if dyv > 0:
@@ -1535,6 +1585,8 @@ func collide_net(e: Entity, net: Entity, px: int, py: int, hw: int, hh: int) -> 
 			if cx >= -w and cx <= w:
 				if _s16(e.yi ^ a) >= 0:
 					a = -a
+					scratch_a = a
+					scratch_b = 0
 					if (e.flags & Entity.F_ATTACK_UP) == 0:
 						if e.zi != 0xd and cx <= w - 1 and cx >= -(w - 1):
 							Rules.score_goal(self, net)
@@ -1547,6 +1599,7 @@ func collide_net(e: Entity, net: Entity, px: int, py: int, hw: int, hh: int) -> 
 						play_sfx(0xac)
 						var r := random(0x1000)
 						e.vy = -r if e.yi >= 0 else r
+						scratch_a = e.vy
 						e.vx = random(0x2000) - 0x1000
 						e.vz = random(0x2000) - 0x1000
 						PuckLogic.puck_spin(self, e, e.vy)
@@ -1577,6 +1630,8 @@ func collide_player_net(e: Entity, net: Entity, px: int, py: int, hw: int, hh: i
 		return
 	if absi(dx) - hw >= 0x40:
 		return
+	scratch_a = _s16(-dy)
+	scratch_b = dx
 	var q := (dx * dx) >> 2
 	if q > 0x100 or dy * dy * 2 + q > 0x100:
 		return
@@ -1625,6 +1680,7 @@ func collide_pair(e: Entity, x: int, dyk: int, o: Entity) -> void:
 	var dx := _s16(o.xi - x)
 	if absi(dx) > 0x10:
 		return
+	scratch_a = _s16(dx * dx + dyk * dyk)
 	if dx * dx + dyk * dyk > 0x100:
 		return
 	var rvx := _s16(e.vx - o.vx)
@@ -1632,9 +1688,11 @@ func collide_pair(e: Entity, x: int, dyk: int, o: Entity) -> void:
 	var dyr := _s16(o.yi - e.yi)
 	var rvy := _s16(e.vy - o.vy)
 	var closing := dyr * rvy + rvx * dxr
+	scratch_b = _s16(closing)
 	if closing < 0:
 		return
 	var strength := _s16(closing >> 4)
+	scratch_b = strength
 	if e.slot == Entity.Slot.REFEREE or o.slot == Entity.Slot.REFEREE or ((o.flags ^ e.flags) & Entity.F_PLAYER2) != 0:
 		var s := ((closing >> 4) >> 8) & 0xff
 		if s >= 0x80:
@@ -1658,6 +1716,8 @@ func collide_pair(e: Entity, x: int, dyk: int, o: Entity) -> void:
 	var me := e.weight + 0x8c
 	var total := _s16(o.weight + 0x8c + me)
 	var give := _div_trunc(me * strength, total)
+	scratch_a = _s16(give)
+	scratch_b = _s16(give)
 	e.vx = _s16(o.vx + _s16((give * dxr + tang * dyr) >> 4))
 	e.vy = _s16(o.vy + _s16((give * dyr - tang * dxr) >> 4))
 	o.vx = _s16(o.vx + _s16((dxr * give) >> 4))

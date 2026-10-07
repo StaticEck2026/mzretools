@@ -1344,7 +1344,8 @@ AI_GLOBALS = (('game_flags', GAME_FLAGS, 1), ('stop_flags', STOP_FLAGS, 1), ('mi
               ('faceoff_side1', 0xe0396, -2), ('fade_in', 0xcbec4, -2), ('clip_frame', 0xcbece, -2),
               ('scorer_jumps', 0xcca58, -4), ('sequence_steps', 0xe9b04, -4), ('match_over', 0xcbc48, -2),
               ('star0_team', 0xe9af8, -2), ('star0_roster', 0xe9afa, -2), ('star1_team', 0xe9afc, -2),
-              ('star1_roster', 0xe9afe, -2), ('star2_team', 0xe9b00, -2), ('star2_roster', 0xe9b02, -2))
+              ('star1_roster', 0xe9afe, -2), ('star2_team', 0xe9b00, -2), ('star2_roster', 0xe9b02, -2),
+              ('buttons_prev0', 0xe9abe, -2), ('buttons_prev1', 0xe9abc, -2))
 FORMAT_PLAYER_NAME = 0x61d48                   # stubbed: a player's name for the panel (the font measures it); ret 8
 SAY_STAR = 0x59b0f                             # stubbed: the announcer names a star
 SAY_GOAL = 0x59ad0                             # stubbed: the announcer says the goal (the goal_call bytes)
@@ -1468,7 +1469,8 @@ def ai_world(emu, rnd, base, tables):
         emu.write(ENTITIES + carrier * 0x80, c)
     emu.write(PUCK + 0x42, bytes([carrier & 0xff]))
     ref = bytearray(emu.read(ENTITIES + 16 * 0x80, 0x80))
-    put_fields(ref, {'x': rnd.randrange(-0x80, 0x81) << 16, 'y': rnd.randrange(-0xe0, 0xe1) << 16, 'state_sp': 0,
+    put_fields(ref, {'x': rnd.randrange(-0x80, 0x81) << 16 | rnd.randrange(0x10000),
+                     'y': rnd.randrange(-0xe0, 0xe1) << 16 | rnd.randrange(0x10000), 'state_sp': 0,
                      'stack': 0x1f1f1f1f, 'stack2': 0x1f1f1f1f, 'anim': 0xa5b})
     emu.write(ENTITIES + 16 * 0x80, ref)
     emu.call(SORT_DRAW_ORDER2)
@@ -1519,7 +1521,7 @@ def ai_world(emu, rnd, base, tables):
               'penalty_shot_spot_x': 0, 'penalty_shot_spot_y': 0, 'series_announce': 0, 'camera_x': 0, 'camera_y': 0,
               'camera_lead': 0, 'faceoff_digit': 7, 'faceoff_side0': 0x8800 - 0x10000, 'faceoff_side1': 0xa000 - 0x10000, 'fade_in': 0,
               'clip_frame': -1, 'scorer_jumps': 0, 'sequence_steps': 0, 'match_over': 0, 'star0_team': 0, 'star0_roster': 0,
-              'star1_team': 0, 'star1_roster': 0, 'star2_team': 0, 'star2_roster': 0})
+              'star1_team': 0, 'star1_roster': 0, 'star2_team': 0, 'star2_roster': 0, 'buttons_prev0': 0, 'buttons_prev1': 0})
     for n, a, sz in AI_GLOBALS:
         emu.write(a, struct.pack('<' + _FMT[sz], g[n] if sz < 0 else g[n] & ((1 << (8 * sz)) - 1)))
     emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
@@ -2006,6 +2008,8 @@ def ai_cases(exe):
         emu.uc.hook_del(h)
     out['goals'] = goals_cases(emu, rnd, base, tables, calls, out['base'], speech)
     out['faceoffs'] = pface_cases(emu, rnd, base, tables, calls, out['base'], speech)
+    out['steps'] = steps_cases(emu, rnd, base, tables, calls, out['base'], speech)
+    out['runs'] = steps_cases(emu, rnd, base, tables, calls, out['base'], speech, 150, (50, 100, 200, 400))
     return out
 
 
@@ -2570,6 +2574,118 @@ def pface_cases(emu, rnd, base, tables, calls, base_fields, speech):
         emu.write(INFRACTION_QUEUE, b'\0' * 64)
         for t_ in TEAM_RECORDS:
             emu.write(t_ + 0x44, b'\0')
+    for h in stubs:
+        emu.uc.hook_del(h)
+    for c in cases:
+        c['before'] = {s_: {k_: v for k_, v in b.items() if base_fields[int(s_)].get(k_) != v} for s_, b in c['before'].items()}
+        c['after'] = {s_: a for s_, a in c['after'].items() if a}
+    return cases
+
+
+SIM_TICK = 0x5c1c4                             # sim_game_state, sim_update_players, update_camera, the replay
+GAME_CLOCK_TICK = 0x5dc10
+REPLAY_RECORD = 0x675d6                        # stubbed: the replay frame
+CONTROL_ENTRY = 0xc4e18                        # the key event the controls are read from (p1, p2 bytes)
+
+
+def steps_cases(emu, rnd, base, tables, calls, base_fields, speech, count=1000, lengths=(1, 1, 1, 2, 4, 10)):
+    '''whole steps of the simulation as run_sim_steps runs them (the clock while play is on, then
+    sim_tick: sim_game_state, sim_update_players with the users' controls, update_camera), one or
+    a run of them, from random moments of play, of stoppages and of faceoffs'''
+    cup = {'v': 0}
+    stubs = [emu.stub(GAME_OVER_CHECK, lambda eax: (calls.append(['game_over_check', s32(eax & 0xffffffff),
+                                                                  s32(emu.uc.reg_read(UC_X86_REG_EDX))]), cup['v'])[1]),
+             emu.stub(DRAW_SCORE_DIGITS, lambda eax: calls.append(['draw_score_digits', s32(eax & 0xffffffff),
+                                                                   s32(emu.uc.reg_read(UC_X86_REG_EDX))])),
+             emu.stub(STOP_CROWD_LOOP, lambda eax: calls.append(['stop_crowd_loop'])),
+             emu.stub(CENTER_MOUSE, lambda eax: calls.append(['center_mouse'])),
+             emu.stub(GSUMMARY_FLUSH, lambda eax: calls.append(['gsummary_flush'])),
+             emu.stub(FREEMEM, lambda eax: None),
+             emu.stub(REPLAY_RECORD, lambda eax: None)]
+    event = emu.alloc(b'\0' * 4)
+    emu.write(CONTROL_ENTRY, struct.pack('<I', event))
+    cases = []
+    for k in range(count):
+        g, teams, carrier = ai_world(emu, rnd, base, tables)
+        g['speech_busy'] = 0
+        speech['busy'] = 0
+        cup['v'] = 0
+        g['clip'] = -1
+        g['panel'] = rnd.choice((-1, -1, -1, 0x100))
+        g['user1_team'] = rnd.choice((0, 1, 1, 2))
+        g['user2_team'] = rnd.choice((0, 0, 1, 2))
+        for u in (1, 2):
+            t_ = g['user%d_team' % u]
+            g['user%d_slot' % u] = rnd.choice((-1, (t_ - 1) * 6 + rnd.randrange(1, 6))) if t_ else -1
+        # the players dressed: those on the ice (a consistent count, nobody in the box yet)
+        for ti, t in enumerate(TEAM_RECORDS):
+            sk = sum(1 for s_ in range(ti * 6, ti * 6 + 6)
+                     if struct.unpack('<h', emu.read(ENTITIES + s_ * 0x80 + 0x1a, 2))[0] >= 0)
+            emu.write(t + 0x36, struct.pack('<h', sk))
+            teams[ti]['skaters'] = sk
+        # the candidate lists of injury_check
+        for ti in range(2):
+            for kk in range(11):
+                emu.write(POS_LISTS + kk * 0x32 + ti * 0x19, b'\xff' * 25)
+            emu.write(POS_LISTS + 4 * 0x32 + ti * 0x19, struct.pack('<25b', *([ti + 2 * i for i in range(4)] + [-1] * 21)))
+            emu.write(POS_LISTS + 7 * 0x32 + ti * 0x19, struct.pack('<25b', *([ti + 2 * i for i in range(10)] + [-1] * 15)))
+        # the crowd: everybody idle
+        for i in range(20):
+            emu.write(CROWD_FIGURES + i * 12, struct.pack('<hbbbhhhb', -1, rnd.choice((5, 30, 60)), 0, 0, 0, 0, 0, 0))
+        emu.write(CROWD_BUSY, b'\0' * 22)
+        g['infraction0'] = 0
+        for n_, a, sz in AI_GLOBALS:
+            emu.write(a, struct.pack('<' + _FMT[abs(sz)], g[n_] & ((1 << (8 * abs(sz))) - 1)))
+        emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
+        emu.write(PERIOD_NUM, struct.pack('<h', g['period'] + 1))
+        emu.write(PANEL_LINE4, b'\0' * 0x20)
+        emu.write(INFRACTION_QUEUE, b'\0' * 64)
+        seed = rnd.getrandbits(32)
+        emu.write(SEED, struct.pack('<I', seed))
+        scratch_ac = rnd.getrandbits(32)
+        scratch = [rnd.getrandbits(16), rnd.getrandbits(16)]
+        emu.write(SCRATCH[2], struct.pack('<I', scratch_ac))
+        emu.write(SCRATCH[0], struct.pack('<H', scratch[0]))
+        emu.write(SCRATCH[1], struct.pack('<H', scratch[1]))
+        befores = {str(s_): dict(entity_fields(emu, s_), prev=list(struct.unpack('<iii', emu.read(ENTITIES + s_ * 0x80 + 0x74, 12))))
+                   for s_ in range(17)}
+        for ti, t in enumerate(TEAM_RECORDS):
+            teams[ti].update({n_: struct.unpack('<' + _FMT[sz], emu.read(t + o, abs(sz)))[0] for n_, o, sz in AI_TEAM_FIELDS})
+        order = draw_order(emu)
+        n = rnd.choice(lengths)
+        controls = []
+        for _ in range(n):
+            controls.append([rnd.choice((8, 8, 8, rnd.randrange(8), rnd.randrange(8) | rnd.choice((0x10, 0x20, 0x40)))),
+                             rnd.choice((8, 8, rnd.randrange(8)))])
+        case = {'routine': 'sim_steps', 'args': [], 'controls': controls, 'globals': g, 'teams': teams, 'carrier': carrier,
+                'seed': seed, 'scratch_ac': scratch_ac, 'scratch': scratch, 'infq': [0] * 64, 'cup': 0, 'order': order,
+                'stats': stats_read(emu, tables), 'crowd': crowd_read(emu),
+                'pos_lists': [[list(struct.unpack('<25b', emu.read(POS_LISTS + kk * 0x32 + ti * 0x19, 25))) for kk in range(11)]
+                              for ti in range(2)]}
+        del calls[:]
+        for c1, c2 in controls:
+            emu.write(event, bytes([c1, c2, 0, 0]))
+            if not emu.read(GAME_FLAGS, 1)[0] & 1:
+                emu.call(GAME_CLOCK_TICK)
+            emu.call(SIM_TICK)
+        after = ai_record(emu)
+        la = {'infq': list(emu.read(INFRACTION_QUEUE, 64)),
+              'panel4': emu.read(PANEL_LINE4, 0x20).split(b'\0')[0].decode('latin-1'),
+              'scratch': list(struct.unpack('<hh', emu.read(SCRATCH[0], 2) + emu.read(SCRATCH[1], 2))),
+              'scratch_ac': struct.unpack('<I', emu.read(SCRATCH[2], 4))[0],
+              'stats': stats_read(emu, tables), 'crowd': crowd_read(emu)}
+        case.update({'before': befores, 'calls': [list(c) for c in calls],
+                     'after': {str(s_): {k_: v for k_, v in entity_fields(emu, s_).items() if befores[str(s_)].get(k_) != v}
+                               for s_ in range(17)},
+                     'world_after': after, 'lines_after': la})
+        cases.append(case)
+        for a, n_ in ((GAME_FLAGS, 1), (OPTION_FLAGS, 4), (STOP_FLAGS, 2), (MISC_FLAGS, 4), (BREAKAWAY_FLAG, 4),
+                      (PENALTY_SHOT_ACTIVE, 4), (PENALTY_SHOT_SETUP, 4), (PENALTY_SHOT_PHASE, 4)):
+            emu.write(a, b'\0' * n_)
+        emu.write(INFRACTION_QUEUE, b'\0' * 64)
+        for t_ in TEAM_RECORDS:
+            emu.write(t_ + 0x44, b'\0')
+    emu.write(CONTROL_ENTRY, b'\0' * 4)
     for h in stubs:
         emu.uc.hook_del(h)
     for c in cases:
