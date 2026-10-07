@@ -166,9 +166,9 @@ func run_tests() -> void:
 		sim.puck_carrier = shooter.slot
 		shooter.set_state(Entity.State.NEAREST)
 		var home_goals := sim.teams[0].goals
-		sim.step(0, 8, 0x20, 0)        # B: start the shot
+		sim.step(0x20, 8, 0x20, 0)     # B down: start the shot (aimed up the ice, direction 0)
 		for i in 40:
-			sim.step(0, 8, 0, 0)
+			sim.step(0, 8, 0, 0)       # B up: a quick wrist shot
 		if sim.puck_carrier == shooter.slot:
 			fail("the shot was not released (anim %x pos %d)" % [shooter.anim, shooter.anim_pos])
 			break
@@ -685,6 +685,228 @@ func golden_tests(gf: Node) -> void:
 			pc_ok += 1
 	print("golden: randomrange, rand, AdLib driver %d / %d sequences, PC speaker %d / %d effects" % [fm_ok, fm.size(), pc_ok, pc.size()])
 	physics_golden()
+	ai_golden()
+
+## the AI state handlers (ai.json): a random moment of play, one entity in a state, its handler run
+func ai_golden() -> void:
+	var data := _golden("ai")
+	if data.is_empty():
+		fail("golden AI data missing")
+		return
+	var base: Array = data["base"]
+	var counts := []
+	for group in data:
+		if group == "base":
+			continue
+		var sim := Sim.new()
+		sim.stubs = {"play_sfx": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
+			"injure_player": true, "bench_cheer": true}
+		var ok := 0
+		var bad := 0
+		var shown := 0
+		var per_state := {}
+		for c: Dictionary in data[group]:
+			_ai_world_set(sim, c, base)
+			var actor: Entity = sim.entities[int(c["actor"])]
+			sim.stub_calls.clear()
+			AI.dispatch(sim, actor)
+			var diff := _ai_world_diff(sim, c, base)
+			var st := int(c["state"])
+			if not per_state.has(st):
+				per_state[st] = [0, 0]
+			if diff.is_empty():
+				ok += 1
+				per_state[st][0] += 1
+			else:
+				bad += 1
+				per_state[st][1] += 1
+				if shown < 10:
+					shown += 1
+					fail("AI %s %s slot %d: %s" % [group, Tables.ai_state_names[st + 1], actor.slot, ", ".join(diff.slice(0, 8))])
+		var parts := []
+		for st in per_state:
+			parts.append("%s %d/%d" % [Tables.ai_state_names[st + 1], per_state[st][0], per_state[st][0] + per_state[st][1]])
+		counts.append("%s %d / %d (%s)" % [group, ok, ok + bad, ", ".join(parts)])
+	print("golden AI: ", "; ".join(counts))
+
+static func _full(base_rec: Dictionary, part: Dictionary) -> Dictionary:
+	var f := base_rec.duplicate()
+	f.merge(part, true)
+	return f
+
+static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
+	var befores: Dictionary = c["before"]
+	for i in 17:
+		var f := _full(base[i], befores.get(str(i), {}))
+		var e: Entity = sim.entities[i]
+		_entity_set(e, f)
+		e.prev_x = int(f["prev"][0])
+		e.prev_y = int(f["prev"][1])
+		e.prev_z = int(f["prev"][2])
+	var g: Dictionary = c["globals"]
+	var gf := int(g["game_flags"])
+	sim.play_stopped = (gf & 1) != 0
+	sim.ends_switched = (gf & 2) != 0
+	sim.stoppage_countdown = (gf & 4) != 0
+	sim.delayed_call = (gf & 8) != 0
+	sim.no_stats = (gf & 0x10) != 0
+	sim.game_over = (gf & 0x40) != 0
+	var sf := int(g["stop_flags"])
+	sim.faceoff_pending = (sf & 1) != 0
+	sim.whistle_ready = (sf & 4) != 0
+	sim.shot_in_flight = (sf & 0x10) != 0
+	sim.power_play = (sf & 0x20) != 0
+	sim.power_play_team = 1 if (sf & 0x40) else 0
+	sim.offside_warning = (sf & 0x80) != 0
+	sim.misc_first_touch = (int(g["misc_flags"]) & 0x10) != 0
+	sim.half_announce = (int(g["misc_flags"]) & 0x80) != 0
+	var opt := int(g["option_flags"])
+	sim.opt_penalties = (opt & 1) != 0
+	sim.opt_offsides = (opt & 2) != 0
+	sim.opt_line_changes = (opt & 4) != 0
+	sim.opt_two_line_pass = (opt & 8) != 0
+	sim.opt_injuries = (opt & 0x10) != 0
+	sim.settings2 = int(g["settings2"])
+	sim.action_pass = (int(g["action_flags"]) & 4) != 0
+	sim.action_shot = (int(g["action_flags"]) & 8) != 0
+	sim.action_hold_camera = (int(g["action_flags"]) & 0x40) != 0
+	sim.user1_slot = int(g["user1_slot"])
+	sim.user2_slot = int(g["user2_slot"])
+	sim.user1_team = int(g["user1_team"])
+	sim.user2_team = int(g["user2_team"])
+	sim.last_touch_slot = int(g["last_touch_slot"])
+	sim.last_touch_y = int(g["last_touch_y"])
+	sim.last_touch_x = int(g["last_touch_x"])
+	sim.last_passer = int(g["last_passer"])
+	sim.last_shooter = int(g["last_shooter"])
+	sim.pending_dir = int(g["pending_dir"])
+	sim.shot_power = int(g["shot_power"])
+	sim.pass_target = int(g["pass_target"])
+	sim.crowd_noise = int(g["crowd"])
+	sim.excitement = int(g["excitement"])
+	sim.breakaway = int(g["breakaway"]) != 0
+	sim.defenders_ahead = int(g["defenders_ahead"])
+	sim.one_timer = int(g["one_timer"]) != 0
+	sim.penalty_shot_slot = int(g["penalty_shot_slot"])
+	sim.penalty_shot = int(g["penalty_shot_active"]) != 0
+	sim.penalty_shot_setup = int(g["penalty_shot_setup"]) != 0
+	sim.penalty_shot_phase = int(g["penalty_shot_phase"])
+	sim.penalty_shot_team = int(g["penalty_shot_team"])
+	sim.icing_flags = int(g["icing_flags"])
+	sim.icing_shooter = int(g["icing_shooter"])
+	sim.goal_prediction[0][0] = int(g["pred0_x"])
+	sim.goal_prediction[0][1] = int(g["pred0_steps"])
+	sim.goal_prediction[1][0] = int(g["pred1_x"])
+	sim.goal_prediction[1][1] = int(g["pred1_steps"])
+	sim.period = int(g["period"])
+	sim.clock_seconds = int(g["clock_seconds"])
+	sim.clock_sub = int(g["clock_sub"])
+	sim.whistle_timer = int(g["whistle_timer"])
+	sim.camera_target_x = int(g["camera_target_x"])
+	sim.camera_target_y = int(g["camera_target_y"])
+	sim.last_impact = int(g["last_impact"])
+	sim.crowd_toggle = int(g["crowd_hit_toggle"]) != 0
+	sim.ref_hits = int(g["ref_hits"])
+	sim.box_count = [int(g["box_home"]), int(g["box_away"])]
+	var teams: Array = c["teams"]
+	for t in 2:
+		var team: Team = sim.teams[t]
+		var f: Dictionary = teams[t]
+		team.reset_stats()
+		_team_set(team, f)
+		team.attacks_up = (t == 0) != sim.ends_switched
+		team.hits = int(f["hits"])
+		team.breakaways = int(f["breakaways"])
+		team.passes = int(f["passes"])
+		team.current_line = int(f["current_line"])
+		team.nearest_dist = int(f["nearest_dist"])
+		team.nearest_slot = int(f["nearest_slot"])
+		team.strategy = int(f["strategy"])
+		team.strategy2 = int(f["strategy2"])
+		team.flags2 = int(f["flags2"])
+		team.mode = int(f["mode"])
+		team.energy_threshold = int(f["energy_threshold"])
+		for i in 28:
+			team.entity_of[i] = int(f["entity_of"][i])
+	for i in 12:
+		var e: Entity = sim.entities[i]
+		e.team = 0 if i < 6 else 1
+		e.energy = sim.teams[e.team].energy[e.roster_idx] if e.roster_idx >= 0 and e.roster_idx < 28 else 0x1000
+	var order: Dictionary = c["order"]
+	for i in 17:
+		sim.draw_list[i] = int(order["list"][i])
+		sim.draw_pos[i] = int(order["pos"][i])
+		sim.draw_keys[i] = int(order["keys"][i])
+	sim.puck_carrier = int(c["carrier"])
+	sim.seed = int(c["seed"])
+
+static func _ai_globals_get(sim: Sim) -> Dictionary:
+	return {"game_flags": (1 if sim.play_stopped else 0) | (2 if sim.ends_switched else 0) | (4 if sim.stoppage_countdown else 0)
+			| (8 if sim.delayed_call else 0) | (0x10 if sim.no_stats else 0) | (0x40 if sim.game_over else 0),
+		"stop_flags": (1 if sim.faceoff_pending else 0) | (4 if sim.whistle_ready else 0) | (0x10 if sim.shot_in_flight else 0)
+			| (0x20 if sim.power_play else 0) | (0x40 if sim.power_play_team == 1 else 0) | (0x80 if sim.offside_warning else 0),
+		"misc_flags": (0x10 if sim.misc_first_touch else 0) | (0x80 if sim.half_announce else 0),
+		"action_flags": (4 if sim.action_pass else 0) | (8 if sim.action_shot else 0) | (0x40 if sim.action_hold_camera else 0),
+		"user1_slot": sim.user1_slot, "user2_slot": sim.user2_slot, "user1_team": sim.user1_team, "user2_team": sim.user2_team,
+		"last_touch_slot": sim.last_touch_slot, "last_touch_y": sim.last_touch_y, "last_touch_x": sim.last_touch_x,
+		"last_passer": sim.last_passer, "last_shooter": sim.last_shooter, "pending_dir": sim.pending_dir,
+		"shot_power": sim.shot_power, "pass_target": sim.pass_target, "crowd": sim.crowd_noise, "excitement": sim.excitement,
+		"breakaway": 1 if sim.breakaway else 0, "defenders_ahead": sim.defenders_ahead, "one_timer": 1 if sim.one_timer else 0,
+		"penalty_shot_slot": sim.penalty_shot_slot, "penalty_shot_active": 1 if sim.penalty_shot else 0,
+		"penalty_shot_setup": 1 if sim.penalty_shot_setup else 0, "penalty_shot_phase": sim.penalty_shot_phase,
+		"penalty_shot_team": sim.penalty_shot_team, "icing_flags": sim.icing_flags, "icing_shooter": sim.icing_shooter & 0xff,
+		"pred0_x": sim.goal_prediction[0][0], "pred0_steps": sim.goal_prediction[0][1], "pred1_x": sim.goal_prediction[1][0],
+		"pred1_steps": sim.goal_prediction[1][1], "period": sim.period, "clock_seconds": sim.clock_seconds,
+		"clock_sub": sim.clock_sub, "whistle_timer": sim.whistle_timer, "camera_target_x": sim.camera_target_x,
+		"camera_target_y": sim.camera_target_y, "last_impact": sim.last_impact, "crowd_hit_toggle": 1 if sim.crowd_toggle else 0,
+		"ref_hits": sim.ref_hits, "box_home": sim.box_count[0], "box_away": sim.box_count[1]}
+
+static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
+	var diff := []
+	var befores: Dictionary = c["before"]
+	var after: Dictionary = c["after"]
+	for i in 17:
+		var b := _full(base[i], befores.get(str(i), {}))
+		for d in _entity_diff(sim.entities[i], after.get(str(i), {}), b):
+			diff.append("%d: %s" % [i, d])
+	var wa: Dictionary = c["world_after"]
+	var got := _ai_globals_get(sim)
+	var ga: Dictionary = wa["globals"]
+	for k in got:
+		var w := int(ga[k])
+		match k:
+			"game_flags": w &= 0x5f
+			"stop_flags": w &= 0xf5
+			"misc_flags": w &= 0x90
+			"action_flags": w &= 0x4c
+		if int(got[k]) != w:
+			diff.append("%s %d (original %d)" % [k, int(got[k]), w])
+	var tas: Array = wa["teams"]
+	for t in 2:
+		var team: Team = sim.teams[t]
+		var want: Dictionary = tas[t]
+		var tg := {"hits": team.hits, "breakaways": team.breakaways, "passes": team.passes, "current_line": team.current_line,
+			"nearest_dist": team.nearest_dist, "nearest_slot": team.nearest_slot, "strategy": team.strategy,
+			"strategy2": team.strategy2, "flags2": team.flags2, "mode": team.mode, "energy_threshold": team.energy_threshold}
+		for k in tg:
+			if int(tg[k]) != int(want[k]):
+				diff.append("team %d %s %d (original %d)" % [t, k, int(tg[k]), int(want[k])])
+		var w2 := want.duplicate()
+		w2["player_shots"] = []
+		w2["goalie_shots"] = []
+		for d in _team_diff(team, w2, false):
+			diff.append("team %d %s" % [t, d])
+		for i in 28:
+			if team.entity_of[i] != int(want["entity_of"][i]):
+				diff.append("team %d entity_of[%d] %d (original %d)" % [t, i, team.entity_of[i], int(want["entity_of"][i])])
+				break
+	if sim.puck_carrier != int(wa["carrier"]):
+		diff.append("carrier %d (original %d)" % [sim.puck_carrier, int(wa["carrier"])])
+	if str(sim.stub_calls) != str(_ints(c["calls"])):
+		diff.append("calls %s (original %s)" % [str(sim.stub_calls), str(c["calls"])])
+	if sim.seed != int(wa["seed"]):
+		diff.append("seed")
+	return diff
 
 ## the match physics against the original: approx_distance and direction8; collide_boards (with
 ## collide_corner, bounce_off_boards, puck_spin) on puck and skater states at the boards

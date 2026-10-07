@@ -90,7 +90,8 @@ static func role_preamble(sim: Sim, e: Entity) -> bool:
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		e.timer_a = 0
-		e.want_dir = 8
+		e.want_dir = 8           # (the word +0x28: the direction timer too)
+		e.dir_timer = 0
 	return true
 
 ## net_zone_flags (0x5f04e): outcodes of the player (fe) and his target (ft) against the box
@@ -569,16 +570,20 @@ static func def_defense(sim: Sim, e: Entity) -> void:
 			for i in 6:
 				var o := sim.entities[opp.first_slot + i]
 				if o.line_slot >= 0 and (o.flags2 & Entity.F2_UNSELECTABLE) == 0:
-					deepest = maxi(deepest, (maxi(0, o.vy) >> 4) + o.yi)
-			deepest = mini(deepest + 0x32, 0xc3)
+					deepest = maxi(deepest, Sim._s16((maxi(0, o.vy) >> 4) + o.yi))
+			deepest = Sim._s16(deepest + 0x32)
+			if deepest >= 0xaa:
+				deepest = 0xc3       # deep in the own zone: the goal line
 			tx = -tx
 		else:
 			deepest = 1000
 			for i in 6:
 				var o := sim.entities[opp.first_slot + i]
 				if o.line_slot >= 0 and (o.flags2 & Entity.F2_UNSELECTABLE) == 0:
-					deepest = mini(deepest, (mini(0, o.vy) >> 4) + o.yi)
-			deepest = maxi(deepest - 0x32, -0xc3)
+					deepest = mini(deepest, Sim._s16((mini(0, o.vy) >> 4) + o.yi))
+			deepest = Sim._s16(deepest - 0x32)
+			if deepest <= -0xaa:
+				deepest = -0xc3
 		e.target_x = tx
 		e.target_y = deepest
 		if (puck.xi ^ tx) < 0:
@@ -588,7 +593,9 @@ static func def_defense(sim: Sim, e: Entity) -> void:
 	skate_towards(sim, e, e.target_x, e.target_y, 1)
 	try_check(sim, e)
 
-## ai_wing_defense (0x4a1a6): the winger covers his side in the neutral and defensive zone
+## ai_wing_defense (0x4a1a6): the winger covers his side (x 0x78) between the blue line and the
+## goal line of his own zone, up with the puck when it is out of the zone, at the puck's x when the
+## puck is on his side
 static func wing_defense(sim: Sim, e: Entity) -> void:
 	if not role_preamble(sim, e):
 		return
@@ -601,31 +608,34 @@ static func wing_defense(sim: Sim, e: Entity) -> void:
 	var puck := sim.puck
 	var tx := -0x78 if e.line_slot == 5 else 0x78
 	var ty := 0x8e
-	if (e.flags & Entity.F_ATTACK_UP) == 0:
-		if (sim.team_of(e).flags & Team.FL_OFFSIDE) == 0:
-			if puck.yi > 0x44:
-				ty = 0xe8 if puck.yi > 0xe7 else puck.yi
-			else:
-				ty = 0x44
-		else:
-			ty = 0x44
-	else:
+	var offside := (sim.team_of(e).flags & Team.FL_OFFSIDE) != 0
+	if e.flags & Entity.F_ATTACK_UP:
 		tx = -tx
 		ty = -0x8e
-		if sim.team_of(e).flags & Team.FL_OFFSIDE:
+		if offside:
 			ty = -0x44
-		elif puck.yi > -0x45:
-			ty = -0x44
-		elif puck.yi > -0xe8:
+		elif puck.yi >= -0x44:
 			ty = puck.yi
-		else:
+		elif puck.yi <= -0xe8:
 			ty = -0xe8
+	else:
+		if offside:
+			ty = 0x44
+		elif puck.yi <= 0x44:
+			ty = puck.yi
+		elif puck.yi >= 0xe8:
+			ty = 0xe8
 	if (tx ^ puck.xi) >= 0:
 		tx = puck.xi
 	skate_towards(sim, e, tx, ty)
 
-## ai_wing_offense (0x4a343): find space in the offensive zone
+## ai_wing_offense (0x4a343): find space in the offensive zone: by where the puck is (and is going)
+## a zone (0, 4, 8, 12: behind the red line, the neutral zone, the attacking zone, past the goal
+## line) whose box of wing_zones gives a random target (one time in 128 a new one in the same zone);
+## the left wing mirrors it. A change of state forgets the zone (+0x2f = 0xff).
 static func wing_offense(sim: Sim, e: Entity) -> void:
+	if (e.flags & Entity.F_STATE_ENTERED) and (e.flags & (Entity.F_BUSY | Entity.F_USER)) == 0 and not sim.play_stopped:
+		e.timer_b = Entity.to_s16((e.timer_b & 0xff) | 0xff00)
 	if not role_preamble(sim, e):
 		return
 	e.react_timer -= 1
@@ -636,22 +646,22 @@ static func wing_offense(sim: Sim, e: Entity) -> void:
 			return
 		var puck := sim.puck
 		var py := puck.yi
-		var lead := puck.yi + (puck.vy >> 6)
+		var lead := Sim._s16(puck.yi + (Sim._s16(puck.vy) >> 6))
 		if (e.flags & Entity.F_ATTACK_UP) == 0:
-			py = -py
-			lead = -lead
-		var phase := 0
-		if lead > -0x4f:
-			phase = 1
-			if py > 0x4d and (sim.team_of(e).flags & Team.FL_OFFSIDE) == 0:
-				phase = 2
-				if lead > 0xe7:
-					phase = 3
-		if phase != (e.timer_b & 0xff) or sim.random(0x80) == 0:
-			e.timer_b = phase
-			var z: Array = Tables.wing_zones[phase]
-			e.target_x = z[0] + sim.random(z[1] * 2) - z[1] + e.reaction
-			e.target_y = z[2] + sim.random(z[3] * 2) - z[3]
+			py = Sim._s16(-py)
+			lead = Sim._s16(-lead)
+		var zone := 0
+		if lead >= -0x4e:
+			zone = 4
+			if py >= 0x4e and (sim.team_of(e).flags & Team.FL_OFFSIDE) == 0:
+				zone = 8
+				if lead >= 0xe8:
+					zone = 0xc
+		if zone != e.timer_b or sim.random(0x80) == 0:
+			e.timer_b = zone
+			var z: Array = Tables.wing_zones[zone >> 2]
+			e.target_x = Sim._s16(z[0] + sim.random(Sim._s16(z[1] * 2)) - z[1] + e.reaction)
+			e.target_y = Sim._s16(z[2] + sim.random(Sim._s16(z[3] * 2)) - z[3])
 	var tx := e.target_x if e.line_slot == 5 else -e.target_x
 	var ty := e.target_y
 	if (e.flags & Entity.F_ATTACK_UP) == 0:
@@ -659,7 +669,8 @@ static func wing_offense(sim: Sim, e: Entity) -> void:
 		ty = -ty
 	skate_towards(sim, e, tx, ty, 1)
 
-## ai_center_defense (0x4a53a)
+## ai_center_defense (0x4a53a): the centre stays between the puck (half its x) and his own blue
+## line, at -0x71 when the puck is in his zone
 static func center_defense(sim: Sim, e: Entity) -> void:
 	if not role_preamble(sim, e):
 		return
@@ -671,18 +682,19 @@ static func center_defense(sim: Sim, e: Entity) -> void:
 			return
 	var puck := sim.puck
 	var tx := puck.xi >> 1
-	var py := puck.yi if (e.flags & Entity.F_ATTACK_UP) else -puck.yi
+	var py := puck.yi if (e.flags & Entity.F_ATTACK_UP) else Sim._s16(-puck.yi)
 	var ty := -0x71
-	if py > -0x4f:
-		ty = (puck.yi - 0x71) >> 1 if (e.flags & Entity.F_ATTACK_UP) else -((-puck.yi - 0x71) >> 1)
-		if (e.flags & Entity.F_ATTACK_UP) == 0:
-			ty = -ty
+	if py >= -0x4e:
+		ty = Sim._s16((puck.yi - 0x71) >> 1)
 	if (e.flags & Entity.F_ATTACK_UP) == 0:
-		ty = -ty
+		ty = Sim._s16(-ty)
 	skate_towards(sim, e, tx, ty)
 
-## ai_center_offense (0x4a65c)
+## ai_center_offense (0x4a65c): like the wing (center_zones, the zone by the puck's position alone,
+## not mirrored in x)
 static func center_offense(sim: Sim, e: Entity) -> void:
+	if (e.flags & Entity.F_STATE_ENTERED) and (e.flags & (Entity.F_BUSY | Entity.F_USER)) == 0 and not sim.play_stopped:
+		e.timer_b = Entity.to_s16((e.timer_b & 0xff) | 0xff00)
 	if not role_preamble(sim, e):
 		return
 	e.react_timer -= 1
@@ -691,20 +703,20 @@ static func center_offense(sim: Sim, e: Entity) -> void:
 		if sim.puck_carrier >= 0 and not sim.same_team(sim.puck_carrier, e.slot):
 			e.set_state(Entity.State.CENTER_DEFENSE)
 			return
-		var py := sim.puck.yi if (e.flags & Entity.F_ATTACK_UP) else -sim.puck.yi
-		var phase := 0
-		if py > -0x4f:
-			phase = 1
-			if py > 0x4d and (sim.team_of(e).flags & Team.FL_OFFSIDE) == 0:
-				phase = 2
-				if py > 0xe7:
-					phase = 3
-		if phase != (e.timer_b & 0xff) or sim.random(0x80) == 0:
-			e.timer_b = phase
-			var z: Array = Tables.center_zones[phase]
-			e.target_x = z[0] + sim.random(z[1] * 2) - z[1]
-			e.target_y = z[2] + sim.random(z[3] * 2) - z[3]
-	var ty := e.target_y if (e.flags & Entity.F_ATTACK_UP) else -e.target_y
+		var py := sim.puck.yi if (e.flags & Entity.F_ATTACK_UP) else Sim._s16(-sim.puck.yi)
+		var zone := 0
+		if py >= -0x4e:
+			zone = 4
+			if py >= 0x4e and (sim.team_of(e).flags & Team.FL_OFFSIDE) == 0:
+				zone = 8
+				if py >= 0xe8:
+					zone = 0xc
+		if zone != e.timer_b or sim.random(0x80) == 0:
+			e.timer_b = zone
+			var z: Array = Tables.center_zones[zone >> 2]
+			e.target_x = Sim._s16(sim.random(Sim._s16(z[1] * 2)) - z[1] + z[0])
+			e.target_y = Sim._s16(sim.random(Sim._s16(z[3] * 2)) - z[3] + z[2])
+	var ty := e.target_y if (e.flags & Entity.F_ATTACK_UP) else Sim._s16(-e.target_y)
 	skate_towards(sim, e, e.target_x, ty, 1)
 
 # --------------------------------------------------------------------------------------------
