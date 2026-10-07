@@ -81,9 +81,9 @@ func _run_script(script: String) -> void:
 				await get_tree().process_frame
 			"scores":
 				# the scores around the league after period ARG (end_match_from_period)
-				BoxScore.league_scores_init(Session.home_team, Session.away_team)
+				LeagueScores.init(Session.home_team, Session.away_team)
 				for p in range(1, int(arg) + 1):
-					BoxScore.league_scores_advance(p, Session.home_team)
+					LeagueScores.advance(p, Session.home_team)
 				front.games.boxscore_screen(0x20, int(arg), 0)
 				await get_tree().process_frame
 			"quit":

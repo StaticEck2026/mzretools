@@ -433,93 +433,12 @@ func _injured_for_game(side: int, idx: int) -> bool:
 # simulate_pending_games 0x18f8d, boxscore_screen 0x20)
 # ---------------------------------------------------------------------------------------------
 
-const TEAM_RATING := 0xc8922       # unk_c8922: a strength per team (the order of the games' finish)
-
-static var games: Array = []       # calendar_games (unk_dd774 / dd775), unk_dd730, unk_dd788 / dd789: 6 x [a, b, status, score a, score b]
-static var shown: Array = [0, 0, 0, 0, 0, 0]   # league_status_shown: the status last shown
-static var done_mask := 0          # league_done_mask: the games already simulated to the end
-
-## league_scores_init: six other games of the night, between teams not stronger than the home team
-static func league_scores_init(home: int, away: int) -> void:
-	games.clear()
-	done_mask = 0
-	var limit := Exe.u8(TEAM_RATING + home)
-	var used := [home, away]
-	for g in 6:
-		var a := 0
-		while true:
-			a = randi() % 0x1a
-			if a == home or a == away or Exe.u8(TEAM_RATING + a) > limit or a in used:
-				continue
-			break
-		used.append(a)
-		var b := 0
-		while true:
-			b = randi() % 0x1a
-			if b == a or b == home or b == away or b in used:
-				continue
-			break
-		used.append(b)
-		games.append([a, b, 0, 0, 0])
-	for g in 6:
-		shown[g] = 0
-
-## league_scores_advance: each game moves on as far as the game on the ice (shifted by the
-## difference of the teams' strengths): 0..2 goals for each side per period, a tie after the
-## third goes to overtime (status 4) where 71 of 100 games end in a tie, else one side wins (5);
-## 6 the game is over after regulation
-static func league_scores_advance(period: int, home: int) -> void:
-	for g in games.size():
-		var game: Array = games[g]
-		var target := Exe.u8(TEAM_RATING + home) - Exe.u8(TEAM_RATING + game[0]) + period
-		var st: int = game[2]
-		while st <= target:
-			if st == 4:
-				if game[3] == game[4]:
-					game[2] = 4
-					if randi() % 100 < 0x47:
-						if randi() % 100 > 0x46:
-							game[2] = 5
-							game[4] += 1
-					else:
-						game[2] = 5
-						game[3] += 1
-				else:
-					game[2] = 6
-			elif st == 5 and game[2] == 4:
-				game[2] = 5
-			elif game[2] < 3 and st != game[2]:
-				game[2] = st
-				game[3] += randi() % 3
-				game[4] += randi() % 3
-			st += 1
-
-## simulate_pending_games: one game that finished since it was last shown is played to its end by
-## the off screen simulation (Season.gd); -1 when every game was shown already
-static func simulate_pending_games() -> int:
-	for g in games.size():
-		if games[g][2] > 4 and games[g][2] != shown[g]:
-			done_mask |= 1 << g
-	if done_mask == 0x3f:
-		return -1
-	var free: Array = []
-	for g in games.size():
-		if done_mask & (1 << g) == 0:
-			free.append(g)
-	if free.is_empty():
-		return -1
-	var g: int = free[randi() % free.size()]
-	done_mask |= 1 << g
-	for k in games.size():
-		shown[k] = games[k][2]
-	return g
-
 ## the pages of the scores (kind 0x20): "Boston 3" over "Buffalo 2" and the period or "Final"
 func league_scores_pages() -> int:
 	var r := 0
 	var first := true
-	for g in games.size():
-		var game: Array = games[g]
+	for g in LeagueScores.games.size():
+		var game: Array = LeagueScores.games[g]
 		var ra := _team_record(game[0])
 		var rb := _team_record(game[1])
 		if first:

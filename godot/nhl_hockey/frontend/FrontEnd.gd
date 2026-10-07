@@ -659,10 +659,10 @@ func intermission(m: Node, period_done: int) -> int:
 	var r := await games.boxscore_screen(1, period, period)
 	if _league_scores_on(m):
 		if period == 1:
-			BoxScore.league_scores_init(m.sim.teams[0].info.index, m.sim.teams[1].info.index)
+			LeagueScores.init(m.sim.teams[0].info.index, m.sim.teams[1].info.index)
 		if r & 4 == 0:
-			BoxScore.league_scores_advance(period, m.sim.teams[0].info.index)
-			if BoxScore.simulate_pending_games() >= 0:
+			LeagueScores.advance(period, m.sim.teams[0].info.index)
+			if LeagueScores.simulate_pending() >= 0:
 				await games.boxscore_screen(0x20, period, 0)
 	return await pause_menu(1, m)
 
@@ -674,9 +674,9 @@ func game_end(m: Node) -> void:
 	write_summary(m)
 	var period: int = m.sim.period + 1
 	var r := await games.boxscore_screen(1, 1, period)
-	if _league_scores_on(m) and r & 4 == 0 and not BoxScore.games.is_empty():
-		BoxScore.league_scores_advance(period, m.sim.teams[0].info.index)
-		BoxScore.simulate_pending_games()
+	if _league_scores_on(m) and r & 4 == 0 and not LeagueScores.games.is_empty():
+		LeagueScores.advance(period, m.sim.teams[0].info.index)
+		LeagueScores.simulate_pending()
 		await games.boxscore_screen(0x20, period, 0)
 	var code := await pause_menu(2, m)
 	game = null

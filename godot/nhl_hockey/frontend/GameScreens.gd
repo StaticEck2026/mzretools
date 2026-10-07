@@ -509,7 +509,7 @@ func broadcast_booth_screen() -> int:
 	var data := {
 		"settings": Session.save_block(),
 		"summary": sim.summary_bytes(),
-		"scores": BoxScore.games.duplicate(true),
+		"scores": LeagueScores.games.duplicate(true),
 		"index": Session.game_number,
 		"lines": Session.line_override.duplicate(),
 		"scratches": Session.scratches.duplicate(),
@@ -536,6 +536,6 @@ func continue_saved(data: Dictionary, db: Database = null) -> int:
 	Session.apply_block(data.get("settings", Session.save_block()))
 	Session.line_override = data.get("lines", {})
 	Session.scratches = data.get("scratches", {})
-	BoxScore.games = data.get("scores", [])
+	LeagueScores.games = data.get("scores", [])
 	return await fe.play_game(db, data.get("sim", {}))
 

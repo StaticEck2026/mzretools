@@ -2675,7 +2675,46 @@ func league_golden(gf: Node) -> void:
 		elif shown < 10:
 			shown += 1
 			fail("league_sim_game %d %s forced %d: %s" % [index, str(c["record"]), int(c["forced"]), ", ".join(diff)])
-	print("golden league: league_sim_game %d / %d" % [ok, cases.size()])
+	# the scores around the league: league_scores_init, then league_scores_advance period by period
+	var sc: Array = data.get("scores", [])
+	var s_ok := 0
+	var s_shown := 0
+	for c: Dictionary in sc:
+		League.srand(int(c["seed"]))
+		var home := int(c["home"])
+		LeagueScores.init(home, int(c["away"]))
+		var steps: Array = c["steps"]
+		var bad := _scores_diff(steps[0])
+		var periods: Array = c["periods"]
+		for i in periods.size():
+			if bad != "":
+				break
+			LeagueScores.advance(int(periods[i]), home)
+			bad = _scores_diff(steps[i + 1])
+			if bad != "":
+				bad = "after period %d: %s" % [int(periods[i]), bad]
+		if bad == "":
+			s_ok += 1
+		elif s_shown < 10:
+			s_shown += 1
+			fail("league scores %d-%d seed %d: %s" % [home, int(c["away"]), int(c["seed"]), bad])
+	print("golden league: league_sim_game %d / %d, league_scores %d / %d" % [ok, cases.size(), s_ok, sc.size()])
+
+static func _scores_diff(want: Dictionary) -> String:
+	var games := []
+	var status := []
+	var goals := []
+	for g: Array in LeagueScores.games:
+		games.append([int(g[0]), int(g[1])])
+		status.append(int(g[2]))
+		goals.append([int(g[3]), int(g[4])])
+	if str(games) != str(_ints(want["games"])):
+		return "games %s (original %s)" % [str(games), str(want["games"])]
+	if str(status) != str(_ints(want["status"])) or str(goals) != str(_ints(want["goals"])):
+		return "status %s goals %s (original %s %s)" % [str(status), str(goals), str(want["status"]), str(want["goals"])]
+	if League._seed != int(want["rand"]):
+		return "rand state"
+	return ""
 
 ## a league of computer teams: the schedule, a whole season of simulated games, the play-offs
 func league_tests(gf: Node) -> void:

@@ -4052,6 +4052,41 @@ def league_cases(exe, gamedir, count=400):
     return cases
 
 
+LEAGUE_SCORES_INIT = 0x2f2b1                   # (home, away): six other games of the night
+LEAGUE_SCORES_ADVANCE = 0x2f3d7                # (period): their scores up to the period of the game on the ice
+SCORES_GAMES = 0xdd774                         # calendar_games: 6 x (team a, team b)
+SCORES_STATUS = 0xdd730                        # 6 dwords: 0..2 the period, 4 overtime, 5 over, 6 over in regulation
+SCORES_GOALS = 0xdd788                         # 6 x (goals a, goals b)
+
+
+def scores_cases(exe, count=200):
+    '''the scores around the league: league_scores_init for a game of two random teams, then
+    league_scores_advance after each period (and overtime) as the end of a period calls it, with
+    the C library's rand() from a random seed'''
+    emu = PortEmu(exe)
+    rnd = random.Random(26)
+
+    def state():
+        return {'games': [list(emu.read(SCORES_GAMES + 2 * g, 2)) for g in range(6)],
+                'status': list(struct.unpack('<6i', emu.read(SCORES_STATUS, 24))),
+                'goals': [list(emu.read(SCORES_GOALS + 2 * g, 2)) for g in range(6)],
+                'rand': struct.unpack('<I', emu.read(emu.call(RAND_STATE) & 0xffffffff, 4))[0]}
+    cases = []
+    for k in range(count):
+        home, away = rnd.sample(range(26), 2)
+        seed = rnd.getrandbits(32)
+        emu.call(SRAND, eax=seed)
+        emu.write(TEAM_IDS, struct.pack('<hh', home, away))
+        emu.call(LEAGUE_SCORES_INIT, eax=home, edx=away)
+        steps = [state()]
+        periods = list(range(rnd.choice((3, 4, 5))))
+        for p_ in periods:
+            emu.call(LEAGUE_SCORES_ADVANCE, eax=p_)
+            steps.append(state())
+        cases.append({'home': home, 'away': away, 'seed': seed, 'periods': periods, 'steps': steps})
+    return cases
+
+
 def main():
     if len(sys.argv) != 3:
         print(__doc__ or 'golden.py GAMEDIR OUTDIR')
@@ -4061,7 +4096,7 @@ def main():
     os.makedirs(outdir, exist_ok=True)
     for name, data in (('rng', rng_cases(exe)), ('fm_driver', fm_cases(exe, gamedir)),
                        ('pc_speaker', pc_cases(exe, gamedir)), ('physics', physics_cases(exe)),
-                       ('league', {'league': league_cases(exe, gamedir)})):
+                       ('league', {'league': league_cases(exe, gamedir), 'scores': scores_cases(exe)})):
         write_golden(outdir, name, data)
     write_ai(outdir, ai_cases(exe))
 
