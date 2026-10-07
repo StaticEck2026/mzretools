@@ -558,10 +558,19 @@ func play_game(db_override: Database = null, restore: Dictionary = {}) -> int:
 		"anthem": true,
 		"lines": Session.line_override.duplicate(),
 		"scratches": Session.scratches.duplicate(),
+		"cup_series": _cup_series(),
 	}
 	var r: int = await app.play_match_async(setup)
 	game = null
 	return r
+
+## alloc_cup_banner (0x15b76): a game of the play-off final keeps the final's 7 games of the
+## schedule (game_over_check: does this game win the Stanley Cup)
+func _cup_series() -> PackedByteArray:
+	var lg = Session.league
+	if lg == null or Session.game_number < League.SEASON_GAMES + 14 * 7 or Session.game_number >= League.ALL_GAMES:
+		return PackedByteArray()
+	return (lg as League)._playoffs().slice(14 * 42, 15 * 42)
 
 ## pause_menu (0x1935d): EADESK%d.QFS (0 paused, 1 intermission, 2 after the game) with the menu
 ## bar of 0xceb8f (after the game 0xcec4f). 1 back to the game, 2 the game is left (Sports Desk),

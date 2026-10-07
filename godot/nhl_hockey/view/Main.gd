@@ -189,6 +189,7 @@ func _read_settings() -> void:
 		sim.opt_injuries = flags & 0x10 != 0
 		sim.settings2 = (flags >> 8) & 0xff
 		sim.period_length = config.get("period_length", sim.period_length)
+		sim.cup_series = config.get("cup_series", PackedByteArray())
 		sfx_on = flags & 0x80 != 0
 		music_on = flags & 0x40 != 0
 		sim.user1_team = user1_team

@@ -710,7 +710,7 @@ func ai_golden() -> void:
 	for group in data:
 		if group == "base":
 			continue
-		if group == "lines" or group == "controls" or group == "rules":
+		if group == "lines" or group == "controls" or group == "rules" or group == "goals":
 			counts.append(_lines_golden(data[group], base, group))
 			continue
 		var sim := Sim.new()
@@ -761,9 +761,14 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 		"pick_player_for_position": true, "draw_line_indicator": true, "record_penalty": true,
 		"add_penalty_display": true, "penalty_list_find": true, "update_announcer": true, "update_effects": true,
 		"setup_faceoff": true, "announce_one_minute_left": true}
-	if group == "rules":
+	if group == "rules" or group == "goals":
 		sim.stubs.erase("queue_infraction")
 		sim.stubs.erase("maybe_queue_infraction")
+	if group == "goals":
+		for n in ["setup_faceoff", "injury_check", "update_effects"]:
+			sim.stubs.erase(n)
+		for n in ["draw_score_digits", "game_over_check"]:
+			sim.stubs[n] = true
 	var per := {}
 	var ok := 0
 	var shown := 0
@@ -798,6 +803,14 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 				team.pos_lists[k] = PackedInt32Array(_ints(li["pos_lists"][t][k]))
 			for i in 3:
 				team.goalie_menu[i] = int(li["menu"][t * 3 + i])
+		if c.has("pos_lists"):
+			for t in 2:
+				for k in 11:
+					sim.teams[t].pos_lists[k] = PackedInt32Array(_ints(c["pos_lists"][t][k]))
+		if c.has("stats"):
+			_goal_stats_set(sim, c["stats"])
+		if c.has("crowd"):
+			_crowd_set(sim, c["crowd"])
 		if not li.is_empty():
 			var req: Array = li["req"]
 			for i in 6:
@@ -851,6 +864,15 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 			"time_announcements": Lines.time_announcements(sim)
 			"period_strategy_init": Lines.period_strategy_init(sim)
 			"clear_infractions": Rules.clear_infractions(sim)
+			"score_goal": Rules.score_goal(sim, sim.entities[a0])
+			"goal_disallowed_check": ret = 1 if Rules.goal_disallowed_check(sim) else 0
+			"setup_faceoff": Rules.setup_faceoff(sim)
+			"begin_penalty_shot": Rules.begin_penalty_shot(sim)
+			"start_penalty_shot": Rules.start_penalty_shot(sim)
+			"end_penalty_shot": Rules.end_penalty_shot(sim)
+			"breakaway_foul": ret = 1 if Rules.breakaway_foul(sim, sim.entities[a0]) else 0
+			"injury_check": ret = 1 if Rules.injury_check(sim, sim.entities[a0]) else 0
+			"update_effects": Rules.update_effects(sim)
 		var diff := _ai_world_diff(sim, c, base)
 		var la: Dictionary = c["lines_after"]
 		if la.has("infq"):
@@ -883,6 +905,24 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 				got_req.append(Entity.to_s8(sim.req_slot[i]))
 			if str(got_req) != str(_ints(la["req"])):
 				diff.append("lineup request %s (original %s)" % [str(got_req), str(la["req"])])
+		if la.has("stats"):
+			var got_stats := _goal_stats_get(sim)
+			if str(got_stats) != str(la["stats"]):
+				for t in 2:
+					for r in 25:
+						if str(got_stats[t][r]) != str(la["stats"][t][r]):
+							diff.append("team %d player %d stats %s (original %s)" % [t, r, str(got_stats[t][r]), str(la["stats"][t][r])])
+					for g in 3:
+						if str(got_stats[2 + t][g]) != str(la["stats"][2 + t][g]):
+							diff.append("team %d goalie %d stats %s (original %s)" % [t, g, str(got_stats[2 + t][g]), str(la["stats"][2 + t][g])])
+		if la.has("crowd"):
+			var got_crowd := _crowd_get(sim)
+			if str(got_crowd) != str(la["crowd"]):
+				for i in 20:
+					if str(got_crowd[0][i]) != str(la["crowd"][0][i]):
+						diff.append("crowd figure %d %s (original %s)" % [i, str(got_crowd[0][i]), str(la["crowd"][0][i])])
+				if str(got_crowd[1]) != str(la["crowd"][1]):
+					diff.append("crowd spots %s (original %s)" % [str(got_crowd[1]), str(la["crowd"][1])])
 		if la.has("scratch_ac") and (sim.scratch_ac & 0xffff) != (int(la["scratch_ac"]) & 0xffff):
 			diff.append("scratch e03ac %x (original %x)" % [sim.scratch_ac & 0xffff, int(la["scratch_ac"]) & 0xffff])
 		if la.has("scratch"):
@@ -907,6 +947,62 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 	for n in per:
 		parts.append("%s %d/%d" % [n, per[n][0], per[n][0] + per[n][1]])
 	return "%s %d / %d (%s)" % [group, ok, cases.size(), ", ".join(parts)]
+
+## the player statistics of both teams (team +0xe6: 25 x goals, assists, penalty minutes, plus /
+## minus, power play, short handed and empty net goals, shots) and the goalies' (+0xea: 3 x time,
+## shots, goals against), as golden.py goals_cases records them: [home, away, home goalies, away goalies]
+static func _goal_stats_set(sim: Sim, st: Array) -> void:
+	for t in 2:
+		for r in 25:
+			sim.teams[t].player_stats[r] = PackedInt32Array(_ints(st[t][r]))
+		for g in 3:
+			sim.teams[t].goalie_stats[g] = PackedInt32Array(_ints(st[2 + t][g]))
+
+static func _goal_stats_get(sim: Sim) -> Array:
+	var out := [[], [], [], []]
+	for t in 2:
+		for r in 25:
+			out[t].append(Array(sim.teams[t].player_stats[r]))
+		for g in 3:
+			out[2 + t].append(Array(sim.teams[t].goalie_stats[g]))
+	return out
+
+## the crowd figures (crowd_figures: 20 x [spot, timer, counter, frame, x, y, sequence, count]) and
+## the spots in use (the bits of crowd_spots_busy, 9 words)
+static func _crowd_set(sim: Sim, cr: Array) -> void:
+	if sim.crowd.size() != Crowd.RECORDS:
+		sim.crowd = []
+		for i in Crowd.RECORDS:
+			sim.crowd.append(Crowd.Record.new())
+		sim.crowd_busy = PackedByteArray()
+		sim.crowd_busy.resize(0xab)
+	for i in Crowd.RECORDS:
+		var f: Array = cr[0][i]
+		var r: Crowd.Record = sim.crowd[i]
+		r.id = int(f[0])
+		r.timer = int(f[1])
+		r.counter = int(f[2])
+		r.frame = int(f[3])
+		r.x = int(f[4])
+		r.y = int(f[5])
+		r.seq = int(f[6])
+		r.count = int(f[7])
+	for id in 0xab:
+		sim.crowd_busy[id] = (int(cr[1][id >> 4]) >> (id & 15)) & 1
+
+static func _crowd_get(sim: Sim) -> Array:
+	var recs := []
+	for i in Crowd.RECORDS:
+		var r: Crowd.Record = sim.crowd[i]
+		recs.append([r.id, r.timer, r.counter, r.frame, r.x, r.y, r.seq, r.count])
+	var bits := []
+	for w in 11:
+		var v := 0
+		for b in 16:
+			if w * 16 + b < 0xab and sim.crowd_busy[w * 16 + b] != 0:
+				v |= 1 << b
+		bits.append(v)
+	return [recs, bits]
 
 ## update_camera against the original (golden.py camera_cases)
 func _camera_golden(cases: Array) -> int:
@@ -982,6 +1078,7 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	sim.delayed_call = (gf & 8) != 0
 	sim.no_stats = (gf & 0x10) != 0
 	sim.game_over = (gf & 0x40) != 0
+	sim.intermission_camera = (gf & 0x80) != 0
 	var sf := int(g["stop_flags"])
 	sim.faceoff_pending = (sf & 1) != 0
 	sim.whistle_ready = (sf & 4) != 0
@@ -1107,6 +1204,12 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 		sim.lc_bar[0] = int(g["lc_bar0"])
 		sim.lc_bar[1] = int(g["lc_bar1"])
 		sim.penalty_shot_clock = int(g["penalty_shot_clock"])
+	sim.goal_flags = int(g.get("goal_flags", 1))
+	sim.puck_in_net = int(g.get("puck_in_net", 0)) != 0
+	sim.penalty_shot_roster = int(g.get("penalty_shot_roster", -1))
+	sim.penalty_shot_spot = Vector2i(int(g.get("penalty_shot_spot_x", 0)), int(g.get("penalty_shot_spot_y", 0)))
+	sim.series_announce = int(g.get("series_announce", 0)) != 0
+	sim.cup_final = int(c.get("cup", 0)) != 0
 	if c.has("infq"):
 		var q: Array = c["infq"]
 		for i in 64:
@@ -1141,6 +1244,10 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 		team.penalty_count = int(f.get("penalty_count", 0))
 		team.penalty_minutes = int(f.get("penalty_minutes", 0))
 		team.zone_time = int(f.get("zone_time", 0))
+		team.one_timer_goals = int(f.get("one_timer_goals", 0))
+		team.breakaway_goals = int(f.get("breakaway_goals", 0))
+		team.penalty_shots = int(f.get("penalty_shots", 0))
+		team.penalty_shot_goals = int(f.get("penalty_shot_goals", 0))
 		var bq: Array = f.get("box_queue", [])
 		for i in 28:
 			team.box_queue[i] = int(bq[i]) if i < bq.size() else -1
@@ -1169,7 +1276,8 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 
 static func _ai_globals_get(sim: Sim) -> Dictionary:
 	return {"game_flags": (1 if sim.play_stopped else 0) | (2 if sim.ends_switched else 0) | (4 if sim.stoppage_countdown else 0)
-			| (8 if sim.delayed_call else 0) | (0x10 if sim.no_stats else 0) | (0x40 if sim.game_over else 0),
+			| (8 if sim.delayed_call else 0) | (0x10 if sim.no_stats else 0) | (0x40 if sim.game_over else 0)
+			| (0x80 if sim.intermission_camera else 0),
 		"stop_flags": (1 if sim.faceoff_pending else 0) | (4 if sim.whistle_ready else 0) | (0x10 if sim.shot_in_flight else 0)
 			| (0x20 if sim.power_play else 0) | (0x40 if sim.power_play_team == 1 else 0) | (0x80 if sim.offside_warning else 0),
 		"misc_flags": (0x10 if sim.misc_first_touch else 0) | (0x80 if sim.half_announce else 0) | (0x40 if sim.second_tick else 0),
@@ -1214,7 +1322,9 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 		"penalty_box_mode": 1 if sim.penalty_box_mode else 0, "second_timer": sim.second_timer, "tick24": sim.tick24,
 		"tick_toggle": sim.tick_toggle, "excitement_peak": sim.excitement_peak, "excitement_sum": sim.excitement_sum,
 		"excitement_samples": sim.excitement_samples, "lc_bar0": sim.lc_bar[0], "lc_bar1": sim.lc_bar[1],
-		"penalty_shot_clock": sim.penalty_shot_clock}
+		"penalty_shot_clock": sim.penalty_shot_clock, "goal_flags": sim.goal_flags, "puck_in_net": 1 if sim.puck_in_net else 0,
+		"penalty_shot_roster": sim.penalty_shot_roster, "penalty_shot_spot_x": sim.penalty_shot_spot.x,
+		"penalty_shot_spot_y": sim.penalty_shot_spot.y, "series_announce": 1 if sim.series_announce else 0}
 
 static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 	var diff := []
@@ -1230,7 +1340,7 @@ static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 	for k in got:
 		var w := int(ga[k])
 		match k:
-			"game_flags": w &= 0x5f
+			"game_flags": w &= 0xdf
 			"stop_flags": w &= 0xf5
 			"misc_flags": w &= 0xd0
 			"action_flags": w &= 0xcc
@@ -1248,7 +1358,9 @@ static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 			"one_timer_tries": team.one_timer_tries, "one_timers": team.one_timers, "goalie_slot": team.goalie_slot,
 			"goals": team.goals, "dpair": team.dpair_counter, "extra_attacker": team.extra_attacker,
 			"pp_goals": team.pp_goals, "power_plays": team.power_plays, "pp_time": team.pp_time,
-			"penalty_count": team.penalty_count, "penalty_minutes": team.penalty_minutes, "zone_time": team.zone_time}
+			"penalty_count": team.penalty_count, "penalty_minutes": team.penalty_minutes, "zone_time": team.zone_time,
+			"one_timer_goals": team.one_timer_goals, "breakaway_goals": team.breakaway_goals, "penalty_shots": team.penalty_shots,
+			"penalty_shot_goals": team.penalty_shot_goals}
 		for k in tg:
 			if int(tg[k]) != int(want[k]):
 				diff.append("team %d %s %d (original %d)" % [t, k, int(tg[k]), int(want[k])])
@@ -2657,7 +2769,12 @@ func ceremony_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 	# a cup final: the captain fetches the Stanley Cup
 	sim = Sim.new()
 	sim.set_teams(bos, det)
-	sim.cup_final = true
+	# the final series (game_over_check): the home team won the first three games, a win now
+	# decides it
+	var po := PackedByteArray()
+	for g in 7:
+		po.append_array(PackedByteArray([0, 0, 1, 2, 3 if g < 3 else 0xff, 1 if g < 3 else 0xff]))
+	sim.cup_series = po
 	sim.user1_team = 0
 	sim.assign_users()
 	run_until_play(sim, 1200)

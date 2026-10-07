@@ -202,96 +202,23 @@ static func ref_anthem(sim: Sim, e: Entity) -> void:
 static func regular_season(sim: Sim) -> bool:
 	return (sim.settings2 & 2) != 0
 
-## setup_faceoff (0x5d852): the clock ran out. Another period (or overtime), a tie after a regular
-## season overtime, or the final whistle: the winners celebrate (the players in the box come out
-## to join them) and in a cup final the captain fetches the Stanley Cup.
-static func period_end(sim: Sim) -> void:
-	sim.puck.set_state_reset(Entity.State.PUCK_NORMAL)
-	if sim.period < 2:
-		Rules.queue_infraction(sim, sim.puck, Rules.INF_PERIOD_START)
-		return
-	var diff := sim.teams[0].goals - sim.teams[1].goals
-	if diff == 0:
-		if sim.period == 3 and regular_season(sim):
-			# a regular season game ends tied after the overtime
-			Rules.clear_infractions(sim)
-			sim.add_crowd(900, 0x4b0)
-			sim.play_stopped = true
-			sim.game_over = true
-			sim.excitement += 0x28
-			for i in 12:
-				sim.entities[i].flags &= ~Entity.F_USER
-			Rules.queue_infraction(sim, sim.entities[0], Rules.INF_PERIOD_END)
-		else:
-			Rules.queue_infraction(sim, sim.entities[0], Rules.INF_PERIOD_START)
-		return
-	sim.user1_slot = -1
-	sim.user2_slot = -1
-	sim.puck_carrier = -1
-	if sim.puck.state() == Entity.State.PUCK_NORMAL:
-		sim.puck.set_state(Entity.State.PUCK_IDLE)
-	for i in 12:
-		sim.entities[i].flags &= ~Entity.F_USER
-	var winner := 1 if diff < 0 else 0
-	var team := sim.teams[winner]
-	Crowd.bench_cheer(sim, winner)
-	var first := winner * 6
-	var taker := first
-	if sim.cup_final:
-		# the skater nearest to the bench door (-0x91, 6) skates over to get the cup
-		sim.intermission_camera = true
-		sim.shadow.set_state_reset(Entity.State.PUCK_GIVE_CUP)
-		var best := 40000
-		for i in 6:
-			var p: Entity = sim.entities[first + i]
-			if p.line_slot > 0:
-				var d := (p.xi + 0x91) * (p.xi + 0x91) + (p.yi - 6) * (p.yi - 6)
-				if d <= best:
-					taker = p.slot
-					best = d
-	sim.last_shooter = -1
-	var out_of_box := 0
-	for i in 6:
-		var p: Entity = sim.entities[first + i]
-		if p.line_slot < 1:
-			if p.line_slot < 0 and _serving(team, p):
-				# out of the penalty box to celebrate
-				p.line_slot = 5 if out_of_box == 0 else 3
-				out_of_box += 1
-				_remove_penalty(team, p)
-				p.set_state_reset(Entity.State.CELEBRATE)
-				sim.put_player_on_ice(p, p.roster_idx)
-		elif sim.cup_final and p.slot == taker:
-			p.set_state_reset(Entity.State.STANLEY_CUP)
-			p.set_state_reset(Entity.State.GET_CUP)
-		else:
-			p.set_state_reset(Entity.State.CELEBRATE)
-	Rules.clear_infractions(sim)
-	if winner == 0:
-		sim.add_crowd(1000, 0x5dc)
-		if sim.cup_final:
-			sim.crowd_noise += 800
-	elif sim.crowd_noise < 800:
-		sim.crowd_noise = 800
-	sim.play_stopped = true
-	sim.game_over = true
-	sim.excitement += 0x28
-	Rules.queue_infraction(sim, sim.entities[first], Rules.INF_PERIOD_END)
-
-static func _serving(team: Team, e: Entity) -> bool:
-	var r := Entity.to_s8(e.roster_idx)
-	return r >= 0 and r < 28 and team.entity_of[r] > 0
-
-static func _remove_penalty(team: Team, e: Entity) -> void:
-	var r := Entity.to_s8(e.roster_idx)
-	for i in 0x1c:
-		if team.box_queue[i] < 0:
-			return
-		if team.box_queue[i] == r:
-			for k in range(i, 0x1b):
-				team.box_queue[k] = team.box_queue[k + 1]
-			team.box_queue[0x1b] = -1
-			return
+## game_over_check (0x15c30): does a win by this score decide the Stanley Cup? In the play-off
+## final (sim.cup_series, the 7 games of the final series as the schedule file keeps them, 6 bytes
+## each: home, away, then the scores at +4 / +5, 0xff while unplayed) the score goes into the
+## first unplayed game and the series is decided (series_winner); the game is taken out again.
+static func game_over_check(sim: Sim, home: int, away: int) -> bool:
+	if sim.stubbed("game_over_check", [home, away]):
+		return sim.cup_final
+	if sim.cup_series.size() < 42:
+		return false
+	var po := sim.cup_series.duplicate()
+	var k := 0
+	while k < 6 and po[k * 6 + 4] != 0xff:
+		k += 1
+	po[k * 6 + 4] = home & 0xff
+	po[k * 6 + 5] = away & 0xff
+	var n := League.series_count(po, 0) if sim.cup_series_games <= 0 else sim.cup_series_games
+	return League.series_winner(po, 0, n) >= 0
 
 ## end_of_period (0x5dea6): the next period, the overtime (playoffs: as long as needed, the teams
 ## change ends every time; regular season: once, without changing ends) or the three stars
@@ -558,7 +485,7 @@ static func compute_three_stars(sim: Sim) -> void:
 		var win := 1 if away.goals > home.goals else 0
 		if (sim.last_touch_slot < 6) != (win == 1):
 			sim.game_winner = Vector2i(win, sim.teams[win].carrier_history[0])
-			if sim.cup_final:
+			if game_over_check(sim, home.goals, away.goals):
 				count += _add_star(sim, count, win, sim.game_winner.y)
 	var setting := period_setting(sim)
 	for t in 2:

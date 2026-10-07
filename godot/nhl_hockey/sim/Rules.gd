@@ -753,25 +753,38 @@ static func update_crowd_random(sim: Sim) -> void:
 	elif r == 1:
 		sim.play_sfx(0x96)
 
-## injury_check (0x65b83): may the player be lost (penalty, injury)? A defenceman only while more
-## than 2 defencemen, a forward only while more than 4 forwards of the team are still available.
+## injury_check (0x65b83): may the player be lost (a penalty, an injury)? A defenceman (in his
+## team's defence list, Team.PL_D_DEF) while more than 2 of the defencemen, anyone else while more
+## than 4 of the skaters (PL_SKATERS) are on the bench or on the ice (roster status 3 or 4)
 static func injury_check(sim: Sim, e: Entity) -> bool:
 	if sim.stubbed("injury_check", [e.slot]):
 		return true
-	if e.slot >= 12:
-		return true
-	var team := sim.team_of(e)
-	var defence := Lines.position_class(team, 1)
-	var group: Array = defence
-	var need := 2
-	if not defence.has(e.roster_idx):
-		group = Lines.position_class(team, 0)
-		need = 4
+	var t := 1 if e.flags & Entity.F_PLAYER2 else 0
+	var team := sim.teams[t]
+	var found := false
 	var count := 0
-	for r: int in group:
-		if team.entity_of[r] == -1 or team.entity_of[r] == -2:
+	var list: PackedInt32Array = team.pos_lists[Team.PL_D_DEF]
+	for i in 0x19:
+		var r := list[i]
+		if r < 0:
+			break
+		if r == Entity.to_s8(e.roster_idx):
+			found = true
+		var st := team.roster_status[r]
+		if st == 4 or st == 3:
 			count += 1
-	return count > need
+	if found:
+		return count > 2
+	count = 0
+	list = team.pos_lists[Team.PL_SKATERS]
+	for i in 0x19:
+		var r := list[i]
+		if r < 0:
+			break
+		var st := team.roster_status[r]
+		if st == 4 or st == 3:
+			count += 1
+	return count > 4
 
 # --------------------------------------------------------------------------------------------
 # penalty shot (breakaway_foul 0x6427f, begin_penalty_shot 0x64398, start_penalty_shot 0x63f72, end_penalty_shot 0x64439)
@@ -783,16 +796,17 @@ static func injury_check(sim: Sim, e: Entity) -> bool:
 static func breakaway_foul(sim: Sim, victim: Entity) -> bool:
 	if sim.no_stats or not sim.opt_penalties or sim.puck_carrier != victim.slot or not sim.breakaway:
 		return false
-	if (victim.flags & Entity.F_ATTACK_UP) == 0:
-		if victim.vy > 0 or victim.facing < 3 or victim.facing > 5:
+	var h := Entity.to_s16(victim.heading >> 16)
+	if victim.flags & Entity.F_ATTACK_UP:
+		if victim.vy < 0 or (h >= 2 and h <= 6):
 			return false
-	elif victim.vy < 0 or (victim.facing > 1 and victim.facing < 7):
+	elif victim.vy > 0 or h <= 2 or h >= 6:
 		return false
 	count_defenders_ahead(sim)
 	sim.breakaway = sim.defenders_ahead != 0
 	if not sim.breakaway:
 		return false
-	return absi(victim.yi) <= 0xe4 and not sim.opponents_of(victim).goalie_pulled()
+	return absi(victim.yi) <= 0xe4 and Entity.to_s16(sim.opponents_of(victim).goalie_request) >= 0
 
 ## the fouls on a breakaway (resolve_body_check, resolve_dive_hit, resolve_hook_hold): the fouled
 ## player will take the shot; the culprit gets infraction 0x1a. False when a shot is already set.
@@ -804,45 +818,50 @@ static func award_penalty_shot(sim: Sim, victim: Entity, culprit: Entity) -> boo
 	maybe_queue_infraction(sim, culprit, INF_PENALTY_SHOT)
 	return true
 
-## begin_penalty_shot (0x64398, from penalty_box_update for infraction 0x1a): the shot is called. The faceoff spot of the
-## stoppage is kept for afterwards and the puck goes to centre ice.
+## begin_penalty_shot (0x64398, from penalty_box_update for infraction 0x1a): the shot is called.
+## Both teams are down to one player in the count of skaters, the faceoff spot of the stoppage is
+## kept for afterwards and the puck goes to centre ice.
 static func begin_penalty_shot(sim: Sim) -> void:
-	if sim.penalty_shot_phase != 0 or sim.penalty_shot_slot < 0:
+	if sim.penalty_shot_phase != 0:
 		return
 	sim.penalty_shot_team = 1 if sim.penalty_shot_slot > 5 else 0
 	sim.teams[sim.penalty_shot_team].penalty_shots += 1
-	sim.penalty_shot_roster = sim.entities[sim.penalty_shot_slot].roster_idx
+	sim.teams[0].skaters_on_ice = 1
+	sim.teams[1].skaters_on_ice = 1
+	# with no shooter set (-1) the original reads the byte before the records (the away team's
+	# box queue entry 25)
+	var ps := sim.penalty_shot_slot
+	sim.penalty_shot_roster = Entity.to_s8(sim.entities[ps].roster_idx) if ps >= 0 and ps < 17 else sim.teams[1].box_queue[25]
 	sim.penalty_shot_phase = 1
 	sim.penalty_shot_spot = Vector2i(sim.faceoff_x, sim.faceoff_y)
 	sim.faceoff_x = 0
 	sim.faceoff_y = 0
-	sim.show_message(7, 0x100)          # PENALTY SHOT
-	InfoPanel.record_penalty(sim, 1 - sim.penalty_shot_team, -1, INF_PENALTY_SHOT, 0)
 
 ## start_penalty_shot (0x63f72), from ai_puck_faceoff2 once the shooter and the goalie are set:
-## the puck lies at centre ice, the shooter has it and plays the breakaway state
+## the puck lies at centre ice, the shooter has it and plays the breakaway state; a user of the
+## defending team controls nobody (his goalie plays by himself)
 static func start_penalty_shot(sim: Sim) -> void:
 	var puck := sim.puck
-	puck.set_pos(0, 0)
-	puck.z = 0
-	puck.vx = 0
-	puck.vy = 0
 	puck.vz = 0
+	puck.vy = 0
+	puck.vx = 0
+	puck.z &= 0xffff
+	puck.y &= 0xffff
+	puck.x &= 0xffff
 	puck.set_state(Entity.State.PUCK_NORMAL)
 	var shooter := sim.entities[sim.penalty_shot_slot]
-	shooter.flags2 &= ~(Entity.F2_UNSELECTABLE | Entity.F2_NO_COLLIDE)
+	shooter.flags2 &= 0xdb
 	shooter.flags &= ~Entity.F_ARRIVED
 	for i in 8:
 		shooter.set_state_reset(Entity.State.BREAKAWAY)
-	# the defending user controls nobody (find_switch_target(-1)): his goalie plays by himself
-	var defending := 1 - sim.penalty_shot_team
-	if sim.user1_team == defending + 1 and sim.user1_slot != -1:
+	var defending := (1 if sim.penalty_shot_team == 0 else 0) + 1
+	if sim.user1_team == defending and sim.user1_slot != -1:
 		sim.user1_slot = sim.find_switch_target(-1, sim.user1_slot)
-	if sim.user2_team == defending + 1 and sim.user2_slot != -1:
+	if sim.user2_team == defending and sim.user2_slot != -1:
 		sim.user2_slot = sim.find_switch_target(-1, sim.user2_slot)
-	sim.teams[sim.penalty_shot_team].carrier_history = PackedInt32Array([-1, -1, -1])
-	sim.crowd_noise += 100
-	sim.puck_carrier = sim.penalty_shot_slot
+	sim.team_of(shooter).carrier_history = PackedInt32Array([-1, -1, -1])
+	sim.crowd_noise = Entity.to_s16(sim.crowd_noise + 0x64)
+	sim.puck_carrier = Entity.to_s8(sim.penalty_shot_slot)
 	sim.penalty_shot = true
 	sim.penalty_shot_setup = true
 	sim.penalty_shot_clock = 1000
@@ -865,11 +884,10 @@ static func end_penalty_shot(sim: Sim) -> void:
 	sim.penalty_shot = false
 	sim.penalty_shot_slot = -1
 	queue_infraction(sim, sim.puck, INF_PENALTY_SHOT_END)
-	sim.last_touch_x = sim.penalty_shot_spot.x
-	sim.last_touch_y = sim.penalty_shot_spot.y
+	sim.last_touch_x = Entity.to_s16(sim.penalty_shot_spot.x)
+	sim.last_touch_y = Entity.to_s16(sim.penalty_shot_spot.y)
 	sim.referee.set_state(Entity.State.REF_PICKUP)
 
-## the game misconduct of penalty_box_update (infraction_is_penalty -1): the player is out for the
 ## update_effects (0x615a3): crowd noise decays towards the ambient level
 static func update_effects(sim: Sim) -> void:
 	if sim.stubbed("update_effects", []):
@@ -928,140 +946,282 @@ static func announce_one_minute_left(sim: Sim) -> void:
 # goals (score_goal 0x5ab36) and the end of a period (setup_faceoff 0x5d852)
 # --------------------------------------------------------------------------------------------
 
+## score_goal (0x5ab36, from collide_net): the puck crossed the goal line of `net`. The team the
+## puck went in for ((puck y < 0) xor the ends switched) scores, unless play is already stopped,
+## a delayed penalty cancels it (goal_disallowed_check) or the team is offside: then the puck
+## drops in front of the net, the whistle goes (0x1b, and 8 for the offside). During a penalty
+## shot only the shooting team's goal counts (the other ends the shot). A goal: the statistics
+## (unless no_stats), the score, the scorers celebrate (the penalty shot shooter's team mates come
+## off the bench), the puck rests in the net, the infraction 7, the CPU coaches' review of their
+## tactics and goalies.
 static func score_goal(sim: Sim, net: Entity) -> void:
 	sim.scored_net = net.slot
 	var puck := sim.puck
-	# the team that shoots at this net scores
-	var scorer_team := 0
-	for t in 2:
-		if sim.teams[t].attacks_up == (net.yi > 0):
-			scorer_team = t
-	var scoring := sim.teams[scorer_team]
-	var conceding := sim.teams[1 - scorer_team]
-	var allowed := not sim.play_stopped and not goal_disallowed(sim, scorer_team) and (scoring.flags & Team.FL_OFFSIDE) == 0
-	if allowed:
-		scoring.goals += 1
-		if sim.last_touch_slot >= 0 and sim.same_team(sim.last_touch_slot, scoring.first_slot):
-			sim.last_shooter = sim.last_touch_slot
-		PuckLogic.shot_landed(sim)
-		goal_ends_penalty(sim, scoring.index)
-		sim.play_sfx(0x9c)        # goal horn
-		sim.action_hold_camera = true
-		sim.camera_target_x = sim.camera_x
-		sim.camera_target_y = sim.camera_y
-		if scorer_team == 0:
-			sim.crowd_noise = clampi(sim.crowd_noise + 800, 0x708, 2000)
-			sim.excitement += 0x1e
-		else:
-			sim.crowd_noise = maxi(sim.crowd_noise, 800)
-			sim.excitement += 10
-		Crowd.bench_cheer(sim, scorer_team)
-		# the organ celebrates a home goal when the announcer does not
-		if scorer_team == 0 and not InfoPanel.speech_on(sim):
-			InfoPanel.music(sim, 3)
-		# everyone celebrates / skates to the bench
-		for i in 6:
-			var p := sim.entities[scoring.first_slot + i]
-			if p.line_slot > 0 and (p.flags2 & Entity.F2_KNOCKED) == 0:
-				p.flags &= ~Entity.F_ARRIVED
-				if p.state() == Entity.State.PENALTY_SHOT_WAIT:
-					# the team mates waiting at the bench come out to celebrate the penalty shot goal
-					p.set_state_reset(Entity.State.BENCH_WAIT)
-					p.set_state_reset(Entity.State.CELEBRATE)
-					p.set_state_reset(Entity.State.EXIT_BENCH)
-				else:
-					p.set_state_reset(Entity.State.CELEBRATE)
+	var scorer := (1 if puck.yi < 0 else 0) ^ (1 if sim.ends_switched else 0)
+	var scoring := sim.teams[scorer]
+	var conceding := sim.teams[1 - scorer]
+	if sim.play_stopped or goal_disallowed_check(sim) or (scoring.flags & Team.FL_OFFSIDE):
 		sim.puck_in_net = false
-		puck.x = (-6 if puck.xi < 0 else 6) * 0x10000
 		puck.vx = 0
-		puck.y = (-0xf0 if puck.yi < 0 else 0xf0) * 0x10000
+		puck.x = ((net.xi + (-6 if puck.xi < net.xi else 6)) << 16) | (puck.x & 0xffff)
 		puck.vy = 0
-		puck.z = 0x600 << 4
-		puck.vz = 0
-		puck.spin |= 4
-		puck.set_state(Entity.State.PUCK_IDLE)
-		Anim.set_animation(sim.shadow, 0x7fd)
-		# goal_flags: 1 even strength, 2 short handed, 4 power play, | 8 into an empty net
-		sim.goal_flags = 2 if scoring.skaters_on_ice < conceding.skaters_on_ice else (4 if conceding.skaters_on_ice < scoring.skaters_on_ice else 1)
-		if conceding.goalie_pulled():
-			sim.goal_flags |= 8
-		if not sim.no_stats:
-			goal_statistics(sim, scoring, conceding)
-		queue_infraction(sim, sim.entities[conceding.first_slot], INF_GOAL)
-		if not sim.no_stats:
-			end_penalty_shot(sim)
-			sim.penalty_shot_spot = Vector2i.ZERO
-		sim.referee.set_state(Entity.State.REF_NORMAL)
-	else:
-		sim.puck_in_net = false
-		puck.x = (puck.xi + (-6 if puck.xi < net.xi else 6)) * 0x10000
-		puck.vx = 0
-		puck.y = (puck.yi + (-4 if puck.yi < 0 else 4)) * 0x10000
-		puck.vy = 0
-		puck.z = 0x600 << 4
-		puck.vz = 0
-		puck.spin |= 4
+		puck.y = ((net.yi + (-4 if net.yi < 0 else 4)) << 16) | (puck.y & 0xffff)
+		puck.vz = 0x600
+		puck.z = puck.z & 0xffff
+		_no_prediction(sim)
+		puck.flags |= 4
 		if not sim.play_stopped:
 			puck.set_state(Entity.State.PUCK_IDLE)
 			if scoring.flags & Team.FL_OFFSIDE:
 				maybe_queue_infraction(sim, sim.entities[scoring.first_slot], INF_OFFSIDE)
 			queue_infraction(sim, sim.entities[conceding.first_slot], INF_DISALLOWED)
-	sim.one_timer = false
-	sim.breakaway = false
+		return
+	if sim.penalty_shot and scorer != sim.penalty_shot_team:
+		end_penalty_shot(sim)
+		return
+	scoring.goals += 1
+	if (1 if sim.last_touch_slot < 6 else 0) ^ scorer:
+		sim.shot_in_flight = true
+		sim.last_shooter = sim.last_touch_slot
+	PuckLogic.shot_landed(sim)
+	sim.play_sfx(0x9c)
+	hold_camera(sim)
+	if scorer == 0:
+		sim.crowd_noise = Entity.to_s16(sim.crowd_noise + 0x320)
+		if sim.crowd_noise > 0x7d0:
+			sim.crowd_noise = 0x7d0
+		if sim.crowd_noise < 0x708:
+			sim.crowd_noise = 0x708
+	elif sim.crowd_noise < 0x320:
+		sim.crowd_noise = 0x320
+	Crowd.bench_cheer(sim, scorer)
+	if scorer == 0 and not InfoPanel.speech_on(sim):
+		InfoPanel.music(sim, 3)
+	sim.excitement = Entity.to_s16(sim.excitement + (0xa if scorer == 1 else 0x1e))
+	if scoring.skaters_on_ice < conceding.skaters_on_ice:
+		sim.goal_flags = 2
+	elif scoring.skaters_on_ice > conceding.skaters_on_ice:
+		sim.goal_flags = 4
+	else:
+		sim.goal_flags = 1
+	if Entity.to_s16(conceding.goalie_request) < 0:
+		sim.goal_flags |= 8
+	if not sim.no_stats:
+		var r := scoring.carrier_history[0] & 0xff
+		if r < 0x19:
+			scoring.add_stat(r, Team.ST_GOALS)
+		if scoring.skaters_on_ice > conceding.skaters_on_ice:
+			scoring.add_stat(r, Team.ST_PPG)
+		elif scoring.skaters_on_ice < conceding.skaters_on_ice:
+			scoring.add_stat(r, Team.ST_SHG)
+		if Entity.to_s16(conceding.goalie_request) < 0:
+			scoring.add_stat(r, Team.ST_ENG)
+		if sim.penalty_shot_phase != 0:
+			scoring.penalty_shot_goals += 1
+		elif sim.breakaway:
+			scoring.breakaway_goals += 1
+		if ((1 if sim.one_timer else 0) >> scorer) & 1:
+			scoring.one_timer_goals += 1
+		var a1 := Entity.to_s16(scoring.carrier_history[1])
+		if a1 >= 0:
+			if a1 < 0x19:
+				scoring.add_stat(a1, Team.ST_ASSISTS)
+			var a2 := Entity.to_s16(scoring.carrier_history[2])
+			if a2 >= 0 and a2 < 0x19:
+				scoring.add_stat(a2, Team.ST_ASSISTS)
+		var gr := Entity.to_s16(conceding.goalie_request)
+		if gr >= 0:
+			var g := Entity.to_s16(Lines.line_table(conceding)[gr + 0x24] - 0x19)
+			if g >= 0 and g < 3:
+				conceding.goalie_stats[g][2] += 1
+		if not sim.penalty_shot:
+			if conceding.skaters_on_ice >= scoring.skaters_on_ice:
+				for i in 6:
+					var p := sim.entities[scoring.first_slot + i]
+					if p.line_slot > 0:
+						scoring.add_stat(Entity.to_s8(p.roster_idx), Team.ST_PLUS_MINUS, 1)
+					var q := sim.entities[conceding.first_slot + i]
+					if q.line_slot > 0:
+						conceding.add_stat(Entity.to_s8(q.roster_idx), Team.ST_PLUS_MINUS, -1)
+			goal_ends_penalty(sim, scorer)
+		else:
+			sim.last_touch_y = 0
+			sim.last_touch_x = 0
+			sim.faceoff_y = 0
+			sim.faceoff_x = 0
+		sim.breakaway = false
+		sim.one_timer = false
+	draw_score_digits(sim, scorer, scoring.goals)
+	for i in 6:
+		var p := sim.entities[scoring.first_slot + i]
+		if p.line_slot <= 0 or (p.flags2 & Entity.F2_KNOCKED):
+			continue
+		p.flags &= ~Entity.F_ARRIVED
+		if p.state() == Entity.State.PENALTY_SHOT_WAIT:
+			puck.timer_b = 0
+			p.set_state_reset(Entity.State.BENCH_WAIT)
+			p.set_state_reset(Entity.State.CELEBRATE)
+			p.set_state_reset(Entity.State.EXIT_BENCH)
+		else:
+			p.set_state_reset(Entity.State.CELEBRATE)
+	sim.puck_in_net = false
+	puck.vx = 0
+	puck.x = ((-6 if puck.xi < 0 else 6) << 16) | (puck.x & 0xffff)
+	puck.vy = 0
+	puck.y = ((-0xf0 if puck.yi < 0 else 0xf0) << 16) | (puck.y & 0xffff)
+	puck.vz = 0x600
+	puck.z = puck.z & 0xffff
+	_no_prediction(sim)
+	puck.flags |= 4
+	puck.set_state(Entity.State.PUCK_IDLE)
+	Anim.set_animation(sim.shadow, 0x7fd)
+	queue_infraction(sim, sim.entities[conceding.first_slot], INF_GOAL)
+	if sim.no_stats:
+		return
+	end_penalty_shot(sim)
+	sim.referee.set_state(Entity.State.REF_NORMAL)
+	sim.penalty_shot_spot = Vector2i.ZERO
+	# the CPU coaches: a team down by 4 changes its goalie, a trailing team its tactics
+	var home := sim.teams[0]
+	var away := sim.teams[1]
+	var d := Entity.to_s16(home.goals - away.goals)
+	if d < -3 and home.strategy > 1 and sim.user1_team != 1 and sim.user2_team != 1 and (home.goalie_request & 1) == 0:
+		home.goalie_request ^= 1
+	if d < -1 and home.strategy > 1:
+		home.strategy -= 1
+	if d < 1 and home.strategy2 > 1:
+		home.strategy2 -= 1
+	if d > 3 and away.strategy > 1 and sim.user1_team != 2 and sim.user2_team != 2 and (away.goalie_request & 1) == 0:
+		away.goalie_request ^= 1
+	if d > 1 and away.strategy > 1:
+		away.strategy -= 1
+	if d > -1 and away.strategy2 > 1:
+		away.strategy2 -= 1
+	Lines.time_announcements(sim)
 
-## goal_disallowed_check (0x5afc8): a delayed penalty against the scoring team cancels the goal
-static func goal_disallowed(sim: Sim, scorer_team: int) -> bool:
+## the goal line predictions of ai_goalie are dropped (the high bytes of their step counts)
+static func _no_prediction(sim: Sim) -> void:
+	for k in 2:
+		sim.goal_prediction[k][1] = Entity.to_s16((sim.goal_prediction[k][1] & 0xff) | 0xff00)
+
+## draw_score_digits (0x14a20): the scoreboard's score of team t (a hook; the HUD draws team.goals)
+static func draw_score_digits(sim: Sim, t: int, goals: int) -> void:
+	sim.stubbed("draw_score_digits", [t, goals])
+
+## goal_disallowed_check (0x5aaae): with a delayed penalty pending, a goal of the team that touched
+## the puck last does not count while one of its players on the ice is penalized
+static func goal_disallowed_check(sim: Sim) -> bool:
 	if not sim.delayed_call:
 		return false
+	var t := (1 if sim.puck.yi < 0 else 0) ^ (1 if sim.ends_switched else 0)
+	if ((1 if sim.last_touch_slot < 6 else 0) ^ t) == 0:
+		return false
 	for i in 6:
-		var p := sim.entities[scorer_team * 6 + i]
+		var p := sim.entities[t * 6 + i]
 		if p.line_slot >= 0 and (p.flags2 & Entity.F2_PENALIZED):
 			return true
 	return false
 
-## setup_faceoff (0x5d852) and end_of_period (0x5dea6): see Ceremonies.period_end / next_period
+## setup_faceoff (0x5d852, from sim_game_state when the period clock ran out): the puck plays on;
+## the 1st and 2nd period end (infraction 1). Later a tie goes on into overtime (1) except after a
+## regular season overtime (the game ends tied: 2); otherwise the game is over: nobody is
+## controlled, the winners' bench cheers, the winners celebrate, the players of their box queue
+## come out (line slots 5, 3) to join them, and when the game decides the Stanley Cup
+## (game_over_check) the skater nearest to the bench door fetches it. The infraction 2 goes to the
+## record after the winners' (entities[6] or the top net).
 static func setup_faceoff(sim: Sim) -> void:
 	if sim.stubbed("setup_faceoff", []):
 		return
-	Ceremonies.period_end(sim)
+	var puck := sim.puck
+	puck.set_state_reset(Entity.State.PUCK_NORMAL)
+	if sim.period < 2:
+		queue_infraction(sim, puck, INF_PERIOD_START)
+		return
+	sim.scratch_a = 7
+	if Ceremonies.game_over_check(sim, sim.teams[0].goals, sim.teams[1].goals):
+		sim.scratch_a = 8
+	var diff := Entity.to_s16(sim.teams[0].goals - sim.teams[1].goals)
+	sim.scratch_b = diff
+	if diff == 0:
+		if sim.period == 3 and Ceremonies.regular_season(sim):
+			clear_infractions(sim)
+			if sim.crowd_noise <= 0x4b0:
+				sim.crowd_noise = mini(sim.crowd_noise + 0x384, 0x4b0)
+			sim.play_stopped = true
+			sim.game_over = true
+			sim.excitement = Entity.to_s16(sim.excitement + 0x28)
+			for i in 12:
+				sim.entities[i].flags &= ~Entity.F_USER
+			sim.scratch_ac = (sim.scratch_ac & ~0xffff) | 12
+			queue_infraction(sim, sim.entities[0], INF_PERIOD_END)
+		else:
+			queue_infraction(sim, sim.entities[0], INF_PERIOD_START)
+		return
+	sim.user2_slot = -1
+	sim.user1_slot = -1
+	sim.puck_carrier = -1
+	if puck.state() == Entity.State.PUCK_NORMAL:
+		puck.set_state(Entity.State.PUCK_IDLE)
+	for i in 12:
+		sim.entities[i].flags &= ~Entity.F_USER
+	var winner := 1 if diff < 0 else 0
+	var first := winner * 6
+	Crowd.bench_cheer(sim, winner)
+	var taker := first
+	if sim.scratch_a == 8:
+		sim.series_announce = true
+		sim.intermission_camera = true
+		sim.shadow.set_state_reset(Entity.State.PUCK_GIVE_CUP)
+		var best := 0x9c40
+		for i in 6:
+			var p := sim.entities[first + i]
+			if p.line_slot > 0:
+				var d := (p.xi + 0x91) * (p.xi + 0x91) + (p.yi - 6) * (p.yi - 6)
+				if d <= best:
+					best = d
+					taker = p.slot
+	sim.last_shooter = -1
+	sim.scratch_b = 0
+	for i in 6:
+		var p := sim.entities[first + i]
+		if p.line_slot > 0:
+			if sim.scratch_a == 8 and taker == p.slot:
+				p.set_state_reset(Entity.State.STANLEY_CUP)
+				p.set_state_reset(Entity.State.GET_CUP)
+			else:
+				p.set_state_reset(Entity.State.CELEBRATE)
+		elif p.line_slot < 0:
+			var team := sim.team_of(p)
+			var r := team.box_queue[0]
+			if r >= 0:
+				p.line_slot = 3 if sim.scratch_b != 0 else 5
+				sim.scratch_b += 1
+				p.set_state_reset(Entity.State.CELEBRATE)
+				sim.put_player_on_ice(p, r)
+				var k := 1
+				while true:
+					var v := team.box_queue[k] if k < 28 else -1
+					team.box_queue[k - 1] = v
+					if v < 0:
+						break
+					k += 1
+	sim.scratch_ac = (sim.scratch_ac & ~0xffff)
+	clear_infractions(sim)
+	if sim.teams[0].goals > sim.teams[1].goals:
+		if sim.crowd_noise <= 0x5dc:
+			sim.crowd_noise = mini(sim.crowd_noise + 0x3e8, 0x5dc)
+		if sim.scratch_a == 8:
+			sim.crowd_noise = Entity.to_s16(sim.crowd_noise + 0x320)
+	elif sim.crowd_noise < 0x320:
+		sim.crowd_noise = 0x320
+	sim.play_stopped = true
+	sim.game_over = true
+	sim.excitement = Entity.to_s16(sim.excitement + 0x28)
+	queue_infraction(sim, sim.entities[first + 6], INF_PERIOD_END)
 
 ## called by the puck faceoff handler when a period ended: advance to the next one
 static func next_period(sim: Sim) -> void:
 	Ceremonies.next_period(sim)
-
-## the statistics part of score_goal: the scorer (the last carrier of the scoring team), power
-## play / short handed / empty net goals, the two assists, the goalie's goals against and the
-## plus/minus of the skaters on the ice (not on a power play goal or a penalty shot)
-static func goal_statistics(sim: Sim, scoring: Team, conceding: Team) -> void:
-	var scorer: int = scoring.carrier_history[0]
-	scoring.add_stat(scorer, Team.ST_GOALS)
-	if conceding.skaters_on_ice < scoring.skaters_on_ice:
-		scoring.add_stat(scorer, Team.ST_PPG)
-	elif scoring.skaters_on_ice < conceding.skaters_on_ice:
-		scoring.add_stat(scorer, Team.ST_SHG)
-	if conceding.goalie_pulled():
-		scoring.add_stat(scorer, Team.ST_ENG)
-	if sim.penalty_shot_phase == 0:
-		if sim.breakaway:
-			scoring.breakaway_goals += 1
-	else:
-		scoring.penalty_shot_goals += 1
-	if sim.one_timer:
-		scoring.one_timer_goals += 1
-	if scoring.carrier_history[1] >= 0:
-		scoring.add_stat(scoring.carrier_history[1], Team.ST_ASSISTS)
-		scoring.add_stat(scoring.carrier_history[2], Team.ST_ASSISTS)
-	var g := conceding.goalie_index()
-	if g >= 0:
-		conceding.goalie_stats[g][2] += 1
-	if not sim.penalty_shot and scoring.skaters_on_ice <= conceding.skaters_on_ice:
-		for i in 6:
-			var p := sim.entities[scoring.first_slot + i]
-			if p.line_slot > 0:
-				scoring.add_stat(p.roster_idx, Team.ST_PLUS_MINUS, 1)
-			var q := sim.entities[conceding.first_slot + i]
-			if q.line_slot > 0:
-				conceding.add_stat(q.roster_idx, Team.ST_PLUS_MINUS, -1)
 
 # --------------------------------------------------------------------------------------------
 # offside, icing, breakaway
