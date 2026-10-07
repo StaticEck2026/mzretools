@@ -184,6 +184,10 @@ var icing_shooter: int = -1
 var goalie_pass_mode: int = 0         # goalie_pass_mode (word_c90aa): opponents near the carrier (carrier_scan_opponents)
 var buttons_prev := [0, 0]           # the buttons (0x70) of each user at the last read (read_control_p1 / p2)
 var last_controls := [8, 8]          # the control bytes of the last step (the steps of sim_tick outside the main loop)
+var lineup_forwards := 0             # word_e9f12: the forwards of the lineup (count_dressed_players, lineup_pick_best)
+var lineup_defence := 0              # word_e9f14: the defencemen of the lineup
+var lineup_dressed := 0              # word_e9f16: both
+var lineup_in_table := PackedInt32Array()   # unk_e9c24: 25 flags, the skaters in the line table (count_dressed_players)
 var buttons_changed := 0             # scratch_e03ac: the buttons that went down or up since
 var save_clip_shown := false       # dword_e9a9e low word: the SAVED clip was shown this period (no more save credits)
 var stubs: Dictionary = {}          # golden tests: the routines replaced by a record of their calls (stubbed)
@@ -290,7 +294,8 @@ func _init() -> void:
 	new_game()
 
 ## begin_game_session (0x1befd) and play_match_from_start (0x13e8f) up to the anthem: the player
-## statistics and the summary of a new game, the lines built from the line tables; the match
+## statistics and the summary of a new game, the candidate lists (build_lines) and the line tables
+## checked for missing players (count_dressed_players); the match
 ## globals reset (reset_game_state: the first period set up). With the anthem init_match follows
 ## (Ceremonies.begin_anthem), the match starts when it is over (MatchSetup.start_match); without it
 ## the match starts at once
@@ -303,6 +308,8 @@ func new_game(anthem: bool = false) -> void:
 		team.goalie_menu = PackedByteArray([1, 2, 2])
 	summary_init(0, 0)
 	Lines.build_lines(self)
+	Lines.count_dressed_players(self, 0)
+	Lines.count_dressed_players(self, 1)
 	period = -1
 	crowd_noise = 0
 	skip_wait = false
@@ -443,106 +450,93 @@ func set_teams(home: Database.TeamInfo, away: Database.TeamInfo, scratches: Dict
 			team.roster_status[r] = 2
 	new_game(anthem)
 
-## put_player_on_ice (0x5b2a4): the entity takes roster player `roster`: his state when he comes
-## from the bench (EXIT_BENCH) or the penalty box (EXIT_PENALTY_BOX), the bookkeeping of the
-## team record and his ratings
+## put_player_on_ice (0x5b2c5): the entity takes roster player `roster`. From the bench he skates
+## out (EXIT_BENCH), from the box he leaves it (EXIT_PENALTY_BOX); his place is the ice (entity_of
+## -1, status byte 4). His number and ratings come from the player records (skaters: player_ratings,
+## 0x14 bytes; goalies: 0x10 bytes from +0xe2, the tenth unused, +0x60 kept), adjusted for a skater
+## by the team factors of TEAMS.DB (+0x2dc..+0x2df, Database.TeamInfo.factors): short handed and
+## power play, at home or away, and 2 late in the game (overtime, or the second half of the third
+## period) unless his team leads. Right handed players are drawn mirrored.
 func put_player_on_ice(e: Entity, roster: int) -> void:
 	if stubbed("put_player_on_ice", [e.slot, roster & 0xffff]):
 		return
-	var team := team_of(e)
 	e.flags2 &= ~Entity.F2_HOOKED
-	e.roster_idx = roster
-	var where := team.entity_of[roster] if roster >= 0 and roster < 28 else -1
-	if where == -2 or where >= 0:
-		e.set_state_reset(Entity.State.EXIT_BENCH if where == -2 else Entity.State.EXIT_PENALTY_BOX)
+	var team := teams[1] if e.slot >= 6 else teams[0]
+	var r := Entity.to_s16(roster)
+	e.roster_idx = Entity.to_s8(r)
+	scratch_b = team.entity_of[r]
+	if scratch_b >= 0 or scratch_b == -2:
+		e.set_state_reset(Entity.State.EXIT_PENALTY_BOX if scratch_b >= 0 else Entity.State.EXIT_BENCH)
 		e.flags &= ~Entity.F_BUSY
 		e.anim = 0
-	if roster >= 0 and roster < 28:
-		team.entity_of[roster] = -1
-	e.flags3 = 0
-	e.timer_e = 0
-	e.timer_f = 0
-	e.pass_ok = 0
-	var player: Database.Player = team.info.player(roster) if team.info != null else null
-	if player != null:
-		dress_player(e, player)
-	else:
-		_default_skills(e)
-	e.energy = team.energy[roster] if roster >= 0 and roster < 28 else 0x1000
-
-## put_player_on_ice (0x5b2a4): copies the ratings of the player database into the entity.
-## Skaters (0x14 bytes): [0] hand (1 = left; right handed players are drawn mirrored),
-## [1] agility -> +0x58, [2] speed -> +0x57 (both minus 3), [3] weight class, [4] shot power,
-## [5] aggressiveness, [6] defensive awareness -> +0x60, [7] shot accuracy, [9] passing,
-## [10] offensive awareness -> reaction (inverted), [11] -> awareness (inverted), [12] checking,
-## [13] stick handling, [14] -> +0x5f. Goalies (0x10 bytes): [0] hand, [1] -> +0x62, [2] passing,
-## [3] -> +0x5f, [4] stick handling, [5] shooting, [6] agility, [7] speed, [8] weight,
-## [10]/[11] -> reaction / awareness. A skater gets the adjustments of rating_bonuses.
-func dress_player(e: Entity, p: Database.Player) -> void:
-	var r := p.ratings
-	var bonus := rating_bonuses(e)
-	var home: int = bonus[0]
-	var lead: int = bonus[1]
-	var trail: int = bonus[2]
-	var late: int = bonus[3]
-	e.number = p.number
-	e.left_handed = r[0]
-	e.flags4 &= ~Entity.F4_MIRROR
-	if r[0] == 0:
-		e.flags4 |= Entity.F4_MIRROR
-	if not p.goalie:
-		e.stamina = r[1] - mini(r[1], 3)
-		e.speed_skill = r[2] - mini(r[2], 3)
-		e.weight = r[3]
-		e.shot_skill = r[4]
-		e.aggression = mini(r[5] + late, 15)
-		e.goalie_skill = clampi(r[6] + home + lead + trail, 0, 15)
-		e.shot_accuracy = clampi(r[7] + trail + lead + home, 0, 15)
-		e.pass_skill = clampi(r[9] + home + lead, 0, 15)
-		e.reaction = ((clampi(r[10] + trail + lead + home + late, 0, 15) ^ 0xf) + 0xf) >> 1
-		e.awareness = ((clampi(r[11] + home, 0, 15) ^ 0xf) + 0xf) >> 1
-		e.check_skill = r[12]
-		e.endurance = r[13]
-		e.offense = mini(r[14] + late * 2, 15)
-	else:
-		e.check_skill = r[1]
-		e.pass_skill = r[2]
-		e.offense = r[3]
-		e.endurance = r[4]
-		e.shot_skill = r[5]
-		e.stamina = r[6] - mini(r[6], 3)
-		e.speed_skill = r[7] - mini(r[7], 3)
-		e.weight = r[8]
-		e.reaction = ((clampi(r[10] + late + lead + trail + home, 0, 15) ^ 0xf) + 0xf) >> 1
-		e.awareness = ((clampi(r[11] + home, 0, 15) ^ 0xf) + 0xf) >> 1
-		e.goalie_skill = r[9]
-
-## the adjustments of put_player_on_ice for a skater (line_slot != 0), from the team factors of
-## TEAMS.DB (+0x2dc..+0x2df, Database.TeamInfo.factors): [home or away (0..2 at home, -2..0 away),
-## leading (0..2), trailing (-2..0), late game (2 in overtime or the second half of the third
-## period when tied or behind)]
-func rating_bonuses(e: Entity) -> Array:
-	if e.line_slot == 0 or e.slot >= 12:
-		return [0, 0, 0, 0]
-	var team := team_of(e)
+	team.entity_of[r] = -1
+	team.roster_status[r] = 4
 	var f := PackedByteArray([7, 7, 7, 3])
 	if team.info != null and team.info.factors.size() == 4:
 		f = team.info.factors
-	var away := (e.flags & Entity.F_PLAYER2) != 0
-	var home_b := _factor(f[3]) - 2 if away else _factor(f[2])
-	var lead_b := 0
-	var trail_b := 0
-	var diff := teams[0].goals - teams[1].goals
-	if diff != 0:
-		if (diff < 0) == away:
-			lead_b = _factor(f[1])
-		else:
-			trail_b = _factor(f[0]) - 2
+	var sh := 0
+	var home := 0
 	var late := 0
-	if period > 2 or (period == 2 and clock_seconds < period_length / 2):
-		if diff == 0 or (diff > 0) == away:
-			late = 2
-	return [home_b, lead_b, trail_b, late]
+	var pp := 0
+	var away := (e.flags & Entity.F_PLAYER2) != 0
+	if e.line_slot != 0:
+		if power_play:
+			if away != (power_play_team == 1):
+				sh = _factor(f[0]) - 2
+			else:
+				pp = _factor(f[1])
+		home = _factor(f[3]) - 2 if away else _factor(f[2])
+		if period > 2 or (period == 2 and clock_seconds < (period_length >> 1)):
+			var d := Entity.to_s16(teams[0].goals - teams[1].goals)
+			if d == 0 or (d > 0) == away:
+				late = 2
+	e.pass_target = 0
+	e.timer_f = 0
+	e.timer_e = 0
+	e.pass_ok = 0
+	e.energy = team.energy[r] if r >= 0 and r < 28 else 0x1000
+	if team.info == null:
+		_default_skills(e)
+		return
+	var p: Database.Player = team.info.player(r)
+	var g := PackedByteArray()
+	g.resize(0x14)
+	if p != null:
+		for i in mini(p.ratings.size(), 0x14):
+			g[i] = p.ratings[i]
+	e.number = p.number if p != null else 0
+	e.left_handed = g[0]
+	e.flags4 &= ~Entity.F4_MIRROR
+	if g[0] == 0:
+		e.flags4 |= Entity.F4_MIRROR
+	if r < 0x19:
+		e.stamina = g[1] - mini(g[1], 3)
+		e.speed_skill = g[2] - mini(g[2], 3)
+		e.weight = g[3]
+		e.shot_skill = g[4]
+		e.aggression = _clamp15(g[5] + late)
+		e.goalie_skill = _clamp15(g[6] + pp + sh + home)
+		e.shot_accuracy = _clamp15(g[7] + pp + sh + home)
+		e.pass_skill = _clamp15(g[9] + pp + home)
+		e.reaction = ((_clamp15(g[10] + pp + sh + home + late) ^ 0xf) + 0xf) >> 1
+		e.awareness = ((_clamp15(g[11] + home) ^ 0xf) + 0xf) >> 1
+		e.check_skill = g[12]
+		e.endurance = g[13]
+		e.offense = _clamp15(g[14] + late + late)
+	else:
+		e.check_skill = g[1]
+		e.pass_skill = g[2]
+		e.offense = g[3]
+		e.endurance = g[4]
+		e.shot_skill = g[5]
+		e.stamina = g[6] - mini(g[6], 3)
+		e.speed_skill = g[7] - mini(g[7], 3)
+		e.weight = g[8]
+		e.reaction = ((_clamp15(g[10] + pp + sh + home + late) ^ 0xf) + 0xf) >> 1
+		e.awareness = ((_clamp15(g[11] + home) ^ 0xf) + 0xf) >> 1
+
+static func _clamp15(v: int) -> int:
+	return clampi(Entity.to_s16(v), 0, 15)
 
 static func _factor(v: int) -> int:
 	return 0 if v < 4 else (1 if v < 7 else 2)
@@ -566,12 +560,12 @@ func _default_skills(e: Entity) -> void:
 	e.flags4 = Entity.F4_MIRROR if e.left_handed else 0
 	e.number = 10 + e.roster_idx if e.roster_idx >= 0 else 10 + e.slot
 
-## pick_player_for_position (0x655cc): the line table of a team that lost a player for the game
-## (game misconduct, injury) is rebuilt around him. The port's line picking skips the missing
-## player instead (assign_line_positions); the call is a hook for the golden tests.
+## pick_player_for_position (0x655cc, Lines.pick_player_for_position): the line table of a team
+## that lost a player for the game (game misconduct, injury) is rebuilt around him
 func pick_player_for_position(team: int, roster: int) -> void:
 	if stubbed("pick_player_for_position", [team, roster]):
 		return
+	Lines.pick_player_for_position(self, team, roster)
 
 func team_of(e: Entity) -> Team:
 	return teams[e.team]

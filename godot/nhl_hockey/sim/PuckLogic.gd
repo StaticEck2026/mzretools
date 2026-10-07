@@ -1596,6 +1596,7 @@ static func injure_player(sim: Sim, e: Entity) -> void:
 	sim.camera_target_y = e.yi + (0x32 if e.xi < sim.camera_x else 0)
 	sim.action_hold_camera = true
 	var team := sim.team_of(e)
+	# (the injury proneness, rating byte 15 of player_ratings)
 	var proneness := 8
 	if team.info != null and e.roster_idx >= 0:
 		var p: Database.Player = team.info.player(e.roster_idx)
@@ -1603,11 +1604,15 @@ static func injure_player(sim: Sim, e: Entity) -> void:
 			proneness = p.ratings[15]
 	var r := sim.random(proneness + 8)
 	var for_game := r > 6 and sim.last_impact >= 0x2e
+	# out for the game: status 1 (injured); for the period: status 6
 	if e.roster_idx >= 0 and e.roster_idx < 28:
 		team.entity_of[e.roster_idx] = -4 if for_game else -3
+		team.roster_status[e.roster_idx] = 1 if for_game else 6
 	sim.injury_stoppage = true
 	sim.injury_report = [team.index, e.roster_idx, for_game]
 	InfoPanel.announce_injury(sim, team.index, e.roster_idx, for_game)
+	# the line table is rebuilt without him
+	sim.pick_player_for_position(1 if (e.flags & Entity.F_PLAYER2) != 0 else 0, e.roster_idx)
 
 ## crowd_reaction_sfx (0x58084): 0 a hit, 1 a fall, 2 a fall against the boards (glass)
 static func crowd_reaction_sfx(sim: Sim, kind: int) -> void:

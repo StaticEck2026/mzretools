@@ -188,6 +188,316 @@ static func build_lines(sim: Sim) -> void:
 				flags[r] = 0
 		team.pos_lists[Team.PL_FLAGS] = flags
 
+# --------------------------------------------------------------------------------------------
+# the lineup: a player lost for the game is replaced in the line table (pick_player_for_position),
+# the line table checked at the start of a match (count_dressed_players)
+# --------------------------------------------------------------------------------------------
+
+## the slots of a line table entry's group in later and earlier lines (unk_cd421: groups of slot
+## numbers ending in -1; unk_cd473: the start of the group of each slot)
+const LINEUP_GROUPS := [0, 3, 6, 9, -1, 1, 4, 7, 10, -1, 2, 5, 8, 11, -1, 12, 14, 16, -1, 13, 15, 17, -1,
+	18, 23, 0, 3, 6, 9, -1, 19, 24, 1, 4, 7, 10, -1, 20, 25, 2, 5, 8, 11, -1, 21, 26, 12, 14, 16, -1,
+	22, 27, 13, 15, 17, -1, 28, 32, 0, 3, 6, 9, -1, 29, 33, 1, 4, 7, 10, -1, 30, 34, 12, 14, 16, -1,
+	31, 35, 13, 15, 17, -1]
+const LINEUP_GROUP_START := [0, 5, 10, 0, 5, 10, 0, 5, 10, 0, 5, 10, 15, 19, 15, 19, 15, 19, 23, 30, 37,
+	44, 50, 23, 30, 37, 44, 50, 56, 63, 70, 76, 56, 63, 70, 76]
+
+static func _status_flag(team: Team, p: int) -> int:
+	var st := team.roster_status[p] if p >= 0 and p < 28 else 0
+	return STATUS_FLAGS[st] if st < STATUS_FLAGS.size() else 0
+
+## lineup_player_ok (0x64a0b): roster player p may take line table slot c of team t: dressed
+## (a scratched one only when the lineup holds him as a substitute, flag 2), and not twice in the
+## same line or unit; a forward at most in two lines while more than six forwards are dressed, a
+## defenceman in two pairs while three or more are; on the power play and killing penalties in
+## either unit when the position's players are many enough
+static func lineup_player_ok(sim: Sim, t: int, c: int, p: int) -> bool:
+	var team := sim.teams[t]
+	var lt := line_table(team)
+	var flag := _status_flag(team, p)
+	if flag == 0:
+		return false
+	if flag == 2 and team.pos_lists[Team.PL_FLAGS][p] != 2:
+		return false
+	var pos := position_letter(team, p)
+	var lo: int
+	var hi: int
+	if c < 0xc:
+		var n := 0
+		for b in 0xc:
+			if (b % 3 != c % 3 or b < c) and Entity.to_s8(lt[b]) == p:
+				n += 1
+		if n >= 2 and sim.lineup_forwards > 6:
+			return false
+		lo = (c / 3) * 3
+		hi = lo + 2
+	elif c < 0x12:
+		if sim.lineup_defence >= 3:
+			var n := 0
+			for b in range(0xc, 0x12):
+				if (b % 2 != c % 2 or b < c) and Entity.to_s8(lt[b]) == p:
+					n += 1
+			if n >= 2:
+				return false
+		lo = c & ~1
+		hi = lo + 1
+	elif c < 0x1c:
+		if (pos == 0x44 and sim.lineup_defence < 4) or (pos != 0x44 and sim.lineup_forwards < 6):
+			lo = 0x12 if c < 0x17 else 0x17
+			hi = lo + 4
+		else:
+			lo = 0x12
+			hi = 0x1b
+	elif pos == 0x44 and sim.lineup_defence < 4:
+		lo = 0x1c if c < 0x20 else 0x20
+		hi = lo + 3
+	else:
+		lo = 0x1c
+		hi = 0x23
+	for b in range(lo, hi + 1):
+		if b == c:
+			continue
+		if c >= 0x1c:
+			if b == c + 4:
+				continue
+		elif c >= 0x12 and b == c + 5:
+			continue
+		if Entity.to_s8(lt[b]) == p:
+			return false
+	return true
+
+## lineup_pick_best (0x64ca8): the first player of a candidate list with a lineup flag who may take
+## slot si; a substitute (flag 2) only while fewer than 18 are dressed (forwards fewer than 12): he
+## is dressed then (status 3, out of the scratches at +0x28..+0x2f, flag 1, counted); -1 for none
+static func lineup_pick_best(sim: Sim, list: PackedInt32Array, t: int, si: int) -> int:
+	var team := sim.teams[t]
+	var flags: PackedInt32Array = team.pos_lists[Team.PL_FLAGS]
+	for i in 0x19:
+		var p := list[i]
+		if p < 0:
+			return -1
+		if flags[p] == 0 or not lineup_player_ok(sim, t, si, p):
+			continue
+		if flags[p] == 2:
+			if sim.lineup_dressed >= 0x12:
+				continue
+			if position_letter(team, p) != 0x44 and sim.lineup_forwards >= 0xc:
+				continue
+			team.roster_status[p] = 3
+			var lt := line_table(team)
+			for c in range(0x28, 0x30):
+				if Entity.to_s8(lt[c]) == p:
+					lt[c] = 0x64
+			flags[p] = 1
+			sim.lineup_dressed += 1
+			if position_letter(team, p) == 0x44:
+				sim.lineup_defence += 1
+			else:
+				sim.lineup_forwards += 1
+		return p
+	return -1
+
+## choose_lineup_player (0x64e60): the player for line table slot si of team t, whose player is
+## lost: the one in the same position of a later line or unit; else the best of the candidate
+## lists by the lost player's position (defence or the forward positions in their order of
+## preference; the offensive lists below slot 28, the defensive ones for penalty killing); else the
+## same position of an earlier line; else any skater (defencemen: the defence lists first)
+static func choose_lineup_player(sim: Sim, t: int, si: int) -> int:
+	var team := sim.teams[t]
+	var lt := line_table(team)
+	var start: int = LINEUP_GROUP_START[si]
+	var c := start
+	while true:
+		var v: int = LINEUP_GROUPS[c]
+		c += 1
+		if v == si:
+			break
+	while LINEUP_GROUPS[c] >= 0:
+		var p := Entity.to_s8(lt[LINEUP_GROUPS[c]])
+		if lineup_player_ok(sim, t, si, p):
+			return p
+		c += 1
+	var pos := position_letter(team, Entity.to_s8(lt[si]))
+	var lists: Array = []
+	var offensive := si < 0x1c
+	match pos:
+		0x44:
+			lists = [Team.PL_D if (si >= 0x12 and si < 0x1c) else Team.PL_D_DEF]
+		0x43:
+			lists = [Team.PL_C if offensive else Team.PL_C_DEF, Team.PL_L if offensive else Team.PL_L_DEF,
+				Team.PL_R if offensive else Team.PL_R_DEF]
+		0x52:
+			lists = [Team.PL_R if offensive else Team.PL_R_DEF, Team.PL_L if offensive else Team.PL_L_DEF,
+				Team.PL_C if offensive else Team.PL_C_DEF]
+		0x4c:
+			lists = [Team.PL_L if offensive else Team.PL_L_DEF, Team.PL_R if offensive else Team.PL_R_DEF,
+				Team.PL_C if offensive else Team.PL_C_DEF]
+	for k: int in lists:
+		var p := lineup_pick_best(sim, team.pos_lists[k], t, si)
+		if p >= 0:
+			return p
+	c = start
+	while LINEUP_GROUPS[c] != si:
+		var p := Entity.to_s8(lt[LINEUP_GROUPS[c]])
+		if lineup_player_ok(sim, t, si, p):
+			return p
+		c += 1
+	# (a defenceman: the defence, then all skaters, by the power play's offensive lists or the
+	# defensive ones; a forward: all skaters, then the defence, offensive below slot 28)
+	var pp := si >= 0x12 and si < 0x1c
+	var order := [Team.PL_D if pp else Team.PL_D_DEF, Team.PL_SKATERS if pp else Team.PL_SKATERS_DEF]
+	if pos != 0x44:
+		order = [Team.PL_SKATERS if offensive else Team.PL_SKATERS_DEF, Team.PL_D if offensive else Team.PL_D_DEF]
+	for k: int in order:
+		var list: PackedInt32Array = team.pos_lists[k]
+		for i in 0x19:
+			var p := list[i]
+			if p < 0:
+				break
+			if lineup_player_ok(sim, t, si, p):
+				return p
+	return 0
+
+## lineup_fill_slots (0x6552e): the lost player in slot si leaves the lineup (flag 0); from his
+## line k to the last (count) each slot of the position (step apart) takes the player
+## choose_lineup_player picks, who leaves the substitutes when the slot is a line or a pair
+static func lineup_fill_slots(sim: Sim, t: int, si: int, k: int, count: int, step: int) -> void:
+	var team := sim.teams[t]
+	var lt := line_table(team)
+	var flags: PackedInt32Array = team.pos_lists[Team.PL_FLAGS]
+	var lost := Entity.to_s8(lt[si])
+	if lost >= 0 and lost < 25:
+		flags[lost] = 0
+	while k < count:
+		var p := choose_lineup_player(sim, t, si)
+		lt[si] = p & 0xff
+		if si < 0x12 and p >= 0 and p < 25:
+			flags[p] = 0
+		k += 1
+		si += step
+
+## lineup_set_goalies (0x652d6): a lost starting goalie is replaced by the backup; the backup by
+## the first other goalie who is dressed (or, with `call_up`, a scratched one: dressed, out of the
+## scratches), else the starter is his own backup
+static func lineup_set_goalies(sim: Sim, t: int, slot: int, call_up: int) -> void:
+	var team := sim.teams[t]
+	var lt := line_table(team)
+	if slot == 0x24:
+		lt[0x24] = lt[0x25]
+	for d in range(0x19, 0x1c):
+		if d == Entity.to_s8(lt[0x24]) or d == Entity.to_s8(lt[0x25]):
+			continue
+		var st := team.roster_status[d]
+		if _status_flag(team, d) == 1:
+			lt[0x25] = d
+			return
+		if st == 2 and call_up != 0:
+			team.roster_status[d] = 3
+			for c in range(0x28, 0x30):
+				if Entity.to_s8(lt[c]) == d:
+					lt[c] = 0x64
+			lt[0x25] = d
+			return
+	lt[0x25] = lt[0x24]
+
+## lineup_set_backup (0x653be): the extra attackers (slots 0x26 / 0x27): for the first, the second
+## if he is dressed, else the first dressed skater; then the second, the first dressed skater who is
+## not the first
+static func lineup_set_backup(sim: Sim, t: int, slot: int) -> void:
+	var team := sim.teams[t]
+	var lt := line_table(team)
+	var skaters: PackedInt32Array = team.pos_lists[Team.PL_SKATERS]
+	if slot == 0x26:
+		var second := Entity.to_s8(lt[0x27])
+		if _status_flag(team, second) == 1:
+			lt[0x26] = second & 0xff
+		else:
+			for d in 0x19:
+				var p := skaters[d]
+				if p < 0:
+					break
+				if _status_flag(team, p) == 1:
+					lt[0x26] = p
+					break
+	for d in 0x19:
+		var p := skaters[d]
+		if p < 0:
+			return
+		if _status_flag(team, p) == 1 and p != Entity.to_s8(lt[0x26]):
+			lt[0x27] = p
+			return
+
+## the dressed players (status flag 1) of a candidate list, up to its end
+static func _count_dressed(team: Team, list: PackedInt32Array) -> int:
+	var n := 0
+	for i in 0x19:
+		var p := list[i]
+		if p < 0:
+			break
+		if _status_flag(team, p) == 1:
+			n += 1
+	return n
+
+## pick_player_for_position (0x655cc): roster player r of team t is lost for the game; the
+## dressed players of his kind are counted, and every slot of the line table he holds is filled
+## (the forward lines, the defence pairs, the power play and penalty killing units, the goalies, the
+## extra attackers)
+static func pick_player_for_position(sim: Sim, t: int, r: int) -> void:
+	var team := sim.teams[t]
+	var lt := line_table(team)
+	var pos := position_letter(team, r)
+	if pos == 0x44:
+		sim.lineup_defence = _count_dressed(team, team.pos_lists[Team.PL_D_DEF])
+	elif pos != 0x47:
+		sim.lineup_forwards = _count_dressed(team, team.pos_lists[Team.PL_SKATERS])
+	var di := 0
+	for groups: Array in [[4, 3], [3, 2], [2, 5], [2, 4]]:
+		for k in groups[0]:
+			for j in groups[1]:
+				if Entity.to_s8(lt[di]) == r:
+					lineup_fill_slots(sim, t, di, k, groups[0], groups[1])
+				di += 1
+	for k in 2:
+		if Entity.to_s8(lt[di]) == r:
+			lineup_set_goalies(sim, t, di, 0)
+		di += 1
+	for k in 2:
+		if Entity.to_s8(lt[di]) == r:
+			lineup_set_backup(sim, t, di)
+		di += 1
+
+## count_dressed_players (0x658f3), before the match: the dressed defencemen and forwards counted;
+## the players of the line table (the extra attackers too) whose place is empty or who are injured
+## are replaced (pick_player_for_position), an unavailable starting goalie too (a scratched one may
+## be called up); the substitutes' lineup flags (2) are cleared
+static func count_dressed_players(sim: Sim, t: int) -> void:
+	var team := sim.teams[t]
+	var lt := line_table(team)
+	sim.lineup_defence = _count_dressed(team, team.pos_lists[Team.PL_D_DEF])
+	sim.lineup_forwards = _count_dressed(team, team.pos_lists[Team.PL_SKATERS])
+	sim.lineup_dressed = sim.lineup_forwards + sim.lineup_defence
+	sim.lineup_in_table.resize(0x19)
+	sim.lineup_in_table.fill(0)
+	for c in 0x24:
+		_mark_in_table(sim, Entity.to_s8(lt[c]))
+	_mark_in_table(sim, Entity.to_s8(lt[0x27]))
+	_mark_in_table(sim, Entity.to_s8(lt[0x26]))
+	for c in 0x19:
+		var st := team.roster_status[c]
+		if sim.lineup_in_table[c] != 0 and (st == 0 or st == 1):
+			pick_player_for_position(sim, t, c)
+	var g := Entity.to_s8(lt[0x24])
+	var gst := team.roster_status[g] if g >= 0 and g < 28 else 0
+	if gst == 0 or gst == 1:
+		lineup_set_goalies(sim, t, 0x24, 1)
+	var flags: PackedInt32Array = team.pos_lists[Team.PL_FLAGS]
+	for c in 0x19:
+		flags[c] = 1 if flags[c] == 1 else 0
+
+static func _mark_in_table(sim: Sim, p: int) -> void:
+	if p >= 0 and p < 0x19:
+		sim.lineup_in_table[p] = 1
+
 ## line_avg_energy (0x5a30c): average energy of the players of a line (3 forwards, 5 on the power
 ## play, 4 killing a penalty); the sum is a 16 bit word
 static func line_avg_energy(_sim: Sim, team: Team, line: int) -> int:

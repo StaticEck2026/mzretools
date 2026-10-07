@@ -202,6 +202,8 @@ static func record_penalty(sim: Sim, team: int, roster: int, type: int, minutes:
 ## announce_injury (0x62764) and show_penalty type 3
 static func announce_injury(sim: Sim, team: int, roster: int, for_game: bool) -> void:
 	var t := elapsed(sim)
+	if sim.stubbed("announce_injury", [team, roster & 0xff, 1 if for_game else -1, t.x & 0xff, t.y & 0xff]):
+		return
 	_log(sim, ["injury", team, roster, for_game, sim.period, t.x, t.y])
 	if sim.no_stats:
 		return

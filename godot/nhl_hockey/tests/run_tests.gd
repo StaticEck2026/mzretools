@@ -718,7 +718,7 @@ func ai_golden() -> void:
 	for group in data:
 		if group == "base":
 			continue
-		if group in ["lines", "controls", "rules", "goals", "faceoffs", "steps", "runs", "periods"]:
+		if group in ["lines", "controls", "rules", "goals", "faceoffs", "steps", "runs", "periods", "dress", "lineup"]:
 			counts.append(_lines_golden(data[group], base, group))
 			continue
 		var sim := Sim.new()
@@ -785,6 +785,12 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 	if group == "periods":
 		sim.stubs.erase("period_cleanup")
 		sim.stubs["leave_match_video"] = true
+	if group == "dress":
+		sim.stubs.erase("put_player_on_ice")
+	if group == "lineup":
+		sim.stubs.erase("injure_player")
+		sim.stubs.erase("pick_player_for_position")
+		sim.stubs["announce_injury"] = true
 	var per := {}
 	var ok := 0
 	var shown := 0
@@ -836,6 +842,15 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 		if group == "periods":
 			for t in 2:
 				sim.teams[t].info = _full_ratings_info(c["ratings"][t]) if c.has("ratings") else null
+		if c.has("dress"):
+			for t in 2:
+				sim.teams[t].info = _dress_info(c["dress"], t)
+		if li.has("counts"):
+			sim.lineup_forwards = int(li["counts"][0])
+			sim.lineup_defence = int(li["counts"][1])
+			sim.lineup_dressed = int(li["counts"][2])
+			sim.lineup_in_table.resize(25)
+			sim.lineup_in_table.fill(0)
 		if not li.is_empty():
 			var req: Array = li["req"]
 			for i in 6:
@@ -845,6 +860,7 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 		var args: Array = _ints(c["args"])
 		var a0: int = args[0] if args.size() > 0 else 0
 		var a1: int = args[1] if args.size() > 1 else 0
+		var a2: int = args[2] if args.size() > 2 else 0
 		sim.stub_calls.clear()
 		var ret = null
 		match name:
@@ -901,6 +917,14 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 			"ai_puck_faceoff": AI.puck_faceoff(sim, sim.puck)
 			"ai_puck_faceoff2": AI.puck_faceoff2(sim, sim.puck)
 			"end_of_period": Rules.end_of_period(sim)
+			"put_player_on_ice": sim.put_player_on_ice(sim.entities[a0], a1)
+			"pick_player_for_position": Lines.pick_player_for_position(sim, a0, a1)
+			"count_dressed_players": Lines.count_dressed_players(sim, a0)
+			"choose_lineup_player": ret = Lines.choose_lineup_player(sim, a0, a1)
+			"lineup_player_ok": ret = 1 if Lines.lineup_player_ok(sim, a0, a1, a2) else 0
+			"lineup_set_goalies": Lines.lineup_set_goalies(sim, a0, a1, a2)
+			"lineup_set_backup": Lines.lineup_set_backup(sim, a0, a1)
+			"injure_player": PuckLogic.injure_player(sim, sim.entities[a0])
 			"period_cleanup": MatchSetup.period_cleanup(sim)
 			"reset_game_state": MatchSetup.reset_game_state(sim)
 			"init_match": MatchSetup.init_match(sim)
@@ -923,7 +947,7 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 				diff.append("panel line 5 '%s' (original '%s')" % [sim.panel_text[4], la["panel4"]])
 		if ret != null:
 			var want := int(la["ret"])
-			if name == "penalty_time_left":
+			if name == "penalty_time_left" or name == "choose_lineup_player":
 				want = Entity.to_s16(want)
 				ret = Entity.to_s16(int(ret))
 			elif name != "line_avg_energy":
@@ -964,6 +988,17 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 						diff.append("crowd figure %d %s (original %s)" % [i, str(got_crowd[0][i]), str(la["crowd"][0][i])])
 				if str(got_crowd[1]) != str(la["crowd"][1]):
 					diff.append("crowd spots %s (original %s)" % [str(got_crowd[1]), str(la["crowd"][1])])
+		if la.has("line_tables"):
+			for t in 2:
+				var lt := Lines.line_table(sim.teams[t]).slice(0, 0x30)
+				if str(Array(lt)) != str(_ints(la["line_tables"][t])):
+					diff.append("team %d line table %s (original %s)" % [t, str(Array(lt)), str(la["line_tables"][t])])
+		if la.has("counts"):
+			var got_counts := [sim.lineup_forwards, sim.lineup_defence, sim.lineup_dressed]
+			if str(got_counts) != str(_ints(la["counts"])):
+				diff.append("lineup counts %s (original %s)" % [str(got_counts), str(la["counts"])])
+			if name == "count_dressed_players" and str(Array(sim.lineup_in_table)) != str(_ints(la["in_table"])):
+				diff.append("in the line table %s (original %s)" % [str(sim.lineup_in_table), str(la["in_table"])])
 		if la.has("period_num") and sim.period_num != int(la["period_num"]):
 			diff.append("period_num %d (original %d)" % [sim.period_num, int(la["period_num"])])
 		if la.has("energies"):
@@ -1045,6 +1080,26 @@ static func _ratings_info(ratings: Array) -> Database.TeamInfo:
 		p.ratings.resize(0x10)
 		p.roster_idx = 25 + i
 		info.goalies.append(p)
+	return info
+
+## the players of a team as golden.py dress_cases writes them: numbers (the roster records' byte
+## 5), the skaters' 0x14 rating bytes, the goalies' 0x10, the team factors (TEAMS.DB +0x2dc)
+static func _dress_info(d: Dictionary, t: int) -> Database.TeamInfo:
+	var info := Database.TeamInfo.new()
+	for i in 25:
+		var p := Database.Player.new()
+		p.number = int(d["numbers"][t][i])
+		p.ratings = PackedByteArray(_ints(d["ratings"][t][i]))
+		p.roster_idx = i
+		info.skaters.append(p)
+	for i in 3:
+		var p := Database.Player.new()
+		p.goalie = true
+		p.number = int(d["numbers"][t][25 + i])
+		p.ratings = PackedByteArray(_ints(d["goalie_ratings"][t][i]))
+		p.roster_idx = 25 + i
+		info.goalies.append(p)
+	info.factors = PackedByteArray(_ints(d["factors"][t]))
 	return info
 
 ## a roster of placeholder players with all their rating bytes (player_ratings) and three goalies
