@@ -1175,3 +1175,26 @@ static func all_goto_positions(sim: Sim) -> void:
 			e.next_line_slot = -1
 			e.next_roster = -1
 			e.set_state_reset(Entity.State.BENCH_WAIT)
+
+## ref_queue_infraction_event (0x62c37): the first frozen puck of each goalie (bit 1 << goalie
+## number, the away team's << 3) queues a deferred call (an empty one in this build: return_one)
+## and so ends the frame's steps; true when it did
+static func ref_queue_infraction_event(sim: Sim) -> bool:
+	if sim.infraction_events == 0x3f or sim.ref_infraction_slot < 0:
+		return false
+	var e := sim.entities[sim.ref_infraction_slot]
+	var away := (e.flags & Entity.F_PLAYER2) != 0
+	var bit := 1 << (sim.team_record(e).goalie_request & 31)
+	if away:
+		bit <<= 3
+	if sim.infraction_events & bit:
+		return false
+	sim.infraction_events |= bit
+	sim.deferred = true
+	return true
+
+## goal_milestone_check (0x62807): a milestone of the scorer (a hat trick, a record of the season)
+## queues a deferred call; in this build an empty one (return_one), so only the frame's steps end
+static func goal_milestone_check(sim: Sim) -> void:
+	if sim.stubbed("goal_milestone_check", []):
+		return

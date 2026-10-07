@@ -2396,112 +2396,156 @@ static func ref_call_penalty(sim: Sim, e: Entity) -> void:
 	Anim.set_animation(e, Tables.ref_signal_anim[inf + 1])
 	e.set_state(Entity.State.REF_PICKUP)
 
-## ai_ref_pickup_puck (0x4ed7c): everybody to the dot, the referee fetches the puck
+## ai_ref_pickup_puck (0x4ed7c): the referee picks the puck up after the whistle. While the
+## panel opens with a clip (not the fans' or the clapping) he waits, and once it is up says the
+## goal; with more calls queued he signals them (ref_phase -1); a puck out of the rink: a new one
+## (REF_GET_NEW_PUCK). On entering: after an injury, at 0:00 or a decided overtime straight to the
+## faceoff; else everybody to the faceoff (all_goto_positions) and, by the call: a goalie's frozen
+## puck queues its event or shows the SAVED clip, a goal checks the milestones, the others bring the
+## announcements. Then he skates to the puck (leading it, stopping short of the goal line in
+## front of a net, at the net's mouth for a puck in the net), turns to it and picks it up (carrier
+## 16, held up out of sight); after 0x258 steps he takes a new one.
 static func ref_pickup(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_BUSY:
 		return
-	# the referee waits while the panel opens and plays its clip (not for the fans or the clapping)
+	var puck := sim.puck
 	if sim.clip != InfoPanel.CLIP_CLAP and sim.clip != InfoPanel.CLIP_FAN_ANTHEM and sim.panel >= 0 and sim.panel < InfoPanel.HELD:
 		Anim.set_animation(e, Anim.REF_GLIDE)
-		# the goal is announced once the panel was up for a while (say_goal_wrapper); after an
-		# overtime goal the panel opens again
-		if sim.panel >= 0xec and not sim.goal_call.is_empty():
-			var g: Array = sim.goal_call
+		if sim.panel < 0xec or sim.goal_call.is_empty():
+			return
+		var g: Array = sim.goal_call
+		if not sim.stubbed("say_goal", [int(g[0]) & 0xff, int(g[1]) & 0xff, int(g[2]) & 0xff, int(g[3]) & 0xff]):
 			var assists: Array = []
 			for k in [2, 3]:
 				if g[k] >= 0:
 					assists.append(Speech.number(sim, g[0], g[k]))
 			Speech.say(sim, Speech.goal(Speech.abbrev(sim, g[0]), Speech.number(sim, g[0], g[1]), assists))
-			sim.goal_call = []
-			if sim.period >= 3:
-				sim.panel = 0x38
+		sim.goal_call = []
+		if sim.period >= 3:
+			sim.panel = 0x38
 		return
-	var puck := sim.puck
 	if not sim.infractions.is_empty():
-		# more calls to signal (penalty_box_update runs again with ref_phase -1)
 		Anim.set_animation(e, Anim.REF_GLIDE)
 		sim.ref_phase = -1
 		return
-	if absi(puck.xi) >= 0xa1 or absi(puck.yi) >= 0x113:
+	if absi(puck.xi) > 0xa0 or absi(puck.yi) > 0x112:
 		e.set_state(Entity.State.REF_GET_NEW_PUCK)
 		return
 	if e.flags & Entity.F_STATE_ENTERED:
-		if sim.injury_stoppage or (sim.clock_seconds == 0 and sim.clock_sub == 0) or sim.game_over:
+		if sim.injury_stoppage or (sim.clock_seconds == 0 and sim.clock_sub == 0) \
+				or (sim.period == 3 and sim.teams[0].goals != sim.teams[1].goals):
 			sim.ref_phase = -1
-			sim.puck.set_state(Entity.State.PUCK_FACEOFF)
+			if sim.panel == InfoPanel.HELD:
+				sim.panel = InfoPanel.CLOSING
+			puck.set_state(Entity.State.PUCK_FACEOFF)
 			e.set_state(Entity.State.REF_FACEOFF)
 			return
 		sim.ref_phase = 1
 		e.flags &= ~Entity.F_STATE_ENTERED
 		Rules.all_goto_positions(sim)
 		e.want_dir = 8
+		e.dir_timer = 0
 		e.timer_a = 0
 		e.timer_b = 0
 		e.flags2 |= Entity.F2_NO_COLLIDE
 		e.push_x = 0
 		e.push_y = 0
 		Anim.set_animation(e, Anim.REF_GLIDE)
-		# a goalie who made the save that froze the puck gets the SAVED clip (once a period); after routine
-		# stoppages the announcer or the crowd (ref_check_announcements)
-		if sim.ref_infraction == Rules.INF_GOALIE_HOLD and sim.ref_infraction_slot >= 0 and sim.ref_infraction_slot < 12 \
-				and sim.entities[sim.ref_infraction_slot].save_result != 0 and not sim.save_clip_shown:
-			sim.entities[sim.ref_infraction_slot].save_result = 0
-			InfoPanel.load_clip(sim, InfoPanel.CLIP_SAVE)
-			sim.save_clip_shown = true      # once a period
-			InfoPanel.open(sim)
+		var inf := sim.ref_infraction
+		var announce := true
+		if inf == Rules.INF_GOALIE_HOLD:
+			if Rules.ref_queue_infraction_event(sim):
+				announce = false
+			elif sim.ref_infraction_slot >= 0 and sim.entities[sim.ref_infraction_slot].save_result != 0 and not sim.save_clip_shown:
+				sim.entities[sim.ref_infraction_slot].save_result = 0
+				announce = false
+				InfoPanel.load_clip(sim, InfoPanel.CLIP_SAVE)
+				if sim.clip != -1:
+					sim.save_clip_shown = true      # once a period
+					InfoPanel.open(sim)
+					return
+		elif inf == Rules.INF_GOAL:
+			if sim.no_stats:
+				sim.period_over = true
+				return
+			Rules.goal_milestone_check(sim)
+			announce = false
+		if announce and InfoPanel.ref_announcements(sim):
 			return
-		if sim.ref_infraction != Rules.INF_GOAL and InfoPanel.ref_announcements(sim):
-			return
-		InfoPanel.close(sim)
-	if sim.puck_carrier >= 0 and sim.puck_carrier != Entity.Slot.REFEREE:
+		if sim.panel == InfoPanel.HELD:
+			sim.panel = InfoPanel.CLOSING
+	if sim.deferred:
+		return
+	if sim.puck_carrier >= 0:
 		sim.puck_carrier = -1
 		puck.set_state(Entity.State.PUCK_IDLE)
-	if e.timer_b >= 0x259:
+	if e.timer_b > 0x258:
 		# took too long: a new puck
 		sim.puck_carrier = Entity.Slot.REFEREE
 		puck.vx = 0
 		puck.vy = 0
 		puck.vz = 0
-		puck.z = 100 << 16
+		puck.z = (100 << 16) | (puck.z & 0xffff)
 		e.set_state(Entity.State.REF_GOTO_FACEOFF)
 		return
+	var a: int
+	var b: int
 	var in_net := absi(puck.xi) == 6 and absi(puck.yi) == 0xf0
 	if in_net:
 		e.target_x = puck.xi
 		e.target_y = -0xe3 if puck.yi < 0 else 0xe3
+		a = Sim._s16(e.xi - e.target_x)
+		b = Sim._s16(e.yi - (-0xee if puck.yi < 0 else 0xee))
 	else:
-		e.target_x = puck.xi + (puck.vx >> 7)
-		e.target_y = puck.yi + (puck.vy >> 7)
-	var dx := e.xi - puck.xi
-	var dy := e.yi - (( -0xee if puck.yi < 0 else 0xee) if in_net else puck.yi)
-	if absi(dx) > 0xc or absi(dy) > 0xc:
-		e.timer_b += 1
-		ref_skate_to_point(sim, e, e.target_x, e.target_y)
-		return
-	e.timer_a -= 1
-	if e.timer_a >= 0:
-		return
-	e.timer_a += 8
-	Anim.set_animation(e, Anim.REF_GLIDE)
-	var want := Tables.direction8(puck.xi - e.xi, puck.yi - e.yi)
-	if want < 8 and ((want - e.facing + 1) & 7) > 2:
-		var diff := (want - e.facing) & 7
-		e.facing = (e.facing + (1 if diff < 5 else -1)) & 7
-		e.timer_b += 1
-		ref_skate_to_point(sim, e, e.target_x, e.target_y)
-		return
-	e.vx = 0
-	e.vy = 0
-	sim.puck_carrier = Entity.Slot.REFEREE
-	puck.vx = 0
-	puck.vy = 0
-	puck.vz = 0
-	puck.z = -100 * 0x10000
-	if want < 8:
-		e.facing = want
-	e.flags |= Entity.F_BUSY
-	Anim.set_animation(e, 0xc03)        # picks the puck up
-	e.set_state(Entity.State.REF_GOTO_FACEOFF)
+		e.target_x = Sim._s16(puck.xi + (Sim._s16(puck.vx) >> 7))
+		e.target_y = Sim._s16(puck.yi + (Sim._s16(puck.vy) >> 7))
+		var dv := Tables.direction8(Sim._s16(puck.vx), Sim._s16(puck.vy))
+		var dp := Tables.direction8(Sim._s16(e.xi - puck.xi), Sim._s16(e.yi - puck.yi))
+		if dv > 7 or dp > 7 or dp == dv:
+			e.target_x = puck.xi
+			e.target_y = puck.yi
+		# not across a goal line: where the way to the lead crosses it, stay with the puck
+		for gl: int in [0xe8, -0xe8]:
+			var ty := e.target_y
+			if ((ty - gl) ^ (puck.yi - gl)) < 0:
+				var c: int = (gl - puck.yi) * (e.target_x - puck.xi)
+				if ty - puck.yi != 0:
+					c = _div_trunc(c, ty - puck.yi)
+				if absi(Sim._s16(puck.xi + c)) < 0x19:
+					e.target_x = puck.xi
+					e.target_y = puck.yi
+		a = Sim._s16(e.xi - puck.xi)
+		b = Sim._s16(e.yi - puck.yi)
+	sim.scratch_b = b
+	var close := absi(a) <= 0xc and absi(b) <= 0xc and not (in_net and absi(e.yi) > 0xe8)
+	if close:
+		e.timer_a = Sim._s16(e.timer_a - 1)
+		if e.timer_a >= 0:
+			return
+		e.timer_a += 8
+		Anim.set_animation(e, Anim.REF_GLIDE)
+		var want := Tables.direction8(Sim._s16(puck.xi - e.xi), Sim._s16(puck.yi - e.yi))
+		sim.scratch_ac = want
+		var hw := _heading_word(e)
+		if want >= 8 or ((want - hw + 1) & 7) <= 2:
+			e.vy = 0
+			e.vx = 0
+			sim.puck_carrier = Entity.Slot.REFEREE
+			puck.vx = 0
+			puck.vy = 0
+			puck.vz = 0
+			puck.z = (-100 * 0x10000) | (puck.z & 0xffff)
+			if want < 8:
+				_set_heading_word(e, want)
+			e.flags |= Entity.F_BUSY
+			Anim.set_animation(e, 0xc03)        # picks the puck up
+			e.set_state(Entity.State.REF_GOTO_FACEOFF)
+			return
+		var rel := (want - hw) & 7
+		sim.scratch_ac = rel
+		_set_heading_word(e, (hw + (1 if rel < 5 else -1)) & 7)
+	e.timer_b = Sim._s16(e.timer_b + 1)
+	ref_skate_to_point(sim, e, e.target_x, e.target_y)
 
 ## ai_ref_goto_faceoff (0x4f5bf): the referee takes the puck (carrier 16, held up out of sight)
 ## to the faceoff dot, stands beside it (0xf towards the middle) and turns to face it every 8

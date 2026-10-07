@@ -104,16 +104,17 @@ class PortEmu(LEEmu):
         self.outs = []
         return o
 
-    def stub(self, addr, fn):
+    def stub(self, addr, fn, pop=0):
         '''Replaces the routine at addr: fn(eax) is called instead and the routine returns (with
-        fn's result in eax unless it is None); returns the hook for unstub'''
+        fn's result in eax unless it is None; `pop` bytes of stack arguments removed, as a `ret n`
+        does); returns the hook for unstub'''
         def hook(uc, address, size, user):
             r = fn(uc.reg_read(UC_X86_REG_EAX))
             if r is not None:
                 uc.reg_write(UC_X86_REG_EAX, r & 0xffffffff)
             sp = uc.reg_read(UC_X86_REG_ESP)
             uc.reg_write(UC_X86_REG_EIP, struct.unpack('<I', uc.mem_read(sp, 4))[0])
-            uc.reg_write(UC_X86_REG_ESP, sp + 4)
+            uc.reg_write(UC_X86_REG_ESP, sp + 4 + pop)
         return self.uc.hook_add(UC_HOOK_CODE, hook, None, addr, addr)
 
     def unstub(self, h):
@@ -1315,7 +1316,12 @@ AI_GLOBALS = (('game_flags', GAME_FLAGS, 1), ('stop_flags', STOP_FLAGS, 1), ('mi
               ('injury_stoppage', 0xcbec6, -2), ('clip', 0xcbecc, -2), ('ref_phase', 0xc90d4, -2),
               ('ref_infraction', 0xc90d6, -2), ('ref_infraction_slot', 0xc90d8, -2), ('panel', 0xcbec0, -2),
               ('demo', 0xcc0ec, -4), ('sound_card', 0xc541f, 1), ('sound_enabled', 0xd2430, 1), ('announce_time', 0xe9aac, -2),
-              ('period_length', 0xe9ab8, -2))
+              ('period_length', 0xe9ab8, -2), ('deferred', 0xc5840, -4), ('infraction_events', 0xcc0ac, -4),
+              ('save_clip_shown', 0xe9a9e, -2), ('period_over', 0xcbc46, -2), ('goal_call', 0xe9ad3, 1),
+              ('goal_team', 0xe9ad4, 1), ('goal_scorer', 0xe9ad5, 1), ('goal_a1', 0xe9ad6, 1), ('goal_a2', 0xe9ad7, 1),
+              ('infraction0', 0xe9a16, 1))
+SAY_GOAL = 0x59ad0                             # stubbed: the announcer says the goal (the goal_call bytes)
+GOAL_MILESTONE_CHECK = 0x62807                 # stubbed: its deferred call is empty in this build
 PLAY_SPEECH = 0x59a11                          # stubbed: the announcer (a sample)
 LOAD_CUTSCENE_CLIP = 0x66497                   # stubbed: the clip on the scoreboard (loaded: dword_cbecc = the clip)
 ANNOUNCE_GOAL = 0x62343                        # stubbed (the panel): (team, scorer, assist, assist)
@@ -1446,7 +1452,11 @@ def ai_world(emu, rnd, base, tables):
               'speech_busy': rnd.choice((0, 0, 1)), 'ref_infraction': rnd.choice((7, 7, 1, 2, 3, 5, 6, 8, 9, 0x10, 0x1b)),
               'ref_infraction_slot': rnd.randrange(-1, 12), 'panel': rnd.choice((-1, -1, -1, 0x100, 0x20)),
               'demo': rnd.choice((0, 0, 0, 1)), 'sound_card': rnd.choice((0x10, 0x10, 2, 0)), 'sound_enabled': rnd.choice((0, 1, 1)),
-              'announce_time': rnd.choice((-1, 0x1e, 0x100)), 'period_length': rnd.choice((300, 600, 1200))})
+              'announce_time': rnd.choice((-1, 0x1e, 0x100)), 'period_length': rnd.choice((300, 600, 1200)),
+              'deferred': 0, 'infraction_events': rnd.choice((0, 0, 1, 8, 0x3f)), 'save_clip_shown': rnd.choice((0, 0, 1)),
+              'period_over': 0, 'goal_call': rnd.choice((0xff, 0xff, 1)), 'goal_team': rnd.randrange(2),
+              'goal_scorer': rnd.randrange(20), 'goal_a1': rnd.choice((0xff, rnd.randrange(20))),
+              'goal_a2': rnd.choice((0xff, rnd.randrange(20))), 'infraction0': rnd.choice((0, 0, 0, 0, 3))})
     for n, a, sz in AI_GLOBALS:
         emu.write(a, struct.pack('<' + _FMT[sz], g[n] if sz < 0 else g[n] & ((1 << (8 * sz)) - 1)))
     emu.write(OPTION_FLAGS, struct.pack('<I', g['option_flags']))
@@ -1476,7 +1486,7 @@ AI_GROUPS = {
     # the referee: at the faceoff, following the play, to the faceoff dot, pointing at the goal
     'referee': ((30, (16,)), (31, (16,)), (34, (16,)), (34, (16,)), (35, (16,))),
     # the referee's calls: signalling, the new puck, picking up the puck
-    'refcalls': ((32, (16,)), (32, (16,)), (36, (16,)), (36, (16,))),
+    'refcalls': ((32, (16,)), (32, (16,)), (36, (16,)), (36, (16,)), (33, (16,)), (33, (16,)), (33, (16,)), (33, (16,))),
 }
 
 
@@ -1525,6 +1535,36 @@ def ai_prepare(emu, rnd, state, actor, g):
         if rnd.random() < 0.5:
             rec[0x44] |= 2                           # the entry: the announcements
             g['panel'] = rnd.choice((-1, -1, -1, 0x100))
+    if state == 33:
+        # the puck loose near the referee, in a net, out of the rink; the panel up with a clip, a goal
+        # to say; a frozen puck by a goalie who made a save
+        r = rnd.random()
+        if r < 0.15:
+            px, py = rnd.choice((-6, 6)), rnd.choice((-0xf0, 0xf0))
+        elif r < 0.2:
+            px, py = rnd.choice((-0xb0, 0xb0)), rnd.randrange(-0x100, 0x101)
+        else:
+            px, py = rnd.randrange(-0x90, 0x91), rnd.randrange(-0x100, 0x101)
+        put_fields(puck, {'x': px << 16 | rnd.randrange(0x10000), 'y': py << 16 | rnd.randrange(0x10000),
+                          'vx': rnd.choice((0, rnd.randrange(-0x2000, 0x2001))), 'vy': rnd.choice((0, rnd.randrange(-0x2000, 0x2001)))})
+        if rnd.random() < 0.5:
+            put_fields(rec, {'x': (px + rnd.randrange(-0x10, 0x11)) << 16 | rnd.randrange(0x10000),
+                             'y': (py + rnd.randrange(-0x10, 0x11)) << 16 | rnd.randrange(0x10000)})
+        put_fields(rec, {'timer_a': rnd.choice((-1, 0, 0, 3)), 'timer_b': rnd.choice((0, 0x100, 0x258, 0x259)),
+                         'heading': rnd.randrange(8) << 16 | rnd.randrange(0x10000), 'vx': rnd.choice((0, 0x600)), 'vy': 0})
+        g['panel'] = rnd.choice((-1, -1, -1, 0x20, 0xf0, 0x100))
+        g['clip'] = rnd.choice((-1, -1, 0, 2, 8))
+        g['ref_infraction'] = rnd.choice((4, 4, 7, 7, 3, 6, 0x1d))
+        if g['ref_infraction'] == 4:
+            gs = rnd.choice((0, 6))
+            g['ref_infraction_slot'] = gs
+            grec = bytearray(emu.read(ENTITIES + gs * 0x80, 0x80))
+            put_fields(grec, {'save_result': rnd.choice((0, 1))})
+            emu.write(ENTITIES + gs * 0x80, grec)
+        if rnd.random() < 0.5:
+            rec[0x44] |= 2
+        if rnd.random() < 0.3:
+            carrier = rnd.choice((-1, 16, 3))
     if state == 32 and rnd.random() < 0.3:
         rec[0x44] |= 2                               # the entry: a goal announced
         g['ref_infraction'] = 7
@@ -1639,6 +1679,8 @@ def ai_cases(exe):
         calls.append(['load_clip', s32(eax & 0xffffffff)])
         emu.write(0xcbecc, struct.pack('<h', eax & 0xffff))
     emu.stub(LOAD_CUTSCENE_CLIP, on_clip)
+    emu.stub(SAY_GOAL, lambda eax: calls.append(['say_goal'] + list(emu.read(0xe9ad4, 4))), pop=4)
+    emu.stub(GOAL_MILESTONE_CHECK, lambda eax: calls.append(['goal_milestone_check']))
     emu.stub(ANNOUNCE_GOAL, lambda eax: calls.append(['announce_goal', s32(eax & 0xffffffff),
                                                      s32(emu.uc.reg_read(UC_X86_REG_EDX)), s32(emu.uc.reg_read(UC_X86_REG_EBX)),
                                                      s32(emu.uc.reg_read(UC_X86_REG_ECX))]))

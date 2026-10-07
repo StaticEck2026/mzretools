@@ -712,7 +712,8 @@ func ai_golden() -> void:
 			continue
 		var sim := Sim.new()
 		sim.stubs = {"play_sfx": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
-			"injure_player": true, "bench_cheer": true, "announce_goal": true, "play_speech": true, "load_clip": true}
+			"injure_player": true, "bench_cheer": true, "announce_goal": true, "play_speech": true, "load_clip": true,
+			"say_goal": true, "goal_milestone_check": true}
 		var ok := 0
 		var bad := 0
 		var shown := 0
@@ -903,6 +904,18 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	if g.has("period_length"):
 		sim.period_length = int(g["period_length"])
 	sim.opt_sound = (int(g["option_flags"]) & 0x80) != 0
+	sim.deferred = int(g.get("deferred", 0)) != 0
+	sim.infraction_events = int(g.get("infraction_events", 0))
+	sim.save_clip_shown = int(g.get("save_clip_shown", 0)) != 0
+	sim.period_over = int(g.get("period_over", 0)) != 0
+	if int(g.get("goal_call", 0xff)) == 1:
+		var gc := []
+		for k in ["goal_team", "goal_scorer", "goal_a1", "goal_a2"]:
+			gc.append(Entity.to_s8(int(g[k])))
+		sim.goal_call = gc
+	else:
+		sim.goal_call = []
+	sim.infractions = [[int(g["infraction0"]), -1, false]] if int(g.get("infraction0", 0)) != 0 else []
 	var teams: Array = c["teams"]
 	for t in 2:
 		var team: Team = sim.teams[t]
@@ -973,7 +986,9 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 		"ref_phase": Sim._s16(sim.ref_phase & 0xffff), "ref_infraction": sim.ref_infraction,
 		"ref_infraction_slot": sim.ref_infraction_slot, "panel": sim.panel, "demo": 1 if sim.demo else 0,
 		"sound_card": sim.sound_device, "sound_enabled": 1 if sim.sound_enabled else 0, "announce_time": sim.announce_time,
-		"period_length": sim.period_length}
+		"period_length": sim.period_length, "deferred": 1 if sim.deferred else 0, "infraction_events": sim.infraction_events,
+		"save_clip_shown": 1 if sim.save_clip_shown else 0, "period_over": 1 if sim.period_over else 0,
+		"goal_call": 0 if sim.goal_call.is_empty() else 1, "infraction0": 0 if sim.infractions.is_empty() else 1}
 
 static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 	var diff := []
@@ -993,6 +1008,8 @@ static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 			"stop_flags": w &= 0xf5
 			"misc_flags": w &= 0x90
 			"action_flags": w &= 0x4c
+			"goal_call": w = 1 if w == 1 else 0
+			"infraction0": w = 1 if w != 0 else 0
 		if int(got[k]) != w:
 			diff.append("%s %d (original %d)" % [k, int(got[k]), w])
 	var tas: Array = wa["teams"]

@@ -100,6 +100,8 @@ var overtime_length: int = 0         # period_length of a regular season overtim
 var clock_seconds: int = 300
 var clock_sub: int = 0              # 24 sub ticks per second, decremented every step
 var period_over := false
+var deferred := false               # dword_c5840: a deferred call is queued (the rest of the frame's steps wait)
+var infraction_events := 0          # dword_cc0ac: the goalies (bit 0/1, away << 3) a frozen puck queued an event for
 var stoppage_timer: int = -1
 var whistle_timer: int = 0
 var announce_timer: int = -1        # word_cc0b0
@@ -660,6 +662,7 @@ func add_crowd(amount: int, cap: int) -> void:
 ## pressed_p1/pressed_p2: the button bits that went down with this sample
 func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) -> void:
 	step_count += 1
+	deferred = false            # game_loop ran the deferred calls (empty ones in this build)
 	# match_sequence / three_stars_sequence: a button skips the anthem, the sequences run for
 	# sequence_steps steps
 	if intro or stars_running:
