@@ -408,36 +408,55 @@ static func ref_positioning(sim: Sim, e: Entity, dir: int) -> int:
 	var ay := absi(e.yi)
 	if ay > 0xf2 and absi(e.xi) < 0x32:
 		# behind a net: skate out along the boards
-		if e.yi <= 0:
-			if e.vy < 0:
-				return 5 if e.xi < 0 else 3
-		elif e.vy > 0:
-			return 7 if e.xi < 0 else 1
+		if e.yi > 0:
+			if e.vy > 0:
+				return 7 if e.xi < 0 else 1
+		elif e.vy < 0:
+			return 5 if e.xi < 0 else 3
 		return 6 if e.xi < 0 else 2
+	# the nearest player (or the puck, unless a player is within 0x50) within 0x28 a step ahead:
+	# out of his way, along the boards near them, never across the play in the middle
 	var best := 100
 	var out := dir
 	for i in 15:
 		if i == 12 or i == 13:
 			continue
-		var o := sim.entities[i]
 		if i == 14 and best <= 0x50:
 			continue
-		if o.line_slot < 0:
+		var o := sim.entities[i]
+		var dx := Sim._s16(e.xi - o.xi)
+		var afx := absi(Sim._s16(dx + Entity.to_s8(e.vx >> 8) - Entity.to_s8(o.vx >> 8)))
+		sim.scratch_ac = (sim.scratch_ac & 0xffff0000) | afx
+		if afx > 0x28:
 			continue
-		var dx := e.xi - o.xi
-		var fx := dx + ((e.vx >> 8) - (o.vx >> 8))
-		if absi(fx) >= 0x29:
+		var dy := Sim._s16(e.yi - o.yi)
+		var afy := absi(Sim._s16(dy + Entity.to_s8(e.vy >> 8) - Entity.to_s8(o.vy >> 8)))
+		sim.scratch_b = afy
+		if afy > 0x28 or best <= afx + afy:
 			continue
-		var dy := e.yi - o.yi
-		var fy := dy + ((e.vy >> 8) - (o.vy >> 8))
-		if absi(fy) >= 0x29 or absi(fx) + absi(fy) >= best:
-			continue
-		best = absi(fx) + absi(fy)
-		out = Tables.direction8(dx, dy)
-		if e.xi < -0x82 and out > 4:
-			out = 0 if o.vy == 0 else 4
-		elif e.xi > 0x82 and out > 0 and out < 4:
-			out = 0 if o.vy == 0 else 4
+		best = afx + afy
+		var d := Tables.direction8(dx, dy)
+		out = d
+		if e.xi < -0x82:
+			if d > 4 and d < 8:
+				out = 4 if o.vy != 0 else 0
+		elif e.xi > 0x82:
+			if d > 0 and d < 4:
+				out = 4 if o.vy != 0 else 0
+		elif e.xi > -0x64 and e.xi < 0:
+			if d > 0 and d < 4:
+				out = 8 - d
+				if out == 6 and o.vy != 0:
+					out = 5 if dy < 0 else 4
+				else:
+					out = 7 if dy > 0 else 0
+		elif e.xi >= 0 and e.xi < 0x64:
+			if d > 4 and d < 8:
+				out = 8 - d
+				if out == 2 and o.vy != 0:
+					out = 4 if dy >= 0 else 3
+				else:
+					out = 1 if dy > 0 else 0
 	return out
 
 ## ref_skate_to_point (0x4e29c): skate to a point at walking pace: on it within 8 (the fractions
@@ -2482,7 +2501,10 @@ static func ref_pickup(sim: Sim, e: Entity) -> void:
 	Anim.set_animation(e, 0xc03)        # picks the puck up
 	e.set_state(Entity.State.REF_GOTO_FACEOFF)
 
-## ai_ref_goto_faceoff (0x4f5bf): carries the puck to the dot
+## ai_ref_goto_faceoff (0x4f5bf): the referee takes the puck (carrier 16, held up out of sight)
+## to the faceoff dot, stands beside it (0xf towards the middle) and turns to face it every 8
+## steps; once the announcer is quiet and no clip plays he drops it (ref_phase -1, REF_FACEOFF).
+## During a penalty shot: REF_PENALTY_SHOT.
 static func ref_goto_faceoff(sim: Sim, e: Entity) -> void:
 	if sim.penalty_shot_phase != 0:
 		e.set_state(Entity.State.REF_PENALTY_SHOT)
@@ -2493,8 +2515,9 @@ static func ref_goto_faceoff(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		e.want_dir = 8
+		e.dir_timer = 0
 		e.timer_a = 0
-		e.target_x = sim.faceoff_x + (-0xf if sim.faceoff_x <= 0 else 0xf)
+		e.target_x = Sim._s16(sim.faceoff_x + (-0xf if sim.faceoff_x <= 0 else 0xf))
 		e.target_y = sim.faceoff_y
 		e.flags2 |= Entity.F2_NO_COLLIDE
 		e.push_x = 0
@@ -2503,25 +2526,30 @@ static func ref_goto_faceoff(sim: Sim, e: Entity) -> void:
 		puck.vx = 0
 		puck.vy = 0
 		puck.vz = 0
-		puck.z = -100 * 0x10000
+		puck.z = (-100 * 0x10000) | (puck.z & 0xffff)
 		Anim.set_animation(e, Anim.REF_GLIDE)
-	puck.set_pos(e.xi, e.yi)
 	var dx := e.xi - e.target_x
 	var dy := e.yi - e.target_y
 	if dx * dx + dy * dy < 0x40 and absi(e.vx) < 0x10 and absi(e.vy) < 0x10:
-		e.set_pos(e.target_x, e.target_y)
-		e.timer_a -= 1
+		e.x = (e.target_x << 16) | (e.x & 0xffff)
+		e.y = (e.target_y << 16) | (e.y & 0xffff)
+		e.timer_a = Sim._s16(e.timer_a - 1)
 		if e.timer_a >= 0:
 			return
 		e.timer_a += 8
 		Anim.set_animation(e, Anim.REF_GLIDE)
 		var want := 2 if sim.faceoff_x <= 0 else 6
-		if want != e.facing:
-			var diff := (want - e.facing) & 7
-			e.facing = (e.facing + (1 if diff < 5 else -1)) & 7
+		sim.scratch_ac = want
+		var hw := _heading_word(e)
+		if want != hw:
+			var rel := (want - hw) & 7
+			sim.scratch_ac = rel
+			_set_heading_word(e, (hw + (1 if rel < 5 else -1)) & 7)
 			return
-		e.vx = 0
 		e.vy = 0
+		e.vx = 0
+		if sim.speech_busy or sim.clip != -1:
+			return
 		sim.ref_phase = -1
 		e.set_state(Entity.State.REF_FACEOFF)
 		return
@@ -2534,22 +2562,26 @@ static func ref_point_goal(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		e.want_dir = 8
+		e.dir_timer = 0
 		e.timer_a = 0
 		e.target_y = -0xe6 if sim.puck.yi <= 0 else 0xe6
 		e.target_x = -0x32 if e.xi <= 0 else 0x32
 		e.flags2 |= Entity.F2_NO_COLLIDE
 		e.push_x = 0
 		e.push_y = 0
-	if absi(e.yi - e.target_y) < 0xd and absi(e.yi) <= absi(e.target_y) and absi(e.xi - e.target_x) < 0xd:
-		e.timer_a -= 1
+	if absi(Sim._s16(e.yi - e.target_y)) <= 0xc and absi(e.yi) <= absi(e.target_y) and absi(Sim._s16(e.xi - e.target_x)) <= 0xc:
+		e.timer_a = Sim._s16(e.timer_a - 1)
 		if e.timer_a >= 0:
 			return
 		e.timer_a += 8
 		Anim.set_animation(e, Anim.REF_GLIDE)
-		var want := Tables.direction8(-e.xi, e.target_y - e.yi)
-		if want != e.facing:
-			var diff := (want - e.facing) & 7
-			e.facing = (e.facing + (1 if diff < 5 else -1)) & 7
+		var want := Tables.direction8(Sim._s16(-e.xi), Sim._s16(e.target_y - e.yi))
+		sim.scratch_ac = want
+		var hw := _heading_word(e)
+		if want != hw:
+			var rel := (want - hw) & 7
+			sim.scratch_ac = rel
+			_set_heading_word(e, (hw + (1 if rel < 5 else -1)) & 7)
 			return
 		e.vx = 0
 		e.vy = 0

@@ -229,7 +229,7 @@ func _init() -> void:
 		e.half_h = init[6]
 		e.state_stack[0] = init[7]
 		e.flags = init[8]
-		e.team = 0 if i < 6 else 1
+		e.team = 0 if (i < 6 or i >= 12) else 1   # +0x6c / +0x70: the nets, the puck, its shadow and the referee point at the home team first
 		if i < 12:
 			e.line_slot = -1
 			e.roster_idx = -1
@@ -1010,9 +1010,12 @@ func skating_turn(e: Entity, turn: int) -> void:
 		k = 6
 	if turn != 0:
 		var vdir := Tables.direction8(e.vx, e.vy)     # 8 when standing
-		if (vdir & 8) == 0 and ((vdir - e.facing + k) & 7) < 4:
-			stop_skating(e)
-			return
+		scratch_a = vdir
+		if (vdir & 8) == 0:
+			scratch_a = (vdir - (heading_word(e)) + k) & 7
+			if scratch_a < 4:
+				stop_skating(e)
+				return
 		if (e.flags4 & Entity.F4_MIRROR) == 0:
 			e.facing = e.facing + 1
 		else:
@@ -1041,6 +1044,10 @@ func skating_turn(e: Entity, turn: int) -> void:
 func ref_arm_up() -> bool:
 	return whistle_timer != 0 or (not play_stopped and (offside_warning or delayed_call))
 
+## the word +0x36: the high word of the heading
+static func heading_word(e: Entity) -> int:
+	return _s16(e.heading >> 16)
+
 func skating_accelerate(e: Entity, dir: int) -> void:
 	var k := e.speed_skill + 0x30
 	var v: Array = Tables.dir8_vectors[dir & 7]
@@ -1057,26 +1064,34 @@ func skating_accelerate(e: Entity, dir: int) -> void:
 	var nvx := e.vx + ((ax * factor) >> 5)
 	var nvy := e.vy + ((ay * factor) >> 5)
 	var sp2 := nvx * nvx + nvy * nvy
+	scratch_a = _s16(nvx)
+	scratch_b = _s16(nvy)
 	var level: int
 	if e.slot == Entity.Slot.REFEREE:
-		level = 15
+		# slower while the play is stopped away from the centre
+		level = 0xc if (play_stopped and absi(e.yi) >= 0x74) else 0xf
 	else:
 		level = (e.stamina * e.energy) >> 12
 	level = clampi(level, 0, 15)
 	var limit := Tables.max_speed_sq[level]
 	if e.flags2 & Entity.F2_HOOKED:
 		limit >>= 3
+	scratch_ac = limit & 0xffffffff
 	if sp2 <= limit:
 		e.vx = nvx
 		e.vy = nvy
 	# fatigue (end of skating_accelerate): now and then a skater loses 0x28 energy; a fresh one
 	# (>= 0xc00 left) gets his endurance rating back
-	if e.slot < 12 and opt_line_changes and not play_stopped and e.line_slot != 0 and random(0x80) == 0:
-		var en := e.energy - 0x28
-		if en < 0xc00:
-			e.energy = maxi(en, 0)
-		else:
-			e.energy = clampi(en + e.endurance, 0, 0x1000)
+	if e.slot < 12 and opt_line_changes and not play_stopped and e.line_slot != 0:
+		scratch_a = random(0x80)
+		if scratch_a == 0:
+			var en := _s16(e.energy - 0x28)
+			if en < 0xc00:
+				scratch_a = en
+				e.energy = maxi(en, 0)
+			else:
+				scratch_a = mini(en + e.endurance, 0x1000)
+				e.energy = maxi(scratch_a, 0)
 
 func stop_skating(e: Entity) -> void:
 	if absi(e.vx) > 0x1000 or absi(e.vy) > 0x1000:

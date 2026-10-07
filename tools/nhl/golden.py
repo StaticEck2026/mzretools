@@ -493,6 +493,12 @@ def skating_cases(emu, rnd, base):
             emu.write(GAME_FLAGS, bytes([game]))
             emu.write(OPTION_FLAGS, struct.pack('<I', options))
         emu.write(SEED, struct.pack('<I', seed))
+        # the scratch words as an earlier routine left them (skating_turn and skating_accelerate
+        # leave theirs)
+        scratch = [(seed >> 3) & 0xffff, (seed >> 11) & 0xffff, (seed >> 7) & 0xffff]
+        emu.write(SCRATCH[0], struct.pack('<H', scratch[0]))
+        emu.write(SCRATCH[1], struct.pack('<H', scratch[1]))
+        emu.write(SCRATCH[2], struct.pack('<I', scratch[2]))
         d = rnd.choice((0, 1, 2, 3, 4, 5, 6, 7, 8, 9))
         before = entity_fields(emu, slot)
         emu.call(APPLY_SKATING, eax=ENTITIES + slot * 0x80, edx=d)
@@ -502,7 +508,9 @@ def skating_cases(emu, rnd, base):
                     'game_flags': game, 'stop_flags': stop, 'whistle': whistle, 'options': options,
                     'seed': seed, 'before': before, 'after': entity_fields(emu, slot),
                     'energy_after': struct.unpack('<h', emu.read(team + 0x46 + f['roster'] * 2, 2))[0],
-                    'final_seed': struct.unpack('<I', emu.read(SEED, 4))[0]})
+                    'final_seed': struct.unpack('<I', emu.read(SEED, 4))[0], 'scratch': scratch,
+                    'scratch_after': [struct.unpack('<h', emu.read(SCRATCH[0], 2))[0], struct.unpack('<h', emu.read(SCRATCH[1], 2))[0],
+                                      struct.unpack('<I', emu.read(SCRATCH[2], 4))[0]]})
         emu.write(GAME_FLAGS, b'\0')
         emu.write(STOP_FLAGS, b'\0\0')
         emu.write(WHISTLE_TIMER, b'\0' * 4)
@@ -1302,7 +1310,9 @@ AI_GLOBALS = (('game_flags', GAME_FLAGS, 1), ('stop_flags', STOP_FLAGS, 1), ('mi
               ('breakaway_trigger_y', BREAKAWAY_LANE + 8, -4), ('breakaway_waypoint', BREAKAWAY_LANE + 12, -4),
               ('breakaway_lane_side', BREAKAWAY_LANE + 16, -4), ('breakaway_heading', BREAKAWAY_LANE + 20, -4),
               ('faceoff_x', 0xc90b2, -2), ('faceoff_y', 0xc90b4, -2),
-              ('faceoff_ready0', 0xe0390, -2), ('faceoff_ready1', 0xe0394, -2), ('penalty_shot_timer', PENALTY_SHOT_TIMER, -4))
+              ('faceoff_ready0', 0xe0390, -2), ('faceoff_ready1', 0xe0394, -2), ('penalty_shot_timer', PENALTY_SHOT_TIMER, -4),
+              ('injury_stoppage', 0xcbec6, -2), ('clip', 0xcbecc, -2), ('ref_phase', 0xc90d4, -2))
+SPEECH_BUSY = 0x59aad                          # stubbed: the announcer talking (a case input)
 AI_TEAM_FIELDS = TEAM_FIELDS + (('hits', 0x24, -2), ('breakaways', 0x1c, -2), ('passes', 0x26, -2),
                                 ('current_line', 0x2a, -2), ('nearest_d2', 0x3a, 4), ('nearest_dist', 0x3e, -4), ('nearest_slot', 0x42, -2),
                                 ('strategy', 0xd2, 1), ('strategy2', 0xd3, 1), ('flags2', 0xd4, 1), ('mode', 0xd5, 1),
@@ -1424,7 +1434,9 @@ def ai_world(emu, rnd, base, tables):
               'breakaway_trigger_y': rnd.choice((0x1e, 0x3e, 0x66, 0x91, -1, -1)), 'breakaway_heading': rnd.randrange(8)})
     spot = rnd.choice(((0, 0), (-0x50, 0x9a), (0x50, 0x9a), (-0x50, -0x9a), (0x50, -0x9a), (-0x50, 0x56), (0x50, -0x56)))
     g.update({'faceoff_x': spot[0], 'faceoff_y': spot[1],
-              'faceoff_ready0': rnd.randrange(7), 'faceoff_ready1': rnd.randrange(7), 'penalty_shot_timer': rnd.choice((0, 0, 5, 0x40))})
+              'faceoff_ready0': rnd.randrange(7), 'faceoff_ready1': rnd.randrange(7), 'penalty_shot_timer': rnd.choice((0, 0, 5, 0x40)),
+              'injury_stoppage': rnd.choice((0, 0, 0, 1)), 'clip': rnd.choice((-1, -1, -1, 2, 8)), 'ref_phase': rnd.choice((-1, -1, 0, 1)),
+              'speech_busy': rnd.choice((0, 0, 1))})
     for n, a, sz in AI_GLOBALS:
         emu.write(a, struct.pack('<' + _FMT[sz], g[n] if sz < 0 else g[n] & ((1 << (8 * sz)) - 1)))
     emu.write(OPTION_FLAGS, struct.pack('<I', g['option_flags']))
@@ -1451,6 +1463,8 @@ AI_GROUPS = {
     'faceoff': ((22, tuple(range(12))), (23, (4, 10)), (23, (4, 10)), (39, tuple(range(12))), (39, tuple(range(12))), (41, tuple(range(12)))),
     # the puck and its shadow
     'pucks': ((24, (14,)), (25, (15,)), (26, (14,))),
+    # the referee: at the faceoff, following the play, to the faceoff dot, pointing at the goal
+    'referee': ((30, (16,)), (31, (16,)), (34, (16,)), (34, (16,)), (35, (16,))),
 }
 
 
@@ -1490,6 +1504,21 @@ def ai_prepare(emu, rnd, state, actor, g):
             fx, fy = g['faceoff_x'], g['faceoff_y']
             if rnd.random() < 0.5:
                 put_fields(rec, {'x': (fx + rnd.randrange(-0x30, 0x31)) << 16, 'y': (fy + rnd.randrange(-0x30, 0x31)) << 16})
+    if state in (30, 31, 34, 35):
+        # the referee moving or near the faceoff dot, the faceoff set up or not
+        if rnd.random() < 0.5:
+            g['stop_flags'] |= 1
+        f = {'vx': rnd.choice((0, 0, rnd.randrange(-0x800, 0x801))), 'vy': rnd.choice((0, 0, rnd.randrange(-0x800, 0x801))),
+             'heading': rnd.randrange(8) << 16 | rnd.randrange(0x10000), 'timer_a': rnd.choice((-1, 0, 0, 3)),
+             'target_x': rnd.randrange(-0x90, 0x91), 'target_y': rnd.randrange(-0xf0, 0xf1), 'dir_timer': rnd.randrange(-1, 12)}
+        if state == 34 and rnd.random() < 0.6:
+            fx = g['faceoff_x'] + (-0xf if g['faceoff_x'] <= 0 else 0xf)
+            f.update({'x': (fx + rnd.randrange(-6, 7)) << 16 | rnd.randrange(0x10000),
+                      'y': (g['faceoff_y'] + rnd.randrange(-6, 7)) << 16 | rnd.randrange(0x10000),
+                      'target_x': fx, 'target_y': g['faceoff_y']})
+            if rnd.random() < 0.6:
+                f.update({'vx': 0, 'vy': 0})
+        put_fields(rec, f)
     if state in (24, 25, 26):
         # the puck (or its shadow over it) loose, in the air or carried
         f = {'z': rnd.choice((0, 0, 0, 4, 0x10)) << 16, 'vz': rnd.choice((0, 0, 0x300, -0x200))}
@@ -1572,6 +1601,8 @@ def ai_cases(exe):
     emu.stub(INJURE_PLAYER, lambda eax: calls.append(['injure_player', ((eax & 0xffffffff) - ENTITIES) // 0x80]))
     emu.stub(BENCH_CHEER, lambda eax: calls.append(['bench_cheer', eax & 0xffffffff]))
     emu.stub(DRAW_LINE_INDICATOR, lambda eax: None)    # the HUD (the port's draws team.current_line)
+    speech = {'busy': 0}
+    emu.stub(SPEECH_BUSY, lambda eax: speech['busy'])
     emu.call(ENTITIES_INIT)
     tables = []
     for t in TEAM_RECORDS:
@@ -1592,6 +1623,7 @@ def ai_cases(exe):
             g, teams, carrier = ai_world(emu, rnd, base, tables)
             actor = rnd.choice(actors)
             carrier = ai_prepare(emu, rnd, state, actor, g)
+            speech['busy'] = g['speech_busy']
             rec = bytearray(emu.read(ENTITIES + actor * 0x80, 0x80))
             sp = struct.unpack_from('<h', rec, 0x1c)[0] & 7
             rec[0x1e + sp] = state

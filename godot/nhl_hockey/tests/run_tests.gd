@@ -889,6 +889,10 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	sim.faceoff_y = int(g.get("faceoff_y", 0))
 	sim.faceoff_ready = [int(g.get("faceoff_ready0", 0)), int(g.get("faceoff_ready1", 0))]
 	sim.penalty_shot_away = int(g.get("penalty_shot_timer", 0))
+	sim.injury_stoppage = int(g.get("injury_stoppage", 0)) != 0
+	sim.clip = int(g.get("clip", -1))
+	sim.ref_phase = int(g.get("ref_phase", -1))
+	sim.speech_busy = int(g.get("speech_busy", 0)) != 0
 	var teams: Array = c["teams"]
 	for t in 2:
 		var team: Team = sim.teams[t]
@@ -954,7 +958,8 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 		"breakaway_waypoint": sim.breakaway_waypoint, "breakaway_lane_side": sim.breakaway_lane_side,
 		"breakaway_heading": sim.breakaway_heading, "faceoff_x": sim.faceoff_x, "faceoff_y": sim.faceoff_y,
 		"faceoff_ready0": sim.faceoff_ready[0], "faceoff_ready1": sim.faceoff_ready[1],
-		"penalty_shot_timer": sim.penalty_shot_away}
+		"penalty_shot_timer": sim.penalty_shot_away, "injury_stoppage": 1 if sim.injury_stoppage else 0, "clip": sim.clip,
+		"ref_phase": Sim._s16(sim.ref_phase & 0xffff)}
 
 static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 	var diff := []
@@ -1088,10 +1093,19 @@ func physics_golden() -> void:
 		sim.whistle_timer = int(c["whistle"])
 		sim.opt_line_changes = (int(c["options"]) & 4) != 0
 		sim.seed = int(c["seed"])
+		var sc_in: Array = c.get("scratch", [0, 0, 0])
+		sim.scratch_a = Sim._s16(int(sc_in[0]))
+		sim.scratch_b = Sim._s16(int(sc_in[1]))
+		sim.scratch_ac = int(sc_in[2])
 		sim.apply_skating(e, int(c["dir"]))
 		var diff := _entity_diff(e, c["after"], c["before"])
 		if team != null and e.roster_idx >= 0 and e.energy != int(c["energy_after"]):
 			diff.append("energy %d (original %d)" % [e.energy, int(c["energy_after"])])
+		if c.has("scratch_after"):
+			var sca: Array = c["scratch_after"]
+			var got_sc := [Sim._s16(sim.scratch_a), Sim._s16(sim.scratch_b), sim.scratch_ac & 0xffffffff]
+			if str(got_sc) != str(_ints(sca)):
+				diff.append("scratch %s (original %s)" % [str(got_sc), str(sca)])
 		if sim.seed != int(c["final_seed"]):
 			diff.append("seed")
 		if diff.is_empty():
