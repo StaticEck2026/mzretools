@@ -26,6 +26,8 @@ var opt_offsides := true            # bit 1
 var opt_line_changes := true        # bit 2: line changes and fatigue (Lines.gd)
 var opt_two_line_pass := true       # bit 3
 var opt_injuries := true            # bit 4 (option_flags starts as 0xff: every option on)
+var opt_sound := true               # bit 7: the sound effects (a hotkey toggles them); no crowd clip without
+var demo := false                   # dword_cc0ec: a demo game (no crowd clips at the stoppages)
 
 var entities: Array[Entity] = []
 var teams: Array[Team] = []

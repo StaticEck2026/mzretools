@@ -2345,53 +2345,55 @@ static func ref_normal(sim: Sim, e: Entity) -> void:
 		e.target_y = -0xe8 if puck.yi <= 0 else 0xe8
 	skate_towards(sim, e, e.target_x, e.target_y, 2)
 
-## ai_ref_call_penalty (0x4eb04): skates to the side, signals the call, then collects the puck
+## ai_ref_call_penalty (0x4eb04): for a call with a signal the referee skates to the side (0xa0, 0),
+## turns step by step to the signal's direction and signals it (busy); a goal (7) is announced
+## (announce_goal: the team the puck is in the net of, the last three carriers); then REF_PICKUP.
+## (After a turn the original compares the size of the turn with the new heading, so now and then
+## the signal comes a step early.)
 static func ref_call_penalty(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_BUSY:
 		return
+	var inf := sim.ref_infraction
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
-		var inf := clampi(sim.ref_infraction, 0, 31)
 		if Tables.ref_signal_dir[inf] < 0:
 			if inf == Rules.INF_GOAL:
-				# the goal is announced on the panel (announce_goal)
-				var t := 0
-				for k in 2:
-					if sim.teams[k].attacks_up == (sim.puck.yi > 0):
-						t = k
+				var t := 1 if (sim.puck.yi < 0) != sim.ends_switched else 0
 				var team := sim.teams[t]
 				var a1: int = team.carrier_history[1] if team.carrier_history[1] >= 0 else -1
 				var a2: int = team.carrier_history[2] if team.carrier_history[2] >= 0 else -1
-				if a1 < 0:
-					a2 = -1
 				InfoPanel.announce_goal(sim, t, team.carrier_history[0], a1, a2)
 			e.set_state(Entity.State.REF_PICKUP)
 			return
 		e.want_dir = 8
+		e.dir_timer = 0
 		e.target_y = 0
 		e.target_x = 0xa0
 		e.timer_a = 0
 		e.flags2 |= Entity.F2_NO_COLLIDE
-	if absi(e.yi - e.target_y) > 0xc or e.xi - e.target_x < -0x14:
+		e.push_x = 0
+		e.push_y = 0
+	if absi(Sim._s16(e.yi - e.target_y)) > 0xc or Sim._s16(e.xi - e.target_x) < -0x14:
 		ref_skate_to_point(sim, e, e.target_x, e.target_y)
 		return
-	e.timer_a -= 1
+	e.timer_a = Sim._s16(e.timer_a - 1)
 	if e.timer_a >= 0:
 		return
 	e.timer_a += 8
 	Anim.set_animation(e, Anim.REF_GLIDE)
-	var want: int = Tables.ref_signal_dir[clampi(sim.ref_infraction, 0, 31)]
-	if want != e.facing:
-		var diff := (want - e.facing) & 7
-		e.facing = (e.facing + (1 if diff < 5 else -1)) & 7
-	e.vx = 0
+	var cmp: int = Tables.ref_signal_dir[inf]
+	var hw := _heading_word(e)
+	if cmp != hw:
+		cmp = (cmp - hw) & 7
+		_set_heading_word(e, (hw + (1 if cmp < 5 else -1)) & 7)
+	sim.scratch_ac = (sim.scratch_ac & 0xffff0000) | (cmp & 0xffff)
 	e.vy = 0
-	if want != e.facing:
+	e.vx = 0
+	if cmp != _heading_word(e):
 		return
 	e.flags |= Entity.F_BUSY
-	var anim: int = Tables.ref_signal_anim[clampi(sim.ref_infraction, 0, 31)]
-	if anim > 0:
-		Anim.set_animation(e, anim)
+	# (the original reads a dword and keeps its high word: the entry after the call's)
+	Anim.set_animation(e, Tables.ref_signal_anim[inf + 1])
 	e.set_state(Entity.State.REF_PICKUP)
 
 ## ai_ref_pickup_puck (0x4ed7c): everybody to the dot, the referee fetches the puck
@@ -2591,13 +2593,20 @@ static func ref_point_goal(sim: Sim, e: Entity) -> void:
 		return
 	ref_skate_to_point(sim, e, e.target_x, e.target_y)
 
-## ai_ref_get_new_puck (0x4e8ef): the puck left the rink; the referee gets a new one at the boards
+## ai_ref_get_new_puck (0x4e8ef): after a routine stoppage the referee sends everybody to their
+## places (all_goto_positions), skates to the side (0xa0, 0) for a new puck, faces it and holds
+## it up (busy), then REF_GOTO_FACEOFF; the stoppage may bring an announcement or a crowd clip
+## (ref_check_announcements). After an injury, at 0:00 or once overtime is decided the faceoff
+## follows at once (the open panel starts to close).
 static func ref_get_new_puck(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_BUSY:
 		return
 	if e.flags & Entity.F_STATE_ENTERED:
-		if sim.injury_stoppage or (sim.clock_seconds == 0 and sim.clock_sub == 0) or sim.game_over:
+		if sim.injury_stoppage or (sim.clock_seconds == 0 and sim.clock_sub == 0) \
+				or (sim.period == 3 and sim.teams[0].goals != sim.teams[1].goals):
 			sim.ref_phase = -1
+			if sim.panel == InfoPanel.HELD:
+				sim.panel = InfoPanel.CLOSING
 			sim.puck.set_state(Entity.State.PUCK_FACEOFF)
 			e.set_state(Entity.State.REF_FACEOFF)
 			return
@@ -2605,27 +2614,36 @@ static func ref_get_new_puck(sim: Sim, e: Entity) -> void:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		Rules.all_goto_positions(sim)
 		e.want_dir = 8
+		e.dir_timer = 0
 		e.target_y = 0
 		e.target_x = 0xa0
 		e.timer_a = 0
 		e.flags2 |= Entity.F2_NO_COLLIDE
+		e.push_x = 0
+		e.push_y = 0
 		Anim.set_animation(e, Anim.REF_GLIDE)
-	if absi(e.yi - e.target_y) > 6 or e.xi - e.target_x < -10:
+		if InfoPanel.ref_announcements(sim):
+			return
+		if sim.panel == InfoPanel.HELD:
+			sim.panel = InfoPanel.CLOSING
+	if absi(Sim._s16(e.yi - e.target_y)) > 6 or Sim._s16(e.xi - e.target_x) < -0xa:
 		ref_skate_to_point(sim, e, e.target_x, e.target_y)
 		return
-	e.timer_a -= 1
+	e.timer_a = Sim._s16(e.timer_a - 1)
 	if e.timer_a >= 0:
 		return
 	e.timer_a += 8
 	Anim.set_animation(e, Anim.REF_GLIDE)
-	if e.facing != 2:
-		var diff := (2 - e.facing) & 7
-		e.facing = (e.facing + (1 if diff < 5 else -1)) & 7
-	e.vx = 0
+	var cmp := 2
+	var hw := _heading_word(e)
+	if cmp != hw:
+		cmp = (cmp - hw) & 7
+		_set_heading_word(e, (hw + (1 if cmp < 5 else -1)) & 7)
+	sim.scratch_ac = cmp
 	e.vy = 0
-	if e.facing != 2:
+	e.vx = 0
+	if cmp != _heading_word(e):
 		return
 	e.flags |= Entity.F_BUSY
 	Anim.set_animation(e, 0xc1b)
-	sim.puck.flags &= ~Entity.F_ARRIVED
 	e.set_state(Entity.State.REF_GOTO_FACEOFF)

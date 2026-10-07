@@ -712,7 +712,7 @@ func ai_golden() -> void:
 			continue
 		var sim := Sim.new()
 		sim.stubs = {"play_sfx": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
-			"injure_player": true, "bench_cheer": true}
+			"injure_player": true, "bench_cheer": true, "announce_goal": true, "play_speech": true, "load_clip": true}
 		var ok := 0
 		var bad := 0
 		var shown := 0
@@ -893,6 +893,16 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	sim.clip = int(g.get("clip", -1))
 	sim.ref_phase = int(g.get("ref_phase", -1))
 	sim.speech_busy = int(g.get("speech_busy", 0)) != 0
+	sim.ref_infraction = int(g.get("ref_infraction", 0))
+	sim.ref_infraction_slot = int(g.get("ref_infraction_slot", -1))
+	sim.panel = int(g.get("panel", -1))
+	sim.demo = int(g.get("demo", 0)) != 0
+	sim.sound_device = int(g.get("sound_card", 8))
+	sim.sound_enabled = int(g.get("sound_enabled", 1)) != 0
+	sim.announce_time = int(g.get("announce_time", -1))
+	if g.has("period_length"):
+		sim.period_length = int(g["period_length"])
+	sim.opt_sound = (int(g["option_flags"]) & 0x80) != 0
 	var teams: Array = c["teams"]
 	for t in 2:
 		var team: Team = sim.teams[t]
@@ -901,6 +911,7 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 		_team_set(team, f)
 		team.attacks_up = (t == 0) != sim.ends_switched
 		team.hits = int(f["hits"])
+		team.goals = int(f.get("goals", 0))
 		team.goalie_slot = int(f.get("goalie_slot", -1))
 		team.one_timer_tries = int(f.get("one_timer_tries", 0))
 		team.one_timers = int(f.get("one_timers", 0))
@@ -959,7 +970,10 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 		"breakaway_heading": sim.breakaway_heading, "faceoff_x": sim.faceoff_x, "faceoff_y": sim.faceoff_y,
 		"faceoff_ready0": sim.faceoff_ready[0], "faceoff_ready1": sim.faceoff_ready[1],
 		"penalty_shot_timer": sim.penalty_shot_away, "injury_stoppage": 1 if sim.injury_stoppage else 0, "clip": sim.clip,
-		"ref_phase": Sim._s16(sim.ref_phase & 0xffff)}
+		"ref_phase": Sim._s16(sim.ref_phase & 0xffff), "ref_infraction": sim.ref_infraction,
+		"ref_infraction_slot": sim.ref_infraction_slot, "panel": sim.panel, "demo": 1 if sim.demo else 0,
+		"sound_card": sim.sound_device, "sound_enabled": 1 if sim.sound_enabled else 0, "announce_time": sim.announce_time,
+		"period_length": sim.period_length}
 
 static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 	var diff := []
@@ -988,7 +1002,8 @@ static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 		var tg := {"hits": team.hits, "breakaways": team.breakaways, "passes": team.passes, "current_line": team.current_line,
 			"nearest_dist": team.nearest_dist, "nearest_d2": team.nearest_d2, "nearest_slot": team.nearest_slot, "strategy": team.strategy,
 			"strategy2": team.strategy2, "flags2": team.flags2, "mode": team.mode, "energy_threshold": team.energy_threshold,
-			"one_timer_tries": team.one_timer_tries, "one_timers": team.one_timers, "goalie_slot": team.goalie_slot}
+			"one_timer_tries": team.one_timer_tries, "one_timers": team.one_timers, "goalie_slot": team.goalie_slot,
+			"goals": team.goals}
 		for k in tg:
 			if int(tg[k]) != int(want[k]):
 				diff.append("team %d %s %d (original %d)" % [t, k, int(tg[k]), int(want[k])])

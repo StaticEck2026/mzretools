@@ -47,7 +47,8 @@ from leemu import LEEmu, STACK_TOP            # noqa: E402
 from unicorn import UC_HOOK_CODE, UC_HOOK_INSN    # noqa: E402
 from unicorn.x86_const import (UC_X86_INS_IN, UC_X86_INS_OUT, UC_X86_REG_GDTR, UC_X86_REG_DS,  # noqa: E402
                                UC_X86_REG_ES, UC_X86_REG_SS, UC_X86_REG_FS, UC_X86_REG_GS,
-                               UC_X86_REG_EAX, UC_X86_REG_EDX, UC_X86_REG_ESP, UC_X86_REG_EIP)
+                               UC_X86_REG_EAX, UC_X86_REG_EDX, UC_X86_REG_ESP, UC_X86_REG_EIP, UC_X86_REG_EBX,
+                               UC_X86_REG_ECX)
 
 RANDOMRANGE = 0x8c230
 RAND = 0x8eb27
@@ -1311,9 +1312,15 @@ AI_GLOBALS = (('game_flags', GAME_FLAGS, 1), ('stop_flags', STOP_FLAGS, 1), ('mi
               ('breakaway_lane_side', BREAKAWAY_LANE + 16, -4), ('breakaway_heading', BREAKAWAY_LANE + 20, -4),
               ('faceoff_x', 0xc90b2, -2), ('faceoff_y', 0xc90b4, -2),
               ('faceoff_ready0', 0xe0390, -2), ('faceoff_ready1', 0xe0394, -2), ('penalty_shot_timer', PENALTY_SHOT_TIMER, -4),
-              ('injury_stoppage', 0xcbec6, -2), ('clip', 0xcbecc, -2), ('ref_phase', 0xc90d4, -2))
+              ('injury_stoppage', 0xcbec6, -2), ('clip', 0xcbecc, -2), ('ref_phase', 0xc90d4, -2),
+              ('ref_infraction', 0xc90d6, -2), ('ref_infraction_slot', 0xc90d8, -2), ('panel', 0xcbec0, -2),
+              ('demo', 0xcc0ec, -4), ('sound_card', 0xc541f, 1), ('sound_enabled', 0xd2430, 1), ('announce_time', 0xe9aac, -2),
+              ('period_length', 0xe9ab8, -2))
+PLAY_SPEECH = 0x59a11                          # stubbed: the announcer (a sample)
+LOAD_CUTSCENE_CLIP = 0x66497                   # stubbed: the clip on the scoreboard (loaded: dword_cbecc = the clip)
+ANNOUNCE_GOAL = 0x62343                        # stubbed (the panel): (team, scorer, assist, assist)
 SPEECH_BUSY = 0x59aad                          # stubbed: the announcer talking (a case input)
-AI_TEAM_FIELDS = TEAM_FIELDS + (('hits', 0x24, -2), ('breakaways', 0x1c, -2), ('passes', 0x26, -2),
+AI_TEAM_FIELDS = TEAM_FIELDS + (('goals', 0x10, -2), ('hits', 0x24, -2), ('breakaways', 0x1c, -2), ('passes', 0x26, -2),
                                 ('current_line', 0x2a, -2), ('nearest_d2', 0x3a, 4), ('nearest_dist', 0x3e, -4), ('nearest_slot', 0x42, -2),
                                 ('strategy', 0xd2, 1), ('strategy2', 0xd3, 1), ('flags2', 0xd4, 1), ('mode', 0xd5, 1),
                                 ('energy_threshold', 0xd6, -2), ('one_timer_tries', 0x16, -2), ('one_timers', 0x18, -2),
@@ -1336,7 +1343,7 @@ def ai_world(emu, rnd, base, tables):
                   'skaters': rnd.choice((6, 6, 6, 5)), 'goalie_request': rnd.choice((0, 0, 0, 1)), 'flags': rnd.choice((0, 0, 0x10, 8)),
                   'nearest_dist': rnd.choice((0x10, 0x30, 0x80, 0xffff)), 'nearest_slot': rnd.choice((-1, ti * 6 + rnd.randrange(1, 6))),
                   'strategy': rnd.randrange(4), 'strategy2': rnd.randrange(4), 'flags2': rnd.choice((0, 1)),
-                  'mode': rnd.randrange(3), 'energy_threshold': 0xccc, 'current_line': rnd.randrange(4)})
+                  'mode': rnd.randrange(3), 'energy_threshold': 0xccc, 'current_line': rnd.randrange(4), 'goals': rnd.randrange(3)})
         f['energy'] = rnd.choice((0x1000, 0xc00, 0x800))
         f['entity_of'] = [-2] * 28
         for n, o, sz in AI_TEAM_FIELDS:
@@ -1412,7 +1419,7 @@ def ai_world(emu, rnd, base, tables):
     emu.write(ENTITIES + 16 * 0x80, ref)
     emu.call(SORT_DRAW_ORDER2)
     g = {'game_flags': game, 'stop_flags': rnd.choice((0, 0, 0x10, 0x20, 0x80)), 'misc_flags': rnd.choice((0, 0x10)),
-         'option_flags': rnd.choice((0x1f, 0x1f, 0x1b, 0x0e)), 'settings2': rnd.choice((0, 2)),
+         'option_flags': rnd.choice((0x1f, 0x9f, 0x1b, 0x8e)), 'settings2': rnd.choice((0, 2)),
          'action_flags': rnd.choice((0, 0, 4, 8)), 'user1_slot': rnd.choice((-1, -1, 2, 4)), 'user2_slot': rnd.choice((-1, -1, 9)),
          'user1_team': rnd.choice((0, 1)), 'user2_team': rnd.choice((0, 2)),
          'last_touch_slot': rnd.choice((-1, 2, 9)), 'last_touch_y': rnd.randrange(-0xe0, 0xe1), 'last_touch_x': rnd.randrange(-0x90, 0x91),
@@ -1436,7 +1443,10 @@ def ai_world(emu, rnd, base, tables):
     g.update({'faceoff_x': spot[0], 'faceoff_y': spot[1],
               'faceoff_ready0': rnd.randrange(7), 'faceoff_ready1': rnd.randrange(7), 'penalty_shot_timer': rnd.choice((0, 0, 5, 0x40)),
               'injury_stoppage': rnd.choice((0, 0, 0, 1)), 'clip': rnd.choice((-1, -1, -1, 2, 8)), 'ref_phase': rnd.choice((-1, -1, 0, 1)),
-              'speech_busy': rnd.choice((0, 0, 1))})
+              'speech_busy': rnd.choice((0, 0, 1)), 'ref_infraction': rnd.choice((7, 7, 1, 2, 3, 5, 6, 8, 9, 0x10, 0x1b)),
+              'ref_infraction_slot': rnd.randrange(-1, 12), 'panel': rnd.choice((-1, -1, -1, 0x100, 0x20)),
+              'demo': rnd.choice((0, 0, 0, 1)), 'sound_card': rnd.choice((0x10, 0x10, 2, 0)), 'sound_enabled': rnd.choice((0, 1, 1)),
+              'announce_time': rnd.choice((-1, 0x1e, 0x100)), 'period_length': rnd.choice((300, 600, 1200))})
     for n, a, sz in AI_GLOBALS:
         emu.write(a, struct.pack('<' + _FMT[sz], g[n] if sz < 0 else g[n] & ((1 << (8 * sz)) - 1)))
     emu.write(OPTION_FLAGS, struct.pack('<I', g['option_flags']))
@@ -1465,6 +1475,8 @@ AI_GROUPS = {
     'pucks': ((24, (14,)), (25, (15,)), (26, (14,))),
     # the referee: at the faceoff, following the play, to the faceoff dot, pointing at the goal
     'referee': ((30, (16,)), (31, (16,)), (34, (16,)), (34, (16,)), (35, (16,))),
+    # the referee's calls: signalling, the new puck, picking up the puck
+    'refcalls': ((32, (16,)), (32, (16,)), (36, (16,)), (36, (16,))),
 }
 
 
@@ -1504,6 +1516,23 @@ def ai_prepare(emu, rnd, state, actor, g):
             fx, fy = g['faceoff_x'], g['faceoff_y']
             if rnd.random() < 0.5:
                 put_fields(rec, {'x': (fx + rnd.randrange(-0x30, 0x31)) << 16, 'y': (fy + rnd.randrange(-0x30, 0x31)) << 16})
+    if state == 36:
+        if rnd.random() < 0.6:
+            put_fields(rec, {'x': rnd.randrange(0x90, 0xb0) << 16 | rnd.randrange(0x10000),
+                             'y': rnd.randrange(-0xa, 0xb) << 16 | rnd.randrange(0x10000), 'target_x': 0xa0, 'target_y': 0,
+                             'timer_a': rnd.choice((-1, 0, 0, 3)), 'heading': rnd.randrange(8) << 16 | rnd.randrange(0x10000)})
+        g['ref_infraction'] = rnd.choice((0x1d, 0x1e, 3, 4, 8, 6, 6, 1))
+        if rnd.random() < 0.5:
+            rec[0x44] |= 2                           # the entry: the announcements
+            g['panel'] = rnd.choice((-1, -1, -1, 0x100))
+    if state == 32 and rnd.random() < 0.3:
+        rec[0x44] |= 2                               # the entry: a goal announced
+        g['ref_infraction'] = 7
+    if state == 32 and rnd.random() < 0.6:
+        # near the side where the call is signalled
+        put_fields(rec, {'x': rnd.randrange(0x8a, 0xb0) << 16 | rnd.randrange(0x10000),
+                         'y': rnd.randrange(-0x10, 0x11) << 16 | rnd.randrange(0x10000), 'target_x': 0xa0, 'target_y': 0,
+                         'timer_a': rnd.choice((-1, 0, 0, 3)), 'heading': rnd.randrange(8) << 16 | rnd.randrange(0x10000)})
     if state in (30, 31, 34, 35):
         # the referee moving or near the faceoff dot, the faceoff set up or not
         if rnd.random() < 0.5:
@@ -1574,9 +1603,7 @@ def ai_prepare(emu, rnd, state, actor, g):
     emu.write(PUCK, puck)
     emu.write(ENTITIES + actor * 0x80, rec)
     for n, a, sz in AI_GLOBALS:
-        if n in ('action_flags', 'pass_target', 'one_timer', 'breakaway', 'pred0_x', 'pred0_steps', 'pred1_x', 'pred1_steps',
-                 'stop_flags'):
-            emu.write(a, struct.pack('<' + _FMT[sz], g[n] if sz < 0 else g[n] & ((1 << (8 * sz)) - 1)))
+        emu.write(a, struct.pack('<' + _FMT[sz], g[n] if sz < 0 else g[n] & ((1 << (8 * sz)) - 1)))
     return carrier
 
 
@@ -1603,6 +1630,18 @@ def ai_cases(exe):
     emu.stub(DRAW_LINE_INDICATOR, lambda eax: None)    # the HUD (the port's draws team.current_line)
     speech = {'busy': 0}
     emu.stub(SPEECH_BUSY, lambda eax: speech['busy'])
+
+    def s32(v):
+        return v - (1 << 32) if v & 0x80000000 else v
+    emu.stub(PLAY_SPEECH, lambda eax: calls.append(['play_speech', s32(eax & 0xffffffff)]))
+
+    def on_clip(eax):
+        calls.append(['load_clip', s32(eax & 0xffffffff)])
+        emu.write(0xcbecc, struct.pack('<h', eax & 0xffff))
+    emu.stub(LOAD_CUTSCENE_CLIP, on_clip)
+    emu.stub(ANNOUNCE_GOAL, lambda eax: calls.append(['announce_goal', s32(eax & 0xffffffff),
+                                                     s32(emu.uc.reg_read(UC_X86_REG_EDX)), s32(emu.uc.reg_read(UC_X86_REG_EBX)),
+                                                     s32(emu.uc.reg_read(UC_X86_REG_ECX))]))
     emu.call(ENTITIES_INIT)
     tables = []
     for t in TEAM_RECORDS:

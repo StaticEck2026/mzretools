@@ -38,6 +38,9 @@ static func set_text(sim: Sim, lines: Array) -> void:
 
 ## load_cutscene_clip (0x66497): the clip's frames are loaded and its script starts
 static func load_clip(sim: Sim, id: int) -> void:
+	if sim.stubbed("load_clip", [id]):
+		sim.clip = id
+		return
 	var script: Array = Tables.clip_scripts[id]
 	sim.clip = id
 	sim.clip_pos = 1
@@ -111,6 +114,8 @@ static func _log(sim: Sim, entry: Array) -> void:
 ## announce_goal (0x62343) and show_penalty type 1: "12:34 Boston", the scorer (PP / SH), the
 ## assists; a home goal plays the GOAL or SIREN clip
 static func announce_goal(sim: Sim, team: int, scorer: int, assist1: int, assist2: int) -> void:
+	if sim.stubbed("announce_goal", [team, scorer, assist1, assist2]):
+		return
 	var t := elapsed(sim)
 	_log(sim, ["goal", team, scorer, assist1, assist2, sim.period, t.x, t.y])
 	if not sim.no_stats:
@@ -207,6 +212,8 @@ static func announce_injury(sim: Sim, team: int, roster: int, for_game: bool) ->
 ## random ones, 9 the stomp to the clapping, 10 the anthem, 11 ROCKDITI), queued for the audio
 ## layer (MusicCues picks the song)
 static func music(sim: Sim, id: int) -> void:
+	if sim.stubbed("play_speech", [id]):
+		return
 	sim.music_queue.append(id)
 
 ## stop_crowd_loop (0x59981): the running song stops (the puck drop, a penalty shot)
@@ -228,7 +235,7 @@ static func ref_announcements(sim: Sim) -> bool:
 	if inf != Rules.INF_TWO_LINE and inf != Rules.INF_NET_OFF and inf != Rules.INF_FROZEN and inf != Rules.INF_GOALIE_HOLD \
 			and inf != Rules.INF_OFFSIDE and inf != Rules.INF_ICING:
 		return false
-	if sim.clock_seconds < sim.period_length / 2 and sim.clock_seconds > 0x3b and sim.half_announce:
+	if (sim.period_length >> 1) > sim.clock_seconds and sim.clock_seconds >= 0x3c and sim.half_announce:
 		sim.half_announce = false
 		music(sim, 2)
 		return false
@@ -238,20 +245,24 @@ static func ref_announcements(sim: Sim) -> bool:
 		return false
 	var d := sim.teams[1].skaters_on_ice - sim.teams[0].skaters_on_ice
 	if speech_on(sim) and d != 0 and sim.random(4) == 0:
-		music(sim, 1 if d < 1 else 4)
+		music(sim, 4 if d > 0 else 1)
 		return false
 	var r := sim.random(8)
-	if r == 0:
-		if (sim.sound_device & 0x2a) != 0 and sim.crowd_noise < 0x2bd:
+	if not sim.demo and r == 0:
+		if sim.opt_sound and (sim.sound_device & 0x2a) != 0 and sim.crowd_noise <= 0x2bc:
 			load_clip(sim, CLIP_FAN_ANTHEM)
-			open(sim)
-			return true
-	elif r == 1:
+			if sim.clip != -1:
+				open(sim)
+				return true
+		return false
+	if not sim.demo and r == 1:
 		load_clip(sim, CLIP_CLAP)
+		if sim.clip == -1:
+			return false
 		music(sim, 9)
 		open(sim)
 		return true
-	elif r < 5:
+	if r < 5:
 		music(sim, r + 4)
 	elif r == 5:
 		music(sim, 0xb)
