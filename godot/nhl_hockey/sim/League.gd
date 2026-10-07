@@ -843,9 +843,10 @@ func make_round1(order: Array, po: PackedByteArray, n: int) -> bool:
 
 ## playoff_round1_done .. playoff_final_done: the games of a round nobody plays are simulated, the
 ## games a decided series did not need are taken out
+## (the length of the round's series is that of the first one, taken before any is trimmed)
 func round_done(po: PackedByteArray, first_series: int, count: int, career: PackedByteArray) -> void:
+	var n := series_count(po, first_series)
 	for s in range(first_series, first_series + count):
-		var n := series_count(po, s)
 		var wins := {}
 		for g in n:
 			var base := (s * 7 + g) * 6

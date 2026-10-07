@@ -2736,7 +2736,59 @@ func league_golden(gf: Node) -> void:
 		elif p_shown < 10:
 			p_shown += 1
 			fail("league play-offs humans %s n %d: %s" % [str(c["humans"]), int(c["n"]), bad])
-	print("golden league: league_sim_game %d / %d, league_scores %d / %d, play-off seeding %d / %d" % [ok, cases.size(), s_ok, sc.size(), p_ok, pc.size()])
+	# the first round: seeded, some games played, the rest simulated (playoff_round1_done)
+	var rc: Array = data.get("rounds", [])
+	var r_ok := 0
+	var r_shown := 0
+	for c: Dictionary in rc:
+		var lg := League.new()
+		for n in base:
+			lg.files[n] = (base[n] as PackedByteArray).duplicate()
+		var teams: PackedByteArray = lg.files["TEAMS"]
+		var stand: Array = c["standings"]
+		for t in 26:
+			var v: Array = _ints(stand[t])
+			teams[t * League.TEAM + 0x29] = v[0]
+			teams[t * League.TEAM + 0x2b] = v[1]
+			teams.encode_u16(t * League.TEAM + 0x2c, v[2])
+			teams.encode_u16(t * League.TEAM + 0x2e, v[3])
+		var before := teams.duplicate()
+		var sched := PackedByteArray()
+		sched.resize(2 + League.ALL_GAMES * 6)
+		sched.fill(0xff)
+		lg.files["SCHEDULE"] = sched
+		lg.pinfo.resize(League.PINFO_SIZE)
+		lg.option_flags = int(c["option_flags"])
+		var n := int(c["n"])
+		var po := PackedByteArray()
+		po.resize(15 * 42)
+		po.fill(0xff)
+		lg.make_round1(lg.rank_teams(), po, n)
+		for p: Array in _ints(c["played"]):
+			po[p[0] * 42 + p[1] * 6 + 4] = p[2]
+			po[p[0] * 42 + p[1] * 6 + 5] = p[3]
+		League.srand(int(c["seed"]))
+		for t in 2:
+			League.fwd_order[t] = _ints(c["fwd"][t])
+			League.def_order[t] = _ints(c["def"][t])
+		lg.round_done(po, 0, 8, lg.files["CAREER"])
+		var want: Dictionary = c["after"]
+		var bad := []
+		if po.hex_encode() != str(want["po"]):
+			bad.append("play-off games %s (original %s)" % [po.hex_encode().left(120), str(want["po"]).left(120)])
+		for nm in ["SEASON", "CAREER", "KEY", "ATT"]:
+			if str(_byte_diff(base[nm], lg.files[nm])) != str(_ints(want[nm])):
+				bad.append(nm)
+		if str(_byte_diff(before, lg.files["TEAMS"])) != str(_ints(want["TEAMS"])):
+			bad.append("TEAMS")
+		if League._seed != int(want["rand"]):
+			bad.append("rand state")
+		if bad.is_empty():
+			r_ok += 1
+		elif r_shown < 10:
+			r_shown += 1
+			fail("league round 1 n %d: %s" % [n, ", ".join(bad)])
+	print("golden league: league_sim_game %d / %d, league_scores %d / %d, play-off seeding %d / %d, round 1 %d / %d" % [ok, cases.size(), s_ok, sc.size(), p_ok, pc.size(), r_ok, rc.size()])
 
 static func _scores_diff(want: Dictionary) -> String:
 	var games := []
