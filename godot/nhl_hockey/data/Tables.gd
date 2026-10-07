@@ -194,10 +194,10 @@ static func stick_offset(frame: int, mirrored: bool) -> Vector2i:
 	if frame < 0:
 		return Vector2i.ZERO
 	var f := frame
-	if f > 0x3cd and f < 0x450:
-		f -= 0x1b4
-	if f <= 0x195 or f > 0x219:
+	if not ((f > 0x195 and f < 0x21a) or (f > 0x3cd and f < 0x450)):
 		return Vector2i.ZERO
+	if f > 0x3cd:
+		f -= 0x1b4
 	var o: Array = stick_offsets[f - 0x196]
 	return Vector2i(-o[0] if mirrored else o[0], o[1])
 

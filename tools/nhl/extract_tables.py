@@ -69,7 +69,9 @@ def main():
     t['anim_sequences_base'] = 0xc921d
     t['anim_sequences'] = shorts(le, 0xc921d, 10778 // 2)     # the last duration (of a referee signal) ends at 0xcbc36
     t['dir8_vectors'] = [shorts(le, 0xc90e0 + i * 4, 2) for i in range(8)]
-    t['frame_offsets'] = [list(struct.unpack('<2b', le.read(0xcc148 + i * 2, 2))) for i in range(0x2db)]
+    # frame_offsets_lookup: frames 0..0x283, 0x378..0x3cd (- 0xf4) and 0x3ce..0x467 (- 0x13a), 814 pairs
+    # up to stick_offsets
+    t['frame_offsets'] = [list(struct.unpack('<2b', le.read(0xcc148 + i * 2, 2))) for i in range(0x32e)]
     # do_shot: aim point per pending_dir as (x, z) pairs; the y is the goal line (+-0xe8)
     t['shot_targets'] = shorts(le, 0xccc60, 16)
     # set_default_state: AI state per line_slot (0 goalie .. 6)
@@ -93,8 +95,8 @@ def main():
     t['faceoff_lineup'] = [list(struct.unpack('<8b', le.read(0xcbea8 + i * 8, 8))) for i in range(3)]
     # faceoff_resolve: bonus per centre readiness (ai_faceoff writes 1..6 into word_e038e/e0394)
     t['faceoff_bonus'] = list(struct.unpack('<7b', le.read(0xcca95, 7)))
-    # stick position per frame (stick_offsets_lookup): frames 0x196..0x219 (and 0x3ce..0x44f - 0x1b4)
-    t['stick_offsets'] = [list(struct.unpack('<2b', le.read(0xcc7a4 + i * 2, 2))) for i in range(0x219 - 0x196 + 1)]
+    # stick position per frame (stick_offsets_lookup): frames 0x196..0x219 and 0x3ce..0x44f (- 0x1b4)
+    t['stick_offsets'] = [list(struct.unpack('<2b', le.read(0xcc7a4 + i * 2, 2))) for i in range(0x44f - 0x1b4 - 0x196 + 1)]
     # one timer stick position per facing (one_timer_step)
     t['onetimer_offsets'] = [list(struct.unpack('<2b', le.read(0xccbba + i * 2, 2))) for i in range(8)]
     # ai_puck_carrier: skating targets (x, y) for the attacking team, index want_dir + 6 (0..9) or
