@@ -42,7 +42,7 @@ import struct
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
-from leemu import LEEmu                       # noqa: E402
+from leemu import LEEmu, STACK_TOP            # noqa: E402
 
 from unicorn import UC_HOOK_CODE, UC_HOOK_INSN    # noqa: E402
 from unicorn.x86_const import (UC_X86_INS_IN, UC_X86_INS_OUT, UC_X86_REG_GDTR, UC_X86_REG_DS,  # noqa: E402
@@ -1277,6 +1277,8 @@ AI_HANDLERS = 0xc9161                         # ai_state_handlers[state]
 CLOCK = 0xc90dc                               # clock_seconds, clock_sub
 WHISTLE_TIMER_W = 0xc90d2
 CAMERA_TARGET = 0xc90ac
+DRAW_LINE_INDICATOR = 0x14afe
+BREAKAWAY_LANE = 0xcc130                       # ai_breakaway: lane x, target y, trigger y, waypoint, side, heading
 AI_GLOBALS = (('game_flags', GAME_FLAGS, 1), ('stop_flags', STOP_FLAGS, 1), ('misc_flags', MISC_FLAGS, 1),
               ('option_flags', OPTION_FLAGS, 1), ('settings2', SETTINGS2, 1), ('action_flags', ACTION_FLAGS, 1),
               ('user1_slot', USER_SLOTS, -2), ('user2_slot', USER_SLOTS + 2, -2), ('user1_team', USER_SLOTS + 4, -2),
@@ -1295,11 +1297,14 @@ AI_GLOBALS = (('game_flags', GAME_FLAGS, 1), ('stop_flags', STOP_FLAGS, 1), ('mi
               ('whistle_timer', WHISTLE_TIMER_W, -2), ('camera_target_x', CAMERA_TARGET, -2),
               ('camera_target_y', CAMERA_TARGET + 2, -2), ('last_impact', LAST_IMPACT, -2),
               ('crowd_hit_toggle', CROWD_HIT_TOGGLE, -2), ('ref_hits', REF_HITS, -2), ('box_home', PENALIZED_COUNT, 1),
-              ('box_away', PENALIZED_COUNT + 1, 1))
+              ('box_away', PENALIZED_COUNT + 1, 1), ('goalie_pass_mode', 0xc90aa, -2),
+              ('breakaway_lane_x', BREAKAWAY_LANE, -4), ('breakaway_target_y', BREAKAWAY_LANE + 4, -4),
+              ('breakaway_trigger_y', BREAKAWAY_LANE + 8, -4), ('breakaway_waypoint', BREAKAWAY_LANE + 12, -4),
+              ('breakaway_lane_side', BREAKAWAY_LANE + 16, -4), ('breakaway_heading', BREAKAWAY_LANE + 20, -4))
 AI_TEAM_FIELDS = TEAM_FIELDS + (('hits', 0x24, -2), ('breakaways', 0x1c, -2), ('passes', 0x26, -2),
-                                ('current_line', 0x2a, -2), ('nearest_dist', 0x3e, -4), ('nearest_slot', 0x42, -2),
+                                ('current_line', 0x2a, -2), ('nearest_d2', 0x3a, 4), ('nearest_dist', 0x3e, -4), ('nearest_slot', 0x42, -2),
                                 ('strategy', 0xd2, 1), ('strategy2', 0xd3, 1), ('flags2', 0xd4, 1), ('mode', 0xd5, 1),
-                                ('energy_threshold', 0xd6, -2))
+                                ('energy_threshold', 0xd6, -2), ('one_timer_tries', 0x16, -2), ('one_timers', 0x18, -2))
 DEFAULT_STATES = (14, 2, 2, 3, 5, 3, 5)
 
 
@@ -1403,7 +1408,13 @@ def ai_world(emu, rnd, base, tables):
          'pred1_steps': rnd.choice((-1, 20, 60)), 'period': rnd.choice((0, 1, 2)), 'clock_seconds': rnd.randrange(1, 300),
          'clock_sub': rnd.randrange(24), 'whistle_timer': rnd.choice((0, 0, 0x14)), 'camera_target_x': rnd.randrange(-0x20, 0x21),
          'camera_target_y': rnd.randrange(-0xbc, 0xec), 'last_impact': rnd.randrange(0x20), 'crowd_hit_toggle': rnd.choice((0, 1)),
-         'ref_hits': rnd.randrange(3), 'box_home': rnd.choice((0, 0, 1)), 'box_away': rnd.choice((0, 0, 1))}
+         'ref_hits': rnd.randrange(3), 'box_home': rnd.choice((0, 0, 1)), 'box_away': rnd.choice((0, 0, 1)),
+         'goalie_pass_mode': rnd.randrange(3)}
+    w = rnd.randrange(4)
+    side = rnd.choice((-1, 1))
+    g.update({'breakaway_waypoint': w, 'breakaway_lane_side': side * rnd.choice((0x2c, 0x3a)),
+              'breakaway_lane_x': side * rnd.choice((0x28, 0x16, 0x2c, 0x3a)), 'breakaway_target_y': rnd.choice((0x3c, 0x78, 0x97, 0xc0, 0xc3)),
+              'breakaway_trigger_y': rnd.choice((0x1e, 0x3e, 0x66, 0x91, -1, -1)), 'breakaway_heading': rnd.randrange(8)})
     for n, a, sz in AI_GLOBALS:
         emu.write(a, struct.pack('<' + _FMT[sz], g[n] if sz < 0 else g[n] & ((1 << (8 * sz)) - 1)))
     emu.write(OPTION_FLAGS, struct.pack('<I', g['option_flags']))
@@ -1418,10 +1429,44 @@ def ai_record(emu):
             'carrier': struct.unpack('<b', emu.read(PUCK + 0x42, 1))[0], 'seed': struct.unpack('<I', emu.read(SEED, 4))[0]}
 
 
+SKATERS = (1, 2, 3, 4, 5, 7, 8, 9, 10, 11)
 AI_GROUPS = {
     # the positional states of the skaters (the role of the line slot, offense and defense)
     'positional': ((1, (1, 2, 7, 8)), (2, (1, 2, 7, 8)), (3, (3, 5, 9, 11)), (4, (3, 5, 9, 11)), (5, (4, 10)), (6, (4, 10))),
+    # the puck: chasing it, carrying it, shooting, receiving a pass, the breakaway
+    'puck': ((17, SKATERS), (16, SKATERS), (18, SKATERS), (19, SKATERS), (46, SKATERS)),
 }
+
+
+def ai_prepare(emu, rnd, state, actor, g):
+    '''the world around the actor for its state: the carrier for the carrier, shooting and breakaway
+    states, the pass on its way for the receiver'''
+    rec = bytearray(emu.read(ENTITIES + actor * 0x80, 0x80))
+    puck = bytearray(emu.read(PUCK, 0x80))
+    carrier = struct.unpack('<b', bytes([puck[0x42]]))[0]
+    if state == 16:
+        put_fields(rec, {'target_x': rnd.randrange(4)})     # the lane (carrier_targets 6..9)
+    if state in (16, 18, 46) and rnd.random() < 0.85:
+        carrier = actor
+        struct.pack_into('<ii', puck, 0, struct.unpack_from('<i', rec, 0)[0], struct.unpack_from('<i', rec, 4)[0])
+        put_fields(rec, {'timer_c': 0})
+    if state == 18:
+        put_fields(rec, {'anim': rnd.choice((0x3f9, 0x491)), 'anim_pos': rnd.randrange(0, 0xe)})
+        g['action_flags'] |= 8 if rnd.random() < 0.85 else 0
+    if state == 19:
+        carrier = rnd.choice((-1, -1, -1, actor ^ 1 if actor != 1 else 2))
+        g['pass_target'] = actor if rnd.random() < 0.8 else -1
+        g['one_timer'] = rnd.choice((0, 0, 1))
+        put_fields(puck, {'vx': rnd.randrange(-0x1000, 0x1001), 'vy': rnd.randrange(-0x1000, 0x1001)})
+    if state == 46:
+        g['breakaway'] = 1
+    puck[0x42] = carrier & 0xff
+    emu.write(PUCK, puck)
+    emu.write(ENTITIES + actor * 0x80, rec)
+    for n, a, sz in AI_GLOBALS:
+        if n in ('action_flags', 'pass_target', 'one_timer', 'breakaway'):
+            emu.write(a, struct.pack('<' + _FMT[sz], g[n] if sz < 0 else g[n] & ((1 << (8 * sz)) - 1)))
+    return carrier
 
 
 def ai_cases(exe):
@@ -1444,6 +1489,7 @@ def ai_cases(exe):
     emu.stub(INJURY_CHECK, lambda eax: (calls.append(['injury_check', ((eax & 0xffffffff) - ENTITIES) // 0x80]), 1)[1])
     emu.stub(INJURE_PLAYER, lambda eax: calls.append(['injure_player', ((eax & 0xffffffff) - ENTITIES) // 0x80]))
     emu.stub(BENCH_CHEER, lambda eax: calls.append(['bench_cheer', eax & 0xffffffff]))
+    emu.stub(DRAW_LINE_INDICATOR, lambda eax: None)    # the HUD (the port's draws team.current_line)
     emu.call(ENTITIES_INIT)
     tables = []
     for t in TEAM_RECORDS:
@@ -1459,10 +1505,11 @@ def ai_cases(exe):
                     for i in range(17)]}
     for group, choices in AI_GROUPS.items():
         cases = []
-        for k in range(600):
+        for k in range(100 * len(choices)):
             state, actors = choices[k % len(choices)]
             g, teams, carrier = ai_world(emu, rnd, base, tables)
             actor = rnd.choice(actors)
+            carrier = ai_prepare(emu, rnd, state, actor, g)
             rec = bytearray(emu.read(ENTITIES + actor * 0x80, 0x80))
             sp = struct.unpack_from('<h', rec, 0x1c)[0] & 7
             rec[0x1e + sp] = state
@@ -1471,6 +1518,17 @@ def ai_cases(exe):
             emu.write(ENTITIES + actor * 0x80, rec)
             seed = rnd.getrandbits(32)
             emu.write(SEED, struct.pack('<I', seed))
+            # the scratch dword e03ac as an earlier routine left it (ai_nearest_to_puck reads it
+            # when the puck is carried by a team mate)
+            scratch_ac = (0xffffffff, (seed >> 4) & 0x1ff, (seed >> 4) & 0xfff, (seed >> 4) & 0xffff)[seed & 3]
+            emu.write(SCRATCH[2], struct.pack('<I', scratch_ac))
+            # e03bc / e03c0 too (ai_shoot aims with e03bc)
+            scratch = [(seed >> 7) & 0xffff, (seed >> 13) & 0xffff]
+            emu.write(SCRATCH[0], struct.pack('<H', scratch[0]))
+            emu.write(SCRATCH[1], struct.pack('<H', scratch[1]))
+            # the stack below the call as garbage no slot number matches (ai_nearest_to_puck reads a
+            # local it sets only when no team mate carries the puck)
+            emu.write(STACK_TOP - 0x2100, b'\xcc' * 0x2000)
             befores = {str(s_): dict(entity_fields(emu, s_), prev=list(struct.unpack('<iii', emu.read(ENTITIES + s_ * 0x80 + 0x74, 12))))
                        for s_ in range(17)}
             order = draw_order(emu)
@@ -1479,6 +1537,7 @@ def ai_cases(exe):
             emu.call(handler, eax=ENTITIES + actor * 0x80)
             after = ai_record(emu)
             cases.append({'state': state, 'actor': actor, 'globals': g, 'teams': teams, 'carrier': carrier, 'seed': seed,
+                          'scratch_ac': scratch_ac, 'scratch': scratch,
                           'before': befores, 'order': order, 'calls': [list(c) for c in calls],
                           'after': {str(s_): {k_: v for k_, v in entity_fields(emu, s_).items() if befores[str(s_)].get(k_) != v}
                                     for s_ in range(17)},

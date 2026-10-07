@@ -129,14 +129,31 @@ var last_shooter: int = -1          # word_c90a0
 var pass_target: int = -1           # shot_power high word
 var shot_power: int = 0             # shot_power low word
 var pending_dir: int = 8            # pending_dir
+# the scratch words of the original that some routines read as an earlier one left them:
+# sim_update_players leaves the entity's vy (or its height step) in e03bc and its friction shift in
+# e03ac before the AI handler runs, read_control_p1/p2 the control byte, the pressed and the
+# changed buttons; ai_shoot aims with e03bc, ai_nearest_to_puck takes e03ac for a distance
+var scratch_a: int = 0              # word e03bc
+var scratch_b: int = 0              # word e03c0
+var scratch_ac: int = 0xffffffff    # dword e03ac
 var action_pass := false            # action_flags bit 2
 var action_shot := false            # action_flags bit 3
 var action_hold_camera := false     # action_flags bit 6
 var one_timer := false              # dword_cc0f4
 var breakaway := false              # dword_cc0f8
 var defenders_ahead := 0            # dword_cc124
+# ai_breakaway's lane (breakaway_pick_lane, breakaway_next_waypoint): the lane x and the y to skate
+# to, the y from which the next waypoint is taken (-1: the last, shoot), the next waypoint, the
+# side of the lane, the heading when the last waypoint was reached
+var breakaway_lane_x := 0           # cc130
+var breakaway_target_y := 0         # cc134
+var breakaway_trigger_y := 0        # cc138
+var breakaway_waypoint := 0         # cc13c
+var breakaway_lane_side := 0        # cc140
+var breakaway_heading := 0          # cc144
 var icing_flags: int = 0            # dword_e9abe byte 2: 1 icing called, 2 direction, 4 candidate
 var icing_shooter: int = -1
+var goalie_pass_mode: int = 0         # goalie_pass_mode (word_c90aa): opponents near the carrier (carrier_scan_opponents)
 var buttons_prev := [0, 0]           # the buttons (0x70) of each user at the last read (read_control_p1 / p2)
 var buttons_changed := 0             # scratch_e03ac: the buttons that went down or up since
 var save_clip_shown := false       # dword_e9a9e low word: the SAVED clip was shown this period (no more save credits)
@@ -662,10 +679,12 @@ func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) ->
 		if e.slot == user1_slot:
 			buttons_changed = (control_p1 & 0x70) ^ buttons_prev[0]    # read_control_p1
 			buttons_prev[0] = control_p1 & 0x70
+			_read_control_scratch(control_p1)
 			control_player(e, control_p1, pressed_p1, 0)
 		elif e.slot == user2_slot:
 			buttons_changed = (control_p2 & 0x70) ^ buttons_prev[1]
 			buttons_prev[1] = control_p2 & 0x70
+			_read_control_scratch(control_p2)
 			control_player(e, control_p2, pressed_p2, 1)
 		if e.state() != Entity.State.NONE:
 			AI.dispatch(self, e)
@@ -722,6 +741,7 @@ func integrate(e: Entity) -> void:
 		return    # falling / lying animations move the entity through frame_offsets instead
 	if e.zi == 0:
 		var shift := 9 if (e.flags & 1) else 6
+		scratch_ac = shift
 		if e.vx != 0:
 			var d := e.vx >> shift
 			if d == 0:
@@ -740,16 +760,26 @@ func integrate(e: Entity) -> void:
 		e.x += STEP_DT * e.vx
 	if e.vy != 0:
 		e.y += STEP_DT * e.vy
+	scratch_a = _s16(e.vy)
 	if e.zi >= 0 and (e.zi != 0 or e.vz != 0):
 		e.vz -= GRAVITY
+		scratch_a = _s16(STEP_DT * e.vz)
 		var nz := e.z + STEP_DT * e.vz
 		if nz < 0:
 			e.z = 0
-			e.vz = (-e.vz) >> 1
-			if clampi(5 - e.flags3, 0, 99) < 4:
-				play_sfx(0xab)   # puck drop
+			e.vz = _s16(-e.vz) >> 1
+			scratch_a = maxi(0, 5 - Entity.to_s8(e.vz >> 8))
+			if scratch_a <= 3:
+				play_sfx(0xab)   # the bounce of a dropping puck
 		else:
 			e.z = nz
+
+## what read_control_p1/p2 leave in the scratch words: the control byte, the buttons that went
+## down, the buttons that changed
+func _read_control_scratch(control: int) -> void:
+	scratch_a = control & 0xff
+	scratch_b = control & 0x70 & buttons_changed
+	scratch_ac = (scratch_ac & 0xffff0000) | buttons_changed
 
 ## sim_update_players: a goalie without the puck is kept out of the net posts area
 func clamp_goalie_to_crease(e: Entity) -> void:

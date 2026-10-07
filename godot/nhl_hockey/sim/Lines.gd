@@ -696,7 +696,7 @@ static func regenerate_energy(sim: Sim) -> void:
 ## pull_goalie_logic (0x53f8c), for the puck carrier: the OFFSIDE warning while a team mate is in
 ## the attacking zone before the puck; the carrier then prefers passing (stop_flags & 0x80)
 static func offside_warning_check(sim: Sim, e: Entity) -> void:
-	if not sim.opt_offsides or sim.penalty_shot:
+	if not sim.opt_offsides or sim.penalty_shot or sim.penalty_shot_setup:
 		return
 	var team := sim.team_of(e)
 	var warn := false

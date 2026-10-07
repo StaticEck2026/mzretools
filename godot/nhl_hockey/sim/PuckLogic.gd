@@ -853,6 +853,7 @@ static func shot_control(sim: Sim, e: Entity, dir: int, pressed: int, changed: i
 		return
 	if (dir & 8) == 0:
 		sim.pending_dir = dir & 7
+		sim.scratch_a = dir & 7
 	if e.anim_pos >= 0xa:
 		return
 	if pressed & 0x50:

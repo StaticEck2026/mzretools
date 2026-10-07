@@ -30,6 +30,11 @@ func run_until_play(sim: Sim, limit: int) -> int:
 	return -1
 
 func run_tests() -> void:
+	if OS.get_environment("AI_STATE") != "":       # only the AI golden test
+		ai_golden()
+		print("tests finished, failures: ", failures)
+		quit(1 if failures else 0)
+		return
 	# RefPack: literal run, back reference, stop code
 	var packed := PackedByteArray([0x10, 0xfb, 0, 0, 8, 0xe0, 0x41, 0x42, 0x43, 0x44, 0x00, 0x03, 0xfd, 0x5a])
 	var out := RefPack.decompress(packed)
@@ -712,7 +717,10 @@ func ai_golden() -> void:
 		var bad := 0
 		var shown := 0
 		var per_state := {}
+		var only := OS.get_environment("AI_STATE")      # show only this state's failures
+		var index := -1
 		for c: Dictionary in data[group]:
+			index += 1
 			_ai_world_set(sim, c, base)
 			var actor: Entity = sim.entities[int(c["actor"])]
 			sim.stub_calls.clear()
@@ -727,9 +735,12 @@ func ai_golden() -> void:
 			else:
 				bad += 1
 				per_state[st][1] += 1
-				if shown < 10:
+				if only != "" and Tables.ai_state_names[st + 1] != only:
+					failures += 1
+				elif shown < 10:
 					shown += 1
-					fail("AI %s %s slot %d: %s" % [group, Tables.ai_state_names[st + 1], actor.slot, ", ".join(diff.slice(0, 8))])
+					fail("AI %s %s slot %d%s: %s" % [group, Tables.ai_state_names[st + 1], actor.slot,
+						" (case %d)" % index if only != "" else "", ", ".join(diff.slice(0, 8))])
 		var parts := []
 		for st in per_state:
 			parts.append("%s %d/%d" % [Tables.ai_state_names[st + 1], per_state[st][0], per_state[st][0] + per_state[st][1]])
@@ -815,6 +826,13 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	sim.crowd_toggle = int(g["crowd_hit_toggle"]) != 0
 	sim.ref_hits = int(g["ref_hits"])
 	sim.box_count = [int(g["box_home"]), int(g["box_away"])]
+	sim.goalie_pass_mode = int(g["goalie_pass_mode"])
+	sim.breakaway_lane_x = int(g.get("breakaway_lane_x", 0))
+	sim.breakaway_target_y = int(g.get("breakaway_target_y", 0))
+	sim.breakaway_trigger_y = int(g.get("breakaway_trigger_y", 0))
+	sim.breakaway_waypoint = int(g.get("breakaway_waypoint", 0))
+	sim.breakaway_lane_side = int(g.get("breakaway_lane_side", 0))
+	sim.breakaway_heading = int(g.get("breakaway_heading", 0))
 	var teams: Array = c["teams"]
 	for t in 2:
 		var team: Team = sim.teams[t]
@@ -823,10 +841,13 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 		_team_set(team, f)
 		team.attacks_up = (t == 0) != sim.ends_switched
 		team.hits = int(f["hits"])
+		team.one_timer_tries = int(f.get("one_timer_tries", 0))
+		team.one_timers = int(f.get("one_timers", 0))
 		team.breakaways = int(f["breakaways"])
 		team.passes = int(f["passes"])
 		team.current_line = int(f["current_line"])
 		team.nearest_dist = int(f["nearest_dist"])
+		team.nearest_d2 = int(f["nearest_d2"])
 		team.nearest_slot = int(f["nearest_slot"])
 		team.strategy = int(f["strategy"])
 		team.strategy2 = int(f["strategy2"])
@@ -846,6 +867,10 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 		sim.draw_keys[i] = int(order["keys"][i])
 	sim.puck_carrier = int(c["carrier"])
 	sim.seed = int(c["seed"])
+	sim.scratch_ac = int(c.get("scratch_ac", 0xffffffff))
+	var scratch: Array = c.get("scratch", [0, 0])
+	sim.scratch_a = Sim._s16(int(scratch[0]))
+	sim.scratch_b = int(scratch[1])
 
 static func _ai_globals_get(sim: Sim) -> Dictionary:
 	return {"game_flags": (1 if sim.play_stopped else 0) | (2 if sim.ends_switched else 0) | (4 if sim.stoppage_countdown else 0)
@@ -866,7 +891,11 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 		"pred1_steps": sim.goal_prediction[1][1], "period": sim.period, "clock_seconds": sim.clock_seconds,
 		"clock_sub": sim.clock_sub, "whistle_timer": sim.whistle_timer, "camera_target_x": sim.camera_target_x,
 		"camera_target_y": sim.camera_target_y, "last_impact": sim.last_impact, "crowd_hit_toggle": 1 if sim.crowd_toggle else 0,
-		"ref_hits": sim.ref_hits, "box_home": sim.box_count[0], "box_away": sim.box_count[1]}
+		"ref_hits": sim.ref_hits, "box_home": sim.box_count[0], "box_away": sim.box_count[1],
+		"goalie_pass_mode": sim.goalie_pass_mode, "breakaway_lane_x": sim.breakaway_lane_x,
+		"breakaway_target_y": sim.breakaway_target_y, "breakaway_trigger_y": sim.breakaway_trigger_y,
+		"breakaway_waypoint": sim.breakaway_waypoint, "breakaway_lane_side": sim.breakaway_lane_side,
+		"breakaway_heading": sim.breakaway_heading}
 
 static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 	var diff := []
@@ -893,8 +922,9 @@ static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 		var team: Team = sim.teams[t]
 		var want: Dictionary = tas[t]
 		var tg := {"hits": team.hits, "breakaways": team.breakaways, "passes": team.passes, "current_line": team.current_line,
-			"nearest_dist": team.nearest_dist, "nearest_slot": team.nearest_slot, "strategy": team.strategy,
-			"strategy2": team.strategy2, "flags2": team.flags2, "mode": team.mode, "energy_threshold": team.energy_threshold}
+			"nearest_dist": team.nearest_dist, "nearest_d2": team.nearest_d2, "nearest_slot": team.nearest_slot, "strategy": team.strategy,
+			"strategy2": team.strategy2, "flags2": team.flags2, "mode": team.mode, "energy_threshold": team.energy_threshold,
+			"one_timer_tries": team.one_timer_tries, "one_timers": team.one_timers}
 		for k in tg:
 			if int(tg[k]) != int(want[k]):
 				diff.append("team %d %s %d (original %d)" % [t, k, int(tg[k]), int(want[k])])

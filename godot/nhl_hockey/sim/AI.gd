@@ -327,7 +327,7 @@ static func _around_post(x: int, tx: int, g: Entity, right: int, left: int, by: 
 	return Vector2i(ox, oy)
 
 ## ai_skate_towards (0x5e93b): re-evaluates the direction every 12 steps; `mode` adjusts it
-## (1 = ai_near_carrier_check, 2 = ai_ref_positioning)
+## (1 = ai_near_carrier_check, 2 = ai_ref_positioning, 3 = carrier_scan_opponents)
 static func skate_towards(sim: Sim, e: Entity, tx: int, ty: int, mode: int = 0) -> void:
 	e.dir_timer -= 1
 	if e.dir_timer < 0:
@@ -348,6 +348,8 @@ static func skate_towards(sim: Sim, e: Entity, tx: int, ty: int, mode: int = 0) 
 			dir = near_carrier_check(sim, e, dir)
 		elif mode == 2:
 			dir = ref_positioning(sim, e, dir)
+		elif mode == 3:
+			dir = carrier_scan_opponents(sim, e, dir)
 		e.want_dir = dir
 		if dir >= 8 and e.vx == 0 and e.vy == 0:
 			# standing still: turn to face the puck
@@ -725,7 +727,7 @@ static func center_offense(sim: Sim, e: Entity) -> void:
 
 ## ai_puck_carrier (0x4c6f3)
 static func puck_carrier(sim: Sim, e: Entity) -> void:
-	if sim.puck_carrier != e.slot or (e.flags & Entity.F_USER):
+	if sim.puck_carrier != e.slot:
 		default_skate(sim, e)
 		return
 	if e.flags & Entity.F_BUSY:
@@ -733,15 +735,21 @@ static func puck_carrier(sim: Sim, e: Entity) -> void:
 	if sim.play_stopped:
 		skate_idle(sim, e)
 		return
+	if e.flags & Entity.F_USER:
+		default_skate(sim, e)
+		return
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		e.timer_f = 0
 		e.timer_a = 0
 		e.want_dir = 8
+		e.dir_timer = 0
 		e.target_x = sim.random(4)       # which lane to carry the puck along
+		sim.goalie_pass_mode = 0
 	e.react_timer -= 1
 	if e.react_timer < 0:
 		e.react_timer = e.reaction
+		Lines.offside_warning_check(sim, e)
 		if sim.breakaway and absi(e.yi) < 0x70:
 			e.set_state(Entity.State.BREAKAWAY)
 			return
@@ -751,16 +759,66 @@ static func puck_carrier(sim: Sim, e: Entity) -> void:
 			return
 		if choose_pass_target(sim, e):
 			return
-	var idx := e.target_x + 6 if not sim.offside_warning else e.line_slot - 1
-	var t: Array = Tables.carrier_targets[clampi(idx, 0, 9)]
-	var tx: int = t[0]
-	var ty: int = t[1]
+	var idx := e.line_slot - 1 if sim.offside_warning else e.target_x + 6
+	var tx: int
+	var ty: int
+	if idx >= 0:
+		tx = Tables.carrier_targets[idx][0]
+		ty = Tables.carrier_targets[idx][1]
+	else:
+		# (an off ice carrier: the original reads the words before the table, the end of
+		# goalie_save_anims)
+		var g := Tables.goalie_save_anims
+		tx = g[g.size() + 2 * idx]
+		ty = g[g.size() + 2 * idx + 1]
 	if (e.flags & Entity.F_ATTACK_UP) == 0:
 		tx = -tx
 		ty = -ty
-	if absi(e.xi - tx) < 0xd and absi(e.yi - ty) < 0xd:
+	if absi(e.xi - tx) <= 0xc and absi(e.yi - ty) <= 0xc:
 		e.target_x = sim.random(4)
-	skate_towards(sim, e, tx, ty)
+	skate_towards(sim, e, tx, ty, 3)
+
+## carrier_scan_opponents (0x4ca1e), the carrier's ai_skate_towards adjustment: an opponent within
+## 0x19 of the puck (both a step ahead) turns him away (one step aside, at random, when the
+## opponent is right behind him); goalie_pass_mode counts them. In his own zone near the net he
+## keeps away from his own goalie (within 0x14 in x) and from the net.
+static func carrier_scan_opponents(sim: Sim, e: Entity, dir: int) -> int:
+	dir = Entity.to_s8(dir)
+	var puck := sim.puck
+	var px := Sim._s16(puck.xi + Entity.to_s8(e.vx >> 8))
+	var py := Sim._s16(puck.yi + Entity.to_s8(e.vy >> 8))
+	sim.scratch_ac = (sim.scratch_ac & 0xffff0000) | (px & 0xffff)
+	sim.goalie_pass_mode = 0
+	var first := 6 if e.slot < 6 else 0
+	for i in 6:
+		var o := sim.entities[first + i]
+		if absi(Sim._s16(o.xi + Entity.to_s8(o.vx >> 8) - px)) > 0x19:
+			continue
+		if absi(Sim._s16(o.yi + Entity.to_s8(o.vy >> 8) - py)) > 0x19:
+			continue
+		sim.goalie_pass_mode += 1
+		dir = Tables.direction8(Sim._s16(e.xi - o.xi), Sim._s16(e.yi - o.yi))
+		if dir == (((e.heading >> 16) & 0xffff) ^ 4):
+			dir = (sim.random(2) + dir) & 7
+	var up := (e.flags & Entity.F_ATTACK_UP) != 0
+	if up != (e.yi < 0):
+		return dir
+	if absi(py) < 0xaa or absi(py) > 0xe8 or absi(px) > 0x50:
+		return dir
+	var gs := sim.team_of(e).goalie_slot
+	if gs >= 0:
+		var g := sim.entities[gs]
+		var gx := Sim._s16(g.xi + Entity.to_s8(g.vx >> 8) - px)
+		if absi(gx) <= 0x14:
+			# (the original tests the x distance a second time where the y was meant)
+			var gy := Sim._s16(g.yi + Entity.to_s8(g.vy >> 8) - py)
+			dir = Tables.direction8(Sim._s16(-gx), Sim._s16(-gy))
+	if absi(px) > 0x1e:
+		return dir
+	var ny := -0xdc if up else 0xdc
+	if absi(Sim._s16(ny - py)) > 0x14:
+		return dir
+	return Tables.direction8(e.xi, Sim._s16(e.yi - ny))
 
 ## ai_consider_shot (0x54af9): a tired line in the neutral zone changes on the fly: the carrier
 ## dumps the puck in and the new line comes on
@@ -789,52 +847,72 @@ static func consider_shot(sim: Sim, e: Entity) -> bool:
 	desperation_shot(sim, e)
 	return true
 
-## ai_offense_decision (0x55804): shoot when in a good spot, more eagerly when short handed or
-## behind in the last seconds
+## ai_offense_decision (0x55804): shoot short handed with an opponent on the puck (one in four),
+## or behind in the last seconds; otherwise the odds 0x20 - offense, times 0x10 far from the net
+## (beyond 100), doubled for each opponent skater between the puck and the net, 1 at an empty net
+## or with the goalie down; a number below 9 shoots from inside the attacking half, not while a
+## team mate is offside (on a penalty shot only from 0x74 up)
 static func offense_decision(sim: Sim, e: Entity) -> bool:
 	var puck := sim.puck
-	var short_handed := sim.power_play and sim.power_play_team != e.team
-	if (short_handed and sim.random(4) == 0) or (sim.clock_seconds < 4 and sim.team_of(e).goals < sim.opponents_of(e).goals):
-		desperation_shot(sim, e)
-		return true
-	var odds := 0x20 - e.offense
-	var goal_y := 0xe8 if (e.flags & Entity.F_ATTACK_UP) else -0xe8
-	var dy := goal_y - puck.yi
-	var dx := -puck.xi
-	if dy * dy + dx * dx < 0x2711:
-		var opp := sim.opponents_of(e)
-		if opp.goalie_pulled():
-			odds = 1          # empty net
-		else:
-			var to_net := Tables.direction8(dx, dy)
-			for i in 6:
-				var o := sim.entities[opp.first_slot + i]
-				if o.line_slot == 0:
-					if o.flags2 & Entity.F2_TURNING:
-						odds = 1
-				elif Tables.direction8(o.xi - puck.xi, o.yi - puck.yi) == to_net:
-					odds *= 2
-	else:
-		odds *= 0x10
-	if sim.random(maxi(1, odds)) < 9:
-		var py := puck.yi if (e.flags & Entity.F_ATTACK_UP) else -puck.yi
-		if py >= 0 and 0xe8 - py >= 0 and not sim.offside_warning:
+	if not sim.penalty_shot:
+		var away := (e.flags & Entity.F_PLAYER2) != 0
+		if sim.power_play and away != (sim.power_play_team == 1) and sim.goalie_pass_mode != 0:
+			if sim.random(4) == 0:
+				desperation_shot(sim, e)
+				return true
+		if sim.clock_seconds < 4 and sim.team_record(e).goals < sim.opponents_of(e).goals:
 			desperation_shot(sim, e)
 			return true
-	return false
+	var odds := Sim._s16(0x20 - e.offense)
+	var gy := Sim._s16((0xe8 if (e.flags & Entity.F_ATTACK_UP) else -0xe8) - puck.yi)
+	var gx := Sim._s16(-puck.xi)
+	if (gx * gx + gy * gy) & 0xffffffff > 0x2710:
+		odds = Sim._s16(odds << 4)
+	elif sim.opponents_of(e).goalie_pulled():
+		odds = 1
+	else:
+		var to_net := Tables.direction8(gx, gy)
+		var first := 6 if e.slot < 6 else 0
+		for i in 6:
+			var o := sim.entities[first + i]
+			if o.line_slot == 0:
+				if o.flags2 & Entity.F2_TURNING:
+					odds = 1
+					break
+				continue
+			if Tables.direction8(Sim._s16(o.xi - puck.xi), Sim._s16(o.yi - puck.yi)) == to_net:
+				odds = Sim._s16(odds * 2)
+	if Sim._s16(sim.random(odds)) > 8:
+		return false
+	var py := Sim._s16(puck.yi if (e.flags & Entity.F_ATTACK_UP) else -puck.yi)
+	if py < 0 or 0xe8 - py < 0:
+		return false
+	if sim.penalty_shot and py < 0x74:
+		return false
+	if sim.offside_warning:
+		return false
+	desperation_shot(sim, e)
+	return true
 
-## ai_desperation_shot (0x55a35): wind up for a shot; the SHOOT state releases it
+## ai_desperation_shot (0x55a35): wind up for a shot, the power (+0x28) from the distance to the
+## goal line, at most 0x14; the SHOOT state releases it
 static func desperation_shot(sim: Sim, e: Entity) -> void:
-	var py := sim.puck.yi if (e.flags & Entity.F_ATTACK_UP) else -sim.puck.yi
-	e.want_dir = mini(0x14, (0xe8 - py) >> 3)
+	var py := Sim._s16(sim.puck.yi if (e.flags & Entity.F_ATTACK_UP) else -sim.puck.yi)
+	e.want_dir = mini(0x14, ((0xe8 - py) & 0xffff) >> 3)
+	e.dir_timer = 0                 # the word +0x28
 	e.set_state(Entity.State.SHOOT)
 
-## ai_choose_pass_target (0x55493): pick a team mate at random and pass when the lane is open
+## ai_choose_pass_target (0x55493): pick a team mate at random (always while an opponent is on the
+## puck, else on 10 in offense + 0x10) and pass when the lane is open. Behind the own net a pass
+## goes out only to a mate wide (0x3c) on the puck's side, or across behind the same goal line; a
+## pass across the blue line, or back more than 0xf in the own half, needs pass_lane_ok; no two
+## line pass to an offside mate. An opponent nearer the receiver's puck point on the same line
+## blocks it (the goalie's passes also keep clear of opponents near it). A skater skates on
+## after the pass; after the goalie's pass it returns 0 and the carrier code goes on.
 static func choose_pass_target(sim: Sim, e: Entity) -> bool:
 	var puck := sim.puck
 	e.pass_ok = 0
-	var r := sim.random(e.offense + 0x10) if not sim.offside_warning else 10
-	if r <= 9 and e.line_slot != 0:
+	if sim.goalie_pass_mode == 0 and sim.random(e.offense + 0x10) > 9:
 		return false
 	var idx := sim.random(6)
 	if e.slot >= 6:
@@ -845,52 +923,64 @@ static func choose_pass_target(sim: Sim, e: Entity) -> bool:
 	if t.line_slot <= 0 or (t.flags2 & Entity.F2_UNSELECTABLE) or (t.flags & Entity.F_BUSY):
 		return false
 	var up := (e.flags & Entity.F_ATTACK_UP) != 0
-	if e.line_slot != 0 and (puck.yi > 0) != up:
-		# in the own zone behind the net: only pass out to the open side
-		if absi(puck.xi) < 0x33 and absi(puck.yi) > 0xac:
-			if absi(puck.yi) <= 0xea or absi(t.xi) <= 0x3b or (t.xi ^ puck.xi) >= 0:
+	if e.line_slot != 0 and up != (puck.yi > 0):
+		if absi(puck.xi) <= 0x32 and absi(puck.yi) > 0xac:
+			if absi(puck.yi) < 0xeb or absi(t.xi) < 0x3c:
 				return false
-	var ty := t.yi if up else -t.yi
-	var ey := e.yi if up else -e.yi
+			if (t.xi ^ puck.xi) < 0 and ((absi(t.yi) - 0xe8) ^ (absi(puck.yi) - 0xe8)) < 0:
+				return false
+	var ty := Sim._s16(t.yi if up else -t.yi)
+	var ey := Sim._s16(e.yi if up else -e.yi)
+	var v := ty                  # word e03bc: the receiver's y, or how far ahead of the passer
+	var check := false
 	if sim.opt_offsides and ((ey - 0x4e) ^ (ty - 0x4e)) < 0:
-		# the pass would cross the blue line: only when the receiver can skate onto it
+		check = true
+	elif ty <= 0x4e:
+		v = Sim._s16(ty - ey)
+		check = v < -0xf
+	if check:
 		e.pass_ok = 1 if PuckLogic.pass_lane_ok(sim, e, t) else 0
 		if e.pass_ok == 0:
 			return false
 		e.pass_target = t.slot
-	elif ty < 0x4f and ty - ey < -0xf:
-		e.pass_ok = 1 if PuckLogic.pass_lane_ok(sim, e, t) else 0
-		if e.pass_ok == 0:
-			return false
-		e.pass_target = t.slot
-	if sim.opt_two_line_pass and (t.flags2 & Entity.F2_OFFSIDE) and ey < -0x4e and ty > 0:
+	if sim.opt_two_line_pass and (t.flags2 & Entity.F2_OFFSIDE) and ey < -0x4e and v > 0:
 		return false
-	# an opponent on the lane blocks the pass
-	sim.pending_dir = t.puck_dir ^ 4
+	sim.pending_dir = Entity.to_s8(t.puck_dir ^ 4)
 	var lane_d := t.puck_dist
-	var opp := sim.opponents_of(e)
+	sim.scratch_ac = lane_d & 0xffffffff
+	var first := 6 if e.slot < 6 else 0
 	for i in 6:
-		var o := sim.entities[opp.first_slot + i]
-		if o.line_slot < 0 or o.puck_dist > lane_d:
+		var o := sim.entities[first + i]
+		var od := o.puck_dist
+		if od > lane_d:
 			continue
-		var rel := ((t.puck_dir ^ 4) - (o.puck_dir ^ 4) + 1) & 7
+		var rel := (sim.pending_dir - Entity.to_s8(o.puck_dir ^ 4) + 1) & 7
 		if rel == 1:
 			return false
-		if e.line_slot == 0 and (o.puck_dist < 0x1e or (rel < 3 and o.puck_dist < 0x3c) or ((rel == 3 or rel == 7) and o.puck_dist < 0x28)):
+		if e.line_slot != 0:
+			continue
+		if od < 0x1e or (rel <= 2 and od < 0x3c) or ((rel == 3 or rel == 7) and od < 0x28):
 			return false
 	PuckLogic.do_pass(sim, e)
-	if e.line_slot != 0:
-		default_skate(sim, e)
+	if e.line_slot == 0:
+		return false
+	default_skate(sim, e)
 	return true
 
-## ai_nearest_to_puck (0x4cd4b): the team mate closest to the puck goes to get it
+## ai_nearest_to_puck (0x4cd4b): the team mate closest to the puck goes to get it. On its reaction
+## tick the role is handed to the carrier of the team, or to the skater whose frame point is nearest
+## to where the puck will be (team +0x3a: that distance); the one who keeps it may hold back (+0x2a
+## = 300 steps) instead of chasing, the more likely the further the puck, a forward always may (the
+## original compares the line slot where a y was meant); while holding back with the puck carried he
+## covers the slot between the puck and his net. Line changes only while the play is stopped.
 static func nearest_to_puck(sim: Sim, e: Entity) -> void:
-	var team := sim.team_of(e)
+	var team := sim.team_record(e)
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		e.timer_a = 0
 		e.want_dir = 8
-		e.target_x = 0        # positioning timer in this state
+		e.dir_timer = 0
+		e.target_x = 0        # the holding back timer in this state
 	if sim.puck_carrier == e.slot:
 		if e.line_slot == 0:
 			goalie(sim, e)
@@ -900,63 +990,83 @@ static func nearest_to_puck(sim: Sim, e: Entity) -> void:
 	e.react_timer -= 1
 	if e.react_timer < 0:
 		e.react_timer = e.reaction
+		team.nearest_d2 = 0
 		var best := e
-		var deepest := e.slot
+		var best_d := sim.scratch_ac & 0xffffffff      # stale while a team mate carries the puck
+		var deepest := -1          # (a local the original leaves unset when a team mate has the puck)
 		var deepest_y := e.yi
-		var best_d := -1
-		if sim.puck_carrier < 0 or not sim.same_team(sim.puck_carrier, e.slot):
-			var puck := sim.puck
-			for i in 6:
-				var p := sim.entities[team.first_slot + i]
-				if p.line_slot <= 0 or p.timer_c != 0 or (p.flags2 & Entity.F2_UNSELECTABLE) or p.state() == Entity.State.PASS_RECEIVER:
-					continue
-				var up := (e.flags & Entity.F_ATTACK_UP) != 0
-				if absi(p.yi) < 0xe8 and ((up and p.yi <= deepest_y) or (not up and deepest_y <= p.yi)):
-					deepest = p.slot
-					deepest_y = p.yi
-				var o := Tables.frame_offset(p.frame, (p.flags4 & Entity.F4_MIRROR) != 0)
-				var dx := o.x + p.xi - puck.xi - (puck.vx >> 6)
-				var dy := o.y + p.yi - puck.yi - (puck.vy >> 6)
-				var d := dx * dx + dy * dy
-				if best_d < 0 or d <= best_d:
-					best_d = d
-					best = p
-		else:
+		var handover := false
+		if sim.puck_carrier >= 0 and sim.same_team(sim.puck_carrier, e.slot):
 			best = sim.entities[sim.puck_carrier]
-		if best != e and not sim.play_stopped and best.line_slot > 0 and (best.flags2 & Entity.F2_UNSELECTABLE) == 0:
+			handover = true
+		else:
+			var puck := sim.puck
+			var first := 0 if e.slot < 6 else 6
+			best_d = 0xffffffff
+			deepest = e.slot
+			if e.slot != sim.penalty_shot_slot:
+				for i in 6:
+					var p := sim.entities[first + i]
+					if p.line_slot <= 0 or p.timer_c != 0 or (p.flags2 & Entity.F2_UNSELECTABLE) \
+							or p.state() == Entity.State.PASS_RECEIVER:
+						continue
+					var up := (e.flags & Entity.F_ATTACK_UP) != 0
+					if absi(p.yi) < 0xe8 and ((up and deepest_y >= p.yi) or (not up and deepest_y <= p.yi)):
+						deepest = p.slot
+						deepest_y = p.yi
+					var o := Tables.frame_offset(p.frame, (p.flags4 & Entity.F4_MIRROR) != 0)
+					var dx := Sim._s16(o.x + p.xi - puck.xi - (Sim._s16(puck.vx) >> 6))
+					var dy := Sim._s16(o.y + p.yi - puck.yi - (Sim._s16(puck.vy) >> 6))
+					var d := (dx * dx + dy * dy) & 0xffffffff
+					if d <= best_d:
+						best_d = d
+						best = p
+			sim.scratch_ac = best_d
+			if Sim._s32(best_d) >= 0:
+				team.nearest_d2 = best_d
+				handover = true
+		if handover and best != e and not sim.play_stopped and best.line_slot > 0 \
+				and (best.flags2 & Entity.F2_UNSELECTABLE) == 0:
 			best.flags &= ~Entity.F_HAS_TARGET
 			best.set_state_reset(Entity.State.NEAREST)
 			default_skate(sim, e)
 			return
-		if (e.flags & Entity.F_BUSY) == 0 and best_d >= 0:
-			# decide between chasing and holding a position
-			var level := 2
-			var close := best_d < 0x191 or (best_d < 0xe11 and absi(sim.puck.vx) < 500 and absi(sim.puck.vy) < 500)
-			var hold := false
-			if close:
-				level = 0
-				if e.line_slot > 2:
-					hold = true
-				elif e.slot != deepest and sim.random(maxi(1, (0x32 - e.check_skill - e.stamina - e.awareness) / 2)) == 0:
-					hold = true
-			else:
-				hold = true
-			if hold:
-				if absi(sim.puck.vx) < 500 and absi(sim.puck.vy) < 500:
-					level -= 1
-				if sim.power_play:
-					level -= 2
-					if sim.power_play_team != e.team:
-						level += 4
-				var base := 0x14 - e.stamina
-				var odds := (base >> -level) if level < 0 else (base << level)
-				if sim.random(maxi(1, odds)) < 2:
-					e.target_x = 300
+		if e.flags & Entity.F_BUSY:
+			return
+		# hold back instead of chasing?
+		var level := 2
+		var d16 := Sim._s16(best_d)
+		var slow := absi(sim.puck.vx) < 0x1f4 and absi(sim.puck.vy) < 0x1f4
+		var close := d16 <= 0x190 or (d16 <= 0xe10 and slow)
+		var roll := true
+		if not close and e.line_slot > 2:
+			# (the original compares the line slot with the blue line here)
+			if (e.flags & Entity.F_ATTACK_UP) and e.line_slot > 0x4e:
+				close = true
+			elif (e.flags & Entity.F_ATTACK_UP) == 0 and e.line_slot < -0x4e:
+				close = true
+		if close:
+			level -= 2
+			if e.line_slot <= 2:
+				if e.slot == deepest:
+					roll = false
+				else:
+					var k := _div_trunc(0x32 - e.check_skill - e.aggression - e.awareness, 2)
+					roll = sim.random(Sim._s16(k)) == 0
+		if roll:
+			if slow:
+				level -= 1
+			if sim.power_play:
+				level -= 2
+				if (e.flags & Entity.F_PLAYER2) != 0 != (sim.power_play_team == 1):
+					level += 4
+			var base := 0x14 - e.aggression
+			var n := (base >> -level) if level < 0 else (base << level)
+			if (sim.random(Sim._s16(n)) & 0xffff) <= 1:
+				e.target_x = 0x12c
 	if e.flags & Entity.F_BUSY:
 		return
 	if sim.play_stopped:
-		# (the line change only while the play is stopped: a change during play would take the
-		# role away from the centre)
 		if not Lines.handle_line_change(sim, e):
 			skate_idle(sim, e)
 		return
@@ -964,24 +1074,32 @@ static func nearest_to_puck(sim: Sim, e: Entity) -> void:
 		return
 	if sim.puck_carrier < 0:
 		chase_puck(sim, e)
-	else:
-		e.target_x -= 1
-		if e.target_x >= 0:
-			chase_puck(sim, e)
-		else:
-			e.target_x = 0
-			var puck := sim.puck
-			var tx := ((puck.xi + (puck.vx >> 9)) * 3) / 4
-			var py := puck.yi + (puck.vy >> 9)
-			var own := -0xd4 if (e.flags & Entity.F_ATTACK_UP) else 0xd4
-			var ty := py + ((own - py) >> 1)
-			if absi(puck.yi) < absi(ty) and absi(puck.xi) < 0x41 and absi(ty - puck.yi) > 0x14:
-				if absi(tx) < 0x14:
-					ty = clampi(ty, -200, 200)
-				elif absi(tx) < 0x28:
-					ty = clampi(ty, -0xd2, 0xd2)
-			skate_towards(sim, e, tx, ty)
+		try_check(sim, e)
+		return
+	e.target_x = Sim._s16(e.target_x - 1)
+	if e.target_x >= 0:
+		chase_puck(sim, e)
+		try_check(sim, e)
+		return
+	e.target_x = 0
+	var puck := sim.puck
+	var tx := puck.xi + (Entity.to_s8(puck.vx >> 8) >> 1)
+	var ty := puck.yi + (Entity.to_s8(puck.vy >> 8) >> 1)
+	tx = Sim._s16(_div_trunc(Sim._s16(tx) * 3, 4))
+	var own := -0xd4 if (e.flags & Entity.F_ATTACK_UP) else 0xd4
+	ty = Sim._s16(((own - ty) >> 1) + ty)
+	if absi(ty) > absi(puck.yi) and absi(puck.xi) < 0x41 and absi(ty - puck.yi) > 0x14:
+		if absi(tx) < 0x14:
+			if absi(ty) > 0xc8:
+				ty = -0xc8 if ty < 0 else 0xc8
+		elif absi(tx) < 0x28:
+			if absi(ty) > 0xd2:
+				ty = -0xd2 if ty < 0 else 0xd2
+	skate_towards(sim, e, tx, ty)
 	try_check(sim, e)
+
+static func _div_trunc(v: int, d: int) -> int:
+	return -((-v) / d) if v < 0 else v / d
 
 ## ai_shoot (0x4d3f8): wind up and release; a CPU player may fake when a defender is close
 static func shoot(sim: Sim, e: Entity) -> void:
@@ -995,18 +1113,25 @@ static func shoot(sim: Sim, e: Entity) -> void:
 		default_skate(sim, e)
 		return
 	var changed := 0
-	e.want_dir -= 1
-	if e.want_dir < 0:
+	var w := Sim._s16((e.want_dir | (e.dir_timer << 8)) - 1)      # the word +0x28: the wind up
+	e.want_dir = w & 0xff
+	e.dir_timer = Entity.to_s8(w >> 8)
+	if w < 0:
 		changed = 0x20        # B released: the shot goes
-	e.timer_f = maxi(0, e.timer_f - 1)
-	var pressed := 0
+	sim.scratch_ac = (sim.scratch_ac & 0xffff0000) | changed
+	e.timer_f = maxi(0, Sim._s16(e.timer_f - 1))
 	var ay := absi(e.yi)
 	if ay < 0x9e and ay > 0x53 and sim.opponents_of(e).nearest_dist < 0x24 and e.timer_f == 0 and sim.random(0x14) == 0:
 		e.timer_f = 300
-		pressed = 0x10        # fake shot
-	PuckLogic.shot_control(sim, e, 8, pressed, changed)
+		sim.scratch_b |= 0x10          # fake shot
+	else:
+		sim.scratch_b &= 0xffaf
+	# the aim: whatever the movement code left in the scratch word (the shooter's vy)
+	PuckLogic.shot_control(sim, e, sim.scratch_a, sim.scratch_b, changed)
 
-## ai_pass_receiver (0x50f3f) with the one timer logic of one_timer_step
+## ai_pass_receiver (0x50f3f): a CPU receiver waits for the pass (chasing a slow loose puck) and
+## may set up a one timer when the pass leaves (not on a team of a user); the user's receiver and a
+## one timer run one_timer_step. Done when somebody has the puck or after 6 reaction ticks.
 static func pass_receiver(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_BUSY:
 		return
@@ -1016,44 +1141,51 @@ static func pass_receiver(sim: Sim, e: Entity) -> void:
 		skate_idle(sim, e)
 		return
 	e.react_timer -= 1
-	if (e.flags & Entity.F_USER) == 0:
-		if e.flags & Entity.F_STATE_ENTERED:
-			e.flags = (e.flags & ~(Entity.F_STATE_ENTERED | Entity.F_HAS_TARGET)) | Entity.F_HAS_TARGET
-			e.want_dir = 8
-			var team_no := e.team + 1
-			if sim.puck_carrier < 0 and sim.user1_team != team_no and sim.user2_team != team_no and one_timer_chance(sim, e):
-				sim.one_timer = true
-		if not sim.one_timer:
-			if sim.puck_carrier < 0:
-				if absi(sim.puck.vx) < 0x168 and absi(sim.puck.vy) < 0x168:
-					chase_puck(sim, e)
-				if e.react_timer > -6:
-					return
-			e.flags &= ~Entity.F_HAS_TARGET
-			default_skate(sim, e)
-			sim.one_timer = false
-			if sim.puck_carrier == e.slot:
-				pass_completed(sim, e)
-			elif sim.puck_carrier >= 0:
-				sim.pass_target = -1
+	if e.flags & Entity.F_USER:
+		one_timer_step(sim, e)
+		return
+	if e.flags & Entity.F_STATE_ENTERED:
+		e.flags = (e.flags & ~(Entity.F_STATE_ENTERED | Entity.F_HAS_TARGET)) | Entity.F_HAS_TARGET
+		e.want_dir = 8
+		e.dir_timer = 0
+		var team_no := 2 if (e.flags & Entity.F_PLAYER2) else 1
+		sim.scratch_a = team_no
+		if sim.puck_carrier < 0 and sim.user1_team != team_no and team_no != sim.user2_team and one_timer_chance(sim, e):
+			sim.one_timer = true
+	if sim.one_timer:
+		sim.scratch_b &= 0xffaf          # no fake
+		one_timer_step(sim, e)
+		return
+	if sim.puck_carrier < 0:
+		if absi(sim.puck.vx) < 0x168 and absi(sim.puck.vy) < 0x168:
+			chase_puck(sim, e)
+		if e.react_timer >= -5:
 			return
-	one_timer_step(sim, e)
+	e.flags &= ~Entity.F_HAS_TARGET
+	default_skate(sim, e)
+	sim.one_timer = false
+	if sim.puck_carrier == e.slot:
+		PuckLogic.pass_completed(sim, e)
+	elif sim.puck_carrier >= 0:
+		sim.pass_target = -1
 
-## one_timer_chance: is a one timer on from here
+## one_timer_chance (0x50e5c): in the attacking zone between the blue line and the goal line, the
+## net not empty: sure when the goalie stands more than 0xc to the side (and the receiver not at
+## his x), else one in 2 (more than 6) or 3. The goalie is the first opponent with line slot 0 (the
+## entity after the six when there is none).
 static func one_timer_chance(sim: Sim, e: Entity) -> bool:
 	var ay := absi(e.yi)
-	if ay <= 0x4e or ay >= 0xde or (e.yi < 0) != ((e.flags & Entity.F_ATTACK_UP) == 0):
+	if ay <= 0x4e or ay >= 0xde or (e.yi < 0) == ((e.flags & Entity.F_ATTACK_UP) != 0):
 		return false
-	var opp := sim.opponents_of(e)
-	var goalie: Entity = null
-	for i in 6:
-		var o := sim.entities[opp.first_slot + i]
-		if o.line_slot == 0:
-			goalie = o
-	if goalie == null:
+	if sim.opponents_of(e).goalie_pulled():
 		return false
+	var first := 6 if e.slot < 6 else 0
+	var i := 0
+	while i < 6 and sim.entities[first + i].line_slot != 0:
+		i += 1
+	var goalie := sim.entities[first + i]
 	var odds := 3
-	if (e.xi ^ goalie.xi) < 0:
+	if e.xi != goalie.xi:
 		var gx := absi(goalie.xi)
 		if gx > 0xc:
 			return true
@@ -1061,18 +1193,15 @@ static func one_timer_chance(sim: Sim, e: Entity) -> bool:
 			odds = 2
 	return sim.random(odds) == 0
 
-## pass_completed: the pass arrived
-static func pass_completed(sim: Sim, e: Entity) -> void:
-	if sim.pass_target >= 0 and sim.same_team(sim.pass_target, e.slot) and not sim.no_stats:
-		sim.team_of(e).passes_completed += 1
-	sim.pass_target = -1
-
-## one_timer_step: wind up as the pass comes, fire when the puck reaches the blade
+## one_timer_step (0x50b55): until the puck arrives (0x19 reaction ticks at most) the receiver of a
+## one timer winds up as it comes near (the stick back from 0x16 ticks before, aimed at the net
+## from where the puck will be) and fires when it reaches the blade (onetimer_offsets): the shot
+## power from the shooting rating, the crowd up. A user's B (or C) before the stick is back fakes.
 static func one_timer_step(sim: Sim, e: Entity) -> void:
 	var puck := sim.puck
-	if sim.puck_carrier >= 0 or e.react_timer <= -0x1a:
+	if sim.puck_carrier >= 0 or e.react_timer < -0x19:
 		if sim.puck_carrier == e.slot:
-			pass_completed(sim, e)
+			PuckLogic.pass_completed(sim, e)
 		sim.pass_target = -1
 		e.flags &= ~Entity.F_HAS_TARGET
 		default_skate(sim, e)
@@ -1081,22 +1210,29 @@ static func one_timer_step(sim: Sim, e: Entity) -> void:
 	if not sim.one_timer:
 		return
 	if e.anim == 0xdd3 or e.anim == 0xe2b:
+		if e.anim_pos <= 2 and (sim.scratch_b & 0x50):
+			sim.action_shot = false
+			e.flags |= Entity.F_BUSY
+			e.anim = 0x1355 if e.anim == 0xdd3 else 0x138d
+			sim.one_timer = false
 		e.timer_c = 5
 		var f := e.facing
 		if e.flags4 & Entity.F4_MIRROR:
 			f = (8 - f) & 7
 		var o: Array = Tables.onetimer_offsets[f]
 		var ox: int = o[0]
+		var oy: int = o[1]
 		if e.flags4 & Entity.F4_MIRROR:
 			ox = -ox
-		var dx := e.xi + ox - puck.xi
-		var oy: int = o[1]
-		var dy := e.yi + oy - puck.yi
+		sim.scratch_a = ox
+		sim.scratch_b = oy
+		var dx := Sim._s16(e.xi + ox - puck.xi)
+		var dy := Sim._s16(e.yi + oy - puck.yi)
 		var d2 := dx * dx + dy * dy
-		if (e.anim_pos == 0 and (e.react_timer < -4 or d2 < 400)) or (e.anim_pos == 2 and d2 < 0x100):
+		if (e.anim_pos == 0 and (e.react_timer < -4 or d2 < 0x190)) or (e.anim_pos == 2 and d2 < 0x100):
 			e.anim_hold = 0
 			Anim.advance(e, sim)
-		if d2 < 0x65 or (d2 < 0x91 and e.react_timer < -10):
+		if d2 <= 0x64 or (d2 <= 0x90 and e.react_timer < -0xa):
 			if sim.pending_dir > 8:
 				sim.pending_dir = 8
 			sim.shot_power = e.shot_skill / 2 + 0x1e
@@ -1104,26 +1240,33 @@ static func one_timer_step(sim: Sim, e: Entity) -> void:
 			e.anim_hold = 4
 			e.frame_wait = 0
 			Anim.advance(e, sim)
-			sim.team_of(e).one_timers += 1
-			sim.crowd_noise += 100
+			sim.team_record(e).one_timers += 1
+			sim.crowd_noise = Sim._s16(sim.crowd_noise + 100)
 			PuckLogic.update_carrier(sim, e)
-			sim.puck_carrier = e.slot
 			PuckLogic.do_shot(sim, e)
-			pass_completed(sim, e)
+			PuckLogic.pass_completed(sim, e)
 			e.flags &= ~Entity.F_HAS_TARGET
 			default_skate(sim, e)
 			sim.one_timer = false
-	elif e.react_timer < 0x17 and e.react_timer > -0xb:
-		var in_zone := (e.flags & Entity.F_USER) != 0 or ((e.flags & Entity.F_ATTACK_UP) and e.yi > 0x45) or ((e.flags & Entity.F_ATTACK_UP) == 0 and e.yi < -0x45)
-		if in_zone:
-			var lead := (e.react_timer + 10) * 0x10
-			var goal_y := 0xe8 if (e.flags & Entity.F_ATTACK_UP) else -0xe8
-			var px := puck.xi + ((puck.vx * lead) >> 16)
-			var py := puck.yi + ((puck.vy * lead) >> 16)
-			var dir := Tables.direction8(-px, goal_y - py)
-			Anim.set_animation(e, 0xe2b if PuckLogic.shot_is_backhand(e, dir) else 0xdd3)
+		return
+	if e.react_timer > 0x16 or e.react_timer < -0xa:
+		return
+	if (e.flags & Entity.F_USER) == 0:
+		if (e.flags & Entity.F_ATTACK_UP) and e.yi < 0x46:
+			return
+		if (e.flags & Entity.F_ATTACK_UP) == 0 and e.yi > -0x46:
+			return
+	sim.team_record(e).one_timer_tries += 1
+	var lead := Sim._s16((e.react_timer + 10) << 4)
+	var tx := Sim._s16(-(puck.xi + ((puck.vx * lead) >> 16)))
+	var goal_y := 0xe8 if (e.flags & Entity.F_ATTACK_UP) else -0xe8
+	var ty := Sim._s16(goal_y - (Sim._s16((lead * puck.vy) >> 16) + puck.yi))
+	var dir := Tables.direction8(tx, ty)
+	Anim.set_animation(e, 0xe2b if PuckLogic.shot_is_backhand(e, dir) else 0xdd3)
 
-## ai_breakaway (0x4fae8): alone against the goalie: skate in along a lane and deke or shoot
+## ai_breakaway (0x4fae8): alone against the goalie the CPU carrier skates in along a lane through
+## the breakaway waypoints; past the last one he shoots, at once on a change of heading by more
+## than one step (one in 4) or now and then (one in 0x20), aiming low on the side of the lane
 static func breakaway(sim: Sim, e: Entity) -> void:
 	if sim.puck_carrier != e.slot or (e.flags & Entity.F_USER):
 		default_skate(sim, e)
@@ -1142,47 +1285,70 @@ static func breakaway(sim: Sim, e: Entity) -> void:
 		e.timer_a = 0
 		e.dir_timer = 0
 		e.want_dir = 8
+		sim.breakaway_waypoint = 0
 		e.target_x = sim.random(4)
-		e.timer_f = 0          # waypoint index
-		# first waypoint: wide of the net when far out, straight in when close
-		var wp: Array = Tables.breakaway_waypoints[0]
-		e.target_y = wp[1]
-		e.timer_e = wp[2]
-		var lane: int = wp[0] if sim.random(2) == 0 else -wp[0]
-		if py >= 0x27 and absi(e.xi) > 0x14:
-			lane = 0
-			e.target_y = 0x97
-			e.timer_e = 0x66
-			e.timer_f = 2
-		e.pass_target = lane     # reused as the lane x
-	if e.timer_e >= 0 and py >= e.timer_e:
-		e.timer_f += 1
-		if e.timer_f < 4:
-			var wp2: Array = Tables.breakaway_waypoints[e.timer_f]
-			var lx: int = wp2[0]
-			if e.pass_target < 0:
-				lx = -lx
-			e.pass_target = lx
-			e.target_y = wp2[1]
-			e.timer_e = wp2[2]
-		else:
-			e.timer_e = -1
-	if e.timer_e < 0:
-		# at the last waypoint: shoot, sometimes after a deke to the other side
-		var diff := (e.facing - (2 if e.pass_target >= 0 else 6) + 1) & 7
-		if diff > 2 and sim.random(4) == 0 or diff <= 2 and sim.random(0x20) == 0 or py > 0xc8:
-			sim.pending_dir = sim.random(2) + (5 if e.pass_target < 0 else 2)
-			sim.shot_power = 0x14
-			var goal_y := 0xe8 if up else -0xe8
-			var dir := Tables.direction8(-e.xi, goal_y - e.yi)
-			Anim.set_animation(e, 0xdd3 if PuckLogic.shot_is_backhand(e, dir) else 0xe2b)
-			Anim.advance(e, sim)
-			e.anim_hold = 2
-			PuckLogic.do_shot(sim, e)
-			return
-	var ty := e.target_y if up else -e.target_y
-	e.dir_timer -= 2
-	skate_towards(sim, e, e.pass_target, ty)
+		breakaway_pick_lane(sim, e, py)
+	if sim.breakaway_trigger_y < 0:
+		var d := Sim._s16(e.heading >> 16) - sim.breakaway_heading
+		if d != 0:
+			d = (d + 1) & 7
+			var shoot_now := false
+			if d >= 3:
+				shoot_now = sim.random(4) == 0
+			else:
+				shoot_now = sim.random(0x20) == 0
+			if shoot_now:
+				sim.pending_dir = sim.random(2) + 2 + (3 if sim.breakaway_lane_side < 0 else 0)
+				sim.shot_power = 0x14
+				sim.scratch_a = Sim._s16(-e.xi)
+				sim.scratch_b = Sim._s16((0xe8 if up else -0xe8) - e.yi)
+				var dir := Tables.direction8(sim.scratch_a, sim.scratch_b)
+				Anim.set_animation(e, 0xdd3 if PuckLogic.shot_is_backhand(e, dir) else 0xe2b)
+				Anim.advance(e, sim)
+				e.anim_hold = 2
+				PuckLogic.do_shot(sim, e)
+				return
+	elif py >= sim.breakaway_trigger_y:
+		breakaway_next_waypoint(sim)
+		sim.breakaway_heading = Sim._s16(e.heading >> 16)
+	sim.scratch_a = Sim._s16(sim.breakaway_lane_x)
+	sim.scratch_b = Sim._s16(sim.breakaway_target_y if up else -sim.breakaway_target_y)
+	e.dir_timer = Entity.to_s8(e.dir_timer - 2)
+	skate_towards(sim, e, sim.scratch_a, sim.scratch_b)
+
+## breakaway_pick_lane (0x4f9ef): from far out a lane 0x3a to the side, to 0x3c then (waypoint 0);
+## from 0x27 on 0x2c to the side (straight in when already wide) to 0x97, then waypoint 2. The side:
+## the backhand side of a left handed shooter three times in four, else either
+static func breakaway_pick_lane(sim: Sim, e: Entity, py: int) -> void:
+	var d := 0x2c if py >= 0x27 else 0x3a
+	if py >= 0x27 and absi(e.xi) > 0x14:
+		d = 0
+	else:
+		if sim.random(4) != 0:
+			if e.left_handed != 0:
+				d = -d
+		elif sim.random(0x10) < 8:
+			d = -d
+		if (e.flags & Entity.F_ATTACK_UP) == 0:
+			d = -d
+	sim.breakaway_lane_x = d
+	sim.breakaway_lane_side = d
+	if py >= 0x27:
+		sim.breakaway_waypoint = 2
+		sim.breakaway_target_y = 0x97
+		sim.breakaway_trigger_y = 0x66
+	else:
+		sim.breakaway_target_y = 0x3c
+		sim.breakaway_trigger_y = 0x1e
+
+## breakaway_next_waypoint (0x4f99b): the lane x (on the side of the lane), the y and the trigger y
+## of breakaway_waypoints
+static func breakaway_next_waypoint(sim: Sim) -> void:
+	var wp: Array = Tables.breakaway_waypoints[sim.breakaway_waypoint]
+	sim.breakaway_lane_x = -int(wp[0]) if sim.breakaway_lane_side < 0 else int(wp[0])
+	sim.breakaway_target_y = wp[1]
+	sim.breakaway_trigger_y = wp[2]
+	sim.breakaway_waypoint += 1
 
 # --------------------------------------------------------------------------------------------
 # goalie (ai_goalie 0x4b774, ai_goalie_get_puck 0x4b5c2)

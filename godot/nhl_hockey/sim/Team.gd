@@ -21,6 +21,7 @@ var zone_time: int = 0               # +0x0e seconds with the puck in the attack
 var goals: int = 0                   # +0x10
 var faceoffs_won: int = 0            # +0x12
 var offensive_faceoffs: int = 0      # +0x14 faceoffs won in the attacking zone
+var one_timer_tries: int = 0         # +0x16 one timers set up (one_timer_step)
 var one_timers: int = 0              # +0x18 one timer shots
 var one_timer_goals: int = 0         # +0x1a
 var breakaways: int = 0              # +0x1c breakaways (note_breakaway)
@@ -37,6 +38,7 @@ var carrier_history: PackedInt32Array = PackedInt32Array([-1, -1, -1])   # +0x30
 var skaters_on_ice: int = 6          # +0x36 players dressed (goalie included)
 var goalie_request: int = 0          # +0x38 word: low nibble = goalie 0/1, 0xff00 = pulled by the CPU (reverts at the next faceoff), 0xfff0 = pulled by the user
 var line_change_ui: bool = false     # line_change_prompt: the line change prompt is open
+var nearest_d2: int = 0               # +0x3a the squared distance of the skater nearest to the puck (ai_nearest_to_puck)
 var nearest_dist: int = 0xffff       # +0x3e distance of the nearest skater to the puck
 var nearest_slot: int = -1           # +0x42
 var flags: int = 0                   # +0x44
@@ -94,6 +96,7 @@ func reset_stats() -> void:
 	zone_time = 0
 	faceoffs_won = 0
 	offensive_faceoffs = 0
+	one_timer_tries = 0
 	one_timers = 0
 	hits = 0
 	passes = 0
