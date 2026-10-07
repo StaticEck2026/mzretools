@@ -495,6 +495,20 @@ func league_tests(gf: Node) -> void:
 		fail("league game played: over %s, %s, GP %d, after %d, unplayed before %d, games %d" % [sim.match_over, hrec.hex_encode(), ht[tb], after, before, h.games_played()])
 	else:
 		print("league: game %d played %d-%d after %d steps" % [gi, hrec[4], hrec[5], steps])
+	# play-off series: Rangers - Canucks meet in the final, Rangers - Bruins in the first round
+	var ps := League.create_series("TESTPO", src, PackedByteArray(), 12, 21)
+	var br := ps.bracket()
+	var fin: Array = br[14]
+	if not ((fin[0] == 12 and fin[1] == 21) or (fin[0] == 21 and fin[1] == 12)) or fin[2] != 0 or fin[3] != 0 or ps.games_played() != 0x4a6:
+		fail("play-off series final: %s, games %x" % [str(fin), ps.games_played()])
+	var ps2 := League.create_series("TESTPO2", src, PackedByteArray(), 12, 0)
+	var met := false
+	for s in 8:
+		var sr: Array = ps2.bracket()[s]
+		if (sr[0] == 12 and sr[1] == 0) or (sr[0] == 0 and sr[1] == 12):
+			met = true
+	if not met:
+		fail("play-off series: Rangers and Bruins should meet in the first round")
 
 ## line changes, fatigue and goalie pulling (Lines.gd)
 func line_change_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:

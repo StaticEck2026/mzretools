@@ -65,14 +65,15 @@ static func rand_below(n: int) -> int:
 static func root() -> String:
 	return "user://leagues"
 
-## the leagues of the directory (scan_league_dirs: the directories NAME.LP)
-static func list_leagues() -> PackedStringArray:
+## the leagues of the directory (scan_league_dirs: the directories NAME.LP, NAME.PO the play-off
+## series)
+static func list_leagues(ext := ".LP") -> PackedStringArray:
 	var out := PackedStringArray()
 	var d := DirAccess.open(root())
 	if d == null:
 		return out
 	for n in d.get_directories():
-		if n.to_upper().ends_with(".LP"):
+		if n.to_upper().ends_with(ext):
 			out.append(n.get_basename())
 	out.sort()
 	return out
@@ -94,10 +95,10 @@ func save() -> void:
 		if g != null:
 			g.store_buffer(game_set)
 
-static func open(league_name: String) -> League:
+static func open(league_name: String, ext := ".LP") -> League:
 	var l := League.new()
 	l.name = league_name.to_upper()
-	l.dir = root().path_join(l.name + ".LP")
+	l.dir = root().path_join(l.name + ext)
 	if not DirAccess.dir_exists_absolute(l.dir):
 		return null
 	for n in FILES:
@@ -111,8 +112,8 @@ static func open(league_name: String) -> League:
 	l.season_over = l.games_played() >= ALL_GAMES
 	return l
 
-static func delete(league_name: String) -> void:
-	var d := root().path_join(league_name.to_upper() + ".LP")
+static func delete(league_name: String, ext := ".LP") -> void:
+	var d := root().path_join(league_name.to_upper() + ext)
 	var da := DirAccess.open(d)
 	if da == null:
 		return
@@ -1158,3 +1159,196 @@ func game_played(index: int, sim: Sim) -> void:
 			record_result(rec[2 + side], side, index, sim)
 	play_day(index if index < SEASON_GAMES else index - 1, rec[2] if human(rec[2]) else rec[3], 2)
 	play_day(games_played() if index < SEASON_GAMES else index, -1, 7)
+
+# ---------------------------------------------------------------------------------------------
+# a play-off series of its own (New Play-Off Series: stanley_cup_tree_screen 0x86696,
+# cup_tree_seed_bracket 0x86e8b, cup_tree_pick_teams 0x870b6, load_schedule_db 0x8721f,
+# schedule_build_bracket 0x875a3, playoff_eliminate_round1..3, schedule_advance_round1..final):
+# the two teams of the locker room meet; in the same conference in the first round, else in the
+# final, the rounds before played out with them winning
+# ---------------------------------------------------------------------------------------------
+
+const TEAM_CONFERENCE := 0xc5581     # unk_c5581: 3 western, 12 eastern
+
+static func conference(t: int) -> int:
+	return Exe.i32(TEAM_CONFERENCE + t * 4)
+
+## randomrange(n) of the match code (the same generator here)
+static func _randomrange(n: int) -> int:
+	return rand() % n
+
+## cup_tree_seed_bracket: 16 places, eight of each conference at random; the two teams at the
+## ends of their conference (same conference) or at random places of different halves
+static func seed_bracket(home: int, away: int) -> Array:
+	var slots: Array = []
+	slots.resize(16)
+	slots.fill(-16)
+	for i in 8:
+		for marker in [-3, -12]:
+			var k := _randomrange(16)
+			while slots[k] != -16:
+				k = (k + 1) % 16
+			slots[k] = marker
+	var ch := conference(home)
+	var ca := conference(away)
+	if ch == ca:
+		for i in 16:
+			if -slots[i] == ch:
+				slots[i] = home
+				break
+		for i in range(15, -1, -1):
+			if -slots[i] == ca:
+				slots[i] = away
+				break
+	else:
+		var a := _randomrange(3)
+		var ih := -1
+		var c := -1
+		while c != a:
+			ih += 1
+			if -slots[ih] == ch:
+				c += 1
+		slots[ih] = home
+		var b := _randomrange(4 - a)
+		var ia := -1
+		c = -1
+		while c != a + b:
+			ia += 1
+			if -slots[ia] == ca:
+				c += 1
+		slots[ia] = away
+		if ia < ih:
+			slots[ih] = away
+			slots[ia] = home
+			for i in 16:
+				if -slots[i] == ch:
+					slots[i] = -ca
+				elif -slots[i] == ca:
+					slots[i] = -ch
+	_pick_teams(slots, 3, 0, 12, home, away)
+	_pick_teams(slots, 0xc, 12, 14, home, away)
+	return slots
+
+## cup_tree_pick_teams: eight other teams of a conference (CONF_A + base, n of them), the first
+## two of different divisions, into the places of the conference's marker
+static func _pick_teams(slots: Array, mask: int, base: int, n: int, home: int, away: int) -> void:
+	var used := 0
+	for t in [home, away]:
+		if Exe.i32(CONFERENCE_BITS + t * 4) & mask:
+			for i in n:
+				if Exe.i32(CONF_A + (base + i) * 4) == t:
+					used |= 1 << i
+	var pick: Array = []
+	for k in 8:
+		var r := _randomrange(n)
+		while used & (1 << r):
+			r = _randomrange(n)
+		used |= 1 << r
+		pick.append(r)
+	var div0 := Exe.i32(CONFERENCE_BITS + Exe.i32(CONF_A + (base + pick[0]) * 4) * 4)
+	if div0 == Exe.i32(CONFERENCE_BITS + Exe.i32(CONF_A + (base + pick[1]) * 4) * 4):
+		var k := 2
+		while k < 8 and div0 == Exe.i32(CONFERENCE_BITS + Exe.i32(CONF_A + (base + pick[k]) * 4) * 4):
+			k += 1
+		if k < 8:
+			var x: int = pick[1]
+			pick[1] = pick[k]
+			pick[k] = x
+	var j := 0
+	for i in 16:
+		if -slots[i] == mask and j < 8:
+			slots[i] = Exe.i32(CONF_A + (base + pick[j]) * 4)
+			j += 1
+
+## the play-off series as a league of its own (NAME.PO): the season counts as played, the first
+## round of the seeded places, the rounds before the two teams meet are played out
+static func create_series(series_name: String, sources: Dictionary, settings: PackedByteArray, home: int, away: int) -> League:
+	var l := League.create(series_name, sources, [home, away], false, settings)
+	l.dir = root().path_join(l.name + ".PO")
+	for i in SEASON_GAMES:
+		var r := l.game(i)
+		r[0] = 0xff
+		r[1] = 0xff
+		l.set_game(i, r)
+	l.set_games_played(SEASON_GAMES)
+	var slots := seed_bracket(home, away)
+	var po := l._playoffs()
+	for k in po.size():
+		po[k] = 0xff
+	var n := l.series_length()
+	for c in 2:
+		var conf_teams: Array = []
+		for t in slots:
+			if conference(t) == (3 if c == 0 else 12):
+				conf_teams.append(t)
+		for s in 4:
+			set_series(po, c * 4 + s, conf_teams[s], conf_teams[7 - s], n)
+	for g in n:
+		for s in 8:
+			var dt := normalize_date(4, (0x11 if s < 4 else 0x10) + g * 2)
+			po[(s * 7 + g) * 6] = dt.x
+			po[(s * 7 + g) * 6 + 1] = dt.y
+	l._store_playoffs(po)
+	l.series_slots = slots
+	if conference(home) != conference(away):
+		var career := l.file("CAREER").duplicate()
+		for r in 3:
+			l._force_round(r, [home, away], career)
+			po = l._playoffs()
+			l.make_next_round(po, r + 1)
+			l._store_playoffs(po)
+		l.set_games_played(0x4a6)
+	return l
+
+var series_slots: Array = []
+
+## playoff_eliminate_round*: the series of a round played out, the two teams winning theirs
+func _force_round(r: int, teams: Array, career: PackedByteArray) -> void:
+	var first: int = ROUND_SERIES[r][0]
+	for s in range(first, first + ROUND_SERIES[r][1]):
+		var base := SEASON_GAMES + s * 7
+		var a := game(base)[2]
+		var b := game(base)[3]
+		var forced_team := a if teams.has(a) else (b if teams.has(b) else -1)
+		var n := series_length()
+		var wins := {}
+		for g in n:
+			var rec := game(base + g)
+			if rec[0] == 0xff:
+				continue
+			if wins.get(a, 0) == n / 2 + 1 or wins.get(b, 0) == n / 2 + 1:
+				rec[0] = 0xff
+				rec[1] = 0xff
+				rec[2] = 0xff
+				rec[3] = 0xff
+				set_game(base + g, rec)
+				continue
+			if not played(rec):
+				var forced := -1
+				if forced_team >= 0:
+					forced = 0 if rec[2] == forced_team else 1
+				sim_game(base + g, career, forced)
+				rec = game(base + g)
+			var w: int = rec[2] if rec[4] > rec[5] else rec[3]
+			wins[w] = wins.get(w, 0) + 1
+
+## the bracket for the screens: per series [team A, team B, wins A, wins B] (-1 when not set)
+func bracket() -> Array:
+	var po := _playoffs()
+	var out: Array = []
+	for s in 15:
+		var a: int = po[s * 42 + 2]
+		var b: int = po[s * 42 + 3]
+		var wa := 0
+		var wb := 0
+		for g in 7:
+			var base := (s * 7 + g) * 6
+			if po[base] == 0xff or po[base + 4] == 0xff:
+				continue
+			var w: int = po[base + 2] if po[base + 4] > po[base + 5] else po[base + 3]
+			if w == a:
+				wa += 1
+			elif w == b:
+				wb += 1
+		out.append([a if a < 26 else -1, b if b < 26 else -1, wa, wb])
+	return out

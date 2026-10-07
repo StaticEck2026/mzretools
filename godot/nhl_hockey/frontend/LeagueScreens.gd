@@ -347,6 +347,8 @@ func password_prompt(l: League, t: int) -> bool:
 
 func league_select_screen() -> int:
 	var names := League.list_leagues()
+	for n in League.list_leagues(".PO"):
+		names.append(n + " (Play-Offs)")
 	if names.is_empty():
 		await fe.message_dialog(["There are no leagues to open."])
 		return 0
@@ -372,11 +374,15 @@ func league_select_screen() -> int:
 	var r := await fe.message_dialog_buttons(lines, list)
 	if r < 0 or r >= labels.size() - 1:
 		return 0
-	var l := League.open(labels[r])
+	var series: bool = labels[r].ends_with(" (Play-Offs)")
+	var l := League.open(labels[r].trim_suffix(" (Play-Offs)"), ".PO" if series else ".LP")
 	if l == null:
 		await fe.message_dialog(["Error while reading the league!"])
 		return 0
-	open_league(l)
+	if series:
+		open_series(l)
+	else:
+		open_league(l)
 	return 2
 
 ## Export Databases ... (league_select_team: a team's files for its player on another computer)
@@ -776,3 +782,231 @@ func league_hilights() -> int:
 func league_import_databases() -> int:
 	await fe.message_dialog(["All human teams of this league", "play on this computer."])
 	return 0
+
+# ---------------------------------------------------------------------------------------------
+# New Play-Off Series ... (stanley_cup_tree_screen) and Next Play-Off Game ... (playoff_tree_screen
+# with the bracket of playoff_bracket_screen 0x8a652)
+# ---------------------------------------------------------------------------------------------
+
+## the name (NAME.PO), the databases, the two teams of the locker room; the bracket is seeded
+## and the series is open
+func stanley_cup_tree_screen() -> int:
+	fe.set_dialog_colors(0x41, 0x40, 0x42, 0x40, 0x43)
+	var name := (await fe.text_entry_dialog("Please Enter New Play-Off Name", 8)).to_upper()
+	if name == "":
+		return 2
+	if League.list_leagues(".PO").has(name):
+		var r := await fe.message_dialog_buttons(["There is already a Play-Off with that name!",
+			"Do you want to replace it with a new Play-Off?"], FrontEnd.buttons_at(0xc7733, 2))
+		if r != 1:
+			return 2
+	var org := await fe.message_dialog_buttons(["Do you wish to use your", "Current database or the", "Original NHL database?"],
+		FrontEnd.buttons_at(0xc74b7, 2))
+	if org < 0:
+		return 2
+	var keep := Session.save_block()
+	Session.mode = 1
+	if await fe.games.locker_room_hub() == 3:
+		Session.apply_block(keep)
+		return 2
+	# settings_playoff: the teams chosen, every rule, the play-off overtime
+	Session.option_flags = (Session.option_flags >> 8 & 0x80) << 8 | 0x79ff
+	Session.league_dir = name + ".PO"
+	Session.league_name = name
+	var settings := Session.save_block()
+	var home := Session.home_team
+	var away := Session.away_team
+	Session.apply_block(keep)
+	await _busy(["Seeding the play-offs."])
+	League.delete(name, ".PO")
+	var l := League.create_series(name, sources(org == 1), settings, home, away)
+	l.save()
+	open_series(l)
+	return 2
+
+func open_series(l: League) -> void:
+	Session.league = l
+	Session.league_dir = l.name + ".PO"
+	Session.league_name = l.name
+	Session.stats_dir = l.dir
+	Menus.at(0xce56f).cb = "playoff_tree_screen"
+	Menus.at(0xce58f).cb = "menu_playoff_settings"
+	Menus.at(0xce5af).cb = "playoff_highlights"
+
+## the tree of the series (File: Play Next Game / Return; Settings; Statistics): the next game
+## of the two teams is played and recorded, the other series move on
+func playoff_tree_screen() -> int:
+	var l: League = Session.league
+	if l == null:
+		return 0
+	var keep := Session.save_block()
+	if l.game_set.size() >= Session.SETTINGS_SIZE:
+		Session.apply_block(l.game_set)
+	Session.mode = 1
+	fe.set_hub_title(1)
+	while true:
+		var code := await _tree_menu(l)
+		if code != 4:
+			break
+		var index := _next_human_game(l)
+		if index < 0:
+			await fe.message_dialog(["The play-offs are over."])
+			continue
+		var rec := l.game(index)
+		Session.home_team = rec[2]
+		Session.away_team = rec[3]
+		Session.game_number = index
+		Session.option_flags &= ~0x200
+		var db := Database.open(l.file("TEAMS"), l.file("KEY"), l.file("ATT"))
+		if await fe.games.team_select_screen(rec[2], rec[3]) == 4:
+			continue
+		var played := await fe.play_game(db)
+		if played == 1 and fe.last_sim != null:
+			l.game_played(index, fe.last_sim)
+			l.save()
+			fe.stats.forget_files()
+			if l.season_over:
+				await awards_screen()
+		fe.last_sim = null
+	l.game_set = Session.save_block()
+	l.save()
+	Session.apply_block(keep)
+	Session.mode = 0
+	fe.set_hub_title(0)
+	return 2
+
+func _next_human_game(l: League) -> int:
+	for i in range(League.SEASON_GAMES, League.ALL_GAMES):
+		var r := l.game(i)
+		if r[0] != 0xff and r[2] != 0xff and r[3] != 0xff and not League.played(r) and (l.human(r[2]) or l.human(r[3])):
+			return i
+	return -1
+
+func _tree_menu(l: League) -> int:
+	await fe.leave_screen(100)
+	var pal := draw_bracket(l)
+	var root := Menus.list(0xcf90f, 3)
+	ui.draw_menu_items(root, 0x40, 0x41, 0x42)
+	fe.play_loop("leaguetm")
+	await scr.fade_in(pal, 16)
+	var redraw := func() -> void:
+		await scr.fade_out(16)
+		draw_bracket(l)
+		ui.draw_menu_items(root, 0x40, 0x41, 0x42)
+		await scr.fade_in(pal, 16)
+	var code := await ui.run_menu(root, 0x40, 0x41, 0x42, fe.dispatch, redraw, [1, 4])
+	ui.show_pointer(false)
+	await fe.leave_screen(100)
+	return code
+
+func menu_playoff_settings() -> int:
+	return await fe.settings.menu_exhibition_settings()
+
+func playoff_highlights() -> int:
+	await fe.message_dialog(["No highlights have been saved", "in these play-offs."])
+	return 0
+
+const BRACKET_X := [20, 183, 348, 510]   # unk_c6e22
+
+## playoff_bracket_screen: EMBSCUP, the bars of PSTATBAR, the arrows of SCUPARRW; the western
+## conference from the top (first round, second round, final), the eastern one from the bottom,
+## the final in the middle; the seed of each team (the font's badges 0x91..) and its wins, a
+## winner in colour 0x44. Returns the palette.
+func draw_bracket(l: League) -> PackedByteArray:
+	scr.clearclip()
+	var bg := fe.bank("embscup")
+	if bg != null:
+		scr.setclip(0, 0x13, 0x280, 0x1e0)
+		scr.drawshape_remap(bg.find("bkgd"), 0, 0)
+		scr.clearclip()
+	var pb := fe.bank("embpal")
+	var pal := Screen8.shape_palette(pb.find("!pal")) if pb != null else FrontEnd._grey_palette()
+	var br := l.bracket()
+	scr.setfont(fe.font_main)
+	scr.set_text_colors(0x40, 0x43)
+	if (br[0] as Array)[0] < 0:
+		var t := "Playoffs have not been seeded yet"
+		scr.print_text_at((640 - scr.textwidth(t)) / 2, 0xe8, t)
+		return pal
+	var bars := fe.bank("pstatbar")
+	if bars != null:
+		scr.drawshape_remap(bars.find("rst1"), 0, 0x1a)
+		scr.drawshape_remap(bars.find("rst2"), 0xf, 0x192)
+	var arrows := fe.bank("scuparrw")
+	var title := '"%s" Play-Offs' % l.name
+	scr.print_text_at((640 - scr.textwidth(title)) / 2, 0x16, title)
+	scr.setfont(fe.font_kaufm)
+	scr.print_outlined(0x140 - (scr.textwidth("Western Conference") >> 1), 0x2f, "Western Conference")
+	scr.print_outlined(0x140 - (scr.textwidth("Eastern Conference") >> 1), 0x1a7, "Eastern Conference")
+	scr.setfont(fe.font_main)
+	var seeds := {}
+	for s in 8:
+		var sr: Array = br[s]
+		seeds[sr[0]] = s % 4
+		seeds[sr[1]] = 7 - s % 4
+	var next_round := func(s: int) -> int:
+		return 8 + s / 2 if s < 8 else (12 + (s - 8) / 2 if s < 12 else (14 if s < 14 else -1))
+	var row := func(s: int, k: int, x: int, wx: int, y: int) -> void:
+		var sr: Array = br[s]
+		var t: int = sr[k]
+		if t < 0:
+			return
+		scr.set_text_colors(0x40, 0x43)
+		scr.print_text_at(x, y, "%c %s" % [0x91 + seeds.get(t, 0), Database.cstring(l.file("TEAMS"), t * 0x2e8 + 0x1a, 13)])
+		var adv := false
+		var nr: int = next_round.call(s)
+		if nr >= 0:
+			var nx: Array = br[nr]
+			adv = nx[0] == t or nx[1] == t
+		else:
+			var need := l.series_length() / 2 + 1
+			adv = sr[2 + k] >= need
+		scr.set_text_colors(0x44 if adv else 0x40, 0x43)
+		scr.print_text_at(wx, y, str(sr[2 + k]))
+	var all_set := func(list: Array) -> bool:
+		for s in list:
+			if (br[s] as Array)[0] < 0 or (br[s] as Array)[1] < 0:
+				return false
+		return true
+	# the west: first round, second round, conference final
+	for k in 4:
+		row.call(k, 0, BRACKET_X[k], BRACKET_X[k] + 0x6a, 0x48)
+		row.call(k, 1, BRACKET_X[k], BRACKET_X[k] + 0x6a, 0x58)
+	if all_set.call([8, 9]):
+		if arrows != null:
+			scr.drawshape_remap(arrows.find("aup1"), 18, 102)
+		for k in 2:
+			var x: int = [48, 220][k]
+			row.call(8 + k, 0, x, x + 0x6a, 0x97)
+			row.call(8 + k, 1, x, x + 0x6a, 0xa7)
+		if all_set.call([12]):
+			if arrows != null:
+				scr.drawshape_remap(arrows.find("aup2"), 45, 186)
+			row.call(12, 0, 0x48, 0xb2, 0xe3)
+			row.call(12, 1, 0x48, 0xb2, 0xf3)
+	# the east: from the bottom
+	for k in 4:
+		row.call(4 + k, 0, BRACKET_X[k], BRACKET_X[k] + 0x6a, 0x17e)
+		row.call(4 + k, 1, BRACKET_X[k], BRACKET_X[k] + 0x6a, 0x18e)
+	if all_set.call([10, 11]):
+		if arrows != null:
+			scr.drawshape_remap(arrows.find("adn1"), 17, 334)
+		for k in 2:
+			var x: int = [320, 492][k]
+			row.call(10 + k, 0, x, x + 0x6a, 0x131)
+			row.call(10 + k, 1, x, x + 0x6a, 0x141)
+		if all_set.call([13]):
+			if arrows != null:
+				scr.drawshape_remap(arrows.find("adn2"), 318, 264)
+			row.call(13, 0, 0x1c6, 0x230, 0xe3)
+			row.call(13, 1, 0x1c6, 0x230, 0xf3)
+	# the final in the middle
+	var fin: Array = br[14]
+	if fin[0] >= 0 or fin[1] >= 0:
+		if arrows != null:
+			scr.drawshape_remap(arrows.find("aup3"), 185, 226)
+			scr.drawshape_remap(arrows.find("adn3"), 378, 226)
+			scr.drawshape_remap(arrows.find("midl"), 262, 211)
+		row.call(14, 0, 0x102, 0x16c, 0xe0)
+		row.call(14, 1, 0x102, 0x16c, 0xf0)
+	return pal
