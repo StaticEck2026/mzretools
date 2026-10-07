@@ -1278,8 +1278,118 @@ func physics_golden() -> void:
 	sim.penalty_shot_slot = -1
 	sim.teams[0].attacks_up = true
 	sim.teams[1].attacks_up = false
+	# passing and shooting: do_pass, pass_lane_ok, pass_lead, start_shot, shot_control, do_shot,
+	# shot_setup
+	var s_ok := 0
+	var s_bad := 0
+	sim.stubs = {"play_sfx": true, "queue_infraction": true, "maybe_queue_infraction": true}
+	for c: Dictionary in ph["shoot"]:
+		var befores: Dictionary = c["before"]
+		for k in befores:
+			_entity_set(sim.entities[int(k)], befores[k])
+		var extra: Dictionary = c["extra"]
+		for k in extra:
+			var e: Entity = sim.entities[int(k)]
+			e.pass_ok = int(extra[k][0])
+			e.shot_accuracy = int(extra[k][1])
+			e.pass_target = int(extra[k][2])
+			e.react_timer = int(extra[k][3])
+		var g: Dictionary = c["globals"]
+		var gf := int(g["game_flags"])
+		sim.play_stopped = (gf & 1) != 0
+		sim.ends_switched = (gf & 2) != 0
+		sim.no_stats = (gf & 0x10) != 0
+		var teams: Array = c["teams"]
+		for t in 2:
+			var team: Team = sim.teams[t]
+			team.attacks_up = (t == 0) != sim.ends_switched
+			team.passes = int(teams[t]["passes"])
+			for i in 28:
+				team.energy[i] = int(teams[t]["energy"])
+				team.entity_of[i] = -1
+		sim.pending_dir = int(g["pending_dir"])
+		sim.shot_power = int(g["shot_power"])
+		sim.pass_target = int(g["pass_target"])
+		sim.last_passer = int(g["last_passer"])
+		sim.last_shooter = int(g["last_shooter"])
+		sim.action_pass = (int(g["action_flags"]) & 4) != 0
+		sim.action_shot = (int(g["action_flags"]) & 8) != 0
+		sim.shot_in_flight = (int(g["stop_flags"]) & 0x10) != 0
+		sim.power_play = false
+		sim.one_timer = int(g["one_timer"]) != 0
+		sim.breakaway = int(g["breakaway"]) != 0
+		sim.defenders_ahead = int(g["defenders_ahead"])
+		sim.user1_slot = int(g["user1_slot"])
+		sim.user2_slot = int(g["user2_slot"])
+		sim.user1_team = int(g["user1_team"])
+		sim.user2_team = int(g["user2_team"])
+		sim.penalty_shot = int(g["penalty_shot_active"]) != 0
+		sim.puck_carrier = int(c["carrier"])
+		sim.seed = int(c["seed"])
+		sim.stub_calls.clear()
+		var e: Entity = sim.entities[int(c["shooter"])]
+		var r: Entity = sim.entities[int(c["receiver"])]
+		var result := 0
+		var sc: Array = g["scratch"]
+		match String(c["mode"]):
+			"pass": PuckLogic.do_pass(sim, e)
+			"lane": result = 1 if PuckLogic.pass_lane_ok(sim, e, r) else 0
+			"lead": PuckLogic.pass_lead(sim, r)
+			"start": PuckLogic.start_shot(sim, e)
+			"control": PuckLogic.shot_control(sim, e, int(sc[0]), int(sc[1]) & 0xff, int(sc[2]) & 0xff)
+			"shot": PuckLogic.do_shot(sim, e)
+			"setup": PuckLogic.shot_setup(sim, e)
+		var diff := []
+		var after: Dictionary = c["after"]
+		for k in after:
+			for d in _entity_diff(sim.entities[int(k)], after[k], befores[k]):
+				diff.append("%s: %s" % [k, d])
+		var xa: Dictionary = c["extra_after"]
+		for k in xa:
+			var x: Entity = sim.entities[int(k)]
+			if x.pass_ok != int(xa[k][0]) or Entity.to_s8(x.react_timer) != int(xa[k][1]):
+				diff.append("%s: pass_ok %d react %d (original %s)" % [k, x.pass_ok, x.react_timer, str(xa[k])])
+		if result != int(c["result"]):
+			diff.append("result %d (original %d)" % [result, int(c["result"])])
+		if sim.puck_carrier != int(c["carrier_after"]):
+			diff.append("carrier %d (original %d)" % [sim.puck_carrier, int(c["carrier_after"])])
+		if str(sim.stub_calls) != str(_ints(c["calls"])):
+			diff.append("calls %s (original %s)" % [str(sim.stub_calls), str(c["calls"])])
+		var ga: Dictionary = c["globals_after"]
+		var got := {"pending_dir": sim.pending_dir, "shot_power": sim.shot_power, "pass_target": sim.pass_target,
+			"last_passer": sim.last_passer, "last_shooter": sim.last_shooter,
+			"action_flags": (4 if sim.action_pass else 0) | (8 if sim.action_shot else 0),
+			"stop_flags": 0x10 if sim.shot_in_flight else 0, "one_timer": 1 if sim.one_timer else 0,
+			"breakaway": 1 if sim.breakaway else 0, "defenders_ahead": sim.defenders_ahead,
+			"user1_slot": sim.user1_slot, "user2_slot": sim.user2_slot, "user1_team": sim.user1_team,
+			"user2_team": sim.user2_team, "penalty_shot_active": 1 if sim.penalty_shot else 0}
+		for k in got:
+			var w: int = int(ga[k])
+			if k == "action_flags":
+				w &= 0xc
+			elif k == "stop_flags":
+				w &= 0x10
+			if int(got[k]) != w:
+				diff.append("%s %d (original %d)" % [k, int(got[k]), w])
+		for t in 2:
+			if sim.teams[t].passes != int(c["passes_after"][t]):
+				diff.append("team %d passes %d (original %d)" % [t, sim.teams[t].passes, int(c["passes_after"][t])])
+		if sim.seed != int(c["final_seed"]):
+			diff.append("seed")
+		if diff.is_empty():
+			s_ok += 1
+		else:
+			s_bad += 1
+			if s_bad <= 12:
+				fail("%s by %d (to %d) aim %d power %d: %s" % [String(c["mode"]), e.slot, r.slot, int(g["pending_dir"]), int(g["shot_power"]), ", ".join(diff.slice(0, 8))])
+	sim.stubs = {}
+	sim.no_stats = false
+	sim.ends_switched = false
+	sim.penalty_shot = false
+	sim.teams[0].attacks_up = true
+	sim.teams[1].attacks_up = false
 	sim.sort_draw_order()
-	print("golden physics: %d / %d distances, collide_boards %d / %d, apply_skating %d / %d, at the nets %d / %d, move_entity %d / %d, advance_animation %d / %d, puck_check_players %d / %d, body contacts %d / %d, puck_update %d / %d" % [ph["distance"].size() - dbad, ph["distance"].size(), ok, ph["boards"].size(), sk_ok, ph["skating"].size(), n_ok, ph["nets"].size(), c_ok, ph["contacts"].size(), a_ok, ph["animation"].size(), p_ok, ph["pickup"].size(), b_ok, ph["checks"].size(), u_ok, ph["update"].size()])
+	print("golden physics: %d / %d distances, collide_boards %d / %d, apply_skating %d / %d, at the nets %d / %d, move_entity %d / %d, advance_animation %d / %d, puck_check_players %d / %d, body contacts %d / %d, puck_update %d / %d, passes and shots %d / %d" % [ph["distance"].size() - dbad, ph["distance"].size(), ok, ph["boards"].size(), sk_ok, ph["skating"].size(), n_ok, ph["nets"].size(), c_ok, ph["contacts"].size(), a_ok, ph["animation"].size(), p_ok, ph["pickup"].size(), b_ok, ph["checks"].size(), u_ok, ph["update"].size(), s_ok, ph["shoot"].size()])
 
 ## the numbers of a JSON value as ints (arrays too, strings kept)
 static func _ints(v: Variant) -> Variant:

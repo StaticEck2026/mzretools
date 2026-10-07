@@ -982,17 +982,17 @@ static func shoot(sim: Sim, e: Entity) -> void:
 	if not sim.action_shot:
 		default_skate(sim, e)
 		return
-	var control := 0x20
+	var changed := 0
 	e.want_dir -= 1
 	if e.want_dir < 0:
-		control = 0           # B released: the shot goes
+		changed = 0x20        # B released: the shot goes
 	e.timer_f = maxi(0, e.timer_f - 1)
 	var pressed := 0
 	var ay := absi(e.yi)
 	if ay < 0x9e and ay > 0x53 and sim.opponents_of(e).nearest_dist < 0x24 and e.timer_f == 0 and sim.random(0x14) == 0:
 		e.timer_f = 300
 		pressed = 0x10        # fake shot
-	PuckLogic.shot_control(sim, e, control, pressed)
+	PuckLogic.shot_control(sim, e, 8, pressed, changed)
 
 ## ai_pass_receiver (0x50f3f) with the one timer logic of one_timer_step
 static func pass_receiver(sim: Sim, e: Entity) -> void:

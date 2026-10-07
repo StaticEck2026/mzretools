@@ -137,6 +137,8 @@ var breakaway := false              # dword_cc0f8
 var defenders_ahead := 0            # dword_cc124
 var icing_flags: int = 0            # dword_e9abe byte 2: 1 icing called, 2 direction, 4 candidate
 var icing_shooter: int = -1
+var buttons_prev := [0, 0]           # the buttons (0x70) of each user at the last read (read_control_p1 / p2)
+var buttons_changed := 0             # scratch_e03ac: the buttons that went down or up since
 var save_clip_shown := false       # dword_e9a9e low word: the SAVED clip was shown this period (no more save credits)
 var stubs: Dictionary = {}          # golden tests: the routines replaced by a record of their calls (stubbed)
 var stub_calls: Array = []
@@ -658,8 +660,12 @@ func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) ->
 		e.timer_d = maxi(0, e.timer_d - 1)
 		integrate(e)
 		if e.slot == user1_slot:
+			buttons_changed = (control_p1 & 0x70) ^ buttons_prev[0]    # read_control_p1
+			buttons_prev[0] = control_p1 & 0x70
 			control_player(e, control_p1, pressed_p1, 0)
 		elif e.slot == user2_slot:
+			buttons_changed = (control_p2 & 0x70) ^ buttons_prev[1]
+			buttons_prev[1] = control_p2 & 0x70
 			control_player(e, control_p2, pressed_p2, 1)
 		if e.state() != Entity.State.NONE:
 			AI.dispatch(self, e)
@@ -801,7 +807,7 @@ func control_player(e: Entity, control: int, pressed: int, player: int) -> void:
 				PuckLogic.pass_button(self, e, control, pressed)
 				return
 			if action_shot:
-				PuckLogic.shot_control(self, e, control, pressed)
+				PuckLogic.shot_control(self, e, control, pressed, buttons_changed)
 				return
 			if pressed & 0x10:          # A: pass (released next step, in the pushed direction)
 				pending_dir = e.facing
@@ -1220,6 +1226,11 @@ func collide_boards(e: Entity, px: int, py: int, hw: int, hh: int) -> void:
 		return
 	collide_corner(e, a, b)
 
+## a 32 bit signed value (the original's registers wrap)
+static func _s32(v: int) -> int:
+	v &= 0xffffffff
+	return v - 0x100000000 if v >= 0x80000000 else v
+
 static func _s16(v: int) -> int:
 	v &= 0xffff
 	return v - 0x10000 if v >= 0x8000 else v
@@ -1593,6 +1604,42 @@ static func _div_trunc(a: int, b: int) -> int:
 	return -q if a < 0 else q
 
 ## isqrt32: integer square root
+## isqrt32 (0x93470): the original's square root of an unsigned 32 bit number: a subtraction of odd
+## numbers below 0x931, below 0x10000 two Newton steps from a guess of the high byte, otherwise four
+## Newton steps of 16 bit divisions (the original faults on numbers so large that a quotient
+## exceeds 16 bits; they do not occur)
+static func isqrt32(v: int) -> int:
+	v &= 0xffffffff
+	if v < 0x10000:
+		if v <= 0x930:
+			var d := v >> 1
+			if d == 0:
+				return v
+			var a := -6
+			while true:
+				a += 0x10
+				d -= a
+				if d < 0:
+					break
+			d += a
+			a = (a - 6) >> 2
+			for i in 3:
+				d -= a
+				if d < 0:
+					return a
+				a += 1
+			return a
+		var bl := (v >> 8) + 0x30
+		if bl >= 0x100:
+			var bx := (v >> 9) + 0x80
+			return ((v / bx) + bx) >> 1
+		bl = (bl + v / bl) >> 1
+		return ((v / bl) + bl) >> 1
+	var b := ((v >> 16) + 0x800) & 0xffff
+	for i in 3:
+		b = ((b + v / b) & 0xffff) >> 1
+	return ((v / b + b) & 0xffff) >> 1
+
 static func isqrt(v: int) -> int:
 	if v <= 0:
 		return 0

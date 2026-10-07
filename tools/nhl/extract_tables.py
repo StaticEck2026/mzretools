@@ -73,7 +73,7 @@ def main():
     # up to stick_offsets
     t['frame_offsets'] = [list(struct.unpack('<2b', le.read(0xcc148 + i * 2, 2))) for i in range(0x32e)]
     # do_shot: aim point per pending_dir as (x, z) pairs; the y is the goal line (+-0xe8)
-    t['shot_targets'] = shorts(le, 0xccc60, 16)
+    t['shot_targets'] = shorts(le, 0xccc60, 18)          # 9 aim points (x, height): 8 directions and the middle
     # set_default_state: AI state per line_slot (0 goalie .. 6)
     t['position_default_state'] = list(le.read(0xccca1, 7))
     t['dir8_lut'] = list(le.read(0xd2c74, 16))

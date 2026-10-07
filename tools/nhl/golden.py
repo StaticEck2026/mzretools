@@ -22,7 +22,9 @@
 #                    pointing at buffers of the emulator); body contacts of both teams (move_entity,
 #                    resolve_body_check, knock_down; injury_check, injure_player, bench_cheer and
 #                    start_stoppage stubbed); puck_update among all 17 entities (the prediction,
-#                    the carried puck, icing, offside, the penalty shot timer, the frozen puck).
+#                    the carried puck, icing, offside, the penalty shot timer, the frozen puck);
+#                    passes and shots (do_pass, pass_lane_ok, pass_lead, start_shot, shot_control,
+#                    do_shot, shot_setup).
 #                    The records after a call keep the fields that changed.
 #
 # The patch bank is put in the emulator's memory the way loadpatches leaves it: the .PAT file at
@@ -398,6 +400,16 @@ PENALTY_SHOT_ACTIVE = 0xcc128
 PENALTY_SHOT_SETUP = 0xcc11c
 PENALTY_SHOT_SPOT = 0xcc110                   # dwords x, y
 USER_SLOTS = 0xc90c2                          # user1_slot, user2_slot, user1_team, user2_team
+DO_PASS = 0x54df4
+PASS_LANE_OK = 0x54c09                        # (passer, receiver) -> bool
+PASS_LEAD = 0x551cf                           # (receiver)
+START_SHOT = 0x5786e
+SHOT_CONTROL = 0x578fa                        # scratch inputs: e03bc dir, e03c0 pressed, e03ac changed
+DO_SHOT = 0x57c0b
+SHOT_SETUP = 0x57a98
+PENDING_DIR = 0xc90a4
+ONE_TIMER = 0xcc0f4
+SCRATCH = (0xe03bc, 0xe03c0, 0xe03ac)
 # the team record fields of the pickup cases (+0x30.. the last three carriers, +0x36 skaters, +0x38
 # goalie_request) and the default line table of the port (Lines.default_line_table)
 TEAM_FIELDS = (('shots', 0, -2), ('pp_shots', 6, -2), ('faceoffs_won', 0x12, -2), ('offensive_faceoffs', 0x14, -2),
@@ -1129,6 +1141,131 @@ def update_cases(emu, rnd, base, calls):
     return out
 
 
+SHOOT_GLOBALS = (('pending_dir', PENDING_DIR, -2), ('shot_power', SHOT_POWER, -2), ('pass_target', SHOT_POWER + 2, -2),
+                 ('last_passer', LAST_PASSER, -2), ('last_shooter', LAST_SHOOTER, -2), ('action_flags', ACTION_FLAGS, 1),
+                 ('stop_flags', STOP_FLAGS, 1), ('one_timer', ONE_TIMER, -4), ('breakaway', BREAKAWAY_FLAG, -4),
+                 ('defenders_ahead', DEFENDERS_AHEAD, -4), ('user1_slot', USER_SLOTS, -2), ('user2_slot', USER_SLOTS + 2, -2),
+                 ('user1_team', USER_SLOTS + 4, -2), ('user2_team', USER_SLOTS + 6, -2),
+                 ('penalty_shot_active', PENALTY_SHOT_ACTIVE, -4))
+
+
+def shoot_cases(emu, rnd, base, calls):
+    """passing and shooting: do_pass (pass_to_entity, pass_lead, pass_lane_ok, the blind pass, the
+    goalie's clearance and the users following it), pass_lane_ok and pass_lead called directly,
+    start_shot, shot_control (its scratch inputs given), do_shot (shot_setup, the power, the
+    scatter, the lift) and shot_setup"""
+    frames = list(range(0, 0x284)) + list(range(0x294, 0x2da)) + list(range(0x378, 0x468))
+    out = []
+    modes = ('pass', 'pass', 'lane', 'lead', 'start', 'control', 'control', 'shot', 'shot', 'shot', 'setup')
+    for k in range(1100):
+        mode = modes[k % len(modes)]
+        emu.write(ENTITIES, base)
+        game = rnd.choice((0, 0, 0, 0x10, 2))
+        switched = game & 2
+        teams = []
+        for ti, t in enumerate(TEAM_RECORDS):
+            f = {'energy': rnd.choice((0x1000, 0xc00, 0x800)), 'passes': rnd.randrange(20)}
+            emu.write(t + 0x46, struct.pack('<28h', *([f['energy']] * 28)))
+            emu.write(t + 0x26, struct.pack('<h', f['passes']))
+            emu.write(t + 0x7e, struct.pack('<28h', *([-1] * 28)))
+            emu.write(t + 0xf6, struct.pack('<I', ENTITIES + ti * 6 * 0x80))
+            teams.append(f)
+        px = rnd.randrange(-0x90, 0x91)
+        py = rnd.randrange(-0xe0, 0xe1)
+        shooter = rnd.choice((1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 0, 6))
+        for slot in range(12):
+            rec = bytearray(emu.read(ENTITIES + slot * 0x80, 0x80))
+            near = slot == shooter or rnd.random() < 0.25
+            x = px + rnd.randrange(-6, 7) if near else rnd.randrange(-0x90, 0x91)
+            y = py + rnd.randrange(-6, 7) if near else rnd.randrange(-0xf0, 0xf1)
+            up = (slot < 6) != bool(switched)
+            lim = rnd.choice((0x400, 0x1800, 0x3000))
+            f = {'x': x << 16 | rnd.randrange(0x10000), 'y': y << 16 | rnd.randrange(0x10000),
+                 'vx': rnd.choice((0, rnd.randrange(-lim, lim))), 'vy': rnd.choice((0, rnd.randrange(-lim, lim))),
+                 'heading': rnd.randrange(8) << 16 | rnd.randrange(0x10000), 'frame': rnd.choice(frames),
+                 'flags4': rnd.choice((0, 8)), 'flags': (0x80 if up else 0) | (0x40 if slot >= 6 else 0) | rnd.choice((0, 0, 8)),
+                 'flags2': rnd.choice((0, 0, 0, 4)), 'line_slot': (0 if slot in (0, 6) else rnd.randrange(1, 6)) if rnd.random() < 0.93 else -1,
+                 'roster': rnd.randrange(0, 20), 'anim': rnd.choice((0x3f9, 0x491, 0xdd3, 0xe2b, 0x289)),
+                 'anim_pos': rnd.randrange(0, 0x10), 'shot_skill': rnd.randrange(16), 'pass_skill': rnd.randrange(16),
+                 'save_result': 0, 'speed_skill': rnd.randrange(16)}
+            put_fields(rec, f)
+            rec[0x5c] = rnd.randrange(16)                    # shot accuracy
+            rec[0x53] = rnd.choice((0, 0, 1))                # pass_ok
+            struct.pack_into('<h', rec, 0x48, rnd.choice((-1, 2, 3, 8, 9)) if slot != shooter else rnd.choice((2, 3, 4) if slot < 6 else (8, 9, 10)))
+            emu.write(ENTITIES + slot * 0x80, rec)
+        puck = bytearray(emu.read(PUCK, 0x80))
+        put_fields(puck, {'x': px << 16, 'y': py << 16, 'vx': rnd.randrange(-0x800, 0x800), 'vy': rnd.randrange(-0x800, 0x800),
+                          'vz': rnd.choice((0, 0x2ff, 0x5ab)), 'z': 0})
+        emu.write(PUCK, puck)
+        emu.call(SORT_DRAW_ORDER2)
+        carrier = shooter if rnd.random() < 0.85 else rnd.choice((-1, 3))
+        emu.write(PUCK + 0x42, bytes([carrier & 0xff]))
+        g = {'pending_dir': rnd.choice((0, 1, 2, 3, 4, 5, 6, 7, 8)), 'shot_power': rnd.choice((0xf, 0x14, 0x1a, 0x23, 0x2c)),
+             'pass_target': rnd.choice((-1, 3)), 'last_passer': rnd.choice((-1, 2)), 'last_shooter': rnd.choice((-1, 9)),
+             'action_flags': rnd.choice((0, 4, 8, 0xc)), 'stop_flags': rnd.choice((0, 0x10)), 'one_timer': rnd.choice((0, 1)),
+             'breakaway': rnd.choice((0, 0, 1)), 'defenders_ahead': rnd.choice((0, 1)),
+             'user1_slot': rnd.choice((-1, shooter, 2)), 'user2_slot': rnd.choice((-1, 8, shooter)),
+             'user1_team': rnd.choice((1, 2)), 'user2_team': rnd.choice((0, 2, 1)),
+             'penalty_shot_active': rnd.choice((0, 0, 0, 1)), 'game_flags': game,
+             'scratch': [rnd.choice((8, 0, 2, 5, 7, 0x22, 0x13)), rnd.choice((0, 0, 0, 0x10, 0x40)), rnd.choice((0, 0x20, 0x20, 0x10))]}
+        emu.write(GAME_FLAGS, bytes([game]))
+        for n, a, sz in SHOOT_GLOBALS:
+            emu.write(a, struct.pack('<' + _FMT[sz], g[n] if sz < 0 else g[n] & ((1 << (8 * sz)) - 1)))
+        for a, v in zip(SCRATCH, g['scratch']):
+            emu.write(a, struct.pack('<H', v))
+        seed = rnd.getrandbits(32)
+        emu.write(SEED, struct.pack('<I', seed))
+        befores = {str(s_): entity_fields(emu, s_) for s_ in range(17)}
+        extra = {str(s_): [emu.read(ENTITIES + s_ * 0x80 + 0x53, 1)[0], emu.read(ENTITIES + s_ * 0x80 + 0x5c, 1)[0],
+                           struct.unpack('<h', emu.read(ENTITIES + s_ * 0x80 + 0x48, 2))[0],
+                           struct.unpack('<b', emu.read(ENTITIES + s_ * 0x80 + 0x27, 1))[0]] for s_ in range(12)}
+        receiver = rnd.choice([s_ for s_ in range(12) if s_ != shooter])
+        if mode == 'lane' and rnd.random() < 0.7:
+            # inside pass_lane_ok's window: a drop pass in the attacking zone, both skating up the ice
+            receiver = rnd.choice([s_ for s_ in (range(1, 6) if shooter < 6 else range(7, 12)) if s_ != shooter])
+            up = struct.unpack('<B', emu.read(ENTITIES + shooter * 0x80 + 0x44, 1))[0] & 0x80
+            sign = 1 if up else -1
+            ey = rnd.randrange(0x52, 0x77)
+            ty = rnd.randrange(0x4f, ey)
+            ex = rnd.randrange(-0x40, 0x41)
+            for slot, x, y in ((shooter, ex, ey), (receiver, ex + rnd.randrange(-0x28, 0x29), ty)):
+                rec = bytearray(emu.read(ENTITIES + slot * 0x80, 0x80))
+                put_fields(rec, {'x': x << 16, 'y': (sign * y) << 16, 'vy': sign * rnd.randrange(0, 0x600),
+                                 'vx': rnd.randrange(-0x600, 0x600), 'line_slot': rnd.randrange(1, 6)})
+                emu.write(ENTITIES + slot * 0x80, rec)
+            befores = {str(s_): entity_fields(emu, s_) for s_ in range(17)}
+        del calls[:]
+        e = ENTITIES + shooter * 0x80
+        result = 0
+        if mode == 'pass':
+            emu.call(DO_PASS, eax=e)
+        elif mode == 'lane':
+            result = emu.call(PASS_LANE_OK, eax=e, edx=ENTITIES + receiver * 0x80) & 0xffff
+        elif mode == 'lead':
+            emu.call(PASS_LEAD, eax=ENTITIES + receiver * 0x80)
+        elif mode == 'start':
+            emu.call(START_SHOT, eax=e)
+        elif mode == 'control':
+            emu.call(SHOT_CONTROL, eax=e)
+        elif mode == 'shot':
+            emu.call(DO_SHOT, eax=e)
+        else:
+            emu.call(SHOT_SETUP, eax=e)
+        out.append({'mode': mode, 'shooter': shooter, 'receiver': receiver, 'carrier': carrier, 'globals': g, 'teams': teams,
+                    'seed': seed, 'before': befores, 'extra': extra,
+                    'after': {str(s_): entity_fields(emu, s_) for s_ in range(17)},
+                    'extra_after': {str(s_): [emu.read(ENTITIES + s_ * 0x80 + 0x53, 1)[0],
+                                              struct.unpack('<b', emu.read(ENTITIES + s_ * 0x80 + 0x27, 1))[0]] for s_ in range(12)},
+                    'result': result, 'carrier_after': struct.unpack('<b', emu.read(PUCK + 0x42, 1))[0],
+                    'calls': [list(c) for c in calls],
+                    'globals_after': {n: struct.unpack('<' + _FMT[sz], emu.read(a, abs(sz)))[0] for n, a, sz in SHOOT_GLOBALS},
+                    'passes_after': [struct.unpack('<h', emu.read(t + 0x26, 2))[0] for t in TEAM_RECORDS],
+                    'final_seed': struct.unpack('<I', emu.read(SEED, 4))[0]})
+        for a, n in ((GAME_FLAGS, 1), (PENALTY_SHOT_ACTIVE, 4), (STOP_FLAGS, 2), (BREAKAWAY_FLAG, 4)):
+            emu.write(a, b'\0' * n)
+    return out
+
+
 def physics_cases(exe):
     emu = PortEmu(exe)
     rnd = random.Random(1993)
@@ -1214,6 +1351,7 @@ def physics_cases(exe):
     out['pickup'] = pickup_cases(emu, rnd, base, calls)
     out['checks'] = check_cases(emu, rnd, base, calls)
     out['update'] = update_cases(emu, rnd, base, calls)
+    out['shoot'] = shoot_cases(emu, rnd, base, calls)
     # the records after the call keep only the fields that changed (the test merges them over the
     # records before the call)
     for cases in out.values():

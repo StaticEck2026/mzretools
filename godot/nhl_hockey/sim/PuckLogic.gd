@@ -660,7 +660,13 @@ static func pass_button(sim: Sim, e: Entity, control: int, _pressed: int) -> voi
 	if (control & 8) == 0:
 		sim.pending_dir = control & 7
 
-## do_pass (0x54df4): find a receiver in the aimed direction, otherwise a blind pass
+## do_pass (0x54df4): the carrier lets the puck go. A computer player with a lane picked
+## (ai_choose_pass_target: pass_ok, the target in +0x48) passes to him directly; otherwise the
+## shot power is the passing rating (8 for a goalie) x 4 + 0xa0 and the receiver is the team mate
+## nearest to the puck in the aimed direction (pending_dir, one step either side counting 0x10000
+## more): a user with an open lane passes directly, else the pass leads him (pass_lead); with nobody
+## there the puck goes the aimed way at that power (a blind pass). A goalie clears it up the ice
+## (and the users follow the puck), a skater passes fore or backhand.
 static func do_pass(sim: Sim, e: Entity) -> void:
 	var puck := sim.puck
 	sim.one_timer = false
@@ -671,130 +677,153 @@ static func do_pass(sim: Sim, e: Entity) -> void:
 	if (e.flags & Entity.F_USER) == 0 and e.pass_ok != 0 and e.pass_target >= 0:
 		pass_to_entity(sim, e, sim.entities[e.pass_target])
 		return
-	var power := (8 if e.line_slot == 0 else e.pass_skill) * 4 + 0xa0
+	sim.shot_power = (8 if e.line_slot == 0 else e.pass_skill) * 4 + 0xa0
 	var best: Entity = null
-	var best_d := 0x7fffffff
-	var first := sim.team_of(e).first_slot
+	var best_d := 0xffffffff
+	var first := 0 if e.slot < 6 else 6
 	for i in 6:
 		var p := sim.entities[first + i]
 		if p == e or p.line_slot <= 0 or (p.flags2 & Entity.F2_UNSELECTABLE):
 			continue
-		var dx := p.xi - puck.xi
-		var dy := p.yi - puck.yi
+		var dx := Sim._s16(p.xi - puck.xi)
+		var dy := Sim._s16(p.yi - puck.yi)
 		var d := (Tables.direction8(dx, dy) - sim.pending_dir) & 7
-		if d < 2 or d == 7:
-			var score := dy * dy + dx * dx + (0 if d == 0 else 0x10000)
+		if d <= 1 or d == 7:
+			var score := (dy * dy + dx * dx + (0 if d == 0 else 0x10000)) & 0xffffffff
 			if score <= best_d:
 				best_d = score
 				best = p
 	if best == null:
-		var v: Array = Tables.dir8_vectors[sim.pending_dir & 7]
-		puck.vy = (v[1] * power * 0x400) / 3000 + e.vy
-		puck.vx = (v[0] * power * 0x400) / 3000 + e.vx
+		# (no direction, 8: the original reads past the table into random_seed, which follows it)
+		var v: Array = Tables.dir8_vectors[sim.pending_dir] if sim.pending_dir < 8 \
+			else [Sim._s16(sim.seed), Sim._s16(sim.seed >> 16)]
+		puck.vy = Sim._s16(_div_trunc(Sim._s32((v[1] * sim.shot_power) << 10), 3000) + e.vy)
+		puck.vx = Sim._s16(_div_trunc(Sim._s32((v[0] * sim.shot_power) << 10), 3000) + e.vx)
 		puck.vz = sim.random(0x1000)
 	else:
 		if (e.flags & Entity.F_USER) and pass_lane_ok(sim, e, best):
 			pass_to_entity(sim, e, best)
 			return
-		pass_lead(sim, e, best)
+		pass_lead(sim, best)
 	var a := 0
 	if e.line_slot == 0:
 		# the goalie clears towards his own blue line
 		if (puck.vy < 0) != ((e.flags & Entity.F_ATTACK_UP) == 0):
-			puck.vy = -puck.vy
+			puck.vy = Sim._s16(-puck.vy)
 		a = 0x1b9
 		e.flags2 |= Entity.F2_TURNING
 		if e.flags & Entity.F_USER:
-			var player := 0 if e.slot == sim.user1_slot else 1
-			if best == null or (best.flags & Entity.F_USER):
-				sim.switch_to_nearest(e, player)
-			elif player == 0:
-				sim.user1_slot = sim.find_switch_target(best.slot, sim.user1_slot)
+			if best != null and (best.flags & Entity.F_USER) == 0:
+				if e.slot == sim.user1_slot:
+					if sim.user1_slot != best.slot:
+						sim.user1_slot = sim.find_switch_target(best.slot, sim.user1_slot)
+				elif best.slot != sim.user2_slot:
+					sim.user2_slot = sim.find_switch_target(best.slot, sim.user2_slot)
 			else:
-				sim.user2_slot = sim.find_switch_target(best.slot, sim.user2_slot)
+				sim.switch_to_nearest(e, 0 if e.slot == sim.user1_slot else 1)
 	else:
 		var d := Tables.direction8(puck.vx, puck.vy)
 		a = 0x3c1 if shot_is_backhand(e, d) else 0x389
 	Anim.set_animation(e, a)
 	e.flags |= Entity.F_BUSY
-	sim.play_sfx(0x99 if puck.vz > 0x500 else 0x98)
+	# a lifted pass (the high byte of vz 6 or more) sounds different
+	sim.play_sfx(0x99 if Entity.to_s8(puck.vz >> 8) >= 6 else 0x98)
 
-## pass_to_entity (0x5516a): the receiver skates onto a soft pass
+## pass_to_entity (0x54d63): a direct pass: the receiver (PASS_RECEIVER) skates onto a soft puck
+## (a random speed, less for a better passer); the puck's pickup timer is cleared
 static func pass_to_entity(sim: Sim, e: Entity, target: Entity) -> void:
 	e.timer_c = 0x28
 	if not sim.no_stats:
-		sim.team_of(e).passes += 1
+		sim.team_record(e).passes += 1
 	sim.pass_target = target.slot
 	e.pass_ok = 0
 	target.set_state_reset(Entity.State.PASS_RECEIVER)
-	var spread := (0x12 - e.pass_skill) * 0x14
 	sim.puck.vz = 0
-	sim.puck.vx = sim.random(spread)
-	sim.puck.vy = sim.random(spread)
+	var spread := Sim._s16((0x12 - e.pass_skill) * 0x14)
+	sim.puck.vx = Sim._s16(sim.random(spread))
+	sim.puck.vy = Sim._s16(sim.random(spread))
+	sim.puck.timer_c = 0
 
-## pass_lead: lead the pass to where the receiver will be
-static func pass_lead(sim: Sim, e: Entity, target: Entity) -> void:
+## pass_lead (0x551cf): the pass is led to where the receiver (PASS_RECEIVER) will be: the flight
+## time t (in units of 4 steps, 1..0x18) solves |q + v t| = speed t for his offset q (from the point
+## his frame stands on, /4) and velocity v (x 0xf0 / 0x10000) at a quarter of the shot power, in the
+## original's 16 bit words; the puck is lifted up to 12 (random above 6), the receiver waits t x 8 - 10
+## steps (a byte) and skates to the meeting point; the puck's pickup timer runs 6 steps less
+static func pass_lead(sim: Sim, target: Entity) -> void:
 	var puck := sim.puck
 	if not sim.no_stats:
-		sim.team_of(e).passes += 1
+		sim.team_record(target).passes += 1
 	sim.pass_target = target.slot
 	target.set_state_reset(Entity.State.PASS_RECEIVER)
 	var o := Tables.frame_offset(target.frame, (target.flags4 & Entity.F4_MIRROR) != 0)
-	var dx := o.x + target.xi - puck.xi
-	var dy := o.y + target.yi - puck.yi
-	var tvx := (target.vx * 0xf0) >> 16
-	var tvy := (target.vy * 0xf0) >> 16
-	var speed := (e.pass_skill * 4 + 0xa0) >> 2
-	# solve for the flight time t (in 4 step units) of a pass at `speed` meeting the receiver
+	var dx := Sim._s16(o.x + target.xi - puck.xi)
+	var dy := Sim._s16(o.y + target.yi - puck.yi)
 	var qx := dx >> 2
 	var qy := dy >> 2
-	var b := (tvx * qx + tvy * qy) * 2
-	var a := (tvx * tvx + tvy * tvy) - speed * speed
-	var disc := b * b - 4 * (qx * qx + qy * qy) * a
-	var root := Sim.isqrt(disc) if disc > 0 else 0
-	a >>= 2
+	var tvx := Sim._s16((Sim._s16(target.vx) * 0xf0) >> 16)
+	var tvy := Sim._s16((Sim._s16(target.vy) * 0xf0) >> 16)
+	var b := Sim._s16((tvx * qx + tvy * qy) * 2)
+	var speed := sim.shot_power >> 2
+	var a := Sim._s16(tvx * tvx + tvy * tvy - Sim._s16(speed) * Sim._s16(speed))
+	var disc := Sim._s32(b * b - Sim._s32(Sim._s32((qx * qx + qy * qy) * a) << 2))
+	var root := Sim.isqrt32(disc) if disc > 0 else 0
+	a = a >> 2
 	if a == 0:
 		a = 1
-	var t := (root - b) / a
-	if t < 0:
-		t = (-root - b) / a
-	t = clampi(t, 1, 0x18)
-	var h := mini(t, 12)
+	var t := 0
+	var r := Sim._s16(root)
+	for k in 2:
+		t = Sim._s16(_div_trunc(r - b, a))
+		if t >= 0:
+			break
+		r = Sim._s16(-root)
+	if t <= 0:
+		t = 1
+	if t > 0x18:
+		t = 0x18
+	var h := t if t < 0xc else 0xc
 	if h > 6:
-		h = sim.random(h / 2) + (h + 1) / 2
-	puck.vz = h << 8
-	target.react_timer = t * 8 - 10
+		h = sim.random(h >> 1) + ((h + 1) >> 1)
+	puck.vz = Sim._s16(((h & 0xff) << 8) | (puck.vz & 0xff))
+	target.react_timer = Entity.to_s8((t << 3) - 10)
+	# the puck's +0x3e (word_dff5a): while it runs, the puck is harder to pick up (puck_player_interaction)
+	puck.timer_c = target.react_timer - 6
 	var lx := ((tvx * t) >> 1) + dx
 	var ly := ((tvy * t) >> 1) + dy
-	target.target_x = puck.xi + lx
-	target.target_y = puck.yi + ly
-	var tt := t * 0x78
-	puck.vx = (lx << 16) / tt
-	puck.vy = (ly << 16) / tt
+	target.target_x = Sim._s16(puck.xi + lx)
+	target.target_y = Sim._s16(puck.yi + ly)
+	var tt := Sim._s16(t * 0x78)
+	puck.vx = Sim._s16(_div_trunc(Sim._s32(lx << 16), tt))
+	puck.vy = Sim._s16(_div_trunc(Sim._s32(ly << 16), tt))
 
-## pass_lane_ok: is the lane to the receiver open enough for a direct pass
+## pass_lane_ok (0x54c09): may a user pass directly (pass_to_entity) to a team mate: not a goalie,
+## no breakaway, from his own side of his blue line, back towards his own net, both skating that
+## way, the receiver (a step ahead) on the passer's side of the line 0x4e, within 0x3c and 0x28, and
+## the passer in the direction the receiver is skating
 static func pass_lane_ok(sim: Sim, e: Entity, target: Entity) -> bool:
+	var up := (e.flags & Entity.F_ATTACK_UP) != 0
 	if e.line_slot == 0:
 		return false
 	if Rules.count_defenders_ahead(sim):
 		return false
-	var up := (e.flags & Entity.F_ATTACK_UP) != 0
-	var ey := e.yi
 	var ty := target.yi
+	var ey := e.yi
 	var line := 0x4e if up else -0x4e
 	if (ey > line) != up:
 		return false
-	if absi(ty) >= absi(ey) or absi(ey) >= 0x77:
+	if absi(ey) <= absi(ty) or absi(ey) > 0x76:
 		return false
 	if up and (target.vy < 0 or e.vy < 0):
 		return false
 	if not up and (target.vy > 0 or e.vy > 0):
 		return false
-	if absi(ty - ey) >= 0x3d or absi(e.xi - target.xi) >= 0x29:
+	if ((Entity.to_s8(target.vy >> 8) + ty - 0x4e) ^ (ey - 0x4e)) < 0:
+		return false
+	if absi(ty - ey) > 0x3c or absi(e.xi - target.xi) > 0x28:
 		return false
 	var tdir := Tables.direction8(target.vx, target.vy)
 	if tdir == 8:
-		tdir = target.facing
+		tdir = (target.heading >> 16) & 0xffff
 	var rdir := Tables.direction8(e.xi - target.xi, e.yi - target.yi)
 	return ((tdir - rdir + 1) & 7) < 3
 
@@ -802,43 +831,51 @@ static func pass_lane_ok(sim: Sim, e: Entity, target: Entity) -> bool:
 # shooting (start_shot, shot_control, do_shot, shot_setup)
 # --------------------------------------------------------------------------------------------
 
-## start_shot (0x5786e): wind up towards the net; the power grows while B is held
+## start_shot (0x5786e): the wind up towards the middle of the net line (y 0xf0), fore or backhand;
+## the shot power starts at 0xf
 static func start_shot(sim: Sim, e: Entity) -> void:
 	sim.pending_dir = 8
 	sim.action_shot = true
 	var target_y := 0xf0 if (e.flags & Entity.F_ATTACK_UP) else -0xf0
-	var dir := Tables.direction8(-e.xi, target_y - e.yi)
+	var dir := Tables.direction8(Sim._s16(-e.xi), Sim._s16(target_y - e.yi))
 	sim.shot_power = 0xf
 	# the player is not "busy" during the wind up: shot_control runs every step until the release
 	Anim.set_animation(e, Anim.SHOT_BACKHAND if shot_is_backhand(e, dir) else Anim.SHOT_FOREHAND)
 
-## shot_control (0x50a9f): per step while the shot animation plays. A tap releases a quick wrist
-## shot, holding B through the wind up makes it a harder slap shot; A or C cancel into a deke.
-static func shot_control(sim: Sim, e: Entity, control: int, pressed: int) -> void:
-	if e.anim_pos > 0xd:
+## shot_control (0x578fa): every step of the wind up (the original's scratch inputs: dir the
+## control word, 8 none; pressed the buttons that went down; changed those that went down or up).
+## At frame 0xe the shot goes (do_shot). The direction held aims it. Before frame 0xa, A or C fake
+## it (the deke animations); before frame 8 the power grows, and B let go (or, for a shooter rated
+## below 10, frame 5) jumps to the release.
+static func shot_control(sim: Sim, e: Entity, dir: int, pressed: int, changed: int) -> void:
+	if e.anim_pos >= 0xe:
 		do_shot(sim, e)
 		return
-	if (control & 8) == 0:
-		sim.pending_dir = control & 7
-	if e.anim_pos < 10:
-		if pressed & 0x50:
-			# fake: skate on with the puck
-			sim.action_shot = false
-			e.flags |= Entity.F_BUSY
-			match e.anim:
-				Anim.SHOT_FOREHAND: e.anim = 0x1265
-				Anim.SHOT_BACKHAND: e.anim = 0x12dd
-				0xdd3: e.anim = 0x1355
-				0xe2b: e.anim = 0x138d
-			return
-		if e.anim_pos < 8:
-			sim.shot_power += 1
-			if (control & 0x20) == 0:
-				# released early: skip the rest of the wind up
-				e.anim_pos = 0xe - e.anim_pos
-				e.anim_hold = -1
+	if (dir & 8) == 0:
+		sim.pending_dir = dir & 7
+	if e.anim_pos >= 0xa:
+		return
+	if pressed & 0x50:
+		# fake: skate on with the puck
+		sim.action_shot = false
+		e.flags |= Entity.F_BUSY
+		match e.anim:
+			Anim.SHOT_FOREHAND: e.anim = 0x1265
+			Anim.SHOT_BACKHAND: e.anim = 0x12dd
+			0xdd3: e.anim = 0x1355
+			0xe2b: e.anim = 0x138d
+		return
+	if e.anim_pos >= 8:
+		return
+	sim.shot_power = Sim._s16(sim.shot_power + 1)
+	if (e.shot_skill < 0xa and e.anim_pos > 4) or (changed & 0x20):
+		e.anim_pos = Sim._s16(0xe - e.anim_pos)
 
-## do_shot (0x578f0): release the puck towards the aim point
+## do_shot (0x57c0b): the release. The shot power (less a quarter on the backhand) grows with the
+## shooting rating (more for a good shooter near the net, then +1 for each of 10, 13, 14 passed) and
+## the energy, x 0x5249 / 0x10000; a weak shot (power / 16 below 3) sounds different. The puck goes
+## to the aim point of shot_targets in pending_dir (shot_setup aims a computer player) on the goal
+## line, scattered unless the shooter is accurate and close; it is lifted by the target's height.
 static func do_shot(sim: Sim, e: Entity) -> void:
 	var puck := sim.puck
 	shot_setup(sim, e)
@@ -849,91 +886,110 @@ static func do_shot(sim: Sim, e: Entity) -> void:
 		sim.play_sfx(0x99)
 		return
 	sim.shot_in_flight = true
-	var power := sim.shot_power
-	if e.anim == Anim.SHOT_BACKHAND or e.anim == 0xe2b:
-		power -= power >> 2
 	var sfx := 0xaa
+	if e.anim == Anim.SHOT_BACKHAND or e.anim == 0xe2b:
+		sim.shot_power = Sim._s16(sim.shot_power - (sim.shot_power >> 2))
 	var skill := e.shot_skill
-	if skill > 0xc and absi(e.xi) + absi(e.yi) < 500:
+	if skill > 0xc and absi(e.xi) + absi(e.yi) < 0x1f4:
 		skill += 2
 	if skill > 0xe:
 		skill += 1
 	if skill > 0xd:
 		skill += 1
-	if skill > 10:
+	if skill > 0xa:
 		skill += 1
-	var eskill := (e.energy * skill) >> 12
-	power = (power * (eskill + 0x14) * 0x5249) >> 16
+	var es := Sim._s16((_team_energy(sim, e) * Sim._s16(skill)) >> 12)
+	sim.shot_power = Sim._s16(sim.shot_power * (es + 0x14))
+	sim.shot_power = Sim._s16(((sim.shot_power * 0x5249) & 0xffffffff) >> 16)
 	if sim.breakaway:
 		Rules.count_defenders_ahead(sim)
 		sim.breakaway = sim.defenders_ahead != 0
-	if (power >> 4) >= 3:
+	if Sim._s16(3 - (sim.shot_power >> 4)) > 0:
 		sfx = 0x9a
 	sim.puck_carrier = -1
 	e.timer_c = 0x10
 	sim.last_passer = e.slot
 	var goal_y := 0xe8 if (e.flags & Entity.F_ATTACK_UP) else -0xe8
-	var aim := sim.pending_dir & 7
-	var ax: int = Tables.shot_targets[aim * 2]
-	var az: int = Tables.shot_targets[aim * 2 + 1]
-	var dx := ax - puck.xi
-	var dy := goal_y - puck.yi
-	var dist := maxi(1, Sim.approx_distance(dx, dy))
+	var aim := sim.pending_dir
+	var dx := Sim._s16(Tables.shot_targets[aim * 2] - puck.xi)
+	var dy := Sim._s16(goal_y - puck.yi)
+	var az := Sim._s16(Tables.shot_targets[aim * 2 + 1])
+	var dist := Sim.approx_distance(dx, dy)
+	if dist == 0:
+		dist = 1
 	if not sim.no_stats:
 		var acc := e.shot_accuracy
 		if acc > 0xe:
 			acc += 1
 		if acc > 0xd:
 			acc += 1
-		if dist > 200 or sim.random(e.shot_accuracy + 0x10) < 0xf:
-			var spread := (dist * (((power >> 4) - acc) + 0x10) & 0xffff) >> 6
+		if dist > 0xc8 or Sim._s16(sim.random(e.shot_accuracy + 0x10)) <= 0xe:
+			var spread := ((dist * ((sim.shot_power >> 4) - acc + 0x10)) & 0xffff) >> 6
 			if dist < 0xfa:
 				spread >>= 1
-			spread = mini(spread, 0xa0)
-			dx += sim.random(spread * 2) - spread
-			spread = mini(spread, 0x3c)
+			if spread > 0xa0:
+				spread = 0xa0
+			dx = Sim._s16(dx + sim.random(Sim._s16(spread * 2)) - spread)
+			if spread > 0x3c:
+				spread = 0x3c
 			var sy := spread if dy >= 0 else spread >> 1
-			dy += sim.random(sy * 2) - sy
+			dy = Sim._s16(dy + sim.random(Sim._s16(sy * 2)) - sy)
 			var sz := spread >> 1
 			if dist < 0xa0:
-				sz = spread / 3
+				sz = _div_trunc(spread, 3)
 			if dist < 0x50:
 				sz = spread >> 2
-			az += sim.random(maxi(1, sz))
-	puck.vx = (dx * power * 0x3b) / dist
-	puck.vy = (dy * power * 0x3b) / dist
+			az = Sim._s16(az + sim.random(Sim._s16(sz)))
+	var k := sim.shot_power * 0x3b
+	puck.vx = Sim._s16(_div_trunc(Sim._s32(dx * k), dist))
+	puck.vy = Sim._s16(_div_trunc(Sim._s32(dy * k), dist))
+	if sim.penalty_shot:
+		# on a penalty shot the puck is at least as fast as the shooter, plus 0x1f4
+		if (e.vx ^ puck.vx) >= 0 and absi(puck.vx) < absi(e.vx):
+			puck.vx = Sim._s16(e.vx + 0x1f4)
+		if (e.vy ^ puck.vy) >= 0 and absi(puck.vy) < absi(e.vy):
+			puck.vy = Sim._s16(e.vy + 0x1f4)
 	if az != 0:
-		var p := maxi(1, power)
-		puck.vz = mini(0x1800, (p * 0x44 * az) / dist + (dist * 0xb33) / p)
+		# unsigned 32 bit divisions, like the original's
+		var lift := (((sim.shot_power * 0x44 * az) & 0xffffffff) / dist) & 0xffffffff
+		lift = (lift + ((dist * 0xb33) & 0xffffffff) / (sim.shot_power & 0xffffffff)) & 0xffff
+		if lift > 0x1800:
+			lift = 0x1800
+		puck.vz = Sim._s16(lift)
 	sim.play_sfx(sfx)
+	if sim.penalty_shot:
+		e.set_state(Entity.State.NEAREST)
 
-## shot_setup (0x5471a): the AI aims at the side of the net the goalie leaves open
+## shot_setup (0x57a98): a computer shooter aims at the side of the net (0x12 either side of the
+## middle) the goalie leaves open (his position and a part of his velocity), or the middle
 static func shot_setup(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_USER:
 		return
 	var puck := sim.puck
-	var opp := sim.opponents_of(e)
 	var goalie: Entity = null
+	var first := 6 if e.slot < 6 else 0
 	for i in 6:
-		var p := sim.entities[opp.first_slot + i]
+		var p := sim.entities[first + i]
 		if p.line_slot == 0:
 			goalie = p
 			break
 	if goalie == null:
 		sim.pending_dir = 8
 		return
-	var gx := goalie.xi + (goalie.vx >> 9) - puck.xi
-	var gy := goalie.yi + (goalie.vy >> 9) - puck.yi
-	var d := maxi(1, Sim.approx_distance(gx, gy))
+	var gx := Sim._s16(goalie.xi + (Sim._s16(goalie.vx) >> 9) - puck.xi)
+	var gy := Sim._s16(goalie.yi + (Sim._s16(goalie.vy) >> 9) - puck.yi)
+	var d := Sim.approx_distance(gx, gy)
+	if d == 0:
+		d = 1
 	var goal_y := 0xe8 if (e.flags & Entity.F_ATTACK_UP) else -0xe8
 	var num := gx * (goal_y - puck.yi)
-	var side := (num - (0x12 - puck.xi) * gy) / d + (num - (-0x12 - puck.xi) * gy) / d
-	if absi(side) < 0x2d:
-		if e.flags & Entity.F_ATTACK_UP:
-			side = -side
-		sim.pending_dir = 6 if side < 0 else 2
-	else:
+	var side := Sim._s16(_div_trunc(num - (0x12 - puck.xi) * gy, d) + _div_trunc(num - (-0x12 - puck.xi) * gy, d))
+	if absi(side) > 0x2c:
 		sim.pending_dir = 0
+		return
+	if e.flags & Entity.F_ATTACK_UP:
+		side = -side
+	sim.pending_dir = 2 if side >= 0 else 6
 
 static func shot_is_backhand(e: Entity, dir: int) -> bool:
 	var rel := (e.facing - dir) & 7

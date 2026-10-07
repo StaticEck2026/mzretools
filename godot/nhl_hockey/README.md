@@ -120,6 +120,7 @@ the headless test feeds the same inputs to the port and compares, field by field
 | | `puck_check_players`, `puck_player_interaction`, `goalie_save`, `puck_hits_player`, `attach_puck_to_stick`, `take_puck`, `update_carrier`, `shot_landed`, `two_line_pass_check` | 800 situations of the puck among players, goalies and the referee (loose, carried, shots in flight, first touches, icing) | every record, the carrier, the sounds, infractions, knock downs and user switches in order, the touch, pass and icing state, the team records (the last carriers, shots, faceoffs, passes), the players' and goalies' shots, the seed |
 | | `collide_pair` (opponents), `goalie_collision`, `resolve_body_check`, `resolve_hook_hold`, `resolve_dive_hit`, `penalty_odds`, `breakaway_foul`, `facing_boards`, `knock_down`, `knockdown_position`, `crowd_reaction_sfx` | 1800 body contacts among both teams, goalies, the referee and the puck, in open ice, along the boards, in the corners and at the nets: `move_entity`, and `resolve_body_check` and `knock_down` called directly | every record (the state stack too), the carrier, the sounds, penalties, injuries, bench cheers and stoppages in order, the penalty shot, the referee's hits, the crowd, the teams' hits, the seed |
 | | `puck_update`, `predict_puck_goal_line`, `check_icing`, `check_offside`, `note_breakaway`, `count_defenders_ahead`, `update_offside_flags`, `end_penalty_shot` | 800 states of all 17 entities with the puck crossing the blue and red lines, carried, standing still, on a penalty shot | every record, the carrier, the calls in order, the prediction, the frozen puck and penalty shot timers, offside and icing state, the touch, the teams' flags and breakaways, the seed |
+| | `do_pass`, `pass_to_entity`, `pass_lead`, `pass_lane_ok`, `isqrt32`, `start_shot`, `shot_control`, `do_shot`, `shot_setup` | 1100 passes (aimed, blind, direct, led, the goalie's clearance), lanes, wind ups and releases with every aim and power, with and without a carrier, on penalty shots | every record (the pass flags, the receivers' timers), the shot power and aim, the touch and shot state, the users, the teams' passes, the sounds, the seed |
 
 All of them match. The comparisons found and fixed, among others: the distance (the original's is
 |dx| / cos of the vector's angle from its arctangent and sine tables, not an octagonal estimate), the
@@ -131,8 +132,11 @@ steal odds and the hold speed, deflections off a goalie, icing called only when 
 the puck, the two line pass against the right goal line, the referee's hits counted for the home team,
 the injury that stops the play at once, a skater turning on the spot by the direction of his whole
 velocity, the blue line crossing noting a breakaway, the goal line prediction counting down every step
-and wrapping like the original's 16 bit words, the flat puck only on the ice, and every FM register of
-the AdLib driver (`audio/FmDriver.gd` is a literal port). Running
+and wrapping like the original's 16 bit words, the flat puck only on the ice, the pass lead solved with
+the original's approximate square root and the shared shot power, the puck's pickup timer during a led
+pass, a weak shot's sound, the scatter of a shot and its lift, a blind pass without a direction reading
+the random seed past the end of the direction table, and every FM register of the AdLib driver
+(`audio/FmDriver.gd` is a literal port). Running
 whole games beside them showed one more departure: the centre lost the puck chasing role to a line
 change during play (the original changes lines there only while the play is stopped).
 
