@@ -56,7 +56,7 @@ behaviour matches the DOS game (see "Porting conventions" below).
 | Rink | `loaders/RinkTiles.gd` | `load_rink` / `load_rink_tiles`: the RINK.QFS surface with the centre ice logo of the home team (TEAM.TIL / .MAP, mirrored second half for EDM, LA, NJ, PIT) |
 | Rosters | `loaders/Database.gd` | `db_open_files` / `db_load_team_roster` / `db_read_player`: TEAMS.DB, KEY.DB, ATT.DB (names, numbers, positions, ratings, the line table) |
 | Sound cards | `audio/MusicPlayer.gd`, `loaders/FmBank.gd`, `loaders/Sounds.gd` | `load_sound_config`: the card chosen in the settings (NHL.CFG; `NHL_SOUND` for a match without the front end) and its SCN file, patch file and timbre files (`loadpatches`); the drivers compiled into HOCKEY.EXE: Sound Blaster (FM + `sbdac_*`), AdLib (`adlib_drv_*`, the effects as FM timbres of PCFF002.TIM), PC speaker (`pcspk_*`), MT-32 (`mpu_drv_*`), none; `snd_play_patch` for the effects, `update_ambient_audio` / `sound_pause_all` for the crowd |
-| Digital driver | `audio/DacDriver.gd` | `sbdac_*` and the software mixer `mix_*`: four voices at 11025 Hz with their 8 bit volume tables and clipping, the voice masks and priorities of the patch records, voice stealing, pitch bend; the effects, the crowd's roar (0x7d, voice 2) and murmur (0x7e, voice 3), the speech (voices 0 / 1) and the stomp |
+| Digital driver | `audio/DacDriver.gd` | `sbdac_*` and the software mixer `mix_*`: four voices at 11025 Hz with their 8 bit volume tables and clipping, the voice masks and priorities of the patch records, voice stealing, pitch bend; the effects, the crowd's roar (0x7d, voice 2) and murmur (0x7e, voice 3), the speech (voices 0 / 1), the stomp and the front end's recordings (voice 3) |
 | PC speaker | `audio/PcSpeaker.gd` | `pcspk_*`: one voice (as in the original), the timbre's envelope, LFO and note sequence moving the PIT divisor of the note, `pcspk_hw_update` |
 | MT-32 | `audio/Mt32.gd` | `mpu_drv_send_midi`: the MPU-401 byte stream (MT32HOCK.KMS's set-up, the MT* songs, the effects on the rhythm part), heard through a small stand-in synthesiser (see below) |
 | Speech | `loaders/Viv.gd`, `sim/Speech.gd`, `view/Announcer.gd` | `speech_load_bank` (XBRUCE2.VIV: byte pair packed clips and 4 bit Fibonacci delta coded ones), the sentences of `say_goal`, `say_penalty`, `say_penalty_shot`, `say_star`, `say_time_remaining`, `say_game_intro`, played back to back like the timer routine `speech_timer` |
@@ -118,8 +118,7 @@ Montreal home game and the power play flags.
   mode is not modelled (the drivers never set it). The chip runs natively through the GDExtension in
   `native/` (built for Linux x86_64 in `native/bin`; `native/opl2/CMakeLists.txt` builds it for other
   platforms); without the library the same arithmetic runs in GDScript, which costs about half a
-  CPU core for six sounding channels. The front end's recordings play as samples of their own, not
-  through the mixer's voice 3.
+  CPU core for six sounding channels.
 - The period label under the clock is an addition (the original shows the period on the pause screen).
 
 ## Porting conventions

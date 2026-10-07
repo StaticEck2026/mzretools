@@ -179,7 +179,7 @@ func _settings(with_length: bool) -> int:
 						f |= 0x400
 			Session.option_flags = f
 			if f & 0x40:
-				if not fe.loop_player.playing and fe.loop_name != "":
+				if not fe.loop_playing() and fe.loop_name != "":
 					fe.play_loop(fe.loop_name)
 			else:
 				fe.stop_loop()

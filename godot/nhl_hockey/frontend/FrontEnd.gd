@@ -25,6 +25,7 @@ var font_main: Vfn
 var font_kaufm: Vfn
 var loop_player: AudioStreamPlayer   # channel 3 of the original: the recordings of the menu screens (dword_c721d)
 var loop_name := ""
+var loop_volume := 0x4c
 var desk_toggle := false             # byte_c7218: TONIGHTS.IFF and MAINDESK.IFF take turns on the desk
 var loading_shown := false           # dword_c9074
 var db: Database
@@ -93,21 +94,37 @@ func bank(name: String) -> Shpi:
 	var data := GameFiles.read_bank(name)
 	return Shpi.parse(data) if not data.is_empty() else null
 
-## loadsound + playsample(.., channel 3, volume): the recording of a menu screen, looped as stored
+## loadsound + playsample(.., channel 3, volume): the recording of a menu screen, looped as stored.
+## With the Sound Blaster it plays on voice 3 of the digital driver's mixer (the packed 22050 Hz
+## recording stepped by 2 at 11025 Hz), else (no card model) on a player of its own
 func play_loop(name: String, volume: int = 0x4c) -> void:
 	if not Session.sound_enabled:
 		return
-	if loop_player.playing and loop_name == name:
+	if loop_playing() and loop_name == name:
 		return
-	loop_player.stop()
+	stop_loop()
 	var stream := Sounds.load_sample(GameFiles.read_raw(name + ".iff"))
 	loop_name = name
 	if stream == null:
 		return
+	loop_volume = volume
+	if Session.option_flags & 0x40 == 0:
+		return
+	var m := fm_music()
+	if m != null and m.digital():
+		var looped := stream.loop_mode == AudioStreamWAV.LOOP_FORWARD
+		m.play_sample(3, stream.data, stream.mix_rate, volume, stream.loop_begin if looped else 0,
+			stream.loop_end - stream.loop_begin if looped else 0)
+		return
 	loop_player.stream = stream
 	loop_player.volume_db = linear_to_db(volume / 127.0)
-	if Session.option_flags & 0x40:
-		loop_player.play()
+	loop_player.play()
+
+## the recording still plays (sound_channel_status of channel 3)
+func loop_playing() -> bool:
+	if music != null and music.digital():
+		return not music.sample_done(3)
+	return loop_player.playing
 
 ## sound_fade(channel 3, speed) and the wait for the channel (sound_channel_status) before the
 ## sample is released: the fade takes `ticks` of the 100 Hz timer
@@ -118,17 +135,24 @@ func fade_loop(ticks: int = 100) -> void:
 
 ## sound_fade without waiting: the tween of the fade (null when nothing plays)
 func start_fade_loop(ticks: int = 100) -> Tween:
-	if not loop_player.playing:
+	if not loop_playing():
 		loop_name = ""
 		return null
 	var tw := create_tween()
-	tw.tween_property(loop_player, "volume_db", -60.0, ticks / 100.0)
-	tw.tween_callback(loop_player.stop)
+	if music != null and music.digital():
+		var m := music
+		tw.tween_method(func(v: float) -> void: m.dac.mix_volume(3, int(v)), float(loop_volume), 0.0, ticks / 100.0)
+		tw.tween_callback(func() -> void: m.stop_sample(3))
+	else:
+		tw.tween_property(loop_player, "volume_db", -60.0, ticks / 100.0)
+		tw.tween_callback(loop_player.stop)
 	loop_name = ""
 	return tw
 
 func stop_loop() -> void:
 	loop_player.stop()
+	if music != null and music.digital():
+		music.stop_sample(3)
 	loop_name = ""
 
 ## the sound card of the front end (load_sound_config with the card of NHL.CFG): the title song of
@@ -270,7 +294,7 @@ func frontend_main_menu() -> void:
 ## the desk drawn again after a screen (the recording changes)
 func draw_desk() -> void:
 	loading_shown = false
-	if loop_player.playing:
+	if loop_playing():
 		await fade_loop(70)
 	desk_toggle = not desk_toggle
 	play_loop("tonights" if desk_toggle else "maindesk")

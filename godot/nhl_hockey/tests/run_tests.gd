@@ -456,6 +456,12 @@ func sound_card_tests(gf: Node) -> void:
 	sb.play_sample(1, clip[0], clip[1], 0x7f)
 	if (sb.dac.mix[1] as DacDriver.MixVoice).active != 1 or sb.sample_done(1):
 		fail("speech voice")
+	# a recording of the front end on voice 3: the 22050 Hz recording stepped by 2 at 11025 Hz
+	var rec := Sounds.load_sample(gf.read_raw("tonights.iff"))
+	sb.play_sample(3, rec.data, rec.mix_rate, 0x4c, rec.loop_begin, rec.loop_end - rec.loop_begin)
+	var m3r: DacDriver.MixVoice = sb.dac.mix[3]
+	if m3r.active != 1 or m3r.step != 0x20000 or m3r.volume != 0x4c or m3r.loop_len == 0:
+		fail("recording voice: %s" % str([m3r.active, m3r.step, m3r.volume, m3r.loop_len]))
 	sb.free()
 	# the AdLib: the horn is an FM timbre of PCFF002.TIM (type 2) on the OPL2, no crowd
 	var ad := MusicPlayer.new()
