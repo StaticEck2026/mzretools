@@ -693,6 +693,24 @@ func physics_golden() -> void:
 	if ph.is_empty():
 		fail("golden physics data missing")
 		return
+	# the records before a call keep only the fields that differ from the base records
+	var base0: Array = ph["base"]
+	for key in ph:
+		if not (ph[key] is Array) or key == "base" or key == "distance":
+			continue
+		for c in ph[key]:
+			if not (c is Dictionary) or not c.has("before"):
+				continue
+			var b: Dictionary = c["before"]
+			if c.has("slot") and not b.has("0"):
+				var full: Dictionary = base0[int(c["slot"])].duplicate()
+				full.merge(b, true)
+				c["before"] = full
+			else:
+				for k in b.keys():
+					var full: Dictionary = base0[int(k)].duplicate()
+					full.merge(b[k], true)
+					b[k] = full
 	var dbad := 0
 	for c: Array in ph["distance"]:
 		var d := Sim.approx_distance(int(c[0]), int(c[1]))

@@ -1224,10 +1224,21 @@ def physics_cases(exe):
                 else:
                     c['after'] = {s_: {k: v for k, v in a.items() if c['before'][s_].get(k) != v}
                                   for s_, a in c['after'].items()}
-    # the entities as entities_init leaves them (every case starts from these)
+    # the entities as entities_init leaves them (every case starts from these); the records before
+    # a call keep only the fields that differ from them (the test fills in the others)
     emu.write(ENTITIES, base)
     out['base'] = [dict(entity_fields(emu, i), prev=list(struct.unpack('<iii', emu.read(ENTITIES + i * 0x80 + 0x74, 12))))
                    for i in range(17)]
+
+    def from_base(rec, slot):
+        return {k: v for k, v in rec.items() if out['base'][slot].get(k) != v}
+    for cases in out.values():
+        for c in cases if isinstance(cases, list) else ():
+            if isinstance(c, dict) and 'before' in c:
+                if 'x' in c['before']:
+                    c['before'] = from_base(c['before'], c['slot'])
+                else:
+                    c['before'] = {s_: from_base(b, int(s_)) for s_, b in c['before'].items()}
     return out
 
 
