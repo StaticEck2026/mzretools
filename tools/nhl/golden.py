@@ -1350,7 +1350,7 @@ AI_GLOBALS = (('game_flags', GAME_FLAGS, 1), ('stop_flags', STOP_FLAGS, 1), ('mi
               ('star1_roster', 0xe9afe, -2), ('star2_team', 0xe9b00, -2), ('star2_roster', 0xe9b02, -2),
               ('buttons_prev0', 0xe9abe, -2), ('buttons_prev1', 0xe9abc, -2), ('clip_time', 0xe9ab2, -2),
               ('clip_pos', 0xe9ab4, -2), ('last_penalty_team', 0xe9aae, -2), ('last_sfx', CROWD_NOISE, -2),
-              ('highlight_game', 0xccc98, -4))
+              ('one_minute_said', 0xccc98, -4))
 GLOBAL_DEFAULTS = {'last_sfx': -1}            # the globals a case leaves out
 SPEECH = {'busy': 0}                           # speech_busy (stubbed): the announcer talking, as the case says
 CLIP_SCRIPTS = 0xcc01d                        # off_cc01d: the clips' frame scripts (a count, then the frames)
@@ -1436,7 +1436,7 @@ REPLAY_HELD = 0xcd500                          # replay_held_sfx
 def replay_setup(emu, rnd, g):
     '''the replay ring of a case: empty, the write position anywhere (the end too: the ring wraps),
     the half step and the sound held from the skipped step; the ring full (action_flags 0x10) or not,
-    the last sound effect played (crowd_noise), a highlight game (dword_ccc98)'''
+    the last sound effect played (crowd_noise), the last minute line said (dword_ccc98)'''
     buf = struct.unpack('<I', emu.read(REPLAY_BUFFER, 4))[0]
     emu.write(buf, b'\0' * REPLAY_SIZE)
     frame = rnd.choice((0, 0, rnd.randrange(300), 299, 298))
@@ -1446,7 +1446,7 @@ def replay_setup(emu, rnd, g):
     emu.write(REPLAY_HELD, struct.pack('<h', rp['held']))
     g['action_flags'] = (g['action_flags'] & ~0x10) | rnd.choice((0, 0, 0x10))
     g['last_sfx'] = rnd.choice((-1, -1, 0x7d, 0x9c, rnd.randrange(0xb0)))
-    g['highlight_game'] = rnd.choice((0, 0, 0, 1))
+    g['one_minute_said'] = rnd.choice((0, 0, 0, 1))
     g['sound_card'] = rnd.choice((g['sound_card'], 4, 8))
     return rp
 
@@ -1479,7 +1479,9 @@ PENALTY_LIST_FIND = 0x14ca0                    # the entry of a player released 
 UPDATE_ANNOUNCER = 0x66e06                     # the scoreboard panel and its clips
 UPDATE_EFFECTS = 0x615a2                       # stubbed: the crowd noise and figures
 SETUP_FACEOFF = 0x5d852                        # stubbed for now: the end of a period
-ANNOUNCE_ONE_MINUTE = 0x6280a                  # stubbed: the announcer's last minute line
+ANNOUNCE_ONE_MINUTE = 0x6280a                  # the announcer's last minute line (with sound, speech and statistics)
+SAY_ONE_MINUTE = 0x854ac                       # stubbed: the sentence (it sets dword_ccc98)
+SPEECH_STOP_CHANNELS = 0x837a8                 # stubbed: the voices stop
 PICK_PLAYER_FOR_POSITION = 0x655cc             # stubbed: the line table rebuilt around a lost player; (team, roster)
 PUT_PLAYER_ON_ICE = 0x5b2c5                    # stubbed: the ratings copy (no roster data here); (entity, roster)
 PLAY_SPEECH = 0x59a11                          # stubbed: the announcer (a sample)
@@ -2023,7 +2025,6 @@ def ai_cases(exe):
                    emu.stub(MAYBE_QUEUE_INFRACTION, on_infraction('maybe_queue_infraction'))]
     fixed_stubs = [emu.stub(INJURY_CHECK, lambda eax: (calls.append(['injury_check', ((eax & 0xffffffff) - ENTITIES) // 0x80]), 1)[1])]
     injure_stub = emu.stub(INJURE_PLAYER, lambda eax: calls.append(['injure_player', ((eax & 0xffffffff) - ENTITIES) // 0x80]))
-    emu.stub(BENCH_CHEER, lambda eax: calls.append(['bench_cheer', eax & 0xffffffff]))
 
     def reg(r):
         v = emu.uc.reg_read(r)
@@ -2040,7 +2041,9 @@ def ai_cases(exe):
     emu.stub(FREEMEM, lambda eax: None)
     fixed_stubs += [emu.stub(UPDATE_EFFECTS, lambda eax: calls.append(['update_effects'])),
                     emu.stub(SETUP_FACEOFF, lambda eax: calls.append(['setup_faceoff']))]
-    emu.stub(ANNOUNCE_ONE_MINUTE, lambda eax: calls.append(['announce_one_minute_left']))
+    # the announcer's last minute line (announce_one_minute_left runs; the voices' stop is the sound driver's)
+    emu.stub(SAY_ONE_MINUTE, lambda eax: calls.append(['say_one_minute_left']))
+    emu.stub(SPEECH_STOP_CHANNELS, lambda eax: None)
     emu.stub(DRAW_LINE_INDICATOR, lambda eax: calls.append(['draw_line_indicator', eax & 0xffff,
                                                            struct.unpack('<i', struct.pack('<I', emu.uc.reg_read(UC_X86_REG_EDX)))[0]]))
     speech = SPEECH
@@ -2154,7 +2157,49 @@ def ai_cases(exe):
     emu.uc.hook_del(injure_stub)
     out['lineup'] = lineup_cases(emu, rnd, base, tables, calls, out['base'], os.path.join(os.path.dirname(exe), 'TEAMS.DB'))
     out['hud'] = hud_cases(emu, rnd, calls)
+    out['cup'] = cup_cases(emu, rnd)
     return out
+
+
+CUP_SERIES = 0xdc338                           # dword_dc338 (alloc_cup_banner): the play-off final's 7 games, 6 bytes each
+SESSION_MODE = 0xc53fb                         # dword_c53fb: 0 exhibition, 1 a play-off series alone, 2 a league
+
+
+def cup_cases(emu, rnd, count=300):
+    '''game_over_check called directly: does a win by this score end the play-off final? Random
+    series of 4 to 7 scheduled games between two teams (home ice changing as in the play-offs), some
+    of them played, the score of the game, a league, a play-off series alone (its length from the
+    options) or no final at all'''
+    buf = emu.alloc(b'\xff' * 64)
+    cases = []
+    for k in range(count):
+        mode = rnd.choice((0, 1, 2, 2))
+        has = rnd.random() < 0.9
+        teams = rnd.sample(range(26), 2)
+        scheduled = rnd.choice((4, 5, 6, 7, 7))
+        played = rnd.randrange(min(scheduled, 7))
+        rec = bytearray(b'\xff' * 42)
+        for g_ in range(scheduled):
+            home, away = teams if g_ in (0, 1, 4, 6) else teams[::-1]
+            rec[g_ * 6:g_ * 6 + 4] = bytes([g_, 0, home, away])
+            if g_ < played:
+                a = rnd.randrange(8)
+                b = rnd.choice([x for x in range(8) if x != a])
+                rec[g_ * 6 + 4:g_ * 6 + 6] = bytes([a, b])
+        settings2 = rnd.randrange(256)
+        hg = rnd.randrange(10)
+        ag = rnd.choice([x for x in range(10) if x != hg] + [hg] * (rnd.random() < 0.05))
+        emu.write(buf, bytes(rec))
+        emu.write(CUP_SERIES, struct.pack('<I', buf if has else 0))
+        emu.write(SESSION_MODE, struct.pack('<i', mode))
+        emu.write(OPTION_FLAGS, struct.pack('<I', rnd.randrange(256) | (settings2 << 8)))
+        ret = emu.call(GAME_OVER_CHECK, eax=hg, edx=ag)
+        cases.append({'routine': 'game_over_check', 'args': [hg, ag], 'series': list(rec) if has else [], 'mode': mode,
+                      'settings2': settings2, 'after': {'ret': ret, 'series': list(emu.read(buf, 42)) if has else []}})
+    emu.write(CUP_SERIES, b'\0' * 4)
+    emu.write(SESSION_MODE, b'\0' * 4)
+    emu.write(OPTION_FLAGS, b'\0' * 4)
+    return cases
 
 
 HUD_ROUTINES = {'add_penalty_display': ADD_PENALTY_DISPLAY, 'penalty_list_find': PENALTY_LIST_FIND,
@@ -2278,6 +2323,10 @@ def rules_cases(emu, rnd, base, tables, calls, base_fields, speech):
         g['clock_seconds'] = rnd.choice((0, 0x3c, 0x3d, 0x78, 0xb4, 0x12c, 0x258, 0x259, rnd.randrange(0x300)))
         g['clock_sub'] = rnd.choice((0, 0, 1, 0x17))
         g['period'] = rnd.choice((0, 1, 1, 2, 2, 3))
+        if name in ('game_clock_tick', 'sim_game_state', 'time_announcements', 'ref_announce'):
+            g['settings2'] |= rnd.choice((0, 1, 1))   # the announcer on (option byte 2 bit 0)
+        if name == 'game_clock_tick' and rnd.random() < 0.3:
+            g['clock_seconds'], g['clock_sub'] = 0x3d, 0  # the last minute starts (announce_one_minute_left)
         if rnd.random() < 0.5:
             g['crowd'] = rnd.choice((0x100, 0x300, 0x3e0))
         # the queue
@@ -2380,7 +2429,7 @@ GOAL_ROUTINES = {'score_goal': 0x5ab36, 'goal_disallowed_check': 0x5aaae, 'setup
                  'begin_penalty_shot': 0x64398, 'start_penalty_shot': 0x63f72, 'end_penalty_shot': 0x64439,
                  'breakaway_foul': 0x6427f, 'injury_check': 0x65b83, 'update_effects': 0x615a2}
 DRAW_SCORE_DIGITS = 0x14a20                    # stubbed: the scoreboard digits; (team, goals)
-GAME_OVER_CHECK = 0x15c30                      # stubbed: does the game decide the Stanley Cup (a case input); (home, away)
+GAME_OVER_CHECK = 0x15c30                      # does the game decide the Stanley Cup; (home goals, away goals); stubbed in the match groups (a case input)
 START_CROWD_FIGURE = 0x614c2
 CROWD_FIGURES = 0xdee94                        # 20 x 12 bytes
 CROWD_BUSY = 0xe9b2c                           # the spots in use: 11 words of bits
@@ -2852,6 +2901,8 @@ def steps_cases(emu, rnd, base, tables, calls, base_fields, speech, count=1000, 
             emu.write(CROWD_FIGURES + i * 12, struct.pack('<hbbbhhhb', -1, rnd.choice((5, 30, 60)), 0, 0, 0, 0, 0, 0))
         emu.write(CROWD_BUSY, b'\0' * 22)
         g['infraction0'] = 0
+        if g['last_touch_slot'] < 0 and not g['game_flags'] & 1:
+            g['last_touch_slot'] = 2           # (in play somebody touched the puck: a goal credits him)
         rp = replay_setup(emu, rnd, g)
         # the players' faceoff ratings (faceoff_resolve: byte 0x13 of `player_ratings`, the rest 0)
         faceoff_ratings = [[rnd.randrange(10) for _ in range(25)] for _ in range(2)]
@@ -2926,7 +2977,6 @@ GETPALETTE = 0x8ffb0                           # (cdecl)
 FADE_PALETTE_TO = 0x11598
 SEQUENCE_LOOP = 0x48333                        # stubbed: the anthem / three stars loop (run by the port's step)
 FADE_AMBIENT_AUDIO = 0x597e3
-SPEECH_STOP_CHANNELS = 0x837a8
 SOUND_STOPALL = 0x8f633
 SETMOUSEPOS = 0xb2db4                          # (cdecl)
 TEAM_IDS = 0xc90ca                             # home_team_id, away_team_id
@@ -2966,7 +3016,6 @@ def periods_cases(emu, rnd, base, tables, calls, base_fields, speech):
              emu.stub(FADE_PALETTE_TO, lambda eax: None),
              emu.stub(SEQUENCE_LOOP, lambda eax: 0),
              emu.stub(FADE_AMBIENT_AUDIO, lambda eax: None),
-             emu.stub(SPEECH_STOP_CHANNELS, lambda eax: None),
              emu.stub(SOUND_STOPALL, lambda eax: None),
              emu.stub(SETMOUSEPOS, lambda eax: None)]
     event = emu.alloc(b'\x08\x08\0\0')

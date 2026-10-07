@@ -191,6 +191,7 @@ func _read_settings() -> void:
 		if config.has("period_length"):
 			sim.set_period_length(config["period_length"])
 		sim.cup_series = config.get("cup_series", PackedByteArray())
+		sim.series_mode = config.get("series_mode", false)
 		sfx_on = flags & 0x80 != 0
 		music_on = flags & 0x40 != 0
 		sim.user1_team = user1_team

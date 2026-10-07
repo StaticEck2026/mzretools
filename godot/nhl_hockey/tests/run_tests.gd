@@ -724,9 +724,12 @@ func ai_golden() -> void:
 		if group == "hud":
 			counts.append(_hud_golden(data[group]))
 			continue
+		if group == "cup":
+			counts.append(_cup_golden(data[group]))
+			continue
 		var sim := Sim.new()
 		sim.stubs = {"snd_play_sfx": true, "kms_play": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
-			"injure_player": true, "bench_cheer": true, "show_penalty": true, "say_penalty": true, "say_penalty_shot": true, "play_speech": true, "load_clip": true,
+			"injure_player": true, "show_penalty": true, "say_penalty": true, "say_penalty_shot": true, "play_speech": true, "load_clip": true,
 			"say_goal": true, "goal_milestone_check": true, "put_player_on_ice": true,
 			"pick_player_for_position": true, "draw_line_indicator": true}
 		var ok := 0
@@ -767,11 +770,11 @@ func ai_golden() -> void:
 func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 	var sim := Sim.new()
 	sim.stubs = {"snd_play_sfx": true, "kms_play": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
-		"injure_player": true, "bench_cheer": true, "show_penalty": true, "say_penalty": true, "say_penalty_shot": true, "play_speech": true, "load_clip": true,
+		"injure_player": true, "show_penalty": true, "say_penalty": true, "say_penalty_shot": true, "play_speech": true, "load_clip": true,
 		"say_goal": true, "goal_milestone_check": true, "put_player_on_ice": true,
 		"pick_player_for_position": true, "draw_line_indicator": true,
 		"update_effects": true,
-		"setup_faceoff": true, "announce_one_minute_left": true}
+		"setup_faceoff": true, "say_one_minute_left": true}
 	if group == "rules" or group == "goals":
 		sim.stubs.erase("queue_infraction")
 		sim.stubs.erase("maybe_queue_infraction")
@@ -1290,7 +1293,7 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	if g.has("hud"):
 		_hud_set(sim, g["hud"])
 	sim.last_sfx = int(g.get("last_sfx", -1))
-	sim.highlight_game = int(g.get("highlight_game", 0)) != 0
+	sim.one_minute_said = int(g.get("one_minute_said", 0)) != 0
 	sim.user1_slot = int(g["user1_slot"])
 	sim.user2_slot = int(g["user2_slot"])
 	sim.user1_team = int(g["user1_team"])
@@ -1499,7 +1502,7 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 		"misc_flags": (0x10 if sim.misc_first_touch else 0) | (0x80 if sim.half_announce else 0) | (0x40 if sim.second_tick else 0),
 		"action_flags": (4 if sim.action_pass else 0) | (8 if sim.action_shot else 0) | (0x40 if sim.action_hold_camera else 0)
 			| (0x80 if sim.action_replay else 0) | (0x10 if sim.replay.wrapped else 0),
-		"last_sfx": Entity.to_s16(sim.last_sfx), "highlight_game": 1 if sim.highlight_game else 0,
+		"last_sfx": Entity.to_s16(sim.last_sfx), "one_minute_said": 1 if sim.one_minute_said else 0,
 		"user1_slot": sim.user1_slot, "user2_slot": sim.user2_slot, "user1_team": sim.user1_team, "user2_team": sim.user2_team,
 		"last_touch_slot": sim.last_touch_slot, "last_touch_y": sim.last_touch_y, "last_touch_x": sim.last_touch_x,
 		"last_passer": sim.last_passer, "last_shooter": sim.last_shooter, "pending_dir": sim.pending_dir,
@@ -1617,6 +1620,30 @@ func _hud_golden(cases: Array) -> String:
 	for n in per:
 		parts.append("%s %d/%d" % [n, per[n][0], per[n][1]])
 	return "hud %d / %d (%s)" % [ok, cases.size(), ", ".join(parts)]
+
+## game_over_check (ai_cup.json): random play-off finals, the score of the game, the session's mode
+func _cup_golden(cases: Array) -> String:
+	var sim := Sim.new()
+	var ok := 0
+	var shown := 0
+	for c: Dictionary in cases:
+		var a: Array = c["args"]
+		sim.cup_series = PackedByteArray(_ints(c["series"]))
+		sim.series_mode = int(c["mode"]) == 1
+		sim.settings2 = int(c["settings2"])
+		var ret := 1 if Ceremonies.game_over_check(sim, int(a[0]), int(a[1])) else 0
+		var want: Dictionary = c["after"]
+		var diff := []
+		if ret != int(want["ret"]):
+			diff.append("returns %d (original %d)" % [ret, int(want["ret"])])
+		if str(Array(sim.cup_series)) != str(_ints(want["series"])):
+			diff.append("series %s (original %s)" % [str(sim.cup_series), str(want["series"])])
+		if diff.is_empty():
+			ok += 1
+		elif shown < 10:
+			shown += 1
+			fail("cup game_over_check %s mode %d series %s: %s" % [str(a), int(c["mode"]), str(c["series"]), ", ".join(diff)])
+	return "cup %d / %d" % [ok, cases.size()]
 
 ## the replay as tools/nhl/golden.py replay_read records it: the write position, the half step, the
 ## held sound, a hash of the ring and the frame written last

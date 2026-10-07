@@ -559,6 +559,7 @@ func play_game(db_override: Database = null, restore: Dictionary = {}) -> int:
 		"lines": Session.line_override.duplicate(),
 		"scratches": Session.scratches.duplicate(),
 		"cup_series": _cup_series(),
+		"series_mode": Session.mode == 1,
 	}
 	var r: int = await app.play_match_async(setup)
 	game = null

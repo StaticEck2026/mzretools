@@ -918,11 +918,16 @@ static func game_clock_tick(sim: Sim) -> void:
 	if (pn == 3 and (c == 0x3c or c == 0x78 or c == 0xb4 or c == 0x12c or c == 0x258)) or (pn == 2 and c == 0x258):
 		Lines.time_announcements(sim)
 
-## announce_one_minute_left (0x6280a): the announcer's last minute line (a hook)
+## announce_one_minute_left (0x6280a): with sound and speech on and statistics kept, the voices
+## stop (speech_stop_channels: the new sentence replaces the one being said) and
+## say_one_minute_left (0x854ac) says the last minute line, which sets dword_ccc98
 static func announce_one_minute_left(sim: Sim) -> void:
-	if sim.stubbed("announce_one_minute_left", []):
+	if not sim.sound_enabled or (sim.settings2 & 1) == 0 or sim.no_stats:
+		return
+	if sim.stubbed("say_one_minute_left", []):
 		return
 	Speech.say(sim, Speech.one_minute())
+	sim.one_minute_said = true
 
 # --------------------------------------------------------------------------------------------
 # goals (score_goal 0x5ab36) and the end of a period (setup_faceoff 0x5d852)

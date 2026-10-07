@@ -115,8 +115,11 @@ static func regular_season(sim: Sim) -> bool:
 
 ## game_over_check (0x15c30): does a win by this score decide the Stanley Cup? In the play-off
 ## final (sim.cup_series, the 7 games of the final series as the schedule file keeps them, 6 bytes
-## each: home, away, then the scores at +4 / +5, 0xff while unplayed) the score goes into the
-## first unplayed game and the series is decided (series_winner); the game is taken out again.
+## each: a first byte 0xff while not scheduled, home, away at +2 / +3, the scores at +4 / +5, 0xff
+## while unplayed) the score goes into the first unplayed game and the series is decided
+## (series_winner: a team has won half its length and one more), its length from the options in a
+## play-off series alone (series_mode), else from the games scheduled (playoff_series_count); the
+## game is taken out again.
 static func game_over_check(sim: Sim, home: int, away: int) -> bool:
 	if sim.stubbed("game_over_check", [home, away]):
 		return sim.cup_final
@@ -124,11 +127,13 @@ static func game_over_check(sim: Sim, home: int, away: int) -> bool:
 		return false
 	var po := sim.cup_series.duplicate()
 	var k := 0
-	while k < 6 and po[k * 6 + 4] != 0xff:
+	while k < 7 and po[k * 6 + 4] != 0xff:
 		k += 1
-	po[k * 6 + 4] = home & 0xff
-	po[k * 6 + 5] = away & 0xff
-	var n := League.series_count(po, 0) if sim.cup_series_games <= 0 else sim.cup_series_games
+	if k < 7:
+		po[k * 6 + 4] = home & 0xff
+		po[k * 6 + 5] = away & 0xff
+	# a play-off series alone has the length of the options, else the games scheduled say it
+	var n := (sim.settings2 >> 4) & 7 if sim.series_mode else League.series_count(po, 0)
 	return League.series_winner(po, 0, n) >= 0
 
 # --------------------------------------------------------------------------------------------

@@ -59,7 +59,7 @@ var intermission_pending := false    # end_of_period: a period ended, the front 
 var sequence_steps: int = 0          # sequence_steps: steps left of the anthem / three stars
 var cup_final := false               # game_over_check: this game decides the Stanley Cup (the harness's stub result)
 var cup_series := PackedByteArray()  # dword_dc338 (alloc_cup_banner): the 7 games of the play-off final, empty otherwise
-var cup_series_games := 0            # the final's length when the league fixes it (option_flags bits 12..14), else 0
+var series_mode := false             # dword_c53fb == 1: a play-off series alone, its length from option_flags bits 12..14
 var series_announce := false         # byte_ccca0: the cup was won, the pause menu says the series result
 var intermission_camera := false     # game_flags 0x80 (the cup presentation)
 var stars: Array = []                # e9af8: up to 3 x [team, roster], the 1st star first
@@ -117,7 +117,7 @@ var whistle_timer: int = 0
 var announce_timer: int = -1        # word_cc0b0
 var box_count := [0, 0]            # penalized_count / byte_e9abb: players sitting in each penalty box
 var last_sfx := -1                 # crowd_noise low word: the last play_sfx id (recorded by the replay)
-var highlight_game := false        # dword_ccc98: a highlight of a league game plays (its horn sounds over the announcer)
+var one_minute_said := false       # dword_ccc98: say_one_minute_left said the last minute line (league_highlight_game clears it); in a game without statistics the horn sounds over the announcer only then
 # the scoreboard below the ice (Scoreboard): its clock (hud_clock_min/sec/tenths: minutes, seconds,
 # hundredths), the hundredths played and not yet counted (dword_d8c78, 100 a step), those of the
 # frame (dword_dc28c) and those draw_clock counted down (dword_c583c); per team the penalty list
@@ -625,7 +625,7 @@ func play_sfx(id: int) -> void:
 	if speech_busy:
 		if id != 0x9c:
 			return
-		if no_stats and not highlight_game:
+		if no_stats and not one_minute_said:
 			return
 	if (sound_device == 8 or sound_device == 4) and (id == 0xa0 or id == 0xa1):
 		return
