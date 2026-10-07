@@ -55,9 +55,12 @@ behaviour matches the DOS game (see "Porting conventions" below).
 | Team colours | `loaders/GamePalette.gd` | `load_team_palettes`: RINKPAL.QFS + HOMEPALS.BIN / AWAYPALS.BIN, the colour remap tables of `blit_sprite` and their mirrored variant |
 | Rink | `loaders/RinkTiles.gd` | `load_rink` / `load_rink_tiles`: the RINK.QFS surface with the centre ice logo of the home team (TEAM.TIL / .MAP, mirrored second half for EDM, LA, NJ, PIT) |
 | Rosters | `loaders/Database.gd` | `db_open_files` / `db_load_team_roster` / `db_read_player`: TEAMS.DB, KEY.DB, ATT.DB (names, numbers, positions, ratings, the line table) |
-| Sound | `loaders/Sounds.gd`, `loaders/FmBank.gd` | `snd_play_patch`, `loadpatches`: the patch bank PCFF001.PAT with the FM timbres of PCFF000.TIM and the digital ones of PCFF001.TIM, the 30 samples of PCFF001.DIG found by their ids, played at 11025 Hz shifted by the patch's transpose, loops and note lengths; 8SVX / WAV samples |
-| Speech | `loaders/Viv.gd`, `sim/Speech.gd`, `view/Announcer.gd` | `speech_load_bank` (XBRUCE2.VIV, byte pair packed clips), the sentences of `say_goal`, `say_penalty`, `say_penalty_shot`, `say_star`, `say_time_remaining`, `say_game_intro`, played back to back like the timer routine `speech_timer` |
-| Music | `loaders/Kms.gd`, `audio/KmsPlayer.gd`, `audio/FmDriver.gd`, `audio/Opl2.gd`, `audio/DacDriver.gd`, `audio/MusicCues.gd`, `audio/MusicPlayer.gd` | `music_load_kms` (KMS + CFG), the sequencer of the 100 Hz timer (`sound_timer_tick`, `kms_track_tick`, the note table, `snd_play_patch` for the FM effects), the FM driver YM30.BGP (voices, the timbres' envelopes, LFOs and step sequences, levels, frequencies), a model of the OPL2 chip, the digital voices of SB30.BGP, `load_music_banks` / `play_speech` (the home team's songs, three random ones, the anthem, the stomp) |
+| Sound cards | `audio/MusicPlayer.gd`, `loaders/FmBank.gd`, `loaders/Sounds.gd` | `load_sound_config`: the card chosen in the settings (NHL.CFG; `NHL_SOUND` for a match without the front end) and its SCN file, patch file and timbre files (`loadpatches`); the drivers compiled into HOCKEY.EXE: Sound Blaster (FM + `sbdac_*`), AdLib (`adlib_drv_*`, the effects as FM timbres of PCFF002.TIM), PC speaker (`pcspk_*`), MT-32 (`mpu_drv_*`), none; `snd_play_patch` for the effects, `update_ambient_audio` / `sound_pause_all` for the crowd |
+| Digital driver | `audio/DacDriver.gd` | `sbdac_*` and the software mixer `mix_*`: four voices at 11025 Hz with their 8 bit volume tables and clipping, the voice masks and priorities of the patch records, voice stealing, pitch bend; the effects, the crowd's roar (0x7d, voice 2) and murmur (0x7e, voice 3), the speech (voices 0 / 1) and the stomp |
+| PC speaker | `audio/PcSpeaker.gd` | `pcspk_*`: one voice (as in the original), the timbre's envelope, LFO and note sequence moving the PIT divisor of the note, `pcspk_hw_update` |
+| MT-32 | `audio/Mt32.gd` | `mpu_drv_send_midi`: the MPU-401 byte stream (MT32HOCK.KMS's set-up, the MT* songs, the effects on the rhythm part), heard through a small stand-in synthesiser (see below) |
+| Speech | `loaders/Viv.gd`, `sim/Speech.gd`, `view/Announcer.gd` | `speech_load_bank` (XBRUCE2.VIV: byte pair packed clips and 4 bit Fibonacci delta coded ones), the sentences of `say_goal`, `say_penalty`, `say_penalty_shot`, `say_star`, `say_time_remaining`, `say_game_intro`, played back to back like the timer routine `speech_timer` |
+| Music | `loaders/Kms.gd`, `audio/KmsPlayer.gd`, `audio/FmDriver.gd`, `audio/Opl2.gd`, `audio/DacDriver.gd`, `audio/MusicCues.gd`, `audio/MusicPlayer.gd` | `music_load_kms` (KMS + CFG), the sequencer of the 100 Hz timer (`sound_timer_tick`, `kms_track_tick`, the note table, `snd_play_patch` for the FM effects), the FM driver (`adlib_drv_*`, also YM30.BGP: voices, the timbres' envelopes, LFOs and step sequences, levels, frequencies), the YM3812 computed sample by sample at 49716 Hz (ROM tables, envelope generator, feedback, the YM3014 DAC; natively in `native/opl2` where the library is built, else in GDScript), each track sent to the driver of its program's record class (`kms_track_tick`), `load_music_banks` / `play_speech` (the home team's songs, three random ones, the anthem, the card's stomp) |
 | Fonts | `loaders/Vfn.gd` | `setfont` / `printstr`: 1 bpp VFN fonts (HILIGHT, WITTLE06, TEENY05...) |
 | Entities and teams | `sim/Entity.gd`, `sim/Team.gd` | the 17 x 0x80 byte entity records and the two team records (STRUCTURES.md) |
 | Animation | `sim/Anim.gd` | `set_animation`, `advance_animation` |
@@ -108,12 +111,15 @@ Montreal home game and the power play flags.
   teams are simulated after each human game, so there is nothing to merge.
 - Injuries do not carry over from one league game to the next; neither do they in the original, whose
   roster loader reads a return date (SEASON.DB +0x26 / +0x27) that nothing but the multi-player merge writes.
-- Sound: the port plays what the Sound Blaster plays (SBDAC.SCN: FM music and FM effects through the OPL2,
-  digital effects, speech and the stomp through the DAC); the Adlib, MT-32 and speaker variants are not
-  modelled. The OPL2 is a model, not a cycle exact emulation (envelope generator per 16 samples, 22050 Hz
-  output). The ambient crowd is one looping sample whose volume follows `crowd_noise` (the original fades
-  several channels in `update_ambient_audio`). The pause screen plays its recording (PAUSE.IFF, packed two
-  samples per byte, see FORMATS.md) and the front end plays the recordings of its screens.
+- Sound: the MT-32's sound is its own (LA synthesis and the PCM samples of its ROMs, neither part of the
+  game): the port sends it exactly what the game sends but plays the messages on a small stand-in
+  synthesiser (a waveform and an envelope per program family, noise for the rhythm part). The Gravis
+  UltraSound plays like the Sound Blaster (its drivers need the GUS's own patch files). The OPL2's rhythm
+  mode is not modelled (the drivers never set it). The chip runs natively through the GDExtension in
+  `native/` (built for Linux x86_64 in `native/bin`; `native/opl2/CMakeLists.txt` builds it for other
+  platforms); without the library the same arithmetic runs in GDScript, which costs about half a
+  CPU core for six sounding channels. The front end's recordings play as samples of their own, not
+  through the mixer's voice 3.
 - The period label under the clock is an addition (the original shows the period on the pause screen).
 
 ## Porting conventions

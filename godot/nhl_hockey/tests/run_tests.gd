@@ -412,6 +412,7 @@ func asset_tests() -> void:
 			fail("effect note lengths")
 		audio_tests(gf, snd)
 		sound_card_tests(gf)
+		opl2_tests()
 	league_tests(gf)
 
 ## the sound cards (load_sound_config): the Sound Blaster's digital driver and its mixer (the
@@ -505,6 +506,71 @@ func sound_card_tests(gf: Node) -> void:
 			fail("MT-32 horn bytes: %s" % str(Array(st.slice(maxi(st.size() - 6, 0)))))
 		print("sound cards: SB / AdLib / speaker / MT-32 checked (%d MT-32 set-up messages)" % mt.mt32.sysex_count)
 	mt.free()
+
+## the OPL2: the ROM tables, a note's attack and release, the waveforms; the native chip (when its
+## library is loaded) against the GDScript one, sample for sample
+func opl2_tests() -> void:
+	var chip := Opl2.new(22050.0, false)
+	if Opl2.logsin[0] != 0x859 or Opl2.logsin[255] != 0 or Opl2.exprom[0] != 0x7fa or Opl2.exprom[255] != 0x400:
+		fail("OPL2 ROM tables: %x %x %x %x" % [Opl2.logsin[0], Opl2.logsin[255], Opl2.exprom[0], Opl2.exprom[255]])
+	var setup := func(c) -> void:
+		c.write(0x01, 0x20)
+		c.write(0xbd, 0xc0)
+		for r in [[0x20, 0x21, 0xe1], [0x40, 0x1a, 0x00], [0x60, 0xf4, 0x83], [0x80, 0x37, 0x46], [0xe0, 0x01, 0x02]]:
+			c.write(r[0], r[1])
+			c.write(r[0] + 3, r[2])
+		c.write(0xc0, 0x0a)
+		c.write(0xa0, 0x58)
+		c.write(0xb0, 0x31)
+		# a second channel with additive synthesis and vibrato / tremolo
+		for r in [[0x21, 0xe2], [0x24, 0xc1], [0x41, 0x05], [0x44, 0x00], [0x61, 0xa5], [0x64, 0xd3], [0x81, 0x28], [0x84, 0x1a]]:
+			c.write(r[0], r[1])
+		c.write(0xc1, 0x01)
+		c.write(0xa1, 0x81)
+		c.write(0xb1, 0x2d)
+	setup.call(chip)
+	var buf := PackedInt32Array()
+	buf.resize(4000)
+	chip.chip_block(buf)
+	var peak := 0
+	for v in buf:
+		peak = maxi(peak, absi(v))
+	if peak < 1000:
+		fail("OPL2 note level %d" % peak)
+	if chip.s_gen[3] == Opl2.EG_ATTACK:
+		fail("OPL2 attack did not end")
+	chip.write(0xb0, 0x11)
+	chip.write(0xb1, 0x0d)
+	var tail := PackedInt32Array()
+	tail.resize(200000)
+	chip.chip_block(tail)
+	if chip.active_channels() != 0:
+		fail("OPL2 release did not end")
+	if ClassDB.class_exists("Opl2Chip"):
+		var nat: RefCounted = ClassDB.instantiate("Opl2Chip")
+		var gd := Opl2.new(22050.0, false)
+		setup.call(nat)
+		setup.call(gd)
+		var a: PackedInt32Array = nat.chip_samples(30000)
+		var b := PackedInt32Array()
+		b.resize(30000)
+		gd.chip_block(b)
+		nat.write(0xb0, 0x11)
+		gd.write(0xb0, 0x11)
+		a.append_array(nat.chip_samples(30000))
+		var b2 := PackedInt32Array()
+		b2.resize(30000)
+		gd.chip_block(b2)
+		b.append_array(b2)
+		var diff := -1
+		for i in a.size():
+			if a[i] != b[i]:
+				diff = i
+				break
+		if diff >= 0:
+			fail("native OPL2 differs at sample %d: %d %d" % [diff, a[diff], b[diff]])
+		else:
+			print("native OPL2 = GDScript OPL2 for %d samples" % a.size())
 
 ## a league of computer teams: the schedule, a whole season of simulated games, the play-offs
 func league_tests(gf: Node) -> void:

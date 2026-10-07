@@ -1,0 +1,11 @@
+[configuration]
+
+entry_symbol = "opl2_library_init"
+compatibility_minimum = "4.3"
+
+[libraries]
+
+linux.x86_64 = "res://native/bin/libopl2.linux.x86_64.so"
+linux.arm64 = "res://native/bin/libopl2.linux.arm64.so"
+windows.x86_64 = "res://native/bin/libopl2.windows.x86_64.dll"
+macos = "res://native/bin/libopl2.macos.x86_64.dylib"
