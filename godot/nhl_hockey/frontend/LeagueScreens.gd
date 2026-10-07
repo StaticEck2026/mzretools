@@ -806,10 +806,10 @@ func menu_show_league_settings() -> int:
 func league_trade_players() -> int:
 	return await menu_central_registry()
 
-## Central Registry ... (menu_central_registry: the database editor)
+## Central Registry ... (menu_central_registry: the database editor; a league's databases when a
+## league is open)
 func menu_central_registry() -> int:
-	await fe.message_dialog(["The Central Registry is not", "available yet."])
-	return 0
+	return await Registry.new(fe).run()
 
 func league_hilights() -> int:
 	await fe.message_dialog(["No highlights have been saved", "in this league."])

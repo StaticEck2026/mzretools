@@ -273,6 +273,9 @@ func draw_menu_entry(it: Menus.Item, ox: int, oy: int, text_color: int, fill: in
 	scr.set_text_colors(text_color, 0)
 	scr.print_text_at(x + 2, y + 1, it.text)
 
+var menu_item: Menus.Item = null      # the entry whose callback runs (the callbacks of the original get its record)
+var menu_root_index := 0             # and the bar entry it is under
+
 ## run_menu (0x1d6e8): the bar `root` (records of Menus) with pull-down lists. A click on a bar entry
 ## or on an entry with a sub list opens it (below the bar, to the right of a list), the first click on
 ## an entry with a callback selects it, a second click runs it: handler.call(name) -> code. Code 1
@@ -363,6 +366,8 @@ func run_menu(root: Array, light: int, face: int, dark: int, handler: Callable, 
 		top = 0
 		var keep := Vector2i(px, py)
 		show_pointer(false)
+		menu_item = it
+		menu_root_index = current[0]
 		var code = await handler.call(it.cb)
 		if not (code is int):
 			code = 0

@@ -27,6 +27,11 @@ var team_id := 0
 var info: Database.TeamInfo
 var work := PackedByteArray()      # acStack_124: 40 jersey numbers
 var original := PackedByteArray()  # the line table at the start (unk_dbd1c)
+# TEAMS.DB the default lines are saved to (the installation's; the Central Registry its own)
+var teams_read: Callable = func() -> PackedByteArray: return GameFiles.read_raw("teams.db")
+var teams_write: Callable = func(b: PackedByteArray) -> void:
+	GameFiles.write_data("teams.db", b)
+	fe.db = Database.open(b, GameFiles.read_raw("key.db"), GameFiles.read_raw("att.db"))
 var state := PackedByteArray()     # rosters[team][r]: 0 empty, 1 injured, 2 scratched, 3 dressed
 var entries: Array = []            # unk_ed0f4: [pos, number, roster, name] sorted
 var picked := -1                   # local_60: the entry picked in the list
@@ -358,13 +363,12 @@ func _callback(cb: String):
 			if not await _dressed_ok():
 				return 0
 			var lt := _table()
-			var teams := GameFiles.read_raw("teams.db")
+			var teams: PackedByteArray = teams_read.call()
 			var at := team_id * 0x2e8 + 0xbc
 			if teams.size() >= at + 0x30:
 				for i in 0x30:
 					teams[at + i] = lt[i]
-				GameFiles.write_data("teams.db", teams)
-				fe.db = Database.open(teams, GameFiles.read_raw("key.db"), GameFiles.read_raw("att.db"))
+				teams_write.call(teams)
 			original = lt.duplicate()
 			return 0
 		"lines_dress_player_b", "lines_dress_player":
