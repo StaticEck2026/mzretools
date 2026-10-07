@@ -1,0 +1,73 @@
+name: NHL Hockey port
+
+# The tools (formats.py against the game's own decoders, the golden data against HOCKEY.EXE run in
+# the emulator) and the Godot port's tests, which read the game files of re/nhl_hockey.
+on:
+  push:
+    paths:
+      - 'tools/**'
+      - 'godot/nhl_hockey/**'
+      - 're/nhl_hockey/**'
+      - '.github/workflows/nhl.yml'
+  pull_request:
+    paths:
+      - 'tools/**'
+      - 'godot/nhl_hockey/**'
+      - 're/nhl_hockey/**'
+      - '.github/workflows/nhl.yml'
+  workflow_dispatch:
+
+env:
+  GODOT: Godot_v4.3-stable_linux.x86_64
+
+jobs:
+  tools:
+    name: Tools and golden data
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Emulator
+        run: pip install unicorn==2.1.4
+      - name: Decoders against the game's own
+        run: python3 tools/nhl/test_pack.py re/nhl_hockey
+      - name: The golden data is what the original computes
+        run: |
+          python3 tools/nhl/golden.py re/nhl_hockey godot/nhl_hockey/tests/golden
+          git diff --exit-code godot/nhl_hockey/tests/golden
+
+  godot:
+    name: Godot tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Godot 4.3
+        run: |
+          curl -sSfL -o godot.zip https://github.com/godotengine/godot/releases/download/4.3-stable/$GODOT.zip
+          unzip -q godot.zip -d "$HOME/godot"
+      - name: Import
+        run: '"$HOME/godot/$GODOT" --headless --path godot/nhl_hockey --import'
+      - name: Tests
+        run: '"$HOME/godot/$GODOT" --headless --path godot/nhl_hockey --script tests/run_tests.gd'
+
+  native:
+    name: OPL2 library from source
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: godot-cpp
+        run: git clone --depth 1 --branch godot-4.3-stable https://github.com/godotengine/godot-cpp.git "$HOME/godot-cpp"
+      - name: Build
+        run: |
+          cmake -S godot/nhl_hockey/native/opl2 -B build-opl2 -DGODOT_CPP_DIR="$HOME/godot-cpp" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-opl2 -j "$(nproc)"
+      - name: Godot 4.3
+        run: |
+          curl -sSfL -o godot.zip https://github.com/godotengine/godot/releases/download/4.3-stable/$GODOT.zip
+          unzip -q godot.zip -d "$HOME/godot"
+      - name: Tests with the library just built
+        run: |
+          "$HOME/godot/$GODOT" --headless --path godot/nhl_hockey --import
+          "$HOME/godot/$GODOT" --headless --path godot/nhl_hockey --script tests/run_tests.gd
