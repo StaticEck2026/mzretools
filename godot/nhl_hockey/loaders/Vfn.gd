@@ -43,9 +43,17 @@ func glyph_height(c: int) -> int:
 func advance(c: int) -> int:
 	return data[adv_tab + c - first] if adv_tab != 0 else glyph_width(c) + spacing
 
+## the character codes of the text (Latin-1: the fonts have glyphs above 0x7f, e.g. 0xa8 and 0xa9)
+static func codes(s: String) -> PackedInt32Array:
+	var out := PackedInt32Array()
+	out.resize(s.length())
+	for i in s.length():
+		out[i] = s.unicode_at(i)
+	return out
+
 func text_width(s: String) -> int:
 	var w := 0
-	for c in s.to_ascii_buffer():
+	for c in codes(s):
 		if c >= first and c <= last:
 			w += advance(c)
 	return w
@@ -59,7 +67,7 @@ func render(s: String, color: Color) -> Image:
 
 ## Draws `s` into `img` at (x, y) with `color`
 func draw(img: Image, s: String, x: int, y: int, color: Color) -> void:
-	for c in s.to_ascii_buffer():
+	for c in codes(s):
 		if c < first or c > last:
 			continue
 		var i := c - first

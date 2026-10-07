@@ -34,6 +34,8 @@ var settings: SettingsScreens
 var game: Node = null               # view/Main.gd while a game is on (the pause screen's callbacks use it)
 var last_sim: Sim = null            # the simulation of the last game played to its end (the league records it)
 var leagues: LeagueScreens
+var intro: IntroScreens
+var music: MusicPlayer = null        # the FM songs of the front end (the title song of the intro and the credits)
 
 func _ready() -> void:
 	layer = CanvasLayer.new()
@@ -60,6 +62,7 @@ func _ready() -> void:
 	stats = StatsScreens.new(self)
 	settings = SettingsScreens.new(self)
 	leagues = LeagueScreens.new(self)
+	intro = IntroScreens.new(self)
 
 ## the mouse pointer of POINTER3.QFS (on the CD only): without it an arrow of the same size
 func _fallback_pointer() -> void:
@@ -128,6 +131,45 @@ func stop_loop() -> void:
 	loop_player.stop()
 	loop_name = ""
 
+## the music driver of the front end: PCFF001.PAT with the FM timbres of PCFF000.TIM, like
+## load_music_banks for the match
+func fm_music() -> MusicPlayer:
+	if music == null:
+		var fm := FmBank.load_bank(GameFiles.read_raw("pcff001.pat"), [GameFiles.read_raw("pcff000.tim")])
+		if fm == null:
+			return null
+		music = MusicPlayer.new()
+		add_child(music)
+		music.setup(fm, func(n: String) -> PackedByteArray: return GameFiles.read_raw(n))
+	return music
+
+## music_load_kms + play_sample_by_ptr: a song (the title song ADTITLE / MTTITLE) when the music is on
+func play_song(name: String) -> void:
+	if Session.option_flags & 0x40 == 0:
+		return
+	var m := fm_music()
+	if m != null:
+		m.play_song(name)
+
+## stop_crowd_loop + kms_unload
+func stop_song() -> void:
+	if music != null:
+		music.stop_song()
+
+## say_goodnight (0x59c3e): the announcer's GOODNITE.INT with speech on (option_flags 0x100), when
+## the speech bank has it (the bank of the floppy version does not)
+func say_goodnight() -> void:
+	if not Session.sound_enabled or Session.option_flags & 0x100 == 0:
+		return
+	var v := Viv.parse(GameFiles.read_raw("xbruce2.viv"))
+	if v == null or not v.has("goodnite.int"):
+		return
+	var p := AudioStreamPlayer.new()
+	p.stream = v.stream("goodnite.int")
+	add_child(p)
+	p.finished.connect(p.queue_free)
+	p.play()
+
 ## the screen fades to black with the recording (the usual way out of a screen)
 func leave_screen(ticks: int = 100) -> void:
 	var tw := start_fade_loop(ticks)
@@ -145,6 +187,8 @@ func run() -> void:
 	show_screen(true)
 	scr.black()
 	load_nhl_cfg()
+	if IntroScreens.intro_wanted():
+		await intro.intro_sequence()
 	var set_file := FileAccess.get_file_as_bytes("user://GAME.SET")
 	Session.apply_block(set_file if set_file.size() >= Session.SETTINGS_SIZE else Session.default_block())
 	if set_file.size() < Session.SETTINGS_SIZE:
@@ -158,6 +202,13 @@ func run() -> void:
 	await loading_screen()
 	await frontend_main_menu()
 	await leave_screen(100)
+	await quit_program()
+
+## the end of main (and of exit_game_dialog): the loading screen, credits_screen, back to DOS
+func quit_program() -> void:
+	loading_shown = false
+	await loading_screen()
+	await intro.credits_screen()
 	app.quit()
 
 ## loading_screen (0x47a9c..): LOAD.QFS "load" at (100, 75), its palette brought up from black
@@ -268,7 +319,7 @@ func set_hub_title(which: int) -> void:
 
 ## run_menu's callback: the method of the same name (1 leaves the menu, 2 redraws the screen)
 func dispatch(cb: String):
-	for target in [self, games, stats, settings, leagues]:
+	for target in [self, games, stats, settings, leagues, intro]:
 		if target != null and target.has_method(cb):
 			var r = await target.call(cb)
 			return r if r is int else 0

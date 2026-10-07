@@ -66,6 +66,7 @@ var tick_acc := 0.0                   # 100 Hz timer ticks of the replay speed
 var replay_from_menu := false
 var end_shown := false
 var anthem := true
+var demo := false                     # dword_c5130: a demo game of the intro (demo_game), a key ends it
 
 var config: Dictionary = {}           # the front end's setup of the match (App.play_match_async): home, away,
                                       # user1, user2 (0 none, 1 home, 2 away), option_flags
@@ -195,6 +196,7 @@ func _read_settings() -> void:
 		sim.user2_team = user2_team
 		sim.assign_users()
 		anthem = config.get("anthem", true)
+		demo = config.get("demo", false)
 		return
 	if OS.has_environment("NHL_HOME"):
 		home_team = int(OS.get_environment("NHL_HOME"))
@@ -228,6 +230,10 @@ func _physics_process(delta: float) -> void:
 		Mode.REPLAY:
 			_replay_step(ticks)
 			return
+	if demo and (Input.is_anything_pressed() or Input.is_action_just_pressed("pause")):
+		# game_loop of a demo game: pause_requested ends it (dword_c53f7 = 2)
+		_demo_over(2)
+		return
 	if Input.is_action_just_pressed("pause") and not sim.match_over:
 		if front != null:
 			_front_pause(0)
@@ -244,6 +250,10 @@ func _physics_process(delta: float) -> void:
 	_play_queued_sfx()
 	_play_music()
 	_update_view()
+	if demo and (sim.intermission_pending or sim.match_over):
+		# the end of the demo game's first period (dword_c53f7 = 1): the intro goes on
+		_demo_over(1)
+		return
 	if sim.intermission_pending and front != null:
 		# end_of_period -> leave_match_video -> end_match_from_period: the box score of the period
 		# and the pause screen of the intermission (pause_menu(1)) before the next period
@@ -277,6 +287,13 @@ func _physics_process(delta: float) -> void:
 # --------------------------------------------------------------------------------------------
 # pause screen (pause_menu) and instant replay (instant_replay)
 # --------------------------------------------------------------------------------------------
+
+## the demo game is over: 1 at the end of the period, 2 a key was pressed
+func _demo_over(result: int) -> void:
+	mode = Mode.PAUSED
+	front_busy = true
+	_stop_sounds()
+	app.match_finished(result)
 
 ## the pause screen of the front end (pause_menu(0)): back to the game, the replay, or the match is left
 func _front_pause(variant: int) -> void:

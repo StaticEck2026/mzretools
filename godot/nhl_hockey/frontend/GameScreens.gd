@@ -388,7 +388,7 @@ func exit_game_dialog() -> int:
 	await fe.fade_loop(100)
 	if await fe.yes_no_dialog(["Exiting the game", "may lose this game's data.", "Do you wish to exit?"]):
 		await scr.fade_out(16)
-		fe.app.quit()
+		await fe.quit_program()
 	return 0
 
 ## menu_go_to_replay (0x1a817): the instant replay of the match, then the pause screen again
