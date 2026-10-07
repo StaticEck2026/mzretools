@@ -30,7 +30,6 @@ extends RefCounted
 const CLASS := 1                      # the driver class of the FM records (+0xf of a patch record)
 const OP_OFFSET := [0, 1, 2, 8, 9, 10, 16, 17, 18]                                   # unk_d67a8
 const VOICE_REGS := [0x23, 0x43, 0x63, 0x83, 0xe3, 0x20, 0x40, 0x60, 0x80, 0xe0, 0xc0, 0xa0, 0xb0]  # unk_d67b4
-const SINE := 0xd6178                 # unk_d6178: the quarter sine, 257 16.16 values
 # unk_d67f4: the F-numbers of note % 12 + offset (from -12) and, after them, the velocity levels
 # (unk_d683c, (velocity & 0x7c) / 4) that offsets past 35 read; unk_d687c: controller 7's gains
 const FNUM_LOW := [43, 45, 48, 51, 54, 57, 61, 64, 68, 72, 76, 81]
@@ -107,13 +106,11 @@ var free_mask := 0x1ff                # word_f3452
 var used_mask := 0                    # word_f3450
 var released_mask := 0                # word_f344e
 var shadow := PackedByteArray()       # unk_d68fc: the registers as written (opl_flush_regs)
-static var _sine := PackedInt32Array()
 
 func _init(c: Opl2, b: FmBank) -> void:
 	chip = c
 	bank = b
 	shadow.resize(256)
-	_tables()
 	for i in 16:
 		channels.append(Channel.new())
 	for i in 9:
@@ -121,15 +118,6 @@ func _init(c: Opl2, b: FmBank) -> void:
 		v.regs.resize(13)
 		voices.append(v)
 	reset()
-
-## the 16.16 quarter sine of the executable (computed when it is not there; 4 of 257 differ by 1)
-static func _tables() -> void:
-	if not _sine.is_empty():
-		return
-	_sine.resize(257)
-	var exe := Exe.i32(SINE + 256 * 4) == 0x10000 and Exe.i32(SINE + 4) == 402
-	for i in 257:
-		_sine[i] = Exe.i32(SINE + i * 4) if exe else int(floor(65536.0 * sin(PI / 2.0 * i / 256.0)))
 
 ## adlib_drv_init with opl_reset: every register 0 (1 = 0x20: the waveforms), the release rates 0xe,
 ## the voices free, the channels' records back to no patch
@@ -176,16 +164,6 @@ static func _uw(t: PackedByteArray, o: int) -> int:
 ## fixmul16: a * b / 65536, rounded up from one half less one
 static func fixmul16(a: int, b: int) -> int:
 	return (a * b + 0x7fff) >> 16
-
-## sin_lookup: the 16.16 sine of a 10 bit phase
-static func sine(p: int) -> int:
-	_tables()
-	var i := p & 0xff
-	match (p >> 8) & 3:
-		0: return _sine[i]
-		1: return _sine[256 - i]
-		2: return -_sine[i]
-	return -_sine[256 - i]
 
 ## the word of the F-number table at an index (-12..35, and the level table after it)
 static func _fnum(idx: int) -> int:
@@ -577,7 +555,7 @@ func _lfo_step(v: Voice, t: PackedByteArray) -> void:
 			v.lfo_state = 0
 		else:
 			v.lfo_phase = (v.lfo_phase + v.lfo_rate) & 0xffff
-			v.lfo_raw = _s16(fixmul16(v.lfo_depth << 2, sine(v.lfo_phase >> 6)))
+			v.lfo_raw = _s16(fixmul16(v.lfo_depth << 2, Tables.sin16(v.lfo_phase >> 6)))
 	var lim := _w(t, 0x2a)
 	if v.lfo_raw > lim:
 		v.lfo_out = lim

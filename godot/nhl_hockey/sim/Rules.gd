@@ -151,9 +151,8 @@ static func penalty_box_update(sim: Sim) -> void:
 			sim.infractions.pop_back()
 			e.flags2 &= ~Entity.F2_PENALIZED
 			begin_penalty_shot(sim)
-			# the referee picks up the puck again: the shooter and the goalie line up, the others
-			# wait at the benches (all_goto_positions with the shot phase set)
-			all_goto_positions(sim)
+			# the shooter and the goalie line up, the others wait at the benches once the referee
+			# picks up the puck (ai_ref_pickup_puck -> all_goto_positions with the shot phase set)
 			ref_announce(sim, type, e.slot)
 			return
 		var minutes: int = Tables.infraction_is_penalty[type]

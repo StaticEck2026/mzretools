@@ -683,6 +683,88 @@ func golden_tests(gf: Node) -> void:
 		else:
 			pc_ok += 1
 	print("golden: randomrange, rand, AdLib driver %d / %d sequences, PC speaker %d / %d effects" % [fm_ok, fm.size(), pc_ok, pc.size()])
+	physics_golden()
+
+## the match physics against the original: approx_distance and direction8; collide_boards (with
+## collide_corner, bounce_off_boards, puck_spin) on puck and skater states at the boards
+func physics_golden() -> void:
+	var ph := _golden("physics")
+	if ph.is_empty():
+		fail("golden physics data missing")
+		return
+	var dbad := 0
+	for c: Array in ph["distance"]:
+		var d := Sim.approx_distance(int(c[0]), int(c[1]))
+		var r := Tables.direction8(int(c[0]), int(c[1]))
+		if d != int(c[2]) or r != int(c[3]):
+			dbad += 1
+			if dbad <= 3:
+				fail("distance %s: %d direction %d" % [str(c), d, r])
+	var sim := Sim.new()
+	var ok := 0
+	var bad := 0
+	for c: Dictionary in ph["boards"]:
+		var e: Entity = sim.entities[int(c["slot"])]
+		var before: Dictionary = c["before"]
+		_entity_set(e, before)
+		e.half_w = int(c["hw"])
+		e.half_h = int(c["hh"])
+		e.prev_x = int(c["prev_x"])
+		e.prev_y = int(c["prev_y"])
+		e.prev_z = e.z
+		sim.puck_carrier = int(c["carrier"])
+		sim.seed = int(c["seed"])
+		sim.sfx_queue.clear()
+		sim.play_stopped = false
+		sim.collide_boards(e, int(c["px"]), int(c["py"]), e.half_w, e.half_h)
+		var want: Dictionary = c["after"]
+		var got := _entity_get(e)
+		var diff := []
+		for k in want:
+			if k == "spin" and e.slot != Entity.Slot.PUCK:
+				continue
+			if int(got[k]) != int(want[k]):
+				diff.append("%s %d (original %d)" % [k, got[k], want[k]])
+		var sfx: Array = c["sfx"]
+		if sim.sfx_queue.size() != sfx.size() or (sfx.size() > 0 and sim.sfx_queue[0] != int(sfx[0])):
+			diff.append("sounds %s (original %s)" % [str(sim.sfx_queue), str(sfx)])
+		if sim.seed != int(c["final_seed"]):
+			diff.append("seed")
+		if diff.is_empty():
+			ok += 1
+		else:
+			bad += 1
+			if bad <= 6:
+				fail("collide_boards slot %d at %d,%d v %d,%d: %s" % [e.slot, int(c["px"]), int(c["py"]), int(before["vx"]), int(before["vy"]), ", ".join(diff)])
+	print("golden physics: %d / %d distances, collide_boards %d / %d" % [ph["distance"].size() - dbad, ph["distance"].size(), ok, ph["boards"].size()])
+
+## the fields of physics.json (ENTITY_FIELDS of golden.py) to and from an entity of the port
+static func _entity_set(e: Entity, f: Dictionary) -> void:
+	e.x = int(f["x"])
+	e.y = int(f["y"])
+	e.z = int(f["z"])
+	e.vx = int(f["vx"])
+	e.vy = int(f["vy"])
+	e.vz = int(f["vz"])
+	e.frame = int(f["frame"])
+	e.speed = int(f["speed"])
+	e.push_x = int(f["push_x"])
+	e.push_y = int(f["push_y"])
+	if e.slot == Entity.Slot.PUCK:
+		e.flags3 = int(f["spin"])
+	else:
+		e.heading = (e.heading & 0xffff) | (int(f["spin"]) << 16)
+	e.anim = int(f["anim"])
+	e.anim_pos = int(f["anim_pos"])
+	e.anim_hold = int(f["anim_hold"])
+	e.flags = int(f["flags"])
+	e.flags4 = int(f["flags4"])
+
+static func _entity_get(e: Entity) -> Dictionary:
+	return {"x": e.x, "y": e.y, "z": e.z, "vx": e.vx, "vy": e.vy, "vz": e.vz, "frame": e.frame,
+		"speed": e.speed, "push_x": e.push_x, "push_y": e.push_y,
+		"spin": e.flags3 if e.slot == Entity.Slot.PUCK else (e.heading >> 16) & 0xff,
+		"anim": e.anim, "anim_pos": e.anim_pos, "anim_hold": e.anim_hold, "flags": e.flags, "flags4": e.flags4}
 
 ## a league of computer teams: the schedule, a whole season of simulated games, the play-offs
 func league_tests(gf: Node) -> void:

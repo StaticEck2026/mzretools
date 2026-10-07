@@ -8,6 +8,9 @@
 #   fm_driver.json   the AdLib driver (adlib_drv_init / send_midi / tick): the OPL2 registers after
 #                    every timer tick of a few MIDI sequences, the port I/O caught by a hook
 #   pc_speaker.json  the PC speaker driver (pcspk_*): the PIT divisor and the speaker gate every tick
+#   physics.json     approx_distance and direction8 on vectors; collide_boards (with collide_corner,
+#                    bounce_off_boards, puck_spin) on puck and skater states at the boards: the entity
+#                    record after the call, the sound effects asked for (play_sfx stubbed), the seed
 #
 # The patch bank is put in the emulator's memory the way loadpatches leaves it: the .PAT file at
 # snd_patch_bank, each record's +0x10 pointing at its timbre from the .TIM files.
@@ -23,9 +26,10 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 from leemu import LEEmu                       # noqa: E402
 
-from unicorn import UC_HOOK_INSN              # noqa: E402
+from unicorn import UC_HOOK_CODE, UC_HOOK_INSN    # noqa: E402
 from unicorn.x86_const import (UC_X86_INS_IN, UC_X86_INS_OUT, UC_X86_REG_GDTR, UC_X86_REG_DS,  # noqa: E402
-                               UC_X86_REG_ES, UC_X86_REG_SS, UC_X86_REG_FS, UC_X86_REG_GS)
+                               UC_X86_REG_ES, UC_X86_REG_SS, UC_X86_REG_FS, UC_X86_REG_GS,
+                               UC_X86_REG_EAX, UC_X86_REG_ESP, UC_X86_REG_EIP)
 
 RANDOMRANGE = 0x8c230
 RAND = 0x8eb27
@@ -39,6 +43,14 @@ ADLIB_SEND = 0x9e676
 PCSPK_INIT = 0x9d698
 PCSPK_TICK = 0x9d6f3
 PCSPK_SEND = 0x9daac
+ENTITIES = 0xdf81c                            # entities[17], 0x80 bytes each
+ENTITIES_INIT = 0x5ba89
+COLLIDE_BOARDS = 0x582c9
+APPROX_DISTANCE = 0xb3d94                     # cdecl (dx, dy)
+DIRECTION8 = 0x8c8e8
+PLAY_SFX = 0x59884
+COLL_HALF_W = 0xc909c
+COLL_HALF_H = 0xc909e
 
 
 class PortEmu(LEEmu):
@@ -72,6 +84,15 @@ class PortEmu(LEEmu):
         o = self.outs
         self.outs = []
         return o
+
+    def stub(self, addr, fn):
+        '''Replaces the routine at addr: fn(eax) is called instead and the routine returns'''
+        def hook(uc, address, size, user):
+            fn(uc.reg_read(UC_X86_REG_EAX))
+            sp = uc.reg_read(UC_X86_REG_ESP)
+            uc.reg_write(UC_X86_REG_EIP, struct.unpack('<I', uc.mem_read(sp, 4))[0])
+            uc.reg_write(UC_X86_REG_ESP, sp + 4)
+        self.uc.hook_add(UC_HOOK_CODE, hook, None, addr, addr)
 
 
 def read(gamedir, name):
@@ -286,6 +307,87 @@ def pc_cases(exe, gamedir):
     return out
 
 
+# ----------------------------------------------------------------------------------------------
+# match physics
+# ----------------------------------------------------------------------------------------------
+
+# the fields of an entity record compared (STRUCTURES.md): name, offset, size (negative: signed)
+ENTITY_FIELDS = (('x', 0, -4), ('y', 4, -4), ('z', 8, -4), ('vx', 0xc, -2), ('vy', 0xe, -2), ('vz', 0x10, -2),
+                 ('frame', 0x12, -2), ('speed', 0x18, -2), ('push_x', 0x30, -2), ('push_y', 0x32, -2),
+                 ('spin', 0x36, 1), ('anim', 0x38, -2), ('anim_pos', 0x3a, -2), ('anim_hold', 0x3c, -2),
+                 ('flags', 0x44, 1), ('flags4', 0x55, 1))
+_FMT = {1: 'B', -1: 'b', 2: 'H', -2: 'h', 4: 'I', -4: 'i'}
+
+
+def entity_fields(emu, slot):
+    rec = emu.read(ENTITIES + slot * 0x80, 0x80)
+    return {n: struct.unpack_from('<' + _FMT[k], rec, o)[0] for n, o, k in ENTITY_FIELDS}
+
+
+def physics_cases(exe):
+    emu = PortEmu(exe)
+    rnd = random.Random(1993)
+    out = {'distance': [], 'boards': []}
+    for _ in range(200):
+        dx = rnd.randrange(-400, 401)
+        dy = rnd.randrange(-600, 601)
+        if rnd.random() < 0.1:
+            dx = 0
+        out['distance'].append([dx, dy, emu.call(APPROX_DISTANCE, stack=(dx & 0xffffffff, dy & 0xffffffff)) & 0xffff,
+                                emu.call(DIRECTION8, eax=dx & 0xffffffff, edx=dy & 0xffffffff) & 0xff])
+    sfx = []
+    emu.stub(PLAY_SFX, lambda eax: sfx.append(eax & 0xffff))
+    emu.call(ENTITIES_INIT)
+    base = emu.read(ENTITIES, 17 * 0x80)
+    for k in range(300):
+        emu.write(ENTITIES, base)
+        slot = 14 if k % 2 == 0 else (3 if k % 4 == 1 else 8)
+        rec = bytearray(emu.read(ENTITIES + slot * 0x80, 0x80))
+        hw = struct.unpack_from('<h', rec, 0x66)[0]
+        hh = struct.unpack_from('<h', rec, 0x68)[0]
+        w, h = 0xa0 - hw, 0x108 - hh
+        region = rnd.randrange(3)
+        if region == 0:          # the side boards
+            x = rnd.choice((-1, 1)) * rnd.randrange(w - 6, w + 8)
+            y = rnd.randrange(-(h - 70), h - 70)
+        elif region == 1:        # the corners
+            x = rnd.choice((-1, 1)) * rnd.randrange(w - 70, w + 4)
+            y = rnd.choice((-1, 1)) * rnd.randrange(h - 70, h + 4)
+        else:                    # the end boards, away from the nets
+            x = rnd.choice((-1, 1)) * rnd.randrange(0x48, w - 60)
+            y = rnd.choice((-1, 1)) * rnd.randrange(h - 6, h + 6)
+        lim = 0x3000 if slot == 14 else 0x1800
+        vx = rnd.randrange(-lim, lim)
+        vy = rnd.randrange(-lim, lim)
+        z = 0 if slot != 14 or rnd.random() < 0.6 else rnd.randrange(0, 0x12)
+        fields = {'x': (x << 16) | rnd.randrange(0x10000), 'y': (y << 16) | rnd.randrange(0x10000), 'z': z << 16,
+                  'vx': vx, 'vy': vy, 'vz': rnd.randrange(-0x400, 0x400) if z else 0,
+                  'speed': rnd.randrange(0, 21), 'anim_pos': rnd.randrange(0, 14)}
+        fields['prev_x'] = fields['x'] - vx * 16
+        fields['prev_y'] = fields['y'] - vy * 16
+        for n, o, sz in ENTITY_FIELDS:
+            if n in fields:
+                struct.pack_into('<' + _FMT[sz].lower() if sz < 0 else '<' + _FMT[sz], rec, o,
+                                 fields[n] if sz < 0 else fields[n] & ((1 << (8 * sz)) - 1))
+        struct.pack_into('<i', rec, 0x74, fields['prev_x'])
+        struct.pack_into('<i', rec, 0x78, fields['prev_y'])
+        struct.pack_into('<i', rec, 0x7c, fields['z'])
+        emu.write(ENTITIES + slot * 0x80, rec)
+        carrier = rnd.choice((-1, -1, 3, 8))
+        emu.write(ENTITIES + 14 * 0x80 + 0x42, bytes([carrier & 0xff]))
+        seed = rnd.getrandbits(32)
+        emu.write(SEED, struct.pack('<I', seed))
+        emu.write(COLL_HALF_W, struct.pack('<hh', hw, hh))
+        del sfx[:]
+        before = entity_fields(emu, slot)
+        emu.call(COLLIDE_BOARDS, eax=ENTITIES + slot * 0x80, edx=x & 0xffffffff, ebx=y & 0xffffffff)
+        out['boards'].append({'slot': slot, 'carrier': carrier, 'seed': seed, 'px': x, 'py': y, 'hw': hw, 'hh': hh,
+                              'prev_x': fields['prev_x'], 'prev_y': fields['prev_y'], 'before': before,
+                              'after': entity_fields(emu, slot), 'sfx': list(sfx),
+                              'final_seed': struct.unpack('<I', emu.read(SEED, 4))[0]})
+    return out
+
+
 def main():
     if len(sys.argv) != 3:
         print(__doc__ or 'golden.py GAMEDIR OUTDIR')
@@ -294,7 +396,7 @@ def main():
     exe = os.path.join(gamedir, 'HOCKEY.EXE')
     os.makedirs(outdir, exist_ok=True)
     for name, data in (('rng', rng_cases(exe)), ('fm_driver', fm_cases(exe, gamedir)),
-                       ('pc_speaker', pc_cases(exe, gamedir))):
+                       ('pc_speaker', pc_cases(exe, gamedir)), ('physics', physics_cases(exe))):
         path = os.path.join(outdir, name + '.json')
         with open(path, 'w') as f:
             json.dump(data, f, separators=(',', ':'), sort_keys=True)

@@ -75,6 +75,10 @@ def main():
     # set_default_state: AI state per line_slot (0 goalie .. 6)
     t['position_default_state'] = list(le.read(0xccca1, 7))
     t['dir8_lut'] = list(le.read(0xd2c74, 16))
+    # vector_octant: the angle (0x80 = 45 degrees) of the ratio i / 256; sin_lookup / cos_lookup: the
+    # 16.16 quarter sine (257 values, 0x100 = 90 degrees)
+    t['atan_table'] = list(le.read(0xd6074, 257))
+    t['sine_table'] = list(struct.unpack('<257i', le.read(0xd6178, 257 * 4)))
     t['infraction_priority'] = list(struct.unpack('<31i', le.read(0xcd39c, 124)))
     t['infraction_is_penalty'] = list(struct.unpack('<31b', le.read(0xc9123, 31)))
     # process_infractions: stoppage length (<< 5 steps) and announcement delay per infraction

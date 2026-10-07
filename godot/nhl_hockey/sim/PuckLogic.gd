@@ -362,7 +362,7 @@ static func puck_hits_player(sim: Sim, e: Entity) -> void:
 			oy = -oy
 		puck.vx = (ox >> 1) << 8 | (puck.vx & 0xff)
 		puck.vy = (oy >> 1) << 8 | (puck.vy & 0xff)
-		puck_spin(sim, puck)
+		puck_spin(sim, puck, ox)
 
 ## attach_puck_to_stick (0x579c6): the puck meets a skater's body / stick
 static func attach_puck_to_stick(sim: Sim, e: Entity) -> void:
@@ -379,9 +379,17 @@ static func attach_puck_to_stick(sim: Sim, e: Entity) -> void:
 	e.timer_c = 8
 	var vx := puck.vx
 	var vy := puck.vy
-	puck.vx = ((e.xi - puck.xi) << 8) | (puck.vx & 0xff)
-	puck.vy = ((e.yi - puck.yi) << 8) | (puck.vy & 0xff)
-	puck_spin(sim, puck)
+	# the high bytes of the velocity: the puck's offset from the skater (with none in y the offset
+	# of the skater's frame)
+	var dx := puck.xi - e.xi
+	var dy := puck.yi - e.yi
+	if dy == 0:
+		var o := Tables.frame_offset(e.frame, (e.flags4 & Entity.F4_MIRROR) != 0)
+		dx = o.x
+		dy = o.y
+	puck.vx = Sim._s16((dx << 8) | (puck.vx & 0xff))
+	puck.vy = Sim._s16((dy << 8) | (puck.vy & 0xff))
+	puck_spin(sim, puck, dx)
 	if low:
 		if e.anim != 0x84b:
 			sim.play_sfx(0xa3)
@@ -465,14 +473,16 @@ static func release_puck_random(sim: Sim) -> void:
 	puck.vy = sim.random(0x2000) - 0x1000
 	puck.vx = sim.random(0x2000) - 0x1000
 	puck.vz = sim.random(0x1000)
-	puck_spin(sim, puck)
+	puck_spin(sim, puck, puck.vz)
 
 ## puck_spin / puck_flat: puck frame bookkeeping (flat disc vs rolling)
-static func puck_spin(sim: Sim, puck: Entity) -> void:
-	if ((puck.vx >> 16) + (puck.vy >> 16)) < 0x14 and absi(puck.vx) + absi(puck.vy) < 0x1400:
+## a: the value in dword_e03ba of the caller (its low bit flips the spin)
+static func puck_spin(sim: Sim, puck: Entity, a: int) -> void:
+	# the original adds the two velocity words (+0xc, +0xe) as they are
+	if puck.vx + puck.vy < 0x14:
 		puck_flat(sim, puck)
 		return
-	puck.flags3 = ((sim.random(2) & 1) ^ puck.flags3) & 3
+	puck.flags3 = ((a & 1) ^ puck.flags3) & 3
 	puck.anim_hold = -1
 	Anim.set_animation(puck, 0x239)
 

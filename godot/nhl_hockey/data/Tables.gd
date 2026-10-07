@@ -67,6 +67,8 @@ static var knockdown_right2_x: Array = []
 static var knockdown_left2_x: Array = []
 static var knockdown_top_y: Array = []            # y against the end boards per facing
 static var knockdown_bottom_y: Array = []
+static var atan_table := PackedByteArray()      # vector_octant: angle of the ratio i / 256 (0x80 = 45 degrees)
+static var sine_table := PackedInt32Array()     # sin_lookup: the 16.16 quarter sine (0x100 = 90 degrees)
 static var menu_items: Dictionary = {}           # hex address -> [x0, y0, x1, y1, text, callback, sub list, sub count] (Menus.gd)
 static var loaded := false
 
@@ -143,6 +145,8 @@ static func load_tables() -> void:
 	knockdown_left2_x = _ints(t["knockdown_left2_x"])
 	knockdown_top_y = _ints(t["knockdown_top_y"])
 	knockdown_bottom_y = _ints(t["knockdown_bottom_y"])
+	atan_table = PackedByteArray(t["atan_table"])
+	sine_table = PackedInt32Array(t["sine_table"])
 	menu_items = t.get("menu_items", {})
 	loaded = true
 
@@ -198,6 +202,49 @@ static func stick_offset(frame: int, mirrored: bool) -> Vector2i:
 	return Vector2i(-o[0] if mirrored else o[0], o[1])
 
 ## direction8(dx, dy): 0-7 like the original (direction8 @0x8c8e8), 8 when both are zero
+## sin_lookup (0xb4a60): the 16.16 sine of an angle of 10 bits (0x100 = 90 degrees)
+static func sin16(a: int) -> int:
+	var i := a & 0xff
+	match (a >> 8) & 3:
+		0: return sine_table[i]
+		1: return sine_table[256 - i]
+		2: return -sine_table[i]
+	return -sine_table[256 - i]
+
+## cos_lookup (0xb4a66)
+static func cos16(a: int) -> int:
+	return sin16(a + 0x100)
+
+## vector_octant (0xb49c0): the angle of a vector, -0x200..0x200 (0x100 = 90 degrees, +y = 0x100)
+static func vector_angle(dx: int, dy: int) -> int:
+	var oct := 0
+	if dx < 0:
+		oct |= 2
+		dx = -dx
+	if dy < 0:
+		oct |= 4
+		dy = -dy
+	var a := 0x80
+	if dy != dx:
+		var lo := dy
+		var hi := dx
+		if dy > dx:
+			lo = dx
+			hi = dy
+			oct |= 1
+		# (lo << 32) / hi, the top 8 bits rounded by the next one
+		var q := (lo << 32) / hi
+		a = atan_table[(q >> 24) + ((q >> 23) & 1)]
+	match oct:
+		1: return 0x100 - a
+		2: return 0x200 - a
+		3: return a + 0x100
+		4: return -a
+		5: return a - 0x100
+		6: return a - 0x200
+		7: return -a - 0x100
+	return a
+
 static func direction8(dx: int, dy: int) -> int:
 	if dx == 0 and dy == 0:
 		return 8
