@@ -747,6 +747,58 @@ func ai_golden() -> void:
 		counts.append("%s %d / %d (%s)" % [group, ok, ok + bad, ", ".join(parts)])
 	print("golden AI: ", "; ".join(counts))
 
+## update_camera against the original (golden.py camera_cases)
+func _camera_golden(cases: Array) -> int:
+	var ok := 0
+	var shown := 0
+	var sim := Sim.new()
+	for c: Dictionary in cases:
+		var cam: Array = c["cam"]
+		var g: Dictionary = c["g"]
+		sim.camera_x = int(cam[0])
+		sim.camera_y = int(cam[1])
+		sim.camera_target_x = int(cam[2])
+		sim.camera_target_y = int(cam[3])
+		sim.camera_offset_y = int(cam[4])
+		var gf := int(g["game_flags"])
+		sim.play_stopped = (gf & 1) != 0
+		sim.stoppage_countdown = (gf & 4) != 0
+		sim.intermission_camera = (gf & 0x80) != 0
+		sim.stoppage_timer = int(g["stoppage_timer"])
+		sim.ref_phase = int(g["ref_phase"])
+		sim.clock_seconds = int(g["clock"][0])
+		sim.clock_sub = int(g["clock"][1])
+		sim.action_hold_camera = (int(g["action_flags"]) & 0x40) != 0
+		sim.faceoff_x = int(g["faceoff"][0])
+		sim.faceoff_y = int(g["faceoff"][1])
+		sim.puck_carrier = int(c["carrier"])
+		var sc: Array = c["scratch"]
+		sim.scratch_a = Sim._s16(int(sc[0]))
+		sim.scratch_b = Sim._s16(int(sc[1]))
+		sim.scratch_ac = int(sc[2])
+		var ents: Dictionary = c["ents"]
+		for k in ents:
+			var f: Dictionary = ents[k]
+			var e: Entity = sim.entities[int(k)]
+			e.x = int(f["x"])
+			e.y = int(f["y"])
+			e.vy = int(f["vy"])
+			e.flags = int(f["flags"])
+			e.target_x = int(f["target_x"])
+			e.target_y = int(f["target_y"])
+			if f.has("state"):
+				e.state_sp = 0
+				e.state_stack[0] = int(f["state"])
+		sim.update_camera()
+		var got := [sim.camera_x, sim.camera_y, sim.camera_target_x, sim.camera_target_y, sim.camera_offset_y,
+			Sim._s16(sim.scratch_a), Sim._s16(sim.scratch_b), Sim._s16(sim.scratch_ac & 0xffff)]
+		if str(got) == str(_ints(c["after"])):
+			ok += 1
+		elif shown < 5:
+			shown += 1
+			fail("update_camera %s: %s (original %s)" % [str(g), str(got), str(c["after"])])
+	return ok
+
 static func _full(base_rec: Dictionary, part: Dictionary) -> Dictionary:
 	var f := base_rec.duplicate()
 	f.merge(part, true)
@@ -833,6 +885,10 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	sim.breakaway_waypoint = int(g.get("breakaway_waypoint", 0))
 	sim.breakaway_lane_side = int(g.get("breakaway_lane_side", 0))
 	sim.breakaway_heading = int(g.get("breakaway_heading", 0))
+	sim.faceoff_x = int(g.get("faceoff_x", 0))
+	sim.faceoff_y = int(g.get("faceoff_y", 0))
+	sim.faceoff_ready = [int(g.get("faceoff_ready0", 0)), int(g.get("faceoff_ready1", 0))]
+	sim.penalty_shot_away = int(g.get("penalty_shot_timer", 0))
 	var teams: Array = c["teams"]
 	for t in 2:
 		var team: Team = sim.teams[t]
@@ -841,6 +897,7 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 		_team_set(team, f)
 		team.attacks_up = (t == 0) != sim.ends_switched
 		team.hits = int(f["hits"])
+		team.goalie_slot = int(f.get("goalie_slot", -1))
 		team.one_timer_tries = int(f.get("one_timer_tries", 0))
 		team.one_timers = int(f.get("one_timers", 0))
 		team.breakaways = int(f["breakaways"])
@@ -895,7 +952,9 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 		"goalie_pass_mode": sim.goalie_pass_mode, "breakaway_lane_x": sim.breakaway_lane_x,
 		"breakaway_target_y": sim.breakaway_target_y, "breakaway_trigger_y": sim.breakaway_trigger_y,
 		"breakaway_waypoint": sim.breakaway_waypoint, "breakaway_lane_side": sim.breakaway_lane_side,
-		"breakaway_heading": sim.breakaway_heading}
+		"breakaway_heading": sim.breakaway_heading, "faceoff_x": sim.faceoff_x, "faceoff_y": sim.faceoff_y,
+		"faceoff_ready0": sim.faceoff_ready[0], "faceoff_ready1": sim.faceoff_ready[1],
+		"penalty_shot_timer": sim.penalty_shot_away}
 
 static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 	var diff := []
@@ -924,7 +983,7 @@ static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 		var tg := {"hits": team.hits, "breakaways": team.breakaways, "passes": team.passes, "current_line": team.current_line,
 			"nearest_dist": team.nearest_dist, "nearest_d2": team.nearest_d2, "nearest_slot": team.nearest_slot, "strategy": team.strategy,
 			"strategy2": team.strategy2, "flags2": team.flags2, "mode": team.mode, "energy_threshold": team.energy_threshold,
-			"one_timer_tries": team.one_timer_tries, "one_timers": team.one_timers}
+			"one_timer_tries": team.one_timer_tries, "one_timers": team.one_timers, "goalie_slot": team.goalie_slot}
 		for k in tg:
 			if int(tg[k]) != int(want[k]):
 				diff.append("team %d %s %d (original %d)" % [t, k, int(tg[k]), int(want[k])])
@@ -1650,7 +1709,8 @@ func physics_golden() -> void:
 	sim.teams[0].attacks_up = true
 	sim.teams[1].attacks_up = false
 	sim.sort_draw_order()
-	print("golden physics: %d / %d distances, collide_boards %d / %d, apply_skating %d / %d, at the nets %d / %d, move_entity %d / %d, advance_animation %d / %d, puck_check_players %d / %d, body contacts %d / %d, puck_update %d / %d, passes and shots %d / %d" % [ph["distance"].size() - dbad, ph["distance"].size(), ok, ph["boards"].size(), sk_ok, ph["skating"].size(), n_ok, ph["nets"].size(), c_ok, ph["contacts"].size(), a_ok, ph["animation"].size(), p_ok, ph["pickup"].size(), b_ok, ph["checks"].size(), u_ok, ph["update"].size(), s_ok, ph["shoot"].size()])
+	var cam_ok := _camera_golden(ph.get("camera", []))
+	print("golden physics: %d / %d distances, collide_boards %d / %d, apply_skating %d / %d, at the nets %d / %d, move_entity %d / %d, advance_animation %d / %d, puck_check_players %d / %d, body contacts %d / %d, puck_update %d / %d, passes and shots %d / %d, update_camera %d / %d" % [ph["distance"].size() - dbad, ph["distance"].size(), ok, ph["boards"].size(), sk_ok, ph["skating"].size(), n_ok, ph["nets"].size(), c_ok, ph["contacts"].size(), a_ok, ph["animation"].size(), p_ok, ph["pickup"].size(), b_ok, ph["checks"].size(), u_ok, ph["update"].size(), s_ok, ph["shoot"].size(), cam_ok, ph.get("camera", []).size()])
 
 ## the numbers of a JSON value as ints (arrays too, strings kept)
 static func _ints(v: Variant) -> Variant:

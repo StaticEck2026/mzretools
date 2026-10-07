@@ -326,58 +326,79 @@ static func _around_post(x: int, tx: int, g: Entity, right: int, left: int, by: 
 		oy = by
 	return Vector2i(ox, oy)
 
-## ai_skate_towards (0x5e93b): re-evaluates the direction every 12 steps; `mode` adjusts it
-## (1 = ai_near_carrier_check, 2 = ai_ref_positioning, 3 = carrier_scan_opponents)
+## ai_skate_towards (0x5e93b): re-evaluates the direction every 12 steps: around the nets
+## (ai_choose_direction), standing (9) within 0xc of the point unless still short of the real
+## target without moving; `mode` adjusts it (1 = ai_near_carrier_check, 2 = ai_ref_positioning,
+## 3 = carrier_scan_opponents). Standing still he turns a step towards the puck (the camera target
+## while the puck's flags2 bit 0 is set). The scratch words carry the target in and the direction
+## (or the turn) and the y out, as in the original.
 static func skate_towards(sim: Sim, e: Entity, tx: int, ty: int, mode: int = 0) -> void:
-	e.dir_timer -= 1
+	sim.scratch_a = tx
+	sim.scratch_b = ty
+	e.dir_timer = Entity.to_s8(e.dir_timer - 1)
 	if e.dir_timer < 0:
 		e.dir_timer += 12
-		var otx := tx
-		var oty := ty
 		var t := choose_direction(sim, e, tx, ty)
-		var px := e.xi + (e.vx >> 8)
-		var py := e.yi + (e.vy >> 8)
-		var dx := t.x - px
-		var dy := t.y - py
+		var px := e.xi + Entity.to_s8(e.vx >> 8)
+		var py := e.yi + Entity.to_s8(e.vy >> 8)
+		var dx := Sim._s16(t.x - px)
+		var dy := Sim._s16(t.y - py)
+		sim.scratch_a = dx
+		sim.scratch_b = dy
 		var dir: int
-		if absi(dx) < 0xd and absi(dy) < 0xd and not (absi(otx - px) > 0xc and e.vx == 0) and not (absi(oty - py) > 0xc and e.vy == 0):
+		if absi(dx) <= 0xc and absi(dy) <= 0xc and (absi(tx - px) <= 0xc or e.vx != 0) and (absi(ty - py) <= 0xc or e.vy != 0):
 			dir = 9
 		else:
 			dir = Tables.direction8(dx, dy)
+		sim.scratch_a = dir
 		if mode == 1:
 			dir = near_carrier_check(sim, e, dir)
 		elif mode == 2:
 			dir = ref_positioning(sim, e, dir)
 		elif mode == 3:
 			dir = carrier_scan_opponents(sim, e, dir)
-		e.want_dir = dir
-		if dir >= 8 and e.vx == 0 and e.vy == 0:
-			# standing still: turn to face the puck
-			var fdir := Tables.direction8(sim.puck.xi - e.xi, sim.puck.yi - e.yi)
-			var diff := (e.facing - fdir) & 7
-			if diff != 0:
-				e.facing = (e.facing + ((diff & 4) >> 1) - 1) & 7
-	sim.apply_skating(e, e.want_dir)
+		sim.scratch_a = dir
+		e.want_dir = dir & 0xff
+		if Sim._s16(dir) > 7 and e.vx == 0 and e.vy == 0:
+			var fx := sim.puck.xi
+			var fy := sim.puck.yi
+			if sim.puck.flags2 & 1:
+				fx = sim.camera_target_x
+				fy = sim.camera_target_y
+			var ax := Sim._s16(fx - e.xi)
+			var ay := Sim._s16(fy - e.yi)
+			sim.scratch_b = ay
+			var hw := _heading_word(e)
+			var d := Sim._s16(hw - Tables.direction8(ax, ay))
+			sim.scratch_a = d
+			if d != 0:
+				_set_heading_word(e, (hw + ((d & 4) >> 1) - 1) & 7)
+	sim.apply_skating(e, Entity.to_s8(e.want_dir))
 
 ## ai_near_carrier_check (0x5e7fe): a defender close to the carrier moves into his path
 static func near_carrier_check(sim: Sim, e: Entity, dir: int) -> int:
-	if sim.puck_carrier < 0 or sim.puck_carrier >= 12:
+	if sim.puck_carrier < 0:
 		return dir
 	var c := sim.entities[sim.puck_carrier]
-	var dx := e.xi - c.xi
-	var fx := ((e.vx >> 8) - (c.vx >> 8)) + dx
-	if absi(fx) >= 0x29:
+	var dx := Sim._s16(e.xi - c.xi)
+	var fx := Sim._s16(Entity.to_s8(e.vx >> 8) - Entity.to_s8(c.vx >> 8) + dx)
+	sim.scratch_ac = (sim.scratch_ac & 0xffff0000) | (fx & 0xffff)
+	if absi(fx) > 0x28:
 		return dir
-	var dy := e.yi - c.yi
-	var fy := ((e.vy >> 8) - (c.vy >> 8)) + dy
-	if absi(fy) >= 0x29:
+	var dy := Sim._s16(e.yi - c.yi)
+	var fy := Sim._s16(Entity.to_s8(e.vy >> 8) - Entity.to_s8(c.vy >> 8) + dy)
+	sim.scratch_b = fy
+	if absi(fy) > 0x28:
 		return dir
+	sim.scratch_b = dy
 	var out := Tables.direction8(dx, dy)
 	if sim.opt_offsides:
-		var ry := (e.yi if (e.flags & Entity.F_ATTACK_UP) else -e.yi) - 0x4e
-		if ry < 0xb and ry > -0x33:
+		var ry := Sim._s16((e.yi if (e.flags & Entity.F_ATTACK_UP) else -e.yi) - 0x4e)
+		sim.scratch_b = ry
+		if ry <= 0xa and ry >= -0x32:
 			# at the blue line: slide along it instead of going offside
-			out = 2 if c.xi < e.xi else 6
+			sim.scratch_b = e.xi
+			out = 2 if e.xi > c.xi else 6
 	return out
 
 ## ai_ref_positioning (0x5e4c4): the referee keeps out of everybody's way
@@ -419,38 +440,77 @@ static func ref_positioning(sim: Sim, e: Entity, dir: int) -> int:
 			out = 0 if o.vy == 0 else 4
 	return out
 
-## ref_skate_to_point (0x5e3a0): the referee glides to a point, around the nets
+## ref_skate_to_point (0x4e29c): skate to a point at walking pace: on it within 8 (the fractions
+## stay); round the net from behind it (0xfc deep, 0x28 out) or from its side (0xdc, 0x28); slowed
+## by a quarter within 0x19, at least 0x640 each way while 8 or more off (the skating animation
+## from the glide, the glide from none), turned a step towards the point unless the direction
+## timer runs (the original takes the point from the scratch words ai_skate_towards left)
 static func ref_skate_to_point(sim: Sim, e: Entity, tx: int, ty: int) -> void:
-	var dx := tx - e.xi
-	var dy := ty - e.yi
-	if absi(dx) < 8 and absi(dy) < 8:
-		e.vx = 0
+	var a := tx
+	var b := ty
+	var sdx := Sim._s16(a - e.xi)
+	var sdy := Sim._s16(b - e.yi)
+	var adx := absi(sdx)
+	var ady := absi(sdy)
+	if adx < 8 and ady < 8:
 		e.vy = 0
-		e.set_pos(tx, ty)
+		e.vx = 0
+		e.x = (a << 16) | (e.x & 0xffff)
+		e.y = (b << 16) | (e.y & 0xffff)
 		return
-	if absi(e.xi) < 0x1f and absi(e.yi) > 0xf1 and absi(ty) < 0xf2:
+	var aex := absi(e.xi)
+	var aey := absi(e.yi)
+	var ab := absi(b)
+	if aex <= 0x1e and aey >= 0xf2 and ab < 0xf2:
 		# behind the net: out along the boards first
-		ty = -0xfc if e.yi < 0 else 0xfc
-		tx = -0x28 if tx < 0 else 0x28
+		b = -0xfc if e.yi < 0 else 0xfc
+		a = -0x28 if a < 0 else 0x28
 		if (e.vy > 0) != (e.yi > 0):
 			e.vy = 0
-	skate_towards(sim, e, tx, ty)
-	if absi(dx) < 0x19 and absi(dy) < 0x19:
+		sdx = Sim._s16(a - e.xi)
+		sdy = Sim._s16(b - e.yi)
+		adx = absi(sdx)
+		ady = absi(sdy)
+	elif aex >= 0x10 and aex <= 0x1e and aey >= 0xe8 and (b ^ e.yi) >= 0 and ab < 0xe8 and ab > 0xe0 and absi(a) < 0x14:
+		# beside the net, the point in front of it: round the post
+		b = -0xdc if e.yi < 0 else 0xdc
+		a = -0x28 if e.xi < 0 else 0x28
+		if (e.vx > 0) != (e.xi > 0):
+			e.vx = 0
+		sdx = Sim._s16(a - e.xi)
+		sdy = Sim._s16(b - e.yi)
+		adx = absi(sdx)
+		ady = absi(sdy)
+	skate_towards(sim, e, a, b)
+	if adx < 0x19 and ady < 0x19:
 		if absi(e.vx) > 0x9c4:
-			e.vx -= e.vx >> 2
+			e.vx = Sim._s16(e.vx - _div_trunc(e.vx, 4))
 		if absi(e.vy) > 0x9c4:
-			e.vy -= e.vy >> 2
-	# the last few units are covered at a minimum glide speed so the approach never stalls
-	var glide := Anim.REF_GLIDE if e.slot == Entity.Slot.REFEREE else (0x99 if e.line_slot == 0 else Anim.GLIDE)
-	var skate := Anim.REF_SKATE if e.slot == Entity.Slot.REFEREE else (Anim.GOALIE_IDLE if e.line_slot == 0 else Anim.SKATE)
-	if absi(dx) > 7 and absi(e.vx) < 0x640:
-		if (e.vx == 0 and e.anim == glide) or e.vy == 0:
-			Anim.set_animation(e, skate if e.vy == 0 else glide)
-		e.vx = 0x640 if dx > 0 else -0x640
-	if absi(dy) > 7 and absi(e.vy) < 0x640:
-		if (e.vx == 0 and e.anim == glide) or e.vy == 0:
-			Anim.set_animation(e, skate if e.vx == 0 else glide)
-		e.vy = 0x640 if dy > 0 else -0x640
+			e.vy = Sim._s16(e.vy - _div_trunc(e.vy, 4))
+	var glide := 0x289
+	var skate := 0x2e9
+	if e.slot == Entity.Slot.REFEREE:
+		glide = 0xa5b
+		skate = 0xa73
+	elif e.line_slot == 0:
+		glide = 0x99
+		skate = 0x1f1
+	if adx >= 8 and absi(e.vx) < 0x640:
+		if e.vx == 0 and e.anim == glide:
+			Anim.set_animation(e, skate)
+		elif e.anim == 0:
+			Anim.set_animation(e, glide)
+		e.vx = 0x640 if sdx > 0 else -0x640
+	if ady >= 8 and absi(e.vy) < 0x640:
+		if e.vx == 0 and e.anim == glide:
+			Anim.set_animation(e, skate)
+		elif e.anim == 0:
+			Anim.set_animation(e, glide)
+		e.vy = 0x640 if sdy > 0 else -0x640
+	var hw := _heading_word(e)
+	var rel := (Tables.direction8(Sim._s16(sim.scratch_a - e.xi), Sim._s16(sim.scratch_b - e.yi)) - hw) & 7
+	if ((rel + 1) & 7) > 2 and e.dir_timer == 0:
+		_set_heading_word(e, (hw + (1 if rel < 5 else -1)) & 7)
 
 ## ai_chase_puck (0x5eb17): skate to where the puck will be, lunge when it is just out of reach
 static func chase_puck(sim: Sim, e: Entity) -> void:
@@ -1685,37 +1745,42 @@ static func faceoff_wait(sim: Sim, e: Entity) -> void:
 	if (e.flags & Entity.F_BUSY) == 0 and not sim.faceoff_pending:
 		e.push_state()
 
-## ai_faceoff (0x4d528): the centre at the dot; CPU centres time the drop by skill
+## ai_faceoff (0x4d528): the centre at the dot. His readiness (1 hunched, 2 and 3 the stick
+## down, +3 for a right hander) goes to faceoff_ready for faceoff_resolve; the stick hitting the ice
+## clicks. A CPU centre decides once (flags2 bit 2, cleared by the animations) when to move: a
+## countdown of 0x28 (the away centre 0x14 + random 10) to the stick down (0x7f1); then with the
+## drop close (0x10 steps) or one in 8, the swipe (0x7dd, busy) or, early, the anticipation (0xd05).
 static func faceoff(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_BUSY:
 		return
 	if not sim.faceoff_pending:
 		e.timer_c = 0x14
-		e.push_state()
+		default_skate(sim, e)
 		return
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		e.timer_a = 0
-		e.frame = 0x16c if e.facing == 0 else 0x167
+		e.frame = 0x167 if _heading_word(e) != 0 else 0x16c
 		Anim.set_animation(e, 0)
-		e.timer_b = 0x28 if (e.flags & Entity.F_PLAYER2) == 0 else sim.random(10) + 0x14
+		e.timer_b = sim.random(10) + 0x14 if (e.flags & Entity.F_PLAYER2) else 0x28
 	var side := 1 if (e.flags & Entity.F_PLAYER2) else 0
 	var ready := 1
 	if e.frame == 0x169 or e.frame == 0x16e:
 		ready = 2
 	elif e.frame == 0x16a or e.frame == 0x16f:
-		ready = 3
 		if e.anim_hold == 7:
 			sim.play_sfx(0x9e + side)
+		ready = 3
 	if e.left_handed == 0:
 		ready += 3
+	sim.scratch_a = ready
 	sim.faceoff_ready[side] = ready
 	if e.flags & Entity.F_USER:
 		return
 	if e.flags2 & Entity.F2_TURNING:
 		return
 	e.flags2 |= Entity.F2_TURNING
-	if e.timer_b < 0 and (sim.faceoff_timer < 0x11 or sim.random(8) == 0):
+	if e.timer_b < 0 and ((sim.faceoff_timer & 0xffff) <= 0x10 or sim.random(8) == 0):
 		e.timer_b = -1
 		if sim.faceoff_timer < 0x11:
 			e.flags |= Entity.F_BUSY
@@ -1723,24 +1788,25 @@ static func faceoff(sim: Sim, e: Entity) -> void:
 		else:
 			Anim.set_animation(e, 0xd05)
 		return
-	e.timer_b -= 1
-	if e.timer_b >= 0:
-		e.flags2 &= ~Entity.F2_TURNING
-		return
-	Anim.set_animation(e, 0x7f1)
-	e.flags2 &= ~Entity.F2_TURNING
+	e.timer_b = Sim._s16(e.timer_b - 1)
+	if e.timer_b < 0:
+		Anim.set_animation(e, 0x7f1)
 
-## ai_all_goto_faceoff (0x52720): skate to the faceoff position after a whistle
+## ai_all_goto_faceoff (0x52720): after a whistle every player skates to his place at the next
+## faceoff (Rules.faceoff_position; the penalty shooter just inside his half at centre ice), turns
+## to the dot step by step every 8 steps and stands (timer_b = -100: arrived, all_players_arrived);
+## once there he goes back to the state below (and out of a celebration or a bench wait). A player
+## off the ice goes through the door.
 static func all_goto_faceoff(sim: Sim, e: Entity) -> void:
 	if e.line_slot < 0:
 		e.set_state(Entity.State.DOOR_OPEN)
 		e.timer_b = -100
 		e.flags2 |= Entity.F2_UNSELECTABLE
-		return
 	if e.flags & Entity.F_BUSY:
 		return
+	if Lines.handle_line_change(sim, e):
+		return
 	if e.timer_b == -100:
-		# arrived: back to the role (and out of a celebration / bench wait) until the faceoff is set up
 		default_skate(sim, e)
 		var s := e.state()
 		if s == Entity.State.CELEBRATE or s == Entity.State.BENCH_WAIT:
@@ -1749,10 +1815,10 @@ static func all_goto_faceoff(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		e.want_dir = 8
+		e.dir_timer = 0
 		e.timer_a = 0
 		var pos := Rules.faceoff_position(sim, e)
 		if sim.penalty_shot_phase != 0 and e.slot == sim.penalty_shot_slot:
-			# the shooter waits just inside his own half at centre ice
 			pos = Vector2i(0, -10 if (e.flags & Entity.F_ATTACK_UP) else 10)
 		e.target_x = pos.x
 		e.target_y = pos.y
@@ -1764,37 +1830,47 @@ static func all_goto_faceoff(sim: Sim, e: Entity) -> void:
 	var dy := e.yi - e.target_y
 	var d2 := dx * dx + dy * dy
 	if d2 < 0x40 and absi(e.vx) < 0x10 and absi(e.vy) < 0x10:
-		e.set_pos(e.target_x, e.target_y)
-		e.timer_a -= 1
+		# on the spot (the fractions of the position stay)
+		e.x = (e.target_x << 16) | (e.x & 0xffff)
+		e.y = (e.target_y << 16) | (e.y & 0xffff)
+		e.timer_a = Sim._s16(e.timer_a - 1)
 		if e.timer_a >= 0:
 			return
 		e.timer_a += 8
 		Anim.set_animation(e, 0x99 if e.line_slot == 0 else Anim.GLIDE)
-		var want := Tables.direction8(sim.faceoff_x - e.xi, sim.faceoff_y - e.yi)
+		var want := Tables.direction8(Sim._s16(sim.faceoff_x - e.xi), Sim._s16(sim.faceoff_y - e.yi))
 		if e.line_slot == 0:
 			if want == 2:
-				want = 3 if (e.flags & Entity.F_ATTACK_UP) == 0 else 1
+				want = 1 if (e.flags & Entity.F_ATTACK_UP) else 3
 			elif want == 6:
-				want = 5 if (e.flags & Entity.F_ATTACK_UP) == 0 else 7
-		if want != e.facing:
-			var diff := (want - e.facing) & 7
-			e.facing = (e.facing + (1 if diff < 5 else -1)) & 7
+				want = 7 if (e.flags & Entity.F_ATTACK_UP) else 5
+		sim.scratch_ac = want
+		var hw := _heading_word(e)
+		if want != hw:
+			var rel := (want - hw) & 7
+			sim.scratch_ac = rel
+			_set_heading_word(e, (hw + (1 if rel < 5 else -1)) & 7)
 			return
-		e.vx = 0
 		e.vy = 0
+		e.vx = 0
 		e.timer_b = -100
 		return
-	if d2 < 400:
+	sim.scratch_a = e.target_x
+	sim.scratch_b = e.target_y
+	if d2 < 0x190:
 		ref_skate_to_point(sim, e, e.target_x, e.target_y)
 	else:
 		skate_towards(sim, e, e.target_x, e.target_y)
 
-## ai_init_period (0x526ed): the players wait on the bench until the faceoff is set up
-static func init_period(_sim: Sim, e: Entity) -> void:
+## ai_init_period (0x526ed): the players wait off the ice until handle_line_change puts them on
+## (then 100 steps to come on)
+static func init_period(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_BUSY:
 		return
 	e.frame = -1
-	e.timer_b = -100
+	if Lines.handle_line_change(sim, e):
+		e.timer_a = 0x64
+		e.timer_b = 0
 
 ## ai_puck_normal (0x4d8c7)
 static func puck_normal(sim: Sim, e: Entity) -> void:
@@ -1802,6 +1878,7 @@ static func puck_normal(sim: Sim, e: Entity) -> void:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		sim.puck_goal_timer = 0
 		sim.puck_stuck_timer = 0x78
+		sim.penalty_shot_away = 0
 	PuckLogic.puck_update(sim)
 
 ## ai_puck_shadow (0x56ecf): the shadow sits under the puck (slot 15)
@@ -1913,7 +1990,7 @@ static func puck_faceoff2(sim: Sim, e: Entity) -> void:
 	if e.timer_a != 0:
 		var t := (e.timer_a + 6) >> 3
 		if t <= 2:
-			sim.faceoff_timer = 10 - t
+			sim.faceoff_digit = 10 - t
 
 ## the penalty shot branch of ai_puck_faceoff2 (0x51fc6..0x5214d): the user of the shooter's team
 ## takes the shooter, the defending goalie is reset, play resumes and start_penalty_shot hands the

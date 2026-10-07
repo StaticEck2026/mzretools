@@ -924,30 +924,37 @@ static func note_breakaway(sim: Sim) -> bool:
 
 ## position of a player at the faceoff (ai_all_goto_faceoff / ai_puck_faceoff2 share this)
 static func faceoff_position(sim: Sim, e: Entity) -> Vector2i:
-	var team := sim.team_of(e)
-	var row := clampi(6 - team.skaters_on_ice, 0, 2)
-	var lineup: Array = Tables.faceoff_lineup[row]
-	var idx: int = lineup[clampi(e.line_slot, 0, 7)]
-	var spot: Array = Tables.faceoff_spots[idx]
+	var team := sim.team_record(e)
+	# the row: 6 - skaters on the ice, one more when short handed with the goalie pulled; the
+	# table is read flat (row * 8 + line slot) as the original does
+	var row := -team.skaters_on_ice
+	if row > -6 and team.goalie_pulled():
+		row -= 1
+	var flat := (row + 6) * 8 + e.line_slot
+	var idx := 0
+	if flat >= 0 and flat < Tables.faceoff_lineup.size() * 8:
+		idx = Tables.faceoff_lineup[flat >> 3][flat & 7]
+	var spot: Array = Tables.faceoff_spots[idx] if idx >= 0 and idx < Tables.faceoff_spots.size() else [0, 0]
 	var sx: int = spot[0]
 	var sy: int = spot[1]
-	if (e.flags & Entity.F_ATTACK_UP) == 0:
+	var up := (e.flags & Entity.F_ATTACK_UP) != 0
+	if not up:
 		sx = -sx
 		sy = -sy
 	var fx := sim.faceoff_x
 	var fy := sim.faceoff_y
 	if e.line_slot == 0:
-		# the goalie stays in the crease, shaded towards the faceoff side
-		if absi(fy) > 0x27 and (fy < 0) != ((e.flags & Entity.F_ATTACK_UP) != 0):
-			var d := absi(fy - (0x27 if (e.flags & Entity.F_ATTACK_UP) else -0x27))
-			sx += (fx * d * 3) >> 12
+		# the goalie in his crease, shaded towards the dot when the faceoff is in his end
+		if absi(fy) > 0x27 and (fy < 0) == up:
+			var d := absi(Sim._s16(fy - (-0x27 if up else 0x27)))
+			sx = Sim._s16(sx + AI._div_trunc(fx * d * 3, 0x1000))
 		return Vector2i(sx, sy)
-	if idx < 5:
-		# wingers and defence squeeze towards the middle when the dot is off centre
+	if idx <= 2:
+		# the defencemen squeeze towards the middle when the dot is off centre
 		if (sx ^ fx) < 0:
-			sy -= fy >> 3
-		sx -= fx >> 2
-	return Vector2i(sx + fx, sy + fy)
+			sy = Sim._s16(sy - (fy >> 3))
+		sx = Sim._s16(sx - (fx >> 2))
+	return Vector2i(Sim._s16(sx + fx), Sim._s16(sy + fy))
 
 ## the block of ai_puck_faceoff2 that snaps everybody into place before the drop
 ## ai_puck_faceoff2: the nets back on their pegs at y +-0xec, still
@@ -1053,7 +1060,7 @@ static func place_faceoff(sim: Sim) -> void:
 	sim.faceoff_ready = [1, 4]
 	sim.faceoff_side = [0x8800 if not sim.ends_switched else 0x8000, 0xa000 if not sim.ends_switched else 0xa800]
 	sim.faceoff_dir = [-1, -1]
-	sim.faceoff_timer = 7
+	sim.faceoff_digit = 7
 	puck.timer_a = sim.random(0x78) + 0xb4
 
 ## faceoff_resolve (0x4db2b): the drop; the winner is decided by the centres' readiness and skill

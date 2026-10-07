@@ -115,7 +115,6 @@ var ref_phase: int = -1             # dword_c90d4: 0 = referee called, 1 = colle
 var ref_infraction: int = 0         # dword_c90d6
 var faceoff_x: int = 0              # dword_c90b2
 var faceoff_y: int = 0
-var faceoff_timer: int = 0          # word_dff42
 var faceoff_ready: Array = [0, 0]   # word_e038e / word_e0394: readiness of the two centres
 var faceoff_side: Array = [0x8800, 0xa000]   # dword_e0392 / word_e0396
 var faceoff_dir: Array = [-1, -1]   # word_c90b6 / word_c90b8: direction held by the users at the drop
@@ -185,8 +184,20 @@ var line_hotkey: PackedInt32Array = PackedInt32Array([-1, -1])                 #
 # counts frames down to 0 and clears the message, 0 = stays until cleared
 var message: int = -1
 var message_timer: int = 0
-var puck_stuck_timer: int = 0x78    # puck +0x28 (frozen puck countdown)
-var puck_goal_timer: int = 0        # puck +0x26 (goal line prediction every 5 steps)
+## the puck's words +0x28 (frozen puck countdown) and +0x26 (the goal line prediction every 5 steps
+## in play; before a faceoff the steps to the drop, the original's faceoff_timer 0xdff42)
+var puck_stuck_timer: int:
+	get: return Entity.to_s16((puck.want_dir & 0xff) | ((puck.dir_timer & 0xff) << 8))
+	set(v):
+		puck.want_dir = v & 0xff
+		puck.dir_timer = Entity.to_s8(v >> 8)
+var puck_goal_timer: int:
+	get: return puck.timer_a
+	set(v): puck.timer_a = Entity.to_s16(v)
+var faceoff_timer: int:
+	get: return puck.timer_a
+	set(v): puck.timer_a = Entity.to_s16(v)
+var faceoff_digit: int = 0          # word_e0398 faceoff_countdown_digit: 7, then 8, 9 in the last steps
 var penalty_shot := false           # dword_cc128 penalty_shot_active: the shot is under way
 var penalty_shot_phase := 0          # dword_cc118: 1 from the call until the shot ends
 var penalty_shot_setup := false      # dword_cc11c: from the start of the shot until the next faceoff
@@ -228,6 +239,7 @@ func _init() -> void:
 	referee = entities[Entity.Slot.REFEREE]
 	puck.line_slot = 0
 	shadow.line_slot = 0
+	puck_stuck_timer = 0x78
 	# entities_init: the draw order starts as the slots, then sorted
 	draw_list.resize(17)
 	draw_pos.resize(17)
@@ -1561,53 +1573,129 @@ func collide_pair(e: Entity, x: int, dyk: int, o: Entity) -> void:
 # camera (update_camera 0x65d8d)
 # --------------------------------------------------------------------------------------------
 
+## update_camera (0x65d01): the camera (the view's centre) follows its target with a dead zone of
+## 0xa up and down and 0x28 sideways, moving 1/16 (1/8 when the carrier skates fast towards the
+## edge of the view) of the way per step, at most 2 (0x20 >> 4) while the play is stopped. The
+## target: the carrier (or the loose puck) and a lead of up to 0x32 in his direction of play (the
+## referee's when he has the puck); while the referee works a stoppage the referee, the side of his
+## way the camera already is on, then the faceoff dot once he is close to it; nothing at 0:00 or
+## while the camera is held. For the cup presentation (game_flags 0x80) it looks at the bench
+## door (-100, 0xf).
 func update_camera() -> void:
-	var limit := 0x28
-	var ease := 10
-	var tx := camera_target_x
-	var ty := camera_target_y
-	if game_over:
-		tx = -100
-		ty = 0xf
-	elif clock_seconds != 0 or clock_sub != 0:
-		if (not stoppage_countdown or stoppage_timer >= 0) and ref_phase < 1:
-			if not action_hold_camera:
-				var target := puck
-				if puck_carrier >= 0:
-					target = entities[puck_carrier]
-					if puck_carrier == Entity.Slot.REFEREE:
-						camera_offset_y = -(target.vy >> 8)
-					elif (target.flags & Entity.F_ATTACK_UP) == 0:
-						camera_offset_y = maxi(camera_offset_y - 2, -0x32)
-					else:
-						camera_offset_y = mini(camera_offset_y + 2, 0x32)
-				ty = camera_offset_y + target.yi + (target.vy >> 8)
-				tx = target.xi
-		else:
-			# during the stoppage the camera follows the referee, then the faceoff spot
-			tx = referee.xi
-			ty = referee.yi
-			var rs := referee.state()
-			if (rs == Entity.State.REF_GOTO_FACEOFF or rs == Entity.State.REF_PENALTY_SHOT) \
-					and (referee.xi - faceoff_x) ** 2 + (referee.yi - faceoff_y) ** 2 < 0x640:
-				tx = faceoff_x
-				ty = faceoff_y
-				limit = 0
-				ease = 0
-	camera_target_x = tx
-	camera_target_y = ty
-	var dy := ty - camera_y
-	if dy > limit:
-		camera_y += maxi(1, (mini(dy - limit, 0x20)) >> 2) if ease > 0 else dy
-	elif dy < -limit:
-		camera_y -= maxi(1, (mini(-dy - limit, 0x20)) >> 2) if ease > 0 else -dy
-	camera_y = clampi(camera_y, -0xbc, 0xec)
-	var dx := tx - camera_x
-	if dx > ease:
-		camera_x += maxi(1, mini(dx - ease, 0x20) >> 2)
-	elif dx < -ease:
-		camera_x -= maxi(1, mini(-dx - ease, 0x20) >> 2)
-	camera_x = clampi(camera_x, -0x20, 0x20)
+	var dzx := 0x28
+	var dzy := 0xa
+	var fast := false
+	var ac := camera_target_y
+	var b0 := camera_target_x
+	var a: int
+	var b := scratch_b
+	if intermission_camera:
+		camera_target_x = -100
+		b0 = -100
+		camera_target_y = 0xf
+		ac = 0xf
+		a = _s16(0xf - camera_y)
+		if a < -5:
+			b = 0x14
+		elif a > 5:
+			b = 0xa
+		if absi(a) > 5:
+			b = clampi(_s16(b - camera_y), -0x20, 0x20)
+			if b != 0:
+				b >>= 5
+				if b == 0:
+					b = 1
+				camera_y = _s16(camera_y + b)
+		_camera_x_step(b0, dzx, 5, b, ac)
+		return
+	if clock_seconds != 0 or clock_sub != 0:
+		var rp := _s16(ref_phase & 0xffff)
+		if (stoppage_countdown and stoppage_timer < 0) or rp > 0:
+			var r := referee
+			camera_target_x = r.xi
+			camera_target_y = r.yi
+			var d1 := _s16(camera_target_x - camera_x)
+			var d2 := _s16(r.target_x - camera_x)
+			if (d1 ^ d2) < 0:
+				camera_target_x = camera_x
+			elif absi(d1) > absi(d2):
+				camera_target_x = r.target_x
+			d1 = _s16(camera_target_y - camera_y)
+			d2 = _s16(r.target_y - camera_y)
+			if (d1 ^ d2) < 0:
+				camera_target_y = camera_y
+			elif absi(d1) > absi(d2):
+				camera_target_y = r.target_y
+			ac = camera_target_y
+			b0 = camera_target_x
+			var rs := r.state()
+			if rs == Entity.State.REF_GOTO_FACEOFF or rs == Entity.State.REF_PENALTY_SHOT:
+				var fx := r.xi - faceoff_x
+				var fy := r.yi - faceoff_y
+				if fx * fx + fy * fy < 0x640:
+					camera_target_y = faceoff_y
+					ac = faceoff_y
+					camera_target_x = faceoff_x
+					b0 = faceoff_x
+					dzy = 0
+					dzx = 0
+		elif not action_hold_camera:
+			var t := puck
+			if puck_carrier >= 0:
+				t = entities[puck_carrier]
+				if t.slot == Entity.Slot.REFEREE:
+					camera_offset_y = _s16(-Entity.to_s8(t.vy >> 8))
+				elif t.flags & Entity.F_ATTACK_UP:
+					fast = t.vy < -0x64
+					camera_offset_y = mini(_s16(camera_offset_y + 2), 0x32)
+				else:
+					fast = t.vy > 0x64
+					camera_offset_y = _s16(camera_offset_y - 2)
+					if camera_offset_y <= -0x32:
+						camera_offset_y = -0x32
+			ac = _s16(camera_offset_y + t.yi + Entity.to_s8(t.vy >> 8))
+			camera_target_y = ac
+			b0 = t.xi
+			camera_target_x = b0
+	a = _s16(ac - camera_y)
+	var move := true
+	if a < -dzy:
+		b = maxi(_s16(ac + dzy), -0xbc)
+	elif dzy < a:
+		b = mini(ac if fast else _s16(ac - dzy), 0xec)
+	else:
+		move = false
+	if move and absi(a) > dzy:
+		b = _s16(b - camera_y)
+		if play_stopped:
+			b = clampi(b, -0x20, 0x20)
+		if b != 0:
+			b >>= 3 if fast else 4
+			if b == 0:
+				b = 1
+			camera_y = _s16(camera_y + b)
+	_camera_x_step(b0, dzx, 4, b, ac)
+
+## the sideways part of update_camera: towards the target outside the dead zone, within +-0x20;
+## the scratch words keep what the original leaves in them
+func _camera_x_step(b0: int, dzx: int, shift: int, b: int, ac: int) -> void:
+	scratch_ac = (scratch_ac & 0xffff0000) | (ac & 0xffff)
+	var a := _s16(b0 - camera_x)
+	scratch_a = a
+	scratch_b = b
+	if a < -dzx:
+		b = maxi(_s16(b0 + dzx), -0x20)
+	elif dzx < a:
+		b = mini(_s16(b0 - dzx), 0x20)
+	else:
+		return
+	b = clampi(_s16(b - camera_x), -0x20, 0x20)
+	if b != 0:
+		b >>= shift
+		if b == 0:
+			b = 1
+		camera_x = _s16(camera_x + b)
+	scratch_b = b
 
 ## scroll position of the 320x168 view over the 384x592 rink surface (game_loop)
 func view_origin() -> Vector2i:

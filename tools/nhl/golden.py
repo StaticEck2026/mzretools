@@ -1300,11 +1300,14 @@ AI_GLOBALS = (('game_flags', GAME_FLAGS, 1), ('stop_flags', STOP_FLAGS, 1), ('mi
               ('box_away', PENALIZED_COUNT + 1, 1), ('goalie_pass_mode', 0xc90aa, -2),
               ('breakaway_lane_x', BREAKAWAY_LANE, -4), ('breakaway_target_y', BREAKAWAY_LANE + 4, -4),
               ('breakaway_trigger_y', BREAKAWAY_LANE + 8, -4), ('breakaway_waypoint', BREAKAWAY_LANE + 12, -4),
-              ('breakaway_lane_side', BREAKAWAY_LANE + 16, -4), ('breakaway_heading', BREAKAWAY_LANE + 20, -4))
+              ('breakaway_lane_side', BREAKAWAY_LANE + 16, -4), ('breakaway_heading', BREAKAWAY_LANE + 20, -4),
+              ('faceoff_x', 0xc90b2, -2), ('faceoff_y', 0xc90b4, -2),
+              ('faceoff_ready0', 0xe0390, -2), ('faceoff_ready1', 0xe0394, -2), ('penalty_shot_timer', PENALTY_SHOT_TIMER, -4))
 AI_TEAM_FIELDS = TEAM_FIELDS + (('hits', 0x24, -2), ('breakaways', 0x1c, -2), ('passes', 0x26, -2),
                                 ('current_line', 0x2a, -2), ('nearest_d2', 0x3a, 4), ('nearest_dist', 0x3e, -4), ('nearest_slot', 0x42, -2),
                                 ('strategy', 0xd2, 1), ('strategy2', 0xd3, 1), ('flags2', 0xd4, 1), ('mode', 0xd5, 1),
-                                ('energy_threshold', 0xd6, -2), ('one_timer_tries', 0x16, -2), ('one_timers', 0x18, -2))
+                                ('energy_threshold', 0xd6, -2), ('one_timer_tries', 0x16, -2), ('one_timers', 0x18, -2),
+                                ('goalie_slot', 0xfa, -2))
 DEFAULT_STATES = (14, 2, 2, 3, 5, 3, 5)
 
 
@@ -1378,6 +1381,10 @@ def ai_world(emu, rnd, base, tables):
         emu.write(ENTITIES + slot * 0x80, rec)
     for ti, t in enumerate(TEAM_RECORDS):
         emu.write(t + 0x7e, struct.pack('<28h', *teams[ti]['entity_of']))
+        # the goalie on the ice, as sim_update_players leaves it (+0xfa)
+        line = struct.unpack('<h', emu.read(ENTITIES + ti * 6 * 0x80 + 0x1a, 2))[0]
+        teams[ti]['goalie_slot'] = ti * 6 if line == 0 else -1
+        emu.write(t + 0xfa, struct.pack('<h', teams[ti]['goalie_slot']))
     carrier = rnd.choice((-1, -1, rnd.randrange(12)))
     puck = bytearray(emu.read(PUCK, 0x80))
     put_fields(puck, {'x': puck_x << 16 | rnd.randrange(0x10000), 'y': puck_y << 16 | rnd.randrange(0x10000),
@@ -1415,6 +1422,9 @@ def ai_world(emu, rnd, base, tables):
     g.update({'breakaway_waypoint': w, 'breakaway_lane_side': side * rnd.choice((0x2c, 0x3a)),
               'breakaway_lane_x': side * rnd.choice((0x28, 0x16, 0x2c, 0x3a)), 'breakaway_target_y': rnd.choice((0x3c, 0x78, 0x97, 0xc0, 0xc3)),
               'breakaway_trigger_y': rnd.choice((0x1e, 0x3e, 0x66, 0x91, -1, -1)), 'breakaway_heading': rnd.randrange(8)})
+    spot = rnd.choice(((0, 0), (-0x50, 0x9a), (0x50, 0x9a), (-0x50, -0x9a), (0x50, -0x9a), (-0x50, 0x56), (0x50, -0x56)))
+    g.update({'faceoff_x': spot[0], 'faceoff_y': spot[1],
+              'faceoff_ready0': rnd.randrange(7), 'faceoff_ready1': rnd.randrange(7), 'penalty_shot_timer': rnd.choice((0, 0, 5, 0x40))})
     for n, a, sz in AI_GLOBALS:
         emu.write(a, struct.pack('<' + _FMT[sz], g[n] if sz < 0 else g[n] & ((1 << (8 * sz)) - 1)))
     emu.write(OPTION_FLAGS, struct.pack('<I', g['option_flags']))
@@ -1437,6 +1447,10 @@ AI_GROUPS = {
     'puck': ((17, SKATERS), (16, SKATERS), (18, SKATERS), (19, SKATERS), (46, SKATERS)),
     # the goalies: in the crease, out for a rimmed puck
     'goalie': ((14, (0, 6)), (14, (0, 6)), (14, (0, 6)), (14, (0, 6)), (14, (0, 6)), (15, (0, 6))),
+    # the faceoff: waiting, the centres at the dot, going to the faceoff, the start of a period
+    'faceoff': ((22, tuple(range(12))), (23, (4, 10)), (23, (4, 10)), (39, tuple(range(12))), (39, tuple(range(12))), (41, tuple(range(12)))),
+    # the puck and its shadow
+    'pucks': ((24, (14,)), (25, (15,)), (26, (14,))),
 }
 
 
@@ -1462,6 +1476,26 @@ def ai_prepare(emu, rnd, state, actor, g):
         put_fields(puck, {'vx': rnd.randrange(-0x1000, 0x1001), 'vy': rnd.randrange(-0x1000, 0x1001)})
     if state == 46:
         g['breakaway'] = 1
+    if state in (22, 23, 39, 41):
+        # mostly a faceoff set up (stop flag 1); the centres in their faceoff frames
+        if rnd.random() < 0.75:
+            g['stop_flags'] |= 1
+        # the steps to the drop: the puck's +0x26 (faceoff_timer 0xdff42)
+        put_fields(puck, {'timer_a': rnd.choice((-1, 0, 0x10, 0x11, 0x30))})
+        if state == 23:
+            put_fields(rec, {'frame': rnd.choice((0x167, 0x168, 0x169, 0x16a, 0x16c, 0x16d, 0x16e, 0x16f)),
+                             'anim_hold': rnd.choice((0, 3, 7)), 'timer_b': rnd.choice((-1, 0, 1, 0x14)),
+                             'flags2': rnd.choice((0, 0, 0, 2))})
+        if state == 39:
+            fx, fy = g['faceoff_x'], g['faceoff_y']
+            if rnd.random() < 0.5:
+                put_fields(rec, {'x': (fx + rnd.randrange(-0x30, 0x31)) << 16, 'y': (fy + rnd.randrange(-0x30, 0x31)) << 16})
+    if state in (24, 25, 26):
+        # the puck (or its shadow over it) loose, in the air or carried
+        f = {'z': rnd.choice((0, 0, 0, 4, 0x10)) << 16, 'vz': rnd.choice((0, 0, 0x300, -0x200))}
+        put_fields(puck, f)
+        if actor == 14:
+            put_fields(rec, f)
     if state in (14, 15):
         # the goalie in, out of or behind his crease; the puck mostly near his net, shot, carried
         # by him or an opponent; a shot predicted to the goal line
@@ -1511,7 +1545,8 @@ def ai_prepare(emu, rnd, state, actor, g):
     emu.write(PUCK, puck)
     emu.write(ENTITIES + actor * 0x80, rec)
     for n, a, sz in AI_GLOBALS:
-        if n in ('action_flags', 'pass_target', 'one_timer', 'breakaway', 'pred0_x', 'pred0_steps', 'pred1_x', 'pred1_steps'):
+        if n in ('action_flags', 'pass_target', 'one_timer', 'breakaway', 'pred0_x', 'pred0_steps', 'pred1_x', 'pred1_steps',
+                 'stop_flags'):
             emu.write(a, struct.pack('<' + _FMT[sz], g[n] if sz < 0 else g[n] & ((1 << (8 * sz)) - 1)))
     return carrier
 
@@ -1596,6 +1631,64 @@ def ai_cases(exe):
             c['before'] = {s_: {k_: v for k_, v in b.items() if out['base'][int(s_)].get(k_) != v} for s_, b in c['before'].items()}
             c['after'] = {s_: a for s_, a in c['after'].items() if a}
         out[group] = cases
+    return out
+
+
+UPDATE_CAMERA = 0x65d01
+CAMERA = 0xc9098                              # x, y; then the target x, y at 0xc90ac and the lead 0xc90b0
+STOPPAGE_TIMER = 0xc90ce
+REF_PHASE = 0xc90d4
+
+
+def camera_cases(emu, rnd, base):
+    """update_camera: the carrier or the puck with the lead, the referee during a stoppage and the
+    faceoff dot, the clock at 0:00, the held camera, the cup presentation (game_flags 0x80)"""
+    out = []
+    for k in range(600):
+        emu.write(ENTITIES, base)
+        cam = [rnd.randrange(-0x20, 0x21), rnd.randrange(-0xbc, 0xed), rnd.randrange(-0x90, 0x91),
+               rnd.randrange(-0xf0, 0xf1), rnd.randrange(-0x32, 0x33)]
+        g = {'game_flags': rnd.choice((0, 0, 0, 1, 4, 5, 0x80, 0x81)), 'stoppage_timer': rnd.choice((-1, -1, 0, 5)),
+             'ref_phase': rnd.choice((-1, -1, 0, 1, 2)), 'clock': rnd.choice(((0, 0), (0, 3), (1, 0), (200, 7), (59, 0))),
+             'action_flags': rnd.choice((0, 0, 0x40)), 'faceoff': rnd.choice(((0, 0), (-0x50, 0x9a), (0x50, -0x56)))}
+        carrier = rnd.choice((-1, -1, rnd.randrange(12), rnd.randrange(12), 16))
+        scratch = [rnd.randrange(0x10000), rnd.randrange(0x10000), rnd.randrange(0x10000)]
+        ents = {}
+        for slot in (14, 16) + ((carrier,) if carrier >= 0 else ()):
+            rec = bytearray(emu.read(ENTITIES + slot * 0x80, 0x80))
+            near = slot == 16 and rnd.random() < 0.4
+            fx, fy = g['faceoff']
+            f = {'x': ((fx + rnd.randrange(-0x30, 0x31)) if near else rnd.randrange(-0x90, 0x91)) << 16,
+                 'y': ((fy + rnd.randrange(-0x30, 0x31)) if near else rnd.randrange(-0xf0, 0xf1)) << 16,
+                 'vy': rnd.randrange(-0x1800, 0x1801), 'flags': rnd.choice((0, 0x80)),
+                 'target_x': rnd.randrange(-0x90, 0x91), 'target_y': rnd.randrange(-0xf0, 0xf1)}
+            if slot == 16:
+                f['state_sp'] = 0
+                st = rnd.choice((0x22, 0x2c, 0x1f, 0x22))
+                f['stack'] = st | st << 8 | st << 16 | st << 24
+            put_fields(rec, f)
+            emu.write(ENTITIES + slot * 0x80, rec)
+            ents[str(slot)] = {n: f[n] for n in ('x', 'y', 'vy', 'flags', 'target_x', 'target_y')}
+            if slot == 16:
+                ents['16']['state'] = st
+        emu.write(PUCK + 0x42, bytes([carrier & 0xff]))
+        emu.write(CAMERA, struct.pack('<hh', cam[0], cam[1]))
+        emu.write(CAMERA + 0x14, struct.pack('<hhh', cam[2], cam[3], cam[4]))
+        emu.write(0xc90b2, struct.pack('<hh', *g['faceoff']))
+        emu.write(GAME_FLAGS, bytes([g['game_flags']]))
+        emu.write(STOPPAGE_TIMER, struct.pack('<h', g['stoppage_timer']))
+        emu.write(REF_PHASE, struct.pack('<h', g['ref_phase']))
+        emu.write(CLOCK, struct.pack('<hh', *g['clock']))
+        emu.write(ACTION_FLAGS, bytes([g['action_flags']]))
+        emu.write(SCRATCH[0], struct.pack('<H', scratch[0]))
+        emu.write(SCRATCH[1], struct.pack('<H', scratch[1]))
+        emu.write(SCRATCH[2], struct.pack('<H', scratch[2]))
+        emu.call(UPDATE_CAMERA)
+        after = list(struct.unpack('<hh', emu.read(CAMERA, 4))) + list(struct.unpack('<hhh', emu.read(CAMERA + 0x14, 6)))
+        after += [struct.unpack('<h', emu.read(a, 2))[0] for a in SCRATCH]
+        out.append({'cam': cam, 'g': g, 'carrier': carrier, 'scratch': scratch, 'ents': ents, 'after': after})
+    emu.write(GAME_FLAGS, b'\0')
+    emu.write(ACTION_FLAGS, b'\0')
     return out
 
 
@@ -1685,6 +1778,7 @@ def physics_cases(exe):
     out['checks'] = check_cases(emu, rnd, base, calls)
     out['update'] = update_cases(emu, rnd, base, calls)
     out['shoot'] = shoot_cases(emu, rnd, base, calls)
+    out['camera'] = camera_cases(emu, rnd, base)
     # the records after the call keep only the fields that changed (the test merges them over the
     # records before the call)
     for cases in out.values():
