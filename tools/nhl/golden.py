@@ -35,6 +35,7 @@
 # The large files are written compressed (.json.gz); tools/nhl/golden_check.py compares two sets.
 #
 import gzip
+import hashlib
 import json
 import os
 import random
@@ -68,6 +69,8 @@ COLLIDE_BOARDS = 0x582c9
 APPROX_DISTANCE = 0xb3d94                     # cdecl (dx, dy)
 DIRECTION8 = 0x8c8e8
 PLAY_SFX = 0x59884
+SND_PLAY_SFX = 0x8f61d                         # stubbed: the sample to the sound driver
+KMS_PLAY = 0x8f270                             # stubbed: the organ (a KMS song) with a wave table card
 COLL_HALF_W = 0xc909c
 COLL_HALF_H = 0xc909e
 
@@ -1346,7 +1349,10 @@ AI_GLOBALS = (('game_flags', GAME_FLAGS, 1), ('stop_flags', STOP_FLAGS, 1), ('mi
               ('star0_team', 0xe9af8, -2), ('star0_roster', 0xe9afa, -2), ('star1_team', 0xe9afc, -2),
               ('star1_roster', 0xe9afe, -2), ('star2_team', 0xe9b00, -2), ('star2_roster', 0xe9b02, -2),
               ('buttons_prev0', 0xe9abe, -2), ('buttons_prev1', 0xe9abc, -2), ('clip_time', 0xe9ab2, -2),
-              ('clip_pos', 0xe9ab4, -2), ('last_penalty_team', 0xe9aae, -2))
+              ('clip_pos', 0xe9ab4, -2), ('last_penalty_team', 0xe9aae, -2), ('last_sfx', CROWD_NOISE, -2),
+              ('highlight_game', 0xccc98, -4))
+GLOBAL_DEFAULTS = {'last_sfx': -1}            # the globals a case leaves out
+SPEECH = {'busy': 0}                           # speech_busy (stubbed): the announcer talking, as the case says
 CLIP_SCRIPTS = 0xcc01d                        # off_cc01d: the clips' frame scripts (a count, then the frames)
 CLIP_SCRIPT = 0xe0248                         # dword_e0248: the script of the clip loaded
 
@@ -1363,13 +1369,98 @@ def write_globals(emu, g):
             g['clip_pos'] = 1 + g.get('clip_pos', 0) % n
     emu.write(CLIP_SCRIPT, struct.pack('<I', ptr))
     emu.write(PERIOD_NUM, struct.pack('<i', g.get('period_num', g['period'] + 1)))
+    SPEECH['busy'] = g.get('speech_busy', 0)
     ev = g.get('events')
     if ev is not None:
         emu.write(EVENT_REC, bytes(ev['rec']))
         emu.write(EVENT_BUF, bytes(ev['buf']))
         emu.write(EVENT_COUNT, struct.pack('<i', ev['count']))
     for n_, a, sz in AI_GLOBALS:
-        emu.write(a, struct.pack('<' + _FMT[abs(sz)], g[n_] & ((1 << (8 * abs(sz))) - 1)))
+        v = g.setdefault(n_, GLOBAL_DEFAULTS.get(n_, 0))
+        emu.write(a, struct.pack('<' + _FMT[abs(sz)], v & ((1 << (8 * abs(sz))) - 1)))
+    hud_write(emu, g.setdefault('hud', hud_default()))
+
+
+HUD_LISTS = (0xc571c, 0xc575c)                 # the penalty lists: 8 x (number, minutes, seconds, hundredths) words
+HUD_LINES_ONLY = (0xc5844, 0xc5848)            # the panels show the lines (draw_clock found the list empty)
+HUD_CLOCK = 0xc5704                            # the scoreboard's clock: minutes, seconds, hundredths (dwords)
+HUD_FRAME = 0xc583c                            # dword_c583c: the hundredths draw_clock counted down
+HUD_HUNDREDTHS = 0xdc28c                       # dword_dc28c: the hundredths of the frame (game_loop)
+
+
+def hud_default():
+    '''the scoreboard of a case that leaves it out: no penalties, 5:00 on the clock'''
+    return {'lists': [[-1, 0, 0, 0] * 8, [-1, 0, 0, 0] * 8], 'lines_only': [0, 0], 'clock': [5, 0, 0]}
+
+
+def hud_random(rnd, numbers=None):
+    '''a random scoreboard: some penalties (the numbers of `numbers` per team now and then), free
+    entries in between at times, the clock anywhere (run out, not set)'''
+    lists = []
+    for t in range(2):
+        n = rnd.choice((0, 0, 1, 2, 3, rnd.randrange(9)))
+        es = []
+        for i in range(8):
+            if i < n:
+                num = rnd.choice(numbers[t]) if numbers and numbers[t] and rnd.random() < 0.6 else rnd.randrange(1, 100)
+                es.append([num, rnd.choice((0, 0, 1, 2, 4, 9)), rnd.randrange(60), rnd.randrange(100)])
+            else:
+                es.append([-1, rnd.choice((0, 0, 0, 1)), rnd.choice((0, 0, 30)), rnd.choice((0, 0, 50))])
+        if rnd.random() < 0.2:
+            rnd.shuffle(es)
+        lists.append(sum(es, []))
+    return {'lists': lists, 'lines_only': [rnd.choice((0, 0, 1)), rnd.choice((0, 0, 1))],
+            'clock': [rnd.choice((0, 0, 1, 5, 19, -1)), rnd.randrange(60), rnd.randrange(100)]}
+
+
+def hud_write(emu, h):
+    for t in range(2):
+        emu.write(HUD_LISTS[t], struct.pack('<32h', *h['lists'][t]))
+        emu.write(HUD_LINES_ONLY[t], struct.pack('<i', h['lines_only'][t]))
+    emu.write(HUD_CLOCK, struct.pack('<3i', *h['clock']))
+
+
+def hud_read(emu):
+    return {'lists': [list(struct.unpack('<32h', emu.read(HUD_LISTS[t], 64))) for t in range(2)],
+            'lines_only': [struct.unpack('<i', emu.read(HUD_LINES_ONLY[t], 4))[0] for t in range(2)],
+            'clock': list(struct.unpack('<3i', emu.read(HUD_CLOCK, 12)))}
+
+
+REPLAY_BUFFER = 0xc9078                        # replay_buffer: the ring of frames
+REPLAY_SIZE = 0x9600                           # 300 frames of 0x80 bytes
+REPLAY_WRITE = 0xe039c                         # replay_write_ptr
+REPLAY_HALF = 0xcd4fe                          # replay_half_step
+REPLAY_HELD = 0xcd500                          # replay_held_sfx
+
+
+def replay_setup(emu, rnd, g):
+    '''the replay ring of a case: empty, the write position anywhere (the end too: the ring wraps),
+    the half step and the sound held from the skipped step; the ring full (action_flags 0x10) or not,
+    the last sound effect played (crowd_noise), a highlight game (dword_ccc98)'''
+    buf = struct.unpack('<I', emu.read(REPLAY_BUFFER, 4))[0]
+    emu.write(buf, b'\0' * REPLAY_SIZE)
+    frame = rnd.choice((0, 0, rnd.randrange(300), 299, 298))
+    rp = {'write': frame * 0x80, 'half': rnd.choice((0, 1)), 'held': rnd.choice((-1, -1, 0x7d, 0x9c, rnd.randrange(0xb0)))}
+    emu.write(REPLAY_WRITE, struct.pack('<I', buf + rp['write']))
+    emu.write(REPLAY_HALF, struct.pack('<h', rp['half']))
+    emu.write(REPLAY_HELD, struct.pack('<h', rp['held']))
+    g['action_flags'] = (g['action_flags'] & ~0x10) | rnd.choice((0, 0, 0x10))
+    g['last_sfx'] = rnd.choice((-1, -1, 0x7d, 0x9c, rnd.randrange(0xb0)))
+    g['highlight_game'] = rnd.choice((0, 0, 0, 1))
+    g['sound_card'] = rnd.choice((g['sound_card'], 4, 8))
+    return rp
+
+
+def replay_read(emu):
+    '''the replay after a case: the write position, the half step, the held sound, a hash of the ring
+    and the frame written last (in full)'''
+    buf = struct.unpack('<I', emu.read(REPLAY_BUFFER, 4))[0]
+    w = struct.unpack('<I', emu.read(REPLAY_WRITE, 4))[0] - buf
+    data = emu.read(buf, REPLAY_SIZE)
+    last = (w - 0x80) % REPLAY_SIZE
+    return {'write': w, 'half': struct.unpack('<h', emu.read(REPLAY_HALF, 2))[0],
+            'held': struct.unpack('<h', emu.read(REPLAY_HELD, 2))[0],
+            'hash': hashlib.sha256(bytes(data)).hexdigest()[:16], 'last': bytes(data[last:last + 0x80]).hex()}
 
 
 FORMAT_PLAYER_NAME = 0x61d48                   # stubbed: a player's name for the panel (the font measures it); ret 8
@@ -1383,8 +1474,8 @@ SAY_PENALTY_SHOT_WRAPPER = 0x59b88             # stubbed: the announcer; (abbrev
 EVENT_REC = 0xe9ac8                            # dword_e9ac8: the record of the last event (11 bytes)
 EVENT_BUF = 0xe9b4c                            # unk_e9b4c: the stoppage's events, 8 x 11 bytes
 EVENT_COUNT = 0xcd34c                          # dword_cd34c
-ADD_PENALTY_DISPLAY = 0x14c22                  # stubbed: the scoreboard's penalty clock entry
-PENALTY_LIST_FIND = 0x14ca0                    # stubbed: the entry of a player released by a goal
+ADD_PENALTY_DISPLAY = 0x14c22                  # the scoreboard's penalty clock entry
+PENALTY_LIST_FIND = 0x14ca0                    # the entry of a player released by a goal
 UPDATE_ANNOUNCER = 0x66e06                     # the scoreboard panel and its clips
 UPDATE_EFFECTS = 0x615a2                       # stubbed: the crowd noise and figures
 SETUP_FACEOFF = 0x5d852                        # stubbed for now: the end of a period
@@ -1556,6 +1647,8 @@ def ai_world(emu, rnd, base, tables):
               'events': {'rec': [rnd.randrange(256) for _ in range(11)], 'buf': [0] * 88, 'count': rnd.choice((0, 0, 1, 6, 7))},
               'scorer_jumps': 0, 'sequence_steps': 0, 'match_over': 0, 'star0_team': 0, 'star0_roster': 0,
               'star1_team': 0, 'star1_roster': 0, 'star2_team': 0, 'star2_roster': 0, 'buttons_prev0': 0, 'buttons_prev1': 0})
+    if g['stop_flags'] & 0x10 and g['last_shooter'] < 0:
+        g['last_shooter'] = 2                  # (a shot in flight has a shooter: shot_landed credits him)
     write_globals(emu, g)
     emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
     return g, teams, carrier
@@ -1568,7 +1661,7 @@ def events_read(emu):
 
 def ai_record(emu):
     return {'globals': {n: struct.unpack('<' + _FMT[sz], emu.read(a, abs(sz)))[0] for n, a, sz in AI_GLOBALS},
-            'events': events_read(emu),
+            'events': events_read(emu), 'hud': hud_read(emu),
             'teams': [dict({n: struct.unpack('<' + _FMT[sz], emu.read(t + o, abs(sz)))[0] for n, o, sz in AI_TEAM_FIELDS},
                            entity_of=list(struct.unpack('<28h', emu.read(t + 0x7e, 56))),
                            roster_status=[emu.read(ROSTERS + ti * 0x444 + i * 0x27, 1)[0] for i in range(28)],
@@ -1917,14 +2010,15 @@ def ai_cases(exe):
     rnd = random.Random(2593)
     calls = []
 
-    def on_sfx(eax):
-        calls.append(['play_sfx', eax & 0xffff])
-
     def on_infraction(name):
         def f(eax):
             calls.append([name, ((eax & 0xffffffff) - ENTITIES) // 0x80, emu.uc.reg_read(UC_X86_REG_EDX) & 0xff])
         return f
-    emu.stub(PLAY_SFX, on_sfx)
+    # play_sfx runs: the sample goes to the sound driver (snd_play_sfx), the organ to the music
+    emu.stub(SND_PLAY_SFX, lambda eax: calls.append(['snd_play_sfx', eax & 0xffff]))
+    emu.stub(KMS_PLAY, lambda eax: calls.append(['kms_play']))
+    # the instant replay's ring (allocated at the start of a match)
+    emu.write(REPLAY_BUFFER, struct.pack('<I', emu.alloc(b'\0' * REPLAY_SIZE)))
     queue_stubs = [emu.stub(QUEUE_INFRACTION, on_infraction('queue_infraction')),
                    emu.stub(MAYBE_QUEUE_INFRACTION, on_infraction('maybe_queue_infraction'))]
     fixed_stubs = [emu.stub(INJURY_CHECK, lambda eax: (calls.append(['injury_check', ((eax & 0xffffffff) - ENTITIES) // 0x80]), 1)[1])]
@@ -1943,15 +2037,13 @@ def ai_cases(exe):
     emu.stub(SAY_PENALTY_SHOT_WRAPPER, lambda eax: calls.append(['say_penalty_shot', reg(UC_X86_REG_EDX) & 0xff,
                                                                 reg(UC_X86_REG_EBX), reg(UC_X86_REG_ECX)]))
     emu.stub(SHOW_PENALTY, lambda eax: calls.append(['show_penalty']))
-    emu.stub(ADD_PENALTY_DISPLAY, lambda eax: calls.append(['add_penalty_display', eax & 0xffff, reg(UC_X86_REG_EDX), reg(UC_X86_REG_EBX)]))
-    emu.stub(PENALTY_LIST_FIND, lambda eax: calls.append(['penalty_list_find', eax & 0xffff, reg(UC_X86_REG_EDX) & 0xffff]))
     emu.stub(FREEMEM, lambda eax: None)
     fixed_stubs += [emu.stub(UPDATE_EFFECTS, lambda eax: calls.append(['update_effects'])),
                     emu.stub(SETUP_FACEOFF, lambda eax: calls.append(['setup_faceoff']))]
     emu.stub(ANNOUNCE_ONE_MINUTE, lambda eax: calls.append(['announce_one_minute_left']))
     emu.stub(DRAW_LINE_INDICATOR, lambda eax: calls.append(['draw_line_indicator', eax & 0xffff,
                                                            struct.unpack('<i', struct.pack('<I', emu.uc.reg_read(UC_X86_REG_EDX)))[0]]))
-    speech = {'busy': 0}
+    speech = SPEECH
     emu.stub(SPEECH_BUSY, lambda eax: speech['busy'])
 
     def s32(v):
@@ -2061,7 +2153,65 @@ def ai_cases(exe):
     emu.uc.hook_del(pp4p_stub)
     emu.uc.hook_del(injure_stub)
     out['lineup'] = lineup_cases(emu, rnd, base, tables, calls, out['base'], os.path.join(os.path.dirname(exe), 'TEAMS.DB'))
+    out['hud'] = hud_cases(emu, rnd, calls)
     return out
+
+
+HUD_ROUTINES = {'add_penalty_display': ADD_PENALTY_DISPLAY, 'penalty_list_find': PENALTY_LIST_FIND,
+                'penalty_lists_reset': 0x1cbd8, 'draw_clock': 0x14cf1, 'hud_clock_count_down': 0x15374,
+                'penalty_clocks_count_down': 0x15655}
+LC_PROMPTS = (0xcbc6a, 0xcbc6c)                # line_change_prompt, word_cbc6c
+
+
+def hud_cases(emu, rnd, calls, count=100):
+    '''the scoreboard's clock and penalty lists: add_penalty_display, penalty_list_find,
+    penalty_lists_reset, draw_clock (its drawing stubbed: the count down and the panels' choice),
+    hud_clock_count_down and penalty_clocks_count_down called on random scoreboards'''
+    stubs = [emu.stub(a, lambda eax: None, pop=p) for a, p in
+             ((0x8c1c2, 0), (0x14bef, 0), (0x1540a, 0), (0x15707, 0), (0x157bd, 4), (0xb4cf2, 0), (0x15995, 0), (0x1cc3d, 0))]
+    cases = []
+    for k in range(count * len(HUD_ROUTINES)):
+        name = list(HUD_ROUTINES)[k % len(HUD_ROUTINES)]
+        h = hud_random(rnd)
+        hud_write(emu, h)
+        no_stats = rnd.choice((0, 0, 0, 1))
+        prompts = [rnd.choice((0, 0, 0, 1)), rnd.choice((0, 0, 0, 1))]
+        frame = rnd.choice((0, 4, 5, 100, rnd.randrange(200), rnd.randrange(130000)))
+        emu.write(GAME_FLAGS, bytes([no_stats << 4]))
+        for t in range(2):
+            emu.write(LC_PROMPTS[t], struct.pack('<h', prompts[t]))
+        emu.write(HUD_HUNDREDTHS, struct.pack('<i', frame))
+        emu.write(HUD_FRAME, struct.pack('<i', 0))
+        args = []
+        regs = {}
+        if name in ('add_penalty_display', 'penalty_list_find'):
+            t = rnd.choice((0, 1, 1, 0x100))
+            nums = [x for x in h['lists'][1 if t & 0xffff else 0][::4] if x >= 0]
+            number = rnd.choice(nums) if nums and rnd.random() < 0.7 else rnd.randrange(1, 100)
+            args = [t, number]
+            regs = {'eax': t, 'edx': number}
+            if name == 'add_penalty_display':
+                args.append(rnd.choice((2, 4, 5, 10)))
+                regs['ebx'] = args[2]
+        elif name == 'hud_clock_count_down':
+            args = [frame]
+            regs = {'eax': frame}
+        elif name == 'penalty_clocks_count_down':
+            t = rnd.randrange(2)
+            args = [t, frame]
+            regs = {'eax': HUD_LISTS[t], 'edx': frame}
+        del calls[:]
+        ret = emu.call(HUD_ROUTINES[name], **regs)
+        cases.append({'routine': name, 'args': args, 'hud': h, 'no_stats': no_stats, 'prompts': prompts, 'frame': frame,
+                      'after': dict(hud_read(emu), ret=s32(ret) if name == 'hud_clock_count_down' else 0,
+                                    frame=struct.unpack('<i', emu.read(HUD_HUNDREDTHS, 4))[0],
+                                    counted=struct.unpack('<i', emu.read(HUD_FRAME, 4))[0])})
+    emu.write(GAME_FLAGS, b'\0')
+    for t in range(2):
+        emu.write(LC_PROMPTS[t], b'\0\0')
+    for h_ in stubs:
+        emu.uc.hook_del(h_)
+    return cases
 
 
 RULE_ROUTINES = {'update_stoppage': 0x63bf8, 'process_infractions': 0x637b5, 'start_stoppage': 0x63543,
@@ -2141,6 +2291,9 @@ def rules_cases(emu, rnd, base, tables, calls, base_fields, speech):
         emu.write(INFRACTION_QUEUE, bytes(raw))
         g['infraction0'] = raw[0]
         random_boxes(emu, rnd, teams)
+        # the scoreboard's penalty lists (the numbers of the players in the box now and then)
+        g['hud'] = hud_random(rnd, [[emu.read(ROSTERS + ti * 0x444 + r * 0x27 + 5, 1)[0] for r in teams[ti]['box_queue'] if r >= 0]
+                                    for ti in range(2)])
         write_globals(emu, g)
         emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
         emu.write(PERIOD_NUM, struct.pack('<h', g['period'] + 1))
@@ -2651,7 +2804,7 @@ def pface_cases(emu, rnd, base, tables, calls, base_fields, speech):
 
 SIM_TICK = 0x5c1c4                             # sim_game_state, sim_update_players, update_camera, the replay
 GAME_CLOCK_TICK = 0x5dc10
-REPLAY_RECORD = 0x675d6                        # stubbed: the replay frame
+REPLAY_RECORD = 0x675d6                        # the replay frame
 CONTROL_ENTRY = 0xc4e18                        # the key event the controls are read from (p1, p2 bytes)
 
 
@@ -2666,8 +2819,7 @@ def steps_cases(emu, rnd, base, tables, calls, base_fields, speech, count=1000, 
                                                                    s32(emu.uc.reg_read(UC_X86_REG_EDX))])),
              emu.stub(STOP_CROWD_LOOP, lambda eax: calls.append(['stop_crowd_loop'])),
              emu.stub(CENTER_MOUSE, lambda eax: calls.append(['center_mouse'])),
-             emu.stub(GSUMMARY_FLUSH, lambda eax: calls.append(['gsummary_flush'])),
-             emu.stub(REPLAY_RECORD, lambda eax: None)]
+             emu.stub(GSUMMARY_FLUSH, lambda eax: calls.append(['gsummary_flush']))]
     event = emu.alloc(b'\0' * 4)
     emu.write(CONTROL_ENTRY, struct.pack('<I', event))
     cases = []
@@ -2700,6 +2852,11 @@ def steps_cases(emu, rnd, base, tables, calls, base_fields, speech, count=1000, 
             emu.write(CROWD_FIGURES + i * 12, struct.pack('<hbbbhhhb', -1, rnd.choice((5, 30, 60)), 0, 0, 0, 0, 0, 0))
         emu.write(CROWD_BUSY, b'\0' * 22)
         g['infraction0'] = 0
+        rp = replay_setup(emu, rnd, g)
+        # the players' faceoff ratings (faceoff_resolve: byte 0x13 of `player_ratings`, the rest 0)
+        faceoff_ratings = [[rnd.randrange(10) for _ in range(25)] for _ in range(2)]
+        for ti in range(2):
+            emu.write(PLAYER_RATINGS + ti * 0x1f4, bytes(sum(([0] * 0x13 + [f] for f in faceoff_ratings[ti]), [])))
         write_globals(emu, g)
         emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
         emu.write(PERIOD_NUM, struct.pack('<h', g['period'] + 1))
@@ -2724,7 +2881,7 @@ def steps_cases(emu, rnd, base, tables, calls, base_fields, speech, count=1000, 
                              rnd.choice((8, 8, rnd.randrange(8)))])
         case = {'routine': 'sim_steps', 'args': [], 'controls': controls, 'globals': g, 'teams': teams, 'carrier': carrier,
                 'seed': seed, 'scratch_ac': scratch_ac, 'scratch': scratch, 'infq': [0] * 64, 'cup': 0, 'order': order,
-                'stats': stats_read(emu, tables), 'crowd': crowd_read(emu),
+                'stats': stats_read(emu, tables), 'crowd': crowd_read(emu), 'replay': rp, 'faceoff_ratings': faceoff_ratings,
                 'pos_lists': [[list(struct.unpack('<25b', emu.read(POS_LISTS + kk * 0x32 + ti * 0x19, 25))) for kk in range(11)]
                               for ti in range(2)]}
         del calls[:]
@@ -2738,7 +2895,7 @@ def steps_cases(emu, rnd, base, tables, calls, base_fields, speech, count=1000, 
               'panel4': emu.read(PANEL_LINE4, 0x20).split(b'\0')[0].decode('latin-1'),
               'scratch': list(struct.unpack('<hh', emu.read(SCRATCH[0], 2) + emu.read(SCRATCH[1], 2))),
               'scratch_ac': struct.unpack('<I', emu.read(SCRATCH[2], 4))[0],
-              'stats': stats_read(emu, tables), 'crowd': crowd_read(emu)}
+              'stats': stats_read(emu, tables), 'crowd': crowd_read(emu), 'replay': replay_read(emu)}
         case.update({'before': befores, 'calls': [list(c) for c in calls],
                      'after': {str(s_): {k_: v for k_, v in entity_fields(emu, s_).items() if befores[str(s_)].get(k_) != v}
                                for s_ in range(17)},
@@ -2801,7 +2958,6 @@ def periods_cases(emu, rnd, base, tables, calls, base_fields, speech):
              emu.stub(STOP_CROWD_LOOP, lambda eax: calls.append(['stop_crowd_loop'])),
              emu.stub(CENTER_MOUSE, lambda eax: calls.append(['center_mouse'])),
              emu.stub(GSUMMARY_FLUSH, lambda eax: calls.append(['gsummary_flush'])),
-             emu.stub(REPLAY_RECORD, lambda eax: None),
              emu.stub(LEAVE_MATCH_VIDEO, on_leave),
              emu.stub(FLUSH_KEY_EVENTS, lambda eax: None),
              emu.stub(SELECT_GAME_SURFACE, lambda eax: None),
@@ -2907,6 +3063,7 @@ def periods_cases(emu, rnd, base, tables, calls, base_fields, speech):
         team_ids = [rnd.randrange(26), rnd.randrange(26)]
         emu.write(TEAM_IDS, struct.pack('<hh', *team_ids))
         g['infraction0'] = 0
+        rp = replay_setup(emu, rnd, g)
         write_globals(emu, g)
         emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
         emu.write(PERIOD_NUM, struct.pack('<i', period_num))
@@ -2927,7 +3084,7 @@ def periods_cases(emu, rnd, base, tables, calls, base_fields, speech):
         order = draw_order(emu)
         case = {'routine': name, 'args': [], 'globals': g, 'teams': teams, 'carrier': carrier, 'seed': seed,
                 'scratch_ac': scratch_ac, 'scratch': scratch, 'infq': [0] * 64, 'cup': cup['v'], 'order': order,
-                'period_num': period_num, 'team_ids': team_ids, 'crowd': crowd_read(emu),
+                'period_num': period_num, 'team_ids': team_ids, 'crowd': crowd_read(emu), 'replay': rp,
                 'pos_lists': [[list(struct.unpack('<25b', emu.read(POS_LISTS + kk * 0x32 + ti * 0x19, 25))) for kk in range(11)]
                               for ti in range(2)]}
         if name == 'three_stars_sequence':
@@ -2942,7 +3099,7 @@ def periods_cases(emu, rnd, base, tables, calls, base_fields, speech):
               'scratch_ac': struct.unpack('<I', emu.read(SCRATCH[2], 4))[0], 'crowd': crowd_read(emu),
               'period_num': struct.unpack('<i', emu.read(PERIOD_NUM, 4))[0],
               'energies': [list(struct.unpack('<28h', emu.read(t + 0x46, 56))) for t in TEAM_RECORDS],
-              'order': draw_order(emu)}
+              'order': draw_order(emu), 'replay': replay_read(emu)}
         case.update({'before': befores, 'calls': [list(c) for c in calls],
                      'after': {str(s_): {k_: v for k_, v in entity_fields(emu, s_).items() if befores[str(s_)].get(k_) != v}
                                for s_ in range(17)},

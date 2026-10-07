@@ -100,8 +100,9 @@ func _draw() -> void:
 			draw_texture(line_labels[line], Vector2(0x2a if t == 0 else 0xfb, HUD_Y + 0x14))
 	for t in 2:
 		var team := sim.teams[t]
-		# draw_clock: the line change prompt shows the lines even with players in the box
-		var penalties := not team.box_list().is_empty() and not team.line_change_ui
+		# draw_clock: the penalty clocks unless the line change prompt is open, the list was found
+		# empty or no statistics are kept (Scoreboard.draw_clock)
+		var penalties: bool = sim.hud_penalties[t]
 		var shown := _box_line(team)
 		var panel: Texture2D = null
 		if penalties:
@@ -115,7 +116,7 @@ func _draw() -> void:
 		if panel != null:
 			draw_texture(panel, Vector2(PANEL_X[t], HUD_Y))
 		if penalties:
-			_draw_penalty_clocks(team, PENALTY_X[t])
+			_draw_penalty_clocks(t, PENALTY_X[t])
 		else:
 			_draw_line_bars(team, BARS_X[t])
 		_draw_energy(team, ENERGY_X[t])
@@ -168,36 +169,36 @@ func _draw_energy(team: Team, x0: int) -> void:
 	draw_rect(Rect2(x0 + 9 - w, HUD_Y + 0x1a, w, 3), c)
 	draw_rect(Rect2(x0 + 0x10, HUD_Y + 0x1a, w, 3), c)
 
-## draw_penalty_clocks: number, minutes and seconds of up to four penalties in the small digits
-func _draw_penalty_clocks(team: Team, x0: int) -> void:
-	var box := team.box_list()
+## draw_penalty_clocks: the first four entries of the team's penalty list (Scoreboard): number,
+## minutes and seconds in the small digits (the tens of the number and of the minutes blank below
+## 10), a free entry blank
+func _draw_penalty_clocks(t: int, x0: int) -> void:
+	var l: Array = sim.penalty_lists[t]
+	var xs := [10, 0x10, 0x1b, 0x21, 0x2a, 0x30]
 	for i in 4:
 		var y := HUD_Y + 9 + 5 * i
-		if i >= box.size():
-			for dx in [10, 0x10, 0x1b, 0x21, 0x2a, 0x30]:
+		var number: int = l[i * 4]
+		if number < 0:
+			for dx in xs:
 				draw_texture(small_digits[10], Vector2(x0 + dx, y))
 			continue
-		var pen: Array = box[i]
-		var number := 0
-		if team.info != null and team.info.player(pen[0]) != null:
-			number = team.info.player(pen[0]).number
-		var seconds: int = pen[1]
-		var values := [number / 10, number % 10, seconds / 60 / 10, (seconds / 60) % 10, (seconds % 60) / 10, seconds % 10]
-		var xs := [10, 0x10, 0x1b, 0x21, 0x2a, 0x30]
+		var minutes: int = l[i * 4 + 1]
+		var seconds: int = l[i * 4 + 2]
+		var values := [number / 10, number, minutes / 10, minutes, seconds / 10, seconds]
 		for k in 6:
-			var v: int = values[k]
-			var tex: Texture2D = small_digits[v % 10]
-			if (k == 0 and number < 10) or (k == 2 and seconds < 600):
+			var tex: Texture2D = small_digits[posmod(values[k], 10)]
+			if (k == 0 and number < 10) or (k == 2 and minutes < 10):
 				tex = small_digits[10]
 			draw_texture(tex, Vector2(x0 + xs[k], y))
 
 ## draw_clock_full: mm:ss, or ss.hh during the last minute
 func _draw_clock() -> void:
 	var y := HUD_Y + 3
-	var minutes := sim.clock_seconds / 60
-	var seconds := sim.clock_seconds % 60
+	# (the scoreboard's own clock, Scoreboard)
+	var minutes: int = maxi(sim.hud_clock[0], 0)
+	var seconds: int = posmod(sim.hud_clock[1], 60)
 	if minutes == 0:
-		var hundredths := (0x17 - sim.clock_sub) * 100 / 0x18
+		var hundredths: int = posmod(sim.hud_clock[2], 100)
 		draw_texture(clock_digits[10], Vector2(CLOCK_X[3], y))
 		draw_texture(clock_digits[seconds / 10] if seconds >= 10 else clock_digits[10], Vector2(CLOCK_X[0], y))
 		draw_texture(clock_digits[seconds % 10], Vector2(CLOCK_X[1], y))

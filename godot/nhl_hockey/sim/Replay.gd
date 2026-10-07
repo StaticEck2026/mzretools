@@ -74,10 +74,12 @@ var frame: ReplayFrame = null
 func _init() -> void:
 	buf.resize(SIZE)
 
+## period_init: the ring starts again at its beginning, not full (action_flags 0x10); replay_reset
+## (0x67565): the next step records a frame
 func reset() -> void:
 	write = 0
 	wrapped = false
-	half = 0
+	half = 1
 	held_sfx = -1
 
 ## replay_buffer_start (0x675a0): the newest frame (where a stopped play keeps recording)
@@ -94,21 +96,20 @@ func frame_count() -> int:
 
 ## replay_record_frame (0x675d6), called at the end of every sim_tick
 func record(sim: Sim) -> void:
-	if sim.replay_disabled:
+	if sim.no_stats:
 		return
-	if half < 1:
+	half += 1
+	if half < 2:
 		held_sfx = -1 if sim.whistle_ready else sim.last_sfx
 		sim.last_sfx = -1
-		half += 1
 		return
-	half -= 1
+	half -= 2
 	if sim.whistle_ready:
 		write = buffer_start()
 	var p := write
 	for i in 17:
 		var e: Entity = sim.entities[i]
-		var f := e.frame & 0x7ff
-		var v := (e.xi & 0x3ff) | ((e.yi & 0x3ff) << 10) | (f << 20)
+		var v := ((e.yi & 0x3ff) << 10) | (e.xi & 0x3ff) | ((e.frame & 0x7ff) << 20)
 		if e.flags4 & Entity.F4_MIRROR:
 			v |= 1 << 31
 		buf.encode_u32(p, v & 0xffffffff)
@@ -116,12 +117,17 @@ func record(sim: Sim) -> void:
 	for i in 12:
 		buf[p] = sim.entities[i].number & 0xff
 		p += 1
+	# (the line slots of two entities a byte, -1 as 0xf, built in the word e03bc)
 	for k in 6:
 		var a: int = sim.entities[k * 2].line_slot
 		var b: int = sim.entities[k * 2 + 1].line_slot
-		var v := 0xf if a < 0 else a & 0xf
-		v |= 0xf0 if b < 0 else (b & 0xf) << 4
-		buf[p] = v
+		var w := 0xf if a < 0 else a & 0xffff
+		if b < 0:
+			w |= 0xf0
+		else:
+			w = (w | (b << 4)) & 0xffff
+		sim.scratch_a = Entity.to_s16(w)
+		buf[p] = w & 0xff
 		p += 1
 	buf[p] = sim.puck.zi & 0xff
 	buf[p + 1] = sim.shadow.zi & 0xff
@@ -133,8 +139,8 @@ func record(sim: Sim) -> void:
 	buf[p + 5] = sim.puck_carrier & 0xff
 	buf[p + 6] = ((sim.box_count[1] & 0xf) << 4) | (sim.box_count[0] & 0xf)
 	buf[p + 7] = sim.camera_x & 0xff
-	buf.encode_s16(p + 8, sim.camera_y)
-	buf.encode_s16(p + 10, clampi(sim.crowd_noise, -0x8000, 0x7fff))
+	buf.encode_s16(p + 8, Entity.to_s16(sim.camera_y))
+	buf.encode_s16(p + 10, Entity.to_s16(sim.crowd_noise))
 	p += 12
 	var fx := sim.effect_record_bytes()
 	for i in 30:

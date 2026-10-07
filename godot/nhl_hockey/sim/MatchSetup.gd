@@ -75,6 +75,7 @@ static func reset_game_state(sim: Sim) -> void:
 	sim.deferred = false
 	sim.period_over = 0
 	sim.match_over = false
+	sim.hud_acc = 0
 
 ## reset_match_state (0x5e086)
 static func reset_match_state(sim: Sim) -> void:

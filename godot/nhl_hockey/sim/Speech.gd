@@ -91,7 +91,7 @@ static func game_intro(home: String, away: String) -> PackedStringArray:
 ## the speech_busy() of the simulation: a sentence is queued for the audio layer; nothing is
 ## said with the speech option off (option byte 2 bit 0) or without sound
 static func say(sim: Sim, clips: PackedStringArray) -> void:
-	if not InfoPanel.speech_on(sim) or sim.replay_disabled:
+	if not InfoPanel.speech_on(sim):
 		return
 	sim.announcer_queue.append(clips)
 

@@ -428,13 +428,13 @@ static func record_penalty(sim: Sim, away: int, roster: int, kind: int, minutes:
 		return
 	InfoPanel.record_penalty(sim, away, roster, kind, minutes, mm, ss, queue_index)
 
-## add_penalty_display (0x14c22): the penalty clock entry on the scoreboard (a hook)
+## add_penalty_display (0x14c22): the penalty clock entry on the scoreboard
 static func add_penalty_display(sim: Sim, away: int, number: int, minutes: int) -> void:
-	sim.stubbed("add_penalty_display", [away, number, minutes])
+	Scoreboard.add_penalty_display(sim, away, number, minutes)
 
-## penalty_list_find (0x14ca0): the penalty clock entry of a player released by a goal (a hook)
+## penalty_list_find (0x14ca0): the penalty clock entry of a player released by a goal runs out
 static func penalty_list_find(sim: Sim, away: int, number: int) -> void:
-	sim.stubbed("penalty_list_find", [away, number])
+	Scoreboard.penalty_list_find(sim, away, number)
 
 ## count_penalized (0x5df86): the players sitting in each box (penalized_count; not a coincidental
 ## one whose time is up); everybody else not out of the game is back on the bench (status 3)

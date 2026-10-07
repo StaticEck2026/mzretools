@@ -721,8 +721,11 @@ func ai_golden() -> void:
 		if group in ["lines", "controls", "rules", "goals", "faceoffs", "steps", "runs", "periods", "dress", "lineup"]:
 			counts.append(_lines_golden(data[group], base, group))
 			continue
+		if group == "hud":
+			counts.append(_hud_golden(data[group]))
+			continue
 		var sim := Sim.new()
-		sim.stubs = {"play_sfx": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
+		sim.stubs = {"snd_play_sfx": true, "kms_play": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
 			"injure_player": true, "bench_cheer": true, "show_penalty": true, "say_penalty": true, "say_penalty_shot": true, "play_speech": true, "load_clip": true,
 			"say_goal": true, "goal_milestone_check": true, "put_player_on_ice": true,
 			"pick_player_for_position": true, "draw_line_indicator": true}
@@ -763,11 +766,11 @@ func ai_golden() -> void:
 ## the line change routines (ai_lines.json): called directly on random teams
 func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 	var sim := Sim.new()
-	sim.stubs = {"play_sfx": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
+	sim.stubs = {"snd_play_sfx": true, "kms_play": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
 		"injure_player": true, "bench_cheer": true, "show_penalty": true, "say_penalty": true, "say_penalty_shot": true, "play_speech": true, "load_clip": true,
 		"say_goal": true, "goal_milestone_check": true, "put_player_on_ice": true,
 		"pick_player_for_position": true, "draw_line_indicator": true,
-		"add_penalty_display": true, "penalty_list_find": true, "update_effects": true,
+		"update_effects": true,
 		"setup_faceoff": true, "announce_one_minute_left": true}
 	if group == "rules" or group == "goals":
 		sim.stubs.erase("queue_infraction")
@@ -832,10 +835,15 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 			_goal_stats_set(sim, c["stats"])
 		if c.has("crowd"):
 			_crowd_set(sim, c["crowd"])
+		if c.has("replay"):
+			sim.replay.buf.fill(0)
+			sim.replay.write = int(c["replay"]["write"])
+			sim.replay.half = int(c["replay"]["half"])
+			sim.replay.held_sfx = int(c["replay"]["held"])
 		if c.has("team_ids"):
 			sim.team_ids = _ints(c["team_ids"])
 			sim.last_controls = [8, 8]
-		if group == "faceoffs":
+		if group in ["faceoffs", "steps", "runs"]:
 			for t in 2:
 				sim.teams[t].info = _ratings_info(c["faceoff_ratings"][t]) if c.has("faceoff_ratings") else null
 		if group == "periods":
@@ -949,18 +957,21 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 				var step_i := 0
 				for st: Array in c["controls"]:
 					sim.run_sim_step(int(st[0]), int(st[1]))
+					sim.replay.record(sim)
 					if step_i < trace.size():
 						var want: Dictionary = trace[step_i]
 						var slot := int(OS.get_environment("RUNS_TRACE_SLOT"))
 						var got := _entity_get(sim.entities[slot])
 						var bad := []
 						for k in want:
-							if got.has(k) and int(got[k]) != int(want[k]) and k != "heading":
+							if got.has(k) and int(got[k]) != int(want[k]) and k != "heading" and not (k == "next_line" and slot == Entity.Slot.PUCK):
 								bad.append("%s %d/%d" % [k, int(got[k]), int(want[k])])
 						if sim.seed != int(want["seed"]):
 							bad.append("seed")
 						if sim.puck_carrier != int(want["carrier"]):
 							bad.append("carrier %d/%d" % [sim.puck_carrier, int(want["carrier"])])
+						if want.has("users") and str([sim.user1_slot, sim.user2_slot]) != str(_ints(want["users"])):
+							bad.append("users %s/%s" % [str([sim.user1_slot, sim.user2_slot]), str(want["users"])])
 						if not bad.is_empty():
 							print("TRACE case %d step %d: %s" % [index, step_i, ", ".join(bad)])
 							trace = []
@@ -1015,6 +1026,12 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 						diff.append("crowd figure %d %s (original %s)" % [i, str(got_crowd[0][i]), str(la["crowd"][0][i])])
 				if str(got_crowd[1]) != str(la["crowd"][1]):
 					diff.append("crowd spots %s (original %s)" % [str(got_crowd[1]), str(la["crowd"][1])])
+		if la.has("replay"):
+			var want_r: Dictionary = la["replay"]
+			var got_r := _replay_get(sim)
+			for k in got_r:
+				if str(got_r[k]) != str(want_r[k]):
+					diff.append("replay %s %s (original %s)" % [k, str(got_r[k]), str(want_r[k])])
 		if la.has("line_tables"):
 			for t in 2:
 				var lt := Lines.line_table(sim.teams[t]).slice(0, 0x30)
@@ -1269,6 +1286,11 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	sim.action_shot = (int(g["action_flags"]) & 8) != 0
 	sim.action_hold_camera = (int(g["action_flags"]) & 0x40) != 0
 	sim.action_replay = (int(g["action_flags"]) & 0x80) != 0
+	sim.replay.wrapped = (int(g["action_flags"]) & 0x10) != 0
+	if g.has("hud"):
+		_hud_set(sim, g["hud"])
+	sim.last_sfx = int(g.get("last_sfx", -1))
+	sim.highlight_game = int(g.get("highlight_game", 0)) != 0
 	sim.user1_slot = int(g["user1_slot"])
 	sim.user2_slot = int(g["user2_slot"])
 	sim.user1_team = int(g["user1_team"])
@@ -1476,7 +1498,8 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 			| (0x20 if sim.power_play else 0) | (0x40 if sim.power_play_team == 1 else 0) | (0x80 if sim.offside_warning else 0),
 		"misc_flags": (0x10 if sim.misc_first_touch else 0) | (0x80 if sim.half_announce else 0) | (0x40 if sim.second_tick else 0),
 		"action_flags": (4 if sim.action_pass else 0) | (8 if sim.action_shot else 0) | (0x40 if sim.action_hold_camera else 0)
-			| (0x80 if sim.action_replay else 0),
+			| (0x80 if sim.action_replay else 0) | (0x10 if sim.replay.wrapped else 0),
+		"last_sfx": Entity.to_s16(sim.last_sfx), "highlight_game": 1 if sim.highlight_game else 0,
 		"user1_slot": sim.user1_slot, "user2_slot": sim.user2_slot, "user1_team": sim.user1_team, "user2_team": sim.user2_team,
 		"last_touch_slot": sim.last_touch_slot, "last_touch_y": sim.last_touch_y, "last_touch_x": sim.last_touch_x,
 		"last_passer": sim.last_passer, "last_shooter": sim.last_shooter, "pending_dir": sim.pending_dir,
@@ -1528,6 +1551,84 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 		"star1_roster": _star(sim, 1, 1), "star2_team": _star(sim, 2, 0), "star2_roster": _star(sim, 2, 1),
 		"buttons_prev0": sim.buttons_prev[0], "buttons_prev1": sim.buttons_prev[1]}
 
+## the scoreboard of a case (tools/nhl/golden.py hud_write): the penalty lists, the "lines" flags,
+## the clock
+static func _hud_set(sim: Sim, h: Dictionary) -> void:
+	for t in 2:
+		var l: Array = sim.penalty_lists[t]
+		for i in l.size():
+			l[i] = int(h["lists"][t][i])
+		sim.hud_lines_only[t] = int(h["lines_only"][t]) != 0
+	for i in 3:
+		sim.hud_clock[i] = int(h["clock"][i])
+
+static func _hud_diff(sim: Sim, h: Dictionary) -> Array:
+	var diff := []
+	for t in 2:
+		if str(sim.penalty_lists[t]) != str(_ints(h["lists"][t])):
+			diff.append("team %d penalty list %s (original %s)" % [t, str(sim.penalty_lists[t]), str(h["lists"][t])])
+		if (1 if sim.hud_lines_only[t] else 0) != int(h["lines_only"][t]):
+			diff.append("team %d scoreboard lines %s (original %d)" % [t, str(sim.hud_lines_only[t]), int(h["lines_only"][t])])
+	if str(Array(sim.hud_clock)) != str(_ints(h["clock"])):
+		diff.append("scoreboard clock %s (original %s)" % [str(sim.hud_clock), str(h["clock"])])
+	return diff
+
+## the scoreboard's routines (ai_hud.json): add_penalty_display, penalty_list_find,
+## penalty_lists_reset, draw_clock (its count down and the panels' choice), hud_clock_count_down,
+## penalty_clocks_count_down called on random scoreboards
+func _hud_golden(cases: Array) -> String:
+	var sim := Sim.new()
+	var per := {}
+	var ok := 0
+	var shown := 0
+	for c: Dictionary in cases:
+		var name: String = c["routine"]
+		var a: Array = c["args"]
+		_hud_set(sim, c["hud"])
+		sim.no_stats = int(c["no_stats"]) != 0
+		for t in 2:
+			sim.teams[t].line_change_ui = int(c["prompts"][t]) != 0
+		sim.hud_hundredths = int(c["frame"])
+		sim.hud_frame = 0
+		var ret := 0
+		match name:
+			"add_penalty_display": Scoreboard.add_penalty_display(sim, int(a[0]), int(a[1]), int(a[2]))
+			"penalty_list_find": Scoreboard.penalty_list_find(sim, int(a[0]), int(a[1]))
+			"penalty_lists_reset": Scoreboard.reset_lists(sim)
+			"draw_clock": Scoreboard.draw_clock(sim)
+			"hud_clock_count_down": ret = 1 if Scoreboard.clock_count_down(sim, int(a[0])) else 0
+			"penalty_clocks_count_down": Scoreboard.penalty_clocks_count_down(sim.penalty_lists[int(a[0])], int(a[1]))
+		var want: Dictionary = c["after"]
+		var diff := _hud_diff(sim, want)
+		if ret != int(want["ret"]):
+			diff.append("returns %d (original %d)" % [ret, int(want["ret"])])
+		if name == "draw_clock" and (sim.hud_hundredths != int(want["frame"]) or sim.hud_frame != int(want["counted"])):
+			diff.append("hundredths %d / %d (original %d / %d)" % [sim.hud_hundredths, sim.hud_frame, int(want["frame"]), int(want["counted"])])
+		if not per.has(name):
+			per[name] = [0, 0]
+		per[name][1] += 1
+		if diff.is_empty():
+			ok += 1
+			per[name][0] += 1
+		elif shown < 10:
+			shown += 1
+			fail("hud %s %s: %s" % [name, str(a), ", ".join(diff.slice(0, 6))])
+	var parts := []
+	for n in per:
+		parts.append("%s %d/%d" % [n, per[n][0], per[n][1]])
+	return "hud %d / %d (%s)" % [ok, cases.size(), ", ".join(parts)]
+
+## the replay as tools/nhl/golden.py replay_read records it: the write position, the half step, the
+## held sound, a hash of the ring and the frame written last
+static func _replay_get(sim: Sim) -> Dictionary:
+	var r := sim.replay
+	var ctx := HashingContext.new()
+	ctx.start(HashingContext.HASH_SHA256)
+	ctx.update(r.buf)
+	var last := (r.write - Replay.FRAME + Replay.SIZE) % Replay.SIZE
+	return {"write": r.write, "half": Entity.to_s16(r.half), "held": Entity.to_s16(r.held_sfx),
+		"hash": ctx.finish().hex_encode().substr(0, 16), "last": r.buf.slice(last, last + Replay.FRAME).hex_encode()}
+
 static func _star(sim: Sim, k: int, f: int) -> int:
 	return int(sim.stars[k][f]) if k < sim.stars.size() else 0
 
@@ -1548,12 +1649,15 @@ static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 			"game_flags": w &= 0xdf
 			"stop_flags": w &= 0xf5
 			"misc_flags": w &= 0xd0
-			"action_flags": w &= 0xcc
+			"action_flags": w &= 0xdc
 			"goal_call": w = 1 if w == 1 else 0
 			"infraction0": w = 1 if w != 0 else 0
 			"puck_in_net": w = 1 if w != 0 else 0
 		if int(got[k]) != w:
 			diff.append("%s %d (original %d)" % [k, int(got[k]), w])
+	if wa.has("hud"):
+		for d in _hud_diff(sim, wa["hud"]):
+			diff.append(d)
 	var tas: Array = wa["teams"]
 	for t in 2:
 		var team: Team = sim.teams[t]

@@ -117,7 +117,19 @@ var whistle_timer: int = 0
 var announce_timer: int = -1        # word_cc0b0
 var box_count := [0, 0]            # penalized_count / byte_e9abb: players sitting in each penalty box
 var last_sfx := -1                 # crowd_noise low word: the last play_sfx id (recorded by the replay)
-var replay_disabled := false       # game_flags 0x10: nothing is recorded
+var highlight_game := false        # dword_ccc98: a highlight of a league game plays (its horn sounds over the announcer)
+# the scoreboard below the ice (Scoreboard): its clock (hud_clock_min/sec/tenths: minutes, seconds,
+# hundredths), the hundredths played and not yet counted (dword_d8c78, 100 a step), those of the
+# frame (dword_dc28c) and those draw_clock counted down (dword_c583c); per team the penalty list
+# (word_c571c / word_c575c: 8 x number, minutes, seconds, hundredths), the "lines" flag
+# (dword_c5844 / dword_c5848) and whether the panel shows the penalty clocks (draw_clock)
+var hud_clock := PackedInt32Array([5, 0, 0])
+var hud_acc := 0
+var hud_hundredths := 0
+var hud_frame := 0
+var penalty_lists: Array = [[], []]
+var hud_lines_only := [false, false]
+var hud_penalties := [false, false]
 var replay := Replay.new()
 var crowd: Array = []              # crowd_figures: Crowd.Record x 20 (the figures around the ice and the benches)
 var crowd_busy := PackedByteArray() # crowd_spots_busy: spots in use
@@ -254,6 +266,9 @@ var last_impact := 0                 # word_e9b28: strength of the last collisio
 
 func _init() -> void:
 	infq.resize(64)
+	for t in 2:
+		penalty_lists[t].resize(Scoreboard.ENTRIES * 4)
+	Scoreboard.reset_lists(self)
 	seed = 0xabcd4321
 	teams.append(Team.new(0))
 	teams.append(Team.new(1))
@@ -303,6 +318,7 @@ func _init() -> void:
 ## (Ceremonies.begin_anthem), the match starts when it is over (MatchSetup.start_match); without it
 ## the match starts at once
 func new_game(anthem: bool = false) -> void:
+	Scoreboard.reset_lists(self)
 	period_num = -1
 	for t in 2:
 		var team := teams[t]
@@ -317,6 +333,7 @@ func new_game(anthem: bool = false) -> void:
 	crowd_noise = 0
 	skip_wait = false
 	MatchSetup.reset_game_state(self)
+	Scoreboard.start(self, true)
 	crowd_noise = 0
 	if not anthem:
 		MatchSetup.start_match(self)
@@ -605,20 +622,30 @@ func play_sfx(id: int) -> void:
 	if stubbed("play_sfx", [id]):
 		return
 	last_sfx = id
-	if speech_busy and not (id == 0x9c and not replay_disabled):
-		return
+	if speech_busy:
+		if id != 0x9c:
+			return
+		if no_stats and not highlight_game:
+			return
 	if (sound_device == 8 or sound_device == 4) and (id == 0xa0 or id == 0xa1):
 		return
 	if id == 0x7d:
-		crowd_noise += 500
+		crowd_noise = Entity.to_s16(crowd_noise + 0x1f4)
 		return
 	if sound_device == 4 and id == 0xaa:
-		music_cues.append(id)
+		if not stubbed("kms_play", []):
+			music_cues.append(id)
 		return
 	if id == 0x90:
 		if sound_device == 4:
-			sfx_queue.append(0x90)
+			_snd_play_sfx(0x90)
 		id = 0x91
+	_snd_play_sfx(id)
+
+## snd_play_sfx (0x8f61d): the sample to the sound driver (the audio layer plays the queue)
+func _snd_play_sfx(id: int) -> void:
+	if stubbed("snd_play_sfx", [id]):
+		return
 	sfx_queue.append(id)
 
 ## the crowd figures for the replay frame (10 frame counter bytes, 20 spot bytes)
@@ -669,6 +696,7 @@ func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) ->
 		return
 	run_sim_step(control_p1, control_p2)
 	replay.record(self)
+	Scoreboard.frame(self)
 	# game_loop: a period over (end_period_flag, ai_ref_pickup_puck) ends after this frame
 	# (end_of_period: the intermission, the next period); then the line hotkeys and the period flag
 	# are cleared, and a game over starts the three stars (three_stars_sequence)
@@ -678,12 +706,14 @@ func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) ->
 		line_hotkey_req[0] = 0
 		deferred = false
 		period_over = 0
+		hud_acc = 0
 		if match_over:
 			summary_flush()
 			Ceremonies.begin_three_stars(self)
 			if not stars_running:
 				finished = true
 		else:
+			Scoreboard.start(self, true)
 			InfoPanel.music(self, 0)
 
 ## a step of run_sim_steps (0x1149a): the clock while play is on (game_clock_tick), then sim_tick
@@ -691,6 +721,7 @@ func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) ->
 ## by the caller); the controls are the bytes read_control_p1 / read_control_p2 read
 func run_sim_step(control_p1: int, control_p2: int) -> void:
 	if not play_stopped:
+		Scoreboard.step_played(self)
 		Rules.game_clock_tick(self)
 	Rules.sim_game_state(self)
 	sim_update_players(control_p1, control_p2)

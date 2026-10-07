@@ -4,8 +4,8 @@
 A per step trace of the original for runs of the steps groups (GROUP: steps or runs), to find the
 first step where the port departs from it in a long run: the whole golden generation runs again
 (so the random cases are the same as in tests/golden) and for the listed cases (comma separated
-indices) the record of entity SLOT, its previous position, the random seed and the puck carrier
-are kept after every step. tests/run_tests.gd compares them step by step with
+indices) the record of entity SLOT, its previous position, the random seed, the puck carrier and
+the users' slots are kept after every step. tests/run_tests.gd compares them step by step with
 RUNS_TRACE=OUT.json RUNS_TRACE_SLOT=SLOT RUNS_TRACE_GROUP=GROUP AI_STATE=sim_steps.'''
 import json
 import os
@@ -33,7 +33,8 @@ def main():
         "                case.setdefault('trace', []).append(dict(entity_fields(emu, s_),\n"
         "                    prev=list(struct.unpack('<iii', emu.read(ENTITIES + s_ * 0x80 + 0x74, 12))),\n"
         "                    seed=struct.unpack('<I', emu.read(SEED, 4))[0],\n"
-        "                    carrier=struct.unpack('<b', emu.read(PUCK + 0x42, 1))[0]))\n"))
+        "                    carrier=struct.unpack('<b', emu.read(PUCK + 0x42, 1))[0],\n"
+        "                    users=list(struct.unpack('<hh', emu.read(USER_SLOTS, 4)))))\n"))
     golden.TRACE = {'count': count, 'cases': cases, 'slot': slot}
     exec(compile(fn, 'steps_cases (traced)', 'exec'), golden.__dict__)
     exe = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 're', 'nhl_hockey', 'HOCKEY.EXE')
