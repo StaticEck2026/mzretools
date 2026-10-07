@@ -2039,12 +2039,13 @@ static func ref_pickup(sim: Sim, e: Entity) -> void:
 		e.push_x = 0
 		e.push_y = 0
 		Anim.set_animation(e, Anim.REF_GLIDE)
-		# a goalie who made the save that froze the puck gets the SAVED clip; after routine
+		# a goalie who made the save that froze the puck gets the SAVED clip (once a period); after routine
 		# stoppages the announcer or the crowd (ref_check_announcements)
 		if sim.ref_infraction == Rules.INF_GOALIE_HOLD and sim.ref_infraction_slot >= 0 and sim.ref_infraction_slot < 12 \
-				and sim.entities[sim.ref_infraction_slot].save_result != 0:
+				and sim.entities[sim.ref_infraction_slot].save_result != 0 and not sim.save_clip_shown:
 			sim.entities[sim.ref_infraction_slot].save_result = 0
 			InfoPanel.load_clip(sim, InfoPanel.CLIP_SAVE)
+			sim.save_clip_shown = true      # once a period
 			InfoPanel.open(sim)
 			return
 		if sim.ref_infraction != Rules.INF_GOAL and InfoPanel.ref_announcements(sim):

@@ -83,319 +83,408 @@ static func predict_goal_line(sim: Sim) -> void:
 			px = -0x140 - px
 		pred[0] = px
 
-## update_carrier (0x4de14): bookkeeping of who carries the puck, icing and two line pass set up
+## update_carrier (0x4de14): a player touches the puck: the place of the touch (last_touch_*, not
+## when the touch makes a two line pass), the last three carriers of his team (the scorer and the
+## assists of a goal: words +0x30/+0x32/+0x34 of the team record, a high byte of 0xff marks an
+## entry that no longer counts), the end of a shot, offside and the two line pass, icing (called
+## when a player of the other team, not the goalie, touches the puck first) or a new icing candidate
 static func update_carrier(sim: Sim, c: Entity) -> void:
-	var in_zone := carrier_in_offensive_zone(sim, c)
-	if not in_zone and not sim.play_stopped:
+	var zone := carrier_zone_entry(sim, c)
+	if not zone and not sim.play_stopped:
 		sim.last_touch_x = c.xi
 		sim.last_touch_y = c.yi
 		sim.last_touch_slot = c.slot
 	var team := sim.team_of(c)
-	if team.carrier_history[0] != c.roster_idx:
-		team.carrier_history[2] = team.carrier_history[1]
-		team.carrier_history[1] = team.carrier_history[0]
-		team.carrier_history[0] = c.roster_idx
+	var r := Entity.to_s8(c.roster_idx)
+	if r != team.carrier_history[0]:
+		if team.flags & 8:
+			team.flags &= ~8
+		else:
+			team.carrier_history[2] = team.carrier_history[1]
+			team.carrier_history[1] = team.carrier_history[0]
+		team.carrier_history[0] = r
+		if r == team.carrier_history[2]:
+			team.carrier_history[2] = Entity.to_s16(team.carrier_history[2] | 0xff00)
+	elif team.flags & 8:
+		team.flags &= ~8
 	if c.line_slot != 0:
 		sim.shot_in_flight = false
-	if not offside_entry_check(sim, c) and in_zone:
+	if not offside_entry_check(sim, c) and zone:
 		Rules.maybe_queue_infraction(sim, c, Rules.INF_TWO_LINE)
-	# icing candidate: the puck is shot from the own half (dword_e9abe)
+	# icing_state: byte 2 = flags (1 the puck crossed the goal line, 2 shot by the team attacking
+	# +y, 4 a candidate), byte 3 = the shooter
+	var ic := sim.icing_flags
+	if (ic & 4) and (ic & 1) and c.line_slot != 0 and ((c.flags & Entity.F_ATTACK_UP) != 0) != ((ic & 2) != 0):
+		Rules.maybe_queue_infraction(sim, sim.entities[sim.icing_shooter], Rules.INF_ICING)
+		return
+	sim.icing_flags = 0
 	sim.icing_shooter = c.slot
-	var own_half := c.yi if (c.flags & Entity.F_ATTACK_UP) else -c.yi
-	sim.icing_flags = 2 if (c.flags & Entity.F_ATTACK_UP) else 0
-	if own_half < 0:
-		var diff := sim.teams[0].skaters_on_ice - sim.teams[1].skaters_on_ice
+	var a := sim.puck.yi
+	if c.flags & Entity.F_ATTACK_UP:
+		sim.icing_flags = 2
+		a = -a
+	if a >= 0:
+		# from the own half, unless short handed
+		a = sim.teams[0].skaters_on_ice - sim.teams[1].skaters_on_ice
 		if c.flags & Entity.F_PLAYER2:
-			diff = -diff
-		if diff >= 0:          # no icing for the short handed team
+			a = -a
+		if a >= 0:
 			sim.icing_flags |= 4
 
-## carrier_zone_entry: the carrier entered the offensive zone with team mates already inside
-static func carrier_in_offensive_zone(sim: Sim, c: Entity) -> bool:
+## carrier_zone_entry (0x4dd51): a two line pass: with the puck in his own half (or flagged offside)
+## the receiver is past the red line and the last touch was a team mate's in their own zone (the
+## original takes any slot below 6, -1 included, for the home team)
+static func carrier_zone_entry(sim: Sim, c: Entity) -> bool:
 	if sim.no_stats or not sim.opt_two_line_pass:
 		return false
-	var puck := sim.puck
-	var in_front := (puck.yi > 0) == ((c.flags & Entity.F_ATTACK_UP) != 0)
-	if (c.flags2 & Entity.F2_OFFSIDE) == 0 and not in_front:
+	var up := (c.flags & Entity.F_ATTACK_UP) != 0
+	if (c.flags2 & Entity.F2_OFFSIDE) == 0 and (sim.puck.yi > 0) == up:
 		return false
-	if c.slot == sim.last_touch_slot or not sim.same_team(sim.last_touch_slot, c.slot) or sim.last_touch_slot < 0:
+	var lts := sim.last_touch_slot
+	if c.slot == lts or (c.slot < 6) != (lts < 6):
 		return false
-	if c.flags & Entity.F_ATTACK_UP:
-		return sim.last_touch_y < -0x4d and c.yi >= 0
-	return sim.last_touch_y > 0x4d and c.yi <= 0
+	if up:
+		return sim.last_touch_y <= -0x4e and c.yi >= 0
+	return sim.last_touch_y >= 0x4e and c.yi <= 0
 
-## offside_entry_check: offside when the carrier crosses the blue line with the flag set
+## offside_entry_check (0x4dcdd): the puck carried into the attacking zone (past y 0x4e) while the
+## team is flagged offside (check_offside)
 static func offside_entry_check(sim: Sim, c: Entity) -> bool:
-	if not sim.opt_offsides or sim.penalty_shot:
+	if not sim.opt_offsides or sim.penalty_shot or sim.penalty_shot_setup:
 		return false
 	var py := sim.puck.yi if (c.flags & Entity.F_ATTACK_UP) else -sim.puck.yi
-	if py > 0x4d and (sim.team_of(c).flags & Team.FL_OFFSIDE) and not sim.no_stats:
-		Rules.maybe_queue_infraction(sim, c, Rules.INF_OFFSIDE)
-		return true
-	return false
+	if py < 0x4e or (sim.team_of(c).flags & Team.FL_OFFSIDE) == 0 or sim.no_stats:
+		return false
+	Rules.maybe_queue_infraction(sim, c, Rules.INF_OFFSIDE)
+	return true
 
-## puck_check_players (0x4d94c): the puck against every skater and the referee near its row
+## puck_check_players (0x548ac): the puck against the entities next to it in the draw order (sorted
+## by y): upwards, then downwards, while their y is within 0x28 of the puck's
 static func puck_check_players(sim: Sim) -> void:
 	var puck := sim.puck
-	if absi(puck.yi) > 400:
-		puck.vx = 0
+	if absi(puck.yi) > 0x190:
 		puck.vy = 0
+		puck.vx = 0
 	if puck.zi > 0x10:
 		return      # too high to be played
-	for i in 17:
-		if i >= 12 and i != Entity.Slot.REFEREE:
-			continue
-		var e := sim.entities[i]
-		if e.line_slot < 0 and i != Entity.Slot.REFEREE:
-			continue
-		if absi(e.yi - puck.yi) >= 0x29:
-			continue
-		puck_player_interaction(sim, e)
+	var k := sim.draw_pos[puck.slot]
+	while k != 0x10:
+		var s := sim.draw_list[k + 1]
+		if sim.draw_keys[s] - puck.yi > 0x28:
+			break
+		puck_player_interaction(sim, puck, s)
+		k += 1
+	k = sim.draw_pos[puck.slot]
+	while k != 0:
+		var s := sim.draw_list[k - 1]
+		if puck.yi - sim.draw_keys[s] > 0x28:
+			return
+		puck_player_interaction(sim, puck, s)
+		k -= 1
 
-## puck_player_interaction (0x5428a): pick up, deflect or save the puck
-static func puck_player_interaction(sim: Sim, e: Entity) -> void:
-	var puck := sim.puck
-	if e.slot == sim.puck_carrier or (e.slot >= 12 and e.slot != Entity.Slot.REFEREE):
+## puck_player_interaction (0x5428a): the puck against one player (or the referee):
+##  - the goalie reaches it with his stick: the reach (stick_offset_from_frame) grows with the
+##    rating of his animation (stickhandling_skill) and shrinks with the speed of the puck, the
+##    height of the blade limits the height of the puck -> goalie_save; then also, like a puck
+##    against his body (within 10) -> puck_hits_player
+##  - a skater within 14 of the point his frame stands on (0xc4, 0x31 while the puck's timer_c
+##    runs; 0x24 in the frames 0x430-0x44f) gets it (goalie_save, the shared "gets the puck")
+##  - otherwise a skater or the referee near the blade of a stick handling frame (0x431-0x44f,
+##    odd) with the puck low, or near his body (8, 0x10 in frames past 0x44f) -> attach_puck_to_stick
+## The squared distance (and for puck_hits_player the offsets) are the scratch values the
+## original leaves for the routine it calls.
+static func puck_player_interaction(sim: Sim, puck: Entity, slot: int) -> void:
+	if slot == sim.puck_carrier:
 		return
+	if slot > 0xb and slot != Entity.Slot.REFEREE:
+		return
+	var e := sim.entities[slot]
 	if (e.flags & Entity.F_ARRIVED) or e.timer_c != 0:
 		return
 	var mirrored := (e.flags4 & Entity.F4_MIRROR) != 0
-	if (e.flags2 & Entity.F2_UNSELECTABLE) == 0 and e.line_slot == 0 and puck.zi <= 5 and puck.vz <= 0x200:
-		# goalie: the pads and glove cover an area of 15 around the body
-		var o := Tables.frame_offset(e.frame, mirrored)
-		var dx := o.x + e.xi - puck.xi
-		if absi(dx) < 0xf:
-			var dy := o.y + e.yi - puck.yi
-			if absi(dy) < 0xf:
-				var d2 := dx * dx + dy * dy
-				var reach := 0x31 if e.timer_c > 0 else 0xc4
-				if d2 <= reach and (e.anim < 0x430 or e.anim > 0x44f or d2 < 0x25):
-					goalie_save(sim, e)
-					return
-	elif (e.flags2 & Entity.F2_UNSELECTABLE) == 0 and e.line_slot > 0 and e.slot != Entity.Slot.REFEREE:
-		# skater: the stick reach grows with the stickhandling skill and shrinks with the puck speed
+	if (e.flags2 & Entity.F2_UNSELECTABLE) == 0 and e.line_slot == 0:
 		var skill := stickhandling_skill(e)
-		var speed := maxi(1, absi(puck.vx) + absi(puck.vy))
-		var reach := clampi((skill * 0x800 - 4000) / speed, 0, 4)
+		var sum := absi(Sim._s16(puck.vx)) + absi(Sim._s16(puck.vy))
+		var speed := Sim._s16(sum) if (sum & 0xffff) != 0 else 1
+		var reach := Sim._s16(((skill << 11) - 0xfa0) / speed)
+		if reach < 0:
+			reach = 0
+		if reach > 4:
+			reach = 4
 		var so := Tables.stick_offset(e.frame, mirrored)
 		var fo := Tables.frame_offset(e.frame, mirrored)
-		var sx := so.x - fo.x
-		var sy := so.y - fo.y
-		var rx := ((absi(sx) << 2) / 3)
-		var ry := ((absi(sy) << 2) / 3)
-		var limit := absi(sx) + reach
-		var dx := fo.x + e.xi - puck.xi
-		if absi(dx) < limit:
-			var dy := fo.y + e.yi - puck.yi
-			if absi(dy) < limit:
-				var zlim := maxi(5, rx + absi(sy)) + reach
-				var zlow := absi(sy) - rx - reach
-				if puck.zi <= zlim and (zlow < 0 or zlow < puck.zi):
-					var d2 := dx * dx + dy * dy
-					var r2 := limit * limit
-					if e.timer_c > 0:
+		var sa := Sim._s16(so.x - fo.x)
+		var sb := absi(Sim._s16(so.y - fo.y))
+		var sa43 := Sim._s16((absi(sa) << 2) / 3)
+		var c := Sim._s16(absi(sa) + reach)
+		var a := absi(Sim._s16(fo.x + e.xi - puck.xi))
+		if a < c:
+			var b := absi(Sim._s16(fo.y + e.yi - puck.yi))
+			if b < c:
+				var top := Sim._s16(sa43 + sb)
+				if top <= 5:
+					top = 5
+				var low := Sim._s16(sb - sa43 - reach)
+				if Sim._s16(top + reach) >= puck.zi and (low < 0 or low < puck.zi):
+					var d2 := a * a + b * b
+					var r2 := c * c
+					if puck.timer_c > 0:
 						r2 >>= 2
-					if d2 <= r2:
+					if Sim._s16(r2) >= Sim._s16(d2):
 						Rules.two_line_pass_check(sim, e)
-						goalie_save(sim, e)   # the shared "player gets the puck" path
-						return
+						goalie_save(sim, puck, e, d2)
+	elif (e.flags2 & Entity.F2_UNSELECTABLE) == 0 and e.line_slot >= 0 and slot != Entity.Slot.REFEREE \
+			and puck.zi <= 5 and puck.vz <= 0x200:
+		var fo := Tables.frame_offset(e.frame, mirrored)
+		var a := Sim._s16(fo.x + e.xi - puck.xi)
+		if absi(a) <= 0xe:
+			var b := Sim._s16(fo.y + e.yi - puck.yi)
+			if absi(b) <= 0xe:
+				var d2 := a * a + b * b
+				var r2 := 0x31 if puck.timer_c > 0 else 0xc4
+				if d2 <= r2 and (e.frame < 0x430 or e.frame > 0x44f or d2 <= 0x24):
+					goalie_save(sim, puck, e, d2)
+					return
 	if e.line_slot == 0:
-		# a loose puck bumping into the goalie's body
-		var dx := e.xi - puck.xi
-		if absi(dx) < 0xb:
-			var dy := e.yi - puck.yi
-			if absi(dy) < 0xb and dx * dx + dy * dy < 0x65:
-				Rules.two_line_pass_check(sim, e)
-				puck_hits_player(sim, e)
-		return
-	# body contact with a skater: the puck sticks to the stick when it is low and slow enough,
-	# a hard shot knocks the player down
-	var is_slow := e.anim >= 0x431 and e.anim <= 0x44f and (e.anim & 1) and puck.zi <= 7
-	var low := puck.zi < 9
-	var near_x := 8
-	var near_d := 0x40
-	if e.anim > 0x44f:
-		near_x = 0x10
-		near_d = 0x100
-	var ddx := e.xi - puck.xi
-	var ddy := e.yi - puck.yi
-	if is_slow:
-		var so := Tables.stick_offset(e.frame, mirrored)
-		var hx := so.x >> 1
-		var hy := so.y >> 1
-		var rr := absi(hx)
-		var cx := hx + ddx
-		var cy := hy + ddy
-		if absi(cx) <= rr and absi(cy) <= rr and cx * cx + cy * cy <= rr * rr:
-			attach_puck_to_stick(sim, e)
+		# a loose puck against the goalie's body
+		var a := Sim._s16(e.xi - puck.xi)
+		if absi(a) > 0xa:
 			return
-	if absi(ddx) <= near_x and absi(ddy) <= near_x and ddx * ddx + ddy * ddy <= near_d:
-		attach_puck_to_stick(sim, e)
+		var b := Sim._s16(e.yi - puck.yi)
+		if absi(b) > 0xa or a * a + b * b > 0x64:
+			return
+		Rules.two_line_pass_check(sim, e)
+		puck_hits_player(sim, puck, e, a, b)
+		return
+	var f := e.frame
+	if f >= 0x431 and f <= 0x44f and (f & 1) and puck.zi < 8:
+		# the blade of the stick, at half the offset of stick_offsets
+		var so := Tables.stick_offset(f, mirrored)
+		var sa := so.x >> 1
+		var sb := so.y >> 1
+		var r := absi(sa)
+		var a := Sim._s16(sa + e.xi - puck.xi)
+		if absi(a) <= r:
+			var b := Sim._s16(sb + e.yi - puck.yi)
+			if absi(b) <= r:
+				var d2 := a * a + b * b
+				if r * r >= d2:
+					attach_puck_to_stick(sim, puck, e, d2)
+					return
+	var near := 8
+	var near2 := 0x40
+	if f > 0x44f:
+		near = 0x10
+		near2 = 0x100
+	var a := Sim._s16(e.xi - puck.xi)
+	if absi(a) > near:
+		return
+	var b := Sim._s16(e.yi - puck.yi)
+	if absi(b) > near:
+		return
+	var d2 := a * a + b * b
+	if d2 > near2:
+		return
+	attach_puck_to_stick(sim, puck, e, d2)
 
-## stickhandling_skill (0x5414e): which rating applies to the current animation
+## stickhandling_skill (0x5414e): the rating that goes with the animation (by the hand he shoots
+## with): +0x5d / +0x62 for 0xb1, 0xc9, 0xe1, 0x11d5, +0x5f / +0x61 for 0x101, 0x119, 0x121d,
+## otherwise +0x5b
 static func stickhandling_skill(e: Entity) -> int:
 	var a := e.anim
-	if a == 0xb1 or a == 0xc9 or a == 0xe1 or a == 0x11d5:
-		return e.check_skill if e.left_handed else e.pass_skill
-	if a == 0x101 or a == 0x119 or a == 0x121d:
-		return e.endurance if e.left_handed else e.offense
+	var lh := e.left_handed != 0
+	if a == 0xb1:
+		return e.pass_skill if lh else e.check_skill
+	if a == 0xc9 or a == 0xe1 or a == 0x11d5:
+		return e.check_skill if lh else e.pass_skill
+	if a == 0x119:
+		return e.offense if lh else e.endurance
+	if a == 0x101 or a == 0x121d:
+		return e.endurance if lh else e.offense
 	return e.shot_skill
 
-## goalie_save (0x574ba): a player (usually the goalie) gets to the puck; a hard shot may be
-## stopped and dropped, otherwise the puck is taken
-static func goalie_save(sim: Sim, e: Entity) -> void:
-	var puck := sim.puck
+## the energy of a player (team record +0x46, by roster index)
+static func _team_energy(sim: Sim, e: Entity) -> int:
+	var r := Entity.to_s8(e.roster_idx)
+	if r < 0 or r >= 28:
+		return 0x1000
+	return Entity.to_s16(sim.team_of(e).energy[r])
+
+## goalie_save (0x57483): a player gets to the puck (d2: the squared distance the caller measured).
+## A goalie first ends the shot (shot_landed) and is credited a save worth the SAVED clip (once a
+## period: save_clip_shown) when the home goalie stops a hard shot from the far zone. A loose puck
+## is taken (take_puck) unless faster than the hold speed (13000 + 700 x +0x60, without the bonus
+## while a shot is on its way) — the pass receiver takes it one time in two anyway — else it
+## rebounds off him. With a carrier it is a stick check: the puck comes loose (release_puck_random)
+## when he is within 6 of an opponent and wins the roll of the +0x60 ratings and energies.
+static func goalie_save(sim: Sim, puck: Entity, e: Entity, d2: int) -> void:
+	var save := 0
 	if e.line_slot == 0:
 		if sim.no_stats:
 			return
 		e.save_result = 0
-		var save := false
-		if sim.shot_in_flight and (e.flags & Entity.F_PLAYER2) == 0 or sim.shot_in_flight:
-			if sim.last_shooter >= 0 and not sim.same_team(sim.last_shooter, e.slot):
-				var shooter := sim.entities[sim.last_shooter]
-				if absi(shooter.yi) > 0x58 and ((e.flags & Entity.F_ATTACK_UP) != 0) != (shooter.yi > 0):
-					var vy := absi(puck.vy)
-					if vy >= 0x2ee1 or (vy >= 0x1771 and e.anim >= 0x119d and e.anim <= 0x121d):
-						save = true
+		if not sim.save_clip_shown and (e.flags & Entity.F_PLAYER2) == 0 and sim.shot_in_flight \
+				and (e.slot < 6) != (sim.last_shooter < 6):
+			var sh := sim.entities[sim.last_shooter]
+			if absi(sh.yi) > 0x58 and (sh.yi > 0) != ((e.flags & Entity.F_ATTACK_UP) != 0):
+				var vy := absi(Sim._s16(puck.vy))
+				if vy > 0x2ee0 or (vy > 0x1770 and e.anim >= 0x119d and e.anim <= 0x121d):
+					save = 1
 		shot_landed(sim)
-		if save:
-			e.save_result = 1
 	e.flags &= ~Entity.F_HAS_TARGET
-	if sim.puck_carrier < 0:
-		var v2 := puck.vx * puck.vx + puck.vy * puck.vy
-		var hold := 13000
+	if sim.puck_carrier >= 0:
+		if e.anim >= 0x13c5 and e.anim <= 0x14ad:
+			return
+		var c := sim.entities[sim.puck_carrier]
+		if ((e.flags ^ c.flags) & Entity.F_PLAYER2) == 0:
+			return
+		if d2 > 0x24:
+			return
+		if e.line_slot != 0:
+			if c.line_slot == 0:
+				return
+			var cs := Sim._s16((_team_energy(sim, c) * c.goalie_skill) >> 12)
+			var es := Sim._s16((_team_energy(sim, e) * e.goalie_skill) >> 12)
+			var odds := Sim._s16(cs + 0x20 - es)
+			if (c.flags & Entity.F_USER) and (e.flags & Entity.F_USER) == 0:
+				odds = Sim._s16(odds + _div_trunc(odds, 8))
+			if Sim._s16(sim.random(odds)) > 2:
+				return
+		c.timer_c = Sim._s16(Sim._s16((_team_energy(sim, c) * c.goalie_skill) >> 12) + 0x14)
+		e.timer_c = Sim._s16(Sim._s16((_team_energy(sim, e) * e.goalie_skill) >> 12) + 0x14)
+		sim.last_passer = c.slot
+		sim.action_pass = false
+		sim.action_shot = false
+	else:
+		if e.line_slot == 0 and d2 > 0x40:
+			return
+		var vx := Sim._s16(puck.vx)
+		var vy := Sim._s16(puck.vy)
+		var v2 := vx * vx + vy * vy
+		var hold := 0
 		if not sim.shot_in_flight:
-			hold += e.goalie_skill * 700
-		var hold2 := hold * hold
+			hold = (e.goalie_skill * 0x2bc) & 0xffff
+		hold = Sim._s16(hold + 0x32c8)
 		if e.anim < 0x13c5 or e.anim > 0x14ad:
-			if v2 <= hold2 or (e.slot == sim.pass_target and sim.random(2) != 0):
-				# controlled: the player takes the puck
+			if v2 <= hold * hold or (e.slot == sim.pass_target and sim.random(2) != 0):
 				puck.vz = 0
 				take_puck(sim, e)
 				if e.line_slot != 0:
 					return
 				if puck.zi > 8:
-					puck.z = 8 << 16
-				puck.vx >>= 2
-				puck.vy >>= 2
+					puck.z = (8 << 16) | (puck.z & 0xffff)
+				puck.vx = Sim._s16(puck.vx) >> 2
+				puck.vy = Sim._s16(puck.vy) >> 2
+				e.save_result = save
 				return
-		# too hot to handle: it rebounds
 		e.timer_c = 8
-	else:
-		# stealing the puck from the carrier
-		if e.anim >= 0x13c5 and e.anim <= 0x14ae:
-			return
-		var c := sim.entities[sim.puck_carrier]
-		if (c.flags & Entity.F_PLAYER2) == (e.flags & Entity.F_PLAYER2):
-			return
-		if c.puck_dist_sq > 0x24:
-			return
-		if e.line_slot != 0:
-			if c.line_slot == 0:
-				return
-			var cs := (c.energy * c.check_skill >> 12) + 0x20
-			var es := (e.energy * e.check_skill >> 12)
-			var chance := cs - es
-			if (c.flags & Entity.F_USER) and (e.flags & Entity.F_USER) == 0:
-				chance += chance >> 3
-			if sim.random(maxi(1, chance)) > 2:
-				return
-		c.timer_c = (c.energy * c.check_skill >> 12) + 0x14
-		e.timer_c = (e.energy * e.check_skill >> 12) + 0x14
-		sim.last_passer = c.slot
-		sim.action_pass = false
-		sim.action_shot = false
 	sim.play_sfx(0x99)
 	update_carrier(sim, e)
 	release_puck_random(sim)
 
-## puck_hits_player (0x57268): deflection off a body
-static func puck_hits_player(sim: Sim, e: Entity) -> void:
-	var puck := sim.puck
+## a signed division truncated towards zero, like the original's shift with the sign correction
+static func _div_trunc(v: int, d: int) -> int:
+	return -((-v) / d) if v < 0 else v / d
+
+## puck_hits_player (0x57096): a loose puck against a goalie's body (a, b: the goalie's offset from
+## the puck). It ends a shot, may count as a save (as in goalie_save, the speed is |vx| + |vy|);
+## slow enough for his rating (+0x5b) he takes it (take_puck), otherwise it is knocked loose from a
+## carrier and bounces off him (half the offset of the puck, in the direction opposite his motion)
+static func puck_hits_player(sim: Sim, puck: Entity, e: Entity, a: int, b: int) -> void:
+	var save := 0
 	if sim.no_stats:
 		return
-	var dx := e.xi - puck.xi
-	var dy := e.yi - puck.yi
-	var from_dir := Tables.direction8(-dx, -dy)
-	var rel := (from_dir - e.facing) & 7
-	var low := puck.zi < 9
-	if (e.anim < 0x206 or e.anim > 0x215) or puck.zi < 5:
-		e.save_result = 0
-		if sim.shot_in_flight and sim.last_shooter >= 0 and not sim.same_team(sim.last_shooter, e.slot):
-			var shooter := sim.entities[sim.last_shooter]
-			if absi(shooter.yi) > 0x58 and (shooter.yi > 0) != ((e.flags & Entity.F_ATTACK_UP) != 0):
-				var sp := absi(puck.vx) + absi(puck.vy)
-				if sp > 17000 or (sp > 6000 and e.anim >= 0x119d and e.anim <= 0x121d):
-					e.save_result = 1
-		shot_landed(sim)
-		update_carrier(sim, e)
-		if not sim.play_stopped and absi(puck.vy) > 4000:
-			sim.play_sfx(0xa1 if (e.flags & Entity.F_PLAYER2) else 0x7d)
-		sim.play_sfx(0xa3 if absi(puck.vy) < 0xbb9 else 0x9d)
-		if sim.puck_carrier < 0:
-			var limit := (sim.random((((e.shot_skill * 5) >> 2) + 2) * 0x200) + 0x2000)
-			if absi(puck.vx) <= limit and absi(puck.vy) <= limit and (e.flags2 & Entity.F2_UNSELECTABLE) == 0:
-				puck.vz = 0
-				if puck.zi > 8:
-					puck.z = 8 << 16
-				puck.vx >>= 2
-				puck.vy >>= 2
-				take_puck(sim, e)
-				return
-		else:
-			var c := sim.entities[sim.puck_carrier]
-			sim.puck_carrier = -1
-			c.timer_c = 0x14
-			sim.last_passer = c.slot
-			sim.action_pass = false
-			sim.action_shot = false
-		puck.vz = 0
-		if puck.zi > 10:
-			puck.z = 10 << 16
-		e.timer_c = 10
-		e.timer_b = 4
-		var ox := dx
-		var oy := dy
-		if oy == 0:
-			oy = 1
-		if ((oy << 16) ^ (puck.vy << 16)) >= 0:
-			oy = -oy
-		puck.vx = (ox >> 1) << 8 | (puck.vx & 0xff)
-		puck.vy = (oy >> 1) << 8 | (puck.vy & 0xff)
-		puck_spin(sim, puck, ox)
-
-## attach_puck_to_stick (0x579c6): the puck meets a skater's body / stick
-static func attach_puck_to_stick(sim: Sim, e: Entity) -> void:
-	var puck := sim.puck
-	var low := puck.zi < 9
-	if puck.frame < 0x430 or puck.frame > 0x467:
-		if low and (puck.vx & 0xf) != 0:
+	# the side of the body that is hit (kept in scratch_e03ac, not used further): a straight hit
+	# draws a random number
+	var rel := (Tables.direction8(Sim._s16(-a), Sim._s16(-b)) - ((e.heading >> 16) & 0xffff)) & 7
+	if (rel & 3) == 0:
+		sim.random(0x100)
+	if e.frame >= 0x206 and e.frame < 0x216 and puck.zi >= 5:
+		return
+	e.save_result = 0
+	if not sim.save_clip_shown and (e.flags & Entity.F_PLAYER2) == 0 and sim.shot_in_flight \
+			and (e.slot < 6) != (sim.last_shooter < 6):
+		var sh := sim.entities[sim.last_shooter]
+		if absi(sh.yi) > 0x58 and (sh.yi > 0) != ((e.flags & Entity.F_ATTACK_UP) != 0):
+			var s := Sim._s16(absi(Sim._s16(puck.vy)) + absi(Sim._s16(puck.vx)))
+			if s > 0x4268 or (s > 0x1770 and e.anim >= 0x119d and e.anim <= 0x121d):
+				save = 1
+	shot_landed(sim)
+	update_carrier(sim, e)
+	if not sim.play_stopped and absi(Sim._s16(puck.vy)) > 0xfa0:
+		sim.play_sfx(0xa1 if (e.flags & Entity.F_PLAYER2) else 0x7d)
+	sim.play_sfx(0x9d if absi(Sim._s16(puck.vy)) > 0xbb8 else 0xa3)
+	if sim.puck_carrier < 0:
+		var lim := Sim._s16(sim.random(Sim._s16(((((e.shot_skill * 5) >> 2) + 2) << 9))) + 0x2000)
+		if absi(Sim._s16(puck.vx)) <= lim and absi(Sim._s16(puck.vy)) <= lim and (e.flags2 & Entity.F2_UNSELECTABLE) == 0:
+			puck.vz = 0
+			if puck.zi > 8:
+				puck.z = (8 << 16) | (puck.z & 0xffff)
+			puck.vx = Sim._s16(puck.vx) >> 2
+			puck.vy = Sim._s16(puck.vy) >> 2
+			take_puck(sim, e)
+			e.save_result = save
 			return
-	elif puck.frame < 0x450 and (puck.frame & 1) and not low:
+	else:
+		var c := sim.entities[sim.puck_carrier]
+		sim.puck_carrier = -1
+		c.timer_c = 0x14
+		sim.last_passer = c.slot
+		sim.action_pass = false
+		sim.action_shot = false
+	puck.vz = 0
+	if puck.zi > 10:
+		puck.z = (10 << 16) | (puck.z & 0xffff)
+	e.timer_c = 10
+	e.target_y = 4
+	var pa := Sim._s16(puck.xi - e.xi)
+	var pb := Sim._s16(puck.yi - e.yi)
+	if pb == 0:
+		var fo := Tables.frame_offset(e.frame, (e.flags4 & Entity.F4_MIRROR) != 0)
+		pa = fo.x
+		pb = fo.y
+	if pb == 0:
+		pb = 1
+	if (pb ^ Sim._s16(e.vy)) >= 0:
+		pb = Sim._s16(-pb)
+	puck.vx = Sim._s16(((Entity.to_s8(pa) >> 1) << 8) | (puck.vx & 0xff))
+	puck.vy = Sim._s16(((Entity.to_s8(pb) >> 1) << 8) | (puck.vy & 0xff))
+	puck_spin(sim, puck, pa)
+
+## attach_puck_to_stick (0x56d06): the puck meets a skater's stick or body (d2: the squared distance
+## the caller measured; a low puck in another frame than the rolling ones needs its low 4 bits clear,
+## a rolling one at stick height is too high). He becomes the carrier (update_carrier, not the
+## referee): the high bytes of the puck's velocity hold its offset from him (that of his frame when
+## level with him). A puck in the air hurts: hard enough (speed over 3000) and high (over 12) it
+## knocks him down, otherwise he is stung (animation 0x84b).
+static func attach_puck_to_stick(sim: Sim, puck: Entity, e: Entity, d2: int) -> void:
+	var f := puck.frame
+	if f >= 0x430 and f <= 0x467:
+		if f <= 0x44f and (f & 1) and puck.zi > 8:
+			return
+	elif puck.zi <= 8 and (d2 & 0xf) != 0:
 		return
 	if e.slot != Entity.Slot.REFEREE:
 		update_carrier(sim, e)
 	puck.vz = 0
 	e.timer_c = 8
-	var vx := puck.vx
-	var vy := puck.vy
-	# the high bytes of the velocity: the puck's offset from the skater (with none in y the offset
-	# of the skater's frame)
-	var dx := puck.xi - e.xi
-	var dy := puck.yi - e.yi
-	if dy == 0:
-		var o := Tables.frame_offset(e.frame, (e.flags4 & Entity.F4_MIRROR) != 0)
-		dx = o.x
-		dy = o.y
-	puck.vx = Sim._s16((dx << 8) | (puck.vx & 0xff))
-	puck.vy = Sim._s16((dy << 8) | (puck.vy & 0xff))
-	puck_spin(sim, puck, dx)
-	if low:
+	var a := Sim._s16(puck.xi - e.xi)
+	var b := Sim._s16(puck.yi - e.yi)
+	if b == 0:
+		var fo := Tables.frame_offset(e.frame, (e.flags4 & Entity.F4_MIRROR) != 0)
+		a = fo.x
+		b = fo.y
+	var vx := Sim._s16(puck.vx)
+	var vy := Sim._s16(puck.vy)
+	puck.vx = Sim._s16(((a & 0xff) << 8) | (puck.vx & 0xff))
+	puck.vy = Sim._s16(((b & 0xff) << 8) | (puck.vy & 0xff))
+	puck_spin(sim, puck, a)
+	if puck.zi <= 8:
 		if e.anim != 0x84b:
 			sim.play_sfx(0xa3)
 		return
 	var sfx := 0xa3
-	if vx * vx + vy * vy > 9000000 and puck.zi > 0xc:
+	if vx * vx + vy * vy > 0x895440 and puck.zi > 0xc:
 		sfx = 0xa2
 		knock_down(sim, puck, e)
 	if e.anim != 0x84b:
@@ -404,46 +493,74 @@ static func attach_puck_to_stick(sim: Sim, e: Entity) -> void:
 		e.flags |= Entity.F_BUSY
 		Anim.set_animation(e, 0x84b)    # stung by the puck
 
-## take_puck: a player becomes the carrier
+## take_puck (0x56f5a): a player becomes the carrier. A penalty shooter playing the puck again ends
+## the penalty shot; the other team's history of carriers no longer gives assists; the first touch
+## after a faceoff wins it (an offensive zone faceoff past y 0x4e), the crowd stirs; a completed
+## pass; a goalie ends the shot and gets 140 steps (5 after a poke check) to play the puck; the
+## user follows the puck to the new carrier of his team
 static func take_puck(sim: Sim, e: Entity) -> void:
 	sim.puck_carrier = e.slot
 	var team := sim.team_of(e)
 	var opp := sim.opponents_of(e)
-	if sim.penalty_shot and e.roster_idx == team.carrier_history[0]:
-		# the shooter plays the puck a second time (a rebound): the penalty shot is over
+	if sim.penalty_shot and Entity.to_s8(e.roster_idx) == team.carrier_history[0]:
 		Rules.end_penalty_shot(sim)
 		sim.one_timer = false
 		sim.breakaway = false
-	opp.carrier_history[1] = -1
-	opp.carrier_history[2] = -1
+	opp.carrier_history[1] = Entity.to_s16(opp.carrier_history[1] | 0xff00)
+	opp.carrier_history[2] = Entity.to_s16(opp.carrier_history[2] | 0xff00)
 	opp.flags |= 8
-	if not sim.misc_first_touch:
-		sim.play_sfx(0x9b)
-	else:
+	if sim.misc_first_touch:
 		sim.misc_first_touch = false
 		if not sim.no_stats:
-			team.faceoffs_won += 0
+			team.faceoffs_won += 1
+			var up := (e.flags & Entity.F_ATTACK_UP) != 0
+			if (sim.puck.yi > 0x4e and up) or (sim.puck.yi < -0x4e and not up):
+				team.offensive_faceoffs += 1
 		sim.add_crowd(200, 1000)
 		if (e.flags & Entity.F_PLAYER2) == 0:
 			sim.excitement += 10
-	if e.slot == sim.pass_target and not sim.no_stats:
-		team.passes_completed += 1
-	sim.pass_target = -1
+	else:
+		sim.play_sfx(0x9b)
+	pass_completed(sim, e)
 	sim.action_pass = false
 	sim.action_shot = false
 	if e.line_slot == 0:
 		shot_landed(sim)
 		Rules.end_penalty_shot(sim)
 		e.timer_b = 5 if e.anim == 0x181 else 0x8c   # time until the goalie must play the puck
-	# follow_puck_user_switch: the user follows the puck to the new carrier of his team
-	if e.slot != sim.user1_slot and e.slot != sim.user2_slot:
-		var t := e.team + 1
-		if sim.user1_team == t and sim.user1_slot >= 0:
-			sim.user1_slot = sim.find_switch_target(e.slot, sim.user1_slot)
-		elif sim.user2_team == t and sim.user2_slot >= 0:
-			sim.user2_slot = sim.find_switch_target(e.slot, sim.user2_slot)
+	follow_puck_user_switch(sim, e.slot)
 
-## shot_landed: a shot reached a player or the net: shot statistics
+## pass_completed (0x50afe): a pass to a team mate (the pass target, shot_power's high word) counts
+## for the team
+static func pass_completed(sim: Sim, e: Entity) -> void:
+	if sim.pass_target >= 0 and (sim.pass_target < 6) == (e.slot < 6) and not sim.no_stats:
+		sim.team_of(e).passes_completed += 1
+	sim.pass_target = -1
+
+## follow_puck_user_switch (0x5b1ce): a user follows the puck to the new carrier of his team (the
+## second user first when he made the pass)
+static func follow_puck_user_switch(sim: Sim, slot: int) -> void:
+	if sim.stubbed("follow_puck_user_switch", [slot]):
+		return
+	if slot == sim.user1_slot or slot == sim.user2_slot:
+		return
+	var t := 2 if slot >= 6 else 1
+	if sim.user2_slot == sim.last_passer:
+		if sim.user2_team == t:
+			sim.user2_slot = sim.find_switch_target(slot, sim.user2_slot)
+			return
+		if t != sim.user1_team:
+			return
+	elif sim.user1_team != t:
+		if t != sim.user2_team:
+			return
+		sim.user2_slot = sim.find_switch_target(slot, sim.user2_slot)
+		return
+	sim.user1_slot = sim.find_switch_target(slot, sim.user1_slot)
+
+## shot_landed (0x55d28): the shot in flight (stop_flags 0x10) reached a player or the net: with the
+## puck in the shooter's attacking half a shot on goal (the crowd, the excitement, the team's
+## shots and power play shots, the game summary, the shooter's shots, the goalie's shots against)
 static func shot_landed(sim: Sim) -> void:
 	if not sim.shot_in_flight:
 		return
@@ -451,20 +568,27 @@ static func shot_landed(sim: Sim) -> void:
 	if sim.play_stopped or sim.last_shooter < 0:
 		return
 	var s := sim.entities[sim.last_shooter]
-	if (sim.puck.yi > 0) == ((s.flags & Entity.F_ATTACK_UP) != 0):
-		sim.add_crowd(100, 1000)
-		sim.excitement += 10
-		if not sim.no_stats:
-			var team := sim.team_of(s)
-			team.shots += 1
-			team.add_stat(s.roster_idx, Team.ST_SHOTS)
-			var opp := sim.opponents_of(s)
-			if sim.power_play and opp.skaters_on_ice < team.skaters_on_ice:
-				team.pp_shots += 1
-			sim.gs_trailer[2 + team.index * 2] += 1
-			var g := opp.goalie_index()
-			if g >= 0:
-				opp.goalie_stats[g][1] += 1
+	if ((s.flags & Entity.F_ATTACK_UP) != 0) != (sim.puck.yi > 0):
+		return
+	sim.add_crowd(100, 1000)
+	sim.excitement += 10
+	if sim.no_stats:
+		return
+	var team := sim.team_of(s)
+	var opp := sim.opponents_of(s)
+	team.shots += 1
+	if sim.power_play and team.skaters_on_ice > opp.skaters_on_ice:
+		team.pp_shots += 1
+	sim.gs_trailer[4 if (s.flags & Entity.F_PLAYER2) else 2] += 1
+	var r := Entity.to_s8(s.roster_idx)
+	if r < 0x19:
+		team.add_stat(r, Team.ST_SHOTS)
+	var gr := Entity.to_s16(opp.goalie_request)
+	var lt := Lines.line_table(opp)
+	if gr >= 0 and 0x24 + gr < lt.size():
+		var g := lt[0x24 + gr] - 0x19
+		if g >= 0 and g < 3:
+			opp.goalie_stats[g][1] += 1
 
 ## release_puck_random: the puck squirts away from a failed take
 static func release_puck_random(sim: Sim) -> void:
@@ -1140,6 +1264,8 @@ static func goalie_collision(sim: Sim, e: Entity, o: Entity) -> void:
 ## into a board animation (knockdown_position) and boarding may be called; a fall can injure him
 ## (injure_player). The hitter can be a player, the referee or the puck.
 static func knock_down(sim: Sim, hitter: Entity, victim: Entity) -> void:
+	if sim.stubbed("knock_down", [hitter.slot, victim.slot]):
+		return
 	if (victim.slot >= 12 and victim.slot != Entity.Slot.REFEREE) or (victim.flags2 & Entity.F2_KNOCKED):
 		return
 	var va := victim.anim

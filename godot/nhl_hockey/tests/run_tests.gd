@@ -154,7 +154,8 @@ func run_tests() -> void:
 		for i in 6:
 			var g := sim.entities[6 + i]
 			if g.line_slot == 0:
-				g.line_slot = -1        # pull the away goalie
+				g.line_slot = -1        # pull the away goalie: off the ice (the puck checks every
+				g.set_pos(-0xc0, 0)     # entity near it in the draw order, like the original)
 		shooter.set_pos(0, 150)
 		shooter.vx = 0
 		shooter.vy = 0
@@ -905,7 +906,143 @@ func physics_golden() -> void:
 			a_bad += 1
 			if a_bad <= 6:
 				fail("advance_animation anim %x pos %d hold %d wait %d: %s" % [int(c["before"]["anim"]), int(c["before"]["anim_pos"]), int(c["before"]["anim_hold"]), int(c["before"]["frame_wait"]), ", ".join(diff)])
-	print("golden physics: %d / %d distances, collide_boards %d / %d, apply_skating %d / %d, at the nets %d / %d, move_entity %d / %d, advance_animation %d / %d" % [ph["distance"].size() - dbad, ph["distance"].size(), ok, ph["boards"].size(), sk_ok, ph["skating"].size(), n_ok, ph["nets"].size(), c_ok, ph["contacts"].size(), a_ok, ph["animation"].size()])
+	# puck_check_players: the puck against the players next to it in the draw order (goalie_save,
+	# puck_hits_player, attach_puck_to_stick, take_puck, update_carrier, shot_landed); the routines
+	# the emulator stubs are recorded here too (Sim.stubbed)
+	var p_ok := 0
+	var p_bad := 0
+	sim.stubs = {"play_sfx": true, "queue_infraction": true, "maybe_queue_infraction": true, "knock_down": true,
+		"follow_puck_user_switch": true}
+	for c: Dictionary in ph["pickup"]:
+		for i in 17:
+			_entity_set(sim.entities[i], base[i])
+		var befores: Dictionary = c["before"]
+		for k in befores:
+			_entity_set(sim.entities[int(k)], befores[k])
+		var teams: Array = c["teams"]
+		for t in 2:
+			var team: Team = sim.teams[t]
+			team.reset_stats()
+			_team_set(team, teams[t])
+		var order: Dictionary = c["order"]
+		for i in 17:
+			sim.draw_list[i] = int(order["list"][i])
+			sim.draw_pos[i] = int(order["pos"][i])
+			sim.draw_keys[i] = int(order["keys"][i])
+		var g: Dictionary = c["globals"]
+		sim.puck_carrier = int(c["carrier"])
+		sim.play_stopped = (int(g["game_flags"]) & 1) != 0
+		sim.no_stats = (int(g["game_flags"]) & 0x10) != 0
+		sim.shot_in_flight = (int(g["stop_flags"]) & 0x10) != 0
+		sim.power_play = (int(g["stop_flags"]) & 0x20) != 0
+		sim.last_shooter = int(g["last_shooter"])
+		sim.pass_target = int(g["pass_target"])
+		sim.misc_first_touch = (int(g["misc_flags"]) & 0x10) != 0
+		sim.last_passer = int(g["last_passer"])
+		sim.last_touch_slot = int(g["last_touch"][0])
+		sim.last_touch_y = int(g["last_touch"][1])
+		sim.last_touch_x = int(g["last_touch"][2])
+		sim.crowd_noise = int(g["crowd"])
+		sim.excitement = int(g["excitement"])
+		sim.opt_offsides = (int(g["options"]) & 2) != 0
+		sim.opt_two_line_pass = (int(g["options"]) & 8) != 0
+		sim.action_pass = (int(g["action_flags"]) & 4) != 0
+		sim.action_shot = (int(g["action_flags"]) & 8) != 0
+		sim.icing_flags = int(g["icing"][0])
+		sim.icing_shooter = int(g["icing"][1])
+		sim.goal_prediction[0][0] = int(g["prediction"][0])
+		sim.goal_prediction[1][0] = int(g["prediction"][1])
+		sim.save_clip_shown = int(g["save_clip_shown"]) != 0
+		sim.gs_trailer[2] = int(g["summary_shots"][0])
+		sim.gs_trailer[4] = int(g["summary_shots"][1])
+		sim.penalty_shot = false
+		sim.penalty_shot_setup = false
+		sim.seed = int(c["seed"])
+		sim.stub_calls.clear()
+		PuckLogic.puck_check_players(sim)
+		var diff := []
+		var after: Dictionary = c["after"]
+		for k in after:
+			for d in _entity_diff(sim.entities[int(k)], after[k]):
+				diff.append("%s: %s" % [k, d])
+		if sim.puck_carrier != int(c["carrier_after"]):
+			diff.append("carrier %d (original %d)" % [sim.puck_carrier, int(c["carrier_after"])])
+		var want_calls: Array = c["calls"]
+		if str(sim.stub_calls) != str(_ints(want_calls)):
+			diff.append("calls %s (original %s)" % [str(sim.stub_calls), str(want_calls)])
+		var ga: Dictionary = c["globals_after"]
+		var got := {"stop_flags": (0x10 if sim.shot_in_flight else 0) | (0x20 if sim.power_play else 0),
+			"last_passer": sim.last_passer, "last_touch": [sim.last_touch_slot, sim.last_touch_y, sim.last_touch_x],
+			"pass_target": sim.pass_target, "misc_flags": 0x10 if sim.misc_first_touch else 0,
+			"action_flags": (4 if sim.action_pass else 0) | (8 if sim.action_shot else 0), "crowd": sim.crowd_noise,
+			"excitement": sim.excitement, "icing": [sim.icing_flags, sim.icing_shooter],
+			"summary_shots": [sim.gs_trailer[2], sim.gs_trailer[4]]}
+		for k in got:
+			var w = _ints(ga[k])
+			if k == "action_flags":
+				w &= 0xc
+			if str(got[k]) != str(w):
+				diff.append("%s %s (original %s)" % [k, str(got[k]), str(w)])
+		var tas: Array = c["teams_after"]
+		for t in 2:
+			for d in _team_diff(sim.teams[t], tas[t]):
+				diff.append("team %d %s" % [t, d])
+		if sim.seed != int(c["final_seed"]):
+			diff.append("seed")
+		if diff.is_empty():
+			p_ok += 1
+		else:
+			p_bad += 1
+			if p_bad <= 8:
+				fail("puck_check_players carrier %d puck %d,%d z %d v %d,%d slots %s: %s" % [int(c["carrier"]), int(befores["14"]["x"]) >> 16, int(befores["14"]["y"]) >> 16, int(befores["14"]["z"]) >> 16, int(befores["14"]["vx"]), int(befores["14"]["vy"]), str(befores.keys()), ", ".join(diff.slice(0, 8))])
+	sim.stubs = {}
+	print("golden physics: %d / %d distances, collide_boards %d / %d, apply_skating %d / %d, at the nets %d / %d, move_entity %d / %d, advance_animation %d / %d, puck_check_players %d / %d" % [ph["distance"].size() - dbad, ph["distance"].size(), ok, ph["boards"].size(), sk_ok, ph["skating"].size(), n_ok, ph["nets"].size(), c_ok, ph["contacts"].size(), a_ok, ph["animation"].size(), p_ok, ph["pickup"].size()])
+
+## the numbers of a JSON value as ints (arrays too, strings kept)
+static func _ints(v: Variant) -> Variant:
+	if v is Array:
+		return v.map(func(x): return _ints(x))
+	if v is float:
+		return int(v)
+	return v
+
+## the team record fields of the pickup cases (TEAM_FIELDS of golden.py), the shots of the players
+## (+0xe6 records +0xe) and the goalies' shots against (+0xea)
+static func _team_set(t: Team, f: Dictionary) -> void:
+	for i in 28:
+		t.energy[i] = int(f["energy"])
+	t.shots = int(f["shots"])
+	t.pp_shots = int(f["pp_shots"])
+	t.faceoffs_won = int(f["faceoffs_won"])
+	t.offensive_faceoffs = int(f["offensive_faceoffs"])
+	t.passes_completed = int(f["passes_completed"])
+	t.carrier_history = PackedInt32Array([int(f["carrier0"]), int(f["carrier1"]), int(f["carrier2"])])
+	t.skaters_on_ice = int(f["skaters"])
+	t.goalie_request = int(f["goalie_request"]) & 0xffff
+	t.flags = int(f["flags"])
+
+static func _team_diff(t: Team, want: Dictionary) -> Array:
+	var got := {"shots": t.shots, "pp_shots": t.pp_shots, "faceoffs_won": t.faceoffs_won,
+		"offensive_faceoffs": t.offensive_faceoffs, "passes_completed": t.passes_completed,
+		"carrier0": t.carrier_history[0], "carrier1": t.carrier_history[1], "carrier2": t.carrier_history[2],
+		"skaters": t.skaters_on_ice, "goalie_request": Entity.to_s16(t.goalie_request), "flags": t.flags}
+	var diff := []
+	for k in got:
+		if int(got[k]) != int(want[k]):
+			diff.append("%s %d (original %d)" % [k, got[k], int(want[k])])
+	var shots := []
+	for r in 28:
+		shots.append(t.stat(r, Team.ST_SHOTS))
+	var want_shots: Array = want["player_shots"]
+	if str(shots) != str(_ints(want_shots)):
+		diff.append("player shots %s (original %s)" % [str(shots), str(want_shots)])
+	var gshots := []
+	for g in 3:
+		gshots.append(t.goalie_stats[g][1])
+	var want_g: Array = want["goalie_shots"]
+	if str(gshots) != str(_ints(want_g)):
+		diff.append("goalie shots %s (original %s)" % [str(gshots), str(want_g)])
+	return diff
 
 ## the fields of physics.json (ENTITY_FIELDS of golden.py) to and from an entity of the port (the
 ## puck keeps its spin bits, +0x36, in flags3; the others' +0x36 is the facing in heading)
@@ -940,6 +1077,15 @@ static func _entity_set(e: Entity, f: Dictionary) -> void:
 	e.speed_skill = int(f["speed_skill"])
 	e.stamina = int(f["stamina"])
 	e.endurance = int(f["endurance"])
+	e.timer_b = int(f["timer_b"])
+	e.timer_c = int(f["timer_c"])
+	e.shot_skill = int(f["shot_skill"])
+	e.pass_skill = int(f["pass_skill"])
+	e.offense = int(f["offense"])
+	e.goalie_skill = int(f["goalie_skill"])
+	e.check_skill = int(f["check_skill"])
+	e.save_result = int(f["save_result"])
+	e.left_handed = int(f["left_handed"])
 
 static func _entity_get(e: Entity) -> Dictionary:
 	return {"x": e.x, "y": e.y, "z": e.z, "vx": e.vx, "vy": e.vy, "vz": e.vz, "frame": e.frame, "hit_by": e.hit_by,
@@ -948,7 +1094,9 @@ static func _entity_get(e: Entity) -> Dictionary:
 		"heading": e.heading, "spin": e.flags3 if e.slot == Entity.Slot.PUCK else (e.heading >> 16) & 0xff,
 		"anim": e.anim, "anim_pos": e.anim_pos, "anim_hold": e.anim_hold, "flags": e.flags, "flags2": e.flags2,
 		"frame_wait": e.frame_wait, "roster": e.roster_idx & 0xff, "flags4": e.flags4, "weight": e.weight, "speed_skill": e.speed_skill,
-		"stamina": e.stamina, "endurance": e.endurance}
+		"stamina": e.stamina, "endurance": e.endurance, "timer_b": e.timer_b, "timer_c": e.timer_c,
+		"shot_skill": e.shot_skill, "pass_skill": e.pass_skill, "offense": e.offense, "goalie_skill": e.goalie_skill,
+		"check_skill": e.check_skill, "save_result": e.save_result, "left_handed": e.left_handed}
 
 ## the fields of an entity that differ from the original's (heading: the 32 bit word)
 static func _entity_diff(e: Entity, want: Dictionary) -> Array:

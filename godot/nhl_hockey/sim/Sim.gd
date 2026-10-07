@@ -137,6 +137,9 @@ var breakaway := false              # dword_cc0f8
 var defenders_ahead := 0            # dword_cc124
 var icing_flags: int = 0            # dword_e9abe byte 2: 1 icing called, 2 direction, 4 candidate
 var icing_shooter: int = -1
+var save_clip_shown := false       # dword_e9a9e low word: the SAVED clip was shown this period (no more save credits)
+var stubs: Dictionary = {}          # golden tests: the routines replaced by a record of their calls (stubbed)
+var stub_calls: Array = []
 var goal_prediction: Array = [[0, -1], [0, -1]]   # unk_df812: [x, steps] per goal line (+y, -y)
 var camera_x: int = 0
 var camera_y: int = 0
@@ -307,6 +310,7 @@ func start_period(p: int, switch_ends: bool = true) -> void:
 	period_over = false
 	# period_init: the halfway announcement in the first two periods, the panel is closed
 	half_announce = p < 2
+	save_clip_shown = false
 	excitement = 0x10
 	InfoPanel.reset(self)
 	event_log.clear()
@@ -573,6 +577,8 @@ func random(n: int) -> int:
 ## horn plays; the digital devices 4 and 8 leave out 0xa0 / 0xa1; 0x7d is a cheer of the crowd;
 ## the end of period horn 0x90 plays sample 0x91 (device 4: both)
 func play_sfx(id: int) -> void:
+	if stubbed("play_sfx", [id]):
+		return
 	last_sfx = id
 	if speech_busy and not (id == 0x9c and not replay_disabled):
 		return
@@ -595,6 +601,14 @@ func effect_record_bytes() -> PackedByteArray:
 	if crowd.size() < Crowd.RECORDS:
 		Crowd.reset(self)
 	return Crowd.record_bytes(self)
+
+## golden tests (tests/run_tests.gd): the routines the emulator replaces by a record of their calls
+## (tools/nhl/golden.py stubs) do the same here: stubbed(name, args) records the call and is true
+func stubbed(name: String, args: Array) -> bool:
+	if not stubs.has(name):
+		return false
+	stub_calls.append([name] + args)
+	return true
 
 func add_crowd(amount: int, cap: int) -> void:
 	if crowd_noise < cap + 1:

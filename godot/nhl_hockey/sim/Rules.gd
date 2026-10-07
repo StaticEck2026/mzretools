@@ -399,6 +399,8 @@ static func start_stoppage(sim: Sim, idx: int) -> void:
 
 ## queue_infraction (0x52d80)
 static func queue_infraction(sim: Sim, e: Entity, type: int) -> void:
+	if sim.stubbed("queue_infraction", [e.slot, type]):
+		return
 	if sim.infractions.size() >= 0x20 or sim.penalty_box_mode:
 		return
 	# the message box shows the most important call (infraction_priority = message id); the
@@ -423,6 +425,8 @@ static func queue_infraction(sim: Sim, e: Entity, type: int) -> void:
 
 ## maybe_queue_infraction (0x52cf9): rule events filtered by the option flags
 static func maybe_queue_infraction(sim: Sim, e: Entity, type: int) -> void:
+	if sim.stubbed("maybe_queue_infraction", [e.slot, type]):
+		return
 	if sim.play_stopped or e.slot == Entity.Slot.REFEREE or sim.penalty_shot:
 		return
 	if type != INF_ICING:
@@ -846,21 +850,22 @@ static func check_icing(sim: Sim) -> void:
 	if absi(puck.xi) < 0x2d:
 		sim.icing_flags &= ~4     # through the goal area: no icing
 		return
-	sim.icing_flags |= 1
-	if sim.icing_shooter >= 0:
-		maybe_queue_infraction(sim, sim.entities[sim.icing_shooter], INF_ICING)
+	sim.icing_flags |= 1          # called when a player of the other team touches it (update_carrier)
 
-## two_line_pass_check (0x55f9e)
+## two_line_pass_check (0x541ca): offside on a pass: a player of the team flagged offside receives
+## a puck headed for his own goal line within 0x2c of the middle, last touched by the other team
 static func two_line_pass_check(sim: Sim, receiver: Entity) -> bool:
-	if not sim.opt_offsides or sim.no_stats or sim.penalty_shot:
+	if not sim.opt_offsides or sim.no_stats or sim.penalty_shot or sim.penalty_shot_setup:
 		return false
 	var puck := sim.puck
-	if absi(puck.yi) >= 0xe9:
+	if absi(puck.yi) > 0xe8:
 		return false
-	var pred: Array = sim.goal_prediction[0 if (receiver.flags & Entity.F_ATTACK_UP) else 1]
-	if absi(pred[0]) >= 0x2d or (sim.opponents_of(receiver).flags & Team.FL_OFFSIDE) == 0:
+	# where the puck crosses the own goal line (goal_prediction +2 / +6)
+	var pred: Array = sim.goal_prediction[1 if (receiver.flags & Entity.F_ATTACK_UP) else 0]
+	if absi(pred[0]) > 0x2c or (sim.opponents_of(receiver).flags & Team.FL_OFFSIDE) == 0:
 		return false
-	if sim.last_touch_slot >= 0 and sim.same_team(sim.last_touch_slot, receiver.slot):
+	# the last touch by a team mate (the original takes any slot below 6, -1 included, as home)
+	if (receiver.slot < 6) == (sim.last_touch_slot < 6):
 		return false
 	queue_infraction(sim, sim.entities[maxi(0, sim.last_touch_slot)], INF_OFFSIDE)
 	return true
