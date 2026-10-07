@@ -32,6 +32,7 @@ var demo := false                   # dword_cc0ec: a demo game (no crowd clips a
 var entities: Array[Entity] = []
 var teams: Array[Team] = []
 var team_info: Array = [null, null]  # Database.TeamInfo of the home and the away team (null: placeholders)
+var team_ids := [0, 1]               # word_c90ca / away_team_id: the numbers of the two teams (the anthem's country)
 var puck: Entity
 var shadow: Entity
 var referee: Entity
@@ -51,7 +52,9 @@ var game_over := false              # game_flags 0x40: the final whistle went
 # ceremonies (Ceremonies.gd)
 var intro := false                   # the anthem before the game (match_sequence) is running
 var stars_running := false           # the three stars after the game (three_stars_sequence)
-var match_over := false              # the three stars are over: the game is finished
+var match_over := false              # word game_over: the game is decided (set_game_over; 0 while the stars run, 1 once presented)
+var finished := false                # end_match_from_loop: the three stars are over, the match is finished
+var saved_period_num := 1            # three_stars_sequence keeps the period count while it runs
 var intermission_pending := false    # end_of_period: a period ended, the front end shows the intermission
 var sequence_steps: int = 0          # sequence_steps: steps left of the anthem / three stars
 var cup_final := false               # game_over_check: this game decides the Stanley Cup (the harness's stub result)
@@ -99,10 +102,11 @@ var misc_first_touch := false       # misc_flags bit 4: first touch after the fa
 var controls_blocked := false       # dword_ccc9c
 var period: int = 0                 # period_idx (0 based)
 var period_length: int = 300        # seconds on the clock at the start of a period (dword_e9ab6)
-var overtime_length: int = 0         # period_length of a regular season overtime (word_cbc4a[0]), 0 the same
+var period_lengths := PackedInt32Array([300, 600, 1200, 1200])   # word_cbc4a: by option_flags bits 10-11 (MatchSetup.period_length)
+var period_num: int = 1              # _period_num: the period count (1 based, overtimes go on), -1 during the anthem
 var clock_seconds: int = 300
 var clock_sub: int = 0              # 24 sub ticks per second, decremented every step
-var period_over := false
+var period_over: int = 0            # word period_over: 1 the period is over (end_period_flag), -1 after the intermission
 var deferred := false               # dword_c5840: a deferred call is queued (the rest of the frame's steps wait)
 var infraction_events := 0          # dword_cc0ac: the goalies (bit 0/1, away << 3) a frozen puck queued an event for
 var stoppage_timer: int = -1
@@ -179,6 +183,7 @@ var icing_flags: int = 0            # dword_e9abe byte 2: 1 icing called, 2 dire
 var icing_shooter: int = -1
 var goalie_pass_mode: int = 0         # goalie_pass_mode (word_c90aa): opponents near the carrier (carrier_scan_opponents)
 var buttons_prev := [0, 0]           # the buttons (0x70) of each user at the last read (read_control_p1 / p2)
+var last_controls := [8, 8]          # the control bytes of the last step (the steps of sim_tick outside the main loop)
 var buttons_changed := 0             # scratch_e03ac: the buttons that went down or up since
 var save_clip_shown := false       # dword_e9a9e low word: the SAVED clip was shown this period (no more save credits)
 var stubs: Dictionary = {}          # golden tests: the routines replaced by a record of their calls (stubbed)
@@ -284,33 +289,40 @@ func _init() -> void:
 	teams[1].goalie_slot = 6
 	new_game()
 
-## init_match: team records for a new game (lines, strategy, energy), then the first period
-func new_game() -> void:
-	Crowd.reset(self)
+## begin_game_session (0x1befd) and play_match_from_start (0x13e8f) up to the anthem: the player
+## statistics and the summary of a new game, the lines built from the line tables; the match
+## globals reset (reset_game_state: the first period set up). With the anthem init_match follows
+## (Ceremonies.begin_anthem), the match starts when it is over (MatchSetup.start_match); without it
+## the match starts at once
+func new_game(anthem: bool = false) -> void:
+	period_num = -1
 	for t in 2:
 		var team := teams[t]
 		team.info = team_info[t]
-		team.current_line = 0
-		team.dpair_counter = 0
-		team.goalie_request = 0
-		team.extra_attacker = -1
 		team.reset_stats()
-		team.box_queue.fill(-1)
-		team.skaters_on_ice = 6
-		for i in 28:
-			team.energy[i] = 0x1000
-			team.entity_of[i] = -2 if Lines.roster_exists(team, i) else -3
-			team.roster_status[i] = 3 if Lines.roster_exists(team, i) else 0
 		team.goalie_menu = PackedByteArray([1, 2, 2])
-		Lines.adjust_strategy(self, t)
-	Lines.build_lines(self)
-	for i in 12:
-		entities[i].roster_idx = -1
-		entities[i].line_slot = -1
-	replay.reset()
 	summary_init(0, 0)
-	start_period(0)
-	sort_draw_order()
+	Lines.build_lines(self)
+	period = -1
+	crowd_noise = 0
+	skip_wait = false
+	MatchSetup.reset_game_state(self)
+	crowd_noise = 0
+	if not anthem:
+		MatchSetup.start_match(self)
+
+## the length of the periods for the period setting of option_flags (word_cbc4a; demo_game makes
+## its periods a minute long this way)
+func set_period_length(seconds: int) -> void:
+	period_lengths[(settings2 >> 2) & 3] = seconds
+
+## sim_tick (0x5c1c4) outside the main loop (period_init, init_match, three_stars_sequence): a
+## step of the simulation with the controls as they were last read
+func sim_tick() -> void:
+	Rules.sim_game_state(self)
+	sim_update_players(last_controls[0], last_controls[1])
+	update_camera()
+	replay.record(self)
 
 ## gsummary_init (0x1aed0..): a new summary for the date of the game
 func summary_init(month: int, day: int) -> void:
@@ -320,9 +332,11 @@ func summary_init(month: int, day: int) -> void:
 	gs_trailer = PackedByteArray([4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
 ## gsummary_flush (0x61b85, at the faceoff): the events of the stoppage go into the summary (the
-## port appends them as they happen; a hook)
+## port appends them as they happen; a hook) and the list of the events starts again
 func summary_flush() -> void:
-	stubbed("gsummary_flush", [])
+	if stubbed("gsummary_flush", []):
+		return
+	event_log.clear()
 
 ## center_mouse (0x50ade, at the faceoff): the mouse pointer back to the centre (a hook)
 func center_mouse() -> void:
@@ -360,87 +374,6 @@ static func summary_records(data: PackedByteArray) -> Array:
 		out.append(data.slice(at, at + 11))
 		at += 11
 	return out
-
-## new period: dress the default lines, everyone to the centre faceoff
-func start_period(p: int, switch_ends: bool = true) -> void:
-	# end_of_period: the teams change ends every period (not in the overtime of a regular
-	# season game); period 3 is the overtime
-	if p == 0:
-		ends_switched = false
-	elif switch_ends:
-		ends_switched = not ends_switched
-	period = p
-	# period_init: period_strategy_init (the coaching, the first lines)
-	Lines.period_strategy_init(self)
-	# period_start_reset: count_penalized (the players with time left in the box; everybody else
-	# not out of the game to the bench) before the lines are dressed
-	Rules.count_penalized(self)
-	# period_clock_init: the clock (period_length: the overtime of a regular season game is the
-	# first entry of the table, 5 minutes); a random time of the late game announcement (3rd period)
-	clock_seconds = period_length
-	if p >= 3 and (settings2 & 2) != 0 and overtime_length > 0:
-		clock_seconds = overtime_length
-	clock_sub = 0
-	announce_time = clock_seconds - random(clock_seconds >> 1)
-	period_over = false
-	# period_init: the halfway announcement in the first two periods, the panel is closed
-	half_announce = p < 2
-	save_clip_shown = false
-	excitement = 0x10
-	InfoPanel.reset(self)
-	event_log.clear()
-	for t in 2:
-		var team := teams[t]
-		var up := (t == 0) != ends_switched     # the home team shoots at +y in the 1st and 3rd period
-		team.attacks_up = up
-		team.info = team_info[t]
-		# period_start_reset / reset_team_for_period: everybody is rested and the players hurt in the last period are back
-		for i in 28:
-			team.energy[i] = 0x1000
-		for r: int in team.injured:
-			if team.entity_of[r] == -3:
-				team.entity_of[r] = -2
-		team.injured.clear()
-		for i in 6:
-			var e := entities[t * 6 + i]
-			e.flags &= ~(Entity.F_ATTACK_UP | Entity.F_USER | Entity.F_BUSY | Entity.F_BACKWARDS)
-			if up:
-				e.flags |= Entity.F_ATTACK_UP
-			e.flags2 = 0
-			e.flags3 = 0
-			e.state_sp = 0
-			e.state_stack[0] = Entity.State.INIT_PERIOD
-			e.frame = -1
-			e.anim = 0
-			if e.roster_idx >= 0 and e.line_slot >= 0 and team.entity_of[e.roster_idx] == -1:
-				team.entity_of[e.roster_idx] = -2
-			e.line_slot = -1
-		# dress_current_lines: the current line is dressed at once (dress_line), the players wait at the
-		# bench (INIT_PERIOD) until the faceoff is set up
-		Lines.apply_line_change(self, team)
-		Lines.dress_line(self, team)
-		for i in 6:
-			var e := entities[t * 6 + i]
-			e.state_sp = 0
-			e.state_stack[0] = Entity.State.INIT_PERIOD
-	play_stopped = true
-	faceoff_x = 0
-	faceoff_y = 0
-	Rules.clear_infractions(self)
-	# jump straight to the faceoff set up (the referee ceremony of the original is skipped)
-	puck.state_sp = 0
-	puck.state_stack[0] = Entity.State.PUCK_FACEOFF
-	puck.flags |= Entity.F_STATE_ENTERED
-	referee.state_sp = 0
-	referee.state_stack[0] = Entity.State.REF_FACEOFF
-	stoppage_countdown = false
-	stoppage_timer = -1
-	ref_phase = -1
-	penalty_box_mode = false
-	injury_stoppage = false
-	user1_slot = -1
-	user2_slot = -1
-	assign_users()
 
 ## the users take their skaters for a faceoff (switch_to_nearest from ai_puck_faceoff2): the
 ## skater nearest to the puck, which is the centre; a second user on the same team takes the
@@ -495,9 +428,20 @@ func show_message(idx: int, frames: int) -> void:
 	message_timer = frames
 
 ## Selects the teams from the databases (Database.load_team); call before the first step
-func set_teams(home: Database.TeamInfo, away: Database.TeamInfo) -> void:
+## the teams of the match (db_load_team_roster): the status byte of each player's record, 3 (to be
+## dressed) for the players of the roster, 0 for the empty places, 2 for the players scratched in
+## the line editor before the game (`scratches`: per team the roster indices); then a new game
+func set_teams(home: Database.TeamInfo, away: Database.TeamInfo, scratches: Dictionary = {}, anthem: bool = false) -> void:
 	team_info = [home, away]
-	new_game()
+	for t in 2:
+		var team := teams[t]
+		team.info = team_info[t]
+		team_ids[t] = team_info[t].index if team_info[t] != null else t
+		for r in 28:
+			team.roster_status[r] = 3 if Lines.roster_exists(team, r) else 0
+		for r in scratches.get(t, []):
+			team.roster_status[r] = 2
+	new_game(anthem)
 
 ## put_player_on_ice (0x5b2a4): the entity takes roster player `roster`: his state when he comes
 ## from the bench (EXIT_BENCH) or the penalty box (EXIT_PENALTY_BOX), the bookkeeping of the
@@ -704,25 +648,44 @@ func add_crowd(amount: int, cap: int) -> void:
 ## pressed_p1/pressed_p2: the button bits that went down with this sample
 func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) -> void:
 	step_count += 1
+	last_controls = [control_p1, control_p2]
 	deferred = false            # game_loop ran the deferred calls (empty ones in this build)
-	# match_sequence / three_stars_sequence: a button skips the anthem, the sequences run for
-	# sequence_steps steps
+	# match_sequence / three_stars_sequence: sequence_loop runs the steps of the sequence until
+	# sequence_steps ran out (a button skips the anthem); then the match starts or is finished
 	if intro or stars_running:
 		if intro and ((pressed_p1 | pressed_p2) & 0x30) != 0:
 			sequence_steps = 0
-		sequence_steps = maxi(0, sequence_steps - 1)
 		if sequence_steps == 0:
 			if intro:
 				Ceremonies.end_anthem(self)
 			else:
-				stars_running = false
-				match_over = true
+				Ceremonies.end_three_stars(self)
+				return
+		else:
+			run_sim_step(control_p1, control_p2)
+			replay.record(self)
+			sequence_steps = maxi(0, sequence_steps - 1)
+			return
+	if finished:
+		return
 	run_sim_step(control_p1, control_p2)
 	replay.record(self)
-	# game_loop: a period over (end_period_flag, ai_ref_pickup_puck) ends after this frame, after
-	# the intermission (end_of_period)
-	if period_over and not stars_running and not match_over:
+	# game_loop: a period over (end_period_flag, ai_ref_pickup_puck) ends after this frame
+	# (end_of_period: the intermission, the next period); then the line hotkeys and the period flag
+	# are cleared, and a game over starts the three stars (three_stars_sequence)
+	if period_over != 0 and not stars_running and not finished:
 		Rules.end_of_period(self)
+		line_hotkey_req[1] = 0
+		line_hotkey_req[0] = 0
+		deferred = false
+		period_over = 0
+		if match_over:
+			summary_flush()
+			Ceremonies.begin_three_stars(self)
+			if not stars_running:
+				finished = true
+		else:
+			InfoPanel.music(self, 0)
 
 ## a step of run_sim_steps (0x1149a): the clock while play is on (game_clock_tick), then sim_tick
 ## (0x5c1c4): sim_game_state, sim_update_players and update_camera (the replay frame is recorded

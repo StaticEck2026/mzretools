@@ -2787,7 +2787,7 @@ static func ref_pickup(sim: Sim, e: Entity) -> void:
 					return
 		elif inf == Rules.INF_GOAL:
 			if sim.no_stats:
-				sim.period_over = true
+				sim.period_over = 1
 				return
 			Rules.goal_milestone_check(sim)
 			announce = false

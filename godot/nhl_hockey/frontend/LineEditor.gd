@@ -406,11 +406,14 @@ func _apply(lt: PackedByteArray) -> void:
 	if m != null and not pre_game:
 		var team: Team = m.sim.teams[team_side]
 		team.info.line_table = lt
+		# (a scratched player's place as team_energy_init gives it from his status byte)
 		for r in 28:
 			if state[r] == 2 and team.entity_of[r] == -2:
-				team.entity_of[r] = -3
-			elif state[r] == 3 and team.entity_of[r] == -3 and not r in team.injured:
+				team.entity_of[r] = MatchSetup.STATUS_ENTITY_OF[2]
+				team.roster_status[r] = 2
+			elif state[r] == 3 and team.entity_of[r] == MatchSetup.STATUS_ENTITY_OF[2]:
 				team.entity_of[r] = -2
+				team.roster_status[r] = 3
 	else:
 		Session.line_override[team_side] = lt
 		var sc: Array = []

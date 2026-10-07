@@ -188,7 +188,8 @@ func _read_settings() -> void:
 		sim.opt_two_line_pass = flags & 8 != 0
 		sim.opt_injuries = flags & 0x10 != 0
 		sim.settings2 = (flags >> 8) & 0xff
-		sim.period_length = config.get("period_length", sim.period_length)
+		if config.has("period_length"):
+			sim.set_period_length(config["period_length"])
 		sim.cup_series = config.get("cup_series", PackedByteArray())
 		sfx_on = flags & 0x80 != 0
 		music_on = flags & 0x40 != 0
@@ -197,6 +198,7 @@ func _read_settings() -> void:
 		sim.assign_users()
 		anthem = config.get("anthem", true)
 		demo = config.get("demo", false)
+		sim.demo = demo
 		return
 	if OS.has_environment("NHL_HOME"):
 		home_team = int(OS.get_environment("NHL_HOME"))
@@ -234,7 +236,7 @@ func _physics_process(delta: float) -> void:
 		# game_loop of a demo game: pause_requested ends it (dword_c53f7 = 2)
 		_demo_over(2)
 		return
-	if Input.is_action_just_pressed("pause") and not sim.match_over:
+	if Input.is_action_just_pressed("pause") and not sim.finished:
 		if front != null:
 			_front_pause(0)
 		else:
@@ -251,7 +253,7 @@ func _physics_process(delta: float) -> void:
 	_play_queued_sfx()
 	_play_music()
 	_update_view()
-	if demo and (sim.intermission_pending or sim.match_over):
+	if demo and (sim.intermission_pending or sim.finished):
 		# the end of the demo game's first period (dword_c53f7 = 1): the intro goes on
 		_demo_over(1)
 		return
@@ -262,7 +264,7 @@ func _physics_process(delta: float) -> void:
 		_front_intermission(sim.period - 1)
 		return
 	sim.intermission_pending = false
-	if sim.match_over and not end_shown and shot_path == "":
+	if sim.finished and not end_shown and shot_path == "":
 		# three_stars_sequence is over: the pause screen of the finished game (pause_menu(2))
 		end_shown = true
 		if front != null:
@@ -851,11 +853,7 @@ func _load_assets() -> void:
 		for side in 2:
 			if lines.has(side) and ti[side] != null:
 				ti[side].line_table = lines[side]
-		sim.set_teams(ti[0], ti[1])
-		var scratches: Dictionary = config.get("scratches", {})
-		for side in 2:
-			for r in scratches.get(side, []):
-				sim.teams[side].entity_of[r] = -3
+		sim.set_teams(ti[0], ti[1], config.get("scratches", {}), anthem)
 		# a saved game continues where it was left (savegame_io)
 		var saved: Dictionary = config.get("restore", {})
 		if not saved.is_empty():

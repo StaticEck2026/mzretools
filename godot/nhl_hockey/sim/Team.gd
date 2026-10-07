@@ -72,7 +72,6 @@ var goalie_menu: PackedByteArray = PackedByteArray([2, 2, 2])
 # the status byte of each player's record in the global `rosters` (0xdb3a8, 0x27 bytes a player,
 # 28 a team): 3 on the bench, 4 on the ice, 7 called on by the line editor (bench_player_slot)
 var roster_status: PackedByteArray = PackedByteArray()
-var injured: Array = []              # roster indices hurt for the rest of the period (entity_of -3)
 var box_queue: PackedInt32Array = PackedInt32Array()   # +0xb6: 28 roster indices of the box, in order, -1 after the last
 var first_slot: int = 0              # index of players[0] in Sim.entities
 var attacks_up: bool = false         # the goal this team shoots at is at +y (flags & 0x80 of its players)

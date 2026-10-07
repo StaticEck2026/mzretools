@@ -2010,6 +2010,7 @@ def ai_cases(exe):
     out['faceoffs'] = pface_cases(emu, rnd, base, tables, calls, out['base'], speech)
     out['steps'] = steps_cases(emu, rnd, base, tables, calls, out['base'], speech)
     out['runs'] = steps_cases(emu, rnd, base, tables, calls, out['base'], speech, 150, (50, 100, 200, 400))
+    out['periods'] = periods_cases(emu, rnd, base, tables, calls, out['base'], speech)
     return out
 
 
@@ -2685,6 +2686,217 @@ def steps_cases(emu, rnd, base, tables, calls, base_fields, speech, count=1000, 
         emu.write(INFRACTION_QUEUE, b'\0' * 64)
         for t_ in TEAM_RECORDS:
             emu.write(t_ + 0x44, b'\0')
+    emu.write(CONTROL_ENTRY, b'\0' * 4)
+    for h in stubs:
+        emu.uc.hook_del(h)
+    for c in cases:
+        c['before'] = {s_: {k_: v for k_, v in b.items() if base_fields[int(s_)].get(k_) != v} for s_, b in c['before'].items()}
+        c['after'] = {s_: a for s_, a in c['after'].items() if a}
+    return cases
+
+
+PERIOD_ROUTINES = {'period_cleanup': 0x5de70, 'end_of_period': 0x5dea6, 'reset_game_state': 0x14056, 'init_match': 0x47cd6,
+                   'setup_demo_faceoff': 0x13c79, 'three_stars_sequence': 0x48f0b}
+LEAVE_MATCH_VIDEO = 0x10f6d                    # stubbed: the intermission screens; period_over -1, the period count on
+FLUSH_KEY_EVENTS = 0x4fd47
+SELECT_GAME_SURFACE = 0x8c1c2
+DRAW_CLOCK = 0x14cf1
+GETPALETTE = 0x8ffb0                           # (cdecl)
+FADE_PALETTE_TO = 0x11598
+SEQUENCE_LOOP = 0x48333                        # stubbed: the anthem / three stars loop (run by the port's step)
+FADE_AMBIENT_AUDIO = 0x597e3
+SPEECH_STOP_CHANNELS = 0x837a8
+SOUND_STOPALL = 0x8f633
+SETMOUSEPOS = 0xb2db4                          # (cdecl)
+TEAM_IDS = 0xc90ca                             # home_team_id, away_team_id
+PLAYER_STATS = (0xdb088, 0xdb218)              # word_db088: 25 x 8 words per team (team +0xe6)
+GOALIE_STATS = (0xdc240, 0xdc252)              # word_dc240: 3 x [time, shots against, goals against] (team +0xea)
+
+
+def periods_cases(emu, rnd, base, tables, calls, base_fields, speech):
+    """the start of the match and of its periods: period_cleanup (the next period: everybody to the
+    bench and rested, the entities from entity_init, the clock, the users' skaters, two steps of the
+    simulation, the penalized players' places kept; the end of the game), end_of_period with it,
+    reset_game_state (the whole match reset: the globals, the team records, the first period),
+    init_match (the anthem), setup_demo_faceoff (the lines at the opening faceoff) and
+    three_stars_sequence (after the game), from random moments of play"""
+    names = list(PERIOD_ROUTINES)
+    weights = {'period_cleanup': 4, 'end_of_period': 2, 'reset_game_state': 2, 'init_match': 2, 'setup_demo_faceoff': 2,
+               'three_stars_sequence': 2}
+    cup = {'v': 0}
+
+    def on_leave(eax):
+        calls.append(['leave_match_video'])
+        emu.write(0xcbc46, struct.pack('<h', -1))
+        n = struct.unpack('<i', emu.read(PERIOD_NUM, 4))[0]
+        emu.write(PERIOD_NUM, struct.pack('<i', n + 1))
+    stubs = [emu.stub(GAME_OVER_CHECK, lambda eax: (calls.append(['game_over_check', s32(eax & 0xffffffff),
+                                                                  s32(emu.uc.reg_read(UC_X86_REG_EDX))]), cup['v'])[1]),
+             emu.stub(DRAW_SCORE_DIGITS, lambda eax: calls.append(['draw_score_digits', s32(eax & 0xffffffff),
+                                                                   s32(emu.uc.reg_read(UC_X86_REG_EDX))])),
+             emu.stub(STOP_CROWD_LOOP, lambda eax: calls.append(['stop_crowd_loop'])),
+             emu.stub(CENTER_MOUSE, lambda eax: calls.append(['center_mouse'])),
+             emu.stub(GSUMMARY_FLUSH, lambda eax: calls.append(['gsummary_flush'])),
+             emu.stub(FREEMEM, lambda eax: None),
+             emu.stub(REPLAY_RECORD, lambda eax: None),
+             emu.stub(LEAVE_MATCH_VIDEO, on_leave),
+             emu.stub(FLUSH_KEY_EVENTS, lambda eax: None),
+             emu.stub(SELECT_GAME_SURFACE, lambda eax: None),
+             emu.stub(DRAW_CLOCK, lambda eax: None),
+             emu.stub(GETPALETTE, lambda eax: None),
+             emu.stub(FADE_PALETTE_TO, lambda eax: None),
+             emu.stub(SEQUENCE_LOOP, lambda eax: 0),
+             emu.stub(FADE_AMBIENT_AUDIO, lambda eax: None),
+             emu.stub(SPEECH_STOP_CHANNELS, lambda eax: None),
+             emu.stub(SOUND_STOPALL, lambda eax: None),
+             emu.stub(SETMOUSEPOS, lambda eax: None)]
+    event = emu.alloc(b'\x08\x08\0\0')
+    emu.write(CONTROL_ENTRY, struct.pack('<I', event))
+    # the team records' pointers (team_state_clear sets the game's own) are put back after each case
+    pointers = [emu.read(t + 0xda, 0x20) for t in TEAM_RECORDS]
+    order_names = [n for n in names for _ in range(weights[n])]
+    cases = []
+    for k in range(50 * len(order_names)):
+        name = order_names[k % len(order_names)]
+        g, teams, carrier = ai_world(emu, rnd, base, tables)
+        g['speech_busy'] = 0
+        speech['busy'] = 0
+        cup['v'] = rnd.choice((0, 0, 1))
+        g['clip'] = rnd.choice((-1, -1, 2))
+        g['panel'] = rnd.choice((-1, -1, 0x100, 0x20))
+        g['settings2'] = rnd.choice((0, 2, 4, 6, 8, 0xa))
+        g['option_flags'] = rnd.choice((0x1f, 0x9f, 0x1b, 0x8e))
+        g['user1_team'] = rnd.choice((0, 1, 1, 2))
+        g['user2_team'] = rnd.choice((0, 0, 1, 2))
+        for u in (1, 2):
+            t_ = g['user%d_team' % u]
+            g['user%d_slot' % u] = rnd.choice((-1, (t_ - 1) * 6 + rnd.randrange(1, 6))) if t_ else -1
+        g['controller0'] = 8
+        g['controller1'] = 8
+        g['demo'] = rnd.choice((0, 0, 0, 1)) if name in ('setup_demo_faceoff', 'three_stars_sequence') else 0
+        period_num = g['period'] + 1
+        if name == 'period_cleanup':
+            g['period'] = rnd.choice((0, 1, 1, 2, 2, 3, 3, 4))
+            g['period_over'] = rnd.choice((1, -1))
+            period_num = g['period'] if g['period'] else rnd.choice((-1, 1, 3))
+        elif name == 'end_of_period':
+            g['period'] = rnd.choice((0, 1, 2, 2, 3, 3))
+            g['period_over'] = rnd.choice((1, 1, 1, -1))
+            period_num = g['period'] + 1
+        elif name == 'reset_game_state':
+            g['period'] = rnd.choice((-1, 0))
+            period_num = rnd.choice((-1, 1, 3))
+        elif name == 'init_match':
+            period_num = 1
+        elif name == 'three_stars_sequence':
+            g['period'] = 4
+            g['match_over'] = 1
+        for ti, t in enumerate(TEAM_RECORDS):
+            f = teams[ti]
+            f['goals'] = rnd.randrange(5)
+            f['goalie_request'] = rnd.choice((0, 0, 1, -256, -16))
+            for n_, o, sz in AI_TEAM_FIELDS:
+                emu.write(t + o, struct.pack('<' + _FMT[sz], f[n_] if sz < 0 else f[n_] & ((1 << (8 * sz)) - 1)))
+        if name == 'init_match':
+            # (as reset_game_state left the teams: nobody in the box, the goalies dressed; the
+            # anthem's line up has five places for the skaters)
+            for ti, t in enumerate(TEAM_RECORDS):
+                teams[ti]['goalie_request'] = 0
+                emu.write(t + 0x38, b'\0\0')
+        else:
+            random_boxes(emu, rnd, teams)
+        # the status bytes of the players (empty places, injured, scratched) and some hurt for the period
+        for ti, t in enumerate(TEAM_RECORDS):
+            ent = teams[ti]['entity_of']
+            status = teams[ti]['roster_status']
+            for r in range(28 if name != 'init_match' else 25):
+                if status[r] == 3 and rnd.random() < 0.08:
+                    status[r] = rnd.choice((0, 1, 2, 7))
+                if ent[r] == -2 and rnd.random() < 0.06:
+                    ent[r] = -3
+                emu.write(ROSTERS + ti * 0x444 + r * 0x27, bytes([status[r]]))
+            emu.write(t + 0x7e, struct.pack('<28h', *ent))
+            energies = [rnd.choice((0x1000, rnd.randrange(0x400, 0x1001))) for _ in range(28)]
+            emu.write(t + 0x46, struct.pack('<28h', *energies))
+            teams[ti]['energies'] = energies
+        if name == 'three_stars_sequence':
+            # the statistics (compute_three_stars reads the game's own tables, the team records point
+            # the generator's copies)
+            for t, (ps, gs) in enumerate(tables):
+                raw = bytearray(28 * 0x10)
+                for r in range(25):
+                    struct.pack_into('<8h', raw, r * 0x10, rnd.randrange(5), rnd.randrange(5), rnd.randrange(10), rnd.randrange(-5, 6),
+                                     rnd.randrange(3), rnd.randrange(2), rnd.randrange(2), rnd.randrange(10))
+                gsr = struct.pack('<9h', *sum(([rnd.choice((0, rnd.randrange(3600))), rnd.randrange(60), rnd.randrange(8)]
+                                               for _ in range(3)), []))
+                emu.write(ps, bytes(raw))
+                emu.write(gs, gsr)
+                emu.write(PLAYER_STATS[t], bytes(raw[:25 * 0x10]))
+                emu.write(GOALIE_STATS[t], gsr)
+            # the ratings (compare_player_stats: the sum of ten of them breaks a tie)
+            ratings = [[[rnd.randrange(1, 4) for _ in range(0x14)] for _ in range(25)] for _ in range(2)]
+            for ti in range(2):
+                emu.write(PLAYER_RATINGS + ti * 0x1f4, bytes(sum(ratings[ti], [])))
+        # the crowd: everybody idle
+        for i in range(20):
+            emu.write(CROWD_FIGURES + i * 12, struct.pack('<hbbbhhhb', -1, rnd.choice((5, 30, 60)), 0, 0, 0, 0, 0, 0))
+        emu.write(CROWD_BUSY, b'\0' * 22)
+        team_ids = [rnd.randrange(26), rnd.randrange(26)]
+        emu.write(TEAM_IDS, struct.pack('<hh', *team_ids))
+        g['infraction0'] = 0
+        for n_, a, sz in AI_GLOBALS:
+            emu.write(a, struct.pack('<' + _FMT[abs(sz)], g[n_] & ((1 << (8 * abs(sz))) - 1)))
+        emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
+        emu.write(PERIOD_NUM, struct.pack('<i', period_num))
+        emu.write(PANEL_LINE4, b'\0' * 0x20)
+        emu.write(INFRACTION_QUEUE, b'\0' * 64)
+        emu.write(event, b'\x08\x08\0\0')
+        seed = rnd.getrandbits(32)
+        emu.write(SEED, struct.pack('<I', seed))
+        scratch_ac = rnd.getrandbits(32)
+        scratch = [rnd.getrandbits(16), rnd.getrandbits(16)]
+        emu.write(SCRATCH[2], struct.pack('<I', scratch_ac))
+        emu.write(SCRATCH[0], struct.pack('<H', scratch[0]))
+        emu.write(SCRATCH[1], struct.pack('<H', scratch[1]))
+        befores = {str(s_): dict(entity_fields(emu, s_), prev=list(struct.unpack('<iii', emu.read(ENTITIES + s_ * 0x80 + 0x74, 12))))
+                   for s_ in range(17)}
+        for ti, t in enumerate(TEAM_RECORDS):
+            teams[ti].update({n_: struct.unpack('<' + _FMT[sz], emu.read(t + o, abs(sz)))[0] for n_, o, sz in AI_TEAM_FIELDS})
+        order = draw_order(emu)
+        case = {'routine': name, 'args': [], 'globals': g, 'teams': teams, 'carrier': carrier, 'seed': seed,
+                'scratch_ac': scratch_ac, 'scratch': scratch, 'infq': [0] * 64, 'cup': cup['v'], 'order': order,
+                'period_num': period_num, 'team_ids': team_ids, 'crowd': crowd_read(emu),
+                'pos_lists': [[list(struct.unpack('<25b', emu.read(POS_LISTS + kk * 0x32 + ti * 0x19, 25))) for kk in range(11)]
+                              for ti in range(2)]}
+        if name == 'three_stars_sequence':
+            case['stats'] = stats_read(emu, tables)
+            case['ratings'] = ratings
+        del calls[:]
+        emu.call(PERIOD_ROUTINES[name])
+        after = ai_record(emu)
+        la = {'infq': list(emu.read(INFRACTION_QUEUE, 64)),
+              'panel4': emu.read(PANEL_LINE4, 0x20).split(b'\0')[0].decode('latin-1'),
+              'scratch': list(struct.unpack('<hh', emu.read(SCRATCH[0], 2) + emu.read(SCRATCH[1], 2))),
+              'scratch_ac': struct.unpack('<I', emu.read(SCRATCH[2], 4))[0], 'crowd': crowd_read(emu),
+              'period_num': struct.unpack('<i', emu.read(PERIOD_NUM, 4))[0],
+              'energies': [list(struct.unpack('<28h', emu.read(t + 0x46, 56))) for t in TEAM_RECORDS],
+              'order': draw_order(emu)}
+        case.update({'before': befores, 'calls': [list(c) for c in calls],
+                     'after': {str(s_): {k_: v for k_, v in entity_fields(emu, s_).items() if befores[str(s_)].get(k_) != v}
+                               for s_ in range(17)},
+                     'world_after': after, 'lines_after': la})
+        for s_ in range(17):
+            prev = list(struct.unpack('<iii', emu.read(ENTITIES + s_ * 0x80 + 0x74, 12)))
+            if prev != befores[str(s_)]['prev']:
+                case['after'].setdefault(str(s_), {})['prev'] = prev
+        cases.append(case)
+        for a, n_ in ((GAME_FLAGS, 1), (OPTION_FLAGS, 4), (STOP_FLAGS, 2), (MISC_FLAGS, 4), (BREAKAWAY_FLAG, 4),
+                      (PENALTY_SHOT_ACTIVE, 4), (PENALTY_SHOT_SETUP, 4), (PENALTY_SHOT_PHASE, 4)):
+            emu.write(a, b'\0' * n_)
+        emu.write(INFRACTION_QUEUE, b'\0' * 64)
+        for t_, ptr in zip(TEAM_RECORDS, pointers):
+            emu.write(t_ + 0x44, b'\0')
+            emu.write(t_ + 0xda, ptr)
     emu.write(CONTROL_ENTRY, b'\0' * 4)
     for h in stubs:
         emu.uc.hook_del(h)

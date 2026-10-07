@@ -96,11 +96,11 @@ func _sim_game(periods: int, seconds: int) -> Node:
 	holder.sim = sim
 	sim.user1_team = 0
 	sim.user2_team = 0
-	sim.period_length = seconds
+	sim.set_period_length(seconds)
 	sim.set_teams(front.db.load_team(Session.home_team), front.db.load_team(Session.away_team))
 	sim.assign_users()
 	var steps := 0
-	while steps < 200000 and not sim.match_over and sim.period < periods:
+	while steps < 200000 and not sim.finished and sim.period < periods:
 		sim.step(8, 8, 0, 0)
 		steps += 1
 		if sim.intermission_pending:

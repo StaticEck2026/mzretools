@@ -912,7 +912,7 @@ static func period_strategy_init(sim: Sim) -> void:
 	home.strategy2 = 2
 	away.strategy = 3
 	away.strategy2 = 2
-	var pn := sim.period + 1
+	var pn := sim.period_num
 	if pn > 3:
 		home.energy_threshold = 0xd9a
 		home.mode = 2
@@ -952,7 +952,7 @@ static func time_announcements(sim: Sim) -> void:
 	var home := sim.teams[0]
 	var away := sim.teams[1]
 	var d := Entity.to_s16(home.goals - away.goals)
-	var pn := sim.period + 1
+	var pn := sim.period_num
 	var c := sim.clock_seconds
 	if pn == 2 and c <= 0x258:
 		var m0 := home.mode

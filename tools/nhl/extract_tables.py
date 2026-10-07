@@ -145,8 +145,9 @@ def main():
     t['anthem_fidgets'] = shorts(le, 0xcc9d0, 10)[::2]
     # compute_three_stars: shots a goalie must face for a shutout star / a save percentage star,
     # per period length setting (option_flags bits 10-11)
-    t['star_shutout_shots'] = list(le.read(0xcc9e4, 3))
-    t['star_save_shots'] = list(le.read(0xcc9e7, 3))
+    # (by option_flags bits 10-11; the fourth setting reads the next table's first byte, signed)
+    t['star_shutout_shots'] = list(struct.unpack('<4b', le.read(0xcc9e4, 4)))
+    t['star_save_shots'] = list(struct.unpack('<4b', le.read(0xcc9e7, 4)))
     # ai_three_stars: the lap of honour, 4 points per team (home, away)
     t['star_laps'] = [[shorts(le, 0xcc9ea + team * 16 + k * 4, 2) for k in range(4)] for team in range(2)]
     # load_cutscene_clip / update_announcer: the scoreboard clips (announcer_ppv_names): the frame

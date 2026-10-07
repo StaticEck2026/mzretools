@@ -13,109 +13,18 @@ const STARS_STEPS := 12000           # three_stars_sequence
 # national anthem
 # --------------------------------------------------------------------------------------------
 
-## init_match (0x47cd6), the part after the lines are dressed: the goalies stand in their creases,
-## the skaters on their blue lines in a random order, the referee at the boards; the anthem of the
-## home team's country (0 Canada, 1 USA) decides how long everybody stands still
+## match_sequence (0x4830e): the anthem (init_match), which sequence_loop plays until its steps ran
+## out or a user skipped it; a demo has none
 static func begin_anthem(sim: Sim) -> void:
-	var home_id: int = sim.team_info[0].index if sim.team_info[0] != null else 0
-	var country: int = Tables.anthem_country[clampi(home_id, 0, Tables.anthem_country.size() - 1)]
-	var length: int = Tables.anthem_length[country]
+	if sim.demo:
+		return
 	sim.intro = true
-	sim.sequence_steps = ANTHEM_STEPS
-	InfoPanel.reset(sim)
-	InfoPanel.load_clip(sim, InfoPanel.CLIP_USA_FLAG if country == 1 else InfoPanel.CLIP_CANADA_FLAG)
-	InfoPanel.open(sim)
-	InfoPanel.music(sim, 10)           # the anthem
-	sim.period_over = false
-	sim.user1_slot = -1
-	sim.user2_slot = -1
-	for i in 12:
-		sim.entities[i].flags &= ~Entity.F_USER
-	# the away team first, entities from the last to the first (the original walks 11 .. 0)
-	for t in [1, 0]:
-		var taken := [false, false, false, false, false]
-		for k in range(5, -1, -1):
-			var e: Entity = sim.entities[t * 6 + k]
-			if e.line_slot < 0:
-				continue
-			var up := (e.flags & Entity.F_ATTACK_UP) != 0
-			if e.line_slot == 0:
-				var gy := -0xdc if up else 0xdc
-				e.set_pos(0, gy)
-				e.target_x = 0
-				e.target_y = gy
-				e.timer_b = -100
-				e.vx = 0
-				e.vy = 0
-				e.facing = 0 if up else 4
-				Anim.set_animation(e, 0x99)
-			else:
-				var spot := sim.random(5)
-				while taken[spot]:
-					spot = (spot + 1) % 5
-				taken[spot] = true
-				var x := spot * 0x28 - 0x50 + sim.random(8) - 4
-				e.target_x = x
-				x += sim.random(2)
-				var y := (-0x3a if up else 0x30) + sim.random(4) - 2
-				e.set_pos(x, y)
-				e.target_y = y
-				e.facing = 4
-				e.vx = 0
-				e.vy = 0
-				e.timer_b = length + sim.random(0x28) - 0x14
-				Anim.set_animation(e, 0)
-				e.frame = 0x171
-			e.state_sp = 0
-			e.set_state(Entity.State.ANTHEM)
-	var puck := sim.puck
-	sim.puck_stuck_timer = 0x78
-	puck.set_pos(200, -0x12c)
-	puck.vx = 0
-	puck.vy = 0
-	puck.state_sp = 0
-	puck.set_state(Entity.State.PUCK_IDLE)
-	sim.puck_carrier = -1
-	var ref := sim.referee
-	ref.timer_a = country
-	ref.set_pos(0x8e + sim.random(2), 0)
-	ref.target_x = 0x8e
-	ref.target_y = 0
-	ref.facing = 4
-	ref.vx = 0
-	ref.vy = 0
-	ref.timer_b = length
-	Anim.set_animation(ref, 0)
-	ref.state_sp = 0
-	ref.set_state(Entity.State.REF_ANTHEM)
-	sim.ref_phase = 0
-	sim.action_hold_camera = true
-	sim.camera_x = 0
-	sim.camera_y = 0
-	sim.camera_target_x = 0
-	sim.camera_target_y = 0
+	MatchSetup.init_match(sim)
 
-## the end of match_sequence: the anthem ran out or a user pressed a button; the opening faceoff
-## is set up from where everybody stands
+## the end of match_sequence: play_match_from_start sets the first period up again
 static func end_anthem(sim: Sim) -> void:
 	sim.intro = false
-	sim.sequence_steps = 0
-	sim.play_stopped = true
-	sim.ref_phase = -1
-	sim.action_hold_camera = false
-	var puck := sim.puck
-	puck.state_sp = 0
-	puck.state_stack[0] = Entity.State.PUCK_FACEOFF
-	puck.flags |= Entity.F_STATE_ENTERED
-	sim.referee.state_sp = 0
-	sim.referee.state_stack[0] = Entity.State.REF_FACEOFF
-	sim.referee.flags |= Entity.F_STATE_ENTERED
-	for i in 12:
-		var e: Entity = sim.entities[i]
-		if e.line_slot >= 0 and e.state() == Entity.State.ANTHEM:
-			e.timer_b = 0
-			e.set_state_reset(Entity.State.ALL_GOTO_FACEOFF)
-	sim.assign_users()
+	MatchSetup.start_match(sim)
 
 ## ai_anthem (0x4842a): standing on the blue line, now and then a little movement
 static func anthem(sim: Sim, e: Entity) -> void:
@@ -221,24 +130,6 @@ static func game_over_check(sim: Sim, home: int, away: int) -> bool:
 	po[k * 6 + 5] = away & 0xff
 	var n := League.series_count(po, 0) if sim.cup_series_games <= 0 else sim.cup_series_games
 	return League.series_winner(po, 0, n) >= 0
-
-## period_cleanup (0x5de70, after end_of_period): the game is over after the last period
-## (set_game_over: the three stars), otherwise the next period starts (period_reset_entities,
-## period_init)
-static func period_cleanup(sim: Sim) -> void:
-	if sim.stubbed("period_cleanup", []):
-		return
-	if sim.period == 4:
-		if not sim.stars_running and not sim.match_over:
-			begin_three_stars(sim)
-		return
-	Rules.clear_infractions(sim)
-	if not sim.no_stats:
-		sim.summary_close_period()
-	sim.start_period(sim.period, false)
-	sim.intermission_pending = true
-	# game_loop: the scoreboard of the intermission with the organ
-	InfoPanel.music(sim, 0)
 
 # --------------------------------------------------------------------------------------------
 # goal celebration and the Stanley Cup
@@ -402,160 +293,187 @@ static func stanley_cup(sim: Sim, e: Entity) -> void:
 # the three stars
 # --------------------------------------------------------------------------------------------
 
-## three_stars_sequence (0x48f0b, called start_period in older maps): after the game everybody
-## leaves the ice and the referee presents the three stars
+## three_stars_sequence (0x48f0b): after the game (not in a demo) the three stars are chosen,
+## the scoreboard cleared, the period number -1 while it runs; everybody off the ice at the left
+## boards, the puck and its shadow at the right, the referee presents the stars
+## (ai_ref_three_stars); two steps of the simulation, the camera at the left, the panel opens;
+## sequence_loop then runs it for 12000 steps (end_three_stars)
 static func begin_three_stars(sim: Sim) -> void:
-	compute_three_stars(sim)
+	if sim.demo:
+		return
 	sim.stars_running = true
-	sim.match_over = false
-	InfoPanel.set_text(sim, ["", "", "", "", ""])
-	sim.message = -1
+	sim.saved_period_num = sim.period_num
+	sim.fade_in = true
+	compute_three_stars(sim)
+	sim.penalty_box_mode = false
 	sim.ref_infraction = 0
 	sim.whistle_timer = 0
-	sim.penalty_box_mode = false
-	sim.box_count = [0, 0]
-	Rules.clear_infractions(sim)
-	sim.period_over = false
-	sim.intermission_camera = false
+	sim.second_timer = 0
+	sim.message_timer = 0
+	sim.injury_stoppage = false
+	sim.teams[1].line_change_ui = false
+	sim.teams[0].line_change_ui = false
+	sim.lc_show[1] = 0
+	sim.lc_show[0] = 0
+	sim.lc_bar[1] = 0
+	sim.lc_bar[0] = 0
+	sim.line_hotkey_req[1] = 0
+	sim.line_hotkey_req[0] = 0
+	sim.message = -1
+	sim.clip_frame = -1
+	sim.clip = -1
+	InfoPanel.set_text(sim, [])
+	sim.period_num = -1
+	sim.period_over = 0
+	sim.match_over = false
 	sim.play_stopped = true
+	sim.intermission_camera = false
 	sim.sequence_steps = STARS_STEPS
-	sim.user1_slot = -1
 	sim.user2_slot = -1
+	sim.user1_slot = -1
+	sim.box_count = [0, 0]
 	for i in 12:
 		var e: Entity = sim.entities[i]
-		e.set_pos(-200, 0)
+		e.x = (e.x & 0xffff) - (200 << 16)
 		e.target_x = -200
+		e.y &= 0xffff
 		e.target_y = 0
 		e.timer_b = -100
-		e.vx = 0
 		e.vy = 0
+		e.vx = 0
 		e.frame = -1
 		e.next_line_slot = -1
 		e.next_roster = -1
 		Anim.set_animation(e, 0)
-		e.state_sp = 0
 		e.set_state(Entity.State.NONE)
-		e.flags &= ~(Entity.F_BUSY | Entity.F_USER)
+		e.flags &= 0xd7
 		e.flags2 |= Entity.F2_UNSELECTABLE
+	var puck := sim.puck
 	sim.puck_stuck_timer = 0x78
-	sim.puck.set_pos(200, -0x12c)
-	sim.puck.vx = 0
-	sim.puck.vy = 0
-	sim.puck.state_sp = 0
-	sim.puck.set_state(Entity.State.PUCK_IDLE)
-	sim.shadow.set_pos(200, -0x12c)
-	sim.shadow.vx = 0
-	sim.shadow.vy = 0
-	sim.shadow.state_sp = 0
-	sim.shadow.set_state(Entity.State.PUCK_SHADOW)
+	puck.x = (200 << 16) | (puck.x & 0xffff)
+	puck.y = (puck.y & 0xffff) - (0x12c << 16)
+	puck.vx = 0
+	puck.vy = 0
+	puck.set_state(Entity.State.PUCK_IDLE)
+	var shadow := sim.shadow
+	shadow.want_dir = 0x78
+	shadow.dir_timer = 0
+	shadow.x = (200 << 16) | (shadow.x & 0xffff)
+	shadow.y = (shadow.y & 0xffff) - (0x12c << 16)
+	shadow.vx = 0
+	shadow.vy = 0
+	shadow.set_state(Entity.State.PUCK_SHADOW)
 	var ref := sim.referee
 	ref.timer_a = 0
-	ref.set_pos(-200, 0)
+	ref.x = (ref.x & 0xffff) - (200 << 16)
 	ref.target_x = -200
+	ref.y &= 0xffff
 	ref.target_y = 0
-	ref.vx = 0
 	ref.vy = 0
+	ref.vx = 0
 	Anim.set_animation(ref, 0)
 	ref.frame = -1
-	ref.state_sp = 0
 	ref.set_state(Entity.State.REF_THREE_STARS)
 	sim.ref_phase = 0
 	sim.action_hold_camera = true
+	sim.sim_tick()
+	sim.sim_tick()
+	sim.sort_draw_order()
 	sim.puck_carrier = -1
 	sim.camera_x = -0x20
 	sim.camera_target_x = -0x20
 	sim.camera_y = 0
 	sim.camera_target_y = 0
-	sim.panel = -1
 	InfoPanel.open(sim)
-	sim.sort_draw_order()
 
-## the period length setting (option_flags bits 10-11): 0 short, 1 medium, 2 long periods
-static func period_setting(sim: Sim) -> int:
-	if sim.period_length >= 1200:
-		return 2
-	if sim.period_length >= 600:
-		return 1
-	return 0
+## the end of three_stars_sequence (sequence_loop is over): the period number back, a quiet crowd;
+## end_match_from_loop follows (the match is finished)
+static func end_three_stars(sim: Sim) -> void:
+	sim.stars_running = false
+	sim.period_num = sim.saved_period_num
+	sim.crowd_noise = 0
+	sim.finished = true
 
 ## compute_three_stars (0x48ac8): the overtime winner of a cup final, goalies with a shutout,
 ## skaters with two points or more (best first, see compare_player_stats), goalies with a save
 ## percentage above .924, then the best of the rest
 static func compute_three_stars(sim: Sim) -> void:
-	sim.stars = []
+	sim.stars = [[-1, -1], [-1, -1], [-1, -1]]
 	sim.game_winner = Vector2i(-1, -1)
 	var count := 0
 	var home := sim.teams[0]
 	var away := sim.teams[1]
-	if sim.period > 2 and home.goals != away.goals:
-		var win := 1 if away.goals > home.goals else 0
-		if (sim.last_touch_slot < 6) != (win == 1):
-			sim.game_winner = Vector2i(win, sim.teams[win].carrier_history[0])
-			if game_over_check(sim, home.goals, away.goals):
-				count += _add_star(sim, count, win, sim.game_winner.y)
-	var setting := period_setting(sim)
+	if sim.period_num > 3:
+		var d := Entity.to_s16(away.goals - home.goals)
+		if d != 0:
+			var win := 1 if d > 0 else 0
+			if int(sim.last_touch_slot < 6) ^ win != 0:
+				sim.game_winner = Vector2i(win, sim.teams[win].carrier_history[0])
+				if game_over_check(sim, home.goals, away.goals):
+					count += _add_star(sim, count, win, sim.game_winner.y)
+	var setting := (sim.settings2 >> 2) & 3
 	for t in 2:
 		if sim.teams[1 - t].goals == 0:
 			var gs: Array = sim.teams[t].goalie_stats
-			var g := 1 if gs[0][1] < gs[1][1] else 0
-			if gs[0][1] < gs[2][1] and gs[1][1] < gs[2][1]:
+			var g := 0
+			if gs[1][1] > gs[0][1]:
+				g = 1
+			if gs[2][1] > gs[0][1] and gs[2][1] > gs[1][1]:
 				g = 2
 			if Tables.star_shutout_shots[setting] < gs[g][1]:
 				count += _add_star(sim, count, t, 25 + g)
+	# the players with a status (not empty, not scratched; the ones out for the game only with a
+	# statistic), best first (the library's qsort)
 	var list := []
 	for i in 50:
 		var t := i / 25
 		var r := i % 25
 		var team := sim.teams[t]
-		if not Lines.roster_exists(team, r):
+		var status := team.roster_status[r]
+		if status == 0 or status == 2:
 			continue
-		var s: PackedInt32Array = team.player_stats[r]
-		var played := s[Team.ST_GOALS] != 0 or s[Team.ST_ASSISTS] != 0 or s[Team.ST_PIM] != 0 \
-			or s[Team.ST_PLUS_MINUS] != 0 or s[Team.ST_SHOTS] != 0
-		if team.entity_of[r] == -4 and not played:
-			continue            # roster status 1: out for the game without a statistic
+		var st: PackedInt32Array = team.player_stats[r]
+		if status == 1 and st[Team.ST_GOALS] == 0 and st[Team.ST_ASSISTS] == 0 and st[Team.ST_PIM] == 0 \
+				and st[Team.ST_PLUS_MINUS] == 0 and st[Team.ST_SHOTS] == 0:
+			continue
 		list.append(i)
-	list.sort_custom(func(a: int, b: int) -> bool: return compare_player_stats(sim, a, b) < 0)
+	Clib.qsort(list, func(a: int, b: int) -> int: return compare_player_stats(sim, a, b))
 	var k := 0
-	var exhausted := false
-	while true:
-		if k >= list.size():
-			exhausted = true
-			break
+	while k < list.size():
 		var t: int = list[k] / 25
 		var r: int = list[k] % 25
-		var s: PackedInt32Array = sim.teams[t].player_stats[r]
-		if s[Team.ST_GOALS] + s[Team.ST_ASSISTS] < 2:
-			break
-		count += _add_star(sim, count, t, r)
-		if count > 2:
-			return
-		k += 1
-	if not exhausted:
-		for g6 in 6:
-			var t := g6 / 3
-			var g := g6 % 3
-			var gs: PackedInt32Array = sim.teams[t].goalie_stats[g]
-			if Tables.star_save_shots[setting] <= gs[1] and (gs[2] * 1000 + gs[1] / 2) / gs[1] < 0x4c:
-				count += _add_star(sim, count, t, 25 + g)
-				if count > 2:
+		var st: PackedInt32Array = sim.teams[t].player_stats[r]
+		if st[Team.ST_GOALS] + st[Team.ST_ASSISTS] <= 1:
+			# the goalies with a good save percentage (the goals against per 1000 shots below 76)
+			for g6 in 6:
+				var gt := g6 / 3
+				var g := g6 % 3
+				var gs: PackedInt32Array = sim.teams[gt].goalie_stats[g]
+				if Tables.star_save_shots[setting] > gs[1]:
+					continue
+				if (gs[2] * 1000 + gs[1] / 2) / gs[1] > 0x4b:
+					continue
+				count += _add_star(sim, count, gt, 25 + g)
+				if count >= 3:
 					return
-	while k < list.size():
-		count += _add_star(sim, count, list[k] / 25, list[k] % 25)
-		if count > 2:
+			while k < list.size():
+				count += _add_star(sim, count, list[k] / 25, list[k] % 25)
+				if count >= 3:
+					return
+				k += 1
+			return
+		count += _add_star(sim, count, t, r)
+		if count >= 3:
 			return
 		k += 1
 
-## three_stars_add_unique: adds a star unless he already is one; returns 1 when added
+## three_stars_add_unique (0x48785): adds a star unless he already is one; returns 1 when added
 static func _add_star(sim: Sim, count: int, team: int, roster: int) -> int:
 	for i in count:
 		var s: Array = sim.stars[i]
 		if s[0] == team and s[1] == roster:
 			return 0
-	if count < sim.stars.size():
-		sim.stars[count] = [team, roster]
-	else:
-		sim.stars.append([team, roster])
+	sim.stars[count] = [team, roster]
 	return 1
 
 ## compare_player_stats (0x4883b): > 0 when b ranks before a. Points (2 extra for the overtime
@@ -592,15 +510,16 @@ static func compare_player_stats(sim: Sim, a: int, b: int) -> int:
 		return _rating_sum(sim, tb, rb) - _rating_sum(sim, ta, ra)
 	return sb[Team.ST_PLUS_MINUS] - sa[Team.ST_PLUS_MINUS]
 
-## player_entity_dressed: the player is on the ice at the end (not as the extra attacker)
+## player_entity_dressed (0x487d9): the player is not on the bench or out (not as the extra
+## attacker either)
 static func _on_ice(sim: Sim, t: int, r: int) -> bool:
 	if sim.teams[t].entity_of[r] < -1:
 		return false
 	for i in 6:
 		var e: Entity = sim.entities[t * 6 + i]
-		if e.roster_idx == r:
+		if Entity.to_s8(e.roster_idx) == r:
 			return e.line_slot != 6
-	return false
+	return true
 
 static func _rating_sum(sim: Sim, t: int, r: int) -> int:
 	var team := sim.teams[t]
@@ -654,8 +573,7 @@ static func ref_three_stars(sim: Sim, e: Entity) -> void:
 		return
 	if e.timer_a < 0:
 		sim.sequence_steps = 0
-		sim.period_over = true
-		sim.stars_running = false
+		sim.period_over = 1
 		sim.match_over = true
 		return
 	if e.target_x >= 0:

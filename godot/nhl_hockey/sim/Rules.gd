@@ -1203,14 +1203,14 @@ static func setup_faceoff(sim: Sim) -> void:
 ## end_period_flag (0x5ddbc, from ai_puck_faceoff when the clock ran out or the game is over):
 ## game_loop ends the period after this step (end_of_period)
 static func end_period_flag(sim: Sim) -> void:
-	if not sim.period_over:
-		sim.period_over = true
+	if sim.period_over == 0:
+		sim.period_over = 1
 
 ## end_of_period (0x5dea6, from game_loop after the intermission): the line change prompts and
 ## bars are gone; the teams change ends and the next period begins. After the third period a tie
 ## goes into overtime (period 3: in the play-offs as often as needed, ends changed each time; a
 ## regular season game once, without changing ends); otherwise, or after an overtime, the game is
-## over (period 4). Then period_cleanup.
+## over (period 4). Then period_cleanup (MatchSetup).
 static func end_of_period(sim: Sim) -> void:
 	sim.lc_bar[1] = 0
 	sim.lc_bar[0] = 0
@@ -1220,19 +1220,21 @@ static func end_of_period(sim: Sim) -> void:
 	sim.lc_line[0] = -1
 	sim.teams[1].line_change_ui = false
 	sim.teams[0].line_change_ui = false
-	sim.ends_switched = not sim.ends_switched
-	sim.period += 1
-	if sim.period >= 3:
-		if sim.period > 3:
-			sim.period = 3
-			if Ceremonies.regular_season(sim):
+	# (period_over -1: the intermission was already shown, as in a highlight; only the cleanup)
+	if sim.period_over != -1:
+		sim.ends_switched = not sim.ends_switched
+		sim.period += 1
+		if sim.period >= 3:
+			if sim.period > 3:
+				sim.period = 3
+				if Ceremonies.regular_season(sim):
+					sim.period = 4
+			elif Ceremonies.regular_season(sim):
+				sim.ends_switched = not sim.ends_switched
+			sim.scratch_a = Entity.to_s16(sim.teams[0].goals - sim.teams[1].goals)
+			if sim.scratch_a != 0:
 				sim.period = 4
-		elif Ceremonies.regular_season(sim):
-			sim.ends_switched = not sim.ends_switched
-		sim.scratch_a = Entity.to_s16(sim.teams[0].goals - sim.teams[1].goals)
-		if sim.scratch_a != 0:
-			sim.period = 4
-	Ceremonies.period_cleanup(sim)
+	MatchSetup.period_cleanup(sim)
 
 ## reset_players_for_faceoff (0x5e01a): nobody is offside; the players on the ice stand (the
 ## glide animation), with no pick-up delay or hit strength, and keep only their side and attack

@@ -196,7 +196,7 @@ func run_tests() -> void:
 			fail("faceoff after a goal should be at centre ice, is at %d,%d" % [sim.faceoff_x, sim.faceoff_y])
 	# a short period ends, the teams switch ends and the next period starts with a faceoff
 	sim = Sim.new()
-	sim.period_length = 5
+	sim.set_period_length(5)
 	sim.clock_seconds = 5
 	var period_steps := -1
 	for i in 6000:
@@ -379,7 +379,7 @@ func asset_tests() -> void:
 		dressed.sort()
 		if dressed != [4, 7, 10, 16, 18, 25]:
 			fail("Boston's first line is not dressed: %s" % str(dressed))
-		if sim.teams[0].entity_of[25] != -1 or sim.teams[0].entity_of[26] != -2 or sim.teams[0].entity_of[22] != -3:
+		if sim.teams[0].entity_of[25] != -1 or sim.teams[0].entity_of[26] != -2 or sim.teams[0].entity_of[22] != -7:
 			fail("entity_of bookkeeping: %d %d %d" % [sim.teams[0].entity_of[25], sim.teams[0].entity_of[26], sim.teams[0].entity_of[22]])
 		var det_goalie := -1
 		for i in range(6, 12):
@@ -718,7 +718,7 @@ func ai_golden() -> void:
 	for group in data:
 		if group == "base":
 			continue
-		if group in ["lines", "controls", "rules", "goals", "faceoffs", "steps", "runs"]:
+		if group in ["lines", "controls", "rules", "goals", "faceoffs", "steps", "runs", "periods"]:
 			counts.append(_lines_golden(data[group], base, group))
 			continue
 		var sim := Sim.new()
@@ -772,16 +772,19 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 	if group == "rules" or group == "goals":
 		sim.stubs.erase("queue_infraction")
 		sim.stubs.erase("maybe_queue_infraction")
-	if group in ["goals", "faceoffs", "steps", "runs"]:
+	if group in ["goals", "faceoffs", "steps", "runs", "periods"]:
 		for n in ["setup_faceoff", "injury_check", "update_effects"]:
 			sim.stubs.erase(n)
 		for n in ["draw_score_digits", "game_over_check"]:
 			sim.stubs[n] = true
-	if group in ["faceoffs", "steps", "runs"]:
+	if group in ["faceoffs", "steps", "runs", "periods"]:
 		sim.stubs.erase("queue_infraction")
 		sim.stubs.erase("maybe_queue_infraction")
 		for n in ["stop_crowd_loop", "center_mouse", "gsummary_flush", "period_cleanup"]:
 			sim.stubs[n] = true
+	if group == "periods":
+		sim.stubs.erase("period_cleanup")
+		sim.stubs["leave_match_video"] = true
 	var per := {}
 	var ok := 0
 	var shown := 0
@@ -824,9 +827,15 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 			_goal_stats_set(sim, c["stats"])
 		if c.has("crowd"):
 			_crowd_set(sim, c["crowd"])
+		if c.has("team_ids"):
+			sim.team_ids = _ints(c["team_ids"])
+			sim.last_controls = [8, 8]
 		if group == "faceoffs":
 			for t in 2:
 				sim.teams[t].info = _ratings_info(c["faceoff_ratings"][t]) if c.has("faceoff_ratings") else null
+		if group == "periods":
+			for t in 2:
+				sim.teams[t].info = _full_ratings_info(c["ratings"][t]) if c.has("ratings") else null
 		if not li.is_empty():
 			var req: Array = li["req"]
 			for i in 6:
@@ -892,6 +901,14 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 			"ai_puck_faceoff": AI.puck_faceoff(sim, sim.puck)
 			"ai_puck_faceoff2": AI.puck_faceoff2(sim, sim.puck)
 			"end_of_period": Rules.end_of_period(sim)
+			"period_cleanup": MatchSetup.period_cleanup(sim)
+			"reset_game_state": MatchSetup.reset_game_state(sim)
+			"init_match": MatchSetup.init_match(sim)
+			"setup_demo_faceoff": MatchSetup.setup_demo_faceoff(sim)
+			"three_stars_sequence":
+				Ceremonies.begin_three_stars(sim)
+				if sim.stars_running:
+					Ceremonies.end_three_stars(sim)
 			"sim_steps":
 				sim.buttons_prev[0] = int(c["globals"].get("buttons_prev0", 0))
 				sim.buttons_prev[1] = int(c["globals"].get("buttons_prev1", 0))
@@ -947,6 +964,25 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 						diff.append("crowd figure %d %s (original %s)" % [i, str(got_crowd[0][i]), str(la["crowd"][0][i])])
 				if str(got_crowd[1]) != str(la["crowd"][1]):
 					diff.append("crowd spots %s (original %s)" % [str(got_crowd[1]), str(la["crowd"][1])])
+		if la.has("period_num") and sim.period_num != int(la["period_num"]):
+			diff.append("period_num %d (original %d)" % [sim.period_num, int(la["period_num"])])
+		if la.has("energies"):
+			for t in 2:
+				if str(Array(sim.teams[t].energy)) != str(_ints(la["energies"][t])):
+					diff.append("team %d energies %s (original %s)" % [t, str(sim.teams[t].energy), str(la["energies"][t])])
+		if la.has("order"):
+			var od: Dictionary = la["order"]
+			if str(Array(sim.draw_list)) != str(_ints(od["list"])) or str(Array(sim.draw_pos)) != str(_ints(od["pos"])) \
+					or str(Array(sim.draw_keys)) != str(_ints(od["keys"])):
+				diff.append("draw order %s (original %s)" % [str(sim.draw_list), str(od["list"])])
+		if group == "periods":
+			for i in 17:
+				var e: Entity = sim.entities[i]
+				var pa: Dictionary = c["after"].get(str(i), {})
+				var pb: Dictionary = _full(base[i], c["before"].get(str(i), {}))
+				var want_prev: Array = pa.get("prev", pb["prev"])
+				if [e.prev_x, e.prev_y, e.prev_z] != _ints(want_prev):
+					diff.append("%d: prev %s (original %s)" % [i, str([e.prev_x, e.prev_y, e.prev_z]), str(want_prev)])
 		if la.has("scratch_ac") and (sim.scratch_ac & 0xffff) != (int(la["scratch_ac"]) & 0xffff):
 			diff.append("scratch e03ac %x (original %x)" % [sim.scratch_ac & 0xffff, int(la["scratch_ac"]) & 0xffff])
 		if la.has("scratch"):
@@ -1009,6 +1045,13 @@ static func _ratings_info(ratings: Array) -> Database.TeamInfo:
 		p.ratings.resize(0x10)
 		p.roster_idx = 25 + i
 		info.goalies.append(p)
+	return info
+
+## a roster of placeholder players with all their rating bytes (player_ratings) and three goalies
+static func _full_ratings_info(ratings: Array) -> Database.TeamInfo:
+	var info := _ratings_info([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+	for i in 25:
+		info.skaters[i].ratings = PackedByteArray(_ints(ratings[i]))
 	return info
 
 ## the crowd figures (crowd_figures: 20 x [spot, timer, counter, frame, x, y, sequence, count]) and
@@ -1210,7 +1253,8 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	sim.deferred = int(g.get("deferred", 0)) != 0
 	sim.infraction_events = int(g.get("infraction_events", 0))
 	sim.save_clip_shown = int(g.get("save_clip_shown", 0)) != 0
-	sim.period_over = int(g.get("period_over", 0)) != 0
+	sim.period_over = Entity.to_s16(int(g.get("period_over", 0)))
+	sim.period_num = int(c.get("period_num", sim.period + 1))
 	if int(g.get("goal_call", 0xff)) == 1:
 		var gc := []
 		for k in ["goal_team", "goal_scorer", "goal_a1", "goal_a2"]:
@@ -1364,7 +1408,7 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 		"ref_infraction_slot": sim.ref_infraction_slot, "panel": sim.panel, "demo": 1 if sim.demo else 0,
 		"sound_card": sim.sound_device, "sound_enabled": 1 if sim.sound_enabled else 0, "announce_time": sim.announce_time,
 		"period_length": sim.period_length, "deferred": 1 if sim.deferred else 0, "infraction_events": sim.infraction_events,
-		"save_clip_shown": 1 if sim.save_clip_shown else 0, "period_over": 1 if sim.period_over else 0,
+		"save_clip_shown": 1 if sim.save_clip_shown else 0, "period_over": sim.period_over,
 		"goal_call": 0 if sim.goal_call.is_empty() else 1, "infraction0": 0 if Rules.inf_type(sim, 0) == 0 else 1,
 		"message": sim.message, "message_timer": sim.message_timer,
 		"lc_show0": sim.lc_show[0], "lc_show1": sim.lc_show[1], "lc_blink0": sim.lc_blink[0], "lc_blink1": sim.lc_blink[1],
@@ -2381,11 +2425,11 @@ func league_tests(gf: Node) -> void:
 	var sim := Sim.new()
 	sim.user1_team = 0
 	sim.user2_team = 0
-	sim.period_length = 20
+	sim.set_period_length(20)
 	sim.set_teams(db.load_team(rec[2]), db.load_team(rec[3]))
 	sim.assign_users()
 	var steps := 0
-	while not sim.match_over and steps < 60000:
+	while not sim.finished and steps < 60000:
 		sim.step(8, 8, 0, 0)
 		sim.intermission_pending = false
 		steps += 1
@@ -2403,9 +2447,9 @@ func league_tests(gf: Node) -> void:
 		elif League.day_index(r[0], r[1]) <= day:
 			before += 1
 	var ht := h.file("TEAMS")
-	if not sim.match_over or hrec[4] != sim.teams[0].goals or hrec[5] != sim.teams[1].goals or ht[tb] != 1 \
+	if not sim.finished or hrec[4] != sim.teams[0].goals or hrec[5] != sim.teams[1].goals or ht[tb] != 1 \
 			or ht[tb + 1] + ht[tb + 2] + ht[tb + 3] != 1 or after != 0 or before != 0 or h.games_played() != gi + 1:
-		fail("league game played: over %s, %s, GP %d, after %d, unplayed before %d, games %d" % [sim.match_over, hrec.hex_encode(), ht[tb], after, before, h.games_played()])
+		fail("league game played: over %s, %s, GP %d, after %d, unplayed before %d, games %d" % [sim.finished, hrec.hex_encode(), ht[tb], after, before, h.games_played()])
 	else:
 		print("league: game %d played %d-%d after %d steps" % [gi, hrec[4], hrec[5], steps])
 	# play-off series: Rangers - Canucks meet in the final, Rangers - Bruins in the first round
@@ -2570,7 +2614,8 @@ func line_change_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 	sim.puck.set_pos(carrier.xi, carrier.yi)
 	sim.delayed_call = true
 	var auto_pull := false
-	for i in 20:
+	# (cpu_line_change runs every 24 steps, sim_game_state's tick)
+	for i in 26:
 		sim.step(8, 8, 0, 0)
 		if sim.teams[0].goalie_pulled():
 			auto_pull = true
@@ -2703,7 +2748,7 @@ func match_rules_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 		if not cut or sim.play_stopped or sim.injury_stoppage:
 			fail("no cut to the faceoff after the injury (stopped %s)" % sim.play_stopped)
 		var hr := hurt.roster_idx
-		sim.start_period(1)
+		Rules.end_of_period(sim)
 		if sim.teams[0].entity_of[hr] == -3:
 			fail("the injured player should be back for the next period")
 	# a check against the right boards pins the victim to them (board animation, x from the table)
@@ -2796,23 +2841,24 @@ func ceremony_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 	sim.assign_users()
 	run_until_play(sim, 1200)
 	sim.period = 2
+	sim.period_num = 3
 	sim.clock_seconds = 2
 	sim.teams[0].goals = 2
 	sim.teams[0].player_stats[7][Team.ST_GOALS] = 2
 	sim.teams[0].player_stats[10][Team.ST_ASSISTS] = 2
 	sim.teams[1].goals = 1
 	sim.teams[1].player_stats[3][Team.ST_GOALS] = 1
-	# (the game ends in period 4: the last home carrier, 9 when the clock runs out, is credited
-	# with the game winner, 2 points more in the order of the stars)
+	# (decided in regular time: no game winner bonus, which compute_three_stars gives only after an
+	# overtime; the two point players first, then the one goal)
 	var star_lines := []
 	for i in 16000:
 		sim.step(8, 8, 0, 0)
 		if sim.stars_running and sim.panel_text[1] != "" and not star_lines.has(sim.panel_text[1]):
 			star_lines.append(sim.panel_text[1])
-		if sim.match_over:
+		if sim.finished:
 			break
-	if not sim.match_over or str(sim.stars) != "[[0, 7], [0, 9], [0, 10]]" or star_lines != ["3rd Star", "2nd Star", "1st Star"]:
-		fail("three stars: over %s stars %s shown %s" % [sim.match_over, str(sim.stars), str(star_lines)])
+	if not sim.finished or str(sim.stars) != "[[0, 7], [0, 10], [1, 3]]" or star_lines != ["3rd Star", "2nd Star", "1st Star"]:
+		fail("three stars: over %s stars %s shown %s" % [sim.finished, str(sim.stars), str(star_lines)])
 	else:
 		print("three stars: ", str(sim.stars))
 	# a regular season game tied after the overtime ends tied; in the playoffs the overtime goes on

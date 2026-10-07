@@ -170,6 +170,74 @@ func set_pos(px: int, py: int) -> void:
 	prev_x = x
 	prev_y = y
 
+## entities_clear (0x5ba4e): the 0x80 bytes of the record zeroed (the port's energy mirror stays)
+func clear() -> void:
+	x = 0
+	y = 0
+	z = 0
+	vx = 0
+	vy = 0
+	vz = 0
+	frame = 0
+	hit_by = 0
+	speed_prev = 0
+	speed = 0
+	line_slot = 0
+	state_sp = 0
+	state_stack.fill(0)
+	timer_a = 0
+	want_dir = 0
+	dir_timer = 0
+	target_x = 0
+	target_y = 0
+	timer_b = 0
+	push_x = 0
+	push_y = 0
+	heading = 0
+	anim = 0
+	anim_pos = 0
+	anim_hold = 0
+	timer_c = 0
+	timer_d = 0
+	next_line_slot = 0
+	next_roster = 0
+	flags = 0
+	flags2 = 0
+	frame_wait = 0
+	roster_idx = 0
+	pass_target = 0
+	timer_e = 0
+	timer_f = 0
+	puck_dist = 0
+	puck_dist_sq = 0
+	puck_dir = 0
+	pass_ok = 0
+	side = 0
+	flags4 = 0
+	weight = 0
+	speed_skill = 0
+	stamina = 0
+	reaction = 0
+	awareness = 0
+	shot_skill = 0
+	shot_accuracy = 0
+	pass_skill = 0
+	number = 0
+	offense = 0
+	goalie_skill = 0
+	endurance = 0
+	check_skill = 0
+	save_result = 0
+	aggression = 0
+	left_handed = 0
+	half_w = 0
+	half_h = 0
+	slot = 0
+	team = 0
+	prev_x = 0
+	prev_y = 0
+	prev_z = 0
+
 ## sign of the attacking direction: +1 when the team shoots at the +y net
 func attack_sign() -> int:
 	return 1 if flags & F_ATTACK_UP else -1
