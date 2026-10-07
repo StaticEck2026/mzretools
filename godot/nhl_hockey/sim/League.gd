@@ -696,12 +696,12 @@ func _team_points(t: int) -> Array:
 	return [teams[b + 1] * 2 + teams[b + 3], teams[b + 1], _u16(teams, b + 4), _u16(teams, b + 6)]
 
 ## sort_teams_by_points (0x42daa): points, wins, goals for, then fewer goals against, then the
-## higher team number first
-func _sort_by_points(list: Array) -> void:
+## higher team number first; `humans_only`: a computer team's standing counts as nothing
+func _sort_by_points(list: Array, humans_only := false) -> void:
 	for a in list.size() - 1:
 		for b in range(a + 1, list.size()):
-			var pa := _team_points(list[a])
-			var pb := _team_points(list[b])
+			var pa := _team_points(list[a]) if not humans_only or human(list[a]) else [0, 0, 0, 0]
+			var pb := _team_points(list[b]) if not humans_only or human(list[b]) else [0, 0, 0, 0]
 			var swap := false
 			if pa[0] != pb[0]:
 				swap = pa[0] < pb[0]
@@ -865,25 +865,27 @@ func round_done(po: PackedByteArray, first_series: int, count: int, career: Pack
 			var w: int = po[base + 2] if po[base + 4] > po[base + 5] else po[base + 3]
 			wins[w] = wins.get(w, 0) + 1
 
-## the day after the last game of a round
-func _round_start(po: PackedByteArray, first_series: int, count: int) -> Vector2i:
-	var best := Vector2i(4, 1)
-	for s in range(first_series, first_series + count):
-		for g in 7:
-			var base := (s * 7 + g) * 6
-			if po[base] != 0xff and po[base + 4] != 0xff:
-				if day_index(po[base], po[base + 1]) > day_index(best.x, best.y):
-					best = Vector2i(po[base], po[base + 1])
-	return Vector2i(best.x, best.y + 1)
+## the first day of the next round (playoff_make_round2 / round3 / final): from the last game of
+## the round's series length (that of its first series) down, the first game of that number some
+## series played, in the series' order: its date, a day later for the series of `later`
+## (the original's variables keep whatever they held when no game was played)
+func _round_start(po: PackedByteArray, first_series: int, count: int, later: Array) -> Vector2i:
+	for g in range(series_count(po, first_series) - 1, -1, -1):
+		for k in count:
+			var base := ((first_series + k) * 7 + g) * 6
+			if po[base + 4] != 0xff:
+				return Vector2i(po[base], po[base + 1] + (1 if later.has(k) else 0))
+	return Vector2i(4, 1)
 
-## the winners of two series in the seeding order: a better seed that won keeps its place
-func _winners(po: PackedByteArray, series: Array, n: int) -> Array:
+## the winners of two series in the seeding order: a better seed that won keeps its place (`length`:
+## the series' length, that of the round's first series for all of them)
+func _winners(po: PackedByteArray, series: Array, length: int) -> Array:
 	var slots := []
 	slots.resize(series.size() * 2)
 	slots.fill(-1)
 	for k in series.size():
 		var s: int = series[k]
-		var w := series_winner(po, s, series_count(po, s))
+		var w := series_winner(po, s, length)
 		if w == po[s * 42 + 2]:
 			slots[k] = w
 		else:
@@ -900,7 +902,7 @@ func make_next_round(po: PackedByteArray, round_index: int) -> bool:
 	var any := false
 	match round_index:
 		1:
-			var d := _round_start(po, 0, 8)
+			var d := _round_start(po, 0, 8, [0, 1, 2, 3])
 			for g in n:
 				for s in [10, 11]:
 					var dt := normalize_date(d.x, d.y)
@@ -912,7 +914,7 @@ func make_next_round(po: PackedByteArray, round_index: int) -> bool:
 					po[(s * 7 + g) * 6 + 1] = dt.y
 				d.y += 2
 			for c in 2:
-				var w := _winners(po, [c * 4, c * 4 + 1, c * 4 + 2, c * 4 + 3], n)
+				var w := _winners(po, [c * 4, c * 4 + 1, c * 4 + 2, c * 4 + 3], series_count(po, 0))
 				if w.size() < 4:
 					continue
 				set_series(po, 8 + c * 2, w[0], w[3], n)
@@ -922,7 +924,7 @@ func make_next_round(po: PackedByteArray, round_index: int) -> bool:
 					_list_playoff_games(w[k], 7, SEASON_GAMES + s * 7, n)
 					any = any or human(w[k])
 		2:
-			var d := _round_start(po, 8, 4)
+			var d := _round_start(po, 8, 4, [0, 1])
 			for g in n:
 				for s in [12, 13]:
 					var dt := normalize_date(d.x, d.y + (0 if s == 13 else 1))
@@ -930,7 +932,7 @@ func make_next_round(po: PackedByteArray, round_index: int) -> bool:
 					po[(s * 7 + g) * 6 + 1] = dt.y
 				d.y += 2
 			for c in 2:
-				var w := _winners(po, [8 + c * 2, 9 + c * 2], n)
+				var w := _winners(po, [8 + c * 2, 9 + c * 2], series_count(po, 8))
 				if w.size() < 2:
 					continue
 				set_series(po, 12 + c, w[0], w[1], n)
@@ -938,17 +940,19 @@ func make_next_round(po: PackedByteArray, round_index: int) -> bool:
 					_list_playoff_games(t, 14, SEASON_GAMES + (12 + c) * 7, n)
 					any = any or human(t)
 		3:
-			var d := _round_start(po, 12, 2)
-			d.y -= 1
+			var d := _round_start(po, 12, 2, [1])
 			for g in n:
 				d.y += 2
 				var dt := normalize_date(d.x, d.y)
 				d = dt
 				po[(14 * 7 + g) * 6] = dt.x
 				po[(14 * 7 + g) * 6 + 1] = dt.y
-			var f: Array = [series_winner(po, 12, series_count(po, 12)), series_winner(po, 13, series_count(po, 13))]
+			var length := series_count(po, 12)
+			var f: Array = [series_winner(po, 12, length), series_winner(po, 13, length)]
 			if f[0] >= 0 and f[1] >= 0:
-				_sort_by_points(f)
+				# (playoff_make_final reads the finalists' records only for human teams: a computer
+				# team's standing is whatever the stack held, taken as nothing here)
+				_sort_by_points(f, true)
 				set_series(po, 14, f[0], f[1], n)
 				for t in f:
 					_list_playoff_games(t, 21, SEASON_GAMES + 14 * 7, n)

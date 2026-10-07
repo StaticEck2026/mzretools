@@ -4159,7 +4159,9 @@ def playoff_cases(exe, gamedir, count=200):
     return cases
 
 
-PLAYOFF_ROUND1_DONE = 0x43644                  # (series, TEAMS file, ATT file, dir) + ext: the round's games nobody played
+PLAYOFF_ROUND1_DONE = 0x43644                  # (play-off games, TEAMS file, ATT file, dir) + ext: the round's games nobody played
+PLAYOFF_CHAIN = (('make_round2', 0x43757), ('round2_done', 0x43e40), ('make_round3', 0x43f4b),
+                 ('round3_done', 0x443b6), ('make_final', 0x444c9), ('final_done', 0x447a6))
 
 
 def round_cases(exe, gamedir, count=60):
@@ -4260,12 +4262,28 @@ def round_cases(exe, gamedir, count=60):
         emu.call(SRAND, eax=seed)
         used['n'] = 0
         ret = emu.call(PLAYOFF_ROUND1_DONE, eax=po, edx=1, ebx=2, ecx=names, stack=(names,))
+        # the rounds after it: each made from the winners, then played out
+        steps = [emu.read(po, 15 * 42).hex()]
+        flag = emu.alloc(b'\0' * 8)
+        for name, addr in PLAYOFF_CHAIN:
+            if name.startswith('make'):
+                extra = (3,) if name == 'make_final' else ()
+                if name == 'make_final':
+                    # (it sorts the finalists by records it reads only for human teams: a computer
+                    # team's is whatever the stack holds, zeros here)
+                    emu.write(STACK_TOP - 0x2100, b'\0' * 0x2000)
+                r_ = emu.call(addr, eax=po, edx=n, ebx=1, ecx=pinfo + 0x20, stack=extra + (flag,))
+            else:
+                r_ = emu.call(addr, eax=po, edx=1, ebx=2, ecx=names, stack=(names,))
+            steps.append(emu.read(po, 15 * 42).hex())
+            if r_ & 0xffffffff:
+                break
         after = {n_: byte_diff(base[n_], emu.read(bufs[n_], len(base[n_]))) for n_, _ in LEAGUE_BUFFERS}
         after['TEAMS'] = byte_diff(before['TEAMS'], files['TEAMS'])
         after['ATT'] = byte_diff(base['ATT'], files['ATT'])
         cases.append({'standings': stand, 'n': n, 'played': played, 'seed': seed, 'fwd': fwd, 'def': dfn,
                       'option_flags': option_flags,
-                      'after': dict(after, ret=s32(ret), po=emu.read(po, 15 * 42).hex(),
+                      'after': dict(after, ret=s32(ret), po=emu.read(po, 15 * 42).hex(), steps=steps,
                                     rand=struct.unpack('<I', emu.read(emu.call(RAND_STATE) & 0xffffffff, 4))[0])})
     emu.write(OPTION_FLAGS, b'\0' * 4)
     return cases

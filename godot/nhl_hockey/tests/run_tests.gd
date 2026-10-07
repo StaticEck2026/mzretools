@@ -2774,7 +2774,26 @@ func league_golden(gf: Node) -> void:
 		lg.round_done(po, 0, 8, lg.files["CAREER"])
 		var want: Dictionary = c["after"]
 		var bad := []
-		if po.hex_encode() != str(want["po"]):
+		# then the later rounds, compared after every step (playoff_make_round2, round2_done ...)
+		var steps: Array = want.get("steps", [])
+		var names := ["round1_done", "make_round2", "round2_done", "make_round3", "round3_done", "make_final", "final_done"]
+		for i in steps.size():
+			if i > 0:
+				if i % 2 == 1:
+					lg.make_next_round(po, (i + 1) / 2)
+				else:
+					var rs: Array = League.ROUND_SERIES[i / 2]
+					lg.round_done(po, rs[0], rs[1], lg.files["CAREER"])
+			if po.hex_encode() != str(steps[i]):
+				var at := 0
+				var got_hex := po.hex_encode()
+				var want_hex := str(steps[i])
+				while at < got_hex.length() and got_hex[at] == want_hex[at]:
+					at += 1
+				bad.append("after %s: series %d game %d %s (original %s)" % [names[i], at / 84, (at % 84) / 12,
+					got_hex.substr(at / 84 * 84, 84), want_hex.substr(at / 84 * 84, 84)])
+				break
+		if bad.is_empty() and steps.is_empty() and po.hex_encode() != str(want["po"]):
 			bad.append("play-off games %s (original %s)" % [po.hex_encode().left(120), str(want["po"]).left(120)])
 		for nm in ["SEASON", "CAREER", "KEY", "ATT"]:
 			if str(_byte_diff(base[nm], lg.files[nm])) != str(_ints(want[nm])):
