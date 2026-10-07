@@ -1047,3 +1047,41 @@ func draw_bracket(l: League) -> PackedByteArray:
 		row.call(14, 0, 0x102, 0x16c, 0xe0)
 		row.call(14, 1, 0x102, 0x16c, 0xf0)
 	return pal
+
+# ---------------------------------------------------------------------------------------------
+# the small callbacks of the league menus
+# ---------------------------------------------------------------------------------------------
+
+## menu_play_next_game (0x86627): the tree's File menu plays the next game (code 4)
+func menu_play_next_game() -> int:
+	return 4
+
+## menu_return_to_central (0x86637), menu_return_one (0x79dd1): back
+func menu_return_to_central() -> int:
+	return 1
+
+func menu_return_one() -> int:
+	return 1
+
+## line_editor_done / line_editor_cancel (0x3edaa / 0x3ef27) of the league's line editor menu
+func line_editor_done() -> int:
+	return 1
+
+func line_editor_cancel() -> int:
+	return 1
+
+## roster_dress_done (0x75456): the dressing of a roster is over
+func roster_dress_done() -> int:
+	return 1
+
+## roster_regular_season_stats / roster_playoff_stats (0x75baa / 0x75bde): the roster's statistics
+## of the regular season or the play-offs (dword_c6956)
+func roster_regular_season_stats() -> int:
+	Session.stats_playoffs = false
+	fe.stats.forget_files()
+	return 2
+
+func roster_playoff_stats() -> int:
+	Session.stats_playoffs = true
+	fe.stats.forget_files()
+	return 2
