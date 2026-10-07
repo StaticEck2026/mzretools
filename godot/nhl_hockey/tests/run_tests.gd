@@ -409,6 +409,56 @@ func asset_tests() -> void:
 		if absf(snd.lengths.get(0x97, 0.0) - 0.36) > 0.001 or absf(snd.lengths.get(0x7b, 0.0) - 1.6) > 0.001:
 			fail("effect note lengths")
 		audio_tests(gf, snd)
+	league_tests(gf)
+
+## a league of computer teams: the schedule, a whole season of simulated games, the play-offs
+func league_tests(gf: Node) -> void:
+	Exe.load_from(gf.read_raw("hockey.exe"))
+	var src := {}
+	for n in League.FILES:
+		src[n] = gf.read_raw(n.to_lower() + ".db")
+	League.srand(12345)
+	var l := League.create("TESTLG", src, [], false)
+	var g0 := l.game(0)
+	if g0[0] != 10 or g0[2] >= 26 or g0[3] >= 26 or League.played(g0) or l.games_played() != 0:
+		fail("league schedule: first game %s" % g0.hex_encode())
+		return
+	l.play_day(1, -1, 7)
+	var teams := l.file("TEAMS")
+	var gp_ok := true
+	var goals := 0
+	var against := 0
+	for t in 26:
+		var b := t * League.TEAM + 0x28
+		if teams[b] != 84 or teams[b + 1] + teams[b + 2] + teams[b + 3] != 84:
+			gp_ok = false
+		goals += teams.decode_u16(b + 4)
+		against += teams.decode_u16(b + 6)
+	var unplayed := 0
+	for i in League.SEASON_GAMES:
+		if not League.played(l.game(i)):
+			unplayed += 1
+	if not gp_ok or goals != against or unplayed != 0:
+		fail("league season: 84 games each %s, goals %d / %d, unplayed %d" % [gp_ok, goals, against, unplayed])
+	var po := l.file("SCHEDULE").slice(League.PLAYOFF_OFFSET, League.PLAYOFF_OFFSET + 0x276)
+	var champ := League.series_winner(po, 14, League.series_count(po, 14))
+	if not l.season_over or l.games_played() != League.ALL_GAMES or champ < 0:
+		fail("league play-offs: over %s, games %x, champion %d" % [l.season_over, l.games_played(), champ])
+	else:
+		print("league: %d goals in 1092 games, champion %s" % [goals, Database.cstring(teams, champ * League.TEAM, 5)])
+	# the scorers of the season: a leader with a plausible number of points
+	var key := l.file("KEY")
+	var season := l.file("SEASON")
+	var best := 0
+	for t in 26:
+		for p in 25:
+			var k := l.key_of(t, p)
+			if k >= 0:
+				best = maxi(best, season.decode_u16(l.key_i32(k, 0x2c) + 6))
+	if best < 40 or best > 250:
+		fail("league scoring leader with %d points" % best)
+	else:
+		print("league: scoring leader %d points" % best)
 
 ## line changes, fatigue and goalie pulling (Lines.gd)
 func line_change_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:

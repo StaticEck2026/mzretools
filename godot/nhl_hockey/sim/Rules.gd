@@ -57,6 +57,7 @@ static func game_state_tick(sim: Sim) -> void:
 			zone_time_stats(sim)
 			lead_time_stats(sim)
 			penalty_timers(sim)
+			goalie_time_stats(sim)
 	if sim.penalty_box_mode:
 		return
 	Lines.cpu_line_change(sim)
@@ -245,6 +246,16 @@ static func zone_time_stats(sim: Sim) -> void:
 		if team.attacks_up == up:
 			team.zone_time += 1
 			return
+
+## the second of the goalies in the nets (sim_update_players with misc_flags 0x40): their time
+## played, for the minutes and the goalie of record of the league files
+static func goalie_time_stats(sim: Sim) -> void:
+	if sim.no_stats:
+		return
+	for i in 12:
+		var e := sim.entities[i]
+		if e.line_slot == 0 and e.roster_idx >= 25 and e.roster_idx < 28:
+			sim.team_of(e).goalie_stats[e.roster_idx - 25][0] += 1
 
 ## lead_time_stats (0x63b57): a second of the power play for the team with more skaters
 static func lead_time_stats(sim: Sim) -> void:
