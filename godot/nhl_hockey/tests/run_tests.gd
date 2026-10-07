@@ -595,10 +595,17 @@ class RecChip extends Opl2:
 		super.write(reg, val)
 
 static func _golden(name: String) -> Dictionary:
-	var f := FileAccess.open("res://tests/golden/%s.json" % name, FileAccess.READ)
-	if f == null:
-		return {}
-	var v = JSON.parse_string(f.get_as_text())
+	var text := ""
+	var gz := "res://tests/golden/%s.json.gz" % name
+	if FileAccess.file_exists(gz):
+		var packed := FileAccess.get_file_as_bytes(gz)
+		text = packed.decompress_dynamic(-1, FileAccess.COMPRESSION_GZIP).get_string_from_utf8()
+	else:
+		var f := FileAccess.open("res://tests/golden/%s.json" % name, FileAccess.READ)
+		if f == null:
+			return {}
+		text = f.get_as_text()
+	var v = JSON.parse_string(text)
 	return v if v is Dictionary else {}
 
 ## the port against the original (tools/nhl/golden.py runs HOCKEY.EXE's routines in an emulator on the

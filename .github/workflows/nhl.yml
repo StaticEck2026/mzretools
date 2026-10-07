@@ -35,8 +35,8 @@ jobs:
         run: python3 tools/nhl/test_pack.py re/nhl_hockey
       - name: The golden data is what the original computes
         run: |
-          python3 tools/nhl/golden.py re/nhl_hockey godot/nhl_hockey/tests/golden
-          git diff --exit-code godot/nhl_hockey/tests/golden
+          python3 tools/nhl/golden.py re/nhl_hockey "$RUNNER_TEMP/golden"
+          python3 tools/nhl/golden_check.py "$RUNNER_TEMP/golden" godot/nhl_hockey/tests/golden
 
   godot:
     name: Godot tests

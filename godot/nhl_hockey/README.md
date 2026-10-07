@@ -103,7 +103,8 @@ Montreal home game and the power play flags.
 
 `tools/nhl/golden.py` runs routines of HOCKEY.EXE itself in an emulator (`tools/leemu.py`: the LE image
 mapped at its linear addresses, port I/O caught, a few routines such as `play_sfx` or `score_goal`
-replaced by recorders) on fixed and random inputs, and writes what they produce to `tests/golden/*.json`;
+replaced by recorders) on fixed and random inputs, and writes what they produce to `tests/golden/*.json`
+(the large ones gzipped);
 the headless test feeds the same inputs to the port and compares, field by field:
 
 | Golden data | The original's routines | Cases | Compared |
@@ -111,7 +112,7 @@ the headless test feeds the same inputs to the port and compares, field by field
 | `rng.json` | `randomrange`, `rand` / `srand` | 7 seeds x 64 | every value and the final seed |
 | `fm_driver.json` | the AdLib driver (`adlib_drv_init` / `send_midi` / `tick` and the `opl_*` layer) | 4 MIDI sequences (an organ note with bend and modulation, the drum kit, the match's FM effects, 60 notes over 4 channels with stealing, sustain and all notes off) | the OPL2 registers after every 100 Hz tick |
 | `pc_speaker.json` | the PC speaker driver (`pcspk_*`) | 8 effects | the gate and the PIT divisor every tick |
-| `physics.json` | `approx_distance`, `direction8` | 200 vectors | the results |
+| `physics.json.gz` | `approx_distance`, `direction8` | 200 vectors | the results |
 | | `collide_boards`, `collide_corner`, `bounce_off_boards`, `puck_spin` | 300 puck and skater states at the boards and corners | the entity record, the sounds, the seed |
 | | `apply_skating`, `skating_turn`, `skating_accelerate`, `stop_skating`, `brake`, `goalie_move` | 400 skater, goalie and referee states (100 on seeds that hit the fatigue step) | velocity, heading, animation, flags, the team's energy word, the seed |
 | | `collide_net`, `collide_player_net`, `net_push_off` | 400 states at the nets: goals, posts, the roof, the frame, nets knocked off | the record, the goal, the infractions, the net's velocity, the seed |
@@ -121,6 +122,7 @@ the headless test feeds the same inputs to the port and compares, field by field
 | | `collide_pair` (opponents), `goalie_collision`, `resolve_body_check`, `resolve_hook_hold`, `resolve_dive_hit`, `penalty_odds`, `breakaway_foul`, `facing_boards`, `knock_down`, `knockdown_position`, `crowd_reaction_sfx` | 1800 body contacts among both teams, goalies, the referee and the puck, in open ice, along the boards, in the corners and at the nets: `move_entity`, and `resolve_body_check` and `knock_down` called directly | every record (the state stack too), the carrier, the sounds, penalties, injuries, bench cheers and stoppages in order, the penalty shot, the referee's hits, the crowd, the teams' hits, the seed |
 | | `puck_update`, `predict_puck_goal_line`, `check_icing`, `check_offside`, `note_breakaway`, `count_defenders_ahead`, `update_offside_flags`, `end_penalty_shot` | 800 states of all 17 entities with the puck crossing the blue and red lines, carried, standing still, on a penalty shot | every record, the carrier, the calls in order, the prediction, the frozen puck and penalty shot timers, offside and icing state, the touch, the teams' flags and breakaways, the seed |
 | | `do_pass`, `pass_to_entity`, `pass_lead`, `pass_lane_ok`, `isqrt32`, `start_shot`, `shot_control`, `do_shot`, `shot_setup` | 1100 passes (aimed, blind, direct, led, the goalie's clearance), lanes, wind ups and releases with every aim and power, with and without a carrier, on penalty shots | every record (the pass flags, the receivers' timers), the shot power and aim, the touch and shot state, the users, the teams' passes, the sounds, the seed |
+| `ai.json.gz` | `ai_state_handlers` through `AI.dispatch`: so far the positional states (`ai_defense_offense`, `ai_defense_defense`, `ai_wing_defense`, `ai_wing_offense`, `ai_center_defense`, `ai_center_offense` with `ai_skate_towards`, `ai_choose_direction`, `ai_near_carrier_check`, `ai_try_check`) | 600 random moments of play (both teams, the puck loose or carried, the referee, the team records, forty globals) | all 17 records, the globals, the team records, the calls, the seed |
 
 All of them match. The comparisons found and fixed, among others: the distance (the original's is
 |dx| / cos of the vector's angle from its arctangent and sine tables, not an octagonal estimate), the
@@ -142,7 +144,7 @@ change during play (the original changes lines there only while the play is stop
 
 The workflow `.github/workflows/nhl.yml` runs, on every change of the tools, the port or the game files:
 the decoders of `tools/nhl/formats.py` against the game's own (`tools/nhl/test_pack.py`), `golden.py`
-again (its output must equal the committed data), the Godot tests on the committed OPL2 library, and the
+again (its output must equal the committed data, `tools/nhl/golden_check.py`), the Godot tests on the committed OPL2 library, and the
 library built from source with the tests again.
 
 ## Not ported yet, and known simplifications

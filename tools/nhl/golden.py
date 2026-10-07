@@ -32,6 +32,9 @@
 #
 #   python3 tools/nhl/golden.py re/nhl_hockey godot/nhl_hockey/tests/golden
 #
+# The large files are written compressed (.json.gz); tools/nhl/golden_check.py compares two sets.
+#
+import gzip
 import json
 import os
 import random
@@ -1613,10 +1616,19 @@ def main():
     os.makedirs(outdir, exist_ok=True)
     for name, data in (('rng', rng_cases(exe)), ('fm_driver', fm_cases(exe, gamedir)),
                        ('pc_speaker', pc_cases(exe, gamedir)), ('physics', physics_cases(exe)), ('ai', ai_cases(exe))):
-        path = os.path.join(outdir, name + '.json')
-        with open(path, 'w') as f:
-            json.dump(data, f, separators=(',', ':'), sort_keys=True)
-            f.write('\n')
+        text = (json.dumps(data, separators=(',', ':'), sort_keys=True) + '\n').encode()
+        if len(text) > 1 << 20:
+            # the large ones compressed (the test reads both; tools/nhl/golden_check.py compares the
+            # contents, so that another zlib cannot make a difference)
+            path = os.path.join(outdir, name + '.json.gz')
+            with open(path, 'wb') as f:
+                f.write(gzip.compress(text, compresslevel=9, mtime=0))
+            if os.path.exists(path[:-3]):
+                os.remove(path[:-3])
+        else:
+            path = os.path.join(outdir, name + '.json')
+            with open(path, 'wb') as f:
+                f.write(text)
         print('wrote', path)
 
 
