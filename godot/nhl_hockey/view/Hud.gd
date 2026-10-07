@@ -100,13 +100,15 @@ func _draw() -> void:
 			draw_texture(line_labels[line], Vector2(0x2a if t == 0 else 0xfb, HUD_Y + 0x14))
 	for t in 2:
 		var team := sim.teams[t]
-		var penalties := not team.box_list().is_empty()
+		# draw_clock: the line change prompt shows the lines even with players in the box
+		var penalties := not team.box_list().is_empty() and not team.line_change_ui
+		var shown := _box_line(team)
 		var panel: Texture2D = null
 		if penalties:
 			panel = panels["homp" if t == 0 else "visp"]
-		elif team.current_line < 4:
+		elif shown < 4:
 			panel = panels["hlin" if t == 0 else "vlin"]
-		elif team.current_line < 6:
+		elif shown < 6:
 			panel = panels["hpp" if t == 0 else "vpp"]
 		else:
 			panel = panels["hpk" if t == 0 else "vpk"]
@@ -125,23 +127,38 @@ func _draw() -> void:
 	_draw_period()
 	_draw_message()
 
+## the line whose panel draw_line_box shows: the line picked at the open line change prompt
+## (lc_line), else the current one
+func _box_line(team: Team) -> int:
+	return sim.lc_line[team.index] if team.line_change_ui else team.current_line
+
 ## draw_line_box: two bars per line (left and right of the line number), 20 pixels = full energy
-## (line_avg_energy / 200), the current line in another colour; the power play and penalty
-## killing panels show their two units at the second and third row
+## (line_avg_energy / 200), the rest of the 20 pixels in the background colour; the current line in
+## another colour; at the line change prompt the line picked blinks (lc_show) on a light ground.
+## The power play and penalty killing panels show their two units at the second and third row.
 func _draw_line_bars(team: Team, x0: int) -> void:
+	var shown := _box_line(team)
 	var first := 0
 	var last := 4
 	var y := HUD_Y + 8
-	if team.current_line >= 4:
-		first = 4 if team.current_line < 6 else 6
+	if shown >= 4:
+		first = 4 if shown < 6 else 6
 		last = first + 2
 		y = HUD_Y + 14
 	for line in range(first, last):
 		var energy := Lines.line_avg_energy(sim, team, line)
 		var w := clampi(energy / 200, 0, 20)
-		var c := palette.colors[0x21] if line == team.current_line else palette.colors[0x67]
+		var c: Color = palette.colors[0x67]
+		var ground: Color = palette.colors[0]
+		if line == shown and sim.lc_show[team.index] != 0:
+			c = palette.colors[0x61]
+			ground = palette.colors[7]
+		elif line == team.current_line:
+			c = palette.colors[0x21]
 		draw_rect(Rect2(x0 + 0x15 - w, y, w, 3), c)
 		draw_rect(Rect2(x0 + 0x20, y, w, 3), c)
+		draw_rect(Rect2(x0 + 1, y, 0x14 - w, 3), ground)
+		draw_rect(Rect2(x0 + 0x20 + w, y, 0x14 - w, 3), ground)
 		y += 6
 
 ## draw_energy_bar: the energy of the players on the ice (0..8 pixels)

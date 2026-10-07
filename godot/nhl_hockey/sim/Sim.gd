@@ -319,6 +319,15 @@ func summary_init(month: int, day: int) -> void:
 	gs_records.clear()
 	gs_trailer = PackedByteArray([4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
+## gsummary_flush (0x61b85, at the faceoff): the events of the stoppage go into the summary (the
+## port appends them as they happen; a hook)
+func summary_flush() -> void:
+	stubbed("gsummary_flush", [])
+
+## center_mouse (0x50ade, at the faceoff): the mouse pointer back to the centre (a hook)
+func center_mouse() -> void:
+	stubbed("center_mouse", [])
+
 ## gsummary_append_record: an event of the game (the trailer stays the last record)
 func summary_append(rec: PackedByteArray) -> void:
 	rec.resize(11)
@@ -765,6 +774,10 @@ func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) ->
 		puck.frame = 0x18a
 	update_camera()
 	replay.record(self)
+	# game_loop: a period over (end_period_flag, ai_ref_pickup_puck) ends after this frame, after
+	# the intermission (end_of_period)
+	if period_over and not stars_running and not match_over:
+		Rules.end_of_period(self)
 
 ## first loop of sim_update_players: distance/direction of every skater to the puck and the nearest
 ## skater of each team (team.nearest_slot)

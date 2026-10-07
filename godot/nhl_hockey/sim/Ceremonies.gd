@@ -220,24 +220,20 @@ static func game_over_check(sim: Sim, home: int, away: int) -> bool:
 	var n := League.series_count(po, 0) if sim.cup_series_games <= 0 else sim.cup_series_games
 	return League.series_winner(po, 0, n) >= 0
 
-## end_of_period (0x5dea6): the next period, the overtime (playoffs: as long as needed, the teams
-## change ends every time; regular season: once, without changing ends) or the three stars
-static func next_period(sim: Sim) -> void:
-	sim.period_over = true
-	if sim.game_over:
+## period_cleanup (0x5de70, after end_of_period): the game is over after the last period
+## (set_game_over: the three stars), otherwise the next period starts (period_reset_entities,
+## period_init)
+static func period_cleanup(sim: Sim) -> void:
+	if sim.stubbed("period_cleanup", []):
+		return
+	if sim.period == 4:
 		if not sim.stars_running and not sim.match_over:
 			begin_three_stars(sim)
 		return
-	var p := sim.period + 1
-	var switch := true
-	if p == 3 and regular_season(sim):
-		switch = false
-	elif p > 3:
-		p = 3
 	Rules.clear_infractions(sim)
 	if not sim.no_stats:
 		sim.summary_close_period()
-	sim.start_period(p, switch)
+	sim.start_period(sim.period, false)
 	sim.intermission_pending = true
 	# game_loop: the scoreboard of the intermission with the organ
 	InfoPanel.music(sim, 0)

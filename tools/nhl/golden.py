@@ -1293,6 +1293,7 @@ AI_HANDLERS = 0xc9161                         # ai_state_handlers[state]
 CLOCK = 0xc90dc                               # clock_seconds, clock_sub
 WHISTLE_TIMER_W = 0xc90d2
 CAMERA_TARGET = 0xc90ac
+CAMERA_XY = 0xc9098                           # camera x, y
 DRAW_LINE_INDICATOR = 0x14afe
 BREAKAWAY_LANE = 0xcc130                       # ai_breakaway: lane x, target y, trigger y, waypoint, side, heading
 AI_GLOBALS = (('game_flags', GAME_FLAGS, 1), ('stop_flags', STOP_FLAGS, 1), ('misc_flags', MISC_FLAGS, 1),
@@ -1338,7 +1339,9 @@ AI_GLOBALS = (('game_flags', GAME_FLAGS, 1), ('stop_flags', STOP_FLAGS, 1), ('mi
               ('lc_bar0', 0xcbc52, -2), ('lc_bar1', 0xcbc54, -2), ('penalty_shot_clock', 0xcc120, -4),
               ('goal_flags', 0xe9ab0, -2), ('puck_in_net', PUCK_IN_NET, 1), ('penalty_shot_roster', 0xcc100, -4),
               ('penalty_shot_spot_x', PENALTY_SHOT_SPOT, -4), ('penalty_shot_spot_y', PENALTY_SHOT_SPOT + 4, -4),
-              ('series_announce', 0xccca0, 1))
+              ('series_announce', 0xccca0, 1), ('camera_x', CAMERA_XY, -2), ('camera_y', CAMERA_XY + 2, -2),
+              ('camera_lead', 0xc90b0, -2), ('faceoff_digit', 0xe0398, -2), ('faceoff_side0', 0xe0392, -2),
+              ('faceoff_side1', 0xe0396, -2), ('fade_in', 0xcbec4, -2), ('clip_frame', 0xcbece, -2))
 SAY_GOAL = 0x59ad0                             # stubbed: the announcer says the goal (the goal_call bytes)
 GOAL_MILESTONE_CHECK = 0x62807                 # stubbed: its deferred call is empty in this build
 RECORD_PENALTY = 0x624b9                       # stubbed (the event log, the summary, the panel, the announcer); ret 0xc
@@ -1508,7 +1511,9 @@ def ai_world(emu, rnd, base, tables):
               'tick24': rnd.randrange(-1, 0x18), 'tick_toggle': rnd.randrange(2), 'excitement_peak': rnd.randrange(200),
               'excitement_sum': rnd.randrange(100000), 'excitement_samples': rnd.randrange(1000), 'lc_bar0': 0, 'lc_bar1': 0,
               'penalty_shot_clock': rnd.choice((0, 1, 1000)), 'goal_flags': 1, 'puck_in_net': 0, 'penalty_shot_roster': -1,
-              'penalty_shot_spot_x': 0, 'penalty_shot_spot_y': 0, 'series_announce': 0})
+              'penalty_shot_spot_x': 0, 'penalty_shot_spot_y': 0, 'series_announce': 0, 'camera_x': 0, 'camera_y': 0,
+              'camera_lead': 0, 'faceoff_digit': 7, 'faceoff_side0': 0x8800 - 0x10000, 'faceoff_side1': 0xa000 - 0x10000, 'fade_in': 0,
+              'clip_frame': -1})
     for n, a, sz in AI_GLOBALS:
         emu.write(a, struct.pack('<' + _FMT[sz], g[n] if sz < 0 else g[n] & ((1 << (8 * sz)) - 1)))
     emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
@@ -1868,6 +1873,7 @@ def ai_cases(exe):
     for h in fixed_stubs:
         emu.uc.hook_del(h)
     out['goals'] = goals_cases(emu, rnd, base, tables, calls, out['base'], speech)
+    out['faceoffs'] = pface_cases(emu, rnd, base, tables, calls, out['base'], speech)
     return out
 
 
@@ -2275,6 +2281,161 @@ def goals_cases(emu, rnd, base, tables, calls, base_fields, speech):
             emu.write(a, b'\0' * n_)
         emu.write(INFRACTION_QUEUE, b'\0' * 64)
         emu.write(POS_LISTS, b'\xff' * (11 * 0x32))
+        for t_ in TEAM_RECORDS:
+            emu.write(t_ + 0x44, b'\0')
+    for h in stubs:
+        emu.uc.hook_del(h)
+    for c in cases:
+        c['before'] = {s_: {k_: v for k_, v in b.items() if base_fields[int(s_)].get(k_) != v} for s_, b in c['before'].items()}
+        c['after'] = {s_: a for s_, a in c['after'].items() if a}
+    return cases
+
+
+PFACE_ROUTINES = {'ai_puck_faceoff': 0x516e1, 'ai_puck_faceoff2': 0x51bdb, 'end_of_period': 0x5dea6}
+STOP_CROWD_LOOP = 0x59981                      # stubbed: the organ stops
+CENTER_MOUSE = 0x50ade                         # stubbed
+GSUMMARY_FLUSH = 0x61b85                       # stubbed: the stoppage's events into the game summary
+PERIOD_CLEANUP = 0x5de70                       # stubbed: the next period or the end of the game
+FREEMEM = 0x8d2d8                              # stubbed: the scoreboard clip's memory
+
+
+def pface_cases(emu, rnd, base, tables, calls, base_fields, speech):
+    '''the faceoff after a stoppage: ai_puck_faceoff (the end of a period or of the game, an
+    overtime goal, a delayed penalty called, a penalty shot, the users back on the ice after one,
+    the line change prompts and their countdowns, the CPU coaches' lines) and ai_puck_faceoff2
+    (the wait for the referee, the panel and the players, skipped, after an injury, at the opening
+    faceoff; the players placed at the dot by their line slots, the goalies shaded, a penalty shot
+    started; the countdown and the drop); end_of_period (the next period, overtime, the end)'''
+    names = list(PFACE_ROUTINES)
+    weights = {'ai_puck_faceoff': 5, 'ai_puck_faceoff2': 6, 'end_of_period': 2}
+    cup = {'v': 0}
+    stubs = [emu.stub(GAME_OVER_CHECK, lambda eax: (calls.append(['game_over_check', s32(eax & 0xffffffff),
+                                                                  s32(emu.uc.reg_read(UC_X86_REG_EDX))]), cup['v'])[1]),
+             emu.stub(STOP_CROWD_LOOP, lambda eax: calls.append(['stop_crowd_loop'])),
+             emu.stub(CENTER_MOUSE, lambda eax: calls.append(['center_mouse'])),
+             emu.stub(GSUMMARY_FLUSH, lambda eax: calls.append(['gsummary_flush'])),
+             emu.stub(PERIOD_CLEANUP, lambda eax: calls.append(['period_cleanup'])),
+             emu.stub(FREEMEM, lambda eax: None)]
+    order_names = [n for n in names for _ in range(weights[n])]
+    cases = []
+    for k in range(100 * len(order_names)):
+        name = order_names[k % len(order_names)]
+        g, teams, carrier = ai_world(emu, rnd, base, tables)
+        g['speech_busy'] = 0
+        speech['busy'] = 0
+        cup['v'] = rnd.choice((0, 0, 1))
+        g['user1_team'] = rnd.choice((0, 1, 1, 2))
+        g['user2_team'] = rnd.choice((0, 0, 1, 2))
+        for u in (1, 2):
+            t_ = g['user%d_team' % u]
+            g['user%d_slot' % u] = rnd.choice((-1, (t_ - 1) * 6 + rnd.randrange(6))) if t_ else -1
+        g['penalty_box_mode'] = rnd.choice((0, 0, 1))
+        g['penalty_shot_phase'] = rnd.choice((0, 0, 0, 1))
+        g['penalty_shot_setup'] = rnd.choice((0, 0, 1))
+        g['penalty_shot_slot'] = rnd.randrange(12)
+        g['penalty_shot_team'] = 1 if g['penalty_shot_slot'] > 5 else 0
+        g['clip'] = -1
+        for ti, t in enumerate(TEAM_RECORDS):
+            f = teams[ti]
+            f['goals'] = rnd.randrange(4)
+            f['skaters'] = rnd.choice((6, 6, 5, 4))
+            f['goalie_request'] = rnd.choice((0, 0, 1, -256, -16))
+            f['flags'] = rnd.choice((0, 0, 2, 0x10, 8))
+            for n_, o, sz in AI_TEAM_FIELDS:
+                emu.write(t + o, struct.pack('<' + _FMT[sz], f[n_] if sz < 0 else f[n_] & ((1 << (8 * sz)) - 1)))
+        # players: line change requests, arrived at the faceoff (timer_b -100)
+        arrived = rnd.random() < 0.6
+        for slot in range(12):
+            rec = bytearray(emu.read(ENTITIES + slot * 0x80, 0x80))
+            if rnd.random() < 0.15:
+                rec[0x45] |= 8
+            if arrived or rnd.random() < 0.7:
+                struct.pack_into('<h', rec, 0x2e, -100)
+            emu.write(ENTITIES + slot * 0x80, rec)
+        args = []
+        regs = {}
+        puck = bytearray(emu.read(PUCK, 0x80))
+        if name == 'ai_puck_faceoff':
+            g['game_flags'] = (g['game_flags'] & ~0x49) | rnd.choice((1, 1, 1, 1, 0x41, 9))
+            g['period'] = rnd.choice((0, 1, 2, 3, 3))
+            if rnd.random() < 0.15:
+                g['clock_seconds'] = 0
+                g['clock_sub'] = 0
+            carrier = rnd.choice((-1, 16, rnd.randrange(12)))
+            entered = rnd.random() < 0.7
+            put_fields(puck, {'state_sp': 0, 'stack': 0x1b1b1b1b, 'stack2': 0x1b1b1b1b,
+                              'flags': (puck[0x44] & ~2) | (2 if entered else 0),
+                              'timer_a': rnd.choice((-1, -0x100, 0, 1, 3, 0x258)), 'target_x': rnd.randrange(12),
+                              'target_y': rnd.randrange(12), 'want_dir': rnd.choice((0, 1, 3, 0x78)),
+                              'dir_timer': rnd.choice((-1, -1, 0, 1))})
+            regs = {'eax': PUCK}
+        elif name == 'ai_puck_faceoff2':
+            g['game_flags'] = (g['game_flags'] & ~0x49) | 1
+            g['period'] = rnd.choice((0, 0, 1, 2, 3))
+            if rnd.random() < 0.15:
+                g['clock_seconds'] = g['period_length']
+                g['clock_sub'] = 0
+            g['demo'] = rnd.choice((0, 0, 0, 1))
+            g['skip_wait'] = rnd.choice((0, 0, 0, 1))
+            g['injury_stoppage'] = rnd.choice((0, 0, 0, 1))
+            g['ref_phase'] = rnd.choice((-1, -1, -1, 0))
+            g['panel'] = rnd.choice((-1, -1, -1, 0x20))
+            g['clip'] = rnd.choice((-1, -1, 2))
+            entered = rnd.random() < 0.6
+            put_fields(puck, {'state_sp': 0, 'stack': 0x1c1c1c1c, 'stack2': 0x1c1c1c1c,
+                              'flags': (puck[0x44] & ~2) | (2 if entered else 0),
+                              'timer_a': rnd.choice((-1, 0, 1, 2, 0x11, 0x12, 0x16, rnd.randrange(300))),
+                              'timer_b': rnd.choice((1, 2, 500))})
+            regs = {'eax': PUCK}
+        else:
+            g['period'] = rnd.choice((0, 1, 2, 2, 3, 3))
+            g['period_over'] = 1
+            g['settings2'] = rnd.choice((0, 2))
+        emu.write(PUCK, puck)
+        emu.write(PUCK + 0x42, bytes([carrier & 0xff]))
+        g['infraction0'] = 0
+        for n_, a, sz in AI_GLOBALS:
+            emu.write(a, struct.pack('<' + _FMT[abs(sz)], g[n_] & ((1 << (8 * abs(sz))) - 1)))
+        emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
+        emu.write(PERIOD_NUM, struct.pack('<h', g['period'] + 1))
+        emu.write(PANEL_LINE4, b'\0' * 0x20)
+        emu.write(INFRACTION_QUEUE, b'\0' * 64)
+        seed = rnd.getrandbits(32)
+        emu.write(SEED, struct.pack('<I', seed))
+        scratch_ac = rnd.getrandbits(32)
+        scratch = [rnd.getrandbits(16), rnd.getrandbits(16)]
+        emu.write(SCRATCH[2], struct.pack('<I', scratch_ac))
+        emu.write(SCRATCH[0], struct.pack('<H', scratch[0]))
+        emu.write(SCRATCH[1], struct.pack('<H', scratch[1]))
+        befores = {str(s_): dict(entity_fields(emu, s_), prev=list(struct.unpack('<iii', emu.read(ENTITIES + s_ * 0x80 + 0x74, 12))))
+                   for s_ in range(17)}
+        for ti, t in enumerate(TEAM_RECORDS):
+            teams[ti].update({n_: struct.unpack('<' + _FMT[sz], emu.read(t + o, abs(sz)))[0] for n_, o, sz in AI_TEAM_FIELDS})
+        order = draw_order(emu)
+        case = {'routine': name, 'args': args, 'globals': g, 'teams': teams, 'carrier': carrier, 'seed': seed,
+                'scratch_ac': scratch_ac, 'scratch': scratch, 'infq': [0] * 64, 'cup': cup['v'], 'order': order}
+        if name == 'ai_puck_faceoff2':
+            # the ratings of the players (faceoff_resolve: the centres' faceoff rating, byte 0x13)
+            ratings = [[[rnd.randrange(10) for _ in range(20)] for _ in range(25)] for _ in range(2)]
+            for ti in range(2):
+                emu.write(PLAYER_RATINGS + ti * 0x1f4, bytes(sum(ratings[ti], [])))
+            case['faceoff_ratings'] = [[ratings[ti][r][0x13] for r in range(25)] for ti in range(2)]
+        del calls[:]
+        emu.call(PFACE_ROUTINES[name], **regs)
+        after = ai_record(emu)
+        la = {'infq': list(emu.read(INFRACTION_QUEUE, 64)),
+              'panel4': emu.read(PANEL_LINE4, 0x20).split(b'\0')[0].decode('latin-1'),
+              'scratch': list(struct.unpack('<hh', emu.read(SCRATCH[0], 2) + emu.read(SCRATCH[1], 2))),
+              'scratch_ac': struct.unpack('<I', emu.read(SCRATCH[2], 4))[0]}
+        case.update({'before': befores, 'calls': [list(c) for c in calls],
+                     'after': {str(s_): {k_: v for k_, v in entity_fields(emu, s_).items() if befores[str(s_)].get(k_) != v}
+                               for s_ in range(17)},
+                     'world_after': after, 'lines_after': la})
+        cases.append(case)
+        for a, n_ in ((GAME_FLAGS, 1), (OPTION_FLAGS, 4), (STOP_FLAGS, 2), (MISC_FLAGS, 4), (BREAKAWAY_FLAG, 4),
+                      (PENALTY_SHOT_ACTIVE, 4), (PENALTY_SHOT_SETUP, 4), (PENALTY_SHOT_PHASE, 4)):
+            emu.write(a, b'\0' * n_)
+        emu.write(INFRACTION_QUEUE, b'\0' * 64)
         for t_ in TEAM_RECORDS:
             emu.write(t_ + 0x44, b'\0')
     for h in stubs:
@@ -2775,6 +2936,35 @@ def physics_cases(exe):
     return out
 
 
+def write_golden(outdir, name, data):
+    text = (json.dumps(data, separators=(',', ':'), sort_keys=True) + '\n').encode()
+    if len(text) > 1 << 20:
+        # the large ones compressed (the test reads both; tools/nhl/golden_check.py compares the
+        # contents, so that another zlib cannot make a difference)
+        path = os.path.join(outdir, name + '.json.gz')
+        with open(path, 'wb') as f:
+            f.write(gzip.compress(text, compresslevel=9, mtime=0))
+        if os.path.exists(path[:-3]):
+            os.remove(path[:-3])
+    else:
+        path = os.path.join(outdir, name + '.json')
+        with open(path, 'wb') as f:
+            f.write(text)
+        if os.path.exists(path + '.gz'):
+            os.remove(path + '.gz')
+    print('wrote', path)
+
+
+def write_ai(outdir, data):
+    '''the AI cases one file per group (ai_GROUP.json[.gz], the base records in ai_base): a change
+    to one group leaves the others' files as they are'''
+    for group, cases in data.items():
+        write_golden(outdir, 'ai_' + group, {group: cases})
+    for n in ('ai.json', 'ai.json.gz'):
+        if os.path.exists(os.path.join(outdir, n)):
+            os.remove(os.path.join(outdir, n))
+
+
 def main():
     if len(sys.argv) != 3:
         print(__doc__ or 'golden.py GAMEDIR OUTDIR')
@@ -2783,21 +2973,9 @@ def main():
     exe = os.path.join(gamedir, 'HOCKEY.EXE')
     os.makedirs(outdir, exist_ok=True)
     for name, data in (('rng', rng_cases(exe)), ('fm_driver', fm_cases(exe, gamedir)),
-                       ('pc_speaker', pc_cases(exe, gamedir)), ('physics', physics_cases(exe)), ('ai', ai_cases(exe))):
-        text = (json.dumps(data, separators=(',', ':'), sort_keys=True) + '\n').encode()
-        if len(text) > 1 << 20:
-            # the large ones compressed (the test reads both; tools/nhl/golden_check.py compares the
-            # contents, so that another zlib cannot make a difference)
-            path = os.path.join(outdir, name + '.json.gz')
-            with open(path, 'wb') as f:
-                f.write(gzip.compress(text, compresslevel=9, mtime=0))
-            if os.path.exists(path[:-3]):
-                os.remove(path[:-3])
-        else:
-            path = os.path.join(outdir, name + '.json')
-            with open(path, 'wb') as f:
-                f.write(text)
-        print('wrote', path)
+                       ('pc_speaker', pc_cases(exe, gamedir)), ('physics', physics_cases(exe))):
+        write_golden(outdir, name, data)
+    write_ai(outdir, ai_cases(exe))
 
 
 if __name__ == '__main__':

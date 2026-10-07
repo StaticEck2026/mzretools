@@ -600,6 +600,14 @@ class RecChip extends Opl2:
 		super.write(reg, val)
 
 static func _golden(name: String) -> Dictionary:
+	if name == "ai":
+		# golden.py write_ai: one file per group
+		var merged := {}
+		for f in DirAccess.get_files_at("res://tests/golden"):
+			if f.begins_with("ai_") and (f.ends_with(".json") or f.ends_with(".json.gz")):
+				var part := _golden(f.trim_suffix(".gz").trim_suffix(".json"))
+				merged.merge(part)
+		return merged
 	var text := ""
 	var gz := "res://tests/golden/%s.json.gz" % name
 	if FileAccess.file_exists(gz):
@@ -699,7 +707,7 @@ func golden_tests(gf: Node) -> void:
 	physics_golden()
 	ai_golden()
 
-## the AI state handlers (ai.json): a random moment of play, one entity in a state, its handler run
+## the AI state handlers (ai_*.json): a random moment of play, one entity in a state, its handler run
 func ai_golden() -> void:
 	var data := _golden("ai")
 	if data.is_empty():
@@ -710,7 +718,7 @@ func ai_golden() -> void:
 	for group in data:
 		if group == "base":
 			continue
-		if group == "lines" or group == "controls" or group == "rules" or group == "goals":
+		if group == "lines" or group == "controls" or group == "rules" or group == "goals" or group == "faceoffs":
 			counts.append(_lines_golden(data[group], base, group))
 			continue
 		var sim := Sim.new()
@@ -752,7 +760,7 @@ func ai_golden() -> void:
 		counts.append("%s %d / %d (%s)" % [group, ok, ok + bad, ", ".join(parts)])
 	print("golden AI: ", "; ".join(counts))
 
-## the line change routines (ai.json "lines"): called directly on random teams
+## the line change routines (ai_lines.json): called directly on random teams
 func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 	var sim := Sim.new()
 	sim.stubs = {"play_sfx": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
@@ -764,10 +772,15 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 	if group == "rules" or group == "goals":
 		sim.stubs.erase("queue_infraction")
 		sim.stubs.erase("maybe_queue_infraction")
-	if group == "goals":
+	if group == "goals" or group == "faceoffs":
 		for n in ["setup_faceoff", "injury_check", "update_effects"]:
 			sim.stubs.erase(n)
 		for n in ["draw_score_digits", "game_over_check"]:
+			sim.stubs[n] = true
+	if group == "faceoffs":
+		sim.stubs.erase("queue_infraction")
+		sim.stubs.erase("maybe_queue_infraction")
+		for n in ["stop_crowd_loop", "center_mouse", "gsummary_flush", "period_cleanup"]:
 			sim.stubs[n] = true
 	var per := {}
 	var ok := 0
@@ -811,6 +824,9 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 			_goal_stats_set(sim, c["stats"])
 		if c.has("crowd"):
 			_crowd_set(sim, c["crowd"])
+		if group == "faceoffs":
+			for t in 2:
+				sim.teams[t].info = _ratings_info(c["faceoff_ratings"][t]) if c.has("faceoff_ratings") else null
 		if not li.is_empty():
 			var req: Array = li["req"]
 			for i in 6:
@@ -873,6 +889,9 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 			"breakaway_foul": ret = 1 if Rules.breakaway_foul(sim, sim.entities[a0]) else 0
 			"injury_check": ret = 1 if Rules.injury_check(sim, sim.entities[a0]) else 0
 			"update_effects": Rules.update_effects(sim)
+			"ai_puck_faceoff": AI.puck_faceoff(sim, sim.puck)
+			"ai_puck_faceoff2": AI.puck_faceoff2(sim, sim.puck)
+			"end_of_period": Rules.end_of_period(sim)
 		var diff := _ai_world_diff(sim, c, base)
 		var la: Dictionary = c["lines_after"]
 		if la.has("infq"):
@@ -966,6 +985,26 @@ static func _goal_stats_get(sim: Sim) -> Array:
 		for g in 3:
 			out[2 + t].append(Array(sim.teams[t].goalie_stats[g]))
 	return out
+
+## a roster of placeholder players with their faceoff ratings (byte 0x13 of `player_ratings`, all
+## faceoff_resolve reads) and three goalies
+static func _ratings_info(ratings: Array) -> Database.TeamInfo:
+	var info := Database.TeamInfo.new()
+	for i in 25:
+		var p := Database.Player.new()
+		p.ratings = PackedByteArray()
+		p.ratings.resize(0x14)
+		p.ratings[0x13] = int(ratings[i])
+		p.roster_idx = i
+		info.skaters.append(p)
+	for i in 3:
+		var p := Database.Player.new()
+		p.goalie = true
+		p.ratings = PackedByteArray()
+		p.ratings.resize(0x10)
+		p.roster_idx = 25 + i
+		info.goalies.append(p)
+	return info
 
 ## the crowd figures (crowd_figures: 20 x [spot, timer, counter, frame, x, y, sequence, count]) and
 ## the spots in use (the bits of crowd_spots_busy, 9 words)
@@ -1210,6 +1249,13 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	sim.penalty_shot_spot = Vector2i(int(g.get("penalty_shot_spot_x", 0)), int(g.get("penalty_shot_spot_y", 0)))
 	sim.series_announce = int(g.get("series_announce", 0)) != 0
 	sim.cup_final = int(c.get("cup", 0)) != 0
+	sim.camera_x = int(g.get("camera_x", 0))
+	sim.camera_y = int(g.get("camera_y", 0))
+	sim.camera_offset_y = int(g.get("camera_lead", 0))
+	sim.faceoff_digit = int(g.get("faceoff_digit", 7))
+	sim.faceoff_side = [int(g.get("faceoff_side0", 0x8800)) & 0xffff, int(g.get("faceoff_side1", 0xa000)) & 0xffff]
+	sim.fade_in = int(g.get("fade_in", 0)) != 0
+	sim.clip_frame = int(g.get("clip_frame", -1))
 	if c.has("infq"):
 		var q: Array = c["infq"]
 		for i in 64:
@@ -1324,7 +1370,10 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 		"excitement_samples": sim.excitement_samples, "lc_bar0": sim.lc_bar[0], "lc_bar1": sim.lc_bar[1],
 		"penalty_shot_clock": sim.penalty_shot_clock, "goal_flags": sim.goal_flags, "puck_in_net": 1 if sim.puck_in_net else 0,
 		"penalty_shot_roster": sim.penalty_shot_roster, "penalty_shot_spot_x": sim.penalty_shot_spot.x,
-		"penalty_shot_spot_y": sim.penalty_shot_spot.y, "series_announce": 1 if sim.series_announce else 0}
+		"penalty_shot_spot_y": sim.penalty_shot_spot.y, "series_announce": 1 if sim.series_announce else 0,
+		"camera_x": sim.camera_x, "camera_y": sim.camera_y, "camera_lead": sim.camera_offset_y,
+		"faceoff_digit": sim.faceoff_digit, "faceoff_side0": Entity.to_s16(sim.faceoff_side[0]),
+		"faceoff_side1": Entity.to_s16(sim.faceoff_side[1]), "fade_in": 1 if sim.fade_in else 0, "clip_frame": sim.clip_frame}
 
 static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 	var diff := []
@@ -2438,6 +2487,8 @@ func line_change_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 	else:
 		print("CPU line change: line %d, dressed %s" % [away.current_line, str(cpu_after)])
 	# fatigue: skaters lose energy during play, benched players recover
+	for i in 120:
+		sim.step(8, 8, 0, 0)
 	var tired := false
 	for r in 25:
 		if away.entity_of[r] == -1 and away.energy[r] < 0x1000:
@@ -2622,7 +2673,8 @@ func match_rules_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 		if sim.stoppage_timer < 0x13e or not sim.injury_stoppage:
 			fail("injury stoppage timer %d" % sim.stoppage_timer)
 		var cut := false
-		for i in 1200:
+		# (the user's line change prompt at the faceoff runs its 0x258 steps without a button)
+		for i in 2400:
 			sim.step(8, 8, 0, 0)
 			if sim.fade_in:
 				cut = true
@@ -2730,6 +2782,8 @@ func ceremony_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 	sim.teams[0].player_stats[10][Team.ST_ASSISTS] = 2
 	sim.teams[1].goals = 1
 	sim.teams[1].player_stats[3][Team.ST_GOALS] = 1
+	# (the game ends in period 4: the last home carrier, 9 when the clock runs out, is credited
+	# with the game winner, 2 points more in the order of the stars)
 	var star_lines := []
 	for i in 16000:
 		sim.step(8, 8, 0, 0)
@@ -2737,7 +2791,7 @@ func ceremony_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 			star_lines.append(sim.panel_text[1])
 		if sim.match_over:
 			break
-	if not sim.match_over or str(sim.stars) != "[[0, 7], [0, 10], [1, 3]]" or star_lines != ["3rd Star", "2nd Star", "1st Star"]:
+	if not sim.match_over or str(sim.stars) != "[[0, 7], [0, 9], [0, 10]]" or star_lines != ["3rd Star", "2nd Star", "1st Star"]:
 		fail("three stars: over %s stars %s shown %s" % [sim.match_over, str(sim.stars), str(star_lines)])
 	else:
 		print("three stars: ", str(sim.stars))
@@ -2806,8 +2860,10 @@ func _dressed(sim: Sim, t: int) -> Array:
 func replay_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 	var sim := Sim.new()
 	sim.set_teams(bos, det)
-	run_until_play(sim, 1200)
+	run_until_play(sim, 2400)
 	var r := sim.replay
+	# (the ring filled up during the line change prompt of the opening faceoff)
+	r.reset()
 	var before := r.frame_count()
 	for i in 40:
 		sim.step(8, 8, 0, 0)

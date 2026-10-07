@@ -768,6 +768,12 @@ static func user_line_change_prompt(sim: Sim, puck: Entity, e: Entity) -> void:
 		puck.timer_a = 0x258
 		puck.target_x = e.slot
 
+## dress_line_if_start (0x5125f): at the opening faceoff of the game (not in a demo) the line of
+## team t is dressed at once
+static func dress_line_if_start(sim: Sim, t: int) -> void:
+	if not sim.demo and sim.period == 0 and sim.clock_seconds == sim.period_length and sim.clock_sub == 0:
+		dress_line(sim, sim.teams[t])
+
 ## cpu_line_change_select (0x50975): the line chosen at the prompt (place scratch_ac) for the team
 ## of `e`: the player is the user's again, the prompt closes and the line comes on
 static func cpu_line_change_select(sim: Sim, e: Entity) -> void:

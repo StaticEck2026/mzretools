@@ -867,15 +867,6 @@ static func start_penalty_shot(sim: Sim) -> void:
 	sim.penalty_shot_clock = 1000
 	clear_infractions(sim)
 
-## the goalie of the team defending against the penalty shot
-static func defending_goalie(sim: Sim) -> int:
-	var defending := 1 - sim.penalty_shot_team
-	for i in 6:
-		var e := sim.entities[sim.teams[defending].first_slot + i]
-		if e.line_slot == 0:
-			return e.slot
-	return -1
-
 ## end_penalty_shot (0x64439): goal, save, miss, timeout: back to the faceoff spot of the foul
 static func end_penalty_shot(sim: Sim) -> void:
 	if not sim.penalty_shot or sim.penalty_shot_phase == 0:
@@ -1219,9 +1210,55 @@ static func setup_faceoff(sim: Sim) -> void:
 	sim.excitement = Entity.to_s16(sim.excitement + 0x28)
 	queue_infraction(sim, sim.entities[first + 6], INF_PERIOD_END)
 
-## called by the puck faceoff handler when a period ended: advance to the next one
-static func next_period(sim: Sim) -> void:
-	Ceremonies.next_period(sim)
+## end_period_flag (0x5ddbc, from ai_puck_faceoff when the clock ran out or the game is over):
+## game_loop ends the period after this step (end_of_period)
+static func end_period_flag(sim: Sim) -> void:
+	if not sim.period_over:
+		sim.period_over = true
+
+## end_of_period (0x5dea6, from game_loop after the intermission): the line change prompts and
+## bars are gone; the teams change ends and the next period begins. After the third period a tie
+## goes into overtime (period 3: in the play-offs as often as needed, ends changed each time; a
+## regular season game once, without changing ends); otherwise, or after an overtime, the game is
+## over (period 4). Then period_cleanup.
+static func end_of_period(sim: Sim) -> void:
+	sim.lc_bar[1] = 0
+	sim.lc_bar[0] = 0
+	sim.lc_show[1] = 0
+	sim.lc_show[0] = 0
+	sim.lc_line[1] = -1
+	sim.lc_line[0] = -1
+	sim.teams[1].line_change_ui = false
+	sim.teams[0].line_change_ui = false
+	sim.ends_switched = not sim.ends_switched
+	sim.period += 1
+	if sim.period >= 3:
+		if sim.period > 3:
+			sim.period = 3
+			if Ceremonies.regular_season(sim):
+				sim.period = 4
+		elif Ceremonies.regular_season(sim):
+			sim.ends_switched = not sim.ends_switched
+		sim.scratch_a = Entity.to_s16(sim.teams[0].goals - sim.teams[1].goals)
+		if sim.scratch_a != 0:
+			sim.period = 4
+	Ceremonies.period_cleanup(sim)
+
+## reset_players_for_faceoff (0x5e01a): nobody is offside; the players on the ice stand (the
+## glide animation), with no pick-up delay or hit strength, and keep only their side and attack
+## direction flags (and the state just entered)
+static func reset_players_for_faceoff(sim: Sim) -> void:
+	for t in 2:
+		var team := sim.teams[t]
+		team.flags &= ~Team.FL_OFFSIDE
+		for i in 6:
+			var p := sim.entities[team.first_slot + i]
+			p.flags2 = 0
+			if p.line_slot >= 0:
+				Anim.set_animation(p, 0x289)
+				p.timer_c = 0
+				p.speed = 0
+				p.flags &= 0xc2
 
 # --------------------------------------------------------------------------------------------
 # offside, icing, breakaway
@@ -1411,156 +1448,76 @@ static func reset_nets(sim: Sim) -> void:
 		net.vx = 0
 		net.vy = 0
 
-static func place_faceoff(sim: Sim) -> void:
-	sim.faceoff_pending = true
-	sim.whistle_ready = true
-	sim.play_stopped = true
-	sim.stoppage_countdown = false
-	sim.stoppage_timer = -1
-	sim.announce_timer = -1
-	sim.delayed_call = false
-	clear_infractions(sim)
-	sim.shot_in_flight = false
-	sim.pass_target = -1
-	sim.icing_flags = 0
-	sim.whistle_timer = 0
-	sim.action_hold_camera = false
-	sim.camera_target_x = clampi(sim.faceoff_x, -0x20, 0x20)
-	sim.camera_target_y = clampi(sim.faceoff_y, -0xbc, 0xec)
-	sim.camera_x = sim.camera_target_x
-	sim.camera_y = sim.camera_target_y
-	sim.camera_offset_y = 0
-	var puck := sim.puck
-	puck.set_pos(sim.faceoff_x, sim.faceoff_y)
-	puck.z = -100 * 0x10000      # in the referee's hand
-	puck.vx = 0
-	puck.vy = 0
-	puck.vz = 0
-	puck.spin = 0
-	sim.puck_carrier = -1
-	reset_nets(sim)
-	sim.sort_draw_order()
-	sim.last_touch_x = sim.faceoff_x
-	sim.last_touch_y = sim.faceoff_y
-	sim.last_touch_slot = -1
-	sim.last_passer = -1
-	sim.last_shooter = -1
-	Lines.flush_pending(sim)
-	for i in 12:
-		var e := sim.entities[i]
-		e.flags2 &= ~Entity.F2_OFFSIDE
-		if e.line_slot < 0 or e.state() == Entity.State.PENALTY_BOX or e.state() == Entity.State.DOOR_OPEN:
-			continue
-		# dress_line (apply_line_change gives every player of the line his place again): the role
-		# state, NEAREST on top of it for the centre; during a penalty shot only the players
-		# coming from the bench
-		if sim.penalty_shot_phase == 0 or e.state() == Entity.State.INIT_PERIOD or e.state() == Entity.State.ALL_GOTO_FACEOFF:
-			AI.set_default_state(sim, e)
-			if e.line_slot == 4:
-				e.set_state_reset(Entity.State.NEAREST)
-		if e.line_slot != 0:
-			if e.line_slot == 4:
-				var team := sim.team_of(e)
-				team.carrier_history = PackedInt32Array([e.roster_idx, -1, -1])
-				e.set_state_reset(Entity.State.FACEOFF)
-			else:
-				e.set_state_reset(Entity.State.FACEOFF_WAIT)
-		var pos := faceoff_position(sim, e)
-		e.set_pos(pos.x, pos.y)
-		e.vx = 0
-		e.vy = 0
-		e.facing = Tables.direction8(sim.faceoff_x - pos.x, sim.faceoff_y - pos.y)
-		var a := Anim.GLIDE
-		if e.line_slot == 0:
-			var f := (8 - e.facing) & 7 if e.left_handed == 0 else e.facing
-			e.frame = f * 3 + 0x196
-			a = 1
-			if e.facing == 2:
-				e.facing = 3 if (e.flags & Entity.F_ATTACK_UP) == 0 else 1
-			elif e.facing == 6:
-				e.facing = 5 if (e.flags & Entity.F_ATTACK_UP) == 0 else 7
-		elif e.line_slot == 4:
-			e.frame = 0x16c if e.facing == 0 else 0x167
-			a = 0
-		else:
-			var f := (8 - e.facing) & 7 if e.left_handed == 0 else e.facing
-			e.frame = f * 5
-		e.flags2 &= ~Entity.F2_UNSELECTABLE
-		e.flags &= ~Entity.F_BUSY
-		Anim.set_animation(e, a)
-	var ref := sim.referee
-	var rside := 2 if sim.faceoff_x <= 0 else 6
-	ref.set_pos(sim.faceoff_x + (-0xf if sim.faceoff_x <= 0 else 0xf), sim.faceoff_y)
-	ref.facing = rside
-	ref.frame = 0x2bf if rside < 4 else 0x2c7
-	ref.set_state_reset(Entity.State.REF_FACEOFF)
-	ref.vx = 0
-	ref.vy = 0
-	ref.flags2 &= ~Entity.F2_NO_COLLIDE
-	Anim.set_animation(ref, 0xc57)
-	sim.sort_draw_order()
-	sim.user1_slot = -1
-	sim.user2_slot = -1
-	sim.assign_users()
-	sim.faceoff_ready = [1, 4]
-	sim.faceoff_side = [0x8800 if not sim.ends_switched else 0x8000, 0xa000 if not sim.ends_switched else 0xa800]
-	sim.faceoff_dir = [-1, -1]
-	sim.faceoff_digit = 7
-	puck.timer_a = sim.random(0x78) + 0xb4
-
-## faceoff_resolve (0x4db2b): the drop; the winner is decided by the centres' readiness and skill
+## faceoff_resolve (0x4da7b, from ai_puck_faceoff2 when the countdown ran out): the drop. The organ
+## stops, play is on. The home centre wins when randomrange(0x21) reaches 0x10 less the home
+## readiness bonus plus the away one plus the away centre's faceoff rating less the home one (the
+## rating byte 0x13 of `player_ratings`; the first player of each team in line slot 4 is the
+## centre); the winner touched the puck last. The puck goes the way the winner's user holds (now and
+## then, or without a direction held, a random one of the five towards the winner's end), a little
+## up the ice, and bounces off the stick; the referee skates off to his side.
 static func faceoff_resolve(sim: Sim) -> void:
+	var e := sim.puck
 	InfoPanel.stop_music(sim)
 	sim.play_sfx(0xab)
 	sim.faceoff_pending = false
 	sim.whistle_ready = false
 	sim.play_stopped = false
-	sim.puck.flags2 &= ~Entity.F2_KNOCKED
+	e.flags2 &= ~Entity.F2_KNOCKED
 	sim.misc_first_touch = true
-	var home_c := -1
-	var away_c := -1
-	for i in 6:
-		if sim.entities[i].line_slot == 4:
-			home_c = i
-		if sim.entities[6 + i].line_slot == 4:
-			away_c = 6 + i
-	var r0: int = clampi(sim.faceoff_ready[0], 0, 6)
-	var r1: int = clampi(sim.faceoff_ready[1], 0, 6)
-	var chance := (0x10 - Tables.faceoff_bonus[r0]) + Tables.faceoff_bonus[r1]
-	if home_c >= 0 and away_c >= 0:
-		chance += sim.entities[away_c].offense - sim.entities[home_c].offense
-	var home_wins := sim.random(0x21) >= chance
-	var winner := home_c if home_wins else away_c
-	var side: int = sim.faceoff_side[0 if home_wins else 1]
-	sim.last_touch_slot = winner
-	var dir := 8
-	var vy_bias := 0x800 if (side & 0x800) == 0 else -0x800
-	var held: int = sim.faceoff_dir[0 if (side & 0x800) == 0 else 1]
-	if (held & 8) == 0:
-		dir = held & 7
-		if sim.random(4) == 0:
-			dir = (dir + sim.random(5) - 2) & 7
+	var chance := 0x10 - Tables.faceoff_bonus[sim.faceoff_ready[0]] + Tables.faceoff_bonus[sim.faceoff_ready[1]]
+	var hc := 0
+	while hc < 6 and sim.entities[hc].line_slot != 4:
+		hc += 1
+	var ac := 6
+	while ac < 12 and sim.entities[ac].line_slot != 4:
+		ac += 1
+	var ra := Entity.to_s8(sim.entities[ac].roster_idx)
+	var rh := Entity.to_s8(sim.entities[hc].roster_idx)
+	chance = Entity.to_s16(chance + _player_rating(sim, 1, ra, 0x13) - _player_rating(sim, 0, rh, 0x13))
+	sim.scratch_ac = (sim.scratch_ac & ~0xffff) | (chance & 0xffff)
+	var side: int
+	if Entity.to_s16(sim.random(0x21)) < chance:
+		side = sim.faceoff_side[1]
+		sim.last_touch_slot = ac
 	else:
-		dir = (sim.random(5) - 2) & 7
-		if vy_bias < 0:
-			dir ^= 4
-	var v: Array = Tables.dir8_vectors[dir]
-	var puck := sim.puck
-	puck.vx = v[0] << 5
-	puck.vy = (v[1] << 5) + vy_bias
-	puck.vz = sim.random(0x800)
-	puck.z = 0
-	puck.flags &= ~Entity.F_ARRIVED
-	puck.set_state(Entity.State.PUCK_NORMAL)
-	sim.referee.set_state(Entity.State.REF_NORMAL)
-	sim.referee.vx = -0x500 if sim.referee.xi > 0 else 0x500
-	if winner >= 0:
-		# the faceoffs won, those beyond the blue line of the winner's attacking end separately
-		var w := sim.entities[winner]
-		var wt := sim.team_of(w)
-		wt.faceoffs_won += 1
-		if (sim.puck.yi > 0x4e and wt.attacks_up) or (sim.puck.yi < -0x4e and not wt.attacks_up):
-			wt.offensive_faceoffs += 1
+		side = sim.faceoff_side[0]
+		sim.last_touch_slot = hc
+	var held: int
+	var bias: int
+	if side & 0x800:
+		held = sim.faceoff_dir[1]
+		bias = -0x800
+	else:
+		held = sim.faceoff_dir[0]
+		bias = 0x800
+	sim.scratch_a = Entity.to_s16(held)
+	var random_dir := true
+	if (sim.scratch_a & 8) == 0:
+		sim.scratch_a = held & 7
+		random_dir = sim.random(4) == 0
+	if random_dir:
+		sim.scratch_a = (sim.random(5) - 2) & 7
+		if bias < 0:
+			sim.scratch_a ^= 4
+	var v: Array = Tables.dir8_vectors[sim.scratch_a]
+	sim.scratch_a *= 2
+	e.vx = Entity.to_s16(v[0] << 5)
+	e.vy = Entity.to_s16((v[1] << 5) + bias)
+	e.vz = sim.random(0x800)
+	e.z &= 0xffff
+	e.flags &= ~Entity.F_ARRIVED
+	e.set_state(Entity.State.PUCK_NORMAL)
+	var ref := sim.referee
+	ref.set_state(Entity.State.REF_NORMAL)
+	ref.vx = 0x500 if ref.xi > 0 else -0x500
+
+## byte k of the ratings of roster player r of team t, read from `player_ratings` as the original
+## does (0x14 bytes a skater, 0x1f4 a team: a roster index of -1 reads the other table's end)
+static func _player_rating(sim: Sim, t: int, r: int, k: int) -> int:
+	var flat := t * 0x1f4 + r * 0x14 + k
+	if flat < 0 or flat >= 2 * 0x1f4:
+		return 0
+	return Lines.skater_ratings(sim.teams[flat / 0x1f4], (flat % 0x1f4) / 0x14)[flat % 0x14]
 
 ## all_players_arrived (0x51440): every player on the ice stands at his faceoff place (timer_b -100)
 static func all_players_arrived(sim: Sim) -> bool:

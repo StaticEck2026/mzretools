@@ -220,6 +220,8 @@ static func music(sim: Sim, id: int) -> void:
 
 ## stop_crowd_loop (0x59981): the running song stops (the puck drop, a penalty shot)
 static func stop_music(sim: Sim) -> void:
+	if sim.stubbed("stop_crowd_loop", []):
+		return
 	sim.music_queue.append(-1)
 
 ## the announcer and crowd clips are on: option byte 2 bit 0 and sound

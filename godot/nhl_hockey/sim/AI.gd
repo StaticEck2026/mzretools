@@ -1912,143 +1912,412 @@ static func puck_shadow(sim: Sim, e: Entity) -> void:
 	e.vx = 0
 	e.y += 1 << 16
 
-## ai_puck_faceoff (0x516e1): the stoppage is over, prepare the faceoff
+## the line change countdown of team t on the puck's record while the faceoff is set up (+0x26
+## home, +0x28 away: the steps the user has to pick a line at the prompt; its high byte set to
+## 0xff, negative, when there is none) and the player who got the prompt (+0x2a home, +0x2c away)
+static func _pf_timer(e: Entity, t: int) -> int:
+	if t == 0:
+		return e.timer_a
+	return Entity.to_s16((e.want_dir & 0xff) | ((e.dir_timer & 0xff) << 8))
+
+static func _pf_set_timer(e: Entity, t: int, v: int) -> void:
+	if t == 0:
+		e.timer_a = Entity.to_s16(v)
+	else:
+		e.want_dir = v & 0xff
+		e.dir_timer = Entity.to_s8(v >> 8)
+
+static func _pf_no_timer(e: Entity, t: int) -> void:
+	if t == 0:
+		e.react_timer = -1
+	else:
+		e.dir_timer = -1
+
+## ai_puck_faceoff (0x516e1): the stoppage is over. On entry: the puck leaves the hand that holds
+## it (a goalie who froze it during a penalty shot set-up may not take it again for 0x78 steps);
+## the period ends here when the clock ran out or the game is over (end_period_flag), an overtime
+## goal ends the game (setup_faceoff), a delayed penalty is called now (start_stoppage). For a
+## penalty shot both teams just send their players. Otherwise, after a penalty shot the users take
+## a skater again, the CPU puts its goalie back, and with line changes on each user gets the line
+## change prompt (user_line_change_prompt) while the CPU coach of the away team picks his line.
+## Every step: a user who picked his line at the prompt, or whose countdown ran out (the line of
+## the prompt, cpu_line_change_select), sends his players; once both teams are done the home CPU
+## coach picks and the faceoff is set up (ai_puck_faceoff2).
 static func puck_faceoff(sim: Sim, e: Entity) -> void:
+	var home := sim.teams[0]
+	var away := sim.teams[1]
 	if e.flags & Entity.F_STATE_ENTERED:
-		if sim.puck_carrier != Entity.Slot.REFEREE and sim.puck_carrier >= 0:
-			sim.entities[sim.puck_carrier].timer_c = 0x78
-		sim.puck_carrier = -1
+		var c := sim.puck_carrier
+		if c != Entity.Slot.REFEREE:
+			if c >= 0 and sim.penalty_shot_setup:
+				var ce := sim.entities[c]
+				if ce.line_slot == 0:
+					ce.timer_c = 0x78
+					sim.puck.vy = 0
+					sim.puck.vx = 0
+			sim.puck_carrier = -1
 		e.flags &= ~Entity.F_STATE_ENTERED
 		if (sim.clock_seconds == 0 and sim.clock_sub == 0) or sim.game_over:
-			Rules.next_period(sim)
-			if sim.game_over:
-				return
+			Rules.end_period_flag(sim)
+			return
+		if sim.period == 3 and home.goals != away.goals:
+			Rules.setup_faceoff(sim)
 			return
 		if sim.delayed_call:
-			# a penalty was pending: it is called now (served as a faceoff)
-			sim.delayed_call = false
-		sim.skip_wait = false
+			Rules.start_stoppage(sim, 0)
+			return
 		if sim.penalty_shot_phase != 0:
-			# the penalty shot: nobody changes (apply_line_change keeps the players on the ice
-			# here and send_team_to_faceoff does nothing during the shot)
+			e.react_timer = -1
+			e.dir_timer = -1
+			Lines.apply_line_change(sim, away)
+			Lines.send_team_to_faceoff(sim, away)
+			sim.lc_show[1] = 0
+			sim.lc_bar[1] = 0
+			away.line_change_ui = false
+			Lines.apply_line_change(sim, home)
+			Lines.send_team_to_faceoff(sim, home)
+			sim.lc_show[0] = 0
+			sim.lc_bar[0] = 0
+			home.line_change_ui = false
 			e.set_state(Entity.State.PUCK_FACEOFF2)
 			e.timer_b = 1000
 			return
-		# line changes at the stoppage: a goalie pulled by the CPU comes back, the CPU coaches pick
-		# their lines (choose_line), the users keep theirs unless a hotkey request is pending
-		# (the line change prompt of the original times out to the same line)
+		if sim.penalty_shot_setup:
+			if sim.user1_slot < 0 and sim.user1_team != 0:
+				var first := 0 if sim.user1_team == 1 else 6
+				for i in 6:
+					var p := sim.entities[first + i]
+					if p.line_slot < 0 or p.slot == sim.user2_slot:
+						continue
+					if p.slot != sim.user1_slot:
+						sim.user1_slot = sim.find_switch_target(p.slot, sim.user1_slot)
+					break
+			if sim.user2_slot < 0 and sim.user2_team != 0:
+				var first := 0 if sim.user2_team == 1 else 6
+				for i in 6:
+					var p := sim.entities[first + i]
+					if p.line_slot < 0 or p.slot == sim.user1_slot:
+						continue
+					if p.slot != sim.user2_slot:
+						sim.user2_slot = sim.find_switch_target(p.slot, sim.user2_slot)
+					break
 		Lines.cpu_pull_goalie_check(sim)
-		for i in 12:
-			sim.entities[i].flags2 &= ~Entity.F2_LINE_CHANGE
-		if sim.opt_line_changes and (sim.user1_team != 0 or sim.user2_team != 0) and sim.penalty_box_mode:
-			# the users get their line change prompt: the penalty box sequence ends here
-			sim.action_hold_camera = true
-			sim.sort_draw_order()
-			sim.penalty_box_mode = false
-		for t in 2:
-			var team := sim.teams[t]
-			var other := sim.teams[1 - t]
-			if sim.opt_line_changes:
-				if sim.is_user_team(t):
-					if sim.line_hotkey_req[t] != 0:
-						var slot := sim.user1_slot if sim.user1_team == t + 1 else sim.user2_slot
-						if slot >= 0:
-							Lines.request_line_change(sim, sim.entities[slot], sim.line_hotkey[t])
-						sim.line_hotkey_req[t] = 0
-					else:
-						Lines.apply_line_change(sim, team)
-				else:
-					Lines.choose_line(sim, other, team)
-					Lines.apply_line_change(sim, team)
-			else:
-				Lines.apply_line_change(sim, team)
-			Lines.send_team_to_faceoff(sim, team)
+		if not sim.opt_line_changes:
+			Lines.apply_line_change(sim, home)
+			Lines.apply_line_change(sim, away)
+		e.react_timer = -1
+		e.dir_timer = -1
+		if sim.opt_line_changes:
+			home.flags &= ~Team.FL_LINE_CHANGE_UI
+			away.flags &= ~Team.FL_LINE_CHANGE_UI
+			for i in 12:
+				sim.entities[i].flags2 &= ~Entity.F2_LINE_CHANGE
+			if (sim.user1_team | sim.user2_team) != 0 and sim.penalty_box_mode:
+				sim.action_hold_camera = true
+				sim.action_replay = false         # sort_draw_order
+				sim.sort_draw_order()
+				sim.penalty_box_mode = false
+			sim.scratch_a = sim.user1_slot
+			if sim.user1_slot >= 0:
+				Lines.user_line_change_prompt(sim, e, sim.entities[sim.user1_slot])
+			sim.scratch_a = sim.user2_slot
+			if sim.user2_slot >= 0 and sim.user2_team != sim.user1_team:
+				Lines.user_line_change_prompt(sim, e, sim.entities[sim.user2_slot])
+			sim.scratch_a = 2
+			if sim.user1_team != 2 and sim.user2_team != 2:
+				Lines.choose_line(sim, home, away)
+				Lines.apply_line_change(sim, away)
+				Lines.send_team_to_faceoff(sim, away)
+	for t in 2:
+		var w := _pf_timer(e, t)
+		if w < 0:
+			continue
+		sim.scratch_b = e.target_x if t == 0 else e.target_y
+		var p := sim.entities[sim.scratch_b]
+		var team := sim.teams[t]
+		if (p.flags2 & Entity.F2_LINE_CHANGE) == 0:
+			_pf_no_timer(e, t)
+			sim.lc_show[t] = 0
+			team.line_change_ui = false
+		else:
+			w -= 1
+			_pf_set_timer(e, t, w)
+			if Entity.to_s16(w) >= 0:
+				continue
+			sim.scratch_ac = sim.scratch_ac & ~0xffff
+			Lines.cpu_line_change_select(sim, p)
+			sim.lc_show[t] = 0
+			team.line_change_ui = false
+		Lines.apply_line_change(sim, team)
+		Lines.send_team_to_faceoff(sim, team)
+		Lines.dress_line_if_start(sim, t)
+	if e.timer_a >= 0 or _pf_timer(e, 1) >= 0:
+		return
+	sim.scratch_a = 1
+	if sim.opt_line_changes and sim.user1_team != 1 and sim.user2_team != 1:
+		Lines.choose_line(sim, away, home)
+		Lines.apply_line_change(sim, home)
+		Lines.send_team_to_faceoff(sim, home)
+	if not sim.opt_line_changes:
+		away.dpair_counter = 0
+		away.current_line = 0
+		home.dpair_counter = 0
+		home.current_line = 0
+		Lines.draw_line_indicator(sim, 0, 0)
+		Lines.draw_line_indicator(sim, 1, 0)
 	e.set_state(Entity.State.PUCK_FACEOFF2)
 	e.timer_b = 1000
 
-## ai_puck_faceoff2 (0x51bdb): wait for everybody, line up, count down and drop
+## ai_puck_faceoff2 (0x51bdb): on entry it waits (up to 1000 steps) for the referee, the scoreboard
+## panel and every player on the ice (all_players_arrived), unless the wait was skipped, after an
+## injury, in a demo or at the opening faceoff. Then the stoppage ends: the panel closes, the
+## summary takes the period's events, the camera, the puck (in the referee's hand, at the dot)
+## and the nets are set. A penalty shot starts here (the user takes the shooter, the defending
+## user nobody, the goalie gets ready). Otherwise the lines are dressed and everybody is placed at
+## the dot (the faceoff spots of the line slots, the defencemen squeezed towards the middle, the
+## goalie shaded towards a dot in his end), the referee beside it, the users take the players
+## nearest to the puck and the drop comes in 180..299 steps. Every step after: the countdown
+## digits, the referee's drop animation at 0x11 and the drop itself (faceoff_resolve).
 static func puck_faceoff2(sim: Sim, e: Entity) -> void:
-	if e.flags & Entity.F_STATE_ENTERED:
-		e.timer_b -= 1
-		var at_start := sim.period == 0 and sim.clock_sub == 0 and sim.clock_seconds == sim.period_length
-		var wait := e.timer_b > 0 and not sim.skip_wait and not sim.injury_stoppage and not at_start
-		if wait:
-			if sim.ref_phase >= 0:
-				return
-			var all := true
-			for i in 12:
-				var p := sim.entities[i]
-				if p.line_slot >= 0 and p.timer_b != -100:
-					all = false
-					break
-			if not all:
-				return
-		e.flags &= ~Entity.F_STATE_ENTERED
-		# a cut to the faceoff when the wait was skipped or after an injury
-		sim.fade_in = sim.skip_wait or sim.injury_stoppage
-		sim.skip_wait = false
-		sim.injury_stoppage = false
-		sim.ref_phase = -1
-		sim.whistle_timer = 0
-		sim.penalty_box_mode = false
-		Rules.clear_infractions(sim)
-		sim.penalty_shot_setup = false
-		InfoPanel.reset(sim)
-		if sim.penalty_shot_phase != 0:
-			InfoPanel.stop_music(sim)
-			penalty_shot_go(sim, e)
+	if (e.flags & Entity.F_STATE_ENTERED) == 0:
+		e.timer_a = Entity.to_s16(e.timer_a - 1)
+		if e.timer_a < 0:
+			Rules.faceoff_resolve(sim)
 			return
-		Rules.place_faceoff(sim)
+		if e.timer_a == 0x11:
+			Anim.set_animation(sim.referee, 0xc43)
+		if e.timer_a == 0:
+			return
+		sim.scratch_a = (e.timer_a + 6) >> 3
+		if sim.scratch_a <= 2:
+			sim.faceoff_digit = 10 - sim.scratch_a
 		return
-	e.timer_a -= 1
-	if e.timer_a < 0:
-		Rules.faceoff_resolve(sim)
-		return
-	if e.timer_a == 0x11:
-		Anim.set_animation(sim.referee, 0xc43)      # the drop
-	if e.timer_a != 0:
-		var t := (e.timer_a + 6) >> 3
-		if t <= 2:
-			sim.faceoff_digit = 10 - t
-
-## the penalty shot branch of ai_puck_faceoff2 (0x51fc6..0x5214d): the user of the shooter's team
-## takes the shooter, the defending goalie is reset, play resumes and start_penalty_shot hands the
-## puck to the shooter
-static func penalty_shot_go(sim: Sim, e: Entity) -> void:
-	sim.faceoff_pending = false
-	sim.stoppage_countdown = false
-	sim.stoppage_timer = -1
-	sim.announce_timer = -1
-	sim.delayed_call = false
-	sim.pass_target = -1
+	e.timer_b = Entity.to_s16(e.timer_b - 1)
+	var start := sim.period == 0 and sim.clock_sub == 0 and sim.clock_seconds == sim.period_length
+	if e.timer_b > 0 and not sim.demo and not sim.skip_wait and not sim.injury_stoppage and not start:
+		if sim.ref_phase >= 0 or sim.panel >= 0 or not Rules.all_players_arrived(sim):
+			return
+	e.flags &= ~Entity.F_STATE_ENTERED
+	sim.penalty_shot_setup = false
+	sim.summary_flush()
+	sim.message = -1
+	sim.clip_frame = -1
+	sim.clip = -1
+	sim.panel = -1
+	sim.message_timer = 0
+	InfoPanel.set_text(sim, [])
+	if not sim.demo and start and not sim.skip_wait:
+		sim.fade_in = false
+	else:
+		sim.fade_in = sim.demo or sim.skip_wait or sim.injury_stoppage
+	sim.ref_phase = -1
+	sim.skip_wait = false
+	sim.injury_stoppage = false
 	sim.icing_flags = 0
-	sim.action_hold_camera = false
-	sim.camera_target_x = 0
-	sim.camera_target_y = 0
-	Rules.reset_nets(sim)
+	sim.whistle_timer = 0
+	Rules._no_prediction(sim)
+	sim.offside_warning = false
+	sim.faceoff_pending = true
+	sim.whistle_ready = true
+	sim.pass_target = -1
+	sim.action_replay = false             # sort_draw_order
 	sim.sort_draw_order()
-	sim.last_touch_x = 0
-	sim.last_touch_y = 0
-	sim.last_touch_slot = -1
-	sim.last_passer = -1
-	sim.last_shooter = -1
-	var shot := sim.penalty_shot_slot
-	if sim.user1_slot != shot and sim.user2_slot != shot:
-		if sim.user1_team == sim.penalty_shot_team + 1:
-			sim.user1_slot = sim.find_switch_target(shot, sim.user1_slot)
-		elif sim.user2_team == sim.penalty_shot_team + 1:
-			sim.user2_slot = sim.find_switch_target(shot, sim.user2_slot)
-	var g := Rules.defending_goalie(sim)
-	if g >= 0:
-		var goalie := sim.entities[g]
-		goalie.flags3 = 0
-		goalie.timer_e = 0
-		goalie.timer_f = 0
-		goalie.pass_ok = 0
-		goalie.flags2 &= ~(Entity.F2_UNSELECTABLE | Entity.F2_NO_COLLIDE)
-		goalie.flags &= ~Entity.F_ARRIVED
+	sim.penalty_box_mode = false
+	sim.camera_y = 0
+	sim.camera_x = 0
+	sim.camera_target_x = sim.faceoff_x
+	sim.camera_target_y = sim.faceoff_y
+	if absi(sim.camera_target_x) > 0x20:
+		sim.camera_target_x = 0x20 if sim.faceoff_x > 0 else -0x20
+	if sim.camera_target_y <= -0xbc:
+		sim.camera_target_y = -0xbc
+	elif sim.camera_target_y >= 0xec:
+		sim.camera_target_y = 0xec
+	sim.camera_x = sim.camera_target_x
+	sim.camera_y = sim.camera_target_y
+	sim.camera_offset_y = 0
+	var puck := sim.puck
+	puck.x = (sim.faceoff_x << 16) | (puck.x & 0xffff)
+	puck.y = (sim.faceoff_y << 16) | (puck.y & 0xffff)
+	puck.z = ((-100 if sim.penalty_shot_phase == 0 else 0) << 16) | (puck.z & 0xffff)
+	puck.vx = 0
+	puck.vy = 0
+	puck.vz = 0
+	sim.puck_carrier = -1
+	for n in [Entity.Slot.NET_TOP, Entity.Slot.NET_BOTTOM]:
+		var net := sim.entities[n]
+		net.vx = 0
+		net.vy = 0
+		net.x = net.x & 0xffff
+		net.y = ((0xec if n == Entity.Slot.NET_TOP else -0xec) << 16) | (net.y & 0xffff)
+	sim.ref_infraction = 0
+	sim.ref_infraction_slot = -1
+	sim.last_touch_x = sim.faceoff_x
+	sim.last_touch_y = sim.faceoff_y
+	sim.shadow.frame = 0x189
+	sim.shadow.anim = 0
+	sim.shadow.side = 0
+	sim.shadow.flags4 = 0
+	puck.side = 0
+	puck.flags4 = 0
+	puck.frame = 0x18a
+	sim.action_hold_camera = false
+	sim.update_camera()
+	if sim.penalty_shot_phase != 0:
+		_penalty_shot_faceoff(sim, e)
+		return
+	Rules.count_penalized(sim)
+	Lines.apply_line_change(sim, sim.teams[0])
+	Lines.dress_line(sim, sim.teams[0])
+	Lines.apply_line_change(sim, sim.teams[1])
+	Lines.dress_line(sim, sim.teams[1])
+	Rules.reset_players_for_faceoff(sim)
+	for i in 12:
+		var p := sim.entities[i]
+		p.x = (p.x & 0xffff) - (0xf0 << 16)
+		p.y = p.y & 0xffff
+		sim.scratch_b = p.line_slot
+		if p.timer_b == -0x64:
+			p.timer_b = 0
+		if p.line_slot >= 0:
+			_faceoff_place(sim, p)
+		p.flags2 &= 0x7f
+	sim.scratch_ac = sim.scratch_ac & ~0xffff
+	var ref := sim.referee
+	if sim.faceoff_x > 0:
+		ref.facing = 6
+		ref.x = ((sim.faceoff_x + 0xf) << 16) | (ref.x & 0xffff)
+	else:
+		ref.facing = 2
+		ref.x = ((sim.faceoff_x - 0xf) << 16) | (ref.x & 0xffff)
+	ref.y = (sim.faceoff_y << 16) | (ref.y & 0xffff)
+	ref.frame = 0x2c7 if ref.facing > 3 else 0x2bf
+	ref.set_state_reset(Entity.State.REF_FACEOFF)
+	ref.vx = 0
+	ref.vy = 0
+	ref.flags &= ~Entity.F_BUSY
+	Anim.set_animation(ref, 0xc57)
+	sim.sort_draw_order()
+	sim.user1_slot = -1
+	sim.user2_slot = -1
+	if sim.user1_team != 0:
+		sim.switch_to_nearest(e, 0)
+	if sim.user2_team != 0:
+		sim.switch_to_nearest(e, 2)
+	sim.center_mouse()
+	e.timer_a = sim.random(0x78) + 0xb4
+	sim.faceoff_ready = [1, 4]
+	sim.faceoff_side = [0x8000, 0xa800]
+	sim.faceoff_digit = 7
+	if not sim.ends_switched:
+		sim.faceoff_side = [0x8800, 0xa000]
+	sim.faceoff_dir = [-1, -1]
+
+## the place of a player on the ice at the dot (ai_puck_faceoff2): the centre faces off, the others
+## wait (FACEOFF_WAIT); the faceoff spot of his line slot (faceoff_lineup by the skaters on the
+## ice, one more row with the goalie pulled), mirrored for the team attacking down; the
+## defencemen (spots 0..2) squeeze towards the middle, the goalie stays in his crease, shaded
+## towards a dot in his end; he faces the puck, in his standing frame
+static func _faceoff_place(sim: Sim, p: Entity) -> void:
+	var team := sim.team_of(p)
+	var ls := p.line_slot
+	if ls > 0:
+		if ls == 4:
+			team.carrier_history[0] = Entity.to_s8(p.roster_idx)
+			team.carrier_history[1] = Entity.to_s16((team.carrier_history[1] & 0xff) | 0xff00)
+			team.carrier_history[2] = Entity.to_s16((team.carrier_history[2] & 0xff) | 0xff00)
+			team.flags &= ~8
+			sim.scratch_a = Entity.State.FACEOFF
+		else:
+			sim.scratch_a = Entity.State.FACEOFF_WAIT
+		p.set_state_reset(sim.scratch_a)
+	var row := Entity.to_s16(-team.skaters_on_ice)
+	if row > -6 and Entity.to_s16(team.goalie_request) < 0:
+		row -= 1
+	row = Entity.to_s16((row + 6) << 3)
+	var flat := row + sim.scratch_b
+	var idx: int = Tables.faceoff_lineup[flat >> 3][flat & 7]
+	var spot: Array = Tables.faceoff_spots[idx]
+	sim.scratch_a = spot[0]
+	sim.scratch_b = spot[1]
+	var up := (p.flags & Entity.F_ATTACK_UP) != 0
+	if not up:
+		sim.scratch_a = Entity.to_s16(-sim.scratch_a)
+		sim.scratch_b = Entity.to_s16(-sim.scratch_b)
+	var fx := sim.faceoff_x
+	var fy := sim.faceoff_y
+	if ls != 0:
+		if idx * 2 <= 4:
+			if (sim.scratch_a ^ fx) < 0:
+				sim.scratch_b = Entity.to_s16(sim.scratch_b - (fy >> 3))
+			sim.scratch_a = Entity.to_s16(sim.scratch_a - (fx >> 2))
+		sim.scratch_a = Entity.to_s16(sim.scratch_a + fx)
+		sim.scratch_b = Entity.to_s16(sim.scratch_b + fy)
+	elif absi(fy) > 0x27 and up == (fy < 0):
+		var d := absi(Entity.to_s16(fy - (-0x27 if up else 0x27)))
+		sim.scratch_a = Entity.to_s16(sim.scratch_a + _div_trunc(fx * d * 3, 0x1000))
+	p.x = (sim.scratch_a << 16) | (p.x & 0xffff)
+	p.y = (sim.scratch_b << 16) | (p.y & 0xffff)
+	p.vx = 0
+	p.vy = 0
+	var puck := sim.puck
+	p.facing = Tables.direction8(Entity.to_s16(puck.xi - sim.scratch_a), Entity.to_s16(puck.yi - sim.scratch_b))
+	var f := p.facing if p.left_handed != 0 else (8 - p.facing) & 7
+	if ls == 0:
+		p.frame = f * 3 + 0x196
+		sim.scratch_b = 1
+		if p.facing == 2:
+			p.facing = 1 if up else 3
+		elif p.facing == 6:
+			p.facing = 7 if up else 5
+	elif ls == 4:
+		p.frame = 0x167 if p.facing != 0 else 0x16c
+		sim.scratch_b = 0
+	else:
+		p.frame = f * 5
+		sim.scratch_b = 0x289
+	p.flags2 &= ~Entity.F2_UNSELECTABLE
+	p.flags &= ~Entity.F_BUSY
+	Anim.set_animation(p, sim.scratch_b)
+
+## the penalty shot branch of ai_puck_faceoff2 (0x51fc6): the user of the shooter's team takes the
+## shooter, the defending goalie gets ready, a defending user controls nobody; play resumes and
+## start_penalty_shot hands the puck to the shooter
+static func _penalty_shot_faceoff(sim: Sim, e: Entity) -> void:
+	sim.sort_draw_order()
+	var pss := sim.penalty_shot_slot
+	if sim.user1_slot != pss and sim.user2_slot != pss:
+		var st := sim.penalty_shot_team + 1
+		if sim.user1_team == st:
+			sim.user1_slot = sim.find_switch_target(Entity.to_s16(pss), sim.user1_slot)
+		elif sim.user2_team == st:
+			sim.user2_slot = sim.find_switch_target(Entity.to_s16(pss), sim.user2_slot)
+	var i := 0
+	while i < 12:
+		var p := sim.entities[i]
+		if p.line_slot == 0 and ((1 if p.flags & Entity.F_PLAYER2 else 0) ^ sim.penalty_shot_team) != 0:
+			break
+		i += 1
+	var g := sim.entities[i]
+	g.pass_target = 0
+	g.timer_f = 0
+	g.timer_e = 0
+	g.pass_ok = 0
+	g.flags2 &= 0xdb
+	g.flags &= ~Entity.F_ARRIVED
+	var d := (1 if sim.penalty_shot_team == 0 else 0) + 1
+	if sim.user1_team == d:
+		if sim.user1_slot != -1:
+			sim.user1_slot = sim.find_switch_target(-1, sim.user1_slot)
+	elif sim.user2_team == d and sim.user2_slot != -1:
+		sim.user2_slot = sim.find_switch_target(-1, sim.user2_slot)
+	sim.center_mouse()
+	InfoPanel.stop_music(sim)
+	sim.faceoff_pending = false
+	sim.whistle_ready = false
 	sim.play_stopped = false
-	sim.misc_first_touch = true         # misc_flags 0x10, as after a faceoff
+	e.flags2 &= ~Entity.F2_KNOCKED
+	sim.misc_first_touch = true
 	e.flags &= ~Entity.F_ARRIVED
 	e.set_state(Entity.State.PUCK_NORMAL)
 	Rules.start_penalty_shot(sim)
