@@ -423,6 +423,7 @@ func asset_tests() -> void:
 		opl2_tests()
 		golden_tests(gf)
 	league_tests(gf)
+	league_golden(gf)
 
 ## the sound cards (load_sound_config): the Sound Blaster's digital driver and its mixer (the
 ## effects on voices 0 / 1, the crowd's roar and murmur on 2 / 3), the AdLib's FM effects, the PC
@@ -2604,6 +2605,77 @@ static func _entity_diff(e: Entity, after: Dictionary, before: Dictionary) -> Ar
 		if int(got[k]) != w:
 			diff.append("%s %d (original %d)" % [k, got[k], w])
 	return diff
+
+## the runs of bytes of b that differ from a, as tools/nhl/golden.py byte_diff lists them
+static func _byte_diff(a: PackedByteArray, b: PackedByteArray) -> Array:
+	var out := []
+	var i := 0
+	while i < b.size():
+		if a[i] != b[i]:
+			var j := i
+			while j < b.size() and (a[j] != b[j] or (j + 1 < b.size() and a[j + 1] != b[j + 1])):
+				j += 1
+			out.append([i, b.slice(i, j).hex_encode()])
+			i = j
+		else:
+			i += 1
+	return out
+
+## league_sim_game (league.json): the statistical game of two computer teams on the league files
+## the game ships, compared byte by byte (SEASON, CAREER, KEY, TEAMS, ATT), with the score, the
+## rand() state and the line orders
+func league_golden(gf: Node) -> void:
+	var data := _golden("league")
+	var cases: Array = data.get("league", [])
+	if cases.is_empty():
+		fail("golden league data missing")
+		return
+	var base := {}
+	for n in ["KEY", "CAREER", "ATT", "TEAMS", "SEASON"]:
+		base[n] = gf.read_raw(n.to_lower() + ".db")
+	var ok := 0
+	var shown := 0
+	for c: Dictionary in cases:
+		var lg := League.new()
+		for n in base:
+			lg.files[n] = (base[n] as PackedByteArray).duplicate()
+		var sched := PackedByteArray()
+		sched.resize(2 + League.ALL_GAMES * 6)
+		lg.files["SCHEDULE"] = sched
+		var index := int(c["index"])
+		lg.set_game(index, PackedByteArray(_ints(c["record"])))
+		lg.option_flags = int(c["option_flags"])
+		League.srand(int(c["seed"]))
+		for t in 2:
+			League.fwd_order[t] = _ints(c["fwd"][t])
+			League.def_order[t] = _ints(c["def"][t])
+		lg.sim_game(index, lg.files["CAREER"], int(c["forced"]))
+		var want: Dictionary = c["after"]
+		var diff := []
+		for n in base:
+			var got := _byte_diff(base[n], lg.files[n])
+			if str(got) != str(_ints(want[n])):
+				var w: Array = _ints(want[n])
+				var at := 0
+				while at < mini(got.size(), w.size()) and str(got[at]) == str(w[at]):
+					at += 1
+				diff.append("%s run %d: %s (original %s)" % [n, at, str(got.slice(at, at + 3)), str(w.slice(at, at + 3))])
+				# (LEAGUE_DUMP=file.json: the port's runs of a failing file, to compare in full)
+				if OS.get_environment("LEAGUE_DUMP") != "":
+					var df := FileAccess.open(OS.get_environment("LEAGUE_DUMP"), FileAccess.WRITE)
+					df.store_string(JSON.stringify(got))
+		if str(Array(lg.game(index))) != str(_ints(want["record"])):
+			diff.append("record %s (original %s)" % [str(lg.game(index)), str(want["record"])])
+		if League._seed != int(want["rand"]):
+			diff.append("rand state")
+		if str(League.fwd_order) != str(_ints(want["fwd"])) or str(League.def_order) != str(_ints(want["dfn"])):
+			diff.append("line orders %s %s (original %s %s)" % [str(League.fwd_order), str(League.def_order), str(want["fwd"]), str(want["dfn"])])
+		if diff.is_empty():
+			ok += 1
+		elif shown < 10:
+			shown += 1
+			fail("league_sim_game %d %s forced %d: %s" % [index, str(c["record"]), int(c["forced"]), ", ".join(diff)])
+	print("golden league: league_sim_game %d / %d" % [ok, cases.size()])
 
 ## a league of computer teams: the schedule, a whole season of simulated games, the play-offs
 func league_tests(gf: Node) -> void:

@@ -3941,6 +3941,117 @@ def write_ai(outdir, data):
             os.remove(os.path.join(outdir, n))
 
 
+LEAGUE_SIM_GAME = 0x452c5                      # (dir, ext, game index, record) + TEAMS file, ATT file, forced winner
+FILE_READ = 0x145a2                            # stubbed: (file, buffer, offset, size) from the files of the case
+FILE_WRITE = 0x145f9                           # stubbed: into them
+ALLOCMEM = 0x8cca8                             # stubbed (cdecl): a buffer of the pool
+RAND_STATE = 0x8eb21                           # the C library's rand() state
+LEAGUE_BUFFERS = (('SEASON', 0xd07bb), ('CAREER', 0xd07bf), ('KEY', 0xd07c7))   # the databases league_play_day loads
+FORWARD_LINE_ORDER = 0xc900c                   # 2 x 10 dwords: the forward lines in their order of the game
+DEFENCE_PAIR_ORDER = 0xc905c                   # 2 x 3 dwords
+LEAGUE_FILES = ('KEY', 'CAREER', 'ATT', 'TEAMS', 'SEASON')
+
+
+def byte_diff(a, b):
+    """the runs of bytes of b that differ from a: [offset, hex]"""
+    out = []
+    i = 0
+    while i < len(b):
+        if a[i] != b[i]:
+            j = i
+            while j < len(b) and (a[j] != b[j] or (j + 1 < len(b) and a[j + 1] != b[j + 1])):
+                j += 1
+            out.append([i, bytes(b[i:j]).hex()])
+            i = j
+        else:
+            i += 1
+    return out
+
+
+def league_cases(exe, gamedir, count=400):
+    """league_sim_game called directly: the statistical game of two computer teams of the league
+    files the game ships (TEAMS, ATT, KEY, CAREER, SEASON .DB), regular season and play-off games,
+    a winner forced or not, the three period lengths, the C library's rand() from a random seed and
+    the forward lines and defence pairs in a random order"""
+    emu = PortEmu(exe)
+    rnd = random.Random(1092)
+    base = {n: read(gamedir, n + '.DB') for n in LEAGUE_FILES}
+    bufs = {n: emu.alloc(len(base[n]) + 0x100) for n, _ in LEAGUE_BUFFERS}
+    for n, a in LEAGUE_BUFFERS:
+        emu.write(a, struct.pack('<I', bufs[n]))
+    pool = [emu.alloc(0x400) for _ in range(32)]
+    used = {'n': 0}
+    files = {}
+    handles = {1: 'TEAMS', 2: 'ATT'}
+
+    def reg(r):
+        return emu.uc.reg_read(r) & 0xffffffff
+
+    def on_alloc(eax):
+        p_ = pool[used['n']]
+        used['n'] += 1
+        emu.write(p_, b'\0' * 0x400)
+        return p_
+
+    def on_read(eax):
+        f = files[handles[eax & 0xffffffff]]
+        buf, off, size = reg(UC_X86_REG_EDX), reg(UC_X86_REG_EBX), reg(UC_X86_REG_ECX)
+        if off + size > len(f):
+            return 1
+        emu.write(buf, bytes(f[off:off + size]))
+        return 0
+
+    def on_write(eax):
+        f = files[handles[eax & 0xffffffff]]
+        buf, off, size = reg(UC_X86_REG_EDX), reg(UC_X86_REG_EBX), reg(UC_X86_REG_ECX)
+        if off + size > len(f):
+            return 1
+        f[off:off + size] = emu.read(buf, size)
+        return 0
+    emu.stub(ALLOCMEM, on_alloc)
+    emu.stub(FREEMEM, lambda eax: None)
+    emu.stub(FILE_READ, on_read)
+    emu.stub(FILE_WRITE, on_write)
+    names = emu.alloc(b'\0' * 16)
+    recbuf = emu.alloc(b'\0' * 8)
+    cases = []
+    for k in range(count):
+        playoffs = rnd.random() < 0.3
+        index = rnd.randrange(0x444, 0x4ad) if playoffs else rnd.randrange(0x444)
+        teams = rnd.sample(range(26), 2)
+        forced = rnd.choice((-1, -1, -1, 0, 1, 2))
+        option_flags = (rnd.randrange(0x10000) & ~0xc00) | rnd.choice((0, 0x400, 0x800, 0xc00))
+        seed = rnd.getrandbits(32)
+        fwd = []
+        for t in range(2):
+            o = [0, 1, 2, 3, 0, 1, 2, 0, 1, 0]
+            rnd.shuffle(o)
+            fwd.append(o)
+        dfn = [rnd.sample(range(3), 3) for _ in range(2)]
+        rec = [rnd.randrange(1, 13), rnd.randrange(1, 29), teams[0], teams[1], 0xff, 0xff]
+        for n, _ in LEAGUE_BUFFERS:
+            emu.write(bufs[n], base[n])
+        files = {'TEAMS': bytearray(base['TEAMS']), 'ATT': bytearray(base['ATT'])}
+        emu.write(recbuf, bytes(rec))
+        emu.write(OPTION_FLAGS, struct.pack('<I', option_flags))
+        for t in range(2):
+            emu.write(FORWARD_LINE_ORDER + t * 40, struct.pack('<10i', *fwd[t]))
+            emu.write(DEFENCE_PAIR_ORDER + t * 12, struct.pack('<3i', *dfn[t]))
+        emu.call(SRAND, eax=seed)
+        used['n'] = 0
+        ret = emu.call(LEAGUE_SIM_GAME, eax=names, edx=names, ebx=index, ecx=recbuf, stack=(1, 2, forced))
+        after = {n: byte_diff(base[n], emu.read(bufs[n], len(base[n]))) for n, _ in LEAGUE_BUFFERS}
+        after.update({n: byte_diff(base[n], files[n]) for n in ('TEAMS', 'ATT')})
+        state = struct.unpack('<I', emu.read(emu.call(RAND_STATE) & 0xffffffff, 4))[0]
+        cases.append({'index': index, 'record': rec, 'forced': forced, 'option_flags': option_flags, 'seed': seed,
+                      'fwd': fwd, 'def': dfn,
+                      'after': dict(after, record=list(emu.read(recbuf, 6)), ret=s32(ret), rand=state,
+                                    fwd=[list(struct.unpack('<10i', emu.read(FORWARD_LINE_ORDER + t * 40, 40))) for t in range(2)],
+                                    dfn=[list(struct.unpack('<3i', emu.read(DEFENCE_PAIR_ORDER + t * 12, 12))) for t in range(2)])})
+    emu.write(OPTION_FLAGS, b'\0' * 4)
+    return cases
+
+
 def main():
     if len(sys.argv) != 3:
         print(__doc__ or 'golden.py GAMEDIR OUTDIR')
@@ -3949,7 +4060,8 @@ def main():
     exe = os.path.join(gamedir, 'HOCKEY.EXE')
     os.makedirs(outdir, exist_ok=True)
     for name, data in (('rng', rng_cases(exe)), ('fm_driver', fm_cases(exe, gamedir)),
-                       ('pc_speaker', pc_cases(exe, gamedir)), ('physics', physics_cases(exe))):
+                       ('pc_speaker', pc_cases(exe, gamedir)), ('physics', physics_cases(exe)),
+                       ('league', {'league': league_cases(exe, gamedir)})):
         write_golden(outdir, name, data)
     write_ai(outdir, ai_cases(exe))
 

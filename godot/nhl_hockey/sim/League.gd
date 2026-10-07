@@ -287,6 +287,11 @@ static func _set16(b: PackedByteArray, at: int, v: int) -> void:
 static var fwd_order := [[0, 1, 2, 3, 0, 1, 2, 0, 1, 0], [0, 1, 2, 3, 0, 1, 2, 0, 1, 0]]   # forward_line_order
 static var def_order := [[0, 1, 2], [0, 1, 2]]                                            # defence_pair_order
 var best_assist := 0                 # the value of the last assist chosen (kept between the goals)
+# the player the last selection chose (a penalty, a shot or an assist, of either team: byte
+# [esp+0x200] of league_sim_game) and his SEASON.DB record (register edi): a shot nobody can take
+# (the forwards in the box, no defenceman above the best value) goes to them
+var chosen := 0
+var chosen_rec := -1
 
 ## the career record of a skater scaled to 84 games (GP, G, A, PTS = G + A, PPG, SHG, PIM, SOG)
 static func _normalize_career(c: PackedByteArray, at: int) -> void:
@@ -378,9 +383,9 @@ func sim_game(index: int, career: PackedByteArray, forced := -1) -> void:
 	var fl := 0
 	var dl := 0
 	var bias := [0, 0]
-	# values the original keeps between the loops (the chosen player and his value)
-	var chosen := 0
-	var chosen_p := 0
+	# values the original keeps between the loops (the value of the last shooter chosen)
+	chosen = 0
+	chosen_rec = -1
 	var best_shot := 0
 	while i < intervals:
 		if fl == 0:
@@ -440,12 +445,13 @@ func sim_game(index: int, career: PackedByteArray, forced := -1) -> void:
 					if (slot == -1 and k < 3) or v > bestv:
 						slot = k
 						bestv = v
-						chosen_p = p
+						chosen = p
+						chosen_rec = pset[t][p]
 				if slot >= 0 and pen[t][slot] == 0:
 					var minutes := 5 if rand_below(1000) < 0x3c else 2
 					pen[t][slot] = minutes + 1
-					_add16(season, pset[t][chosen_p] + 0xc, minutes)
-					pims[t][chosen_p] += 1
+					_add16(season, chosen_rec + 0xc, minutes)
+					pims[t][chosen] += 1
 					_add16(teams, blk[t] + 0x10, minutes)
 					pim_rate[t] -= 1000
 			else:
@@ -466,10 +472,12 @@ func sim_game(index: int, career: PackedByteArray, forced := -1) -> void:
 							sel = k
 							best_shot = v
 							chosen = p
+							chosen_rec = pset[t][p]
 					var shooter := chosen
 					line_shots[t][line] += 1
 					shots[t][shooter] += 1
-					_add16(season, pset[t][shooter] + 0xe, 1)
+					if chosen_rec >= 0:
+						_add16(season, chosen_rec + 0xe, 1)
 					# the shot counts for the shooting team's own goalie (as in the original)
 					_add16(season, gset[t][goalie[t]] + 0x12, 1)
 					var og: int = ags[t ^ 1][goalie[t ^ 1]]
@@ -504,19 +512,19 @@ func _goal(t: int, scorer: int, places: Array, tid: Array, blk: Array, pset: Arr
 		goals: Array, assists: Array, pen: Array, avail: Array, bias: Array, aps: Array, career: PackedByteArray, fl: int, dl: int) -> void:
 	var teams: PackedByteArray = files["TEAMS"]
 	var season: PackedByteArray = files["SEASON"]
-	_add16(season, pset[t][scorer] + 2, 1)
-	_add16(season, pset[t][scorer] + 6, 1)
+	_add16(season, chosen_rec + 2, 1)
+	_add16(season, chosen_rec + 6, 1)
 	goals[t][scorer] += 1
 	_add16(season, gset[t ^ 1][goalie[t ^ 1]] + 0xe, 1)
 	_add16(teams, blk[t] + 4, 1)
 	score[t] += 1
 	if bias[t] > 0:
 		_add16(teams, blk[t] + 8, 1)
-		_add16(season, pset[t][scorer] + 8, 1)
+		_add16(season, chosen_rec + 8, 1)
 		_add16(teams, blk[t ^ 1] + 0xc, 1)
 	_add16(teams, blk[t ^ 1] + 6, 1)
 	if bias[t] < 0:
-		_add16(season, pset[t][scorer] + 0xa, 1)
+		_add16(season, chosen_rec + 0xa, 1)
 	# plus / minus of the lines on the ice
 	var ot_rec := team_rec(tid[t ^ 1])
 	var oline: int = fwd_order[t ^ 1][fl]
@@ -548,6 +556,8 @@ func _goal(t: int, scorer: int, places: Array, tid: Array, blk: Array, pset: Arr
 				sel = k
 				best_assist = v
 				who = p
+				chosen = p
+				chosen_rec = pset[t][p]
 		if sel == -1:
 			count = 0
 		else:
