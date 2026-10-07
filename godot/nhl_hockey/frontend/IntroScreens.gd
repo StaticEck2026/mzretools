@@ -40,6 +40,7 @@ static func intro_wanted() -> bool:
 func intro_sequence() -> void:
 	ui.show_pointer(false)
 	await _pioneer()
+	League.srand_clock()
 	while true:
 		await _ea_open()
 		if await ea_sports_intro():

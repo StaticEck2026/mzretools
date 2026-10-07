@@ -16,15 +16,14 @@ const ROCKDITI := "ROCKDITI"
 var team_songs: Array = ["", "", "", "", "", ""]
 var random_songs: Array = ["", "", ""]
 var anthem := ""
-var rng := RandomNumberGenerator.new()
 var exists: Callable              # name -> bool (the .KMS file is there)
 var rocku := ROCKU
 
 func _init(file_exists: Callable = Callable()) -> void:
 	exists = file_exists
-	rng.randomize()
 
-## load_music_banks for the home team (database index) and the sound card (sound_card)
+## load_music_banks for the home team (database index) and the sound card (sound_card); the three
+## random songs are drawn with the C library's rand() the league engine uses too (League.rand)
 func setup(home: int, card: int = 2) -> void:
 	rocku = "MTROCKU" if card == 8 else ("SBROCKU" if card == 2 or card == 0x20 else "ADROCKU")
 	var row := home if home <= 0x19 else 0xd
@@ -36,7 +35,7 @@ func setup(home: int, card: int = 2) -> void:
 	for k in 3:
 		var tries := 0
 		while true:
-			var cand: int = Tables.music_pool[rng.randi() % Tables.music_pool.size()]
+			var cand: int = Tables.music_pool[League.rand() % Tables.music_pool.size()]
 			tries += 1
 			if (not ids.has(cand) and not picked.has(cand)) or tries > 200:
 				picked.append(cand)
@@ -53,12 +52,12 @@ func _song(i: int) -> String:
 		return ""            # CGY2 is listed but not on the disks
 	return n
 
-## play_speech: the song of a cue ("" none)
+## play_speech: the song of a cue ("" none); a team song missing: one of the random ones (rand())
 func song_for(id: int) -> String:
 	if id < 6:
 		if id >= 0 and team_songs[id] != "":
 			return team_songs[id]
-		id = rng.randi() % 3 + 6
+		id = League.rand() % 3 + 6
 	if id < 9:
 		return random_songs[id - 6]
 	match id:

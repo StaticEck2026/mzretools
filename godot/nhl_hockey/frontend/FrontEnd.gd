@@ -216,6 +216,7 @@ func run() -> void:
 		await intro.intro_sequence()
 	var set_file := FileAccess.get_file_as_bytes("user://GAME.SET")
 	Session.apply_block(set_file if set_file.size() >= Session.SETTINGS_SIZE else Session.default_block())
+	League.srand_clock()
 	if set_file.size() < Session.SETTINGS_SIZE:
 		# main without GAME.SET: player 1 gets the best controller and the home team
 		Session.p1_device = 8

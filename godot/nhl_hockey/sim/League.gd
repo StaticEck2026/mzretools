@@ -50,6 +50,10 @@ static var _seed := 1
 static func srand(s: int) -> void:
 	_seed = s & 0xffffffff
 
+## main and intro_sequence: srand with the hundredths of the time of day (_dos_gettime)
+static func srand_clock() -> void:
+	srand(int(Time.get_unix_time_from_system() * 100.0) % 100)
+
 static func rand() -> int:
 	_seed = (_seed * 1103515245 + 12345) & 0xffffffff
 	return (_seed >> 16) & 0x7fff
