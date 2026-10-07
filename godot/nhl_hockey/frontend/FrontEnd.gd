@@ -554,3 +554,41 @@ func game_end(m: Node) -> void:
 ## the line editor of a team (edit_lines_screen_b): from the scouting report and the pause screen
 func edit_lines_for(team: int, pal: PackedByteArray) -> void:
 	await message_dialog(["The line editor is not available yet."], ["OK"])
+
+## text_entry_dialog (0x2fedf): a prompt over a field of `maxlen` characters; Enter takes the text,
+## Esc gives "" (the original returns 0x1b)
+func text_entry_dialog(prompt: String, maxlen: int, initial: String = "") -> String:
+	var lh := scr.font_height()
+	var w := maxi(scr.textwidth(prompt), scr.textwidth("W".repeat(maxlen))) + 0x20
+	var h := lh * 2 + 0x20
+	var x := (640 - w) / 2
+	var y := (480 - h) / 2
+	var behind := scr.snapshot()
+	draw_dialog_frame(x, y, w, h, dlg_face, dlg_light, dlg_dark)
+	scr.set_text_colors(dlg_text, dlg_shadow)
+	scr.print_text_at(x + (w - scr.textwidth(prompt)) / 2, y + 8, prompt)
+	var fx := x + 0x10
+	var fy := y + lh + 0x10
+	var text := initial
+	ui.reset_events()
+	var done := false
+	var ok := true
+	while not done:
+		draw_dialog_frame(fx - 2, fy - 2, w - 0x1c, lh + 4, dlg_face, dlg_dark, dlg_light)
+		scr.set_text_colors(dlg_text, dlg_shadow)
+		scr.print_text_at(fx, fy, text + "_")
+		var e: Dictionary = await ui.wait_event()
+		var bt: int = e["buttons"]
+		if bt & 4:
+			ok = false
+			done = true
+		elif bt & 2 and e["type"] == 3:
+			done = true
+		elif bt & 0x20:
+			var k: int = e["key"]
+			if k == KEY_BACKSPACE:
+				text = text.left(maxi(text.length() - 1, 0))
+			elif text.length() < maxlen and k > 0x20 and k < 0x7f:
+				text += char(k)
+	scr.restore(behind)
+	return text if ok else ""

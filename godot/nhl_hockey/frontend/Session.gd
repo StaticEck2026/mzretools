@@ -37,7 +37,9 @@ static var p2_side := 1
 static var input_devices := 8 | 1       # input_devices: 1 mouse, 2 joystick 1, 4 joystick 2, 8 keyboard
 static var sound_enabled := true        # a sound card is installed (sound_enabled)
 static var sound_device := 8            # dword_c541f: the card (8 Sound Blaster, 0x10 none ...)
-static var stats_source := 0            # the Statistics Type of the stats screens (set_menu_mode)
+static var stats_league := false        # dword_c695a: the statistics of the league (else '93 - '94)
+static var stats_playoffs := false      # dword_c6956: the play-offs (else the regular season)
+static var stats_dir := ""              # unk_c65d4: the directory of the league's files
 static var game_number := 0             # dword_dc234: the league game being played (>= 0x444 play-offs)
 static var saved_game := -1             # the saved game to continue (play_game param, -1 a new game)
 

@@ -254,8 +254,9 @@ func draw_menu_entry(it: Menus.Item, ox: int, oy: int, text_color: int, fill: in
 ## or on an entry with a sub list opens it (below the bar, to the right of a list), the first click on
 ## an entry with a callback selects it, a second click runs it: handler.call(name) -> code. Code 1
 ## (or a code in `exit_codes`) leaves the loop and is returned; after code 2 `redraw` draws the screen
-## again. A click outside closes the lists.
-func run_menu(root: Array, light: int, face: int, dark: int, handler: Callable, redraw: Callable = Callable(), exit_codes: Array = [1], idle: Callable = Callable()) -> int:
+## again. A click outside closes the lists and goes to `outside` (the event). `idle` runs every frame
+## (a code in exit_codes from it leaves too).
+func run_menu(root: Array, light: int, face: int, dark: int, handler: Callable, redraw: Callable = Callable(), exit_codes: Array = [1], idle: Callable = Callable(), outside: Callable = Callable()) -> int:
 	var lists: Array = [root, [], [], []]
 	var origins: Array = [Vector2i.ZERO, Vector2i.ZERO, Vector2i.ZERO, Vector2i.ZERO]
 	var current: Array = [0, 0, 0, 0]
@@ -279,13 +280,15 @@ func run_menu(root: Array, light: int, face: int, dark: int, handler: Callable, 
 			continue
 		var hit := _hit_test(lists, top, origins, e["x"], e["y"])
 		if hit.x < 0:
-			# outside: close every list
+			# outside: close every list (menu_page_a / menu_page_b: then a team or a player there)
 			for k in range(top, 0, -1):
 				scr.put(saved[k])
 				saved[k] = null
 				lists[k] = []
 				current[k] = 0
 			top = 0
+			if outside.is_valid():
+				outside.call(e)
 			continue
 		var level := hit.x
 		var it: Menus.Item = lists[level][hit.y]
