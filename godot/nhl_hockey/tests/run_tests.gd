@@ -459,6 +459,42 @@ func league_tests(gf: Node) -> void:
 		fail("league scoring leader with %d points" % best)
 	else:
 		print("league: scoring leader %d points" % best)
+	# a human team: its first game played by the match simulation and recorded, the computer
+	# games up to that date simulated, nothing after it
+	var h := League.create("TESTLG2", src, [12], false)
+	var gi := h.next_game(12)
+	var rec := h.game(gi)
+	var db := Database.open(h.file("TEAMS"), h.file("KEY"), h.file("ATT"))
+	var sim := Sim.new()
+	sim.user1_team = 0
+	sim.user2_team = 0
+	sim.period_length = 20
+	sim.set_teams(db.load_team(rec[2]), db.load_team(rec[3]))
+	sim.assign_users()
+	var steps := 0
+	while not sim.match_over and steps < 60000:
+		sim.step(8, 8, 0, 0)
+		sim.intermission_pending = false
+		steps += 1
+	h.game_played(gi, sim)
+	var hrec := h.game(gi)
+	var tb := 12 * League.TEAM + 0x28
+	var after := 0
+	var before := 0
+	var day := League.day_index(rec[0], rec[1])
+	for i in League.SEASON_GAMES:
+		var r := h.game(i)
+		if League.played(r):
+			if League.day_index(r[0], r[1]) > day:
+				after += 1
+		elif League.day_index(r[0], r[1]) <= day:
+			before += 1
+	var ht := h.file("TEAMS")
+	if not sim.match_over or hrec[4] != sim.teams[0].goals or hrec[5] != sim.teams[1].goals or ht[tb] != 1 \
+			or ht[tb + 1] + ht[tb + 2] + ht[tb + 3] != 1 or after != 0 or before != 0 or h.games_played() != gi + 1:
+		fail("league game played: over %s, %s, GP %d, after %d, unplayed before %d, games %d" % [sim.match_over, hrec.hex_encode(), ht[tb], after, before, h.games_played()])
+	else:
+		print("league: game %d played %d-%d after %d steps" % [gi, hrec[4], hrec[5], steps])
 
 ## line changes, fatigue and goalie pulling (Lines.gd)
 func line_change_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:

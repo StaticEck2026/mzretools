@@ -199,6 +199,46 @@ func drawshape_mapped(s: Shpi.Shape, x: int, y: int, remap: PackedByteArray) -> 
 	var r8 := Image.create_from_data(s.width, s.height, false, Image.FORMAT_R8, pix)
 	_blit(r8, _shape_images(s)[1], x, y)
 
+## the nearest colour of `dst` (indices first .. first + count - 1) for every colour of `src`
+static func palette_map(src: PackedByteArray, dst: PackedByteArray, first: int = 0, count: int = 256) -> PackedByteArray:
+	var out := PackedByteArray()
+	out.resize(256)
+	for i in 256:
+		var best := first
+		var bd := 1 << 30
+		for j in range(first, first + count):
+			var d := 0
+			for c in 3:
+				var e: int = src[i * 3 + c] - dst[j * 3 + c]
+				d += e * e
+			if d < bd:
+				bd = d
+				best = j
+		out[i] = best
+	return out
+
+## a shape of another screen's palette drawn through a palette_map, every `div`-th pixel (the
+## small logos of the CD are missing: the large ones of the installation stand in)
+func drawshape_scaled(s: Shpi.Shape, x: int, y: int, remap: PackedByteArray, div: int = 2) -> void:
+	if s == null or not s.is_image():
+		return
+	var w := s.width / div
+	var h := s.height / div
+	if w <= 0 or h <= 0:
+		return
+	var pix := PackedByteArray()
+	pix.resize(w * h)
+	var la := PackedByteArray()
+	la.resize(w * h * 2)
+	for yy in h:
+		for xx in w:
+			var v: int = s.pixels[(yy * div) * s.width + xx * div]
+			var k := yy * w + xx
+			pix[k] = remap[v] if v != 0xff else 0
+			la[k * 2] = pix[k]
+			la[k * 2 + 1] = 0 if v == 0xff else 255
+	_blit(Image.create_from_data(w, h, false, Image.FORMAT_R8, pix), Image.create_from_data(w, h, false, Image.FORMAT_LA8, la), x, y)
+
 ## grabshape: a copy of the screen rectangle (restored with put())
 func grab(x: int, y: int, w: int, h: int) -> Image:
 	var r := Rect2i(x, y, w, h).intersection(Rect2i(0, 0, W, H))

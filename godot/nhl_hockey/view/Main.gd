@@ -856,7 +856,10 @@ func _load_assets() -> void:
 	if not GameFiles.available():
 		return
 	# rosters, lines and ratings (db_open_files / db_load_team_roster)
-	var db := Database.open(GameFiles.read_raw("teams.db"), GameFiles.read_raw("key.db"), GameFiles.read_raw("att.db"))
+	# a league game plays with the league's databases (its trades and free agents)
+	var db: Database = config.get("db", null)
+	if db == null:
+		db = Database.open(GameFiles.read_raw("teams.db"), GameFiles.read_raw("key.db"), GameFiles.read_raw("att.db"))
 	if db != null:
 		home_team = clampi(home_team, 0, db.team_count() - 1)
 		away_team = clampi(away_team, 0, db.team_count() - 1)

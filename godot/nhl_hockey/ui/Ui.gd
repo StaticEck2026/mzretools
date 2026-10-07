@@ -311,7 +311,10 @@ func run_menu(root: Array, light: int, face: int, dark: int, handler: Callable, 
 				current[k] = 0
 			top = 0
 			if outside.is_valid():
-				outside.call(e)
+				var oc = await outside.call(e)
+				if oc is int and oc in exit_codes:
+					show_pointer(false)
+					return oc
 			continue
 		var level := hit.x
 		var it: Menus.Item = lists[level][hit.y]

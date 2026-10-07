@@ -32,7 +32,8 @@ func _ready() -> void:
 ## press:ACTION (an input action of the match, e.g. pause), shot:PATH (the window as PNG),
 ## simgame:PERIODS[,SECONDS] (the session's teams play that many periods without a view; the
 ## front end's screens then see it as the game on the ice), call:CALLBACK (a menu callback run
-## like run_menu does, without waiting for it), scores:PERIOD (the scores around the league), quit
+## like run_menu does, without waiting for it), scores:PERIOD (the scores around the league),
+## type:TEXT (keys and Enter for a text entry), quit
 func _run_script(script: String) -> void:
 	for cmd in script.split(";", false):
 		var parts := cmd.strip_edges().split(":", true, 1)
@@ -71,6 +72,12 @@ func _run_script(script: String) -> void:
 				front.game = _sim_game(int(pa[0]), int(pa[1]) if pa.size() > 1 else 30)
 			"call":
 				front.dispatch(arg)
+				await get_tree().process_frame
+			"type":
+				# text for a text entry dialog, then Enter
+				for ch in arg:
+					front.ui.push(3, 0x20, ch.unicode_at(0))
+				front.ui.push(3, 2)
 				await get_tree().process_frame
 			"scores":
 				# the scores around the league after period ARG (end_match_from_period)

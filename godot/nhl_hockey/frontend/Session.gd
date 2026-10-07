@@ -2,7 +2,7 @@ class_name Session
 ## The globals of the front end (apply_settings / save_settings, 0x327a1 / 0x3271b): the settings
 ## block of 0x75 bytes that GAME.SET stores (settings_exhibition 0xc5298 is the default) and the
 ## state the menus share. Field names follow the block:
-##   +0x00 mode (dword_c53fb: 0 exhibition, 1 league, 2 play-offs)
+##   +0x00 mode (dword_c53fb: 0 exhibition, 1 a play-off series, 2 a league)
 ##   +0x04 league directory (13 chars), +0x11 / +0x31 the two league names (32 chars each)
 ##   +0x51 home team, +0x55 visiting team (team indices 0..27)
 ##   +0x59 option_flags
@@ -48,6 +48,8 @@ static var game_number := 0             # dword_dc234: the league game being pla
 static var saved_game := -1             # the saved game to continue (play_game param, -1 a new game)
 static var line_override: Dictionary = {}   # side -> the line table edited before the game (unk_dc200 / unk_dabf0)
 static var scratches: Dictionary = {}       # side -> roster indices scratched for the game
+static var league = null                # the League open (sim/League.gd), null none
+static var league_team := -1            # dword_ddd38: the human team playing the league
 
 ## apply_settings: the block (GAME.SET or settings_exhibition) into the globals
 static func apply_block(b: PackedByteArray) -> void:

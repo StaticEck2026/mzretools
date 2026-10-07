@@ -32,6 +32,8 @@ var games: GameScreens
 var stats: StatsScreens
 var settings: SettingsScreens
 var game: Node = null               # view/Main.gd while a game is on (the pause screen's callbacks use it)
+var last_sim: Sim = null            # the simulation of the last game played to its end (the league records it)
+var leagues: LeagueScreens
 
 func _ready() -> void:
 	layer = CanvasLayer.new()
@@ -57,6 +59,7 @@ func _ready() -> void:
 	games = GameScreens.new(self)
 	stats = StatsScreens.new(self)
 	settings = SettingsScreens.new(self)
+	leagues = LeagueScreens.new(self)
 
 ## the mouse pointer of POINTER3.QFS (on the CD only): without it an arrow of the same size
 func _fallback_pointer() -> void:
@@ -265,7 +268,7 @@ func set_hub_title(which: int) -> void:
 
 ## run_menu's callback: the method of the same name (1 leaves the menu, 2 redraws the screen)
 func dispatch(cb: String):
-	for target in [self, games, stats, settings]:
+	for target in [self, games, stats, settings, leagues]:
 		if target != null and target.has_method(cb):
 			var r = await target.call(cb)
 			return r if r is int else 0
@@ -466,9 +469,11 @@ func save_game_set() -> void:
 		f.store_buffer(Session.save_block())
 
 ## play_game (0x11d09): the match with the teams, users and options of the session
-func play_game() -> int:
+func play_game(db_override: Database = null) -> int:
 	await leave_screen(100)
+	last_sim = null
 	var setup := {
+		"db": db_override,
 		"home": Session.home_team, "away": Session.away_team,
 		"user1": Session.user_side(0), "user2": Session.user_side(1),
 		"option_flags": Session.option_flags,
@@ -577,6 +582,7 @@ func intermission(m: Node, period_done: int) -> int:
 ## (the coach's clip of the CD is missing), then pause_menu(2)
 func game_end(m: Node) -> void:
 	game = m
+	last_sim = m.sim
 	write_summary(m)
 	var period: int = m.sim.period + 1
 	var r := await games.boxscore_screen(1, 1, period)
