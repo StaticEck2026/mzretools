@@ -872,6 +872,8 @@ static func end_penalty_shot(sim: Sim) -> void:
 ## the game misconduct of penalty_box_update (infraction_is_penalty -1): the player is out for the
 ## update_effects (0x615a3): crowd noise decays towards the ambient level
 static func update_effects(sim: Sim) -> void:
+	if sim.stubbed("update_effects", []):
+		return
 	if sim.crowd_noise >= 0x2bd:
 		sim.crowd_noise -= 2
 	elif sim.crowd_noise > 0x15e:
@@ -1019,6 +1021,8 @@ static func goal_disallowed(sim: Sim, scorer_team: int) -> bool:
 
 ## setup_faceoff (0x5d852) and end_of_period (0x5dea6): see Ceremonies.period_end / next_period
 static func setup_faceoff(sim: Sim) -> void:
+	if sim.stubbed("setup_faceoff", []):
+		return
 	Ceremonies.period_end(sim)
 
 ## called by the puck faceoff handler when a period ended: advance to the next one

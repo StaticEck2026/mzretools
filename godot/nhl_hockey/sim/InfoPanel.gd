@@ -49,6 +49,8 @@ static func load_clip(sim: Sim, id: int) -> void:
 
 ## the panel part of update_announcer (0x66e06), run every step while play is stopped
 static func update(sim: Sim) -> void:
+	if sim.stubbed("update_announcer", []):
+		return
 	if sim.panel < 0:
 		return
 	if not (sim.stoppage_timer < 0x100 or sim.stoppage_timer > 0x140 or sim.game_over):

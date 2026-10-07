@@ -710,7 +710,7 @@ func ai_golden() -> void:
 	for group in data:
 		if group == "base":
 			continue
-		if group == "lines" or group == "controls":
+		if group == "lines" or group == "controls" or group == "rules":
 			counts.append(_lines_golden(data[group], base, group))
 			continue
 		var sim := Sim.new()
@@ -758,7 +758,12 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 	sim.stubs = {"play_sfx": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
 		"injure_player": true, "bench_cheer": true, "announce_goal": true, "play_speech": true, "load_clip": true,
 		"say_goal": true, "goal_milestone_check": true, "put_player_on_ice": true,
-		"pick_player_for_position": true, "draw_line_indicator": true}
+		"pick_player_for_position": true, "draw_line_indicator": true, "record_penalty": true,
+		"add_penalty_display": true, "penalty_list_find": true, "update_announcer": true, "update_effects": true,
+		"setup_faceoff": true, "announce_one_minute_left": true}
+	if group == "rules":
+		sim.stubs.erase("queue_infraction")
+		sim.stubs.erase("maybe_queue_infraction")
 	var per := {}
 	var ok := 0
 	var shown := 0
@@ -767,6 +772,7 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 	for c: Dictionary in cases:
 		index += 1
 		_ai_world_set(sim, c, base)
+		sim.panel_text[4] = ""
 		var li: Dictionary = c.get("lines", {})
 		for t in (2 if not li.is_empty() else 0):
 			var team: Team = sim.teams[t]
@@ -825,11 +831,39 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 			"controls_goalie_pull_request": Lines.user_goalie_back(sim, a0)
 			"choose_goalie": Lines.choose_goalie(sim, a0, a1)
 			"control_player": sim.control_player(sim.entities[a0], a1)
+			"update_stoppage": Rules.update_stoppage(sim)
+			"process_infractions": Rules.process_infractions(sim)
+			"start_stoppage": Rules.start_stoppage(sim, a0)
+			"penalty_box_update": Rules.penalty_box_update(sim)
+			"penalty_timers": Rules.penalty_timers(sim, sim.teams[a0])
+			"penalty_expired": Rules.penalty_expired(sim, sim.teams[a0], a1)
+			"release_from_box": Rules.release_from_box(sim, sim.teams[a0], a1)
+			"goal_ends_penalty": Rules.goal_ends_penalty(sim, a0)
+			"update_power_play": Rules.update_power_play(sim)
+			"count_penalized": Rules.count_penalized(sim)
+			"penalty_time_left": ret = Rules.penalty_time_left(sim)
+			"queue_infraction": Rules.queue_infraction(sim, sim.entities[a0], a1)
+			"maybe_queue_infraction": Rules.maybe_queue_infraction(sim, sim.entities[a0], a1)
+			"ref_announce": Rules.ref_announce(sim, a0)
+			"update_line_timers": Rules.update_line_timers(sim)
+			"sim_game_state": Rules.sim_game_state(sim)
+			"game_clock_tick": Rules.game_clock_tick(sim)
+			"time_announcements": Lines.time_announcements(sim)
+			"period_strategy_init": Lines.period_strategy_init(sim)
+			"clear_infractions": Rules.clear_infractions(sim)
 		var diff := _ai_world_diff(sim, c, base)
 		var la: Dictionary = c["lines_after"]
+		if la.has("infq"):
+			if str(Array(sim.infq)) != str(_ints(la["infq"])):
+				diff.append("queue %s (original %s)" % [str(Array(sim.infq.slice(0, 10))), str(la["infq"].slice(0, 10))])
+			if str(sim.panel_text[4]) != str(la["panel4"]):
+				diff.append("panel line 5 '%s' (original '%s')" % [sim.panel_text[4], la["panel4"]])
 		if ret != null:
 			var want := int(la["ret"])
-			if name != "line_avg_energy":
+			if name == "penalty_time_left":
+				want = Entity.to_s16(want)
+				ret = Entity.to_s16(int(ret))
+			elif name != "line_avg_energy":
 				want = 1 if (want & 0xffff) != 0 else 0
 			if int(ret) != want:
 				diff.append("returns %d (original %d)" % [int(ret), want])
@@ -851,9 +885,10 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 				diff.append("lineup request %s (original %s)" % [str(got_req), str(la["req"])])
 		if la.has("scratch_ac") and (sim.scratch_ac & 0xffff) != (int(la["scratch_ac"]) & 0xffff):
 			diff.append("scratch e03ac %x (original %x)" % [sim.scratch_ac & 0xffff, int(la["scratch_ac"]) & 0xffff])
-		var sc: Array = la["scratch"]
-		if Sim._s16(sim.scratch_a) != int(sc[0]) or Sim._s16(sim.scratch_b) != int(sc[1]):
-			diff.append("scratch %d %d (original %s)" % [Sim._s16(sim.scratch_a), Sim._s16(sim.scratch_b), str(sc)])
+		if la.has("scratch"):
+			var sc: Array = la["scratch"]
+			if Sim._s16(sim.scratch_a) != int(sc[0]) or Sim._s16(sim.scratch_b) != int(sc[1]):
+				diff.append("scratch %d %d (original %s)" % [Sim._s16(sim.scratch_a), Sim._s16(sim.scratch_b), str(sc)])
 		if c.has("scen"):
 			name = str(c["scen"])
 		if not per.has(name):
@@ -956,6 +991,7 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	sim.offside_warning = (sf & 0x80) != 0
 	sim.misc_first_touch = (int(g["misc_flags"]) & 0x10) != 0
 	sim.half_announce = (int(g["misc_flags"]) & 0x80) != 0
+	sim.second_tick = (int(g["misc_flags"]) & 0x40) != 0
 	var opt := int(g["option_flags"])
 	sim.opt_penalties = (opt & 1) != 0
 	sim.opt_offsides = (opt & 2) != 0
@@ -966,6 +1002,7 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	sim.action_pass = (int(g["action_flags"]) & 4) != 0
 	sim.action_shot = (int(g["action_flags"]) & 8) != 0
 	sim.action_hold_camera = (int(g["action_flags"]) & 0x40) != 0
+	sim.action_replay = (int(g["action_flags"]) & 0x80) != 0
 	sim.user1_slot = int(g["user1_slot"])
 	sim.user2_slot = int(g["user2_slot"])
 	sim.user1_team = int(g["user1_team"])
@@ -1057,6 +1094,23 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 		sim.faceoff_dir[t] = int(g.get("faceoff_dir%d" % t, -1))
 	sim.controls_blocked = int(g.get("controls_blocked", 0)) != 0
 	sim.skip_wait = int(g.get("skip_wait", 0)) != 0
+	if g.has("stoppage_timer"):
+		sim.stoppage_timer = int(g["stoppage_timer"])
+		sim.announce_timer = int(g["announce_timer"])
+		sim.penalty_box_mode = int(g["penalty_box_mode"]) != 0
+		sim.second_timer = int(g["second_timer"])
+		sim.tick24 = int(g["tick24"])
+		sim.tick_toggle = int(g["tick_toggle"])
+		sim.excitement_peak = int(g["excitement_peak"])
+		sim.excitement_sum = int(g["excitement_sum"])
+		sim.excitement_samples = int(g["excitement_samples"])
+		sim.lc_bar[0] = int(g["lc_bar0"])
+		sim.lc_bar[1] = int(g["lc_bar1"])
+		sim.penalty_shot_clock = int(g["penalty_shot_clock"])
+	if c.has("infq"):
+		var q: Array = c["infq"]
+		for i in 64:
+			sim.infq[i] = int(q[i])
 	var teams: Array = c["teams"]
 	for t in 2:
 		var team: Team = sim.teams[t]
@@ -1081,6 +1135,15 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 		team.mode = int(f["mode"])
 		team.energy_threshold = int(f["energy_threshold"])
 		team.dpair_counter = int(f.get("dpair", 0))
+		team.pp_goals = int(f.get("pp_goals", 0))
+		team.power_plays = int(f.get("power_plays", 0))
+		team.pp_time = int(f.get("pp_time", 0))
+		team.penalty_count = int(f.get("penalty_count", 0))
+		team.penalty_minutes = int(f.get("penalty_minutes", 0))
+		team.zone_time = int(f.get("zone_time", 0))
+		var bq: Array = f.get("box_queue", [])
+		for i in 28:
+			team.box_queue[i] = int(bq[i]) if i < bq.size() else -1
 		team.line_change_ui = int(c["globals"].get("lc_prompt%d" % t, 0)) != 0
 		team.extra_attacker = int(f.get("extra_attacker", -1))
 		for i in 28:
@@ -1109,8 +1172,9 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 			| (8 if sim.delayed_call else 0) | (0x10 if sim.no_stats else 0) | (0x40 if sim.game_over else 0),
 		"stop_flags": (1 if sim.faceoff_pending else 0) | (4 if sim.whistle_ready else 0) | (0x10 if sim.shot_in_flight else 0)
 			| (0x20 if sim.power_play else 0) | (0x40 if sim.power_play_team == 1 else 0) | (0x80 if sim.offside_warning else 0),
-		"misc_flags": (0x10 if sim.misc_first_touch else 0) | (0x80 if sim.half_announce else 0),
-		"action_flags": (4 if sim.action_pass else 0) | (8 if sim.action_shot else 0) | (0x40 if sim.action_hold_camera else 0),
+		"misc_flags": (0x10 if sim.misc_first_touch else 0) | (0x80 if sim.half_announce else 0) | (0x40 if sim.second_tick else 0),
+		"action_flags": (4 if sim.action_pass else 0) | (8 if sim.action_shot else 0) | (0x40 if sim.action_hold_camera else 0)
+			| (0x80 if sim.action_replay else 0),
 		"user1_slot": sim.user1_slot, "user2_slot": sim.user2_slot, "user1_team": sim.user1_team, "user2_team": sim.user2_team,
 		"last_touch_slot": sim.last_touch_slot, "last_touch_y": sim.last_touch_y, "last_touch_x": sim.last_touch_x,
 		"last_passer": sim.last_passer, "last_shooter": sim.last_shooter, "pending_dir": sim.pending_dir,
@@ -1145,7 +1209,12 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 		"hotkey_line0": sim.line_hotkey[0], "hotkey_line1": sim.line_hotkey[1],
 		"controls_blocked": 1 if sim.controls_blocked else 0, "skip_wait": 1 if sim.skip_wait else 0,
 		"controller0": sim.controller_type[0], "controller1": sim.controller_type[1],
-		"faceoff_dir0": sim.faceoff_dir[0], "faceoff_dir1": sim.faceoff_dir[1]}
+		"faceoff_dir0": sim.faceoff_dir[0], "faceoff_dir1": sim.faceoff_dir[1],
+		"stoppage_timer": sim.stoppage_timer, "announce_timer": sim.announce_timer,
+		"penalty_box_mode": 1 if sim.penalty_box_mode else 0, "second_timer": sim.second_timer, "tick24": sim.tick24,
+		"tick_toggle": sim.tick_toggle, "excitement_peak": sim.excitement_peak, "excitement_sum": sim.excitement_sum,
+		"excitement_samples": sim.excitement_samples, "lc_bar0": sim.lc_bar[0], "lc_bar1": sim.lc_bar[1],
+		"penalty_shot_clock": sim.penalty_shot_clock}
 
 static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 	var diff := []
@@ -1163,8 +1232,8 @@ static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 		match k:
 			"game_flags": w &= 0x5f
 			"stop_flags": w &= 0xf5
-			"misc_flags": w &= 0x90
-			"action_flags": w &= 0x4c
+			"misc_flags": w &= 0xd0
+			"action_flags": w &= 0xcc
 			"goal_call": w = 1 if w == 1 else 0
 			"infraction0": w = 1 if w != 0 else 0
 		if int(got[k]) != w:
@@ -1177,7 +1246,9 @@ static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 			"nearest_dist": team.nearest_dist, "nearest_d2": team.nearest_d2, "nearest_slot": team.nearest_slot, "strategy": team.strategy,
 			"strategy2": team.strategy2, "flags2": team.flags2, "mode": team.mode, "energy_threshold": team.energy_threshold,
 			"one_timer_tries": team.one_timer_tries, "one_timers": team.one_timers, "goalie_slot": team.goalie_slot,
-			"goals": team.goals, "dpair": team.dpair_counter, "extra_attacker": team.extra_attacker}
+			"goals": team.goals, "dpair": team.dpair_counter, "extra_attacker": team.extra_attacker,
+			"pp_goals": team.pp_goals, "power_plays": team.power_plays, "pp_time": team.pp_time,
+			"penalty_count": team.penalty_count, "penalty_minutes": team.penalty_minutes, "zone_time": team.zone_time}
 		for k in tg:
 			if int(tg[k]) != int(want[k]):
 				diff.append("team %d %s %d (original %d)" % [t, k, int(tg[k]), int(want[k])])
@@ -1190,6 +1261,11 @@ static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 			if team.entity_of[i] != int(want["entity_of"][i]):
 				diff.append("team %d entity_of[%d] %d (original %d)" % [t, i, team.entity_of[i], int(want["entity_of"][i])])
 				break
+		if want.has("box_queue"):
+			for i in 28:
+				if team.box_queue[i] != int(want["box_queue"][i]):
+					diff.append("team %d box queue %s (original %s)" % [t, str(team.box_queue), str(want["box_queue"])])
+					break
 		for i in 28:
 			if team.roster_status[i] != int(want["roster_status"][i]):
 				diff.append("team %d roster_status[%d] %d (original %d)" % [t, i, team.roster_status[i], int(want["roster_status"][i])])

@@ -113,7 +113,7 @@ var crowd: Array = []              # crowd_figures: Crowd.Record x 20 (the figur
 var crowd_busy := PackedByteArray() # crowd_spots_busy: spots in use
 var injury_stoppage := false       # injury_stoppage: a player was hurt; the faceoff follows without the referee's walk
 var fade_in := false               # cut_to_scene: the view cuts (fades in) to the next scene
-var penalty_box_mode := false      # word_c90de: a penalty is being handed out (no new calls)
+var penalty_box_mode := false      # penalty_box_mode (0xcbc44): a penalty is being handed out (no new calls)
 var speech_busy := false           # speech_busy(): the announcer is talking (set by the audio layer)
 var ref_phase: int = -1             # dword_c90d4: 0 = referee called, 1 = collecting, -1 = ready
 var ref_infraction: int = 0         # dword_c90d6

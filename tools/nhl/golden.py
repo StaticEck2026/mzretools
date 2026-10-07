@@ -1331,9 +1331,20 @@ AI_GLOBALS = (('game_flags', GAME_FLAGS, 1), ('stop_flags', STOP_FLAGS, 1), ('mi
               ('lc_timer0', 0xcbc66, -2), ('lc_timer1', 0xcbc68, -2), ('lc_prompt0', 0xcbc6a, -2), ('lc_prompt1', 0xcbc6c, -2),
               ('hotkey0', 0xe0304, -2), ('hotkey1', 0xe0306, -2), ('hotkey_line0', 0xe0380, -2), ('hotkey_line1', 0xe0382, -2),
               ('controls_blocked', 0xccc9c, -4), ('skip_wait', 0xcc0f0, -4), ('controller0', 0xc4d1c, 1),
-              ('controller1', 0xc4d1d, 1), ('faceoff_dir0', 0xc90b6, -2), ('faceoff_dir1', 0xc90b8, -2))
+              ('controller1', 0xc4d1d, 1), ('faceoff_dir0', 0xc90b6, -2), ('faceoff_dir1', 0xc90b8, -2),
+              ('stoppage_timer', 0xc90ce, -2), ('announce_timer', 0xcc0b0, -2), ('penalty_box_mode', 0xcbc44, -2),
+              ('second_timer', 0xc90d0, -2), ('tick24', 0xcc0d9, -1), ('tick_toggle', 0xcc0d8, 1),
+              ('excitement_peak', 0xe9aa4, -2), ('excitement_sum', 0xe009c, -4), ('excitement_samples', 0xe9aa6, 2),
+              ('lc_bar0', 0xcbc52, -2), ('lc_bar1', 0xcbc54, -2), ('penalty_shot_clock', 0xcc120, -4))
 SAY_GOAL = 0x59ad0                             # stubbed: the announcer says the goal (the goal_call bytes)
 GOAL_MILESTONE_CHECK = 0x62807                 # stubbed: its deferred call is empty in this build
+RECORD_PENALTY = 0x624b9                       # stubbed (the event log, the summary, the panel, the announcer); ret 0xc
+ADD_PENALTY_DISPLAY = 0x14c22                  # stubbed: the scoreboard's penalty clock entry
+PENALTY_LIST_FIND = 0x14ca0                    # stubbed: the entry of a player released by a goal
+UPDATE_ANNOUNCER = 0x66e06                     # stubbed: the scoreboard panel and its clips
+UPDATE_EFFECTS = 0x615a2                       # stubbed: the crowd noise and figures
+SETUP_FACEOFF = 0x5d852                        # stubbed for now: the end of a period
+ANNOUNCE_ONE_MINUTE = 0x6280a                  # stubbed: the announcer's last minute line
 PICK_PLAYER_FOR_POSITION = 0x655cc             # stubbed: the line table rebuilt around a lost player; (team, roster)
 PUT_PLAYER_ON_ICE = 0x5b2c5                    # stubbed: the ratings copy (no roster data here); (entity, roster)
 PLAY_SPEECH = 0x59a11                          # stubbed: the announcer (a sample)
@@ -1344,7 +1355,9 @@ AI_TEAM_FIELDS = TEAM_FIELDS + (('goals', 0x10, -2), ('hits', 0x24, -2), ('break
                                 ('current_line', 0x2a, -2), ('nearest_d2', 0x3a, 4), ('nearest_dist', 0x3e, -4), ('nearest_slot', 0x42, -2),
                                 ('strategy', 0xd2, 1), ('strategy2', 0xd3, 1), ('flags2', 0xd4, 1), ('mode', 0xd5, 1),
                                 ('energy_threshold', 0xd6, -2), ('one_timer_tries', 0x16, -2), ('one_timers', 0x18, -2),
-                                ('goalie_slot', 0xfa, -2), ('dpair', 0x2c, -2), ('extra_attacker', 0x2e, -2))
+                                ('goalie_slot', 0xfa, -2), ('dpair', 0x2c, -2), ('extra_attacker', 0x2e, -2),
+                                ('pp_goals', 2, -2), ('power_plays', 4, -2), ('pp_time', 8, -2), ('penalty_count', 0xa, -2),
+                                ('penalty_minutes', 0xc, -2), ('zone_time', 0xe, -2))
 DEFAULT_STATES = (14, 2, 2, 3, 5, 3, 5)
 
 
@@ -1366,6 +1379,8 @@ def ai_world(emu, rnd, base, tables):
                   'mode': rnd.randrange(3), 'energy_threshold': 0xccc, 'current_line': rnd.randrange(4), 'goals': rnd.randrange(3)})
         f['energy'] = rnd.choice((0x1000, 0xc00, 0x800))
         f['entity_of'] = [-2] * 28
+        f['box_queue'] = [-1] * 28
+        emu.write(t + 0xb6, b'\xff' * 28)
         # the status bytes of the players' records in `rosters`: 3 on the bench, now and then one
         # the line editor called on (7, bench_player_slot)
         f['roster_status'] = [3] * 28
@@ -1484,7 +1499,11 @@ def ai_world(emu, rnd, base, tables):
                   'lc_place%d' % t: rnd.randrange(4), 'lc_line%d' % t: rnd.randrange(8), 'lc_timer%d' % t: rnd.choice((0, 5, 0x3c)),
                   'lc_prompt%d' % t: rnd.choice((0, 0, 1)), 'hotkey%d' % t: 0, 'hotkey_line%d' % t: rnd.randrange(4),
                   'controller%d' % t: rnd.choice((8, 8, 2, 1)), 'faceoff_dir%d' % t: rnd.choice((-1, 8, 3, 0x13))})
-    g.update({'controls_blocked': 0, 'skip_wait': 0})
+    g.update({'controls_blocked': 0, 'skip_wait': 0, 'stoppage_timer': rnd.choice((-1, -1, 0, 5, 0x40)),
+              'announce_timer': rnd.choice((-1, -1, 0, 3)), 'penalty_box_mode': 0, 'second_timer': rnd.randrange(0x18),
+              'tick24': rnd.randrange(-1, 0x18), 'tick_toggle': rnd.randrange(2), 'excitement_peak': rnd.randrange(200),
+              'excitement_sum': rnd.randrange(100000), 'excitement_samples': rnd.randrange(1000), 'lc_bar0': 0, 'lc_bar1': 0,
+              'penalty_shot_clock': rnd.choice((0, 1, 1000))})
     for n, a, sz in AI_GLOBALS:
         emu.write(a, struct.pack('<' + _FMT[sz], g[n] if sz < 0 else g[n] & ((1 << (8 * sz)) - 1)))
     emu.write(OPTION_FLAGS, struct.pack('<I', g['option_flags']))
@@ -1495,7 +1514,8 @@ def ai_record(emu):
     return {'globals': {n: struct.unpack('<' + _FMT[sz], emu.read(a, abs(sz)))[0] for n, a, sz in AI_GLOBALS},
             'teams': [dict({n: struct.unpack('<' + _FMT[sz], emu.read(t + o, abs(sz)))[0] for n, o, sz in AI_TEAM_FIELDS},
                            entity_of=list(struct.unpack('<28h', emu.read(t + 0x7e, 56))),
-                           roster_status=[emu.read(ROSTERS + ti * 0x444 + i * 0x27, 1)[0] for i in range(28)])
+                           roster_status=[emu.read(ROSTERS + ti * 0x444 + i * 0x27, 1)[0] for i in range(28)],
+                           box_queue=list(struct.unpack('<28b', emu.read(t + 0xb6, 28))))
                       for ti, t in enumerate(TEAM_RECORDS)],
             'carrier': struct.unpack('<b', emu.read(PUCK + 0x42, 1))[0], 'seed': struct.unpack('<I', emu.read(SEED, 4))[0]}
 
@@ -1725,11 +1745,27 @@ def ai_cases(exe):
             calls.append([name, ((eax & 0xffffffff) - ENTITIES) // 0x80, emu.uc.reg_read(UC_X86_REG_EDX) & 0xff])
         return f
     emu.stub(PLAY_SFX, on_sfx)
-    emu.stub(QUEUE_INFRACTION, on_infraction('queue_infraction'))
-    emu.stub(MAYBE_QUEUE_INFRACTION, on_infraction('maybe_queue_infraction'))
+    queue_stubs = [emu.stub(QUEUE_INFRACTION, on_infraction('queue_infraction')),
+                   emu.stub(MAYBE_QUEUE_INFRACTION, on_infraction('maybe_queue_infraction'))]
     emu.stub(INJURY_CHECK, lambda eax: (calls.append(['injury_check', ((eax & 0xffffffff) - ENTITIES) // 0x80]), 1)[1])
     emu.stub(INJURE_PLAYER, lambda eax: calls.append(['injure_player', ((eax & 0xffffffff) - ENTITIES) // 0x80]))
     emu.stub(BENCH_CHEER, lambda eax: calls.append(['bench_cheer', eax & 0xffffffff]))
+
+    def reg(r):
+        v = emu.uc.reg_read(r)
+        return v - (1 << 32) if v & 0x80000000 else v
+
+    def on_record_penalty(eax):
+        sp = emu.uc.reg_read(UC_X86_REG_ESP)
+        stack = struct.unpack('<3i', emu.read(sp + 4, 12))
+        calls.append(['record_penalty', eax & 0xff, reg(UC_X86_REG_EDX), reg(UC_X86_REG_EBX), reg(UC_X86_REG_ECX)] + list(stack))
+    emu.stub(RECORD_PENALTY, on_record_penalty, pop=12)
+    emu.stub(ADD_PENALTY_DISPLAY, lambda eax: calls.append(['add_penalty_display', eax & 0xffff, reg(UC_X86_REG_EDX), reg(UC_X86_REG_EBX)]))
+    emu.stub(PENALTY_LIST_FIND, lambda eax: calls.append(['penalty_list_find', eax & 0xffff, reg(UC_X86_REG_EDX) & 0xffff]))
+    emu.stub(UPDATE_ANNOUNCER, lambda eax: calls.append(['update_announcer']))
+    emu.stub(UPDATE_EFFECTS, lambda eax: calls.append(['update_effects']))
+    emu.stub(SETUP_FACEOFF, lambda eax: calls.append(['setup_faceoff']))
+    emu.stub(ANNOUNCE_ONE_MINUTE, lambda eax: calls.append(['announce_one_minute_left']))
     emu.stub(DRAW_LINE_INDICATOR, lambda eax: calls.append(['draw_line_indicator', eax & 0xffff,
                                                            struct.unpack('<i', struct.pack('<I', emu.uc.reg_read(UC_X86_REG_EDX)))[0]]))
     speech = {'busy': 0}
@@ -1821,7 +1857,144 @@ def ai_cases(exe):
         out[group] = cases
     out['lines'] = lines_cases(emu, rnd, base, tables, calls, out['base'], os.path.join(os.path.dirname(exe), 'TEAMS.DB'))
     out['controls'] = controls_cases(emu, rnd, base, tables, calls, out['base'])
+    for h in queue_stubs:
+        emu.uc.hook_del(h)
+    out['rules'] = rules_cases(emu, rnd, base, tables, calls, out['base'], speech)
     return out
+
+
+RULE_ROUTINES = {'update_stoppage': 0x63bf8, 'process_infractions': 0x637b5, 'start_stoppage': 0x63543,
+                 'penalty_box_update': 0x62ee9, 'penalty_timers': 0x63a37, 'penalty_expired': 0x639f9,
+                 'release_from_box': 0x6392a, 'goal_ends_penalty': 0x63d69, 'update_power_play': 0x63c73,
+                 'count_penalized': 0x5df86, 'penalty_time_left': 0x54a53, 'queue_infraction': 0x62d80,
+                 'maybe_queue_infraction': 0x62cf9, 'ref_announce': 0x62ea2, 'update_line_timers': 0x63b85,
+                 'sim_game_state': 0x5c302, 'game_clock_tick': 0x5dc10, 'time_announcements': 0x5a77c,
+                 'period_strategy_init': 0x5a669, 'clear_infractions': 0x63d3c}
+INFRACTION_QUEUE = 0xe9a16
+PANEL_LINE4 = 0xe0344                          # byte_e0344: the panel's fifth line ("served by #%d")
+INF_TYPES = (3, 4, 6, 7, 8, 9, 11, 12, 13, 15, 16, 18, 21, 22, 23, 24, 26, 0x1d, 5, 0x1c)
+
+
+def rules_cases(emu, rnd, base, tables, calls, base_fields, speech):
+    '''the rules and the stoppages called directly: the infraction queue (calls, penalties, delayed
+    calls, stoppages started or not), players in the box (penalty times with their flags, the box
+    queue, majors, coincidental ones, injured culprits), the stoppage, whistle and announcement
+    timers, the power play, the clock near the full minutes and at 0:00, the scores'''
+    names = list(RULE_ROUTINES)
+    cases = []
+    for k in range(100 * len(names)):
+        name = names[k % len(names)]
+        g, teams, carrier = ai_world(emu, rnd, base, tables)
+        g['game_flags'] = (g['game_flags'] & ~0x0d) | rnd.choice((0, 1, 5, 5, 1, 9, 0xd, 8))
+        g['stop_flags'] = rnd.choice((0, 0, 0x20, 0x60, 0x24, 0x80, 1))
+        g['penalty_box_mode'] = rnd.choice((0, 0, 0, 1))
+        g['ref_phase'] = rnd.choice((-1, -1, 0, 1))
+        g['action_flags'] = rnd.choice((0, 0, 0, 0x80, 4))
+        g['clip'] = rnd.choice((-1, -1, 0, 2, 5))
+        g['panel'] = rnd.choice((-1, -1, -1, 0x20, 0x100))
+        g['speech_busy'] = rnd.choice((0, 0, 0, 1))
+        speech['busy'] = g['speech_busy']
+        g['penalty_shot_setup'] = rnd.choice((0, 0, 0, 1))
+        g['penalty_shot_active'] = rnd.choice((0, 0, 0, 0, 1))
+        g['injury_stoppage'] = rnd.choice((0, 0, 0, 1))
+        g['clock_seconds'] = rnd.choice((0, 0x3c, 0x3d, 0x78, 0xb4, 0x12c, 0x258, 0x259, rnd.randrange(0x300)))
+        g['clock_sub'] = rnd.choice((0, 0, 1, 0x17))
+        g['period'] = rnd.choice((0, 1, 1, 2, 2, 3))
+        if rnd.random() < 0.5:
+            g['crowd'] = rnd.choice((0x100, 0x300, 0x3e0))
+        # the queue
+        q = []
+        for _ in range(rnd.choice((0, 1, 1, 2, 3, 4))):
+            q.append([rnd.choice(INF_TYPES), rnd.randrange(12) | rnd.choice((0, 0, 0x80))])
+        raw = bytearray(64)
+        for i, (t_, s_) in enumerate(q):
+            raw[2 * i] = t_
+            raw[2 * i + 1] = s_
+        emu.write(INFRACTION_QUEUE, bytes(raw))
+        g['infraction0'] = raw[0]
+        # the boxes
+        for ti, t in enumerate(TEAM_RECORDS):
+            ent = list(teams[ti]['entity_of'])
+            status = list(teams[ti].get('roster_status', [3] * 28))
+            bq = []
+            for r in rnd.sample(range(1, 25), rnd.choice((0, 0, 1, 1, 2, 3))):
+                secs = rnd.choice((0, 1, 2, 5, 6, 30, 120, 300))
+                ent[r] = secs | rnd.choice((0, 0, 0x2000, 0x4000, 0x1000, 0x6000))
+                status[r] = 5
+                bq.append(r)
+            for r in range(28):
+                if ent[r] == -2 and rnd.random() < 0.08:
+                    ent[r] = rnd.choice((-3, -4, -5))
+            bq += [-1] * (28 - len(bq))
+            emu.write(t + 0x7e, struct.pack('<28h', *ent))
+            emu.write(t + 0xb6, struct.pack('<28b', *bq))
+            for i in range(28):
+                emu.write(ROSTERS + ti * 0x444 + i * 0x27, bytes([status[i] & 0xff]))
+            sk = rnd.choice((6, 6, 5, 4))
+            emu.write(t + 0x36, struct.pack('<h', sk))
+            teams[ti].update({'entity_of': ent, 'box_queue': bq, 'roster_status': status, 'skaters': sk})
+        for n_, a, sz in AI_GLOBALS:
+            emu.write(a, struct.pack('<' + _FMT[abs(sz)], g[n_] & ((1 << (8 * abs(sz))) - 1)))
+        emu.write(OPTION_FLAGS, struct.pack('<I', g['option_flags']))
+        emu.write(PERIOD_NUM, struct.pack('<h', g['period'] + 1))
+        emu.write(PANEL_LINE4, b'\0' * 0x20)
+        emu.write(PUCK + 0x42, bytes([carrier & 0xff]))
+        seed = rnd.getrandbits(32)
+        emu.write(SEED, struct.pack('<I', seed))
+        scratch_ac = rnd.getrandbits(32)
+        scratch = [rnd.getrandbits(16), rnd.getrandbits(16)]
+        emu.write(SCRATCH[2], struct.pack('<I', scratch_ac))
+        emu.write(SCRATCH[0], struct.pack('<H', scratch[0]))
+        emu.write(SCRATCH[1], struct.pack('<H', scratch[1]))
+        befores = {str(s_): dict(entity_fields(emu, s_), prev=list(struct.unpack('<iii', emu.read(ENTITIES + s_ * 0x80 + 0x74, 12))))
+                   for s_ in range(17)}
+        order = draw_order(emu)
+        t = rnd.randrange(2)
+        regs = {}
+        args = []
+        if name in ('penalty_timers', 'count_penalized'):
+            if name == 'penalty_timers':
+                args = [t]
+                regs = {'eax': TEAM_RECORDS[t]}
+        elif name in ('penalty_expired', 'release_from_box'):
+            r = rnd.choice([x for x in teams[t]['box_queue'] if x >= 0] or [rnd.randrange(25)])
+            args = [t, r]
+            regs = {'eax': TEAM_RECORDS[t], 'edx': r}
+        elif name == 'goal_ends_penalty':
+            args = [t]
+            regs = {'eax': t}
+        elif name == 'start_stoppage':
+            args = [rnd.randrange(max(1, len(q)))]
+            regs = {'eax': args[0]}
+        elif name in ('queue_infraction', 'maybe_queue_infraction'):
+            slot = rnd.randrange(12) if rnd.random() < 0.9 else rnd.choice((14, 16))
+            args = [slot, rnd.choice(INF_TYPES)]
+            regs = {'eax': ENTITIES + slot * 0x80, 'edx': args[1]}
+        elif name == 'ref_announce':
+            args = [rnd.choice(INF_TYPES)]
+            regs = {'eax': args[0]}
+        del calls[:]
+        ret = emu.call(RULE_ROUTINES[name], **regs)
+        after = ai_record(emu)
+        cases.append({'routine': name, 'args': args, 'globals': g, 'teams': teams, 'carrier': carrier, 'seed': seed,
+                      'scratch_ac': scratch_ac, 'scratch': scratch, 'infq': list(raw),
+                      'before': befores, 'order': order, 'calls': [list(c) for c in calls],
+                      'after': {str(s_): {k_: v for k_, v in entity_fields(emu, s_).items() if befores[str(s_)].get(k_) != v}
+                                for s_ in range(17)},
+                      'world_after': after,
+                      'lines_after': {'infq': list(emu.read(INFRACTION_QUEUE, 64)),
+                                      'panel4': emu.read(PANEL_LINE4, 0x20).split(b'\0')[0].decode('latin-1'),
+                                      'ret': struct.unpack('<i', struct.pack('<I', ret))[0]}})
+        for a, n_ in ((GAME_FLAGS, 1), (OPTION_FLAGS, 4), (STOP_FLAGS, 2), (MISC_FLAGS, 4), (BREAKAWAY_FLAG, 4),
+                      (PENALTY_SHOT_ACTIVE, 4), (PENALTY_SHOT_SETUP, 4), (PENALTY_SHOT_PHASE, 4)):
+            emu.write(a, b'\0' * n_)
+        emu.write(INFRACTION_QUEUE, b'\0' * 64)
+        for t_ in TEAM_RECORDS:
+            emu.write(t_ + 0x44, b'\0')
+    for c in cases:
+        c['before'] = {s_: {k_: v for k_, v in b.items() if base_fields[int(s_)].get(k_) != v} for s_, b in c['before'].items()}
+        c['after'] = {s_: a for s_, a in c['after'].items() if a}
+    return cases
 
 
 CONTROL_PLAYER = 0x504da
