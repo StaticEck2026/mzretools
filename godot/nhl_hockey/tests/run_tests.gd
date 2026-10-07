@@ -1256,6 +1256,13 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	sim.faceoff_side = [int(g.get("faceoff_side0", 0x8800)) & 0xffff, int(g.get("faceoff_side1", 0xa000)) & 0xffff]
 	sim.fade_in = int(g.get("fade_in", 0)) != 0
 	sim.clip_frame = int(g.get("clip_frame", -1))
+	sim.scorer_jumps = int(g.get("scorer_jumps", 0))
+	sim.sequence_steps = int(g.get("sequence_steps", 0))
+	sim.match_over = int(g.get("match_over", 0)) != 0
+	if g.has("star0_team"):
+		sim.stars = []
+		for k in 3:
+			sim.stars.append([int(g["star%d_team" % k]), int(g["star%d_roster" % k])])
 	if c.has("infq"):
 		var q: Array = c["infq"]
 		for i in 64:
@@ -1373,7 +1380,13 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 		"penalty_shot_spot_y": sim.penalty_shot_spot.y, "series_announce": 1 if sim.series_announce else 0,
 		"camera_x": sim.camera_x, "camera_y": sim.camera_y, "camera_lead": sim.camera_offset_y,
 		"faceoff_digit": sim.faceoff_digit, "faceoff_side0": Entity.to_s16(sim.faceoff_side[0]),
-		"faceoff_side1": Entity.to_s16(sim.faceoff_side[1]), "fade_in": 1 if sim.fade_in else 0, "clip_frame": sim.clip_frame}
+		"faceoff_side1": Entity.to_s16(sim.faceoff_side[1]), "fade_in": 1 if sim.fade_in else 0, "clip_frame": sim.clip_frame,
+		"scorer_jumps": sim.scorer_jumps, "sequence_steps": sim.sequence_steps, "match_over": 1 if sim.match_over else 0,
+		"star0_team": _star(sim, 0, 0), "star0_roster": _star(sim, 0, 1), "star1_team": _star(sim, 1, 0),
+		"star1_roster": _star(sim, 1, 1), "star2_team": _star(sim, 2, 0), "star2_roster": _star(sim, 2, 1)}
+
+static func _star(sim: Sim, k: int, f: int) -> int:
+	return int(sim.stars[k][f]) if k < sim.stars.size() else 0
 
 static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 	var diff := []

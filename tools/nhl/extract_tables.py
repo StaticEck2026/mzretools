@@ -141,7 +141,8 @@ def main():
     # per country and the idle animations of the players standing on the blue line
     t['anthem_country'] = list(le.read(0xcc9b0, 28))
     t['anthem_length'] = shorts(le, 0xcc9cc, 2)
-    t['anthem_fidgets'] = shorts(le, 0xcc9d0, 5)
+    # (ai_anthem reads the high word of the dwords from 0xcc9ce: every second word from 0xcc9d0)
+    t['anthem_fidgets'] = shorts(le, 0xcc9d0, 10)[::2]
     # compute_three_stars: shots a goalie must face for a shutout star / a save percentage star,
     # per period length setting (option_flags bits 10-11)
     t['star_shutout_shots'] = list(le.read(0xcc9e4, 3))

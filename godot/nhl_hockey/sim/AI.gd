@@ -2331,8 +2331,9 @@ static func ref_penalty_shot(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		e.want_dir = 8
-		e.timer_a = 0
-		e.react_timer = Tables.direction8(-e.xi, -e.yi)     # +0x27: facing towards centre ice
+		e.dir_timer = 0
+		e.timer_a = e.timer_a & ~0xff
+		e.react_timer = Tables.direction8(Entity.to_s16(-e.xi), Entity.to_s16(-e.yi))     # +0x27: facing towards centre ice
 		e.target_x = 0
 		e.target_y = 0
 		e.timer_b = 0
@@ -2343,7 +2344,7 @@ static func ref_penalty_shot(sim: Sim, e: Entity) -> void:
 		puck.vx = 0
 		puck.vy = 0
 		puck.vz = 0
-		puck.z = -100 * 0x10000
+		puck.z = (puck.z & 0xffff) - (100 << 16)
 		Anim.set_animation(e, Anim.REF_GLIDE)
 	if sim.penalty_shot_slot == -1:
 		e.set_state(Entity.State.REF_PICKUP)
@@ -2353,32 +2354,38 @@ static func ref_penalty_shot(sim: Sim, e: Entity) -> void:
 	if e.timer_b == 1:
 		# the puck is put down at centre ice
 		sim.puck_carrier = -1
-		puck.set_pos(0, 0)
-		puck.z = 0
-		puck.vx = 0
-		puck.vy = 0
 		puck.vz = 0
+		puck.vy = 0
+		puck.vx = 0
+		puck.z &= 0xffff
+		puck.y &= 0xffff
+		puck.x &= 0xffff
 		e.timer_b += 1
 	var dx := e.xi - e.target_x
 	var dy := e.yi - e.target_y
 	if dx * dx + dy * dy < 0x40 and absi(e.vx) < 0x10 and absi(e.vy) < 0x10:
-		var want := e.react_timer
 		if e.timer_b != 0:
-			e.set_pos(e.target_x, e.target_y)
-			want = 6
-		e.timer_a -= 1
-		if e.timer_a >= 0:
+			e.x = (e.target_x << 16) | (e.x & 0xffff)
+			e.y = (e.target_y << 16) | (e.y & 0xffff)
+			sim.scratch_ac = 6
+		else:
+			sim.scratch_ac = e.react_timer
+		# the low byte of +0x26 counts the steps between turns
+		var t := Entity.to_s8(e.timer_a) - 1
+		e.timer_a = (e.timer_a & ~0xff) | (t & 0xff)
+		if t >= 0:
 			return
-		e.timer_a += 8
+		e.timer_a = (e.timer_a & ~0xff) | ((t + 8) & 0xff)
 		Anim.set_animation(e, Anim.REF_GLIDE)
-		if want != e.facing:
-			var diff := (want - e.facing) & 7
+		if (sim.scratch_ac & 0xffff) != (e.facing & 0xffff):
+			var diff := (sim.scratch_ac - e.facing) & 7
+			sim.scratch_ac = (sim.scratch_ac & ~0xffff) | diff
 			e.facing = (e.facing + (1 if diff < 5 else -1)) & 7
 			return
-		e.vx = 0
 		e.vy = 0
+		e.vx = 0
 		if e.timer_b != 0:
-			if not Rules.all_players_arrived(sim):
+			if sim.speech_busy or sim.clip != -1 or not Rules.all_players_arrived(sim):
 				return
 			sim.ref_phase = -1
 			sim.play_sfx(0xa4)          # whistle: the shot may start
@@ -2393,6 +2400,8 @@ static func ref_penalty_shot(sim: Sim, e: Entity) -> void:
 		sim.ref_phase = 0
 		sim.action_hold_camera = false
 		return
+	sim.scratch_a = e.target_x
+	sim.scratch_b = e.target_y
 	ref_skate_to_point(sim, e, e.target_x, e.target_y)
 
 ## ai_all_penalty_shot_wait (0x52db0): everybody but the shooter and the goalie skates to his
@@ -2409,6 +2418,7 @@ static func penalty_shot_wait(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		e.want_dir = 8
+		e.dir_timer = 0
 		e.target_y = (0x41 if (e.flags & Entity.F_PLAYER2) else -0x32) + (2 - sim.random(4)) * 0xf
 		e.target_x = -0xa8
 		e.timer_a = 0

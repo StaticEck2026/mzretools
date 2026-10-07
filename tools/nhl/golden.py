@@ -1341,7 +1341,12 @@ AI_GLOBALS = (('game_flags', GAME_FLAGS, 1), ('stop_flags', STOP_FLAGS, 1), ('mi
               ('penalty_shot_spot_x', PENALTY_SHOT_SPOT, -4), ('penalty_shot_spot_y', PENALTY_SHOT_SPOT + 4, -4),
               ('series_announce', 0xccca0, 1), ('camera_x', CAMERA_XY, -2), ('camera_y', CAMERA_XY + 2, -2),
               ('camera_lead', 0xc90b0, -2), ('faceoff_digit', 0xe0398, -2), ('faceoff_side0', 0xe0392, -2),
-              ('faceoff_side1', 0xe0396, -2), ('fade_in', 0xcbec4, -2), ('clip_frame', 0xcbece, -2))
+              ('faceoff_side1', 0xe0396, -2), ('fade_in', 0xcbec4, -2), ('clip_frame', 0xcbece, -2),
+              ('scorer_jumps', 0xcca58, -4), ('sequence_steps', 0xe9b04, -4), ('match_over', 0xcbc48, -2),
+              ('star0_team', 0xe9af8, -2), ('star0_roster', 0xe9afa, -2), ('star1_team', 0xe9afc, -2),
+              ('star1_roster', 0xe9afe, -2), ('star2_team', 0xe9b00, -2), ('star2_roster', 0xe9b02, -2))
+FORMAT_PLAYER_NAME = 0x61d48                   # stubbed: a player's name for the panel (the font measures it); ret 8
+SAY_STAR = 0x59b0f                             # stubbed: the announcer names a star
 SAY_GOAL = 0x59ad0                             # stubbed: the announcer says the goal (the goal_call bytes)
 GOAL_MILESTONE_CHECK = 0x62807                 # stubbed: its deferred call is empty in this build
 RECORD_PENALTY = 0x624b9                       # stubbed (the event log, the summary, the panel, the announcer); ret 0xc
@@ -1513,7 +1518,8 @@ def ai_world(emu, rnd, base, tables):
               'penalty_shot_clock': rnd.choice((0, 1, 1000)), 'goal_flags': 1, 'puck_in_net': 0, 'penalty_shot_roster': -1,
               'penalty_shot_spot_x': 0, 'penalty_shot_spot_y': 0, 'series_announce': 0, 'camera_x': 0, 'camera_y': 0,
               'camera_lead': 0, 'faceoff_digit': 7, 'faceoff_side0': 0x8800 - 0x10000, 'faceoff_side1': 0xa000 - 0x10000, 'fade_in': 0,
-              'clip_frame': -1})
+              'clip_frame': -1, 'scorer_jumps': 0, 'sequence_steps': 0, 'match_over': 0, 'star0_team': 0, 'star0_roster': 0,
+              'star1_team': 0, 'star1_roster': 0, 'star2_team': 0, 'star2_roster': 0})
     for n, a, sz in AI_GLOBALS:
         emu.write(a, struct.pack('<' + _FMT[sz], g[n] if sz < 0 else g[n] & ((1 << (8 * sz)) - 1)))
     emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
@@ -1549,6 +1555,14 @@ AI_GROUPS = {
               (9, SKATERS), (10, SKATERS), (29, SKATERS)),
     # the referee's calls: signalling, the new puck, picking up the puck
     'refcalls': ((32, (16,)), (32, (16,)), (36, (16,)), (36, (16,)), (33, (16,)), (33, (16,)), (33, (16,)), (33, (16,))),
+    # the penalty shot (the referee with the puck, everybody else off), the goal celebration, the
+    # Stanley Cup (the shadow brings it, the captain fetches it and skates with it)
+    'ceremony': ((44, (16,)), (44, (16,)), (45, SKATERS + (0, 6)), (45, SKATERS + (0, 6)), (7, SKATERS), (7, SKATERS),
+                 (8, SKATERS), (42, SKATERS), (42, SKATERS), (43, (15,))),
+    # the national anthem (the players at the blue lines, the referee to centre ice) and the three
+    # stars (the referee presenting them, a star's lap of honour)
+    'anthem': ((37, tuple(range(12))), (38, (16,)), (38, (16,)), (20, SKATERS + (0, 6)), (20, SKATERS + (0, 6)), (21, (16,)),
+               (21, (16,)), (21, (16,))),
 }
 
 
@@ -1732,6 +1746,122 @@ def ai_prepare(emu, rnd, state, actor, g):
             carrier = -1
             g['pred0_steps' if own > 0 else 'pred1_steps'] = rnd.randrange(1, 0x24)
             g['pred0_x' if own > 0 else 'pred1_x'] = gx + rnd.randrange(-0x20, 0x21)
+    if state == 44:
+        # the referee with the puck to centre ice, putting it down, waiting at the side
+        g['penalty_shot_slot'] = rnd.choice((-1, rnd.randrange(12), rnd.randrange(12), rnd.randrange(12)))
+        g['penalty_shot_team'] = 1 if g['penalty_shot_slot'] > 5 else 0
+        g['penalty_shot_phase'] = 1
+        g['clip'] = rnd.choice((-1, -1, 2))
+        tb = rnd.choice((0, 0, 1, 2, 2, 100))
+        tx, ty = (0, 0) if tb == 0 else (0x96, rnd.choice((10, -10)))
+        f = {'timer_b': tb, 'target_x': tx, 'target_y': ty,
+             'timer_a': (rnd.randrange(8) << 8) | rnd.choice((0, 1, 5, 0xff)),
+             'heading': rnd.randrange(8) << 16 | rnd.randrange(0x10000),
+             'vx': rnd.choice((0, 0, 0x20, -0x300)), 'vy': rnd.choice((0, 0, 0x8))}
+        if rnd.random() < 0.6:
+            f.update({'x': (tx + rnd.randrange(-6, 7)) << 16 | rnd.randrange(0x10000),
+                      'y': (ty + rnd.randrange(-6, 7)) << 16 | rnd.randrange(0x10000)})
+        put_fields(rec, f)
+        if rnd.random() < 0.5:
+            for s_ in range(12):
+                o = bytearray(emu.read(ENTITIES + s_ * 0x80, 0x80))
+                struct.pack_into('<h', o, 0x2e, -100)
+                emu.write(ENTITIES + s_ * 0x80, o)
+            rec = bytearray(emu.read(ENTITIES + actor * 0x80, 0x80)) if actor < 12 else rec
+    if state == 45:
+        # off to the bench for the penalty shot
+        g['penalty_shot_phase'] = rnd.choice((1, 1, 1, 0))
+        away = actor >= 6
+        ty = (0x41 if away else -0x32) + rnd.choice((-0x1e, -0xf, 0, 0xf))
+        f = {'timer_a': rnd.choice((0x64, 0, 0, 1, 5, -1)), 'target_x': -0xa8, 'target_y': ty,
+             'heading': rnd.randrange(8) << 16 | rnd.randrange(0x10000)}
+        if rnd.random() < 0.5:
+            f.update({'x': (-0xa8 + rnd.randrange(-4, 0x24)) << 16 | rnd.randrange(0x10000),
+                      'y': (ty + rnd.randrange(-0x2c, 0x2d)) << 16 | rnd.randrange(0x10000)})
+        put_fields(rec, f)
+        if rnd.random() < 0.3:
+            rec[0x44] |= 4
+    if state == 7:
+        # the scorers celebrate (the scorer jumps up to three times)
+        if rnd.random() < 0.2:
+            carrier = actor
+        if rnd.random() < 0.4:
+            g['last_shooter'] = actor
+        g['scorer_jumps'] = rnd.randrange(4)
+        if rnd.random() < 0.3:
+            g['game_flags'] |= 0x80
+        g['camera_x'] = rnd.randrange(-0x20, 0x21)
+        g['camera_y'] = rnd.randrange(-0xbc, 0xed)
+        put_fields(rec, {'timer_a': rnd.choice((-1, 0, 0, 1, 30)), 'target_x': rnd.choice((-100, 100, -0x50)),
+                         'target_y': rnd.randrange(-0xbc, 0xed)})
+    if state == 8:
+        # the captain skating with the cup
+        put_fields(rec, {'anim': rnd.choice((0, 0xecb, 0x833)), 'target_x': -0x50, 'target_y': 0,
+                         'timer_a': rnd.choice((-1, 0, 0, 5))})
+    if state in (42, 43):
+        cup = bytearray(emu.read(ENTITIES + 15 * 0x80, 0x80))
+        put_fields(cup, {'timer_a': rnd.choice((100, 100, 0, 200))})
+        emu.write(ENTITIES + 15 * 0x80, cup)
+    if state == 42:
+        # the captain to the bench door for the cup
+        f = {'timer_a': rnd.choice((100, 100, 0, 1, -1)), 'target_x': -0x91, 'target_y': 6,
+             'heading': rnd.randrange(8) << 16 | rnd.randrange(0x10000)}
+        if rnd.random() < 0.6:
+            f.update({'x': (-0x91 + rnd.randrange(-6, 7)) << 16 | rnd.randrange(0x10000),
+                      'y': (6 + rnd.randrange(-6, 7)) << 16 | rnd.randrange(0x10000)})
+        put_fields(rec, f)
+        if rnd.random() < 0.3:
+            rec[0x44] |= 4
+    if state == 43:
+        # the shadow brings the cup in once the camera is at the bench door
+        g['camera_x'] = rnd.choice((-0x20, -0x21, -0x40, 0))
+        g['camera_y'] = rnd.choice((0, 0x14, 0x15, -0x14))
+        g['panel'] = rnd.choice((-1, 0x100, 0x100))
+        put_fields(rec, {'timer_a': rnd.choice((0, 50, 100, 200, 200)), 'frame': rnd.choice((0x365, 0x365, 0x362)),
+                         'anim': rnd.choice((0, 0, 0xe97)), 'anim_pos': rnd.randrange(8), 'anim_hold': rnd.randrange(-1, 0xe)})
+    if state == 37:
+        put_fields(rec, {'timer_b': rnd.choice((-100, 0, 1, 2, 50)), 'target_x': rnd.randrange(-0x40, 0x41),
+                         'flags2': rnd.choice((0, 0, 2))})
+    if state == 38:
+        # the referee waiting at the boards, skating to centre ice, turned to the players
+        g['sequence_steps'] = rnd.choice((5, 10, 11, 100))
+        f = {'timer_b': rnd.choice((-100, -100, 0, 1, 2, 50)), 'target_x': -0xf, 'target_y': 0,
+             'timer_a': rnd.choice((-1, 0, 0, 3)), 'heading': rnd.randrange(8) << 16 | rnd.randrange(0x10000),
+             'vx': rnd.choice((0, 0, 0x20, 0x400)), 'vy': rnd.choice((0, 0, -0x10)), 'flags2': rnd.choice((0, 0, 2))}
+        if rnd.random() < 0.5:
+            f.update({'x': (-0xf + rnd.randrange(-0xc, 0xd)) << 16 | rnd.randrange(0x10000),
+                      'y': rnd.randrange(-0xc, 0xd) << 16 | rnd.randrange(0x10000)})
+        put_fields(rec, f)
+        if rnd.random() < 0.5:
+            for s_ in range(12):
+                o = bytearray(emu.read(ENTITIES + s_ * 0x80, 0x80))
+                struct.pack_into('<h', o, 0x2e, -100)
+                emu.write(ENTITIES + s_ * 0x80, o)
+    if state == 20:
+        # a star on his lap of honour
+        tx, ty = rnd.randrange(-0x80, 0x81), rnd.randrange(-0xc0, 0xc1)
+        f = {'timer_b': rnd.randrange(4), 'timer_a': rnd.choice((-1, 0, 1, 2, 3)), 'target_x': tx, 'target_y': ty,
+             'dir_timer': rnd.randrange(-1, 12), 'want_dir': rnd.choice((0, 3, 8, 9)),
+             'heading': rnd.randrange(8) << 16 | rnd.randrange(0x10000)}
+        if rnd.random() < 0.4:
+            f.update({'x': (tx + rnd.randrange(-0x20, 0x21)) << 16 | rnd.randrange(0x10000),
+                      'y': (ty + rnd.randrange(-0x20, 0x21)) << 16 | rnd.randrange(0x10000)})
+        if rnd.random() < 0.3:
+            f.update({'vx': 0, 'vy': 0})
+        put_fields(rec, f)
+    if state == 21:
+        # the referee presenting the stars
+        g['panel'] = rnd.choice((-1, -1, 5, 0x10, 0x100, 0x258, 0x260, 0x268))
+        for k in range(3):
+            g['star%d_team' % k] = rnd.randrange(2)
+            g['star%d_roster' % k] = rnd.choice((rnd.randrange(25), rnd.randrange(25, 28)))
+        star = rnd.choice((-1, 5, 6))
+        put_fields(rec, {'timer_a': rnd.choice((2, 1, 0, -1)), 'want_dir': rnd.choice((1, 2, 0, 0xff, 0xfb)),
+                         'dir_timer': rnd.choice((0, 0, -1)), 'target_x': star})
+        for s_ in (5, 6):
+            o = bytearray(emu.read(ENTITIES + s_ * 0x80, 0x80))
+            put_fields(o, {'timer_a': rnd.choice((100, 0)), 'frame': rnd.choice((-1, -1, 0x30))})
+            emu.write(ENTITIES + s_ * 0x80, o)
     puck[0x42] = carrier & 0xff
     emu.write(PUCK, puck)
     emu.write(ENTITIES + actor * 0x80, rec)
@@ -1795,6 +1925,8 @@ def ai_cases(exe):
                                                                  s32(emu.uc.reg_read(UC_X86_REG_EDX))]))
     emu.stub(SAY_GOAL, lambda eax: calls.append(['say_goal'] + list(emu.read(0xe9ad4, 4))), pop=4)
     emu.stub(GOAL_MILESTONE_CHECK, lambda eax: calls.append(['goal_milestone_check']))
+    emu.stub(SAY_STAR, lambda eax: None)
+    emu.stub(FORMAT_PLAYER_NAME, lambda eax: None, pop=8)
     emu.stub(ANNOUNCE_GOAL, lambda eax: calls.append(['announce_goal', s32(eax & 0xffffffff),
                                                      s32(emu.uc.reg_read(UC_X86_REG_EDX)), s32(emu.uc.reg_read(UC_X86_REG_EBX)),
                                                      s32(emu.uc.reg_read(UC_X86_REG_ECX))]))

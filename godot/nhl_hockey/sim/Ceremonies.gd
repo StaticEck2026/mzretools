@@ -158,6 +158,7 @@ static func ref_anthem(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		e.want_dir = 8
+		e.dir_timer = 0
 		e.timer_a = 0
 		e.target_x = -0xf
 		e.target_y = 0
@@ -172,7 +173,8 @@ static func ref_anthem(sim: Sim, e: Entity) -> void:
 	var dy := e.yi - e.target_y
 	var d2 := dx * dx + dy * dy
 	if d2 < 0x40 and absi(e.vx) < 0x10 and absi(e.vy) < 0x10:
-		e.set_pos(e.target_x, e.target_y)
+		e.x = (e.target_x << 16) | (e.x & 0xffff)
+		e.y = (e.target_y << 16) | (e.y & 0xffff)
 		e.timer_a -= 1
 		if e.timer_a >= 0:
 			return
@@ -257,6 +259,7 @@ static func celebrate(sim: Sim, e: Entity) -> void:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		e.timer_a = sim.random(0x78)
 		e.want_dir = 8
+		e.dir_timer = 0
 		if not sim.intermission_camera:
 			e.target_x = -100 if sim.camera_x < 0 else 100
 			e.target_y = sim.camera_y - (0x37 if sim.camera_x < 0 else 0)
@@ -290,17 +293,19 @@ static func celebrate(sim: Sim, e: Entity) -> void:
 static func puck_give_cup(sim: Sim, e: Entity) -> void:
 	if e.flags & Entity.F_STATE_ENTERED:
 		AI.puck_shadow(sim, e)
+		if sim.speech_busy:
+			return
 		if sim.panel == InfoPanel.HELD:
 			sim.panel = InfoPanel.CLOSING
 		if sim.camera_x > -0x20 or absi(sim.camera_y) > 0x14:
 			return
 		e.flags &= ~Entity.F_STATE_ENTERED
-		e.frame_wait = 0
-		e.set_pos(-0xbe, 3)
+		e.x = (e.x & 0xffff) - (0xbe << 16)
+		e.y = (3 << 16) | (e.y & 0xffff)
 		e.timer_a = 0
-		e.vx = 0
 		e.vy = 0
-		e.pass_target = 0
+		e.vx = 0
+		e.frame_wait = 0
 		e.frame = 0x362
 		Anim.set_animation(e, 0xe97)
 	if e.timer_a < 100:
@@ -319,8 +324,8 @@ static func get_cup(sim: Sim, e: Entity) -> void:
 		return
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
-		e.frame_wait = 0
 		e.want_dir = 8
+		e.dir_timer = 0
 		e.target_y = 6
 		e.target_x = -0x91
 		e.timer_a = 0
@@ -329,19 +334,21 @@ static func get_cup(sim: Sim, e: Entity) -> void:
 		var cup := sim.shadow
 		if cup.timer_a == 100:
 			cup.timer_a = 200
-			cup.pass_ok = 0
+			cup.frame_wait = 0
 			cup.flags |= Entity.F_BUSY
 			Anim.set_animation(cup, 0xea9)
 			e.flags4 &= ~Entity.F4_MIRROR
 			e.frame = 0x165
 			e.facing = 2
-			e.pass_target = 0
+			e.frame_wait = 0
 			e.flags |= Entity.F_BUSY
 			Anim.set_animation(e, 0xe83)
-			Crowd.bench_cheer(sim, e.team)
-			if e.roster_idx >= 0 and e.roster_idx < 28:
-				sim.team_of(e).energy[e.roster_idx] = 0x800
+			var r := Entity.to_s8(e.roster_idx)
+			if r >= 0 and r < 28:
+				sim.team_of(e).energy[r] = 0x800
+			e.energy = 0x800
 			AI.default_skate(sim, e)
+			Crowd.bench_cheer(sim, 1 if e.flags & Entity.F_PLAYER2 else 0)
 		return
 	e.timer_a -= 1
 	if e.timer_a < 0:
@@ -349,9 +356,10 @@ static func get_cup(sim: Sim, e: Entity) -> void:
 		var dy := e.yi - e.target_y
 		var dx := e.xi - e.target_x
 		if absi(dy) < 5 and dx < 5:
-			e.set_pos(e.target_x, e.target_y)
-			e.vx = 0
+			e.y = (e.target_y << 16) | (e.y & 0xffff)
+			e.x = (e.target_x << 16) | (e.x & 0xffff)
 			e.vy = 0
+			e.vx = 0
 			Anim.set_animation(e, Anim.GLIDE)
 			e.flags |= Entity.F_ARRIVED
 			if e.facing != 6:
@@ -368,16 +376,18 @@ static func stanley_cup(sim: Sim, e: Entity) -> void:
 		return
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
-		e.frame_wait = 0
 		e.target_x = -0x50
 		e.target_y = 0
 		e.timer_a = 0
-		e.pass_target = 0
+		e.frame_wait = 0
 		Anim.set_animation(e, 0xecb)
 		sim.stoppage_timer = 0x100
 	if e.anim == 0:
-		if e.roster_idx >= 0 and e.roster_idx < 28:
-			sim.team_of(e).energy[e.roster_idx] = 0x300
+		# (the energy lives in the team record; the port's copy on the entity too)
+		var r := Entity.to_s8(e.roster_idx)
+		if r >= 0 and r < 28:
+			sim.team_of(e).energy[r] = 0x300
+		e.energy = 0x300
 		Anim.set_animation(e, 0x833)
 	var dir := Tables.direction8(e.target_x - e.xi, e.target_y - e.yi)
 	if dir < 8:
@@ -627,18 +637,20 @@ static func _announce_star(sim: Sim, index: int) -> void:
 ## star in turn come out of the bench (entity 5 for the home team, 6 for the away team), skate a
 ## lap and leave; then the game is over. It waits while the panel opens or closes.
 static func ref_three_stars(sim: Sim, e: Entity) -> void:
-	if not (sim.panel == -1 or (sim.panel > 0xf and (sim.panel < InfoPanel.CLOSING or sim.panel > 0x267))):
+	if sim.panel != -1 and (sim.panel < 0x10 or (sim.panel >= InfoPanel.CLOSING and sim.panel < 0x268)):
 		return
+	# the countdown is the word +0x28 (want_dir, dir_timer), the star on the ice +0x2a (target_x)
+	var extra := 0xdc if InfoPanel.speech_on(sim) else 0
 	if e.flags & Entity.F_STATE_ENTERED:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		InfoPanel.set_text(sim, ["EA Sports", "", "", "", ""])
-		e.timer_a = mini(2, sim.stars.size() - 1)        # the star to present (2 = 3rd)
-		e.timer_b = sim.random(0x14) + 0x14            # +0x28 in the original
-		e.target_x = -1                                # the entity of the star on the ice
-		if e.timer_a >= 0:
-			_announce_star(sim, e.timer_a)
-	e.timer_b -= 1
-	if e.timer_b >= 1:
+		e.timer_a = 2                                  # the star to present (2 = 3rd)
+		AI._pf_set_timer(e, 1, sim.random(0x14) + 0x14 + extra)
+		e.target_x = -1
+		_announce_star(sim, e.timer_a)
+	var cd := AI._pf_timer(e, 1) - 1
+	AI._pf_set_timer(e, 1, cd)
+	if cd > 0:
 		return
 	if e.timer_a < 0:
 		sim.sequence_steps = 0
@@ -646,38 +658,40 @@ static func ref_three_stars(sim: Sim, e: Entity) -> void:
 		sim.stars_running = false
 		sim.match_over = true
 		return
-	var star: Entity = sim.entities[e.target_x] if e.target_x >= 0 else null
-	if star == null or star.timer_a != 100 or star.frame != -1:
-		if e.timer_b >= 0:
-			var st: Array = sim.stars[e.timer_a]
-			var slot := 6 if st[0] != 0 else 5
-			e.target_x = slot
-			var p: Entity = sim.entities[slot]
-			sim.crowd_noise = 700 if (p.flags & Entity.F_PLAYER2) else 0x5dc
-			var roster: int = st[1]
-			p.roster_idx = roster
-			p.line_slot = 4 if roster < 25 else 0
-			p.timer_a = 0
-			p.next_roster = -1
-			p.next_line_slot = -1
-			var team := sim.teams[st[0]]
-			team.energy[roster] = 0x300
-			e.flags2 &= ~Entity.F2_UNSELECTABLE
-			sim.put_player_on_ice(p, roster)
-			p.flags2 &= ~Entity.F2_UNSELECTABLE
-			p.state_sp = 0
-			p.set_state(Entity.State.NONE)
-			p.set_state_reset(Entity.State.GAME_MISCONDUCT)
-			p.set_state_reset(Entity.State.THREE_STARS)
-			p.set_state_reset(Entity.State.EXIT_BENCH)
+	if e.target_x >= 0:
+		var star: Entity = sim.entities[e.target_x]
+		if star.timer_a == 100 and star.frame == -1:
+			AI._pf_set_timer(e, 1, sim.random(0x1e) + 0x14 + extra)
+			e.target_x = -1
+			e.timer_a -= 1
+			if e.timer_a < 0:
+				sim.panel = InfoPanel.CLOSING
+				return
+			_announce_star(sim, e.timer_a)
+			return
+	if cd < 0:
 		return
-	e.timer_b = sim.random(0x1e) + 0x14
-	e.target_x = -1
-	e.timer_a -= 1
-	if e.timer_a >= 0:
-		_announce_star(sim, e.timer_a)
-	else:
-		sim.panel = InfoPanel.CLOSING
+	var st: Array = sim.stars[e.timer_a] if e.timer_a < sim.stars.size() else [0, 0]
+	var slot := 6 if st[0] != 0 else 5
+	e.target_x = slot
+	var p: Entity = sim.entities[slot]
+	var t := 1 if p.flags & Entity.F_PLAYER2 else 0
+	sim.crowd_noise = 0x2bc if t == 1 else 0x5dc
+	var roster: int = st[1]
+	p.roster_idx = roster & 0xff
+	p.line_slot = 4 if Entity.to_s8(roster) < 0x19 else 0
+	p.timer_a = 0
+	p.next_roster = -1
+	p.next_line_slot = -1
+	var r := Entity.to_s8(roster)
+	if r >= 0 and r < 28:
+		sim.teams[t].energy[r] = 0x300
+	e.flags2 &= ~Entity.F2_UNSELECTABLE
+	sim.put_player_on_ice(p, r)
+	p.set_state(Entity.State.NONE)
+	p.set_state_reset(Entity.State.GAME_MISCONDUCT)
+	p.set_state_reset(Entity.State.THREE_STARS)
+	p.set_state_reset(Entity.State.EXIT_BENCH)
 
 ## ai_three_stars (0x49460): a lap of honour along four points; a star of the winning home team
 ## raises his stick at one of them; after the lap the state below (ai_game_misconduct) takes him
@@ -690,6 +704,7 @@ static func three_stars(sim: Sim, e: Entity) -> void:
 		e.flags &= ~Entity.F_STATE_ENTERED
 		e.timer_b = 0
 		e.want_dir = 8
+		e.dir_timer = 0
 		if e.line_slot == 0 or side != 0 or sim.teams[0].goals <= sim.teams[1].goals:
 			e.timer_a = -1
 		else:
