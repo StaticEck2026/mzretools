@@ -4538,6 +4538,233 @@ def record_cases(exe, gamedir, count=200):
     return cases
 
 
+LEAGUE_PLAY_DAY = 0x41cc4                      # (dir, ext, game index, PINFO teams) + team (-1 all), mode: the league's games up to a date
+PLAYOFF_TRIM_SERIES = 0x41f64                  # (SCHEDULE file, TEAMS file, game index): a decided series' games off the schedule
+LOADFILE = 0x8e8a0                             # stubbed (cdecl): (path, flags) the file in memory
+FILESIZE = 0x92de0                             # stubbed (cdecl): (path)
+SAVEFILE = 0x932d0                             # stubbed (cdecl): (path, buffer, size)
+AWARDS_SCREEN = 0x13320                        # stubbed: the season's awards (counted)
+LEAGUE_DB_LOAD = 0x42295                       # (dir, random schedule): the new league's schedule, its teams' game lists
+MESSAGE_DIALOG = 0x31013                       # stubbed: ("Shuffling the schedule"); 5 stack arguments
+RESTORE_DIALOG_BACKGROUND = 0x30f12            # stubbed
+DAY_FILES = ('TEAMS', 'CARTEAMS', 'KEY', 'CAREER', 'SEASON', 'SCHEDULE')
+
+
+def file_hash(b):
+    return hashlib.sha1(bytes(b)).hexdigest()
+
+
+def day_cases(exe, gamedir):
+    """whole seasons of a league: league_play_day (schedule_play_games with league_sim_game and
+    schedule_write_record, schedule_screen with schedule_rank_teams and the play-off rounds,
+    schedule_screen2 and playoff_advance) and playoff_trim_series called as league_calendar_flow
+    and league_merge_check call them: each game of a human team gets a score, the games played or
+    the decided series' games are updated, the day is played for its team (mode 2) and then for
+    everybody (mode 7); with no human game left the league plays on to the end. The league files
+    the game ships, one, two or no human teams, the play-off series lengths; after every call the
+    TEAMS, SEASON and SCHEDULE files (SHA-1), the rand() state, the line orders and the awards"""
+    emu = PortEmu(exe)
+    rnd = random.Random(1101)
+    base = {n: read(gamedir, n + '.DB') for n in DAY_FILES}
+    files = {}
+    handles = {}
+    awards = {'n': 0}
+    loaded = {n: emu.alloc(len(base[n]) + 0x100) for n in DAY_FILES}
+    free = {}
+
+    def reg(r):
+        return emu.uc.reg_read(r) & 0xffffffff
+
+    def arg(i):
+        return struct.unpack('<I', emu.read(reg(UC_X86_REG_ESP) + 4 + 4 * i, 4))[0]
+
+    def name_of(path):
+        p_ = bytes(emu.read(path, 64)).split(b'\0')[0].decode('latin-1')
+        return p_.replace('/', '\\').split('\\')[-1].split('.')[0].upper()
+
+    def on_open(eax):
+        h = 5 + len(handles)
+        handles[h] = name_of(eax & 0xffffffff)
+        emu.write(reg(UC_X86_REG_EDX), struct.pack('<i', h))
+        return 0
+
+    def on_close(eax):
+        emu.write(eax & 0xffffffff, struct.pack('<i', -1))
+        return 0
+
+    def on_read(eax):
+        f = files[handles[eax & 0xffffffff]]
+        buf, off, size = reg(UC_X86_REG_EDX), reg(UC_X86_REG_EBX), reg(UC_X86_REG_ECX)
+        if off + size > len(f):
+            return 1
+        emu.write(buf, bytes(f[off:off + size]))
+        return 0
+
+    def on_write(eax):
+        f = files[handles[eax & 0xffffffff]]
+        buf, off, size = reg(UC_X86_REG_EDX), reg(UC_X86_REG_EBX), reg(UC_X86_REG_ECX)
+        if off + size > len(f):
+            return 1
+        f[off:off + size] = emu.read(buf, size)
+        return 0
+
+    def on_load(eax):
+        n_ = name_of(arg(0))
+        emu.write(loaded[n_], bytes(files[n_]))
+        return loaded[n_]
+
+    def on_size(eax):
+        return len(files[name_of(arg(0))])
+
+    def on_save(eax):
+        n_ = name_of(arg(0))
+        files[n_] = bytearray(emu.read(arg(1), arg(2)))
+        return 0
+
+    def on_alloc(eax):
+        size = max(arg(1), 0x400)
+        for p_, sz in list(free.items()):
+            if sz >= size:
+                del free[p_]
+                emu.write(p_, b'\0' * sz)
+                used[p_] = sz
+                return p_
+        p_ = emu.alloc(b'\0' * size)
+        used[p_] = size
+        return p_
+
+    def on_free(eax):
+        p_ = arg(0)
+        if p_ in used:
+            free[p_] = used.pop(p_)
+        return 0
+    used = {}
+    emu.stub(FILE_OPEN_READ, on_open)
+    emu.stub(FILE_OPEN_RW, on_open)
+    emu.stub(FILE_CLOSE, on_close)
+    emu.stub(FILE_READ, on_read)
+    emu.stub(FILE_WRITE, on_write)
+    emu.stub(LOADFILE, on_load)
+    emu.stub(FILESIZE, on_size)
+    emu.stub(SAVEFILE, on_save)
+    emu.stub(ALLOCMEM, on_alloc)
+    emu.stub(FREEMEM, on_free)
+    emu.stub(AWARDS_SCREEN, lambda eax: awards.__setitem__('n', awards['n'] + 1))
+    emu.stub(MESSAGE_DIALOG, lambda eax: 0, pop=0x14)
+    emu.stub(RESTORE_DIALOG_BACKGROUND, lambda eax: 0)
+
+    # playoff_make_final sorts the finalists by the records it reads only for human teams; a
+    # computer team's is whatever the stack holds (heap pointers and frames of earlier calls in the
+    # game): zeros here, as the port takes them
+    def on_make_final(uc, address, size, user):
+        esp = uc.reg_read(UC_X86_REG_ESP)
+        uc.mem_write(esp + 4, b'\0' * 0x5d0)
+    emu.uc.hook_add(UC_HOOK_CODE, on_make_final, None, 0x444dd, 0x444dd)
+    strings = emu.alloc(b'L\0\0\0.DB\0\0')
+    pinfo = emu.alloc(b'\0' * 28 * 0x1e)
+    chains = []
+    # (the human teams, the series length, a random schedule, the play-off rounds the human teams
+    # win after winning every regular season game; None: random scores all along)
+    for humans, length, random_schedule, rounds_won in (([5], 7, 1, None), ([3, 17], 5, 0, None), ([], 7, 1, None),
+                                                         ([12], 3, 1, 4), ([0, 25], 7, 0, None), ([8], 7, 1, 0),
+                                                         ([20, 21], 5, 0, 1), ([14], 7, 0, 2)):
+        files = {n: bytearray(base[n]) for n in DAY_FILES}
+        handles = {1: 'SCHEDULE', 2: 'TEAMS'}
+        emu.write(pinfo, bytes(sum(([0] * 0x17 + [1 if t in humans else 0] + [0] * 6 for t in range(28)), [])))
+        option_flags = (rnd.randrange(0x10000) & ~0x7000) | (length << 12)
+        emu.write(OPTION_FLAGS, struct.pack('<I', option_flags))
+        seed = rnd.getrandbits(32)
+        emu.call(SRAND, eax=seed)
+        # the new league (league_db_load: the play-off games cleared, a random schedule shuffled)
+        ret = emu.call(LEAGUE_DB_LOAD, eax=strings, edx=random_schedule)
+        assert ret == 0
+        fwd = []
+        for t in range(2):
+            o = [0, 1, 2, 3, 0, 1, 2, 0, 1, 0]
+            rnd.shuffle(o)
+            fwd.append(o)
+        dfn = [rnd.sample(range(3), 3) for _ in range(2)]
+        for t in range(2):
+            emu.write(FORWARD_LINE_ORDER + t * 40, struct.pack('<10i', *fwd[t]))
+            emu.write(DEFENCE_PAIR_ORDER + t * 12, struct.pack('<3i', *dfn[t]))
+        steps = []
+
+        def game(i):
+            return files['SCHEDULE'][2 + i * 6:8 + i * 6]
+
+        def call(index, team, mode):
+            awards['n'] = 0
+            ret = emu.call(LEAGUE_PLAY_DAY, eax=strings, edx=strings + 4, ebx=index, ecx=pinfo, stack=(team, mode))
+            return [index, team, mode, s32(ret), awards['n']]
+        for _ in range(400):
+            gp = struct.unpack_from('<H', files['SCHEDULE'], 0)[0]
+            nxt = -1
+            for i in range(0x4ad):
+                r = game(i)
+                if r[2] != 0xff and r[3] != 0xff and (r[2] in humans or r[3] in humans) and r[0] != 0xff \
+                        and (r[4] == 0xff or r[5] == 0xff) and (i < 0x444 or r[1] != 0xff):
+                    nxt = i
+                    break
+            step = {'pre': [], 'gp': -1, 'trim': -1, 'calls': []}
+            if nxt >= 0:
+                r = bytearray(game(nxt))
+                a = rnd.randrange(8)
+                b = rnd.choice([x for x in range(8) if x != a]) if nxt >= 0x444 else rnd.randrange(8)
+                if rounds_won is not None:
+                    rnd_ = 0 if nxt < 0x47c else 1 if nxt < 0x498 else 2 if nxt < 0x4a6 else 3
+                    win = nxt < 0x444 or rnd_ < rounds_won
+                    a, b = sorted((rnd.randrange(1, 8), rnd.randrange(8)), reverse=True)
+                    if a == b:
+                        a += 1
+                    if (r[2] in humans) != win:
+                        a, b = b, a
+                r[4], r[5] = a, b
+                files['SCHEDULE'][2 + nxt * 6:8 + nxt * 6] = r
+                step['pre'] = [nxt, list(r)]
+                if nxt < 0x444:
+                    if gp < nxt + 1:
+                        struct.pack_into('<H', files['SCHEDULE'], 0, nxt + 1)
+                        step['gp'] = nxt + 1
+                else:
+                    step['trim'] = nxt
+                    emu.call(PLAYOFF_TRIM_SERIES, eax=1, edx=2, ebx=nxt)
+                team = r[2] if r[2] in humans else r[3]
+                step['calls'].append(call(nxt if nxt < 0x444 else nxt - 1, team, 2))
+                # the human teams' standings as season_record_result counts the game (golden-verified
+                # on its own): games, wins / losses / ties, goals for and against
+                step['standings'] = []
+                for side_, t_ in ((0, r[2]), (1, r[3])):
+                    if t_ in humans:
+                        tm = files['TEAMS']
+                        b_ = t_ * 0x2e8 + (0x3a if nxt >= 0x444 else 0x28)
+                        mine, other = (a, b) if side_ == 0 else (b, a)
+                        k_ = 1 if mine > other else 2 if mine < other else 3
+                        tm[b_] = (tm[b_] + 1) & 0xff
+                        tm[b_ + k_] = (tm[b_ + k_] + 1) & 0xff
+                        g4, g6 = struct.unpack_from('<HH', tm, b_ + 4)
+                        struct.pack_into('<HH', tm, b_ + 4, (g4 + mine) & 0xffff, (g6 + other) & 0xffff)
+                        step['standings'].append([b_, bytes(tm[b_:b_ + 8]).hex()])
+                gp = struct.unpack_from('<H', files['SCHEDULE'], 0)[0]
+                step['calls'].append(call(gp if nxt < 0x444 else nxt, -1, 7))
+            else:
+                before = file_hash(files['SCHEDULE'])
+                step['calls'].append(call(gp if gp else 1, -1, 7))
+                if file_hash(files['SCHEDULE']) == before:
+                    steps.append(dict(step, after=None))
+                    break
+            step['after'] = {'TEAMS': file_hash(files['TEAMS']), 'SEASON': file_hash(files['SEASON']),
+                             'SCHEDULE': file_hash(files['SCHEDULE']),
+                             'rand': struct.unpack('<I', emu.read(emu.call(RAND_STATE) & 0xffffffff, 4))[0],
+                             'fwd': [list(struct.unpack('<10i', emu.read(FORWARD_LINE_ORDER + t * 40, 40))) for t in range(2)],
+                             'dfn': [list(struct.unpack('<3i', emu.read(DEFENCE_PAIR_ORDER + t * 12, 12))) for t in range(2)]}
+            steps.append(step)
+        chains.append({'humans': humans, 'option_flags': option_flags, 'seed': seed, 'random': random_schedule, 'rounds_won': rounds_won,
+                       'fwd': fwd, 'def': dfn, 'steps': steps,
+                       'final': {n: byte_diff(base[n], files[n]) for n in ('TEAMS', 'SCHEDULE')}})
+    emu.write(OPTION_FLAGS, b'\0' * 4)
+    return chains
+
+
 def main():
     if len(sys.argv) != 3:
         print(__doc__ or 'golden.py GAMEDIR OUTDIR')
@@ -4549,7 +4776,7 @@ def main():
                        ('pc_speaker', pc_cases(exe, gamedir)), ('physics', physics_cases(exe)),
                        ('league', {'league': league_cases(exe, gamedir), 'scores': scores_cases(exe),
                                    'playoffs': playoff_cases(exe, gamedir), 'rounds': round_cases(exe, gamedir),
-                                   'records': record_cases(exe, gamedir)})):
+                                   'records': record_cases(exe, gamedir), 'days': day_cases(exe, gamedir)})):
         write_golden(outdir, name, data)
     write_ai(outdir, ai_cases(exe))
 

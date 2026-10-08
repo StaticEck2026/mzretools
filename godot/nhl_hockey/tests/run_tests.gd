@@ -2859,6 +2859,92 @@ func league_golden(gf: Node) -> void:
 			fail("league round 1 n %d: %s" % [n, ", ".join(bad)])
 	print("golden league: league_sim_game %d / %d, league_scores %d / %d, play-off seeding %d / %d, round 1 %d / %d" % [ok, cases.size(), s_ok, sc.size(), p_ok, pc.size(), r_ok, rc.size()])
 	print("golden league: ", _records_golden(data.get("records", []), base))
+	print("golden league: ", _days_golden(data.get("days", []), base, gf))
+
+static func _sha1(b: PackedByteArray) -> String:
+	var ctx := HashingContext.new()
+	ctx.start(HashingContext.HASH_SHA1)
+	ctx.update(b)
+	return ctx.finish().hex_encode()
+
+## whole seasons of a league (league.json "days"): League.build_schedule, then the human teams'
+## games given their scores (the games played, trim_series in the play-offs) and League.play_day for
+## the team (mode 2) and for everybody (mode 7), or for everybody alone when no human game is left;
+## after every call TEAMS, SEASON and SCHEDULE (SHA-1), the rand() state, the line orders and
+## the awards (season_over) as the original left them
+func _days_golden(chains: Array, base: Dictionary, gf: Node) -> String:
+	if chains.is_empty():
+		fail("golden league days data missing")
+		return ""
+	var sched: PackedByteArray = gf.read_raw("schedule.db")
+	var ok := 0
+	var total := 0
+	for c: Dictionary in chains:
+		var lg := League.new()
+		for n in ["TEAMS", "CARTEAMS", "KEY", "CAREER", "SEASON"]:
+			lg.files[n] = (base[n] as PackedByteArray).duplicate()
+		lg.files["SCHEDULE"] = sched.duplicate()
+		lg.pinfo = League.pinfo_create(_ints(c["humans"]))
+		lg.option_flags = int(c["option_flags"])
+		League.srand(int(c["seed"]))
+		lg.build_schedule(int(c["random"]) != 0)
+		for t in 2:
+			League.fwd_order[t] = _ints(c["fwd"][t])
+			League.def_order[t] = _ints(c["def"][t])
+		var bad := ""
+		var steps: Array = c["steps"]
+		for si in steps.size():
+			var st: Dictionary = steps[si]
+			total += 1
+			var pre: Array = st["pre"]
+			if not pre.is_empty():
+				lg.set_game(int(pre[0]), PackedByteArray(_ints(pre[1])))
+			if int(st["gp"]) >= 0:
+				lg.set_games_played(int(st["gp"]))
+			if int(st["trim"]) >= 0:
+				lg.trim_series(int(st["trim"]))
+			var awards := 0
+			var calls: Array = st["calls"]
+			for ci in calls.size():
+				var call: Array = calls[ci]
+				lg.season_over = false
+				lg.play_day(int(call[0]), int(call[1]), int(call[2]))
+				if lg.season_over:
+					awards += 1
+				# (after the team's day: the human teams' standings of the game, season_record_result)
+				if ci == 0 and st.has("standings"):
+					var tm: PackedByteArray = lg.files["TEAMS"]
+					_byte_apply(tm, st["standings"])
+					lg.files["TEAMS"] = tm
+			var want = st["after"]
+			if want == null:
+				total -= 1
+				continue
+			var diff := []
+			for n in ["TEAMS", "SEASON", "SCHEDULE"]:
+				if _sha1(lg.files[n]) != str(want[n]):
+					diff.append(n)
+			if League._seed != int(want["rand"]):
+				diff.append("rand state")
+			if str(League.fwd_order) != str(_ints(want["fwd"])) or str(League.def_order) != str(_ints(want["dfn"])):
+				diff.append("line orders")
+			var w_awards := 0
+			for call: Array in st["calls"]:
+				w_awards += int(call[4])
+			if awards != w_awards:
+				diff.append("awards %d (original %d)" % [awards, w_awards])
+			if not diff.is_empty():
+				bad = "humans %s step %d (calls %s, games played %d): %s" % [str(c["humans"]), si, str(st["calls"]), lg.games_played(), ", ".join(diff)]
+				# (LEAGUE_DUMP=dir: the port's files at the failing step)
+				if OS.get_environment("LEAGUE_DUMP") != "" and not FileAccess.file_exists(OS.get_environment("LEAGUE_DUMP").path_join("TEAMS.DB")):
+					for n in ["TEAMS", "SEASON", "SCHEDULE"]:
+						var df := FileAccess.open(OS.get_environment("LEAGUE_DUMP").path_join(n + ".DB"), FileAccess.WRITE)
+						df.store_buffer(lg.files[n])
+				break
+			ok += 1
+		if bad != "":
+			fail("league days: " + bad)
+	return "league days %d / %d steps of %d seasons" % [ok, total, chains.size()]
 
 ## the byte runs of a golden file diff ([offset, hex]) into b
 static func _byte_apply(b: PackedByteArray, runs: Array) -> void:

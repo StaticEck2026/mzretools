@@ -201,9 +201,9 @@ static func normalize_date(month: int, day: int) -> Vector2i:
 		month += 1
 	return Vector2i(month, day)
 
-## league_db_load (0x42295): the teams of the schedule shuffled inside their divisions (12 swaps
-## each), every team's games listed in its record (+0x11c: 84 offsets into SCHEDULE.DB), the
-## play-off games cleared
+## league_db_load (0x42295): a random schedule's teams shuffled inside their divisions (12 swaps
+## each) and every team's games listed in its record (+0x11c: 84 offsets into SCHEDULE.DB; the
+## schedule as shipped keeps the lists of TEAMS.DB, -1); the play-off games cleared
 func build_schedule(random: bool) -> void:
 	var map := PackedInt32Array()
 	map.resize(28)
@@ -221,14 +221,13 @@ func build_schedule(random: bool) -> void:
 	var teams: PackedByteArray = files["TEAMS"]
 	var counts := PackedInt32Array()
 	counts.resize(26)
-	for i in SEASON_GAMES:
+	for i in (SEASON_GAMES if random else 0):
 		var rec := game(i)
-		if random:
-			for k in [2, 3]:
-				var t: int = rec[k]
-				if t < 26:
-					rec[k] = map[Exe.u8(TEAM_DIVISION + t) * 7 + Exe.u8(TEAM_DIV_SLOT + t)]
-			set_game(i, rec)
+		for k in [2, 3]:
+			var t: int = rec[k]
+			if t < 26:
+				rec[k] = map[Exe.u8(TEAM_DIVISION + t) * 7 + Exe.u8(TEAM_DIV_SLOT + t)]
+		set_game(i, rec)
 		for k in [2, 3]:
 			var t: int = rec[k]
 			if t < 26 and counts[t] < 84:
@@ -836,11 +835,11 @@ func make_round1(order: Array, po: PackedByteArray, n: int) -> bool:
 		for s in 8:
 			po[(s * 7 + g) * 6] = 4
 			po[(s * 7 + g) * 6 + 1] = 0x11 + g * 2 if s < 4 else 0x10 + g * 2
-	var any := false
-	for t in order:
-		if t >= 0 and human(t):
-			any = true
-	return any
+	# (schedule_screen: a human team among the 16 of the play-offs, the first 8 of each conference)
+	for s in 8:
+		if human(order[s]) or human(order[14 + s]):
+			return true
+	return false
 
 ## playoff_round1_done .. playoff_final_done: the games of a round nobody plays are simulated, the
 ## games a decided series did not need are taken out
@@ -985,7 +984,7 @@ func _season_end(career: PackedByteArray) -> void:
 		_advance(po, 0, career)
 
 ## schedule_screen2 (0x44a41): when no human team has a play-off game left in the round, the
-## round is finished and the next one made (all the rest when no human team is in it)
+## round is finished and the next one made (all the rest when no human team is in it, playoff_advance)
 func _playoff_progress(team: int, mode: int, career: PackedByteArray) -> void:
 	var po := _playoffs()
 	for s in 15:
@@ -1016,9 +1015,11 @@ func _playoff_progress(team: int, mode: int, career: PackedByteArray) -> void:
 		return
 	var humans_next := make_next_round(po, r + 1)
 	_store_playoffs(po)
-	set_games_played([0x47c, 0x498, 0x4a6][r])
 	if not humans_next:
 		_advance(po, r + 1, career)
+	# the round's mark, written over playoff_advance's end of the play-offs after the first and the
+	# second round (the later days run the rounds after it again, the awards with them)
+	set_games_played([0x47c, 0x498, 0x4a6 if humans_next else ALL_GAMES][r])
 
 ## playoff_trim_series (0x41f64): a decided series does not need its remaining games
 func trim_series(index: int) -> void:
@@ -1035,20 +1036,24 @@ func trim_series(index: int) -> void:
 	var need := (count + 1) / 2
 	var wins := {}
 	var teams: PackedByteArray = files["TEAMS"]
+	# (the record read last: the 7th of the series after the count; a game taken out is that record
+	# with its date and score cleared, so it takes the teams of the game read before it)
+	var buf := game(series_first + 6)
 	for g in count:
-		var r := game(series_first + g)
 		if wins.get(first[2], 0) == need or wins.get(first[3], 0) == need:
-			r[0] = 0xff
-			r[1] = 0xff
-			r[4] = 0xff
-			r[5] = 0xff
-			set_game(series_first + g, r)
+			buf[0] = 0xff
+			buf[1] = 0xff
+			buf[4] = 0xff
+			buf[5] = 0xff
+			set_game(series_first + g, buf)
+			# (both teams' play-off game entries, human or not)
 			for t in [first[2], first[3]]:
-				if human(t):
-					teams.encode_s32(team_rec(t) + 0x26c + (round_base + g) * 4, -1)
-		elif played(r):
-			var w: int = r[2] if r[4] > r[5] else r[3]
-			wins[w] = wins.get(w, 0) + 1
+				teams.encode_s32(team_rec(t) + 0x26c + (round_base + g) * 4, -1)
+		else:
+			buf = game(series_first + g)
+			if played(buf):
+				var w: int = buf[2] if buf[4] > buf[5] else buf[3]
+				wins[w] = wins.get(w, 0) + 1
 
 # ---------------------------------------------------------------------------------------------
 # the result of a played game (season_record_result 0x3626d)
