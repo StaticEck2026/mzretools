@@ -49,16 +49,7 @@ func setup(s: Sim, pal: GamePalette, scrbrd: Shpi, fonts: Dictionary, scrbrd2: S
 	if scrbrd != null and pal != null:
 		for n in ["lin1", "lin2", "lin3", "lin4", "PP1 ", "PP2 ", "PK1 ", "PK2 "]:
 			line_labels.append(_tex(scrbrd.find(n)))
-	if crest_bank != null and pal != null:
-		for t in 2:
-			var abbrev := sim.teams[t].abbrev()
-			var shape := crest_bank.find(abbrev.rpad(4))
-			if shape != null and shape.is_image():
-				var remap := pal.table(t, false).duplicate()
-				if remap.size() >= 256:
-					remap[0x43] = 0x67
-					remap[0xff] = 0xff
-				crests[t] = shape.to_texture(pal.colors, remap)
+	load_crests(crest_bank)
 	if scrbrd != null and pal != null:
 		for set in [["0", score_digits], ["1", clock_digits], ["2", small_digits]]:
 			var prefix: String = set[0]
@@ -74,6 +65,21 @@ func setup(s: Sim, pal: GamePalette, scrbrd: Shpi, fonts: Dictionary, scrbrd2: S
 	font_hud = fonts.get("hilight", null)
 	font_small_hud = fonts.get("wittle06", null)
 	z_index = 100
+
+## the crests of the teams on the ice (show_scoreboard: again for the teams of a highlight)
+func load_crests(crest_bank: Shpi) -> void:
+	crests = [null, null]
+	if crest_bank == null or palette == null:
+		return
+	for t in 2:
+		var abbrev := sim.teams[t].abbrev()
+		var shape := crest_bank.find(abbrev.rpad(4))
+		if shape != null and shape.is_image():
+			var remap := palette.table(t, false).duplicate()
+			if remap.size() >= 256:
+				remap[0x43] = 0x67
+				remap[0xff] = 0xff
+			crests[t] = shape.to_texture(palette.colors, remap)
 
 func _tex(shape: Shpi.Shape) -> Texture2D:
 	if shape == null or not shape.is_image():

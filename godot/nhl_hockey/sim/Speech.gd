@@ -88,6 +88,12 @@ static func game_intro(home: String, away: String) -> PackedStringArray:
 	return PackedStringArray(["tonight.bar", home + ".rnk", "easports.bar", "gamebtwn.bar",
 		away + ".awa", "and.bar", home + ".hom"])
 
+## say_highlight_intro (0x847da): "let's take you now to the highlight of the game between <away>
+## and <home>" (the arena of the home team)
+static func highlight_intro(home: String, away: String) -> PackedStringArray:
+	return PackedStringArray(["takeynow.bar", home + ".rnk", "highlite.bar", "of.bar", "gamebtwn.bar",
+		away + ".awa", "and.bar", home + ".hom"])
+
 ## a sentence for the audio layer (the wrappers' speech_stop_channels: it replaces the one being
 ## said); nothing is said with the speech option off (option byte 2 bit 0) or without sound
 static func say(sim: Sim, clips: PackedStringArray) -> void:

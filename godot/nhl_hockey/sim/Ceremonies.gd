@@ -308,7 +308,7 @@ static func begin_three_stars(sim: Sim) -> void:
 		return
 	sim.stars_running = true
 	sim.saved_period_num = sim.period_num
-	sim.fade_in = true
+	sim.fade_in = 1
 	compute_three_stars(sim)
 	sim.event_rec[0] = 0xff
 	sim.penalty_box_mode = false

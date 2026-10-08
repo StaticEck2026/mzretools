@@ -2122,9 +2122,9 @@ static func puck_faceoff2(sim: Sim, e: Entity) -> void:
 	sim.message_timer = 0
 	InfoPanel.set_text(sim, [])
 	if not sim.demo and start and not sim.skip_wait:
-		sim.fade_in = false
+		sim.fade_in = 0
 	else:
-		sim.fade_in = sim.demo or sim.skip_wait or sim.injury_stoppage
+		sim.fade_in = 1 if sim.demo or sim.skip_wait or sim.injury_stoppage else 0
 	sim.ref_phase = -1
 	sim.skip_wait = false
 	sim.injury_stoppage = false

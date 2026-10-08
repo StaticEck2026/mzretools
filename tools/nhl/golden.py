@@ -2246,6 +2246,7 @@ def ai_cases(exe):
     out['lineup'] = lineup_cases(emu, rnd, base, tables, calls, out['base'], os.path.join(os.path.dirname(exe), 'TEAMS.DB'))
     out['hud'] = hud_cases(emu, rnd, calls)
     out['cup'] = cup_cases(emu, rnd)
+    out['highlight'] = highlight_cases(emu, rnd, base, tables, calls, out['base'])
     return out
 
 
@@ -4030,6 +4031,113 @@ def write_golden(outdir, name, data):
         if os.path.exists(path + '.gz'):
             os.remove(path + '.gz')
     print('wrote', path)
+
+
+LEAGUE_HIGHLIGHT_GAME = 0x69336                # (home, away, &home goals, &away goals) + period: a scene of another game
+HIGHLIGHT_LOOP = 0x699eb                       # its frame loop (the harness ends it at once)
+HIGHLIGHT_STUBS = {'load_team_databases': 0x1bbcc, 'show_scoreboard': 0x150c6, 'gsummary_flush': 0x61b85}
+HIGHLIGHT_QUIET = (0x673c5, 0x1395f, 0x47c31, 0x10e9f, 0x3377c, 0x11598, 0x597e3, 0x8373e, 0x836e4, 0x8f633,
+                   0x59981, 0x1baf3, 0x479e9, 0x4fd47, 0xb396e)   # palettes, sprites, video, sound, loading, keys
+GETPALETTE = 0x8ffb0                           # (cdecl)
+
+
+def highlight_cases(emu, rnd, base, tables, calls, base_fields, count=200):
+    """league_highlight_game called directly at random moments of a match: the scene of another game
+    set up in the match (the options, the clock, the period, the score, the lines and the players
+    placed around the puck, the puck and the referee) up to its frame loop, which the harness ends at
+    once with a score of the highlight; then the match's state back (load_team_databases,
+    show_scoreboard and gsummary_flush stubbed and their calls compared, the drawing, the palettes and
+    the sound stubbed). Both the state at the loop and at the end are compared"""
+    stubs = []
+    for name, a in HIGHLIGHT_STUBS.items():
+        stubs.append(emu.stub(a, (lambda n_: lambda eax: calls.append([n_] + ([s32(eax & 0xffffffff)] if n_ == 'load_team_databases' else []))
+                                  )(name)))
+    for a in HIGHLIGHT_QUIET:
+        stubs.append(emu.stub(a, lambda eax: 0))
+    stubs.append(emu.stub(GETPALETTE, lambda eax: 0))
+    # the lines dressed as in the other groups (the ratings copy and the line table stubbed, their calls compared)
+    stubs.append(emu.stub(PUT_PLAYER_ON_ICE, lambda eax: calls.append(['put_player_on_ice', ((eax & 0xffffffff) - ENTITIES) // 0x80,
+                                                                       s32(emu.uc.reg_read(UC_X86_REG_EDX)) & 0xffff])))
+    stubs.append(emu.stub(PICK_PLAYER_FOR_POSITION, lambda eax: calls.append(['pick_player_for_position', s32(eax & 0xffffffff),
+                                                                              s32(emu.uc.reg_read(UC_X86_REG_EDX))])))
+    stubs.append(emu.stub(INJURE_PLAYER, lambda eax: calls.append(['injure_player', ((eax & 0xffffffff) - ENTITIES) // 0x80])))
+    goals_ptr = emu.alloc(b'\0' * 8)
+    mid = {}
+
+    def on_loop(uc, address, size, user):
+        if mid.get('done'):
+            return
+        mid['done'] = True
+        mid['record'] = ai_record(emu)
+        mid['entities'] = {str(s_): entity_fields(emu, s_) for s_ in range(17)}
+        mid['order'] = draw_order(emu)
+        mid['calls'] = [list(c) for c in calls]
+        # the highlight's score, then the loop ends (period_over)
+        hg_, ag_ = mid['goals']
+        emu.write(TEAM_RECORDS[0] + 0x10, struct.pack('<h', hg_))
+        emu.write(TEAM_RECORDS[1] + 0x10, struct.pack('<h', ag_))
+        emu.write(0xcbc46, struct.pack('<h', 1))
+    stubs.append(emu.uc.hook_add(UC_HOOK_CODE, on_loop, None, HIGHLIGHT_LOOP, HIGHLIGHT_LOOP))
+    cases = []
+    for k in range(count):
+        g, teams, carrier = ai_world(emu, rnd, base, tables)
+        g['period'] = rnd.choice((0, 1, 2, 3))
+        g['user1_team'] = rnd.choice((0, 1, 2))
+        g['user2_team'] = rnd.choice((0, 0, 1, 2))
+        for ti, t in enumerate(TEAM_RECORDS):
+            f = teams[ti]
+            f['goals'] = rnd.randrange(6)
+            f['skaters'] = rnd.choice((6, 6, 5, 4))
+            f['goalie_request'] = rnd.choice((0, 0, 1, -256))
+            for n_, o, sz in AI_TEAM_FIELDS:
+                emu.write(t + o, struct.pack('<' + _FMT[sz], f[n_] if sz < 0 else f[n_] & ((1 << (8 * sz)) - 1)))
+        write_globals(emu, g)
+        emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
+        period_num = g['period'] + 1
+        emu.write(PERIOD_NUM, struct.pack('<i', period_num))
+        seed = rnd.getrandbits(32)
+        emu.write(SEED, struct.pack('<I', seed))
+        hg, ag = rnd.randrange(6), rnd.randrange(6)
+        period = rnd.choice((1, 2, 3, 4))
+        emu.write(goals_ptr, struct.pack('<ii', hg, ag))
+        # the crowd: everybody idle, some about to start (update_effects runs in the two steps)
+        for i in range(20):
+            emu.write(CROWD_FIGURES + i * 12, struct.pack('<hbbbhhhb', -1, rnd.choice((0, 0, 1, 30)), 0, 0, 0, 0, 0, 0))
+        emu.write(CROWD_BUSY, b'\0' * 22)
+        crowd = crowd_read(emu)
+        mid.clear()
+        mid['goals'] = (hg + rnd.choice((0, 0, 1)), ag + rnd.choice((0, 0, 1)))
+        for ti in range(2):
+            teams[ti]['roster_status'] = [emu.read(ROSTERS + ti * 0x444 + i * 0x27, 1)[0] for i in range(28)]
+        befores = {str(s_): dict(entity_fields(emu, s_), prev=list(struct.unpack('<iii', emu.read(ENTITIES + s_ * 0x80 + 0x74, 12))))
+                   for s_ in range(17)}
+        for ti, t in enumerate(TEAM_RECORDS):
+            teams[ti].update({n_: struct.unpack('<' + _FMT[sz], emu.read(t + o, abs(sz)))[0] for n_, o, sz in AI_TEAM_FIELDS})
+        order = draw_order(emu)
+        ids = list(struct.unpack('<hh', emu.read(TEAM_IDS, 4)))
+        del calls[:]
+        emu.call(LEAGUE_HIGHLIGHT_GAME, eax=ids[0], edx=ids[1], ebx=goals_ptr, ecx=goals_ptr + 4, stack=(period,))
+        after = ai_record(emu)
+        cases.append({'routine': 'league_highlight_game', 'args': [hg, ag, period, period_num], 'globals': g, 'teams': teams,
+                      'carrier': carrier, 'seed': seed, 'before': befores, 'order': order, 'crowd': crowd,
+                      'mid': {'after': {str(s_): {k_: v for k_, v in mid['entities'][str(s_)].items() if befores[str(s_)].get(k_) != v}
+                                        for s_ in range(17)},
+                              'world_after': mid['record'], 'order': mid['order'], 'calls': mid['calls'], 'goals': list(mid['goals'])},
+                      'calls': [list(c) for c in calls],
+                      'after': {str(s_): {k_: v for k_, v in entity_fields(emu, s_).items() if befores[str(s_)].get(k_) != v}
+                                for s_ in range(17)},
+                      'world_after': after,
+                      'lines_after': {'goals': list(struct.unpack('<ii', emu.read(goals_ptr, 8))),
+                                      'period_num': struct.unpack('<i', emu.read(PERIOD_NUM, 4))[0], 'crowd': crowd_read(emu)}})
+        for a, n_ in ((GAME_FLAGS, 1), (OPTION_FLAGS, 4), (STOP_FLAGS, 2), (MISC_FLAGS, 4)):
+            emu.write(a, b'\0' * n_)
+    for h in stubs:
+        emu.unstub(h)
+    for c in cases:
+        c['before'] = {s_: {k_: v for k_, v in b.items() if base_fields[int(s_)].get(k_) != v} for s_, b in c['before'].items()}
+        c['after'] = {s_: a for s_, a in c['after'].items() if a}
+        c['mid']['after'] = {s_: a for s_, a in c['mid']['after'].items() if a}
+    return cases
 
 
 def write_ai(outdir, data):

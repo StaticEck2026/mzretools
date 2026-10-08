@@ -663,8 +663,8 @@ func _league_scores_on(m: Node) -> bool:
 			return false
 	return true
 
-## end_match_from_period (0x190be): the box score of the period, the scores around the league
-## (started after the 1st period), then the intermission desk
+## end_match_from_period (0x190be): the box score of the period, a highlight of another game and the
+## scores around the league (started after the 1st period), then the intermission desk
 func intermission(m: Node, period_done: int) -> int:
 	game = m
 	write_summary(m)
@@ -675,12 +675,27 @@ func intermission(m: Node, period_done: int) -> int:
 			LeagueScores.init(m.sim.teams[0].info.index, m.sim.teams[1].info.index)
 		if r & 4 == 0:
 			LeagueScores.advance(period, m.sim.teams[0].info.index)
-			if LeagueScores.simulate_pending() >= 0:
+			if await simulate_pending(m) >= 0:
 				await games.boxscore_screen(0x20, period, 0)
 	return await pause_menu(1, m)
 
-## end_match_from_loop (0x1920f): the box score of the game, the final scores around the league
-## (the coach's clip of the CD is missing), then pause_menu(2)
+## simulate_pending_games (0x18f8d): a game around the league not shown to its end is picked
+## (Highlight.pick) and a scene of it played on the ice (league_highlight_game, Main.play_highlight);
+## its score goes to the scores around the league. -1 when the pause key ended the scene (the
+## intermission skips the scores), 0 otherwise (also when every game was shown already)
+func simulate_pending(m: Node) -> int:
+	if LeagueScores.games.is_empty():
+		return 0
+	var pick := Highlight.pick(m.sim)
+	if pick.is_empty():
+		return 0
+	var game: Array = LeagueScores.games[pick[0]]
+	var res: Array = await m.play_highlight(game[0], game[1], [pick[1], pick[2]], pick[3])
+	Highlight.finish(pick[0], res[1])
+	return res[0]
+
+## end_match_from_loop (0x1920f): the box score of the game, a highlight of another game and the
+## final scores around the league (the coach's clip of the CD is missing), then pause_menu(2)
 func game_end(m: Node) -> void:
 	game = m
 	last_sim = m.sim
@@ -689,7 +704,7 @@ func game_end(m: Node) -> void:
 	var r := await games.boxscore_screen(1, 1, period)
 	if _league_scores_on(m) and r & 4 == 0 and not LeagueScores.games.is_empty():
 		LeagueScores.advance(period, m.sim.teams[0].info.index)
-		LeagueScores.simulate_pending()
+		await simulate_pending(m)
 		await games.boxscore_screen(0x20, period, 0)
 	var code := await pause_menu(2, m)
 	game = null

@@ -402,6 +402,7 @@ func asset_tests() -> void:
 		replay_tests(bos, det)
 		crowd_tests(bos, det)
 		save_tests(bos, det)
+		highlight_tests(bos, det, db)
 		speech_tests(bos, det, gf)
 	# sound effects: 30 digital samples found by their ids, the goal horn (0x9c) is the 7 second
 	# sample; the post (0xac) is the 22050 Hz recording played at 11025 Hz two semitones down
@@ -724,10 +725,23 @@ func ai_golden() -> void:
 		return
 	var base: Array = data["base"]
 	var counts := []
+	if not Exe.ok:
+		# the highlight reads its tables from the executable (also when only the AI tests run)
+		var GF := load("res://autoload/GameFiles.gd")
+		var gf: Node = GF.new()
+		gf.use_data = false
+		var dir := OS.get_environment("NHL_GAME_DIR")
+		if dir == "" or not DirAccess.dir_exists_absolute(dir):
+			dir = GF.repository_game_dir()
+		if dir != "":
+			gf.set_game_dir(dir, false)
+		Exe.load_from(gf.read_raw("hockey.exe"))
+		gf.free()
+	var only_group := OS.get_environment("AI_GROUP")     # only this group (with AI_STATE set)
 	for group in data:
-		if group == "base":
+		if group == "base" or (only_group != "" and group != only_group):
 			continue
-		if group in ["lines", "controls", "rules", "goals", "faceoffs", "steps", "runs", "periods", "dress", "lineup"]:
+		if group in ["lines", "controls", "rules", "goals", "faceoffs", "steps", "runs", "periods", "dress", "lineup", "highlight"]:
 			counts.append(_lines_golden(data[group], base, group))
 			continue
 		if group == "hud":
@@ -805,6 +819,11 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 	if group == "lineup":
 		sim.stubs.erase("injure_player")
 		sim.stubs.erase("pick_player_for_position")
+	if group == "highlight":
+		for n in ["setup_faceoff", "injury_check", "update_effects", "queue_infraction", "maybe_queue_infraction"]:
+			sim.stubs.erase(n)
+		for n in ["load_team_databases", "show_scoreboard", "gsummary_flush"]:
+			sim.stubs[n] = true
 	var per := {}
 	var ok := 0
 	var shown := 0
@@ -882,6 +901,7 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 		var a2: int = args[2] if args.size() > 2 else 0
 		sim.stub_calls.clear()
 		var ret = null
+		var pre_diff := []
 		match name:
 			"build_lines": Lines.build_lines(sim)
 			"assign_line_positions": Lines.assign_line_positions(sim, sim.teams[a0])
@@ -934,6 +954,25 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 			"injury_check": ret = 1 if Rules.injury_check(sim, sim.entities[a0]) else 0
 			"update_effects": Rules.update_effects(sim)
 			"goal_milestone_check": Rules.goal_milestone_check(sim)
+			"league_highlight_game":
+				# the scene set up (compared at the original's frame loop), the loop ended with the
+				# highlight's score, the match back
+				var hl := Highlight.begin(sim, [sim.teams[0].info, sim.teams[1].info], [a0, a1], a2)
+				var m: Dictionary = c["mid"]
+				for d in _ai_world_diff(sim, {"before": c["before"], "after": m["after"], "world_after": m["world_after"],
+						"calls": m["calls"]}, base):
+					pre_diff.append("at the loop: " + d)
+				var mo: Dictionary = m["order"]
+				if str(Array(sim.draw_list)) != str(_ints(mo["list"])):
+					pre_diff.append("at the loop: draw order %s (original %s)" % [str(Array(sim.draw_list)), str(mo["list"])])
+				sim.teams[0].goals = int(m["goals"][0])
+				sim.teams[1].goals = int(m["goals"][1])
+				var hl_goals := Highlight.end(sim, hl)
+				var la_: Dictionary = c["lines_after"]
+				if str(hl_goals) != str(_ints(la_["goals"])):
+					pre_diff.append("goals %s (original %s)" % [str(hl_goals), str(la_["goals"])])
+				if sim.period_num != int(la_["period_num"]):
+					pre_diff.append("period_num %d (original %d)" % [sim.period_num, int(la_["period_num"])])
 			"ai_puck_faceoff": AI.puck_faceoff(sim, sim.puck)
 			"ai_puck_faceoff2": AI.puck_faceoff2(sim, sim.puck)
 			"end_of_period": Rules.end_of_period(sim)
@@ -990,6 +1029,7 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 							trace = []
 					step_i += 1
 		var diff := _ai_world_diff(sim, c, base)
+		diff.append_array(pre_diff)
 		var la: Dictionary = c["lines_after"]
 		if la.has("infq"):
 			if str(Array(sim.infq)) != str(_ints(la["infq"])):
@@ -1456,7 +1496,7 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	sim.camera_offset_y = int(g.get("camera_lead", 0))
 	sim.faceoff_digit = int(g.get("faceoff_digit", 7))
 	sim.faceoff_side = [int(g.get("faceoff_side0", 0x8800)) & 0xffff, int(g.get("faceoff_side1", 0xa000)) & 0xffff]
-	sim.fade_in = int(g.get("fade_in", 0)) != 0
+	sim.fade_in = int(g.get("fade_in", 0))
 	sim.clip_frame = int(g.get("clip_frame", -1))
 	sim.clip_time = int(g.get("clip_time", 0))
 	sim.last_penalty_team = int(g.get("last_penalty_team", -1))
@@ -1597,7 +1637,7 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 		"penalty_shot_spot_y": sim.penalty_shot_spot.y, "series_announce": 1 if sim.series_announce else 0,
 		"camera_x": sim.camera_x, "camera_y": sim.camera_y, "camera_lead": sim.camera_offset_y,
 		"faceoff_digit": sim.faceoff_digit, "faceoff_side0": Entity.to_s16(sim.faceoff_side[0]),
-		"faceoff_side1": Entity.to_s16(sim.faceoff_side[1]), "fade_in": 1 if sim.fade_in else 0, "clip_frame": sim.clip_frame,
+		"faceoff_side1": Entity.to_s16(sim.faceoff_side[1]), "fade_in": sim.fade_in, "clip_frame": sim.clip_frame,
 		"clip_time": Entity.to_s16(sim.clip_time), "clip_pos": sim.clip_pos, "last_penalty_team": sim.last_penalty_team,
 		"scorer_jumps": sim.scorer_jumps, "sequence_steps": sim.sequence_steps, "match_over": 1 if sim.match_over else 0,
 		"star0_team": _star(sim, 0, 0), "star0_roster": _star(sim, 0, 1), "star1_team": _star(sim, 1, 0),
@@ -3124,6 +3164,76 @@ func league_tests(gf: Node) -> void:
 			met = true
 	if not met:
 		fail("play-off series: Rangers and Bruins should meet in the first round")
+
+## a highlight at the intermission (Highlight.gd, as the front end plays it): Boston - Detroit with
+## 2 minute periods held after the first (period_cleanup), a game of the scores around the league
+## picked and played on the ice from its score until a stoppage ends it, then the match goes on
+## with its own teams, score, period and clock, and is played to the end
+func highlight_tests(bos: Database.TeamInfo, det: Database.TeamInfo, db: Database) -> void:
+	var sim := Sim.new()
+	sim.set_period_length(120)
+	sim.set_teams(bos, det)
+	sim.hold_intermission = true
+	var steps := 0
+	while not sim.intermission_held and steps < 20000:
+		sim.step(8, 8, 0, 0)
+		steps += 1
+	if not sim.intermission_held or sim.period != 1:
+		fail("highlight: the 1st intermission was not held (period %d)" % sim.period)
+		return
+	sim.intermission_pending = false
+	var goals := [sim.teams[0].goals, sim.teams[1].goals]
+	LeagueScores.init(bos.index, det.index)
+	LeagueScores.advance(1, bos.index)
+	var pick := Highlight.pick(sim)
+	if pick.size() != 4 or LeagueScores.done_mask != 1 << pick[0]:
+		fail("highlight: no game picked: %s" % str(pick))
+		return
+	var game: Array = LeagueScores.games[pick[0]]
+	var saved := Highlight.begin(sim, [db.load_team(game[0]), db.load_team(game[1])], [pick[1], pick[2]], pick[3])
+	if sim.team_ids != [game[0], game[1]] or sim.teams[0].info.index != game[0] or sim.teams[1].goals != pick[2] \
+			or sim.clock_seconds < 60 or sim.clock_seconds >= 180 or sim.user1_team != 0 or sim.fade_in != 2 \
+			or not sim.no_stats or sim.period_num != pick[3]:
+		fail("highlight set up: teams %s clock %d period %d" % [str(sim.team_ids), sim.clock_seconds, sim.period_num])
+	var n := 0
+	while sim.period_over == 0 and n < 10000:
+		sim.run_sim_step(8, 8)
+		sim.replay.record(sim)
+		Scoreboard.frame(sim)
+		n += 1
+	var hg := Highlight.end(sim, saved)
+	if n >= 10000 or hg[0] < pick[1] or hg[1] < pick[2]:
+		fail("highlight: no stoppage after %d steps (%s from %d:%d)" % [n, str(hg), pick[1], pick[2]])
+	Highlight.finish(pick[0], hg)
+	if LeagueScores.shown != LeagueScores.games.map(func(g): return g[2]):
+		fail("highlight: the statuses shown")
+	if game[2] <= 4 and (game[3] != hg[0] or game[4] != hg[1]):
+		fail("highlight: the game's score %d:%d (highlight %s)" % [game[3], game[4], str(hg)])
+	sim.end_intermission()
+	if sim.team_ids != [bos.index, det.index] or sim.teams[0].info != bos or sim.teams[1].info != det \
+			or [sim.teams[0].goals, sim.teams[1].goals] != goals or sim.period != 1 or sim.period_num != 2 \
+			or sim.clock_seconds != 120 or sim.period_over != 0 or sim.no_stats or not sim.opt_penalties:
+		fail("highlight: the match back: teams %s goals %d:%d period %d clock %d" % [str(sim.team_ids),
+			sim.teams[0].goals, sim.teams[1].goals, sim.period, sim.clock_seconds])
+	for t in 2:
+		for r in 28:
+			var pl: Database.Player = sim.teams[t].info.player(r)
+			if pl != null and (sim.teams[t].numbers[r] != pl.number or sim.teams[t].last_names[r] != pl.last):
+				fail("highlight: team %d's players after it (roster %d)" % [t, r])
+				break
+	var intermissions := 1
+	steps = 0
+	while not sim.finished and steps < 60000:
+		sim.step(8, 8, 0, 0)
+		if sim.intermission_held:
+			sim.intermission_pending = false
+			intermissions += 1
+			sim.end_intermission()
+		steps += 1
+	if not sim.finished or intermissions < 2:
+		fail("highlight: the match after it was not played to the end (%d intermissions)" % intermissions)
+	print("highlight %s %d:%d from %d:%d in period %d, %d steps; BOS - DET %d:%d" % [Tables.team_abbrev[game[0]] + "-" + Tables.team_abbrev[game[1]],
+		hg[0], hg[1], pick[1], pick[2], pick[3], n, sim.teams[0].goals, sim.teams[1].goals])
 
 ## a saved game (SaveGame.gd): the state restored into a new simulation goes on exactly the same
 func save_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:

@@ -289,13 +289,13 @@ static func init_match(sim: Sim) -> void:
 ## line changes
 static func start_match(sim: Sim) -> void:
 	if sim.skip_wait:
-		sim.fade_in = true
+		sim.fade_in = 1
 	sim.period = 0
 	reset_game_state(sim)
 	if sim.opt_line_changes or not sim.skip_wait:
 		setup_demo_faceoff(sim)
 	if not sim.demo and not sim.skip_wait:
-		sim.fade_in = false
+		sim.fade_in = 0
 
 ## setup_demo_faceoff (0x13c79): the current lines dressed (dress_current_lines), everybody at his
 ## place of the centre faceoff (faceoff_spots by line slot and number of skaters), standing towards
@@ -369,6 +369,11 @@ static func period_cleanup(sim: Sim) -> void:
 	period_reset_entities(sim)
 	if sim.period > 0:
 		leave_match_video(sim)
+		if sim.intermission_pending and sim.hold_intermission:
+			# the intermission (end_match_from_period, a highlight of another game in it) runs
+			# here: the front end shows it, then Sim.end_intermission goes on
+			sim.intermission_held = true
+			return
 	period_init(sim)
 	reset_bench_slots(sim)
 
@@ -480,7 +485,7 @@ static func period_init(sim: Sim) -> void:
 	sim.camera_offset_y = 0
 	sim.camera_target_y = 0
 	sim.camera_target_x = 0
-	sim.fade_in = true
+	sim.fade_in = 1
 
 ## entities_setup (0x5d80a): the entities from entity_init, the players turned round when the
 ## teams changed ends; the high bytes of the user slots set (no user before period_init picks one)
@@ -522,6 +527,7 @@ static func entities_init(sim: Sim) -> void:
 		e.timer_b = 0
 		sim.draw_list[i] = i
 		sim.draw_pos[i] = i
+	sim.puck_carrier = -1           # the puck's +0x42 (next_line_slot -1 above)
 	var ref := sim.referee
 	ref.heading = (2 << 16) | (ref.heading & 0xffff)
 	ref.line_slot = -1

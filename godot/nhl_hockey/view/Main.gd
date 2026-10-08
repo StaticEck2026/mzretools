@@ -52,7 +52,7 @@ var sfx_on := true                    # option_flags 0x80 (S)
 var music_on := true                  # option_flags 0x40 (M)
 var show_names := false               # show_names (Tab)
 
-enum Mode { MATCH, REPLAY, PAUSED }
+enum Mode { MATCH, REPLAY, PAUSED, HIGHLIGHT }
 var mode := Mode.MATCH
 var panel_view: PanelView
 var vcr: VcrView
@@ -67,6 +67,10 @@ var end_shown := false
 var anthem := true
 var demo := false                     # demo_game_running: a demo game of the intro (demo_game), a key ends it
 
+var db: Database = null              # the rosters of the match (and of a highlight's teams)
+var crest_bank: Shpi = null           # CRESTS4.PPV (the scoreboard's crests)
+var hl_result := 0                    # league_highlight_game: 0, or -1 when the pause key ended it
+signal highlight_over
 var config: Dictionary = {}           # the front end's setup of the match (App.play_match_async): home, away,
                                       # user1, user2 (0 none, 1 home, 2 away), option_flags
 var front: FrontEnd = null            # the front end draws the pause screen, intermissions and the end
@@ -93,6 +97,11 @@ func _ready() -> void:
 	_load_assets()
 	if rink.texture == null:
 		rink.texture = _placeholder_rink()
+	# the intermissions of the front end run inside period_cleanup (end_match_from_period); a game
+	# saved at an intermission goes on with the next period
+	sim.hold_intermission = front != null and not demo
+	if sim.intermission_held:
+		sim.end_intermission()
 	for i in 3:
 		var m := Sprite2D.new()
 		m.centered = false
@@ -149,7 +158,8 @@ func _ready() -> void:
 	add_child(ui)
 	hud = Hud.new()
 	ui.add_child(hud)
-	hud.setup(sim, palette, _bank("scrbrd1"), fonts, _bank("scrbrd2"), _bank("crests4"))
+	crest_bank = _bank("crests4")
+	hud.setup(sim, palette, _bank("scrbrd1"), fonts, _bank("scrbrd2"), crest_bank)
 	panel_view = PanelView.new()
 	ui.add_child(panel_view)
 	panel_view.setup(sim, palette, fonts, _bank)
@@ -169,6 +179,8 @@ func _ready() -> void:
 	var fast := int(OS.get_environment("NHL_FAST_STEPS"))
 	for i in fast:
 		sim.step(8, 8, 0, 0)
+		if sim.intermission_pending and front != null:
+			break
 	sim.sfx_queue.clear()
 
 func _read_settings() -> void:
@@ -236,6 +248,9 @@ func _physics_process(delta: float) -> void:
 		Mode.REPLAY:
 			_replay_step(ticks)
 			return
+		Mode.HIGHLIGHT:
+			_highlight_step()
+			return
 	if demo and (Input.is_anything_pressed() or Input.is_action_just_pressed("pause")):
 		# game_loop of a demo game: pause_requested ends it (dword_c53f7 = 2)
 		_demo_over(2)
@@ -289,6 +304,13 @@ func _physics_process(delta: float) -> void:
 				_open_pause(false)
 				pause_menu.open_menu = 1
 				pause_menu.queue_redraw()
+			"highlight":
+				# a highlight of Montreal - Toronto (NHL_HL_HOME / NHL_HL_AWAY), 2:1 in the 2nd period,
+				# 120 frames in
+				shot_taken = false
+				play_highlight(int(OS.get_environment("NHL_HL_HOME")) if OS.has_environment("NHL_HL_HOME") else 9,
+					int(OS.get_environment("NHL_HL_AWAY")) if OS.has_environment("NHL_HL_AWAY") else 20, [2, 1], 2)
+				return
 		_screenshot()
 
 # --------------------------------------------------------------------------------------------
@@ -341,8 +363,10 @@ func _after_front(code: int) -> void:
 	if code == 7:
 		_start_replay(true)
 		return
+	if sim.intermission_held:
+		sim.end_intermission()
 	mode = Mode.MATCH
-	sim.fade_in = true
+	sim.fade_in = 1
 
 func _open_pause(after_game: bool) -> void:
 	mode = Mode.PAUSED
@@ -871,7 +895,7 @@ func _load_assets() -> void:
 		return
 	# rosters, lines and ratings (db_open_files / db_load_team_roster)
 	# a league game plays with the league's databases (its trades and free agents)
-	var db: Database = config.get("db", null)
+	db = config.get("db", null)
 	if db == null:
 		db = Database.open(GameFiles.read_raw("teams.db"), GameFiles.read_raw("key.db"), GameFiles.read_raw("att.db"))
 	if db != null:
@@ -892,19 +916,9 @@ func _load_assets() -> void:
 			sim.sort_draw_order()
 			sim.replay.reset()
 			anthem = false
-	# palette with the jersey colours (load_team_palettes)
-	palette = GamePalette.build(GameFiles.read_raw("rinkpal.qfs"), GameFiles.read_raw("homepals.bin"), GameFiles.read_raw("awaypals.bin"), mini(home_team, 25), mini(away_team, 25))
+	_team_view(home_team, away_team, mini(home_team, Tables.rink_tile_names.size() - 1))
 	if palette == null:
 		return
-	# rink surface with the centre ice logo (load_rink)
-	var rink_bank := _bank("rink")
-	if rink_bank != null:
-		var shape := rink_bank.find("rink")
-		if shape != null and shape.is_image():
-			var logo := mini(home_team, Tables.rink_tile_names.size() - 1)
-			var base := Tables.rink_tile_names[logo].strip_edges()
-			var img := RinkTiles.compose(shape, GameFiles.read_raw(base + ".til"), GameFiles.read_raw(base + ".map"), logo, palette.colors)
-			rink.texture = ImageTexture.create_from_image(img)
 	# the 1134 sprite frames in 23 banks (load_sprite_banks)
 	for i in 23:
 		var bank := _bank(GameFiles.sprite_bank_name(i))
@@ -949,6 +963,91 @@ func _load_assets() -> void:
 	# the songs of the home team (load_music_banks)
 	cues = MusicCues.new(func(n: String) -> bool: return GameFiles.has(n + ".kms"))
 	cues.setup(home_team, sound_card)
+
+## the palette with the jersey colours of the teams (load_team_palettes) and the rink surface with
+## the centre ice logo (load_rink); the sprites are drawn again in the new colours
+func _team_view(home: int, away: int, logo: int) -> void:
+	palette = GamePalette.build(GameFiles.read_raw("rinkpal.qfs"), GameFiles.read_raw("homepals.bin"), GameFiles.read_raw("awaypals.bin"), mini(home, 25), mini(away, 25))
+	if palette == null:
+		return
+	tex_cache.clear()
+	var rink_bank := _bank("rink")
+	if rink_bank != null:
+		var shape := rink_bank.find("rink")
+		if shape != null and shape.is_image():
+			logo = clampi(logo, 0, Tables.rink_tile_names.size() - 1)
+			var base := Tables.rink_tile_names[logo].strip_edges()
+			var img := RinkTiles.compose(shape, GameFiles.read_raw(base + ".til"), GameFiles.read_raw(base + ".map"), logo, palette.colors)
+			rink.texture = ImageTexture.create_from_image(img)
+	if hud != null:
+		hud.palette = palette
+		hud.load_crests(crest_bank)
+	if panel_view != null:
+		panel_view.palette = palette
+		panel_view.clip_frames.clear()
+
+# --------------------------------------------------------------------------------------------
+# the highlight of another game at an intermission (league_highlight_game)
+# --------------------------------------------------------------------------------------------
+
+## league_highlight_game (0x69336) on the ice of the match: the teams of the other game (their
+## colours, the rink of the home team, the all star teams on rink 0xc) play a scene the computer
+## controls from `goals` in `period` until a stoppage ends it (period_over), a button or the pause
+## key (-1); then the match comes back. Returns [result, [home goals, away goals]].
+func play_highlight(home: int, away: int, goals: Array, period: int) -> Array:
+	var infos := [db.load_team(home), db.load_team(away)] if db != null else [null, null]
+	var saved := Highlight.begin(sim, infos, goals, period)
+	_team_view(home, away, 0xc if home >= 0x1a else home)
+	hl_result = 0
+	sim.sfx_queue.clear()
+	if app != null:
+		app.front_over_match(false)
+	front_busy = false
+	mode = Mode.HIGHLIGHT
+	_update_view()
+	await highlight_over
+	if shot_path != "" and not shot_taken:
+		shot_taken = true
+		_screenshot()
+	_stop_sounds()
+	var out := Highlight.end(sim, saved)
+	_team_view(home_team, away_team, mini(home_team, Tables.rink_tile_names.size() - 1))
+	sim.sfx_queue.clear()
+	_update_view()
+	mode = Mode.PAUSED
+	front_busy = true
+	if app != null:
+		app.front_over_match(true)
+	return [hl_result, out]
+
+## a frame of the highlight's loop: the steps (run_sim_steps: no users), the picture, the clock
+## (draw_clock); the first frame fades in with the announcer's introduction and a crowd noise of
+## 100 to 299; a stoppage, the buttons A / B of either player or the pause key end it
+func _highlight_step() -> void:
+	if sim.period_over != 0:
+		return
+	var c := controls.step()
+	sim.run_sim_step(8, 8)
+	sim.replay.record(sim)
+	sim.message_frame()
+	Scoreboard.frame(sim)
+	_play_queued_sfx()
+	_play_music()
+	_update_view()
+	steps_done += 1
+	if shot_path != "" and steps_done >= shot_steps + 120 and not shot_taken:
+		shot_taken = true
+		_screenshot()
+	if sim.fade_in == 2:
+		Speech.say(sim, Speech.highlight_intro(Speech.abbrev(sim, 0), Speech.abbrev(sim, 1)))
+		sim.fade_in = 0
+		sim.crowd_noise = sim.random(0xc8) + 0x64
+	if Input.is_action_just_pressed("pause"):
+		hl_result = -1
+	elif ((c[0] | c[1]) & 0x30) == 0 and sim.period_over == 0:
+		return
+	mode = Mode.PAUSED
+	highlight_over.emit()
 
 ## the card of the match: the front end's choice, else NHL_SOUND, else the Sound Blaster
 func _sound_card() -> int:

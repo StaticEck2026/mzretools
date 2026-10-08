@@ -1,7 +1,7 @@
 class_name LeagueScores
 ## The scores around the league the intermissions and the end of a game show (league_scores_init
-## 0x2f2b1, league_scores_advance 0x2f3d7, simulate_pending_games 0x18f8d): six other games of the
-## night, their teams and scores (frontend/BoxScore.gd draws them).
+## 0x2f2b1, league_scores_advance 0x2f3d7; simulate_pending_games 0x18f8d is in Highlight.gd): six
+## other games of the night, their teams and scores (frontend/BoxScore.gd draws them).
 
 const TEAM_RATING := 0xc8922       # unk_c8922: a strength per team (the order of the games' finish)
 
@@ -64,23 +64,3 @@ static func advance(period: int, home: int) -> void:
 				game[3] += League.rand() % 3
 				game[4] += League.rand() % 3
 			st += 1
-
-## simulate_pending_games: one game that finished since it was last shown is played to its end by
-## the off screen simulation (Season.gd); -1 when every game was shown already
-static func simulate_pending() -> int:
-	for g in games.size():
-		if games[g][2] > 4 and games[g][2] != shown[g]:
-			done_mask |= 1 << g
-	if done_mask == 0x3f:
-		return -1
-	var free: Array = []
-	for g in games.size():
-		if done_mask & (1 << g) == 0:
-			free.append(g)
-	if free.is_empty():
-		return -1
-	var g: int = free[randi() % free.size()]
-	done_mask |= 1 << g
-	for k in games.size():
-		shown[k] = games[k][2]
-	return g

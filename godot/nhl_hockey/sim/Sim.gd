@@ -56,6 +56,8 @@ var match_over := false              # word game_over: the game is decided (set_
 var finished := false                # end_match_from_loop: the three stars are over, the match is finished
 var saved_period_num := 1            # three_stars_sequence keeps the period count while it runs
 var intermission_pending := false    # end_of_period: a period ended, the front end shows the intermission
+var hold_intermission := false       # the front end shows the intermissions: period_cleanup waits for them
+var intermission_held := false       # period_cleanup stopped after leave_match_video (end_intermission goes on)
 var sequence_steps: int = 0          # sequence_steps: steps left of the anthem / three stars
 var cup_final := false               # game_over_check: this game decides the Stanley Cup (the harness's stub result)
 var cup_series := PackedByteArray()  # dword_dc338 (alloc_cup_banner): the 7 games of the play-off final, empty otherwise
@@ -136,7 +138,7 @@ var replay := Replay.new()
 var crowd: Array = []              # crowd_figures: Crowd.Record x 20 (the figures around the ice and the benches)
 var crowd_busy := PackedByteArray() # crowd_spots_busy: spots in use
 var injury_stoppage := false       # injury_stoppage: a player was hurt; the faceoff follows without the referee's walk
-var fade_in := false               # cut_to_scene: the view cuts (fades in) to the next scene
+var fade_in := 0                   # cut_to_scene: the view cuts (fades in) to the next scene (2: the intro of a highlight)
 var penalty_box_mode := false      # penalty_box_mode (0xcbc44): a penalty is being handed out (no new calls)
 var speech_busy := false           # speech_busy(): the announcer is talking (set by the audio layer)
 var ref_phase: int = -1             # dword_c90d4: 0 = referee called, 1 = collecting, -1 = ready
@@ -682,6 +684,8 @@ func add_crowd(amount: int, cap: int) -> void:
 ## control_p1/control_p2: control bytes (bits 0-3 direction, 8 none, 9 stop, 0x10 A, 0x20 B, 0x40 C)
 ## pressed_p1/pressed_p2: the button bits that went down with this sample
 func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) -> void:
+	if intermission_held:
+		return              # the intermission runs inside game_loop's end_of_period
 	step_count += 1
 	last_controls = [control_p1, control_p2]
 	deferred = false            # game_loop ran the deferred calls (empty ones in this build)
@@ -711,19 +715,34 @@ func step(control_p1: int, control_p2: int, pressed_p1: int, pressed_p2: int) ->
 	# are cleared, and a game over starts the three stars (three_stars_sequence)
 	if period_over != 0 and not stars_running and not finished:
 		Rules.end_of_period(self)
-		line_hotkey_req[1] = 0
-		line_hotkey_req[0] = 0
-		deferred = false
-		period_over = 0
-		hud_acc = 0
-		if match_over:
-			summary_flush()
-			Ceremonies.begin_three_stars(self)
-			if not stars_running:
-				finished = true
-		else:
-			Scoreboard.start(self, true)
-			InfoPanel.music(self, 0)
+		if intermission_held:
+			return
+		_after_end_of_period()
+
+## the intermission the front end showed is over (end_match_from_period returned): the rest of
+## period_cleanup (period_init, reset_bench_slots) and of game_loop after end_of_period
+func end_intermission() -> void:
+	intermission_held = false
+	MatchSetup.period_init(self)
+	MatchSetup.reset_bench_slots(self)
+	_after_end_of_period()
+
+## game_loop after end_of_period: the line hotkeys and the period flag cleared; a game over starts
+## the three stars, otherwise the scoreboard and the music of the next period
+func _after_end_of_period() -> void:
+	line_hotkey_req[1] = 0
+	line_hotkey_req[0] = 0
+	deferred = false
+	period_over = 0
+	hud_acc = 0
+	if match_over:
+		summary_flush()
+		Ceremonies.begin_three_stars(self)
+		if not stars_running:
+			finished = true
+	else:
+		Scoreboard.start(self, true)
+		InfoPanel.music(self, 0)
 
 ## a step of run_sim_steps (0x1149a): the clock while play is on (game_clock_tick), then sim_tick
 ## (0x5c1c4): sim_game_state, sim_update_players and update_camera (the replay frame is recorded
