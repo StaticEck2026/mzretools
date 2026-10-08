@@ -27,7 +27,7 @@ and edited databases are kept under `user://` (`leagues/NAME.LP`, `leagues/NAME.
 `view/App.gd`.
 
 Controls (player 1, home team): arrows skate, X = A (pass / switch player), C = B (shoot / body
-check), Ctrl = C (hook, poke check). Player 2 (`NHL_USER2`): I J K L skate, U = A, O = B, P = C. At the
+check), Z = C (hook, poke check). Player 2 (`NHL_USER2`): I J K L skate, U = A, O = B, P = C. At the
 faceoff hold a direction and press A when the puck drops. A or B skips the anthem.
 
 Hotkeys of the original (`handle_hotkey`): Esc the pause screen (Back to Game, Exit, the goalie choice,
