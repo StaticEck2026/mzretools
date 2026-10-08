@@ -60,6 +60,7 @@ var sequence_steps: int = 0          # sequence_steps: steps left of the anthem 
 var cup_final := false               # game_over_check: this game decides the Stanley Cup (the harness's stub result)
 var cup_series := PackedByteArray()  # dword_dc338 (alloc_cup_banner): the 7 games of the play-off final, empty otherwise
 var series_mode := false             # dword_c53fb == 1: a play-off series alone, its length from option_flags bits 12..14
+var league_game := false             # dword_c53fb != 0: a game of a league or a play-off series (the panel counts the scorer's goals of the season)
 var series_announce := false         # byte_ccca0: the cup was won, the pause menu says the series result
 var intermission_camera := false     # game_flags 0x80 (the cup presentation)
 var stars: Array = []                # e9af8: up to 3 x [team, roster], the 1st star first
@@ -467,10 +468,14 @@ func set_teams(home: Database.TeamInfo, away: Database.TeamInfo, scratches: Dict
 		team.info = team_info[t]
 		team_ids[t] = team_info[t].index if team_info[t] != null else t
 		team.numbers.resize(28)
+		team.title_abbrev = team_info[t].abbrev if team_info[t] != null else ""
+		team.title_name = team_info[t].name if team_info[t] != null else ""
 		for r in 28:
 			team.roster_status[r] = 3 if Lines.roster_exists(team, r) else 0
 			var p: Database.Player = team.info.player(r) if team.info != null else null
 			team.numbers[r] = p.number if p != null else 0
+			team.first_names[r] = p.first if p != null else ""
+			team.last_names[r] = p.last if p != null else ""
 		for r in scratches.get(t, []):
 			team.roster_status[r] = 2
 	new_game(anthem)

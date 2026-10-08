@@ -1325,7 +1325,7 @@ AI_GLOBALS = (('game_flags', GAME_FLAGS, 1), ('stop_flags', STOP_FLAGS, 1), ('mi
               ('faceoff_ready0', 0xe0390, -2), ('faceoff_ready1', 0xe0394, -2), ('penalty_shot_timer', PENALTY_SHOT_TIMER, -4),
               ('injury_stoppage', 0xcbec6, -2), ('clip', 0xcbecc, -2), ('ref_phase', 0xc90d4, -2),
               ('ref_infraction', 0xc90d6, -2), ('ref_infraction_slot', 0xc90d8, -2), ('panel', 0xcbec0, -2),
-              ('demo', 0xcc0ec, -4), ('sound_card', 0xc541f, 1), ('sound_enabled', 0xd2430, 1), ('announce_time', 0xe9aac, -2),
+              ('demo', 0xcc0ec, -4), ('session_mode', 0xc53fb, -4), ('sound_card', 0xc541f, 1), ('sound_enabled', 0xd2430, 1), ('announce_time', 0xe9aac, -2),
               ('period_length', 0xe9ab8, -2), ('deferred', 0xc5840, -4), ('infraction_events', 0xcc0ac, -4),
               ('save_clip_shown', 0xe9a9e, -2), ('period_over', 0xcbc46, -2), ('goal_call', 0xe9ad3, 1),
               ('goal_team', 0xe9ad4, 1), ('goal_scorer', 0xe9ad5, 1), ('goal_a1', 0xe9ad6, 1), ('goal_a2', 0xe9ad7, 1),
@@ -1464,7 +1464,7 @@ def replay_read(emu):
             'hash': hashlib.sha256(bytes(data)).hexdigest()[:16], 'last': bytes(data[last:last + 0x80]).hex()}
 
 
-FORMAT_PLAYER_NAME = 0x61d48                   # stubbed: a player's name for the panel (the font measures it); ret 8
+FORMAT_PLAYER_NAME = 0x61d48                   # a player's name for the panel, shortened to 124 pixels of SCOR2B; ret 8
 SPEECH_ENABLED = 0xd27bb                       # speech_enabled: the speech bank is loaded
 SPEECH_DRIVER = (0xed7ac, 0xed7b0)             # the speech driver's records (the sentences write their flags there)
 SPEECH_AVAILABLE = 0x83711                     # stubbed: 1, a voice is free
@@ -1475,7 +1475,37 @@ SPEECH_PLAY_SENTENCE = 0x8426f                 # stubbed
 SPEECH_RELEASE_CLIP = 0x84418                  # stubbed: the clip appended to the playback list (recorded)
 GOAL_MILESTONE_CHECK = 0x62807                 # stubbed: its deferred call is empty in this build
 RECORD_PENALTY = 0x624b9                       # (team, roster, kind, minutes) + mm, ss, queue index; ret 0xc
-SHOW_PENALTY = 0x61e99                         # stubbed: the panel's lines for the event record (sprintf, the names)
+SHOW_PENALTY = 0x61e99                         # the panel's lines for the event record (sprintf, the names)
+FONT_SCOR2B = 0xd8b70                          # font_scor2b: SCOR2B.VFN in memory (format_player_name measures the names with it)
+FONT_CURRENT_DEFAULT = 0xdc230                 # font_current_default: the font format_player_name sets back
+TEAM_NAMES = 0xdbc30                           # team_names: the TEAMS.DB records (0x2e8 bytes) of the two teams: +0 abbreviation, +0x1a name
+SEASON_GOALS = 0xdeb7c                         # unk_deb7c: 25 x 0x10 bytes per team, +0 the goals of the season before the game
+PANEL_LINES = (0xe02c8, 0xe0250, 0xe028c, 0xe0308, 0xe0344)   # panel_title and the four lines below it
+ROSTER_DB = {}                                 # (ai_cases) the TEAMS.DB records and the names of their players (KEY.DB)
+
+
+def roster_db_load(gamedir):
+    '''the 28 TEAMS.DB records and the first and last names (KEY.DB +3, +0x13) of their 28 players
+    (25 skater keys at +0x4c, 3 goalie keys at +0xb0; -1 no player: empty names)'''
+    with open(os.path.join(gamedir, 'TEAMS.DB'), 'rb') as f:
+        teams = f.read()
+    with open(os.path.join(gamedir, 'KEY.DB'), 'rb') as f:
+        key = f.read()
+    ROSTER_DB['teams'] = [teams[k * 0x2e8:(k + 1) * 0x2e8] for k in range(len(teams) // 0x2e8)]
+    ROSTER_DB['names'] = []
+    for rec in ROSTER_DB['teams']:
+        names = []
+        for i in range(28):
+            kk = struct.unpack_from('<i', rec, 0x4c + i * 4 if i < 25 else 0xb0 + (i - 25) * 4)[0]
+            if kk < 0:
+                names.append((b'', b''))
+            else:
+                names.append((key[kk + 3:kk + 0x13].split(b'\0')[0], key[kk + 0x13:kk + 0x23].split(b'\0')[0]))
+        ROSTER_DB['names'].append(names)
+
+
+def panel_read(emu):
+    return [emu.read(a, 0x3a).split(b'\0')[0].decode('latin-1') for a in PANEL_LINES]
 EVENT_REC = 0xe9ac8                            # dword_e9ac8: the record of the last event (11 bytes)
 EVENT_BUF = 0xe9b4c                            # unk_e9b4c: the stoppage's events, 8 x 11 bytes
 EVENT_COUNT = 0xcd34c                          # dword_cd34c
@@ -1539,6 +1569,19 @@ def ai_world(emu, rnd, base, tables):
         f['numbers'] = [(WORLDS['n'] * 37 + ti * 53 + i * 11) % 99 + 1 for i in range(28)]
         for i, num in enumerate(f['numbers']):
             emu.write(ROSTERS + ti * 0x444 + i * 0x27 + 5, bytes([num]))
+        # the names of the players of a team of the databases (the records' +7, +0x17) and the
+        # names of its TEAMS.DB record in team_names (only those: assign_line_positions of a pulled
+        # goalie's team defending a penalty shot reads the home team's line table out of bounds, in
+        # front of it, into the end of the away team's record; the port reads 0 there), the goals of
+        # the season so far (the panel's " (12)" in a league game), no statistics of the game yet
+        f['db_team'] = (WORLDS['n'] * 5) % len(ROSTER_DB['teams'])
+        emu.write(TEAM_NAMES + ti * 0x2e8, ROSTER_DB['teams'][f['db_team']][:0x27])
+        for i, (first, last) in enumerate(ROSTER_DB['names'][f['db_team']]):
+            emu.write(ROSTERS + ti * 0x444 + i * 0x27 + 7, first.ljust(16, b'\0') + last.ljust(16, b'\0'))
+        f['season_goals'] = [(WORLDS['n'] * 3 + i * 7) % 45 for i in range(25)]
+        for i, v in enumerate(f['season_goals']):
+            emu.write(SEASON_GOALS + ti * 0x190 + i * 0x10, struct.pack('<i', v))
+        emu.write(tables[ti][0], b'\0' * 25 * 0x10)
         for n, o, sz in AI_TEAM_FIELDS:
             emu.write(t + o, struct.pack('<' + _FMT[sz], f[n] if sz < 0 else f[n] & ((1 << (8 * sz)) - 1)))
         emu.write(t + 0x46, struct.pack('<28h', *([f['energy']] * 28)))
@@ -1665,7 +1708,10 @@ def ai_world(emu, rnd, base, tables):
     if g['stop_flags'] & 0x10 and g['last_shooter'] < 0:
         g['last_shooter'] = 2                  # (a shot in flight has a shooter: shot_landed credits him)
     g['settings2'] |= (WORLDS['n'] >> 1) & 1   # the announcer on in every other world (option byte 2 bit 0)
+    g['session_mode'] = (0, 2, 1, 2)[(WORLDS['n'] >> 2) & 3]   # exhibition, league, play-off series
     write_globals(emu, g)
+    for a in PANEL_LINES:
+        emu.write(a, b'\0' * 0x3a)
     emu.write(OPTION_FLAGS, struct.pack('<I', (g['option_flags'] & 0xff) | (g['settings2'] << 8)))
     return g, teams, carrier
 
@@ -1677,7 +1723,7 @@ def events_read(emu):
 
 def ai_record(emu):
     return {'globals': {n: struct.unpack('<' + _FMT[sz], emu.read(a, abs(sz)))[0] for n, a, sz in AI_GLOBALS},
-            'events': events_read(emu), 'hud': hud_read(emu),
+            'events': events_read(emu), 'hud': hud_read(emu), 'panel': panel_read(emu),
             'teams': [dict({n: struct.unpack('<' + _FMT[sz], emu.read(t + o, abs(sz)))[0] for n, o, sz in AI_TEAM_FIELDS},
                            entity_of=list(struct.unpack('<28h', emu.read(t + 0x7e, 56))),
                            roster_status=[emu.read(ROSTERS + ti * 0x444 + i * 0x27, 1)[0] for i in range(28)],
@@ -2063,7 +2109,6 @@ def ai_cases(exe):
         else:
             calls.append(['say_release', name])
     emu.stub(SPEECH_RELEASE_CLIP, on_release)
-    emu.stub(SHOW_PENALTY, lambda eax: calls.append(['show_penalty']))
     emu.stub(FREEMEM, lambda eax: None)
     fixed_stubs += [emu.stub(UPDATE_EFFECTS, lambda eax: calls.append(['update_effects'])),
                     emu.stub(SETUP_FACEOFF, lambda eax: calls.append(['setup_faceoff']))]
@@ -2093,7 +2138,12 @@ def ai_cases(exe):
     pp4p_stub = emu.stub(PICK_PLAYER_FOR_POSITION, lambda eax: calls.append(['pick_player_for_position', s32(eax & 0xffffffff),
                                                                              s32(emu.uc.reg_read(UC_X86_REG_EDX))]))
     emu.stub(GOAL_MILESTONE_CHECK, lambda eax: calls.append(['goal_milestone_check']))
-    emu.stub(FORMAT_PLAYER_NAME, lambda eax: None, pop=8)
+    # the panel's names measured with SCOR2B as the game loads it
+    with open(os.path.join(os.path.dirname(exe), 'SCOR2B.VFN'), 'rb') as f:
+        font = emu.alloc(f.read())
+    emu.write(FONT_SCOR2B, struct.pack('<I', font))
+    emu.write(FONT_CURRENT_DEFAULT, struct.pack('<I', font))
+    roster_db_load(os.path.dirname(exe))
     emu.call(ENTITIES_INIT)
     tables = []
     for ti, t in enumerate(TEAM_RECORDS):
@@ -2103,7 +2153,7 @@ def ai_cases(exe):
         emu.write(t + 0xda, struct.pack('<I', LINE_TABLES[ti]))
         emu.write(t + 0xde, struct.pack('<I', PLAYER_RATINGS + ti * 0x1f4))
         emu.write(t + 0xee, struct.pack('<I', ROSTERS + ti * 0x444))
-        ps = emu.alloc(b'\0' * 28 * 0x10)
+        ps = PLAYER_STATS[ti]                    # (show_penalty reads the scorer's goals there)
         gs = emu.alloc(b'\0' * 3 * 6)
         emu.write(t + 0xe6, struct.pack('<I', ps))
         emu.write(t + 0xea, struct.pack('<I', gs))
@@ -2538,7 +2588,7 @@ def goals_cases(emu, rnd, base, tables, calls, base_fields, speech):
         random_boxes(emu, rnd, teams)
         # the statistics
         for t, (ps, gs) in enumerate(tables):
-            raw = bytearray(28 * 0x10)
+            raw = bytearray(25 * 0x10)
             for r in range(25):
                 struct.pack_into('<8h', raw, r * 0x10, rnd.randrange(5), rnd.randrange(5), rnd.randrange(10), rnd.randrange(-5, 6),
                                  rnd.randrange(3), rnd.randrange(2), rnd.randrange(2), rnd.randrange(10))
@@ -3113,7 +3163,7 @@ def periods_cases(emu, rnd, base, tables, calls, base_fields, speech):
             # the statistics (compute_three_stars reads the game's own tables, the team records point
             # the generator's copies)
             for t, (ps, gs) in enumerate(tables):
-                raw = bytearray(28 * 0x10)
+                raw = bytearray(25 * 0x10)
                 for r in range(25):
                     struct.pack_into('<8h', raw, r * 0x10, rnd.randrange(5), rnd.randrange(5), rnd.randrange(10), rnd.randrange(-5, 6),
                                      rnd.randrange(3), rnd.randrange(2), rnd.randrange(2), rnd.randrange(10))
@@ -3322,7 +3372,7 @@ def lineup_cases(emu, rnd, base, tables, calls, base_fields, teams_path):
             for c in range(0x28, 0x30):
                 if rnd.random() < 0.3:
                     lt[c] = rnd.randrange(28)
-            emu.write(LINE_TABLES[ti], bytes(lt))
+            emu.write(LINE_TABLES[ti], bytes(lt[:0x30]))   # (font_current_default follows the home team's)
             lines_in['line_tables'].append(list(lt))
             pos = [rnd.choice('CCLLRRDDD') for _ in range(25)] + ['G'] * 3
             ratings = [[rnd.randrange(1, 7) for _ in range(0x14)] for _ in range(25)]
@@ -3630,7 +3680,7 @@ def lines_cases(emu, rnd, base, tables, calls, base_fields, teams_path):
             for _ in range(rnd.choice((0, 0, 0, 1, 3))):
                 lt[rnd.randrange(0x26)] = rnd.randrange(25)
             lt += bytes([0x64]) * 0x10
-            emu.write(LINE_TABLES[ti], bytes(lt))
+            emu.write(LINE_TABLES[ti], bytes(lt[:0x30]))   # (font_current_default follows the home team's)
             lines_in['line_tables'].append(list(lt))
             pos = [rnd.choice('CCLLRRDDD') for _ in range(25)] + ['G'] * 3
             ratings = [[rnd.randrange(1, 7) for _ in range(0x14)] for _ in range(25)]

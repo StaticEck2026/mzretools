@@ -539,18 +539,13 @@ static func _rating_sum(sim: Sim, t: int, r: int) -> int:
 		sum += p.ratings[i]
 	return sum
 
-## the caption of a star: "#77 Ray Bourque", shortened like format_player_name when it is long
+## the caption of a star (ai_ref_three_stars): format_player_name with the team's abbreviation
+## before the number, "BOS#77 Ray Bourque"
 static func star_caption(sim: Sim, t: int, r: int) -> String:
 	var team := sim.teams[t]
-	var p: Database.Player = team.info.player(r) if team.info != null else null
-	if p == null:
-		return "%s #%d" % [team.abbrev(), r]
-	var s := "#%d %s %s" % [p.number, p.first, p.last]
-	if s.length() > 20:
-		s = "#%d %s. %s" % [p.number, p.first.left(1), p.last]
-	if s.length() > 20:
-		s = "#%d %s" % [p.number, p.last]
-	return s
+	var first := team.first_names[r] if r >= 0 and r < team.first_names.size() else ""
+	var last := team.last_names[r] if r >= 0 and r < team.last_names.size() else ""
+	return InfoPanel.format_player_name(team.title_abbrev, Speech.number(sim, t, r), first, last, "")
 
 static func _announce_star(sim: Sim, index: int) -> void:
 	sim.panel_text[1] = "%s Star" % Tables.star_names[index]

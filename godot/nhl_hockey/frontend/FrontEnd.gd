@@ -561,10 +561,22 @@ func play_game(db_override: Database = null, restore: Dictionary = {}) -> int:
 		"scratches": Session.scratches.duplicate(),
 		"cup_series": _cup_series(),
 		"series_mode": Session.mode == 1,
+		"league_game": Session.mode != 0,
+		"season_db": _season_db(),
 	}
 	var r: int = await app.play_match_async(setup)
 	game = null
 	return r
+
+## the SEASON.DB of the game's databases (the league's, else the game's own): the goals of the
+## season so far the goal panel adds in a league game (db_load_team_roster)
+func _season_db() -> PackedByteArray:
+	var lg = Session.league
+	if lg != null:
+		var d: PackedByteArray = (lg as League).file("SEASON")
+		if not d.is_empty():
+			return d
+	return GameFiles.read_raw("season.db")
 
 ## alloc_cup_banner (0x15b76): a game of the play-off final keeps the final's 7 games of the
 ## schedule (game_over_check: does this game win the Stanley Cup)

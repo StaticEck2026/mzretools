@@ -141,6 +141,8 @@ func _ready() -> void:
 			end_boards.texture = shape.to_texture(palette.colors)
 			end_boards.position = Vector2(0x37 - shape.center_x, 0x225 - shape.center_y)
 	var fonts := _fonts()
+	# the panel's names fit into 124 pixels of SCOR2B (format_player_name)
+	InfoPanel.name_font = fonts.get("scor2b")
 	# the scoreboard, the info panel and the replay panel are drawn over the sprites
 	var ui := CanvasLayer.new()
 	ui.layer = 5
@@ -192,6 +194,7 @@ func _read_settings() -> void:
 			sim.set_period_length(config["period_length"])
 		sim.cup_series = config.get("cup_series", PackedByteArray())
 		sim.series_mode = config.get("series_mode", false)
+		sim.league_game = config.get("league_game", false)
 		sfx_on = flags & 0x80 != 0
 		music_on = flags & 0x40 != 0
 		sim.user1_team = user1_team
@@ -837,6 +840,22 @@ func _fonts() -> Dictionary:
 			out[n] = Vfn.parse(data)
 	return out
 
+## db_load_team_roster (unk_deb7c): each skater's goals of the season before the game, SEASON.DB at
+## his KEY.DB record's +0x2c, the regular season's block (+2) or the play-offs' (+0x14) by option
+## byte 2 bit 1; the goal panel of a league game adds them to his goals of the game
+func _season_goals(db: Database, ti: Array, season: PackedByteArray) -> void:
+	for t in 2:
+		var team: Team = sim.teams[t]
+		for r in 25:
+			team.season_goals[r] = 0
+			var p: Database.Player = ti[t].player(r) if ti[t] != null else null
+			if p == null or p.key < 0 or p.key + 0x30 > db.key_db.size():
+				continue
+			var off := db.key_db.decode_s32(p.key + 0x2c)
+			var at := off + (2 if sim.settings2 & 2 else 0x14)
+			if off >= 0 and at + 2 <= season.size():
+				team.season_goals[r] = season.decode_u16(at)
+
 func _load_assets() -> void:
 	if not GameFiles.available():
 		return
@@ -855,6 +874,7 @@ func _load_assets() -> void:
 			if lines.has(side) and ti[side] != null:
 				ti[side].line_table = lines[side]
 		sim.set_teams(ti[0], ti[1], config.get("scratches", {}), anthem)
+		_season_goals(db, ti, config.get("season_db", PackedByteArray()))
 		# a saved game continues where it was left (savegame_io)
 		var saved: Dictionary = config.get("restore", {})
 		if not saved.is_empty():

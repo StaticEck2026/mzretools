@@ -101,8 +101,85 @@ static func _goalie_byte(sim: Sim, t: int) -> int:
 	var k := 0x24 + (team.goalie_request & 1)
 	return lt[k] if k < lt.size() else 0xff
 
-static func player_name(sim: Sim, t: int, r: int) -> String:
-	return Ceremonies.star_caption(sim, t, r)
+## SCOR2B (font_scor2b): the panel fits the players' names into 124 pixels of it (the view and the
+## tests load it; without it a character counts 6 pixels)
+static var name_font: Vfn = null
+
+static func text_width(s: String) -> int:
+	return name_font.text_width(s) if name_font != null else s.length() * 6
+
+## format_player_name (0x61d48): "#12 First Last" and the suffix in 124 pixels of SCOR2B, else
+## "#12 F. Last", else "#12 Last", else the last name cut to what the rest leaves
+static func format_player_name(prefix: String, number: int, first: String, last: String, suffix: String) -> String:
+	var s := "%s#%d %s %s%s" % [prefix, number, first, last, suffix]
+	if text_width(s) <= 0x7c:
+		return s
+	# (%c of an empty first name writes the string's end)
+	s = "%s#%d %s. %s%s" % [prefix, number, first.left(1), last, suffix] if first != "" else "%s#%d " % [prefix, number]
+	if text_width(s) <= 0x7c:
+		return s
+	s = "%s#%d %s%s" % [prefix, number, last, suffix]
+	if text_width(s) <= 0x7c:
+		return s
+	var room := 0x7c - text_width("%s#%d %s" % [prefix, number, suffix])
+	var cut := last
+	while text_width(cut) > room and cut != "":
+		cut = cut.left(cut.length() - 1)
+	return "%s#%d %s%s" % [prefix, number, cut, suffix]
+
+## the panel's name of roster player r of team t (his number and names of the player records)
+static func player_name(sim: Sim, t: int, r: int, suffix := "") -> String:
+	var team := sim.teams[t]
+	var first := team.first_names[r] if r >= 0 and r < team.first_names.size() else ""
+	var last := team.last_names[r] if r >= 0 and r < team.last_names.size() else ""
+	return format_player_name("", Speech.number(sim, t, r & 0xff), first, last, suffix)
+
+## show_penalty (0x61e99): the panel's lines for the event record (dword_e9ac8). A goal: "12:34
+## Boston", the scorer (" SH" / " PP", in a league game with statistics his goals of the season so
+## far, " (12)"), "Unassisted" or "Assists:" and the assists; a penalty: "12:34 BOS Penalty", the
+## player, the penalty, "2 minutes" / "game misconduct", or "Penalty shot to be taken by" the
+## shooter; an injury: "12:34 BOS Injury", the player, "gone for the game" / "gone for 1 period"
+## (another record: the lines cleared)
+static func show_penalty(sim: Sim) -> void:
+	if sim.stubbed("show_penalty", []):
+		return
+	var r := sim.event_rec
+	var lines := ["", "", "", "", ""]
+	match r[0]:
+		1:
+			var t: int = r[1]
+			var p: int = r[2]
+			lines[0] = "%02d:%02d %s" % [r[7], r[8], sim.teams[t].title_name]
+			var tag := " SH" if r[5] & 2 else (" PP" if r[5] & 4 else "")
+			if sim.league_game and not sim.no_stats and p < 0x19:
+				tag += " (%d)" % (sim.teams[t].player_stats[p][Team.ST_GOALS] + sim.teams[t].season_goals[p])
+			lines[1] = player_name(sim, t, p, tag)
+			if r[3] == 0xff:
+				lines[2] = "Unassisted"
+			else:
+				lines[2] = "Assists:"
+				lines[3] = player_name(sim, t, r[3])
+			if r[4] != 0xff:
+				lines[4] = player_name(sim, t, r[4])
+		2:
+			var t: int = r[1]
+			if r[3] == 0x11:
+				var st := sim.penalty_shot_team
+				lines[0] = "%02d:%02d %s" % [r[6], r[7], sim.teams[st].title_abbrev]
+				lines[1] = "Penalty shot"
+				lines[2] = "to be taken by"
+				lines[3] = player_name(sim, st, sim.penalty_shot_roster)
+			else:
+				lines[0] = "%02d:%02d %s Penalty" % [r[6], r[7], sim.teams[t].title_abbrev]
+				lines[1] = player_name(sim, t, r[2])
+				lines[2] = Tables.penalty_names[clampi(r[3], 0, Tables.penalty_names.size() - 1)]
+				lines[3] = "game misconduct" if r[4] == 0xff else "%d minutes" % r[4]
+		3:
+			var t: int = r[1]
+			lines[0] = "%02d:%02d %s Injury" % [r[5], r[6], sim.teams[t].title_abbrev]
+			lines[1] = player_name(sim, t, r[2])
+			lines[2] = "gone for the game" if Entity.to_s8(r[3]) > 0 else "gone for 1 period"
+	set_text(sim, lines)
 
 ## the event record (dword_e9ac8) into the events of the stoppage (unk_e9b4c, at most eight: a
 ## ninth replaces the last), which gsummary_flush writes into the game summary
@@ -112,11 +189,6 @@ static func _buffer_event(sim: Sim) -> void:
 	if sim.event_count >= 8:
 		sim.event_count = 7
 
-## show_penalty (0x61e99): the panel's lines for the event record (a hook for the golden tests)
-static func _show(sim: Sim, lines: Array) -> void:
-	if sim.stubbed("show_penalty", []):
-		return
-	set_text(sim, lines)
 
 ## announce_goal (0x62343) and show_penalty type 1: the record (1, team, scorer, assists or -1,
 ## the goal flags, the period count, the time, both goalies), the stoppage's events and the
@@ -141,20 +213,7 @@ static func announce_goal(sim: Sim, team: int, scorer: int, assist1: int, assist
 		sim.gs_trailer[1 + team * 2] += 1
 	if team == 0:
 		load_clip(sim, CLIP_GOAL if sim.random(0x14) < 10 else CLIP_SIREN)
-	var scoring := sim.teams[team]
-	var tag := ""
-	if sim.goal_flags & 2:
-		tag = " SH"
-	elif sim.goal_flags & 4:
-		tag = " PP"
-	var name := scoring.info.name if scoring.info != null else scoring.abbrev()
-	var lines := ["%02d:%02d %s" % [t.x, t.y, name], player_name(sim, team, scorer) + tag, "Unassisted", "", ""]
-	if assist1 >= 0:
-		lines[2] = "Assists:"
-		lines[3] = player_name(sim, team, assist1)
-		if assist2 >= 0:
-			lines[4] = player_name(sim, team, assist2)
-	_show(sim, lines)
+	show_penalty(sim)
 	open(sim)
 	sim.goal_call = [team, Entity.to_s8(scorer), Entity.to_s8(assist1), Entity.to_s8(assist2)]
 
@@ -191,15 +250,7 @@ static func record_penalty(sim: Sim, team: int, roster: int, kind: int, minutes:
 			clip = CLIP_CROSS_CHECK
 		if clip >= 0:
 			load_clip(sim, clip)
-	var abbrev := sim.teams[team].abbrev()
-	if kind == 0x11:
-		var shooter_team := sim.penalty_shot_team
-		_show(sim, ["%02d:%02d %s" % [mm, ss, sim.teams[shooter_team].abbrev()], "Penalty shot", "to be taken by",
-			player_name(sim, shooter_team, sim.penalty_shot_roster), ""])
-	else:
-		var what := "game misconduct" if minutes < 0 else "%d minutes" % minutes
-		_show(sim, ["%02d:%02d %s Penalty" % [mm, ss, abbrev], player_name(sim, team, roster),
-			Tables.penalty_names[clampi(kind, 0, Tables.penalty_names.size() - 1)], what, ""])
+	show_penalty(sim)
 	open(sim)
 	if sim.crowd_noise > 400:
 		sim.crowd_noise = 400
@@ -239,8 +290,7 @@ static func announce_injury(sim: Sim, team: int, roster: int, for_game: bool) ->
 	r[5] = t.x & 0xff
 	r[6] = t.y & 0xff
 	_buffer_event(sim)
-	_show(sim, ["%02d:%02d %s Injury" % [t.x, t.y, sim.teams[team].abbrev()], player_name(sim, team, roster),
-		"gone for the game" if for_game else "gone for 1 period", "", ""])
+	show_penalty(sim)
 	open(sim)
 
 ## play_speech (0x59a11): a song of the music driver (the organ: 0..5 the home team's, 6..8

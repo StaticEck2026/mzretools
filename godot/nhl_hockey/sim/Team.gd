@@ -45,6 +45,11 @@ var flags: int = 0                   # +0x44
 var energy: PackedInt32Array = PackedInt32Array()      # +0x46, 28 x 0..0x1000
 var entity_of: PackedInt32Array = PackedInt32Array()   # +0x7e, 28 x: -1 on the ice, -2 on the bench, -3 not available, 1 in the penalty box
 var numbers := PackedByteArray()      # byte 5 of the 28 player records of `rosters` (unk_db3ad): the jersey numbers the announcer and the penalty clocks use
+var first_names := PackedStringArray() # +7 of the player records: the panel's names (format_player_name)
+var last_names := PackedStringArray()  # +0x17
+var season_goals := PackedInt32Array() # unk_deb7c (db_load_team_roster): a skater's goals of the season before the game, in a league
+var title_abbrev := ""                 # team_names +0: "BOS"
+var title_name := ""                   # team_names +0x1a: "Boston"
 var strategy: int = 0                # +0xd2 index into Tables.line_preference (coaching strategy)
 var strategy2: int = 0               # +0xd3
 var flags2: int = 0                  # +0xd4: 0x01 the CPU picks its own lines (else it mirrors the opponent), 0x40 line just changed, 0x80 alternate
@@ -98,6 +103,9 @@ func _init(idx: int = 0) -> void:
 	roster_status.resize(28)
 	roster_status.fill(3)
 	numbers.resize(28)
+	first_names.resize(28)
+	last_names.resize(28)
+	season_goals.resize(25)
 	box_queue.resize(28)
 	box_queue.fill(-1)
 	for k in 11:

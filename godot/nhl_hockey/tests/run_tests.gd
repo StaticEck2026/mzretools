@@ -21,6 +21,11 @@ func fail(msg: String) -> void:
 
 var failures := 0
 
+## the databases the golden worlds take the players' names and the team records from
+## (golden.py ai_world: "db_team"), and their teams as loaded
+static var names_db: Database = null
+static var names_teams := {}
+
 ## steps the simulation until the puck is dropped (play on) or the limit is reached
 func run_until_play(sim: Sim, limit: int) -> int:
 	for i in limit:
@@ -626,6 +631,9 @@ static func _golden(name: String) -> Dictionary:
 ## same inputs): randomrange and rand, the AdLib driver's OPL2 registers after every tick, the PC
 ## speaker driver's PIT divisor and gate
 func golden_tests(gf: Node) -> void:
+	# the panel's names are measured with SCOR2B (format_player_name)
+	InfoPanel.name_font = Vfn.parse(gf.read("scor2b.vfn"))
+	names_db = Database.open(gf.read_raw("teams.db"), gf.read_raw("key.db"), gf.read_raw("att.db"))
 	var rng := _golden("rng")
 	if rng.is_empty():
 		fail("golden data missing (tests/golden)")
@@ -730,7 +738,7 @@ func ai_golden() -> void:
 			continue
 		var sim := Sim.new()
 		sim.stubs = {"snd_play_sfx": true, "kms_play": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
-			"injure_player": true, "show_penalty": true, "say": true, "play_speech": true, "load_clip": true,
+			"injure_player": true, "say": true, "play_speech": true, "load_clip": true,
 			"goal_milestone_check": true, "put_player_on_ice": true,
 			"pick_player_for_position": true, "draw_line_indicator": true}
 		var ok := 0
@@ -771,7 +779,7 @@ func ai_golden() -> void:
 func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 	var sim := Sim.new()
 	sim.stubs = {"snd_play_sfx": true, "kms_play": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
-		"injure_player": true, "show_penalty": true, "say": true, "play_speech": true, "load_clip": true,
+		"injure_player": true, "say": true, "play_speech": true, "load_clip": true,
 		"goal_milestone_check": true, "put_player_on_ice": true,
 		"pick_player_for_position": true, "draw_line_indicator": true,
 		"update_effects": true,
@@ -1251,7 +1259,27 @@ static func _full(base_rec: Dictionary, part: Dictionary) -> Dictionary:
 	f.merge(part, true)
 	return f
 
+## the names of a golden world's team: its players' and its record's of a team of the databases
+## ("db_team"), the goals of the season so far
+static func _team_names_set(team: Team, f: Dictionary) -> void:
+	var info: Database.TeamInfo = null
+	if f.has("db_team") and names_db != null:
+		var k := int(f["db_team"])
+		if not names_teams.has(k):
+			names_teams[k] = names_db.load_team(k)
+		info = names_teams[k]
+	team.title_abbrev = info.abbrev if info != null else ""
+	team.title_name = info.name if info != null else ""
+	for r in 28:
+		var p: Database.Player = info.player(r) if info != null else null
+		team.first_names[r] = p.first if p != null else ""
+		team.last_names[r] = p.last if p != null else ""
+	var sg: Array = f.get("season_goals", [])
+	for r in 25:
+		team.season_goals[r] = int(sg[r]) if r < sg.size() else 0
+
 static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
+	sim.panel_text = ["", "", "", "", ""]
 	var befores: Dictionary = c["before"]
 	for i in 17:
 		var f := _full(base[i], befores.get(str(i), {}))
@@ -1354,6 +1382,9 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	sim.ref_infraction_slot = int(g.get("ref_infraction_slot", -1))
 	sim.panel = int(g.get("panel", -1))
 	sim.demo = int(g.get("demo", 0)) != 0
+	var mode := int(g.get("session_mode", 0))
+	sim.league_game = mode != 0
+	sim.series_mode = mode == 1
 	sim.sound_device = int(g.get("sound_card", 8))
 	sim.sound_enabled = int(g.get("sound_enabled", 1)) != 0
 	sim.announce_time = int(g.get("announce_time", -1))
@@ -1481,6 +1512,7 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 			if f.has("energies"):
 				team.energy[i] = int(f["energies"][i])
 			team.numbers[i] = int(f["numbers"][i]) if f.has("numbers") else 0
+		_team_names_set(team, f)
 	for i in 12:
 		var e: Entity = sim.entities[i]
 		e.team = 0 if i < 6 else 1
@@ -1528,6 +1560,7 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 		"penalty_shot_timer": sim.penalty_shot_away, "injury_stoppage": 1 if sim.injury_stoppage else 0, "clip": sim.clip,
 		"ref_phase": Sim._s16(sim.ref_phase & 0xffff), "ref_infraction": sim.ref_infraction,
 		"ref_infraction_slot": sim.ref_infraction_slot, "panel": sim.panel, "demo": 1 if sim.demo else 0,
+		"session_mode": (1 if sim.series_mode else 2) if sim.league_game else 0,
 		"sound_card": sim.sound_device, "sound_enabled": 1 if sim.sound_enabled else 0, "announce_time": sim.announce_time,
 		"period_length": sim.period_length, "deferred": 1 if sim.deferred else 0, "infraction_events": sim.infraction_events,
 		"save_clip_shown": 1 if sim.save_clip_shown else 0, "period_over": sim.period_over,
@@ -1689,6 +1722,10 @@ static func _ai_world_diff(sim: Sim, c: Dictionary, base: Array) -> Array:
 	if wa.has("hud"):
 		for d in _hud_diff(sim, wa["hud"]):
 			diff.append(d)
+	if wa.has("panel"):
+		for i in 5:
+			if str(sim.panel_text[i]) != str(wa["panel"][i]):
+				diff.append("panel line %d '%s' (original '%s')" % [i, sim.panel_text[i], wa["panel"][i]])
 	var tas: Array = wa["teams"]
 	for t in 2:
 		var team: Team = sim.teams[t]
