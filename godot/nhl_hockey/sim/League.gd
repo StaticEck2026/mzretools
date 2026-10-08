@@ -1100,18 +1100,24 @@ func record_result(team: int, side: int, index: int, sim: Sim) -> void:
 			_add16(season, s + 0x30 + k * 2, 1)
 		else:
 			_add16(season, s + 0x28 + k * 2, 1)
-	# the goalies of record: in the nets at the winning goal (a tie: at the end)
+	# the goalies of record: a tie, the goalies in the nets at the end (the line tables, goalie
+	# requests); else none until the game summary's goals: whenever the winner's goal count stands at
+	# the winning goal, the goal's goalies (its own team's first: a later goal of the loser while it
+	# stands takes them again, the loser's goalie for the winner)
 	var lt := Lines.line_table(mine)
-	var in_net := [InfoPanel._goalie_byte(sim, 0), InfoPanel._goalie_byte(sim, 1)]
-	if winner >= 0:
+	var in_net := [0xff, 0xff]
+	if winner < 0:
+		in_net = [InfoPanel._goalie_byte(sim, 0), InfoPanel._goalie_byte(sim, 1)]
+	else:
 		var n := [0, 0]
 		for r: PackedByteArray in sim.gs_records:
-			if r[0] == 1:
-				n[r[1]] += 1
-				if r[1] == winner and n[winner] == gwg:
-					in_net[winner] = r[9]
-					in_net[winner ^ 1] = r[10]
-	var of_record: int = in_net[side]
+			if r[0] != 1:
+				continue
+			n[0 if r[1] == 0 else 1] += 1
+			if n[winner] == gwg:
+				in_net[winner] = r[9]
+				in_net[winner ^ 1] = r[10]
+	var of_record: int = Entity.to_s8(in_net[side])
 	# the skaters: all but the scratches
 	var scratched := {}
 	for k in 8:

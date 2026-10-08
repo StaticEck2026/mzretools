@@ -4390,6 +4390,154 @@ def round_cases(exe, gamedir, count=60):
     return cases
 
 
+SEASON_RECORD_RESULT = 0x3626d                 # a human team's game into the league: (dir, ext, team, side; game index, summary dir)
+FILE_OPEN_READ = 0x14525                       # stubbed: (path, handle pointer) from the files of the case
+FILE_OPEN_RW = 0x14552                         # stubbed
+FILE_CLOSE = 0x1457c                           # stubbed: (handle pointer)
+STARS = 0xe9af8                                # e9af8: the three stars, (team, roster) words
+
+
+def record_cases(exe, gamedir, count=200):
+    """season_record_result called directly: the game of a human team into TEAMS.DB (its season or
+    play-off block), SEASON.DB (the stars, the skaters who dressed, the goalies who played with the
+    goalie of record from GSUMMARY.DB, the goals against average and save percentage); the league
+    files the game ships with the team's block and its players' records now and then random, the
+    match (the score, the power plays, the penalty minutes, the line tables with scratches and
+    goalies, the statistics, the stars) and a game summary of its goals (now and then missing some)"""
+    emu = PortEmu(exe)
+    rnd = random.Random(1097)
+    base = {n: read(gamedir, n + '.DB') for n in ('TEAMS', 'KEY', 'SEASON')}
+    files = {}
+    handles = {}
+    pos = {}
+
+    def reg(r):
+        return emu.uc.reg_read(r) & 0xffffffff
+
+    def on_open(eax):
+        path = bytes(emu.read(eax & 0xffffffff, 64)).split(b'\0')[0].decode('latin-1')
+        name = path.replace('/', '\\').split('\\')[-1].split('.')[0].upper()
+        h = 5 + len(handles)
+        handles[h] = name
+        pos[h] = 0
+        emu.write(reg(UC_X86_REG_EDX), struct.pack('<i', h))
+        return 0
+
+    def on_close(eax):
+        emu.write(eax & 0xffffffff, struct.pack('<i', -1))
+        return 0
+
+    def on_read(eax):
+        h = eax & 0xffffffff
+        f = files[handles[h]]
+        buf, off, size = reg(UC_X86_REG_EDX), reg(UC_X86_REG_EBX), reg(UC_X86_REG_ECX)
+        if off & 0x80000000:
+            off = pos[h]
+        if off + size > len(f):
+            return 1
+        emu.write(buf, bytes(f[off:off + size]))
+        pos[h] = off + size
+        return 0
+
+    def on_write(eax):
+        h = eax & 0xffffffff
+        f = files[handles[h]]
+        buf, off, size = reg(UC_X86_REG_EDX), reg(UC_X86_REG_EBX), reg(UC_X86_REG_ECX)
+        if off & 0x80000000:
+            off = pos[h]
+        if off + size > len(f):
+            return 1
+        f[off:off + size] = emu.read(buf, size)
+        pos[h] = off + size
+        return 0
+    emu.stub(FILE_OPEN_READ, on_open)
+    emu.stub(FILE_OPEN_RW, on_open)
+    emu.stub(FILE_CLOSE, on_close)
+    emu.stub(FILE_READ, on_read)
+    emu.stub(FILE_WRITE, on_write)
+    strings = emu.alloc(b'L\0\0\0.DB\0G\0\0\0')
+    teams_db, key_db = base['TEAMS'], base['KEY']
+    cases = []
+    for k in range(count):
+        team = rnd.randrange(26)
+        side = rnd.randrange(2)
+        other = rnd.choice([x for x in range(26) if x != team])
+        playoffs = rnd.random() < 0.3
+        index = rnd.randrange(0x444, 0x4ad) if playoffs else rnd.randrange(0x444)
+        tm = bytearray(base['TEAMS'])
+        se = bytearray(base['SEASON'])
+        rec = team * 0x2e8
+        if rnd.random() < 0.3:
+            b = rec + (0x3a if playoffs else 0x28)
+            tm[b:b + 4] = bytes(rnd.choice((0, 0xff, rnd.randrange(256))) for _ in range(4))
+            tm[b + 4:b + 0x12] = bytes(rnd.randrange(256) for _ in range(14))
+        keys = [struct.unpack_from('<i', tm, rec + (0x4c + r * 4 if r < 25 else 0xb0 + (r - 25) * 4))[0] for r in range(28)]
+        for r in range(28):
+            if keys[r] < 0 or rnd.random() > 0.3:
+                continue
+            so = struct.unpack_from('<i', key_db, keys[r] + 0x2c)[0]
+            n = 0x36 if key_db[keys[r] + 2] == 0x47 else 0x2f
+            for w in range(0, n - 1, 2):
+                struct.pack_into('<H', se, so + w, rnd.choice((0, 0, rnd.randrange(100), rnd.randrange(0x10000))))
+        # the match
+        hg = rnd.randrange(8)
+        ag = rnd.choice((hg, rnd.randrange(8)))
+        goals = (hg, ag)
+        f = []
+        for ti, t in enumerate(TEAM_RECORDS):
+            tid = team if ti == side else other
+            lt = bytearray(teams_db[tid * 0x2e8 + 0xbc:tid * 0x2e8 + 0xec])
+            for c in range(0x28, 0x30):
+                lt[c] = rnd.choice((0x64, 0x64, rnd.randrange(28), rnd.randrange(256)))
+            for c in (0x24, 0x25):
+                lt[c] = rnd.choice((lt[c], 25, 26, 27, rnd.randrange(25), 0x64))
+            emu.write(LINE_TABLES[ti], bytes(lt))
+            emu.write(t + 0xda, struct.pack('<I', LINE_TABLES[ti]))
+            fi = {'goals': goals[ti], 'pp_goals': rnd.randrange(4), 'power_plays': rnd.randrange(8),
+                  'penalty_minutes': rnd.randrange(40), 'goalie_request': rnd.choice((0, 1, 0xff00, 0xff01, 0x10)),
+                  'line_table': list(lt)}
+            emu.write(t + 0x10, struct.pack('<h', fi['goals']))
+            emu.write(t + 2, struct.pack('<hh', fi['pp_goals'], fi['power_plays']))
+            emu.write(t + 0xc, struct.pack('<h', fi['penalty_minutes']))
+            emu.write(t + 0x38, struct.pack('<H', fi['goalie_request']))
+            fi['stats'] = [[rnd.randrange(5), rnd.randrange(5), rnd.randrange(20), rnd.randrange(-4, 5), rnd.randrange(3),
+                            rnd.randrange(2), rnd.randrange(2), rnd.randrange(11)] for _ in range(25)]
+            emu.write(PLAYER_STATS[ti], b''.join(struct.pack('<8h', *st) for st in fi['stats']))
+            fi['goalie_stats'] = [[rnd.choice((0, rnd.randrange(1, 4000))), rnd.randrange(50), rnd.randrange(9)] for _ in range(3)]
+            emu.write(GOALIE_STATS[ti], b''.join(struct.pack('<3h', *gs) for gs in fi['goalie_stats']))
+            f.append(fi)
+        with_key = [r for r in range(28) if keys[r] >= 0]
+        stars = [[rnd.randrange(2), rnd.choice(with_key)] for _ in range(3)]
+        emu.write(STARS, b''.join(struct.pack('<hh', *st) for st in stars))
+        # the game summary: the goals in some order (now and then one missing), penalties, injuries,
+        # the periods' trailers, the goalies in the nets
+        events = []
+        for ti in range(2):
+            for _ in range(goals[ti]):
+                if rnd.random() < 0.05:
+                    continue
+                events.append([1, ti, rnd.randrange(25), 0xff, 0xff, rnd.choice((0, 2, 4)), rnd.randrange(4), rnd.randrange(20),
+                               rnd.randrange(60), rnd.choice((25, 25, 26, 27, 0xff, rnd.randrange(256))),
+                               rnd.choice((25, 25, 26, 27, 0xff, rnd.randrange(256)))])
+        for _ in range(rnd.randrange(4)):
+            events.append([rnd.choice((2, 3)), rnd.randrange(2)] + [rnd.randrange(256) for _ in range(9)])
+        rnd.shuffle(events)
+        for _ in range(rnd.randrange(3)):
+            events.insert(rnd.randrange(len(events) + 1), [4] + [rnd.randrange(10) for _ in range(10)])
+        events.append([4] + [rnd.randrange(10) for _ in range(10)])
+        n = len(events)
+        header = [0, rnd.randrange(1, 13), rnd.randrange(1, 29), 0, 1, n & 0xff, n >> 8, 0, 0, 0, 0]
+        files = {'TEAMS': tm, 'KEY': bytearray(key_db), 'SEASON': se, 'GSUMMARY': bytearray(bytes(header) + b''.join(bytes(e) for e in events))}
+        handles.clear()
+        before = {'TEAMS': byte_diff(base['TEAMS'], tm), 'SEASON': byte_diff(base['SEASON'], se)}
+        ret = emu.call(SEASON_RECORD_RESULT, eax=strings, edx=strings + 4, ebx=team, ecx=side, stack=(index, strings + 8))
+        cases.append({'team': team, 'side': side, 'index': index, 'teams': f, 'stars': stars, 'summary': events,
+                      'before': before,
+                      'after': {'ret': s32(ret), 'TEAMS': byte_diff(base['TEAMS'], files['TEAMS']),
+                                'SEASON': byte_diff(base['SEASON'], files['SEASON'])}})
+    return cases
+
+
 def main():
     if len(sys.argv) != 3:
         print(__doc__ or 'golden.py GAMEDIR OUTDIR')
@@ -4400,7 +4548,8 @@ def main():
     for name, data in (('rng', rng_cases(exe)), ('fm_driver', fm_cases(exe, gamedir)),
                        ('pc_speaker', pc_cases(exe, gamedir)), ('physics', physics_cases(exe)),
                        ('league', {'league': league_cases(exe, gamedir), 'scores': scores_cases(exe),
-                                   'playoffs': playoff_cases(exe, gamedir), 'rounds': round_cases(exe, gamedir)})):
+                                   'playoffs': playoff_cases(exe, gamedir), 'rounds': round_cases(exe, gamedir),
+                                   'records': record_cases(exe, gamedir)})):
         write_golden(outdir, name, data)
     write_ai(outdir, ai_cases(exe))
 

@@ -2858,6 +2858,71 @@ func league_golden(gf: Node) -> void:
 			r_shown += 1
 			fail("league round 1 n %d: %s" % [n, ", ".join(bad)])
 	print("golden league: league_sim_game %d / %d, league_scores %d / %d, play-off seeding %d / %d, round 1 %d / %d" % [ok, cases.size(), s_ok, sc.size(), p_ok, pc.size(), r_ok, rc.size()])
+	print("golden league: ", _records_golden(data.get("records", []), base))
+
+## the byte runs of a golden file diff ([offset, hex]) into b
+static func _byte_apply(b: PackedByteArray, runs: Array) -> void:
+	for run: Array in runs:
+		var bytes: PackedByteArray = str(run[1]).hex_decode()
+		for i in bytes.size():
+			b[int(run[0]) + i] = bytes[i]
+
+## season_record_result (league.json "records", League.record_result): a human team's game into
+## TEAMS.DB and SEASON.DB, compared byte by byte
+func _records_golden(cases: Array, base: Dictionary) -> String:
+	if cases.is_empty():
+		fail("golden season_record_result data missing")
+		return ""
+	var ok := 0
+	var shown := 0
+	for c: Dictionary in cases:
+		var lg := League.new()
+		for n in ["TEAMS", "KEY", "SEASON"]:
+			lg.files[n] = (base[n] as PackedByteArray).duplicate()
+		for n in ["TEAMS", "SEASON"]:
+			_byte_apply(lg.files[n], c["before"][n])
+		var sim := Sim.new()
+		for t in 2:
+			var f: Dictionary = c["teams"][t]
+			var team: Team = sim.teams[t]
+			team.reset_stats()
+			team.goals = int(f["goals"])
+			team.pp_goals = int(f["pp_goals"])
+			team.power_plays = int(f["power_plays"])
+			team.penalty_minutes = int(f["penalty_minutes"])
+			team.goalie_request = int(f["goalie_request"])
+			var info := Database.TeamInfo.new()
+			info.line_table = PackedByteArray(_ints(f["line_table"]))
+			team.info = info
+			for r in 25:
+				team.player_stats[r] = PackedInt32Array(_ints(f["stats"][r]))
+			for g in 3:
+				team.goalie_stats[g] = PackedInt32Array(_ints(f["goalie_stats"][g]))
+		sim.stars = []
+		for st: Array in c["stars"]:
+			sim.stars.append([int(st[0]), int(st[1])])
+		sim.gs_records = []
+		for e: Array in c["summary"]:
+			sim.gs_records.append(PackedByteArray(_ints(e)))
+		lg.record_result(int(c["team"]), int(c["side"]), int(c["index"]), sim)
+		var want: Dictionary = c["after"]
+		var diff := []
+		for n in ["TEAMS", "SEASON"]:
+			var got := _byte_diff(base[n], lg.files[n])
+			var w: Array = _ints(want[n])
+			if str(got) != str(w):
+				var at := 0
+				while at < mini(got.size(), w.size()) and str(got[at]) == str(w[at]):
+					at += 1
+				diff.append("%s run %d: %s (original %s)" % [n, at, str(got.slice(at, at + 3)), str(w.slice(at, at + 3))])
+		if int(want["ret"]) != 0:
+			diff.append("the original failed (%d)" % int(want["ret"]))
+		if diff.is_empty():
+			ok += 1
+		elif shown < 10:
+			shown += 1
+			fail("season_record_result team %d side %d game %d: %s" % [int(c["team"]), int(c["side"]), int(c["index"]), ", ".join(diff)])
+	return "season_record_result %d / %d" % [ok, cases.size()]
 
 static func _scores_diff(want: Dictionary) -> String:
 	var games := []
