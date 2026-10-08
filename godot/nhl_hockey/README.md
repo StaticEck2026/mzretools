@@ -256,7 +256,8 @@ library built from source with the tests again.
 - The files that are on the CD only are replaced: the intro logos and the title video (the loading screen
   with the title song stands in), the credits' background and photographs (the NHL emblem), the calendar's
   pictures (drawn cells), the play-off tree's logos (SRLOGO at half size), the mouse pointer (an arrow),
-  the awards' pictures (AWARDSI and the trophies: EMBSCUP, the text in its brightest colour) and the
+  the awards' pictures (AWARDSI and the trophies: EMBSCUP, the text in its brightest colour), the shirts of
+  the line editor and the trade screen (LINEDITP: frames with the numbers) and the
   front end recordings that the floppy files lack (the awards' songs play instead of AWARDS / AWASONG).
 - The multi-player league of the original (every human team plays from its own copy of the league files,
   `league_merge_files` puts them together) is folded into one set of files: the games of the computer
