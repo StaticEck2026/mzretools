@@ -39,6 +39,8 @@ var pre_game := true               # _period_num < 0
 var result := false                # the lines were taken
 var slots: Array = []              # the places: [x, y]
 var font_lines: Vfn
+var registry_list: Array = []      # the Central Registry's editor (edit_lines_screen 0x73a18): its list (unk_ea990)
+var registry_files: Dictionary = {}   # and its databases (KEY, CAREER, TEAMS)
 
 func _init(f: FrontEnd) -> void:
 	fe = f
@@ -77,6 +79,9 @@ func edit(side: int, menu_addr: int, menu_count: int, match_team: Team = null) -
 	_update_menu()
 	picked = -1
 	result = false
+	# (Dress / Scratch Player only once a player is picked)
+	for a in [0xcf28f, 0xcf2af, 0xd0558, 0xd0578]:
+		Menus.at(a).cb = ""
 	await scr.fade_in(_palette(), 16)
 	var root := Menus.list(menu_addr, menu_count)
 	var handler := func(cb: String):
@@ -99,7 +104,7 @@ func _load_states(lt: PackedByteArray, match_team: Team) -> void:
 			var r := lt[0x28 + k]
 			if r < 28 and state[r] != 0:
 				state[r] = 2
-	if Session.scratches.has(team_side) and match_team == null:
+	if Session.scratches.has(team_side) and match_team == null and registry_list.is_empty():
 		for r in Session.scratches[team_side]:
 			if state[r] != 0:
 				state[r] = 2
@@ -118,6 +123,12 @@ func _roster_of(number: int) -> int:
 ## qsort with cmp_player_names_b; the empty ones, last, are left out
 func _load_entries() -> void:
 	entries.clear()
+	if not registry_list.is_empty():
+		# the registry's list as it is (sorted by cmp_key_names, the empty places last)
+		for e: Array in registry_list:
+			if e[0] != "":
+				entries.append([e[0], e[1], e[2], e[3], e[4]])
+		return
 	var all := []
 	for r in 28:
 		var p := info.player(r)
@@ -252,8 +263,12 @@ func _click(e: Dictionary) -> void:
 		if st == 3 or st == 4 or (st == 2 and pre_game):
 			picked = k
 			_draw_list()
-			Menus.at(0xcf28f).cb = "lines_dress_player_b"
-			Menus.at(0xcf2af).cb = "lines_scratch_player_b"
+			if registry_list.is_empty():
+				Menus.at(0xcf28f).cb = "lines_dress_player_b"
+				Menus.at(0xcf2af).cb = "lines_scratch_player_b"
+			else:
+				Menus.at(0xd0558).cb = "lines_dress_player"
+				Menus.at(0xd0578).cb = "lines_scratch_player"
 		return
 	if picked < 0 or state[entries[picked][2]] == 2:
 		return
@@ -350,6 +365,12 @@ func _callback(cb: String):
 			return 1
 		"lines_cancel":
 			return 1
+		"roster_dress_done":
+			if not await _roster_dress_screen():
+				return 0
+			_registry_done()
+			result = true
+			return 1
 		"lines_use_original", "lines_use_default":
 			var lt := original if cb == "lines_use_original" else fe.db.load_team(team_id).line_table
 			_load_states(lt, null if pre_game else fe.game.sim.teams[team_side])
@@ -389,7 +410,10 @@ func _callback(cb: String):
 				_draw_list()
 				_update_menu()
 			return 0
-		"roster_stats_table", "roster_screen":
+		"roster_screen":
+			await _roster_screen()
+			return 0
+		"roster_stats_table":
 			var keep := scr.snapshot()
 			var pal := scr.getpalette()
 			await scr.fade_out(16)
@@ -401,6 +425,189 @@ func _callback(cb: String):
 			await scr.fade_in(pal, 16)
 			return 0
 	return await fe.dispatch(cb)
+
+## roster_dress_screen (0x751fe): the registry's team has to dress 18 skaters and 2 goaltenders:
+## "Your Roster is incomplete." and "Dress / Scratch %2d Player(s)." / "... Goalie(s)."
+func _roster_dress_screen() -> bool:
+	var skaters := 0
+	var goalies := 0
+	for e: Array in entries:
+		if state[e[2]] == 3:
+			if e[0] == "G":
+				goalies += 1
+			else:
+				skaters += 1
+	if skaters == 18 and goalies == 2:
+		return true
+	var line := func(n: int, want: int, what: String) -> String:
+		var d := want - n if n < want else n - want
+		return "%s %2d %s%s" % ["Dress" if n < want else "Scratch", d, what, "." if d == 1 else "s."]
+	var lines := ["Your Roster is incomplete."]
+	if skaters != 18:
+		lines.append(line.call(skaters, 18, "Player"))
+	if goalies != 2:
+		lines.append(line.call(goalies, 2, "Goalie"))
+	await fe.message_dialog(lines)
+	return false
+
+## roster_dress_done (0x75456): the places as roster slots (the dressed entry with the number), the
+## scratched ones in the list's order in the last 8 bytes; the 0x30 bytes go to the team's TEAMS.DB
+## record at +0xbc and are copied to +0xec
+func _registry_done() -> void:
+	var lt := PackedByteArray()
+	lt.resize(0x30)
+	lt.fill(EMPTY)
+	for i in 0x28:
+		if work[i] == EMPTY:
+			continue
+		for e: Array in entries:
+			if state[e[2]] != 0 and e[1] == work[i]:
+				lt[i] = e[2]
+				break
+	var n := 0
+	for e: Array in entries:
+		if state[e[2]] != 0 and state[e[2]] != 3 and n < 8:
+			lt[0x28 + n] = e[2]
+			n += 1
+	var teams: PackedByteArray = teams_read.call()
+	var at := team_id * 0x2e8 + 0xbc
+	if teams.size() >= at + 0x60:
+		for i in 0x30:
+			teams[at + i] = lt[i]
+			teams[at + 0x30 + i] = lt[i]
+		teams_write.call(teams)
+
+## roster_screen (0x7556e): the registry's roster table (Player Statistics: Return To Line Editor;
+## Display ...: Regular Season / Play-Off Statistics), then the editor drawn again
+func _roster_screen() -> void:
+	var keep := scr.snapshot()
+	_roster_table()
+	var handler := func(cb: String) -> int:
+		match cb:
+			"menu_return_one":
+				return 1
+			"roster_regular_season_stats", "roster_playoff_stats":
+				Session.stats_playoffs = cb == "roster_playoff_stats"
+				_roster_table()
+		return 0
+	await ui.run_menu(Menus.list(0xd075e, 2), 0xc0, 0xc1, 0xc2, handler)
+	scr.restore(keep)
+
+static func _u16(b: PackedByteArray, at: int) -> int:
+	return b.decode_u16(at)
+
+## cmp_roster_skaters (0x75931): the ones with games first, by points, fewer games, goals, plus / minus
+static func cmp_roster_skaters(a: Array, b: Array) -> int:
+	var ra: PackedByteArray = a[1]
+	var rb: PackedByteArray = b[1]
+	if (_u16(rb, 0) == 0) != (_u16(ra, 0) == 0):
+		return _u16(rb, 0) - _u16(ra, 0)
+	if _u16(rb, 6) != _u16(ra, 6):
+		return _u16(rb, 6) - _u16(ra, 6)
+	if _u16(ra, 0) != _u16(rb, 0):
+		return _u16(ra, 0) - _u16(rb, 0)
+	if _u16(rb, 2) != _u16(ra, 2):
+		return _u16(rb, 2) - _u16(ra, 2)
+	return rb.decode_s16(0x10) - ra.decode_s16(0x10)
+
+## cmp_roster_goalies (0x75a37): the ones with minutes first, by goals against average, minutes,
+## games, fewer goals against, wins, fewer losses, save percentage
+static func cmp_roster_goalies(a: Array, b: Array) -> int:
+	var ra: PackedByteArray = a[1]
+	var rb: PackedByteArray = b[1]
+	if (_u16(rb, 0xc) == 0) != (_u16(ra, 0xc) == 0):
+		return _u16(rb, 0xc) - _u16(ra, 0xc)
+	if _u16(rb, 0x10) != _u16(ra, 0x10):
+		return _u16(ra, 0x10) - _u16(rb, 0x10)
+	if _u16(rb, 0xc) != _u16(ra, 0xc):
+		return _u16(rb, 0xc) - _u16(ra, 0xc)
+	if _u16(rb, 0) != _u16(ra, 0):
+		return _u16(rb, 0) - _u16(ra, 0)
+	if _u16(rb, 0xe) != _u16(ra, 0xe):
+		return _u16(ra, 0xe) - _u16(rb, 0xe)
+	if _u16(rb, 2) != _u16(ra, 2):
+		return _u16(rb, 2) - _u16(ra, 2)
+	if _u16(rb, 4) != _u16(ra, 4):
+		return _u16(ra, 4) - _u16(rb, 4)
+	return _u16(rb, 0x14) - _u16(ra, 0x14)
+
+## roster_table (0x75bf7): the team's skaters (places 0..24) and goaltenders (25..27) with their
+## CAREER.DB statistics (the play-offs' from +0x12 / +0x16 with stats_playoffs), sorted by
+## cmp_roster_skaters / cmp_roster_goalies, over the team's EMB "bkgd"
+func _roster_table() -> void:
+	var teams: PackedByteArray = registry_files["TEAMS"]
+	var key: PackedByteArray = registry_files["KEY"]
+	var career: PackedByteArray = registry_files["CAREER"]
+	var rec := team_id * 0x2e8
+	var rows: Array = [[], []]
+	for s in 28:
+		var off := teams.decode_s32(rec + 0x4c + s * 4)
+		if off == -1:
+			continue
+		var g := 1 if s >= 25 else 0
+		var k := key.slice(off, off + 0x34)
+		var c := k.decode_s32(0x28)
+		var blk := ((0x16 if g else 0x12) if Session.stats_playoffs else 0)
+		rows[g].append([k, career.slice(c + blk, c + (0x2c if g else 0x28))])
+	Clib.qsort(rows[0], cmp_roster_skaters)
+	Clib.qsort(rows[1], cmp_roster_goalies)
+	scr.clearclip()
+	var b := fe.bank("emb" + Database.cstring(teams, rec, 5))
+	if b == null:
+		b = fe.bank("embnhl")         # (the teams' EMB banks are on the CD only)
+	if b != null:
+		scr.setclip(0, 0x13, 0x280, 0x1e0)
+		var bk := b.find("bkgd")
+		scr.drawshape_remap(bk, bk.x, bk.y)
+		scr.clearclip()
+	scr.setfont(fe.font_main)
+	ui.draw_menu_items(Menus.list(0xd075e, 2), 0xc0, 0xc1, 0xc2)
+	scr.set_text_colors(0xc0, 0xc3)
+	var p := func(x: int, y: int, t: String) -> void:
+		scr.print_text_at(x, y, t)
+	scr.print_centered_shadow(0x19, "%s Roster:" % Database.cstring(teams, rec + 5, 0x20))
+	for h in [[0x14, "Pos"], [0x42, "No"], [0x60, "Name"], [0x10e, "GP"], [0x136, "  G"], [0x15e, "  A"], [0x186, " PT"], [0x1ae, "Shots"], [0x1e8, "PIM"], [0x210, " +/-"]]:
+		p.call(h[0], 0x30, h[1])
+	var y := 0x40
+	for row: Array in rows[0]:
+		var k: PackedByteArray = row[0]
+		var r: PackedByteArray = row[1]
+		p.call(0x14, y, char(k[2]))
+		if k[1] < 0x64:
+			p.call(0x42, y, "%2d" % k[1])
+		p.call(0x60, y, fe.stats.format_name(Database.cstring(k, 3, 16), Database.cstring(k, 0x13, 17), 0xa6))
+		p.call(0x10e, y, "%2d" % _u16(r, 0))
+		p.call(0x136, y, "%3d" % _u16(r, 2))
+		p.call(0x15e, y, "%3d" % _u16(r, 4))
+		p.call(0x186, y, "%3d" % _u16(r, 6))
+		p.call(0x1ae, y, "%4d" % _u16(r, 0xe))
+		p.call(0x1e8, y, "%3d" % _u16(r, 0xc))
+		p.call(0x210, y, "%4d" % r.decode_s16(0x10))
+		y += 0xd
+	y = 0x195
+	for h in [[0x14, "Pos"], [0x42, "No"], [0x60, "Name"], [0x10e, "GP"], [0x136, " Min"], [0x15e, "  GAA"], [0x190, " W"], [0x1ae, " L"], [0x1ea, " GA"], [0x20e, "  SA"], [0x240, "  PCT"]]:
+		p.call(h[0], y, h[1])
+	if not Session.stats_playoffs:
+		p.call(0x1cc, y, " T")
+	y += 0x10
+	for row: Array in rows[1]:
+		var k: PackedByteArray = row[0]
+		var r: PackedByteArray = row[1]
+		p.call(0x14, y, char(k[2]))
+		if k[1] < 0x64:
+			p.call(0x42, y, "%2d" % k[1])
+		p.call(0x60, y, fe.stats.format_name(Database.cstring(k, 3, 16), Database.cstring(k, 0x13, 17), 0xa6))
+		p.call(0x10e, y, "%2d" % _u16(r, 0))
+		p.call(0x136, y, "%4d" % _u16(r, 0xc))
+		p.call(0x15e, y, "%2d.%02d" % [_u16(r, 0x10) / 100, _u16(r, 0x10) % 100])
+		p.call(0x190, y, "%2d" % _u16(r, 2))
+		p.call(0x1ae, y, "%2d" % _u16(r, 4))
+		if not Session.stats_playoffs:
+			p.call(0x1cc, y, "%2d" % _u16(r, 6))
+		p.call(0x1ea, y, "%3d" % _u16(r, 0xe))
+		p.call(0x20e, y, "%4d" % _u16(r, 0x12))
+		p.call(0x240, y, "%3d.%1d" % [_u16(r, 0x14) / 10, _u16(r, 0x14) % 10])
+		y += 0xd
 
 ## the lines go to the match (the team's line table) or to the next game of the session
 func _apply(lt: PackedByteArray) -> void:

@@ -2933,6 +2933,21 @@ func trades_golden() -> void:
 	if sc.is_empty() or sok != sc.size():
 		fail("golden password_scramble: %d / %d" % [sok, sc.size()])
 	print("golden password_scramble: %d / %d" % [sok, sc.size()])
+	# create_player_form (the Central Registry's new skater)
+	var cf: Array = _golden("registry").get("create_player_form", [])
+	var cok := 0
+	var cshown := 0
+	for c: Array in cf:
+		PlayerForm.seed = int(c[0])
+		var car := PlayerForm.create_player_form(str(c[1]).unicode_at(0), _hex(c[2]))
+		if car.hex_encode() == str(c[3]) and PlayerForm.seed == int(c[4]):
+			cok += 1
+		elif cshown < 5:
+			cshown += 1
+			fail("create_player_form %s %s: %s (original %s)" % [c[1], c[2], car.hex_encode(), c[3]])
+	if cf.is_empty() or cok != cf.size():
+		fail("golden create_player_form: %d / %d" % [cok, cf.size()])
+	print("golden create_player_form: %d / %d" % [cok, cf.size()])
 
 func _awards_diff(c: Dictionary) -> Array:
 	var diff := []

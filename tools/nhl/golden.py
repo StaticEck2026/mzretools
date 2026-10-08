@@ -49,7 +49,7 @@ from unicorn import UC_HOOK_CODE, UC_HOOK_INSN    # noqa: E402
 from unicorn.x86_const import (UC_X86_INS_IN, UC_X86_INS_OUT, UC_X86_REG_GDTR, UC_X86_REG_DS,  # noqa: E402
                                UC_X86_REG_ES, UC_X86_REG_SS, UC_X86_REG_FS, UC_X86_REG_GS,
                                UC_X86_REG_EAX, UC_X86_REG_EDX, UC_X86_REG_ESP, UC_X86_REG_EIP, UC_X86_REG_EBX,
-                               UC_X86_REG_ECX)
+                               UC_X86_REG_ECX, UC_X86_REG_FPCW)
 
 RANDOMRANGE = 0x8c230
 RAND = 0x8eb27
@@ -5558,6 +5558,31 @@ def scramble_cases(exe, count=200):
         cases.append([field.hex(), key, emu.read(buf, 11).hex()])
     return cases
 
+CREATE_PLAYER_FORM = 0x6f6d4                    # (KEY record, ATT record, CAREER record): a new skater's career
+
+def create_form_cases(exe, count=120):
+    """create_player_form on random ATT records (the ratings 0..14 of the editor, the others random)
+    of a C / L / R / D skater: the CAREER words +0..+0x10 and the seed after it"""
+    emu = PortEmu(exe)
+    # the control word __init_8087 loads (word_d65fc 0x127f: 53 bit precision, to the nearest);
+    # the emulator starts with 0 (24 bit precision)
+    emu.uc.reg_write(UC_X86_REG_FPCW, 0x127f)
+    rnd = random.Random(0x6f6d)
+    key, att, car = emu.alloc(0x34), emu.alloc(0x14), emu.alloc(0x28)
+    cases = []
+    for k in range(count):
+        seed = rnd.randrange(1 << 32)
+        pos = rnd.choice(b'CLRD')
+        ratings = bytes(rnd.randrange(16) for i in range(0x14))
+        emu.write(SEED, struct.pack('<I', seed))
+        emu.write(key, bytes([0xff, 9, pos]) + bytes(0x31))
+        emu.write(att, ratings)
+        emu.write(car, bytes(0x28))
+        emu.call(CREATE_PLAYER_FORM, eax=key, edx=att, ebx=car)
+        cases.append([seed, chr(pos), ratings.hex(), emu.read(car, 0x28).hex(),
+                      struct.unpack('<I', emu.read(SEED, 4))[0]])
+    return cases
+
 def main():
     if len(sys.argv) != 3:
         print(__doc__ or 'golden.py GAMEDIR OUTDIR')
@@ -5571,7 +5596,8 @@ def main():
                                    'playoffs': playoff_cases(exe, gamedir), 'rounds': round_cases(exe, gamedir),
                                    'records': record_cases(exe, gamedir), 'days': day_cases(exe, gamedir)}),
                        ('sorts', {'stats': sort_cases(exe), 'screens': stats_screen_cases(exe), 'names': name_sort_cases(exe)}),
-                       ('awards', award_cases(exe)), ('trades', {'cases': trade_cases(exe), 'scrambles': scramble_cases(exe)})):
+                       ('awards', award_cases(exe)), ('trades', {'cases': trade_cases(exe), 'scrambles': scramble_cases(exe)}),
+                       ('registry', {'create_player_form': create_form_cases(exe)})):
         write_golden(outdir, name, data)
     write_ai(outdir, ai_cases(exe))
 

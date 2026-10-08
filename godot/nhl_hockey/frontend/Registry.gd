@@ -390,25 +390,12 @@ func _callback(cb: String) -> void:
 			await _roster_edit_screen(_menu_column())
 		"create_player_menu":
 			await _create_player()
-			for c in 2:
-				if is_fa[c]:
-					_free_lists(c)
-			_draw()
 		"dbedit_edit_team_lines":
 			await _edit_lines(_menu_column())
 		"menu_save_to_game":
 			await _save_to_game()
 		"new_database_dialog":
-			var name := (await fe.text_entry_dialog("Enter a new database name:", 8, 0x30, 5)).to_upper()
-			if name != "" and fe.entry_key != 0x1b:
-				var d := "user://databases".path_join(name)
-				DirAccess.make_dir_recursive_absolute(d)
-				for n in files:
-					var f := FileAccess.open(d.path_join(n + ".DB"), FileAccess.WRITE)
-					if f != null:
-						f.store_buffer(files[n])
-				db_name = name
-			_draw()
+			await _new_database_dialog()
 		"menu_load_database":
 			await _load_named()
 			_draw()
@@ -683,6 +670,7 @@ func _save_to_game() -> void:
 	fe.message_show(["Saving databases."])
 	await ui.frame()
 	_save()
+	dirty = false
 	fe.restore_dialog_background()
 	_draw()
 
@@ -925,79 +913,305 @@ func _find_player_by_name(first: String, last: String, c: int) -> void:
 	scroll = maxi(scroll, 0)
 
 # ---------------------------------------------------------------------------------------------
-# not yet ported literally: Create Free Agent, the line editor, the databases by name
+# Create Free Agent (create_player_menu 0x706e2, ratings_edit_screen 0x704a6, free_agent_card
+# 0x7025b, skater_ratings_edit 0x6fc60, goalie_ratings_edit 0x6ff69, ratings_confirm_dialog
+# 0x6fbe8, create_player_form 0x6f6d4)
 # ---------------------------------------------------------------------------------------------
 
-## create_player_menu / create_player_form: a new free agent: names, number, position; the
-## ratings of an average player, empty statistics
+const RATING_BUTTONS := 0xd0c5c          # Cancel, Create
+const KIND_BUTTONS := 0xd0edd            # Player, Goalie
+const RATING_NAMES := [0xd0880, 0xd09db] # 15 skater / 11 goalie names (the first: the hand)
+const RATING_MAP := [0xd08bc, 0xd0a07]   # their bytes of the ATT.DB record
+const RATING_DEFAULT := [0xd0f80, 0xd0fd0]
+const RATING_MIN := [0xd0fa8, 0xd0ff0]
+const RATING_MAX := [0xd0fbc, 0xd1000]
+const RATING_COUNT := [15, 11]
+const RATING_BREAK := [8, 6]             # the first rating of the second column
+const RATING_FREE := [[0, 3, 13], [0, 8]]   # no Rating Units: the hand, Weight, Shoot/Pass Bias
+const RATING_UNITS := [0x118, 0x104]
+const POSITIONS := {0x43: "Center", 0x44: "Defence", 0x4c: "Left Wing", 0x52: "Right Wing", 0x47: "Goalie"}
+
+var ratings := PackedByteArray()         # byte_d0f94 / byte_d0fe0: the ratings edited (0..14)
+
+## create_player_menu: with fewer than 30 free agents, a player or a goalie (Player / Goalie), the
+## name (normalized to the first and last names), a skater's position (C, L, R or D, asked again
+## until one of them), the jersey number (0..99); the ratings (ratings_edit_screen); Create adds the
+## records at the ends of the databases (SEASON and, for a goalie, CAREER empty; a skater's career
+## by create_player_form; the KEY.DB record 0xff: a free agent) and the columns are built again.
+## (The original first wants room on the disk for the six databases and the new records.)
 func _create_player() -> void:
-	var first := await fe.text_entry_dialog("First name of the new player", 15, 0, 4)
-	if first == "" or fe.entry_key == 0x1b:
+	if fa_count >= 0x1e:
+		await fe.message_dialog(["Not enough space to create", "a new free agent."])
 		return
-	var last := await fe.text_entry_dialog("Last name of the new player", 15, 0, 4)
-	if last == "" or fe.entry_key == 0x1b:
+	var kind := await fe.message_dialog_buttons(["Create a player or goalie."], FrontEnd.buttons_at(KIND_BUTTONS, 2))
+	if kind < 0:
 		return
-	var num := await fe.text_entry_dialog("Jersey number", 2, 0x16, 8)
-	var pos := (await fe.text_entry_dialog("Position (C, L, R, D or G)", 1, 0, 0x10)).to_upper()
-	if not ["C", "L", "R", "D", "G"].has(pos):
-		pos = "C"
-	var goalie := pos == "G"
+	var r: Array = await _dialog_box(["Enter the name of the new player" if kind == 0 else "Enter the name of the new goalie"],
+		"", 0x1f, 0xba, false, 0, 0, false)
+	if r[1] == -1 or r[0] == "":
+		return
+	var n := normalize(r[0])
+	var name: String = n[0] + " " + n[1]
+	var pos := 0x47
+	if kind == 0:
+		while true:
+			r = await _dialog_box(["Enter a position for", name, "(L,C,R,D)"], "", 1, 0xe, false, 0, 0, false)
+			if r[1] == -1 or r[0] == "":
+				return
+			pos = (r[0] as String).to_upper().unicode_at(0)
+			if pos in [0x43, 0x4c, 0x52, 0x44]:
+				break
 	var key: PackedByteArray = files["KEY"]
 	var att: PackedByteArray = files["ATT"]
 	var career: PackedByteArray = files["CAREER"]
 	var season: PackedByteArray = files["SEASON"]
 	var rec := PackedByteArray()
 	rec.resize(0x34)
-	rec[0] = 0xff
-	rec[1] = clampi(int(num) if num.is_valid_int() else 0, 0, 99)
-	rec[2] = pos.unicode_at(0)
-	var fa := first.to_ascii_buffer()
-	var la := last.to_ascii_buffer()
-	for i in 15:
-		rec[3 + i] = fa[i] if i < fa.size() else 0
-		rec[0x13 + i] = la[i] if i < la.size() else 0
+	rec[2] = pos
+	var first := (n[0] as String).to_ascii_buffer()
+	var last := (n[1] as String).to_ascii_buffer()
+	for i in first.size():
+		rec[3 + i] = first[i]
+	for i in last.size():
+		rec[0x13 + i] = last[i]
 	rec.encode_s32(0x24, att.size())
 	rec.encode_s32(0x28, career.size())
 	rec.encode_s32(0x2c, season.size())
-	rec[0x30] = 0x30
-	rec[0x31] = 0x30
-	rec[0x32] = 0x30
-	rec[0x33] = 0x30
-	var ratings := PackedByteArray()
-	ratings.resize(0x10 if goalie else 0x14)
-	ratings.fill(8)
-	ratings[0] = 0
-	att.append_array(ratings)
-	var cz := PackedByteArray()
-	cz.resize(0x28)
-	career.append_array(cz)
-	var sz := PackedByteArray()
-	sz.resize(0x36 if goalie else 0x2f)
-	season.append_array(sz)
-	key.append_array(rec)
-	dirty = true
+	r = await _dialog_box(["Enter a jersey number for", name], "", 2, 0x16, true, 0, 0x63, false)
+	if r[1] < 0:
+		return
+	rec[1] = r[1] & 0xff
+	rec[0] = 0xff
+	var pal := scr.getpalette()
+	var done := await _ratings_edit_screen(rec)
+	await scr.fade_out(16)
+	if done >= 1:
+		var g := 1 if pos == 0x47 else 0
+		var a := PackedByteArray()
+		a.resize(0x10 if g else 0x14)
+		for i in RATING_COUNT[g]:
+			a[Exe.i8(RATING_MAP[g] + i)] = ratings[i]
+		var s := PackedByteArray()
+		s.resize(0x36 if g else 0x2f)
+		season.append_array(s)
+		if g:
+			var c := PackedByteArray()
+			c.resize(0x2c)
+			career.append_array(c)
+		else:
+			career.append_array(PlayerForm.create_player_form(pos, a))
+		att.append_array(a)
+		key.append_array(rec)
+		_free_lists(0)
+		_free_lists(1)
+		dirty = true
+	_draw()
+	await scr.fade_in(pal, 16)
 
-## dbedit_edit_team_lines: the line editor on the registry's databases
+## ratings_edit_screen: the defaults of a skater (280 Rating Units) or a goalie (260) on the card;
+## a click on a rating's value edits it, Cancel (0) or Create (1) ends it
+func _ratings_edit_screen(rec: PackedByteArray) -> int:
+	var g := 1 if rec[2] == 0x47 else 0
+	var units: int = RATING_UNITS[g]
+	ratings = Exe.bytes(RATING_DEFAULT[g], 0x10 if g else 0x14)
+	var pal := scr.getpalette()
+	await scr.fade_out(16)
+	var buttons := FrontEnd.buttons_at(RATING_BUTTONS, 2)
+	_free_agent_card(rec, units, buttons)
+	ui.set_pointer(0x140, 0xf0)
+	ui.show_pointer(true)
+	await scr.fade_in(pal, 16)
+	ui.reset_events()
+	var result := -1
+	while result < 0:
+		var e: Dictionary = await ui.wait_event()
+		if not (e["buttons"] & 2):
+			continue
+		ui.show_pointer(false)
+		var r: Array = await _ratings_edit(g, e["x"], e["y"], units)
+		if r[0]:
+			units = r[1]
+			_free_agent_card(rec, units, buttons)
+		else:
+			result = fe.button_at(buttons, e["x"], e["y"], e["buttons"])
+		ui.show_pointer(true)
+	ui.show_pointer(false)
+	return result
+
+## free_agent_card: the PREZ2 picture, PSTATBAR "pst2", "Free Agent", the name, the number and the
+## position (KAUFM), the ratings (the hand "  L" / "  R", then "%3d" of each in two columns of 13
+## pixel rows from y 0x12a), "Rating Units Available <%3d>" and the buttons
+func _free_agent_card(rec: PackedByteArray, units: int, buttons: Array) -> void:
+	scr.clearclip()
+	var b := fe.bank("embnhl")
+	if b != null:
+		var s := b.find("bkgd")
+		scr.drawshape_remap(s, s.x, s.y)
+	var ps := fe.bank("pstatbar")
+	if ps != null:
+		var s := ps.find("pst2")
+		scr.drawshape_remap(s, s.x, s.y)
+	scr.setfont(fe.font_kaufm)
+	scr.set_text_colors(0x40, 0x42)
+	scr.print_outlined(0x140 - scr.textwidth("Free Agent") / 2, 0x52, "Free Agent")
+	scr.print_centered_shadow(0x98, "%s %s" % [_cstr(rec, 3), _cstr(rec, 0x13)])
+	scr.print_centered_shadow(0xb2, "%d " % rec[1] + POSITIONS.get(rec[2], ""))
+	scr.setfont(fe.font_main)
+	var g := 1 if rec[2] == 0x47 else 0
+	var names := Exe.str_table(RATING_NAMES[g], RATING_COUNT[g])
+	var y := 0x12a
+	scr.print_text_at(0x1e, y, names[0])
+	scr.print_text_at(0xc8, y, "  L" if ratings[0] != 0 else "  R")
+	var col := 0
+	y += 0xd
+	for i in range(1, RATING_COUNT[g]):
+		if i == RATING_BREAK[g]:
+			col = 0x136
+			y -= RATING_BREAK[g] * 0xd
+		scr.print_text_at(col + 0x1e, y, names[i])
+		scr.print_text_at(col + 0xc8, y, "%3d" % ((ratings[i] + 5) * 5))
+		y += 0xd
+	scr.print_centered_shadow(0x110, "Rating Units Available <%3d>" % units)
+	fe.buttons_draw_all(buttons)
+
+static func _cstr(b: PackedByteArray, at: int) -> String:
+	var s := ""
+	while at < b.size() and b[at] != 0:
+		s += char(b[at])
+		at += 1
+	return s
+
+## skater_ratings_edit / goalie_ratings_edit: the rating whose value (x col+0xc8..col+0xe3, a 13
+## pixel row) was clicked: the hand by ratings_confirm_dialog, another "Enter a new rating:" /
+## "%2d < %s < %2d" (its range); a lower value gives the units back, a higher one takes them
+## ("Not enough Rating Units"); Weight and Shoot/Pass Bias (a goalie's Weight) cost nothing.
+## Returns [a rating was clicked, the units]. (The original looks at 15 rows for a goalie too:
+## the 4 below his last one read past his tables.)
+func _ratings_edit(g: int, x: int, y: int, units: int) -> Array:
+	var col := 0
+	var row := 0x12a
+	for i in RATING_COUNT[g]:
+		if i == RATING_BREAK[g]:
+			col = 0x136
+			row -= RATING_BREAK[g] * 0xd
+		if x >= col + 0xc8 and x < col + 0xe4 and y >= row and y < row + 0xd:
+			var lo := (Exe.u8(RATING_MIN[g] + i) + 5) * 5
+			var hi := (Exe.u8(RATING_MAX[g] + i) + 5) * 5
+			var lines := ["Enter a new rating:", "%2d < %s < %2d" % [lo, Exe.str_table(RATING_NAMES[g], RATING_COUNT[g])[i], hi]]
+			if i == 0:
+				await _ratings_confirm_dialog("Glove hand Left or Right?" if g else "Shoots Left or Right?")
+				return [true, units]
+			var cur := (ratings[i] + 5) * 5
+			var r: Array = await _dialog_box(lines, "%d" % cur, 2, 0x1c, true, lo, hi, false)
+			var v: int = r[1] & 0xff
+			if v == 0xff or v < lo or v > hi:
+				return [true, units]
+			var free: bool = i in RATING_FREE[g]
+			if v < cur:
+				ratings[i] = v / 5 - 5
+				if not free:
+					units += cur - (ratings[i] + 5) * 5
+			elif free:
+				ratings[i] = v / 5 - 5
+			elif v - cur <= units:
+				ratings[i] = v / 5 - 5
+				units -= (ratings[i] + 5) * 5 - cur
+			else:
+				await fe.message_dialog(["Not enough Rating Units"])
+			return [true, units]
+		row += 0xd
+	return [false, units]
+
+## ratings_confirm_dialog: "L" or "R" asked (the hand shown), L / l 1, R / r 0
+func _ratings_confirm_dialog(prompt: String) -> void:
+	var r: Array = await _dialog_box([prompt], "L" if ratings[0] != 0 else "R", 1, 0x10, false, 0, 0, false)
+	if r[1] == -1:
+		return
+	var c := (r[0] as String).unicode_at(0) if r[0] != "" else 0
+	if c == 0x4c or c == 0x6c:
+		ratings[0] = 1
+	elif c == 0x52 or c == 0x72:
+		ratings[0] = 0
+
+# ---------------------------------------------------------------------------------------------
+# not yet ported literally: the line editor, the databases by name
+# ---------------------------------------------------------------------------------------------
+
+## dbedit_edit_team_lines (0x6df06) -> edit_lines_screen_a (0x737e1): the line editor of the
+## original's registry (edit_lines_screen: menu d05f4 Done / Cancel, Dress / Scratch Player, Show
+## Player Statistics) on column c's team as the home (0) or visiting (1) side: its list, the lines
+## of its TEAMS.DB record, Done writing them there (the editor does not mark the databases changed)
 func _edit_lines(c: int) -> void:
 	var keep_db := fe.db
-	var keep_home := Session.home_team
+	var keep_team: int = Session.home_team if c == 0 else Session.away_team
 	var keep_lines: Dictionary = Session.line_override.duplicate()
 	fe.db = Database.open(files["TEAMS"], files["KEY"], files["ATT"])
-	Session.home_team = column[c]
+	if c == 0:
+		Session.home_team = column[c]
+	else:
+		Session.away_team = column[c]
 	Session.line_override.clear()
 	var ed := LineEditor.new(fe)
+	ed.registry_list = lists[c]
+	ed.registry_files = files
 	ed.teams_read = func() -> PackedByteArray: return files["TEAMS"]
 	ed.teams_write = func(b: PackedByteArray) -> void:
 		files["TEAMS"] = b
-		dirty = true
-	await ed.edit(0, 0xcf1af, 3)
+	await ed.edit(c, 0xd05f4, 3)
+	# (the editor dresses and scratches the list's entries themselves, kept also after Cancel)
+	for e: Array in lists[c]:
+		if e[E_POS] != "":
+			e[E_FLAG] = ed.state[e[E_SLOT]]
 	fe.db = keep_db
-	Session.home_team = keep_home
+	if c == 0:
+		Session.home_team = keep_team
+	else:
+		Session.away_team = keep_team
 	Session.line_override = keep_lines
 	if is_fa[c ^ 1]:
 		_free_lists(c ^ 1)
 	_draw()
 	await scr.fade_in(_pal, 16)
+
+## the saved databases (Temporary Save): NAME.DBX directories as in the game directory
+const DBX_DIR := "user://databases"
+
+## new_database_dialog (0x6c3c3): "Enter a new database name:" (8 letters or digits); a database of
+## the name replaced after "There is already a database with that name!" / "Do you want to replace
+## it?" (No / Yes); the directory NAME.DBX made, the six databases written into it
+## (database_disk_check), the name shown
+func _new_database_dialog() -> void:
+	var name := await fe.text_entry_dialog("Enter a new database name:", 8, 0x30, 5)
+	if name == "" or fe.entry_key == 0x1b:
+		return
+	var dir := DBX_DIR.path_join(name.to_upper() + ".DBX")
+	if DirAccess.dir_exists_absolute(dir):
+		var r := await fe.message_dialog_buttons(["There is already a database with that name!",
+			"Do you want to replace it?"], FrontEnd.buttons_at(0xc7733, 2))
+		if r != 1:
+			return
+		_delete_directory(dir)
+	if DirAccess.make_dir_recursive_absolute(dir) != OK:
+		return
+	db_name = name
+	_database_disk_check(dir)
+	_draw()
+
+## delete_directory: the directory and its files
+static func _delete_directory(dir: String) -> void:
+	for f in DirAccess.get_files_at(dir):
+		DirAccess.remove_absolute(dir.path_join(f))
+	DirAccess.remove_absolute(dir)
+
+## database_disk_check (0x6c4ba): the six databases written into dir (the original first wants the
+## room on the disk: "Insufficient disk space available" ... and removes the directory); the
+## databases are no longer changed
+func _database_disk_check(dir: String) -> void:
+	for n in files:
+		var f := FileAccess.open(dir.path_join(n + ".DB"), FileAccess.WRITE)
+		if f != null:
+			f.store_buffer(files[n])
+	dirty = false
 
 ## Load Database ...: a copy saved with Temporary Save
 func _load_named() -> void:
