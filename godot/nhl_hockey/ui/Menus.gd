@@ -44,6 +44,21 @@ static func at(addr: int) -> Item:
 	_load()
 	return _items.get(addr, null)
 
+## the record at addr, made when the data has none there (the records whose text the code sets: the
+## trade screen's "Show <team> Statistics...")
+static func ensure(addr: int, x0: int, y0: int, x1: int, y1: int, cb: String) -> Item:
+	_load()
+	if not _items.has(addr):
+		var it := Item.new()
+		it.addr = addr
+		it.x0 = x0
+		it.y0 = y0
+		it.x1 = x1
+		it.y1 = y1
+		it.cb = cb
+		_items[addr] = it
+	return _items[addr]
+
 ## count records from addr
 static func list(addr: int, count: int) -> Array:
 	_load()

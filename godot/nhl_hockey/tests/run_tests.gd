@@ -438,6 +438,7 @@ func asset_tests() -> void:
 	league_golden(gf)
 	sorts_golden()
 	awards_golden()
+	trades_golden()
 
 ## the sound cards (load_sound_config): the Sound Blaster's digital driver and its mixer (the
 ## effects on voices 0 / 1, the crowd's roar and murmur on 2 / 3), the AdLib's FM effects, the PC
@@ -2836,6 +2837,89 @@ func awards_golden() -> void:
 			fail("awards case %d: %s" % [cases.find(c), ", ".join(diff.slice(0, 4))])
 	print("golden awards: %d / %d" % [ok, cases.size()])
 	Awards.reset()
+
+## the trades (trades.json): Trade.edit (team_edit_screen with jersey_number_dialog's answers as the
+## harness gave them) and Trade.roster (line_editor_load_roster); the result, the two teams' records,
+## KEY.DB, the dialogs, the line editors after it, the rosters compared
+func trades_golden() -> void:
+	var cases: Array = _golden("trades").get("cases", [])
+	if cases.is_empty():
+		fail("golden trades data missing")
+		return
+	var ok := 0
+	var shown := 0
+	for c: Dictionary in cases:
+		var a := int(c["a"])
+		var b := int(c["b"])
+		var teams := PackedByteArray()
+		teams.resize(26 * Trade.TEAM)
+		var recs := [_hex(c["records"][0]), _hex(c["records"][1])]
+		for s in 2:
+			var t := a if s == 0 else b
+			for i in Trade.TEAM:
+				teams[t * Trade.TEAM + i] = recs[s][i]
+		var key := _hex(c["key"])
+		var st := {"asked": [], "answers": _ints(c["answers"]), "extra": 0, "messages": 0}
+		var answer := func(_side: int, slot: int, keys: Array) -> int:
+			var k: PackedByteArray = keys[slot]
+			st["messages"] += 1
+			st["asked"].append("Enter jersey number for %s %s" % [Trade._cstr(k, 3), Trade._cstr(k, 0x13)])
+			if not st["answers"].is_empty():
+				return st["answers"].pop_front()
+			st["extra"] += 1
+			return 99 + st["extra"]
+		var nums := PackedByteArray(_ints(c["nums"]))
+		var r: Array = await Trade.edit(teams.duplicate(), key.duplicate(), a, b, nums, answer)
+		var diff := []
+		if r[0] != int(c["result"]):
+			diff.append("result %d (original %d)" % [r[0], int(c["result"])])
+		var f: Trade.Files = r[2]
+		if f != null:
+			for s in 2:
+				var t := a if s == 0 else b
+				var want: PackedByteArray = recs[s].duplicate()
+				for run: Array in c["records_after"][s]:
+					var bytes := _hex(run[1])
+					for i in bytes.size():
+						want[int(run[0]) + i] = bytes[i]
+				if f.teams.data.slice(t * Trade.TEAM, (t + 1) * Trade.TEAM) != want:
+					diff.append("team %d record" % s)
+			var wk := key.duplicate()
+			for run: Array in c["key_after"]:
+				var bytes := _hex(run[1])
+				for i in bytes.size():
+					wk[int(run[0]) + i] = bytes[i]
+			if f.key.data.size() != int(c["key_size"]) or f.key.data.slice(0, key.size()) != wk:
+				diff.append("KEY.DB")
+		var editors := [0, 1] if r[0] == 0 and r[1] else []
+		if str(editors) != str(_ints(c["editors"])):
+			diff.append("line editors %s (original %s)" % [str(editors), str(c["editors"])])
+		if st["messages"] != int(c["messages"]) or str(st["asked"]) != str(c["asked"]):
+			diff.append("dialogs %s (original %s)" % [str(st["asked"]), str(c["asked"])])
+		for s in 2:
+			var t := a if s == 0 else b
+			var want_r: Array = c["rosters"][s]
+			var got = Trade.roster(teams, key, t)
+			if (got == null) != (int(want_r[0]) != 0):
+				diff.append("roster %d result" % s)
+			elif got != null:
+				var e := _hex(want_r[1])
+				for i in 28:
+					var g: Array = got[i]
+					var pos := e[i * 0x16]
+					if (g[0] == "" and pos != 0) or (g[0] != "" and g[0].unicode_at(0) != pos):
+						diff.append("roster %d entry %d position" % [s, i])
+						break
+					if pos != 0 and (g[1] != e[i * 0x16 + 1] or g[2] != e[i * 0x16 + 2]
+							or g[3] != Trade._cstr(e, i * 0x16 + 3)):
+						diff.append("roster %d entry %d: %s (original %s)" % [s, i, str(g), Trade._cstr(e, i * 0x16 + 3)])
+						break
+		if diff.is_empty():
+			ok += 1
+		elif shown < 6:
+			shown += 1
+			fail("trade case %d: %s" % [cases.find(c), ", ".join(diff.slice(0, 4))])
+	print("golden trades: %d / %d" % [ok, cases.size()])
 
 func _awards_diff(c: Dictionary) -> Array:
 	var diff := []

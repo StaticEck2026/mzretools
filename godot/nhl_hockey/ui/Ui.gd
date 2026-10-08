@@ -24,7 +24,8 @@ var held := 0                    # arrow_held_polls: polls the arrows have been 
 var _tick_acc := 0.0
 var _enter_down := false
 var _mouse_down := false
-var menu_hold := 0               # a screen runs outside the menu loops (NHL_UI_SCRIPT call:): they wait
+var menu_depth := 0              # the menu loops running, nested
+var menu_hold := 0               # the loops up to this depth wait (NHL_UI_SCRIPT call: runs a screen outside them)
 
 func setup(screen: Screen8, pointer_bank: Shpi) -> void:
 	scr = screen
@@ -284,6 +285,12 @@ var menu_root_index := 0             # and the bar entry it is under
 ## again. A click outside closes the lists and goes to `outside` (the event). `idle` runs every frame
 ## (a code in exit_codes from it leaves too).
 func run_menu(root: Array, light: int, face: int, dark: int, handler: Callable, redraw: Callable = Callable(), exit_codes: Array = [1], idle: Callable = Callable(), outside: Callable = Callable()) -> int:
+	menu_depth += 1
+	var r: int = await _run_menu(menu_depth, root, light, face, dark, handler, redraw, exit_codes, idle, outside)
+	menu_depth -= 1
+	return r
+
+func _run_menu(depth: int, root: Array, light: int, face: int, dark: int, handler: Callable, redraw: Callable, exit_codes: Array, idle: Callable, outside: Callable) -> int:
 	var lists: Array = [root, [], [], []]
 	var origins: Array = [Vector2i.ZERO, Vector2i.ZERO, Vector2i.ZERO, Vector2i.ZERO]
 	var current: Array = [0, 0, 0, 0]
@@ -294,7 +301,7 @@ func run_menu(root: Array, light: int, face: int, dark: int, handler: Callable, 
 	show_pointer(true)
 	reset_events()
 	while true:
-		if menu_hold > 0:
+		if depth <= menu_hold:
 			await get_tree().process_frame
 			continue
 		if idle.is_valid():

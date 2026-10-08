@@ -5368,6 +5368,177 @@ def award_cases(exe, count=100):
         emu.unstub(h)
     return {'initial': initial, 'cases': cases}
 
+
+TEAM_EDIT_SCREEN = 0x3e390                      # (league dir, [team a, team b], the 4 slots of the trade)
+LINE_EDITOR_LOAD_ROSTER = 0x3dc2c               # (league dir, team, entries, team record buffer)
+DOS_WRITE = 0x90d14                             # served into the case's files
+MESSAGE_DIALOG, TEXT_ENTRY_DIALOG = 0x31013, 0x2fedf   # stubbed: counted / the case's answers
+SETPALETTE, GETMOUSE, FREEMEM = 0xb4b88, 0xb2dca, 0x8d2d8
+LOAD_TEAM_DATABASES, EDIT_LINES_SCREEN_B, FADE_PALETTE = 0x1bbcc, 0x767d0, 0x76429
+TRADE_TEAMS = (0xc90ca, 0xc90cc)                # dword_c90ca (home), away_team_id: the trade's teams after it
+
+
+def trade_cases(exe, count=100):
+    """team_edit_screen (the trade's files: KEY.DB records change team, the rosters exchange their
+    offsets, lines_remove_player on both line tables, jersey_number_dialog's check of the newcomer's
+    number and its answers written) over random TEAMS.DB / KEY.DB served from the case's files, the
+    trade's 4 slots (pairs both set or both empty), jersey numbers from a small set (many clashes),
+    empty roster slots (whose -1 offset reads on from where KEY.DB is), the answers of the number
+    dialog (some clashing again); and line_editor_load_roster (the trade screen's rosters). Compared:
+    the result, the files, the dialogs asked (the slot's player and team), the teams the line editors
+    get after it"""
+    emu = PortEmu(exe)
+    rnd = random.Random(0x7ade)
+    files = {}
+    handles = {}
+    pool = [emu.alloc(0x1000) for i in range(8)]
+    used = {'n': 0}
+    dir_ = emu.alloc(16)
+    emu.write(dir_, b'LG\0')
+    picks = emu.alloc(8)
+    slots = emu.alloc(4)
+    entries = emu.alloc(28 * 0x16)
+    rec_buf = emu.alloc(0x2e8)
+
+    def reg(r):
+        return emu.uc.reg_read(r) & 0xffffffff
+
+    def cstr(a):
+        return emu.read(a, 80).split(b'\0')[0].decode('latin-1')
+
+    def on_open(eax):
+        name = os.path.basename(cstr(eax).replace('\\', '/')).lower()
+        h = len(handles) + 5
+        handles[h] = [name, 0]
+        emu.write(reg(UC_X86_REG_EBX), struct.pack('<I', h))
+        return 0
+
+    def on_lseek(eax):
+        h = handles[eax & 0xffff]
+        h[1] = s32(reg(UC_X86_REG_EDX))
+        return h[1]
+
+    def on_read(eax):
+        h = handles[eax & 0xffff]
+        f = files.get(h[0], bytearray())
+        n = reg(UC_X86_REG_EDX)
+        got = max(0, min(n, len(f) - h[1]))
+        emu.write(reg(UC_X86_REG_EBX), bytes(f[h[1]:h[1] + got]))
+        h[1] += got
+        emu.write(struct.unpack('<I', emu.read(reg(UC_X86_REG_ESP) + 4, 4))[0], struct.pack('<I', got))
+        return 0
+
+    def on_write(eax):
+        h = handles[eax & 0xffff]
+        f = files.setdefault(h[0], bytearray())
+        n = reg(UC_X86_REG_EDX)
+        data = emu.read(reg(UC_X86_REG_EBX), n)
+        if len(f) < h[1] + n:
+            f.extend(bytes(h[1] + n - len(f)))
+        f[h[1]:h[1] + n] = data
+        h[1] += n
+        emu.write(struct.unpack('<I', emu.read(reg(UC_X86_REG_ESP) + 4, 4))[0], struct.pack('<I', n))
+        return 0
+
+    def on_alloc(eax):
+        p_ = pool[used['n'] % len(pool)]
+        used['n'] += 1
+        return p_
+
+    calls = {'messages': 0, 'asked': [], 'answers': [], 'editors': [], 'extra': 0}
+
+    def on_message(eax):
+        calls['messages'] += 1
+        return 0
+
+    def on_text(eax):
+        # the prompt "Enter jersey number for First Last"; the case's answers, then 100, 101, ...
+        # (numbers nobody wears)
+        calls['asked'].append(cstr(eax))
+        if calls['answers']:
+            return calls['answers'].pop(0)
+        calls['extra'] += 1
+        return 99 + calls['extra']
+
+    def on_editor(eax):
+        calls['editors'].append(eax & 0xff)
+        return 0
+    hooks = [emu.stub(DOS_OPEN, on_open), emu.stub(C_LSEEK, on_lseek), emu.stub(DOS_READ, on_read, pop=4),
+             emu.stub(DOS_WRITE, on_write, pop=4), emu.stub(DOS_CLOSE, lambda eax: 0),
+             emu.stub(MESSAGE_DIALOG, on_message, pop=0x14), emu.stub(TEXT_ENTRY_DIALOG, on_text, pop=0x14),
+             emu.stub(GETPALETTE, lambda eax: 0), emu.stub(SETPALETTE, lambda eax: 0), emu.stub(GETMOUSE, lambda eax: 0),
+             emu.stub(ALLOCMEM, on_alloc), emu.stub(FREEMEM, lambda eax: 0),
+             emu.stub(LOAD_TEAM_DATABASES, lambda eax: 0), emu.stub(EDIT_LINES_SCREEN_B, on_editor),
+             emu.stub(FADE_PALETTE, lambda eax: 0)]
+    firsts = [b'Al', b'Bob', b'Cy', b'Dmitri', b'Ed']
+    lasts = [b'Smith', b'Smyth', b'Brown', b'Lemieux', b'Bure', b'Roy', b'Hull', b'B']
+    cases = []
+    for k in range(count):
+        nkeys = rnd.randrange(60, 120)
+        key = bytearray()
+        for i in range(nkeys):
+            r = bytearray(0x34)
+            r[0] = rnd.randrange(26)
+            r[1] = rnd.choice((1, 2, 3, 4, 7, 9, 10, 99, rnd.randrange(100)))
+            r[2] = ord(rnd.choice('LCRDDG'))
+            f_, l_ = rnd.choice(firsts), rnd.choice(lasts)
+            r[3:3 + len(f_)] = f_
+            r[0x13:0x13 + len(l_)] = l_
+            key += r
+        teams = bytearray(26 * 0x2e8)
+        for t in range(26):
+            b = t * 0x2e8
+            teams[b + 0x1a:b + 0x1a + 8] = ('Team%02d' % t).encode().ljust(8, b'\0')
+            for i in range(28):
+                off = rnd.randrange(nkeys) * 0x34 if rnd.random() < 0.85 else -1
+                struct.pack_into('<i', teams, b + 0x4c + i * 4, off)
+            for at in (0xbc, 0xec):
+                for i in range(0x28):
+                    teams[b + at + i] = rnd.randrange(28) if rnd.random() < 0.8 else 0x64
+        a = rnd.randrange(26)
+        bt = rnd.choice([t for t in range(26) if t != a])
+        nums = [0xff] * 4
+        for pair in range(2):
+            if rnd.random() < 0.7:
+                nums[pair] = rnd.randrange(28)
+                nums[pair + 2] = rnd.randrange(28)
+        if nums[0] == nums[1] and nums[0] != 0xff:
+            nums[1] = nums[3] = 0xff
+        answers = [rnd.choice((1, 2, 3, 4, 7, 9, 10, 99, rnd.randrange(100))) for i in range(8)]
+        files.clear()
+        handles.clear()
+        files['teams.db'] = bytearray(teams)
+        files['key.db'] = bytearray(key)
+        emu.write(picks, struct.pack('<ii', a, bt))
+        emu.write(slots, bytes(nums))
+        emu.write(TRADE_TEAMS[0], struct.pack('<HH', 0xffff, 0xffff))
+        calls.update({'messages': 0, 'asked': [], 'answers': list(answers), 'editors': [], 'extra': 0})
+        emu.write(STACK_TOP - 0x4000, b'\0' * (0x4000 - 0x104))
+        ret = emu.call(TEAM_EDIT_SCREEN, eax=dir_, edx=picks, ebx=slots)
+        # (only the two teams' records are read and written: the case keeps those)
+        after = files['teams.db']
+        case = {'a': a, 'b': bt, 'nums': nums, 'answers': answers, 'result': s32(ret),
+                'records': [bytes(teams[t * 0x2e8:t * 0x2e8 + 0x2e8]).hex() for t in (a, bt)],
+                'key': bytes(key).hex(),
+                'records_after': [byte_diff(teams[t * 0x2e8:t * 0x2e8 + 0x2e8], after[t * 0x2e8:t * 0x2e8 + 0x2e8])
+                                  for t in (a, bt)],
+                'key_size': len(files['key.db']), 'key_after': byte_diff(key, files['key.db'][:len(key)]),
+                'messages': calls['messages'], 'asked': calls['asked'], 'editors': calls['editors'],
+                'teams_set': list(struct.unpack('<HH', emu.read(TRADE_TEAMS[0], 4)))}
+        # the trade screen's rosters of the two teams (line_editor_load_roster)
+        rosters = []
+        for t in (a, bt):
+            files['teams.db'] = bytearray(teams)
+            files['key.db'] = bytearray(key)
+            handles.clear()
+            r = emu.call(LINE_EDITOR_LOAD_ROSTER, eax=dir_, edx=t, ebx=entries, ecx=rec_buf)
+            rosters.append([s32(r), emu.read(entries, 28 * 0x16).hex()])
+        case['rosters'] = rosters
+        cases.append(case)
+    for h in hooks:
+        emu.unstub(h)
+    return cases
+
 def main():
     if len(sys.argv) != 3:
         print(__doc__ or 'golden.py GAMEDIR OUTDIR')
@@ -5381,7 +5552,7 @@ def main():
                                    'playoffs': playoff_cases(exe, gamedir), 'rounds': round_cases(exe, gamedir),
                                    'records': record_cases(exe, gamedir), 'days': day_cases(exe, gamedir)}),
                        ('sorts', {'stats': sort_cases(exe), 'screens': stats_screen_cases(exe), 'names': name_sort_cases(exe)}),
-                       ('awards', award_cases(exe))):
+                       ('awards', award_cases(exe)), ('trades', {'cases': trade_cases(exe)})):
         write_golden(outdir, name, data)
     write_ai(outdir, ai_cases(exe))
 

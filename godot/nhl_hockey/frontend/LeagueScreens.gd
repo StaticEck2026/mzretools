@@ -245,7 +245,9 @@ func _grid_highlight(team: int) -> void:
 			scr.putpixel(x0, y, scr.getpixel(x0, y) ^ 0x80)
 			scr.putpixel(x1, y, scr.getpixel(x1, y) ^ 0x80)
 
-## returns the team chosen (mode 8), true when done (modes 1, 2, 4), null when cancelled
+## returns the team chosen (mode 8), the two teams chosen (mode 0x10: a human team clicked twice, then
+## another; [a, b], -1 for one not chosen when Done ends it), true when done (modes 1, 2, 4), null
+## when cancelled
 func team_info_screen(mode: int, title: String, pinfo: PackedByteArray):
 	await fe.leave_screen(100)
 	var ts := fe.bank("tspal")
@@ -255,11 +257,14 @@ func team_info_screen(mode: int, title: String, pinfo: PackedByteArray):
 	ui.draw_menu_items(root, 0x40, 0x41, 0x42)
 	fe.play_loop("leaguetm")
 	await scr.fade_in(_grid_pal, 16)
-	var state := {"sel": -1, "result": null}
+	var state := {"sel": -1, "result": null, "picks": [-1, -1], "cur": 0}
 	var handler := func(cb: String):
 		match cb:
 			"dialog_done":
-				state["result"] = true if mode != 8 else state["sel"]
+				if mode == 0x10:
+					state["result"] = state["picks"].duplicate()
+				else:
+					state["result"] = true if mode != 8 else state["sel"]
 				return 1
 			"dialog_cancel":
 				state["result"] = null
@@ -270,12 +275,25 @@ func team_info_screen(mode: int, title: String, pinfo: PackedByteArray):
 		if t < 0:
 			return 0
 		var human: bool = pinfo[0x20 + t * 0x1e + 0x17] == 1
+		if mode == 0x10 and state["cur"] == 1 and t == state["picks"][0]:
+			return 0
 		if t != state["sel"]:
 			_grid_highlight(state["sel"])
 			state["sel"] = t
 			_grid_highlight(t)
 			return 0
 		# the selected team again
+		if mode == 0x10:
+			# the first pick stays lit while the second is made
+			if human:
+				state["picks"][state["cur"]] = t
+				if state["cur"] == 0:
+					state["cur"] = 1
+					state["sel"] = -1
+					return 0
+				state["result"] = state["picks"].duplicate()
+				return 1
+			return 0
 		if mode == 8:
 			if human:
 				state["result"] = t
@@ -761,8 +779,82 @@ func menu_league_settings() -> int:
 func menu_show_league_settings() -> int:
 	return await fe.settings.menu_exhibition_settings()
 
+## Trade Players ... (league_trade_players 0x33523 -> statistics_menu 0x40183): no saved game waiting,
+## before the trading deadline (the next game's date: March 22nd; April on; the play-offs), more than
+## one human team; two of them chosen (team_info_screen), their passwords, the trade screen
+## (TradeScreen), the trade written (team_edit_screen: Trade.edit, the number dialogs) and both teams'
+## line editors. (The original also wants the league's databases merged; here there is one copy.)
 func league_trade_players() -> int:
-	return await menu_central_registry()
+	var l: League = Session.league
+	if l == null:
+		return 0
+	fe.set_dialog_colors(0xf9, 0xfa, 0xf8, 0xfa, 0xf7)
+	if FileAccess.file_exists(l.dir.path_join("GAME.SAV")):
+		await fe.message_dialog(["There is a saved game in the league", l.name, "which must be played first!"])
+		return 0
+	var gp := l.games_played()
+	var deadline := gp >= 0x444
+	if gp < 0x4ad:
+		var g := l.game(gp)
+		deadline = (g[0] == 3 and g[1] >= 0x16) or (g[0] > 3 and g[0] < 10) or gp >= 0x444
+	if deadline:
+		await fe.message_dialog(["The trading deadline has passed!", "No more trading is allowed!"])
+		return 0
+	if l.humans().size() == 1:
+		await fe.message_dialog(["There is only one human", "controlled team!"])
+		return 0
+	var picks = await team_info_screen(0x10, "Select two teams for trading players", l.pinfo)
+	if picks == null or picks[0] < 0 or picks[1] < 0:
+		return 0
+	if not await password_prompt(l, picks[0]) or not await password_prompt(l, picks[1]):
+		return 0
+	var shirts = await TradeScreen.new(fe).run(l.file("TEAMS"), l.file("KEY"), picks[0], picks[1])
+	if shirts == null:
+		return 0
+	var err := await _trade(l, picks[0], picks[1], shirts)
+	if err != 0:
+		await fe.message_dialog(["Error while trading players!"])
+	return 0
+
+## team_edit_screen: the trade into the league's files (the number dialogs asked), then the line
+## editors of both teams (Save These Lines into the league's TEAMS.DB)
+func _trade(l: League, a: int, b: int, shirts: PackedByteArray) -> int:
+	var answer := func(side: int, slot: int, keys: Array) -> int:
+		var k: PackedByteArray = keys[slot]
+		var team := (l.file("TEAMS") as PackedByteArray).slice((a if side == 0 else b) * Trade.TEAM + 0x1a, (a if side == 0 else b) * Trade.TEAM + 0x1a + 0x10)
+		await fe.message_dialog(["The jersey number %2d is already used on %s!" % [k[1], Trade._cstr(team, 0)]])
+		var t: String = await fe.text_entry_dialog("Enter jersey number for %s %s" % [Trade._cstr(k, 3), Trade._cstr(k, 0x13)], 2)
+		return int(t) if t.is_valid_int() else 0
+	var r: Array = await Trade.edit(l.file("TEAMS").duplicate(), l.file("KEY").duplicate(), a, b, shirts, answer)
+	var f: Trade.Files = r[2]
+	if f != null:
+		l.files["TEAMS"] = f.teams.data
+		l.files["KEY"] = f.key.data
+		l.save()
+		fe.stats.forget_files()
+	if r[0] != 0 or not r[1]:
+		return r[0]
+	# the line editors of the two teams on the league's databases
+	var keep_db := fe.db
+	var keep := [Session.home_team, Session.away_team]
+	var keep_lines: Dictionary = Session.line_override.duplicate()
+	fe.db = Database.open(l.file("TEAMS"), l.file("KEY"), l.file("ATT"))
+	Session.home_team = a
+	Session.away_team = b
+	Session.line_override.clear()
+	for side in 2:
+		var ed := LineEditor.new(fe)
+		ed.teams_read = func() -> PackedByteArray: return l.file("TEAMS")
+		ed.teams_write = func(t: PackedByteArray) -> void:
+			l.files["TEAMS"] = t
+			l.save()
+			fe.db = Database.open(t, l.file("KEY"), l.file("ATT"))
+		await ed.edit(side, 0xcf3cf, 3)
+	fe.db = keep_db
+	Session.home_team = keep[0]
+	Session.away_team = keep[1]
+	Session.line_override = keep_lines
+	return 0
 
 ## Central Registry ... (menu_central_registry: the database editor; a league's databases when a
 ## league is open)

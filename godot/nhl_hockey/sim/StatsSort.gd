@@ -342,6 +342,15 @@ class CFile:
 		pos += got
 		return got
 
+	## write: the bytes at the position (the file grows past its end)
+	func write(buf: PackedByteArray, n: int) -> int:
+		if pos + n > data.size():
+			data.resize(pos + n)
+		for i in n:
+			data[pos + i] = buf[i]
+		pos += n
+		return n
+
 static func _put(dst: PackedByteArray, at: int, src: PackedByteArray, n: int) -> void:
 	for i in n:
 		dst[at + i] = src[i]

@@ -229,6 +229,21 @@ func highlights_preview() -> int:
 		DirAccess.remove_absolute("user://hl_preview".path_join(n))
 	return 0
 
+## Trade Players ... of a new league with Boston and Montreal played by people (NHL_UI_SCRIPT
+## call:trade_preview, for screenshots); the league is deleted afterwards
+func trade_preview() -> int:
+	var src := {}
+	for n: String in League.FILES:
+		src[n] = GameFiles.read_raw(n.to_lower() + ".db")
+	var l := League.create("TRADEPV", src, [0, 9], false)
+	l.save()
+	Session.league = l
+	Session.mode = 2
+	await leagues.league_trade_players()
+	League.delete("TRADEPV")
+	Session.league = null
+	return 0
+
 ## the song still plays (kms_finished)
 func song_playing() -> bool:
 	return music != null and music.song_playing()

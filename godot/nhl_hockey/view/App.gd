@@ -89,11 +89,12 @@ func _run_script(script: String) -> void:
 			"quit":
 				get_tree().quit()
 
-## a callback of call: with the menu loops held, so its own screens get the input
+## a callback of call: with the menu loops running now held, so its own screens get the input
 func _call_held(cb: String) -> void:
-	front.ui.menu_hold += 1
+	var keep: int = front.ui.menu_hold
+	front.ui.menu_hold = front.ui.menu_depth
 	await front.dispatch(cb)
-	front.ui.menu_hold -= 1
+	front.ui.menu_hold = keep
 
 func _sim_game(periods: int, seconds: int) -> Node:
 	var holder: Node = load("res://view/SimHolder.gd").new()
