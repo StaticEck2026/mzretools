@@ -1099,8 +1099,7 @@ func _trade(l: League, a: int, b: int, shirts: PackedByteArray) -> int:
 	Session.line_override = keep_lines
 	return 0
 
-## Central Registry ... (menu_central_registry: the database editor; a league's databases when a
-## league is open)
+## Central Registry ... (menu_central_registry 0x6be95: the editor of the game's current databases)
 func menu_central_registry() -> int:
 	return await Registry.new(fe).run()
 

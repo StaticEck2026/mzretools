@@ -304,13 +304,13 @@ var menu_root_index := 0             # and the bar entry it is under
 ## (or a code in `exit_codes`) leaves the loop and is returned; after code 2 `redraw` draws the screen
 ## again. A click outside closes the lists and goes to `outside` (the event). `idle` runs every frame
 ## (a code in exit_codes from it leaves too).
-func run_menu(root: Array, light: int, face: int, dark: int, handler: Callable, redraw: Callable = Callable(), exit_codes: Array = [1], idle: Callable = Callable(), outside: Callable = Callable()) -> int:
+func run_menu(root: Array, light: int, face: int, dark: int, handler: Callable, redraw: Callable = Callable(), exit_codes: Array = [1], idle: Callable = Callable(), outside: Callable = Callable(), each: Callable = Callable()) -> int:
 	menu_depth += 1
-	var r: int = await _run_menu(menu_depth, root, light, face, dark, handler, redraw, exit_codes, idle, outside)
+	var r: int = await _run_menu(menu_depth, root, light, face, dark, handler, redraw, exit_codes, idle, outside, each)
 	menu_depth -= 1
 	return r
 
-func _run_menu(depth: int, root: Array, light: int, face: int, dark: int, handler: Callable, redraw: Callable, exit_codes: Array, idle: Callable, outside: Callable) -> int:
+func _run_menu(depth: int, root: Array, light: int, face: int, dark: int, handler: Callable, redraw: Callable, exit_codes: Array, idle: Callable, outside: Callable, each: Callable = Callable()) -> int:
 	var lists: Array = [root, [], [], []]
 	var origins: Array = [Vector2i.ZERO, Vector2i.ZERO, Vector2i.ZERO, Vector2i.ZERO]
 	var current: Array = [0, 0, 0, 0]
@@ -333,6 +333,9 @@ func _run_menu(depth: int, root: Array, light: int, face: int, dark: int, handle
 		if e.is_empty():
 			await get_tree().process_frame
 			continue
+		if each.is_valid() and e["buttons"] != 0:
+			# every event with a button (database_menu: the scroll arrows and bar)
+			await each.call(e)
 		if not is_click(e):
 			continue
 		var hit := _hit_test(lists, top, origins, e["x"], e["y"])

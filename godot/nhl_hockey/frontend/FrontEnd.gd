@@ -478,6 +478,27 @@ func draw_bevel_box(x0: int, y0: int, x1: int, y1: int, dots: bool) -> void:
 			scr.putpixel(c[0] + 1, c[1], dlg_dark)
 			scr.putpixel(c[0], c[1] + 1, dlg_dark)
 
+## draw_bevel_box_b (0x78be7) with its colours (dword_d0b16 .. d0b2a: face, light, dark, the two
+## corners, the corner dots' two colours; 0x41, 0x40, 0x42, 0x41, 0x40, 0x42 unless changed): the
+## face, light top and left edges, dark right and bottom ones, two corner pixels, with `dots` a 2 x 2
+## checker of dots in each corner
+const BEVEL_B := [0x41, 0x40, 0x42, 0x41, 0x40, 0x42]
+
+func draw_bevel_box_b(x0: int, y0: int, x1: int, y1: int, dots: bool, c: Array = BEVEL_B) -> void:
+	scr.fillrect(x0, y0, x1 - x0 + 1, y1 - y0 + 1, c[0])
+	scr.drawline(x0, y0, x1 - 1, y0, c[1])
+	scr.drawline(x0, y0, x0, y1 - 1, c[1])
+	scr.drawline(x1, y0 + 1, x1, y1, c[2])
+	scr.drawline(x0 + 1, y1, x1, y1, c[2])
+	scr.putpixel(x0, y1, c[3])
+	scr.putpixel(x1, y0, c[3])
+	if dots:
+		for p in [[x0 + 2, y0 + 2, 5], [x0 + 3, y0 + 3, 5], [x0 + 3, y0 + 2, 4], [x0 + 2, y0 + 3, 4],
+				[x0 + 2, y1 - 2, 4], [x0 + 3, y1 - 3, 4], [x0 + 3, y1 - 2, 5], [x0 + 2, y1 - 3, 5],
+				[x1 - 3, y0 + 2, 5], [x1 - 2, y0 + 3, 5], [x1 - 2, y0 + 2, 4], [x1 - 3, y0 + 3, 4],
+				[x1 - 3, y1 - 2, 4], [x1 - 2, y1 - 3, 4], [x1 - 2, y1 - 2, 5], [x1 - 3, y1 - 3, 5]]:
+			scr.putpixel(p[0], p[1], c[p[2]])
+
 ## a button record (0x1c bytes): x, y, w, h, pressed, flags (1: x from the left edge, 4: y from the
 ## top edge of the dialog), text
 class UiButton:
