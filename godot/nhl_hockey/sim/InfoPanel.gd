@@ -130,9 +130,26 @@ static func format_player_name(prefix: String, number: int, first: String, last:
 ## the panel's name of roster player r of team t (his number and names of the player records)
 static func player_name(sim: Sim, t: int, r: int, suffix := "") -> String:
 	var team := sim.teams[t]
+	if r == -1:
+		# (a penalty shot without a shooter: the record in front of the team's, the home team's
+		# 28th player for the away team, the end of the away team's statistics for the home team)
+		if t == 1:
+			return format_player_name("", Speech.number(sim, 0, 27), sim.teams[0].first_names[27], sim.teams[0].last_names[27], suffix)
+		var st: Array = sim.teams[1].player_stats
+		return format_player_name("", st[22][Team.ST_SHOTS] & 0xff, _stats_string(st[23]), _stats_string(st[24]), suffix)
 	var first := team.first_names[r] if r >= 0 and r < team.first_names.size() else ""
 	var last := team.last_names[r] if r >= 0 and r < team.last_names.size() else ""
 	return format_player_name("", Speech.number(sim, t, r & 0xff), first, last, suffix)
+
+## the bytes of a statistics record (8 words) read as a C string
+static func _stats_string(words: PackedInt32Array) -> String:
+	var out := ""
+	for w in words:
+		for b in [w & 0xff, (w >> 8) & 0xff]:
+			if b == 0:
+				return out
+			out += String.chr(b)
+	return out
 
 ## show_penalty (0x61e99): the panel's lines for the event record (dword_e9ac8). A goal: "12:34
 ## Boston", the scorer (" SH" / " PP", in a league game with statistics his goals of the season so

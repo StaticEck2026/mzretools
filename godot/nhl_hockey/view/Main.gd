@@ -840,21 +840,31 @@ func _fonts() -> Dictionary:
 			out[n] = Vfn.parse(data)
 	return out
 
-## db_load_team_roster (unk_deb7c): each skater's goals of the season before the game, SEASON.DB at
-## his KEY.DB record's +0x2c, the regular season's block (+2) or the play-offs' (+0x14) by option
-## byte 2 bit 1; the goal panel of a league game adds them to his goals of the game
-func _season_goals(db: Database, ti: Array, season: PackedByteArray) -> void:
+## db_load_team_roster (unk_deb74): each skater's records before the game, SEASON.DB at his KEY.DB
+## record's +0x2c and CAREER.DB at +0x28: in the regular season (option byte 2 bit 1) the career's
+## goals and points (CAREER +0x24, +0x26) and the season's (SEASON +2, +4), in the play-offs the
+## play-offs' (SEASON +0x14, +0x16) and no career. The goal panel of a league game adds the goals to
+## the game's, goal_milestone_check looks for the round numbers.
+func _season_records(db: Database, ti: Array, season: PackedByteArray, career: PackedByteArray) -> void:
+	var regular := (sim.settings2 & 2) != 0
 	for t in 2:
 		var team: Team = sim.teams[t]
 		for r in 25:
+			team.career_goals[r] = 0
+			team.career_points[r] = 0
 			team.season_goals[r] = 0
+			team.season_points[r] = 0
 			var p: Database.Player = ti[t].player(r) if ti[t] != null else null
 			if p == null or p.key < 0 or p.key + 0x30 > db.key_db.size():
 				continue
-			var off := db.key_db.decode_s32(p.key + 0x2c)
-			var at := off + (2 if sim.settings2 & 2 else 0x14)
-			if off >= 0 and at + 2 <= season.size():
-				team.season_goals[r] = season.decode_u16(at)
+			var s := db.key_db.decode_s32(p.key + 0x2c) + (2 if regular else 0x14)
+			if s >= 2 and s + 4 <= season.size():
+				team.season_goals[r] = season.decode_u16(s)
+				team.season_points[r] = season.decode_u16(s) + season.decode_u16(s + 2)
+			var c := db.key_db.decode_s32(p.key + 0x28) + 0x24
+			if regular and c >= 0x24 and c + 4 <= career.size():
+				team.career_goals[r] = career.decode_u16(c)
+				team.career_points[r] = career.decode_u16(c) + career.decode_u16(c + 2)
 
 func _load_assets() -> void:
 	if not GameFiles.available():
@@ -874,7 +884,7 @@ func _load_assets() -> void:
 			if lines.has(side) and ti[side] != null:
 				ti[side].line_table = lines[side]
 		sim.set_teams(ti[0], ti[1], config.get("scratches", {}), anthem)
-		_season_goals(db, ti, config.get("season_db", PackedByteArray()))
+		_season_records(db, ti, config.get("season_db", PackedByteArray()), config.get("career_db", PackedByteArray()))
 		# a saved game continues where it was left (savegame_io)
 		var saved: Dictionary = config.get("restore", {})
 		if not saved.is_empty():

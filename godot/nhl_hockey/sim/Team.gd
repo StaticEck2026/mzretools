@@ -47,7 +47,13 @@ var entity_of: PackedInt32Array = PackedInt32Array()   # +0x7e, 28 x: -1 on the 
 var numbers := PackedByteArray()      # byte 5 of the 28 player records of `rosters` (unk_db3ad): the jersey numbers the announcer and the penalty clocks use
 var first_names := PackedStringArray() # +7 of the player records: the panel's names (format_player_name)
 var last_names := PackedStringArray()  # +0x17
-var season_goals := PackedInt32Array() # unk_deb7c (db_load_team_roster): a skater's goals of the season before the game, in a league
+# db_load_team_roster (unk_deb74, 0x10 bytes a skater): the regular season's career goals and points
+# (CAREER.DB +0x24, +0x26; 0 in the play-offs), the goals and points of the season (SEASON.DB +2, +4)
+# or of the play-offs (+0x14, +0x16) before the game: the panel's season total, the milestones
+var career_goals := PackedInt32Array() # unk_deb74
+var career_points := PackedInt32Array() # unk_deb78
+var season_goals := PackedInt32Array() # unk_deb7c
+var season_points := PackedInt32Array() # unk_deb80
 var title_abbrev := ""                 # team_names +0: "BOS"
 var title_name := ""                   # team_names +0x1a: "Boston"
 var strategy: int = 0                # +0xd2 index into Tables.line_preference (coaching strategy)
@@ -105,7 +111,10 @@ func _init(idx: int = 0) -> void:
 	numbers.resize(28)
 	first_names.resize(28)
 	last_names.resize(28)
+	career_goals.resize(25)
+	career_points.resize(25)
 	season_goals.resize(25)
+	season_points.resize(25)
 	box_queue.resize(28)
 	box_queue.fill(-1)
 	for k in 11:

@@ -739,7 +739,7 @@ func ai_golden() -> void:
 		var sim := Sim.new()
 		sim.stubs = {"snd_play_sfx": true, "kms_play": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
 			"injure_player": true, "say": true, "play_speech": true, "load_clip": true,
-			"goal_milestone_check": true, "put_player_on_ice": true,
+			"put_player_on_ice": true,
 			"pick_player_for_position": true, "draw_line_indicator": true}
 		var ok := 0
 		var bad := 0
@@ -780,7 +780,7 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 	var sim := Sim.new()
 	sim.stubs = {"snd_play_sfx": true, "kms_play": true, "queue_infraction": true, "maybe_queue_infraction": true, "injury_check": true,
 		"injure_player": true, "say": true, "play_speech": true, "load_clip": true,
-		"goal_milestone_check": true, "put_player_on_ice": true,
+		"put_player_on_ice": true,
 		"pick_player_for_position": true, "draw_line_indicator": true,
 		"update_effects": true,
 		"setup_faceoff": true}
@@ -933,6 +933,7 @@ func _lines_golden(cases: Array, base: Array, group := "lines") -> String:
 			"breakaway_foul": ret = 1 if Rules.breakaway_foul(sim, sim.entities[a0]) else 0
 			"injury_check": ret = 1 if Rules.injury_check(sim, sim.entities[a0]) else 0
 			"update_effects": Rules.update_effects(sim)
+			"goal_milestone_check": Rules.goal_milestone_check(sim)
 			"ai_puck_faceoff": AI.puck_faceoff(sim, sim.puck)
 			"ai_puck_faceoff2": AI.puck_faceoff2(sim, sim.puck)
 			"end_of_period": Rules.end_of_period(sim)
@@ -1260,7 +1261,8 @@ static func _full(base_rec: Dictionary, part: Dictionary) -> Dictionary:
 	return f
 
 ## the names of a golden world's team: its players' and its record's of a team of the databases
-## ("db_team"), the goals of the season so far
+## ("db_team"); the season records (the career's and the season's goals and points before the
+## game) and the goals and assists of the game so far
 static func _team_names_set(team: Team, f: Dictionary) -> void:
 	var info: Database.TeamInfo = null
 	if f.has("db_team") and names_db != null:
@@ -1274,9 +1276,16 @@ static func _team_names_set(team: Team, f: Dictionary) -> void:
 		var p: Database.Player = info.player(r) if info != null else null
 		team.first_names[r] = p.first if p != null else ""
 		team.last_names[r] = p.last if p != null else ""
-	var sg: Array = f.get("season_goals", [])
-	for r in 25:
-		team.season_goals[r] = int(sg[r]) if r < sg.size() else 0
+	for k in ["career_goals", "career_points", "season_goals", "season_points"]:
+		var src: Array = f.get(k, [])
+		var dst: PackedInt32Array = team.get(k)
+		for r in 25:
+			dst[r] = int(src[r]) if r < src.size() else 0
+		team.set(k, dst)
+	if f.has("game_goals"):
+		for r in 25:
+			team.player_stats[r][Team.ST_GOALS] = int(f["game_goals"][r])
+			team.player_stats[r][Team.ST_ASSISTS] = int(f["game_assists"][r])
 
 static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	sim.panel_text = ["", "", "", "", ""]
@@ -1383,6 +1392,9 @@ static func _ai_world_set(sim: Sim, c: Dictionary, base: Array) -> void:
 	sim.panel = int(g.get("panel", -1))
 	sim.demo = int(g.get("demo", 0)) != 0
 	var mode := int(g.get("session_mode", 0))
+	var gate := int(g.get("milestone_gate", 0))
+	for i in 4:
+		sim.milestone_gate[i] = (gate >> (8 * i)) & 0xff
 	sim.league_game = mode != 0
 	sim.series_mode = mode == 1
 	sim.sound_device = int(g.get("sound_card", 8))
@@ -1561,6 +1573,7 @@ static func _ai_globals_get(sim: Sim) -> Dictionary:
 		"ref_phase": Sim._s16(sim.ref_phase & 0xffff), "ref_infraction": sim.ref_infraction,
 		"ref_infraction_slot": sim.ref_infraction_slot, "panel": sim.panel, "demo": 1 if sim.demo else 0,
 		"session_mode": (1 if sim.series_mode else 2) if sim.league_game else 0,
+		"milestone_gate": sim.milestone_gate.decode_u32(0),
 		"sound_card": sim.sound_device, "sound_enabled": 1 if sim.sound_enabled else 0, "announce_time": sim.announce_time,
 		"period_length": sim.period_length, "deferred": 1 if sim.deferred else 0, "infraction_events": sim.infraction_events,
 		"save_clip_shown": 1 if sim.save_clip_shown else 0, "period_over": sim.period_over,

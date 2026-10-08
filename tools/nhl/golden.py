@@ -1325,7 +1325,7 @@ AI_GLOBALS = (('game_flags', GAME_FLAGS, 1), ('stop_flags', STOP_FLAGS, 1), ('mi
               ('faceoff_ready0', 0xe0390, -2), ('faceoff_ready1', 0xe0394, -2), ('penalty_shot_timer', PENALTY_SHOT_TIMER, -4),
               ('injury_stoppage', 0xcbec6, -2), ('clip', 0xcbecc, -2), ('ref_phase', 0xc90d4, -2),
               ('ref_infraction', 0xc90d6, -2), ('ref_infraction_slot', 0xc90d8, -2), ('panel', 0xcbec0, -2),
-              ('demo', 0xcc0ec, -4), ('session_mode', 0xc53fb, -4), ('sound_card', 0xc541f, 1), ('sound_enabled', 0xd2430, 1), ('announce_time', 0xe9aac, -2),
+              ('demo', 0xcc0ec, -4), ('session_mode', 0xc53fb, -4), ('milestone_gate', 0xe024c, 4), ('sound_card', 0xc541f, 1), ('sound_enabled', 0xd2430, 1), ('announce_time', 0xe9aac, -2),
               ('period_length', 0xe9ab8, -2), ('deferred', 0xc5840, -4), ('infraction_events', 0xcc0ac, -4),
               ('save_clip_shown', 0xe9a9e, -2), ('period_over', 0xcbc46, -2), ('goal_call', 0xe9ad3, 1),
               ('goal_team', 0xe9ad4, 1), ('goal_scorer', 0xe9ad5, 1), ('goal_a1', 0xe9ad6, 1), ('goal_a2', 0xe9ad7, 1),
@@ -1473,13 +1473,16 @@ SPEECH_RESET = 0x833fa                         # stubbed
 SPEECH_QUEUE_CLIP = 0x83faf                    # stubbed: a clip loaded
 SPEECH_PLAY_SENTENCE = 0x8426f                 # stubbed
 SPEECH_RELEASE_CLIP = 0x84418                  # stubbed: the clip appended to the playback list (recorded)
-GOAL_MILESTONE_CHECK = 0x62807                 # stubbed: its deferred call is empty in this build
+GOAL_MILESTONE_CHECK = 0x62807                 # the milestones of a goal (a deferred call, empty in this build; the panel shut)
 RECORD_PENALTY = 0x624b9                       # (team, roster, kind, minutes) + mm, ss, queue index; ret 0xc
 SHOW_PENALTY = 0x61e99                         # the panel's lines for the event record (sprintf, the names)
 FONT_SCOR2B = 0xd8b70                          # font_scor2b: SCOR2B.VFN in memory (format_player_name measures the names with it)
 FONT_CURRENT_DEFAULT = 0xdc230                 # font_current_default: the font format_player_name sets back
 TEAM_NAMES = 0xdbc30                           # team_names: the TEAMS.DB records (0x2e8 bytes) of the two teams: +0 abbreviation, +0x1a name
-SEASON_GOALS = 0xdeb7c                         # unk_deb7c: 25 x 0x10 bytes per team, +0 the goals of the season before the game
+SEASON_RECORDS = 0xdeb74                       # unk_deb74: 25 x 0x10 bytes per team: career goals, career points, season goals, season points (dwords)
+# the season records of the worlds: values around the milestones goal_milestone_check looks for
+SEASON_POOLS = ((0, 0, 0, 97, 98, 99, 199, 299), (0, 0, 96, 97, 98, 99, 198, 299),
+                (0, 0, 1, 8, 9, 18, 19, 47, 48, 49, 98, 99), (0, 0, 17, 18, 19, 39, 96, 97, 98, 99))
 PANEL_LINES = (0xe02c8, 0xe0250, 0xe028c, 0xe0308, 0xe0344)   # panel_title and the four lines below it
 ROSTER_DB = {}                                 # (ai_cases) the TEAMS.DB records and the names of their players (KEY.DB)
 
@@ -1578,10 +1581,21 @@ def ai_world(emu, rnd, base, tables):
         emu.write(TEAM_NAMES + ti * 0x2e8, ROSTER_DB['teams'][f['db_team']][:0x27])
         for i, (first, last) in enumerate(ROSTER_DB['names'][f['db_team']]):
             emu.write(ROSTERS + ti * 0x444 + i * 0x27 + 7, first.ljust(16, b'\0') + last.ljust(16, b'\0'))
-        f['season_goals'] = [(WORLDS['n'] * 3 + i * 7) % 45 for i in range(25)]
-        for i, v in enumerate(f['season_goals']):
-            emu.write(SEASON_GOALS + ti * 0x190 + i * 0x10, struct.pack('<i', v))
-        emu.write(tables[ti][0], b'\0' * 25 * 0x10)
+        n = WORLDS['n']
+        for k, name in enumerate(('career_goals', 'career_points', 'season_goals', 'season_points')):
+            pool = SEASON_POOLS[k]
+            f[name] = [pool[(n * 7 + i * (3 + k) + k * 5) % len(pool)] for i in range(25)]
+        for i in range(25):
+            emu.write(SEASON_RECORDS + ti * 0x190 + i * 0x10,
+                      struct.pack('<4i', f['career_goals'][i], f['career_points'][i], f['season_goals'][i], f['season_points'][i]))
+        # the goals and assists of the game so far, in every third world (the hat tricks)
+        raw = bytearray(25 * 0x10)
+        if n % 3 == 0:
+            f['game_goals'] = [(n + i * 5) % 7 % 4 for i in range(25)]
+            f['game_assists'] = [(n * 3 + i * 2) % 5 for i in range(25)]
+            for i in range(25):
+                struct.pack_into('<hh', raw, i * 0x10, f['game_goals'][i], f['game_assists'][i])
+        emu.write(tables[ti][0], bytes(raw))
         for n, o, sz in AI_TEAM_FIELDS:
             emu.write(t + o, struct.pack('<' + _FMT[sz], f[n] if sz < 0 else f[n] & ((1 << (8 * sz)) - 1)))
         emu.write(t + 0x46, struct.pack('<28h', *([f['energy']] * 28)))
@@ -1709,6 +1723,9 @@ def ai_world(emu, rnd, base, tables):
         g['last_shooter'] = 2                  # (a shot in flight has a shooter: shot_landed credits him)
     g['settings2'] |= (WORLDS['n'] >> 1) & 1   # the announcer on in every other world (option byte 2 bit 0)
     g['session_mode'] = (0, 2, 1, 2)[(WORLDS['n'] >> 2) & 3]   # exhibition, league, play-off series
+    # the bytes that stop goal_milestone_check for a team when both are set (nothing sets them in the
+    # game but reset_game_state and the saved games)
+    g['milestone_gate'] = (0, 0, 0, 0, 0x0101, 0x01010000, 0x0001, 0x01000100)[(WORLDS['n'] >> 4) & 7]
     write_globals(emu, g)
     for a in PANEL_LINES:
         emu.write(a, b'\0' * 0x3a)
@@ -2137,7 +2154,6 @@ def ai_cases(exe):
                                                                     s32(emu.uc.reg_read(UC_X86_REG_EDX)) & 0xffff]))
     pp4p_stub = emu.stub(PICK_PLAYER_FOR_POSITION, lambda eax: calls.append(['pick_player_for_position', s32(eax & 0xffffffff),
                                                                              s32(emu.uc.reg_read(UC_X86_REG_EDX))]))
-    emu.stub(GOAL_MILESTONE_CHECK, lambda eax: calls.append(['goal_milestone_check']))
     # the panel's names measured with SCOR2B as the game loads it
     with open(os.path.join(os.path.dirname(exe), 'SCOR2B.VFN'), 'rb') as f:
         font = emu.alloc(f.read())
@@ -2499,7 +2515,8 @@ def rules_cases(emu, rnd, base, tables, calls, base_fields, speech):
 
 GOAL_ROUTINES = {'score_goal': 0x5ab36, 'goal_disallowed_check': 0x5aaae, 'setup_faceoff': 0x5d852,
                  'begin_penalty_shot': 0x64398, 'start_penalty_shot': 0x63f72, 'end_penalty_shot': 0x64439,
-                 'breakaway_foul': 0x6427f, 'injury_check': 0x65b83, 'update_effects': 0x615a2}
+                 'breakaway_foul': 0x6427f, 'injury_check': 0x65b83, 'update_effects': 0x615a2,
+                 'goal_milestone_check': 0x62807}
 DRAW_SCORE_DIGITS = 0x14a20                    # stubbed: the scoreboard digits; (team, goals)
 GAME_OVER_CHECK = 0x15c30                      # does the game decide the Stanley Cup; (home goals, away goals); stubbed in the match groups (a case input)
 START_CROWD_FIGURE = 0x614c2
@@ -2626,6 +2643,40 @@ def goals_cases(emu, rnd, base, tables, calls, base_fields, speech):
             g['last_shooter'] = rnd.randrange(12)
             args = [net]
             regs = {'eax': ENTITIES + net * 0x80}
+        elif name == 'goal_milestone_check':
+            # the net the puck is in (the team that scored), the scorer and the assists of the team
+            # records (the scorer's low byte; assists unset with the high byte set)
+            puck = bytearray(emu.read(PUCK, 0x80))
+            put_fields(puck, {'y': rnd.choice((-1, 1)) * rnd.randrange(0xc0, 0xf0) << 16})
+            emu.write(PUCK, puck)
+            for ti, t in enumerate(TEAM_RECORDS):
+                hist = [rnd.choice((rnd.randrange(25), rnd.randrange(25), rnd.randrange(25) - 0x100, 25, 30))] + \
+                       [rnd.choice((rnd.randrange(25), rnd.randrange(25), rnd.randrange(25) - 0x100, -1, 26)) for _ in range(2)]
+                emu.write(t + 0x30, struct.pack('<3h', *hist))
+                # the records of the scorer and the assists set to land on a milestone now and then
+                # (a first career goal, the 50th goal, the 100th point, the 100th career goal or
+                # point, the play-offs' 10th goal or 20th point)
+                f = teams[ti]
+                for k, r in enumerate(hist):
+                    r = r & 0xff if k == 0 else r
+                    if not 0 <= r < 25:
+                        continue
+                    gl, ast = struct.unpack('<hh', emu.read(tables[ti][0] + r * 0x10, 4))
+                    target = rnd.choice(('none', 'first', 'g50', 'p100', 'cg100', 'cp100', 'g10', 'p20'))
+                    if target == 'first' and k == 0:
+                        gl = 1
+                        emu.write(tables[ti][0] + r * 0x10, struct.pack('<h', 1))
+                        f['career_goals'][r] = f['season_goals'][r] = 0
+                    elif target in ('g50', 'g10'):
+                        f['season_goals'][r] = (50 if target == 'g50' else 10) * rnd.randrange(1, 3) - gl
+                    elif target in ('p100', 'p20'):
+                        f['season_points'][r] = (100 if target == 'p100' else 20) * rnd.randrange(1, 3) - gl - ast
+                    elif target == 'cg100':
+                        f['career_goals'][r] = 100 * rnd.randrange(1, 4) - gl - f['season_goals'][r]
+                    elif target == 'cp100':
+                        f['career_points'][r] = 100 * rnd.randrange(1, 4) - gl - ast - f['season_points'][r]
+                    emu.write(SEASON_RECORDS + ti * 0x190 + r * 0x10,
+                              struct.pack('<4i', f['career_goals'][r], f['career_points'][r], f['season_goals'][r], f['season_points'][r]))
         elif name == 'goal_disallowed_check':
             g['game_flags'] |= rnd.choice((8, 8, 0))
             puck = bytearray(emu.read(PUCK, 0x80))
@@ -2732,7 +2783,7 @@ def goals_cases(emu, rnd, base, tables, calls, base_fields, speech):
         order = draw_order(emu)
         case = {'routine': name, 'args': args, 'globals': g, 'teams': teams, 'carrier': carrier, 'seed': seed,
                 'scratch_ac': scratch_ac, 'scratch': scratch, 'infq': list(raw), 'cup': cup['v'], 'order': order}
-        if name in ('score_goal', 'setup_faceoff'):
+        if name in ('score_goal', 'setup_faceoff', 'goal_milestone_check'):
             case['stats'] = stats_read(emu, tables)
         if name == 'injury_check':
             case['pos_lists'] = [[lists[ti][kk] for kk in range(11)] for ti in range(2)]

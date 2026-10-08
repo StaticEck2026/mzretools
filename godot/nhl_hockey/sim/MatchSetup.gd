@@ -25,6 +25,7 @@ static func reset_game_state(sim: Sim) -> void:
 	sim.event_rec[0] = 0xff
 	sim.goal_call = []
 	sim.infraction_events = 0
+	sim.milestone_gate.fill(0)
 	sim.panel = -1
 	sim.ref_infraction_slot = -1
 	sim.ref_phase = -1

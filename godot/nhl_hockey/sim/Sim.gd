@@ -60,6 +60,7 @@ var sequence_steps: int = 0          # sequence_steps: steps left of the anthem 
 var cup_final := false               # game_over_check: this game decides the Stanley Cup (the harness's stub result)
 var cup_series := PackedByteArray()  # dword_dc338 (alloc_cup_banner): the 7 games of the play-off final, empty otherwise
 var series_mode := false             # dword_c53fb == 1: a play-off series alone, its length from option_flags bits 12..14
+var milestone_gate := PackedByteArray([0, 0, 0, 0])   # word_e024c / word_e024e: both bytes of a team set, goal_milestone_check passes (only reset_game_state and the saved games write them)
 var league_game := false             # dword_c53fb != 0: a game of a league or a play-off series (the panel counts the scorer's goals of the season)
 var series_announce := false         # byte_ccca0: the cup was won, the pause menu says the series result
 var intermission_camera := false     # game_flags 0x80 (the cup presentation)

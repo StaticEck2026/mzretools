@@ -1597,8 +1597,63 @@ static func ref_queue_infraction_event(sim: Sim) -> bool:
 	sim.deferred = true
 	return true
 
-## goal_milestone_check (0x62807): a milestone of the scorer (a hat trick, a record of the season)
-## queues a deferred call; in this build an empty one (return_one), so only the frame's steps end
+## goal_milestone_check (0x62807): a milestone of the goal for the team that scored (the net the puck
+## is in): the scorer's hat trick (any game); in a league or play-off game his first career goal, a
+## 50th goal or 100th point of the season, a 100th career goal or point (the regular season), a
+## 10th goal or 20th point of the play-offs, else the 100th point of the season or career (20th of
+## the play-offs) of the first assist, else of the second. A milestone queues a deferred call (an
+## empty one in this build, return_one), so the frame's steps end, and shuts the panel at once.
 static func goal_milestone_check(sim: Sim) -> void:
 	if sim.stubbed("goal_milestone_check", []):
 		return
+	var side := (1 if Entity.to_s16(sim.entities[14].y >> 16) < 0 else 0) ^ (1 if sim.ends_switched else 0)
+	if sim.milestone_gate[side * 2] != 0 and sim.milestone_gate[side * 2 + 1] != 0:
+		return
+	var team := sim.teams[side]
+	var regular := (sim.settings2 & 2) != 0
+	var kind := 0
+	var scorer := team.carrier_history[0] & 0xff
+	if scorer < 0x19:
+		var goals := team.stat(scorer, Team.ST_GOALS)
+		var points := team.stat(scorer, Team.ST_ASSISTS) + goals
+		if goals == 3:
+			kind = 1
+		elif not sim.league_game:
+			pass
+		elif regular:
+			if team.season_goals[scorer] + team.career_goals[scorer] + goals == 1:
+				kind = 6
+			elif _milestone(goals + team.season_goals[scorer], 50):
+				kind = 2
+			elif _milestone(points + team.season_points[scorer], 100):
+				kind = 4
+			elif _milestone(goals + team.season_goals[scorer] + team.career_goals[scorer], 100):
+				kind = 3
+			elif _milestone(points + team.season_points[scorer] + team.career_points[scorer], 100):
+				kind = 5
+		elif _milestone(goals + team.season_goals[scorer], 10):
+			kind = 7
+		elif _milestone(points + team.season_points[scorer], 20):
+			kind = 8
+	if sim.league_game and kind == 0:
+		for k in [1, 2]:
+			var r := Entity.to_s16(team.carrier_history[k])
+			if r < 0 or r >= 0x19:
+				break
+			var points := team.stat(r, Team.ST_GOALS) + team.stat(r, Team.ST_ASSISTS) + team.season_points[r]
+			if regular:
+				if _milestone(points, 100):
+					kind = 4
+				elif _milestone(points + team.career_points[r], 100):
+					kind = 5
+			elif _milestone(points, 20):
+				kind = 8
+			if kind != 0:
+				break
+	if kind != 0:
+		sim.deferred = true
+		sim.panel = -1
+
+## a round number reached: n at least `step` and a multiple of it
+static func _milestone(n: int, step: int) -> bool:
+	return n >= step and n % step == 0
