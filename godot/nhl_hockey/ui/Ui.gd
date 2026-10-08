@@ -24,6 +24,7 @@ var held := 0                    # arrow_held_polls: polls the arrows have been 
 var _tick_acc := 0.0
 var _enter_down := false
 var _mouse_down := false
+var menu_hold := 0               # a screen runs outside the menu loops (NHL_UI_SCRIPT call:): they wait
 
 func setup(screen: Screen8, pointer_bank: Shpi) -> void:
 	scr = screen
@@ -293,6 +294,9 @@ func run_menu(root: Array, light: int, face: int, dark: int, handler: Callable, 
 	show_pointer(true)
 	reset_events()
 	while true:
+		if menu_hold > 0:
+			await get_tree().process_frame
+			continue
 		if idle.is_valid():
 			var r = await idle.call()
 			if r is int and r in exit_codes:

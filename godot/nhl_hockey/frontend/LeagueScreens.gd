@@ -770,8 +770,69 @@ func menu_central_registry() -> int:
 	return await Registry.new(fe).run()
 
 func league_hilights() -> int:
-	await fe.message_dialog(["No highlights have been saved", "in this league."])
+	return await highlights_flow()
+
+# ---------------------------------------------------------------------------------------------
+# the highlights reels (league_highlights_flow 0x80075, highlights_screen 0x7fcf8)
+# ---------------------------------------------------------------------------------------------
+
+## league_highlights_flow: a team with a reel, one of its highlights, read and replayed
+## (highlights_play); -1 when there is none or the read fails
+func highlights_flow() -> int:
+	fe.set_dialog_colors(0xf9, 0xfa, 0xf8, 0xfa, 0)
+	var l: League = Session.league
+	if l == null:
+		return -1
+	var pick := await highlights_screen(l.dir)
+	if pick.is_empty():
+		return -1
+	var f := FileAccess.open(pick[0], FileAccess.READ)
+	if f == null:
+		return -1
+	f.seek(pick[1] * HighlightReel.RECORD)
+	var rec := f.get_buffer(HighlightReel.RECORD)
+	f.close()
+	if rec.size() != HighlightReel.RECORD:
+		return -1
+	await fe.play_saved_highlight(rec)
 	return 0
+
+## highlights_screen: the teams that have a reel (TEAM.HI in the league's directory; their order by
+## team, qsort with cmp_ints) by city in a list, "There are no hilights!" without one; then the
+## chosen team's highlights by date, teams, period and time (format_save_description). Returns
+## [the reel's path, the highlight], [] when there is none.
+func highlights_screen(dir: String) -> Array:
+	var teams := []
+	var d := DirAccess.open(dir)
+	if d != null:
+		for n in d.get_files():
+			if n.to_upper().ends_with(".HI"):
+				teams.append(HighlightReel.team_of_file(n))
+	if teams.is_empty():
+		await fe.message_dialog(["There are no hilights!"], [])
+		return []
+	Clib.qsort(teams, func(a: int, b: int) -> int: return 1 if a > b else (-1 if a < b else 0))
+	var names := teams.map(func(t: int) -> String: return Exe.str_ptr(HighlightReel.CITY_NAMES + t * 4))
+	var k := await fe.listbox_dialog(names, "Select a team", 2)
+	if k < 0:
+		return []
+	var path := dir.path_join(HighlightReel.abbrev(teams[k]) + ".HI")
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return []
+	var n := f.get_length() / HighlightReel.RECORD
+	var descs := []
+	for i in n:
+		f.seek(i * HighlightReel.RECORD)
+		var h := f.get_buffer(0x4c)
+		if h.size() != 0x4c:
+			break
+		descs.append(HighlightReel.describe(h))
+	f.close()
+	if descs.is_empty():
+		return []
+	var h := await fe.listbox_dialog(descs, "Select a hilight", 2)
+	return [path, h] if h >= 0 else []
 
 func league_import_databases() -> int:
 	await fe.message_dialog(["All human teams of this league", "play on this computer."])
@@ -897,9 +958,9 @@ func _tree_menu(l: League) -> int:
 func menu_playoff_settings() -> int:
 	return await fe.settings.menu_exhibition_settings()
 
+## Play-Off Hilights ...: the series' reels (league_highlights_flow)
 func playoff_highlights() -> int:
-	await fe.message_dialog(["No highlights have been saved", "in these play-offs."])
-	return 0
+	return await highlights_flow()
 
 const BRACKET_X := [20, 183, 348, 510]   # unk_c6e22
 

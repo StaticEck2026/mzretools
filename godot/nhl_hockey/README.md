@@ -34,8 +34,9 @@ Hotkeys of the original (`handle_hotkey`): Esc the pause screen (Back to Game, E
 Go To Replay), R the instant replay, Tab the numbers of every player, S the sound effects and the crowd, M the
 organ music, F1-F4 / F5-F8 the lines of player 1 / 2, F9 / F10 pull or return the goalie. In the replay the
 mouse works the VCR panel (rewind, step back, pause, step forward, play, fast forward, the recorded
-camera, exit) and a click on the ice follows that player; with the keyboard Left / Right select a button,
-A holds it, Esc or R leaves.
+camera, the menu in a league's game: save the replay to the highlights reel, exit) and a click on the
+ice follows that player; with the keyboard Left / Right select a button, A holds it, Esc or R leaves (on
+the save dialog Up / Down and A choose).
 
 Team indices (`NHL_HOME`, `NHL_AWAY`, or `match/home` and `match/away` in `user://settings.cfg`): 0 BOS, 1 BUF,
 2 CGY, 3 CHI, 4 DET, 5 EDM, 6 HFD, 7 LA, 8 DAL, 9 MTL, 10 NJ, 11 NYI, 12 NYR, 13 OTT, 14 PHI, 15 PIT, 16 QUE,
@@ -76,7 +77,7 @@ behaviour matches the DOS game (see "Porting conventions" below).
 | Ceremonies | `sim/Ceremonies.gd` | the anthem (`match_sequence`, `ai_anthem`), the end of a period and of the game, the goal celebration, the three stars (`three_stars_sequence`, `compute_three_stars`), the Stanley Cup presentation |
 | Match and period setup | `sim/MatchSetup.gd`, `sim/Clib.gd` | `play_match_from_start` with `reset_game_state` (`reset_match_state`, `game_state_clear`, `team_state_clear`, `team_energy_init`), `init_match`, `setup_demo_faceoff`; the periods (`period_cleanup`, `period_init`, `entities_init`, `period_clock_init`, `reset_bench_slots`); the C library's `qsort` |
 | Info panel | `sim/InfoPanel.gd`, `view/PanelView.gd` | the panel of the stoppages (`info_panel_open`, `load_cutscene_clip`, `show_penalty`, `announce_goal`, `ref_check_announcements`), the music cues (`play_speech`) |
-| Replay | `sim/Replay.gd`, `sim/ReplayFrame.gd`, `view/VcrView.gd` | `replay_record_frame`, `replay_seek_frames`, `instant_replay` / `replay_control_loop` with the VCR panel of GADGET5.PPV |
+| Replay | `sim/Replay.gd`, `sim/ReplayFrame.gd`, `view/VcrView.gd`, `sim/HighlightReel.gd`, `view/SaveDialog.gd` | `replay_record_frame`, `replay_seek_frames`, `instant_replay` / `replay_control_loop` with the VCR panel of GADGET5.PPV (GADGET6 without the menu outside a league's or series' game with a person's team); the menu saves the replay to the team's highlights reel, TEAM.HI in the league's directory (`replay_menu`, `replay_save_dialog`: the home team, the away team, both or neither when both teams are people's; `replay_save_highlight`: a 0x52 byte header and the replay ring); the league's and the series' Hilights list the reels and replay one (`league_highlights_flow`, `highlights_screen` with the front end's `listbox_dialog` and its scroll bar, `highlights_play`) |
 | Highlight | `sim/Highlight.gd`, `view/Main.gd`, `frontend/FrontEnd.gd` | `simulate_pending_games` (a game of the scores around the league not shown to its end, picked with `randomrange`) and `league_highlight_game`: at an exhibition's intermission and after the game a scene of that game is played on the ice of the match (its teams loaded, their colours, the home team's rink, the score and the period; the players placed around the dot by their line slots, the puck loose, 1:00 to 2:59 on the clock, the computer playing both sides, the announcer's introduction `say_highlight_intro`) until a stoppage, a button or the pause key ends it; its score goes to the scores around the league and the match comes back. The intermission runs inside `period_cleanup` as in the original (before `period_init`) |
 | Crowd | `sim/Crowd.gd` | the fans, photographers and benches (`start_crowd_figure`, `bench_cheer`, `update_effects`) |
 | Pause screen | `view/PauseMenu.gd`, `frontend/FrontEnd.gd` | `pause_menu` (0, 1 the intermission, 2 after the game): the EA desk, the menu bar, Back to Game, the goalie choice, Go To Replay, the settings, the line editor, the statistics, Save Game, the Sports Desk, Exit (`PauseMenu.gd` is the screen of a match started without the front end) |

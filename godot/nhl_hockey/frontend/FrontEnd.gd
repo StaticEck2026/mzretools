@@ -203,6 +203,32 @@ func awards_preview() -> int:
 	await scr.fade_in(pal, 16)
 	return 0
 
+## the league's Hilights over a reel made here (NHL_UI_SCRIPT call:highlights_preview, for
+## screenshots): Boston - Montreal played for 1500 steps, its replay saved twice to BOS.HI and once
+## to MTL.HI in user://hl_preview
+func highlights_preview() -> int:
+	var d := Database.open(GameFiles.read_raw("teams.db"), GameFiles.read_raw("key.db"), GameFiles.read_raw("att.db"))
+	var sim := Sim.new()
+	sim.set_teams(d.load_team(0), d.load_team(9))
+	for i in 1500:
+		sim.step(8, 8, 0, 0)
+	DirAccess.make_dir_recursive_absolute("user://hl_preview")
+	var rec := HighlightReel.record(sim, 0, 9, 11, 4)
+	for n: String in ["BOS", "BOS", "MTL"]:
+		var path := "user://hl_preview".path_join(n + ".HI")
+		var f := FileAccess.open(path, FileAccess.READ_WRITE) if FileAccess.file_exists(path) else FileAccess.open(path, FileAccess.WRITE)
+		f.seek_end()
+		f.store_buffer(rec)
+		f.close()
+	var l := League.new()
+	l.dir = "user://hl_preview"
+	Session.league = l
+	Session.mode = 2
+	await leagues.highlights_flow()
+	for n in ["BOS.HI", "MTL.HI"]:
+		DirAccess.remove_absolute("user://hl_preview".path_join(n))
+	return 0
+
 ## the song still plays (kms_finished)
 func song_playing() -> bool:
 	return music != null and music.song_playing()
@@ -572,6 +598,135 @@ func message_dialog_buttons(lines: Array, list: Array, x: int = -1, y: int = -1)
 	ui.show_pointer(false)
 	return r
 
+## listbox_dialog (0x303fb): the items in a box under the title, up to 20 rows (a scroll bar on the
+## right for more: scrollbar_init / scrollbar_draw / scrollbar_at), each row filled with the text
+## shadow colour (the chosen one with the text colour, a marked one of a multiple choice with the
+## face colour) and its text left (0), right (1) or centred (2). A click chooses a row (the first
+## is chosen at the start, none with `multi`), a click on the chosen row again ends it (with
+## `multi` it marks and unmarks rows in `marks`, and ends on a marked one). Returns the row.
+func listbox_dialog(items: Array, title: String, align: int, multi: bool = false,
+		marks: PackedByteArray = PackedByteArray()) -> int:
+	var count := items.size()
+	var rows := mini(count, 0x14)
+	var tw := scr.textwidth(title)
+	var w := tw
+	for t: String in items:
+		w = maxi(w, scr.textwidth(t))
+	w += 9
+	var lh := (scr.font_height() + 2) * rows + 4
+	var x := (0x280 - w - 0x10) / 2
+	var y := (0x1e0 - lh - 0x20) / 2
+	var bw := w + 0x10
+	var bh := lh + 0x20
+	var lx := x + 8
+	var ly := y + 0x18
+	var bar := {}
+	var behind := scr.snapshot()
+	if count > rows:
+		lx -= 10
+		x -= 10
+		bar = {"x": x + bw, "y": y, "w": 10, "h": bh, "ty": 0, "th": (bh - 4) * rows / count, "top": 0,
+			"total": count, "pressed": false}
+		_scrollbar_draw(bar)
+	draw_dialog_frame(x, y, bw, bh, dlg_face, dlg_light, dlg_dark)
+	scr.set_text_colors(dlg_text, dlg_shadow)
+	scr.print_text_at((bw - tw) / 2 + x, y + 6, title)
+	draw_dialog_frame(lx, ly, w, lh, dlg_shadow, dlg_dark, dlg_light)
+	var sel := -1 if multi else 0
+	var top := 0
+	for i in rows:
+		_listbox_draw_item(items, lx, ly, w, top, top + i, sel, align, multi, marks)
+	ui.show_pointer(true)
+	ui.reset_events()
+	var done := false
+	while not done:
+		var e: Dictionary = await ui.wait_event()
+		var bt: int = e["buttons"]
+		if bt == 0:
+			continue
+		if bt & 2:
+			var row := _listbox_item_at(e["x"], e["y"], lx, ly, w, rows)
+			if row >= 0:
+				var prev := sel
+				sel = top + row
+				if multi and (sel != prev or marks[sel] == 0):
+					marks[sel] = ~marks[sel] & 0xff
+				if prev >= 0 and prev >= top and prev < top + rows:
+					_listbox_draw_item(items, lx, ly, w, top, prev, sel, align, multi, marks)
+				_listbox_draw_item(items, lx, ly, w, top, sel, sel, align, multi, marks)
+				if sel == prev and (not multi or marks[sel] != 0):
+					done = true
+		if not bar.is_empty() and _scrollbar_at(bar, e["x"], e["y"], bt) and top != bar["top"]:
+			top = bar["top"]
+			for i in rows:
+				_listbox_draw_item(items, lx, ly, w, top, top + i, sel, align, multi, marks)
+	scr.restore(behind)
+	ui.show_pointer(false)
+	return sel
+
+## listbox_draw_item (0x302b9)
+func _listbox_draw_item(items: Array, lx: int, ly: int, w: int, top: int, index: int, sel: int, align: int,
+		multi: bool, marks: PackedByteArray) -> void:
+	var h := scr.font_height()
+	var iy := ly + (index - top) * (h + 2) + 2
+	var ix := lx + 2
+	var iw := w - 4
+	var col := dlg_shadow
+	if multi and marks[index] != 0:
+		col = dlg_face
+	elif index == sel:
+		col = dlg_text
+	scr.fillrect(ix, iy, iw, h + 2, col)
+	var text: String = items[index]
+	text = text.left(0x4f)
+	if align == 1:
+		ix += iw - scr.textwidth(text) - 4
+	elif align == 2:
+		ix += (iw - scr.textwidth(text)) / 2
+	scr.print_text_at(ix, iy + 1, text)
+
+## listbox_item_at (0x3023e): the row under (x, y), -1 none (a row's last line is the next one's first)
+func _listbox_item_at(x: int, y: int, lx: int, ly: int, w: int, rows: int) -> int:
+	var h := scr.font_height()
+	for i in rows:
+		var t := (h + 2) * i + ly + 2
+		if x >= lx + 2 and x <= lx + w - 2 and y >= t and y <= t + h + 2:
+			return i
+	return -1
+
+## scrollbar_draw (0x30c3d): the track, the thumb (pressed: its edges swapped)
+func _scrollbar_draw(b: Dictionary) -> void:
+	draw_dialog_frame(b["x"], b["y"], b["w"], b["h"], dlg_face, dlg_light, dlg_dark)
+	var light := dlg_dark if b["pressed"] else dlg_light
+	var dark := dlg_light if b["pressed"] else dlg_dark
+	draw_dialog_frame(b["x"] + 2, b["y"] + b["ty"] + 2, b["w"] - 4, b["th"], dlg_face, light, dark)
+
+## scrollbar_at (0x30d0e): a press or a release on the bar puts the thumb's middle at the pointer
+## (kept inside the track) and the first row where it points; true when the pointer is on the bar
+func _scrollbar_at(b: Dictionary, x: int, y: int, buttons: int) -> bool:
+	if x >= b["x"] and x < b["x"] + b["w"] and y >= b["y"] and y < b["y"] + b["h"]:
+		var prev: int = b["ty"]
+		if buttons & 1 and not b["pressed"]:
+			b["pressed"] = true
+			prev = -1
+		if buttons & 2:
+			b["pressed"] = false
+			prev = -1
+		var ty: int = y - b["y"] - b["th"] / 2
+		if ty < 0:
+			ty = 0
+		elif ty > b["h"] - b["th"] - 4:
+			ty = b["h"] - b["th"] - 4
+		b["ty"] = ty
+		b["top"] = ty * b["total"] / (b["h"] - 4)
+		if prev != ty:
+			_scrollbar_draw(b)
+		return true
+	if b["pressed"]:
+		b["pressed"] = false
+		_scrollbar_draw(b)
+	return false
+
 ## the NO / YES buttons of the confirmation dialogs (unk_d2b38)
 func yes_no_dialog(lines: Array) -> bool:
 	set_dialog_colors(0xf9, 0xfa, 0xf8, 0xfa, 0)
@@ -610,6 +765,23 @@ func play_game(db_override: Database = null, restore: Dictionary = {}) -> int:
 	var r: int = await app.play_match_async(setup)
 	game = null
 	return r
+
+## highlights_play (0x8011c): a record of a highlights reel replayed on the ice of its teams (their
+## colours, the home team's rink, the league's rosters), the VCR on it until its exit
+func play_saved_highlight(rec: PackedByteArray) -> void:
+	await leave_screen(100)
+	var lg = Session.league
+	var db: Database = null
+	if lg != null:
+		db = Database.open((lg as League).file("TEAMS"), (lg as League).file("KEY"), (lg as League).file("ATT"))
+	var setup := {
+		"db": db, "home": rec[2], "away": rec[0x1f], "user1": 0, "user2": 0,
+		"option_flags": Session.option_flags, "anthem": false,
+		"series_mode": Session.mode == 1, "league_game": Session.mode != 0,
+		"saved_highlight": rec,
+	}
+	await app.play_match_async(setup)
+	game = null
 
 ## SEASON.DB / CAREER.DB of the game's databases (the league's, else the game's own): the records
 ## before the game the goal panel and the milestones read (db_load_team_roster)

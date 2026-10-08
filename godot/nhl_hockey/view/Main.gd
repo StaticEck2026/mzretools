@@ -56,6 +56,11 @@ enum Mode { MATCH, REPLAY, PAUSED, HIGHLIGHT }
 var mode := Mode.MATCH
 var panel_view: PanelView
 var vcr: VcrView
+var save_dialog: SaveDialog           # the VCR menu's "Save To Hilights Reel" (replay_menu)
+var saving := false                   # replay_menu is up: the replay waits
+var menu_down := false                # the menu button is held (replay_menu once a press)
+var menu_off := true                  # dword_ed6f8: GADGET6, the panel without the menu
+var saved_highlight := PackedByteArray()   # highlights_play: a record of a highlights reel to replay
 var pause_menu: PauseMenu
 var box_sprites: Array[Sprite2D] = []   # the players sitting in the penalty boxes (frame 0x17e)
 var end_boards: Sprite2D              # TRINKND.PPV over the sprites near the bottom end (draw_rink_end)
@@ -164,9 +169,19 @@ func _ready() -> void:
 	ui.add_child(panel_view)
 	panel_view.setup(sim, palette, fonts, _bank)
 	hud.panel_view = panel_view
+	# instant_replay: the panel without the menu (GADGET6) unless a league's or a series' game has a
+	# team played by a person (dword_c53fb, dword_c5403 / dword_c5407); the port also wants the
+	# league open to save into
+	menu_off = not sim.league_game or (Session.p1_team < 0 and Session.p2_team < 0) or front == null \
+		or Session.league == null
 	vcr = VcrView.new()
 	ui.add_child(vcr)
-	vcr.setup(sim.replay, _bank("gadget5"), palette)
+	vcr.setup(sim.replay, _bank("gadget6" if menu_off else "gadget5"), palette)
+	save_dialog = SaveDialog.new()
+	save_dialog.visible = false
+	save_dialog.font = fonts.get("hilight")
+	save_dialog.colors = palette.colors if palette != null else PackedColorArray()
+	ui.add_child(save_dialog)
 	var layer := CanvasLayer.new()
 	layer.layer = 10
 	add_child(layer)
@@ -176,6 +191,10 @@ func _ready() -> void:
 	pause_menu.chosen.connect(_on_menu)
 	if anthem:
 		Ceremonies.begin_anthem(sim)
+	if not saved_highlight.is_empty():
+		# highlights_play: the record's period, clock, flags, numbers and replay ring, the VCR on it
+		HighlightReel.restore(saved_highlight, sim)
+		_start_replay(false)
 	var fast := int(OS.get_environment("NHL_FAST_STEPS"))
 	for i in fast:
 		sim.step(8, 8, 0, 0)
@@ -214,6 +233,9 @@ func _read_settings() -> void:
 		sim.assign_users()
 		anthem = config.get("anthem", true)
 		demo = config.get("demo", false)
+		saved_highlight = config.get("saved_highlight", PackedByteArray())
+		if not saved_highlight.is_empty():
+			anthem = false
 		sim.demo = demo
 		return
 	if OS.has_environment("NHL_HOME"):
@@ -299,6 +321,14 @@ func _physics_process(delta: float) -> void:
 				sim.replay.press(Replay.B_PLAY, 1)
 				sim.replay.seek(90, false, sim)
 				sim.replay.follow = maxi(sim.replay.frame.puck_carrier, -1) if sim.replay.frame.puck_carrier < 12 else -1
+				_update_view()
+			"savedialog":
+				# the VCR menu's dialog of two teams played by people (replay_save_dialog)
+				_start_replay(false)
+				sim.replay.seek(90, false, sim)
+				var names := [sim.teams[0].info.city if sim.teams[0].info != null else "",
+					sim.teams[1].info.city if sim.teams[1].info != null else ""]
+				save_dialog.open(names[0], names[1])
 				_update_view()
 			"pause":
 				_open_pause(false)
@@ -425,6 +455,14 @@ func _start_replay(from_menu: bool) -> void:
 	_update_view()
 
 func _end_replay() -> void:
+	if not saved_highlight.is_empty():
+		# the highlight of the reel is over: back to the front end
+		_stop_sounds()
+		mode = Mode.PAUSED
+		front_busy = true
+		if app != null:
+			app.match_finished(0)
+		return
 	vcr.visible = false
 	hud.visible = true
 	panel_view.visible = true
@@ -443,10 +481,87 @@ func _end_replay() -> void:
 		mode = Mode.MATCH
 	_update_view()
 
+## replay_menu (0x7f0af): with one team played by a person (or both by the same) the replay is
+## saved to that team's reel at once; else the dialog asks: the home team, the away team, both or
+## neither. The replay waits a second (settimeout / waittimeout) and goes on paused. The disk's
+## free space is not checked (the original refuses a record that does not fit: GADGET6 from then).
+func _replay_menu() -> void:
+	saving = true
+	var p1 := Session.p1_team
+	var p2 := Session.p2_team
+	var started := Time.get_ticks_msec()
+	if p1 < 0 or p2 < 0 or p1 == p2:
+		var t := p1 if p1 >= 0 else p2
+		_save_highlight(0 if home_team == t else 1)
+	else:
+		var names := ["", ""]
+		for side in 2:
+			var info: Database.TeamInfo = sim.teams[side].info
+			names[side] = info.city if info != null else ""
+		save_dialog.open(names[0], names[1])
+		var k: int = await save_dialog.chosen
+		save_dialog.press(k)
+		started = Time.get_ticks_msec()
+		match k:
+			0:
+				_save_highlight(0)
+			1:
+				_save_highlight(1)
+			2:
+				if _save_highlight(0) == 0:
+					_save_highlight(1)
+	while Time.get_ticks_msec() - started < 1000:
+		await get_tree().process_frame
+	save_dialog.visible = false
+	sim.replay.mode = Replay.MODE_PAUSE
+	saving = false
+	_update_view()
+
+## the keyboard on the dialog (the port's): up / down move the outline, A or Enter chooses
+func _save_dialog_keys() -> void:
+	if not save_dialog.visible or save_dialog.pressed >= 0:
+		return
+	if Input.is_action_just_pressed("p1_up"):
+		save_dialog.selected = (save_dialog.selected + 3) % 4
+		save_dialog.queue_redraw()
+	elif Input.is_action_just_pressed("p1_down"):
+		save_dialog.selected = (save_dialog.selected + 1) % 4
+		save_dialog.queue_redraw()
+	elif Input.is_action_just_pressed("p1_a") or Input.is_action_just_pressed("ui_accept"):
+		save_dialog.chosen.emit(save_dialog.selected)
+
+## replay_save_highlight (0x7fa10): the record (HighlightReel) added at the end of the team's
+## TEAM.HI in the league's directory; 0, or 1 when the file cannot be written
+func _save_highlight(side: int) -> int:
+	var l: League = Session.league
+	if l == null:
+		return 1
+	var month := 0
+	var day := 0
+	if Session.game_number >= 0:
+		var g := l.game(Session.game_number)
+		if g.size() >= 2:
+			month = g[0]
+			day = g[1]
+	var info: Database.TeamInfo = sim.teams[side].info
+	var abbrev := info.abbrev if info != null else HighlightReel.abbrev(home_team if side == 0 else away_team)
+	var rec := HighlightReel.record(sim, home_team, away_team, month, day)
+	var path := l.dir.path_join(abbrev + ".HI")
+	var f := FileAccess.open(path, FileAccess.READ_WRITE) if FileAccess.file_exists(path) else FileAccess.open(path, FileAccess.WRITE)
+	if f == null:
+		return 1
+	f.seek_end()
+	f.store_buffer(rec)
+	f.close()
+	return 0
+
 ## replay_control_loop: a held button (mouse on the panel, or the keyboard selection with A)
 ## repeats every frame; a click on the ice picks the camera
 func _replay_step(ticks: int) -> void:
 	var r := sim.replay
+	if saving:
+		_save_dialog_keys()
+		return
 	var button := -1
 	if Input.is_action_just_pressed("p1_left"):
 		vcr.selected = Replay.BUTTONS[vcr.selected][4]
@@ -463,8 +578,15 @@ func _replay_step(ticks: int) -> void:
 				vcr.selected = b
 	if Input.is_action_just_pressed("pause") or Input.is_action_just_pressed("replay"):
 		button = Replay.B_EXIT
+	if button == Replay.B_MENU and menu_off:
+		button = -1          # replay_control_loop: no menu on GADGET6
 	if button == Replay.B_MENU:
-		button = -1          # replay_menu (save a highlight) belongs to the front end
+		# replay_menu once a press, then the replay waits paused (dword_ed754 = 4)
+		if not menu_down:
+			menu_down = true
+			_replay_menu()
+		return
+	menu_down = false
 	var speed: Variant = r.press(button, ticks)
 	if speed == null:
 		_end_replay()
@@ -477,6 +599,12 @@ func _replay_step(ticks: int) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var pos: Vector2 = get_viewport().get_mouse_position()
+		if saving:
+			# replay_menu: a click on a row of the dialog chooses it
+			var k := SaveDialog.row_at(int(pos.x), int(pos.y))
+			if k >= 0 and save_dialog.visible and save_dialog.pressed < 0:
+				save_dialog.chosen.emit(k)
+			return
 		if mode == Mode.PAUSED:
 			pause_menu.click(pos)
 		elif mode == Mode.REPLAY and pos.y < VcrView.Y:

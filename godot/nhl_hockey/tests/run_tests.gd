@@ -408,6 +408,7 @@ func asset_tests() -> void:
 		crowd_tests(bos, det)
 		save_tests(bos, det)
 		highlight_tests(bos, det, db)
+		highlight_reel_tests(bos, det)
 		speech_tests(bos, det, gf)
 	# sound effects: 30 digital samples found by their ids, the goal horn (0x9c) is the 7 second
 	# sample; the post (0xac) is the 22050 Hz recording played at 11025 Hz two semitones down
@@ -3424,6 +3425,42 @@ func league_tests(gf: Node) -> void:
 ## 2 minute periods held after the first (period_cleanup), a game of the scores around the league
 ## picked and played on the ice from its score until a stoppage ends it, then the match goes on
 ## with its own teams, score, period and clock, and is played to the end
+## the highlights reel (HighlightReel): a record of a game's replay ring put back into another
+## game gives the same frames, period, clock, flags and numbers; the description and the reel's
+## file names
+func highlight_reel_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
+	var sim := Sim.new()
+	sim.set_teams(bos, det)
+	for i in 1500:
+		sim.step(8, 8, 0, 0)
+	var rec := HighlightReel.record(sim, 0, 4, 3, 12)
+	if rec.size() != HighlightReel.RECORD or rec[2] != 0 or rec[0x1f] != 4 or rec[3] != sim.teams[0].numbers[0]:
+		fail("highlight reel: record header")
+	var other := Sim.new()
+	other.set_teams(det, bos)
+	var teams := HighlightReel.restore(rec, other)
+	if teams != [0, 4] or other.replay.buf != sim.replay.buf or other.replay.write != sim.replay.write \
+			or other.replay.wrapped != sim.replay.wrapped or other.period_num != sim.period_num \
+			or other.hud_clock != sim.hud_clock or other.teams[1].numbers != sim.teams[1].numbers:
+		fail("highlight reel: the record put back differs")
+	sim.replay.begin_playback()
+	other.replay.begin_playback()
+	for n in [0, 10, 100]:
+		sim.replay.seek(n, false, sim)
+		other.replay.seek(n, false, other)
+		var a: ReplayFrame = sim.replay.frame
+		var b: ReplayFrame = other.replay.frame
+		if sim.replay.read != other.replay.read or a.camera_y != b.camera_y or a.puck_carrier != b.puck_carrier \
+				or a.entities[3].xi != b.entities[3].xi or a.entities[3].frame != b.entities[3].frame:
+			fail("highlight reel: frame %d differs" % n)
+	var want := "3 12, %s vs %s, Period %d, Time %02d:%02d." % [Exe.str_ptr(HighlightReel.CITY_NAMES),
+		Exe.str_ptr(HighlightReel.CITY_NAMES + 16), sim.period_num, sim.hud_clock[0], sim.hud_clock[1]]
+	if HighlightReel.describe(rec.slice(0, 0x4c)) != want:
+		fail("highlight reel: description %s (%s)" % [HighlightReel.describe(rec.slice(0, 0x4c)), want])
+	if HighlightReel.team_of_file("bos.hi") != 0 or HighlightReel.team_of_file("MTL.HI") != 9 \
+			or HighlightReel.team_of_file("XYZ.HI") != -1 or HighlightReel.abbrev(24) != "ANA":
+		fail("highlight reel: file names")
+
 func highlight_tests(bos: Database.TeamInfo, det: Database.TeamInfo, db: Database) -> void:
 	var sim := Sim.new()
 	sim.set_period_length(120)

@@ -71,7 +71,7 @@ func _run_script(script: String) -> void:
 				var pa := arg.split(",")
 				front.game = _sim_game(int(pa[0]), int(pa[1]) if pa.size() > 1 else 30)
 			"call":
-				front.dispatch(arg)
+				_call_held(arg)
 				await get_tree().process_frame
 			"type":
 				# text for a text entry dialog, then Enter
@@ -88,6 +88,12 @@ func _run_script(script: String) -> void:
 				await get_tree().process_frame
 			"quit":
 				get_tree().quit()
+
+## a callback of call: with the menu loops held, so its own screens get the input
+func _call_held(cb: String) -> void:
+	front.ui.menu_hold += 1
+	await front.dispatch(cb)
+	front.ui.menu_hold -= 1
 
 func _sim_game(periods: int, seconds: int) -> Node:
 	var holder: Node = load("res://view/SimHolder.gd").new()
