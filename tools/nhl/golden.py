@@ -4042,7 +4042,7 @@ def write_ai(outdir, data):
             os.remove(os.path.join(outdir, n))
 
 
-LEAGUE_SIM_GAME = 0x452c5                      # (dir, ext, game index, record) + TEAMS file, ATT file, forced winner
+LEAGUE_SIM_GAME = 0x452c5                      # (dir, ext, game index, record) + TEAMS file, CARTEAMS file, forced winner
 FILE_READ = 0x145a2                            # stubbed: (file, buffer, offset, size) from the files of the case
 FILE_WRITE = 0x145f9                           # stubbed: into them
 ALLOCMEM = 0x8cca8                             # stubbed (cdecl): a buffer of the pool
@@ -4050,7 +4050,7 @@ RAND_STATE = 0x8eb21                           # the C library's rand() state
 LEAGUE_BUFFERS = (('SEASON', 0xd07bb), ('CAREER', 0xd07bf), ('KEY', 0xd07c7))   # the databases league_play_day loads
 FORWARD_LINE_ORDER = 0xc900c                   # 2 x 10 dwords: the forward lines in their order of the game
 DEFENCE_PAIR_ORDER = 0xc905c                   # 2 x 3 dwords
-LEAGUE_FILES = ('KEY', 'CAREER', 'ATT', 'TEAMS', 'SEASON')
+LEAGUE_FILES = ('KEY', 'CAREER', 'CARTEAMS', 'TEAMS', 'SEASON')
 
 
 def byte_diff(a, b):
@@ -4071,7 +4071,7 @@ def byte_diff(a, b):
 
 def league_cases(exe, gamedir, count=400):
     """league_sim_game called directly: the statistical game of two computer teams of the league
-    files the game ships (TEAMS, ATT, KEY, CAREER, SEASON .DB), regular season and play-off games,
+    files the game ships (TEAMS, CARTEAMS, KEY, CAREER, SEASON .DB), regular season and play-off games,
     a winner forced or not, the three period lengths, the C library's rand() from a random seed and
     the forward lines and defence pairs in a random order"""
     emu = PortEmu(exe)
@@ -4083,7 +4083,7 @@ def league_cases(exe, gamedir, count=400):
     pool = [emu.alloc(0x400) for _ in range(32)]
     used = {'n': 0}
     files = {}
-    handles = {1: 'TEAMS', 2: 'ATT'}
+    handles = {1: 'TEAMS', 2: 'CARTEAMS'}   # (league_sim_game reads the team's CARTEAMS record and does not use it)
 
     def reg(r):
         return emu.uc.reg_read(r) & 0xffffffff
@@ -4132,7 +4132,7 @@ def league_cases(exe, gamedir, count=400):
         rec = [rnd.randrange(1, 13), rnd.randrange(1, 29), teams[0], teams[1], 0xff, 0xff]
         for n, _ in LEAGUE_BUFFERS:
             emu.write(bufs[n], base[n])
-        files = {'TEAMS': bytearray(base['TEAMS']), 'ATT': bytearray(base['ATT'])}
+        files = {'TEAMS': bytearray(base['TEAMS']), 'CARTEAMS': bytearray(base['CARTEAMS'])}
         emu.write(recbuf, bytes(rec))
         emu.write(OPTION_FLAGS, struct.pack('<I', option_flags))
         for t in range(2):
@@ -4142,7 +4142,7 @@ def league_cases(exe, gamedir, count=400):
         used['n'] = 0
         ret = emu.call(LEAGUE_SIM_GAME, eax=names, edx=names, ebx=index, ecx=recbuf, stack=(1, 2, forced))
         after = {n: byte_diff(base[n], emu.read(bufs[n], len(base[n]))) for n, _ in LEAGUE_BUFFERS}
-        after.update({n: byte_diff(base[n], files[n]) for n in ('TEAMS', 'ATT')})
+        after.update({n: byte_diff(base[n], files[n]) for n in ('TEAMS', 'CARTEAMS')})
         state = struct.unpack('<I', emu.read(emu.call(RAND_STATE) & 0xffffffff, 4))[0]
         cases.append({'index': index, 'record': rec, 'forced': forced, 'option_flags': option_flags, 'seed': seed,
                       'fwd': fwd, 'def': dfn,
@@ -4260,7 +4260,7 @@ def playoff_cases(exe, gamedir, count=200):
     return cases
 
 
-PLAYOFF_ROUND1_DONE = 0x43644                  # (play-off games, TEAMS file, ATT file, dir) + ext: the round's games nobody played
+PLAYOFF_ROUND1_DONE = 0x43644                  # (play-off games, TEAMS file, CARTEAMS file, dir) + ext: the round's games nobody played
 PLAYOFF_CHAIN = (('make_round2', 0x43757), ('round2_done', 0x43e40), ('make_round3', 0x43f4b),
                  ('round3_done', 0x443b6), ('make_final', 0x444c9), ('final_done', 0x447a6))
 
@@ -4278,7 +4278,7 @@ def round_cases(exe, gamedir, count=60):
     pool = [emu.alloc(0x400) for _ in range(32)]
     used = {'n': 0}
     files = {}
-    handles = {1: 'TEAMS', 2: 'ATT'}
+    handles = {1: 'TEAMS', 2: 'CARTEAMS'}   # (league_sim_game reads the team's CARTEAMS record and does not use it)
 
     def reg(r):
         return emu.uc.reg_read(r) & 0xffffffff
@@ -4324,7 +4324,7 @@ def round_cases(exe, gamedir, count=60):
             struct.pack_into('<HH', teams, t * 0x2e8 + 0x2c, v[2], v[3])
         for n_, _ in LEAGUE_BUFFERS:
             emu.write(bufs[n_], base[n_])
-        files = {'TEAMS': teams, 'ATT': bytearray(base['ATT'])}
+        files = {'TEAMS': teams, 'CARTEAMS': bytearray(base['CARTEAMS'])}
         before = {'TEAMS': bytes(teams)}
         n = rnd.choice((3, 5, 7, 7))
         emu.call(SCHEDULE_RANK_TEAMS, eax=order_buf, ebx=1)
@@ -4381,7 +4381,7 @@ def round_cases(exe, gamedir, count=60):
                 break
         after = {n_: byte_diff(base[n_], emu.read(bufs[n_], len(base[n_]))) for n_, _ in LEAGUE_BUFFERS}
         after['TEAMS'] = byte_diff(before['TEAMS'], files['TEAMS'])
-        after['ATT'] = byte_diff(base['ATT'], files['ATT'])
+        after['CARTEAMS'] = byte_diff(base['CARTEAMS'], files['CARTEAMS'])
         cases.append({'standings': stand, 'n': n, 'played': played, 'seed': seed, 'fwd': fwd, 'def': dfn,
                       'option_flags': option_flags,
                       'after': dict(after, ret=s32(ret), po=emu.read(po, 15 * 42).hex(), steps=steps,

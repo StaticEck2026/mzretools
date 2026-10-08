@@ -281,7 +281,8 @@ static func _set16(b: PackedByteArray, at: int, v: int) -> void:
 # the game simulation (0x452c5): one minute after another the lines of both teams take penalties
 # and shots at the rates of the players' career statistics (scaled to 84 games); the goals follow
 # from the shooter's and the opposing goalie's career percentages, the team ahead in skaters gets
-# a bonus; the statistics go into the season (or play-off) blocks of SEASON.DB and TEAMS.DB
+# a bonus; the statistics go into the season (or play-off) blocks of SEASON.DB and TEAMS.DB (the
+# team's CARTEAMS.DB record is read as well and not used)
 # ---------------------------------------------------------------------------------------------
 
 static var fwd_order := [[0, 1, 2, 3, 0, 1, 2, 0, 1, 0], [0, 1, 2, 3, 0, 1, 2, 0, 1, 0]]   # forward_line_order

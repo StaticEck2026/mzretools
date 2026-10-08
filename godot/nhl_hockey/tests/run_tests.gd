@@ -2672,7 +2672,7 @@ static func _byte_diff(a: PackedByteArray, b: PackedByteArray) -> Array:
 	return out
 
 ## league_sim_game (league.json): the statistical game of two computer teams on the league files
-## the game ships, compared byte by byte (SEASON, CAREER, KEY, TEAMS, ATT), with the score, the
+## the game ships, compared byte by byte (SEASON, CAREER, KEY, TEAMS, CARTEAMS), with the score, the
 ## rand() state and the line orders
 func league_golden(gf: Node) -> void:
 	var data := _golden("league")
@@ -2681,7 +2681,7 @@ func league_golden(gf: Node) -> void:
 		fail("golden league data missing")
 		return
 	var base := {}
-	for n in ["KEY", "CAREER", "ATT", "TEAMS", "SEASON"]:
+	for n in ["KEY", "CAREER", "CARTEAMS", "TEAMS", "SEASON"]:
 		base[n] = gf.read_raw(n.to_lower() + ".db")
 	var ok := 0
 	var shown := 0
@@ -2845,7 +2845,7 @@ func league_golden(gf: Node) -> void:
 				break
 		if bad.is_empty() and steps.is_empty() and po.hex_encode() != str(want["po"]):
 			bad.append("play-off games %s (original %s)" % [po.hex_encode().left(120), str(want["po"]).left(120)])
-		for nm in ["SEASON", "CAREER", "KEY", "ATT"]:
+		for nm in ["SEASON", "CAREER", "KEY", "CARTEAMS"]:
 			if str(_byte_diff(base[nm], lg.files[nm])) != str(_ints(want[nm])):
 				bad.append(nm)
 		if str(_byte_diff(before, lg.files["TEAMS"])) != str(_ints(want["TEAMS"])):
