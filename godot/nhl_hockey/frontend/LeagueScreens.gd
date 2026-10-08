@@ -161,18 +161,7 @@ func new_league_mode() -> int:
 
 ## a message without buttons while the work is done (restore_dialog_background afterwards)
 func _busy(lines: Array) -> void:
-	var lh := scr.font_height() + 2
-	var w := 0
-	for s in lines:
-		w = maxi(w, scr.textwidth(s))
-	w += 0x10
-	var h: int = lines.size() * lh + 0x10
-	var x := (640 - w) / 2
-	var y := (480 - h) / 2
-	fe.draw_dialog_frame(x, y, w, h, fe.dlg_face, fe.dlg_light, fe.dlg_dark)
-	scr.set_text_colors(fe.dlg_text, fe.dlg_shadow)
-	for i in lines.size():
-		scr.print_text_at(x + (w - scr.textwidth(lines[i])) / 2, y + 8 + i * lh, lines[i])
+	fe.message_show(lines)
 	await ui.frame()
 	await ui.frame()
 

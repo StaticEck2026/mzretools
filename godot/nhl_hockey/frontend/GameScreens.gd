@@ -507,8 +507,9 @@ func menu_team_scratches() -> int:
 	return 2
 
 ## Save Game ... of the pause screen (broadcast_booth_screen 0x85924): an exhibition under a name
-## (save_game_dialog: NAME.NHL), a league or play-off game as the league's GAME.SAV; the game is
-## left and goes on from there later
+## (save_game_dialog: NAME.NHL), a league or play-off game as the league's GAME.SAV ("Saving Current
+## League Game." / "Play-Off Game." shown for at least 2 seconds); the game is left and goes on from
+## there later
 func broadcast_booth_screen() -> int:
 	if fe.game == null:
 		return 0
@@ -522,20 +523,91 @@ func broadcast_booth_screen() -> int:
 		"scratches": Session.scratches.duplicate(),
 		"sim": SaveGame.capture(sim),
 	}
-	fe.set_dialog_colors(0xf9, 0xfa, 0xf8, 0xfa, 0)
-	var path := ""
 	if Session.mode == 0 or Session.league == null:
-		var name := (await fe.text_entry_dialog("Enter a name for the saved game", 8, 0x30, 5)).to_upper()
-		if name == "" or fe.entry_key == 0x1b:
+		var name := await save_game_dialog()
+		if name == "":
 			return 0
-		path = SaveGame.saves_dir().path_join(name + ".NHL")
-	else:
-		path = (Session.league as League).dir.path_join("GAME.SAV")
-	if not SaveGame.write(path, data):
+		if not SaveGame.write(SaveGame.saves_dir().path_join(name.to_upper() + ".NHL"), data):
+			await fe.message_dialog(["Error while saving the game!"])
+			return 0
+		return 5
+	fe.set_dialog_colors(0xf9, 0xfa, 0xf8, 0xfa, 0)
+	var until := Time.get_ticks_msec() + 2000
+	fe.message_show(["Saving Current", "League Game." if Session.mode == 2 else "Play-Off Game."])
+	await ui.frame()
+	var ok := SaveGame.write((Session.league as League).dir.path_join("GAME.SAV"), data)
+	while Time.get_ticks_msec() < until:
+		await ui.frame()
+	fe.restore_dialog_background()
+	if not ok:
 		await fe.message_dialog(["Error while saving the game!"])
 		return 0
-	await fe.message_dialog(["The game is saved."])
 	return 5
+
+## save_game_dialog (0x85d6c): SAVEGAME.QFS "prmt" in the middle of the screen, the name typed into
+## it at the shape's hotspot (text_entry_loop: 8 letters and digits, Enter only); an empty name is
+## asked again; when NAME.NHL exists, "err1" with the name and three buttons: overwrite it, cancel,
+## or another name (the old one to edit). Returns the name, "" for cancel.
+func save_game_dialog() -> String:
+	var bank := fe.bank("savegame")
+	var prmt: Shpi.Shape = bank.find("prmt") if bank != null else null
+	var err: Shpi.Shape = bank.find("err1") if bank != null else null
+	if prmt == null or err == null:
+		return ""
+	var keep_fg := scr.text_fg
+	var keep_bg := scr.text_bg
+	var buf := PackedByteArray()
+	buf.resize(10)
+	var p := Vector2i(320 - prmt.width / 2, 240 - prmt.height / 2)
+	var behind := scr.grab(p.x, p.y, prmt.width, prmt.height)
+	scr.drawshape(prmt, p.x, p.y)
+	scr.settextcolor(0xfa, 0xf8)
+	ui.keys.clear()
+	await fe._entry_loop(buf, 8, 0x64, p.x + prmt.center_x, p.y + prmt.center_y, 1)
+	var result := ""
+	while true:
+		var name := FrontEnd.cstring_of(buf)
+		if name != "" and not FileAccess.file_exists(SaveGame.saves_dir().path_join(name.to_upper() + ".NHL")):
+			scr.put(behind)
+			result = name
+			break
+		if name != "":
+			# the name is taken: overwrite (0xda..0x107), cancel (0x114..0x148), another (0x15d..0x1a2)
+			scr.put(behind)
+			var q := Vector2i(320 - err.width / 2, 240 - err.height / 2)
+			var under := scr.grab(q.x, q.y, err.width, err.height)
+			scr.drawshape_remap(err, q.x, q.y)
+			scr.settextcolor(0xfa, 0xf9)
+			scr.printstr_at(name, q.x + err.center_x, q.y + err.center_y)
+			ui.reset_events()
+			ui.set_pointer(0x181, 0xfe)
+			ui.show_pointer(true)
+			var choice := 0
+			while choice == 0:
+				var e: Dictionary = await ui.wait_event()
+				if not ui.is_click(e) or e["y"] < 0xf8 or e["y"] >= 0x109:
+					continue
+				if e["x"] > 0xda and e["x"] < 0x107:
+					choice = 1
+				elif e["x"] > 0x114 and e["x"] < 0x148:
+					choice = 2
+				elif e["x"] > 0x15d and e["x"] < 0x1a2:
+					choice = 3
+			ui.show_pointer(false)
+			scr.put(under)
+			if choice == 1:
+				result = name
+				break
+			if choice == 2:
+				break
+			behind = scr.grab(p.x, p.y, prmt.width, prmt.height)
+			scr.drawshape(prmt, p.x, p.y)
+		scr.settextcolor(0xfa, 0xf8)
+		ui.keys.clear()
+		await fe._entry_loop(buf, 8, 0x64, p.x + prmt.center_x, p.y + prmt.center_y, 1)
+	scr.settextcolor(keep_fg, keep_bg)
+	ui.reset_events()
+	return result
 
 ## a saved game continued: its settings, then the match from the saved state; true when it was
 ## played to the end

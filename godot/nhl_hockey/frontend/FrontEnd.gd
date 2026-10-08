@@ -613,6 +613,31 @@ func message_dialog_buttons(lines: Array, list: Array, x: int = -1, y: int = -1)
 	ui.show_pointer(false)
 	return r
 
+var _dialog_behind: Image = null
+
+## message_dialog without buttons: the box drawn (save_dialog_background keeps what is behind it)
+## and left on the screen until restore_dialog_background
+func message_show(lines: Array) -> void:
+	var lh := scr.font_height() + 2
+	var w := 0
+	for s in lines:
+		w = maxi(w, scr.textwidth(s))
+	w += 0x10
+	var h: int = lines.size() * lh + 0x10
+	var x := (640 - w) / 2
+	var y := (480 - h) / 2
+	_dialog_behind = scr.snapshot()
+	draw_dialog_frame(x, y, w, h, dlg_face, dlg_light, dlg_dark)
+	scr.set_text_colors(dlg_text, dlg_shadow)
+	for i in lines.size():
+		scr.print_text_at(x + (w - scr.textwidth(lines[i])) / 2, y + 8 + i * lh, lines[i])
+
+## restore_dialog_background: the picture behind the last message_show
+func restore_dialog_background() -> void:
+	if _dialog_behind != null:
+		scr.restore(_dialog_behind)
+		_dialog_behind = null
+
 ## listbox_dialog (0x303fb): the items in a box under the title, up to 20 rows (a scroll bar on the
 ## right for more: scrollbar_init / scrollbar_draw / scrollbar_at), each row filled with the text
 ## shadow colour (the chosen one with the text colour, a marked one of a multiple choice with the
@@ -1113,6 +1138,10 @@ func _entry_loop(buf: PackedByteArray, maxlen: int, width: int, x: int, y: int, 
 ## the 20 Hz counter of the timer interrupt (dword_d2fe0: every 5th tick of the 100 Hz timer)
 static func _ticks20() -> int:
 	return Time.get_ticks_msec() / 50
+
+## the text of a buffer up to its 0
+static func cstring_of(buf: PackedByteArray) -> String:
+	return buf.slice(0, _cstrlen(buf)).get_string_from_ascii()
 
 static func _cstrlen(buf: PackedByteArray) -> int:
 	var n := 0
