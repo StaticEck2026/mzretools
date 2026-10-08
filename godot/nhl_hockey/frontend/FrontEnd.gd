@@ -776,8 +776,18 @@ func yes_no_dialog(lines: Array) -> bool:
 # a game: play_game and the screens the match comes back for
 # ---------------------------------------------------------------------------------------------
 
-## GAME.SET: the settings block (save_settings) written when the settings change
+## reload_mode_settings (0x8b92f) / load_game_set (0x32b1d): the settings block written into the
+## GAME.SET of the mode when the settings change: an exhibition's GAME.SET, a play-off series' or a
+## league's in its directory (the League open of that name: its game set; one being made takes the
+## session's settings when its files are written)
 func save_game_set() -> void:
+	if Session.mode != 0:
+		var l = Session.league
+		if l != null and (l.dir as String).get_file() == Session.league_dir:
+			l.game_set = Session.save_block()
+			l.option_flags = Session.option_flags
+			l.save()
+		return
 	var f := FileAccess.open("user://GAME.SET", FileAccess.WRITE)
 	if f != null:
 		f.store_buffer(Session.save_block())

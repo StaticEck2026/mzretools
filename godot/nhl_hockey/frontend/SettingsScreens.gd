@@ -58,13 +58,13 @@ func _dialog_palette() -> void:
 	scr.setpalette(Exe.bytes(0xd16a0, 12), 0xf7, 4)
 
 ## draw_settings_title (0x8050f): "Exhibition" / "Playoff" / "League" on top of the dialog
-func _title(kind: int) -> void:
+func _title(kind: int, colour: int = 0xfa) -> void:
 	var x := DX + (0x59 if kind == 3 or kind == 5 else 0x51)
 	var t := ["Exhibition", "Playoff", "League"]
 	var dx := [-0x41, -0x32, -0x2f]
 	var m := clampi(Session.mode, 0, 2)
 	scr.setfont(fe.font_main)
-	scr.settextcolor(0xfa, 0xff)
+	scr.settextcolor(colour, 0xff)
 	scr.printstr_at(t[m], x + dx[m], DY + 0x16)
 
 ## the settings bits of the pairs (exhibition_settings_show_options / game_settings_show_options)
@@ -224,6 +224,260 @@ func menu_exhibition_settings() -> int:
 ## "Exhibition / Playoff / Show League Settings ..." of the pause screen (game_settings_screen)
 func game_settings_screen() -> int:
 	return await _settings(false)
+
+# ---------------------------------------------------------------------------------------------
+# the settings of a league or a play-off series (settings_dialog 0x7a6bd, settings_screen_a 0x7a404,
+# settings_screen_b 0x7a57e, settings_menu 0x7add3, settings_pointer_loop 0x7ac31): SETTING3.QFS
+# (the on / off pairs, the period length, the length of a play-off series, Accept and Cancel) or
+# SETTING5.QFS (the same without Accept and Cancel, to look at) at (10, 0x13), the buttons of
+# unk_d14f0
+# ---------------------------------------------------------------------------------------------
+
+const LEAGUE_BUTTONS := 0xd14f0     # 27 rectangles: 9 pairs (on, off; fighting's unused), 3 period lengths, 4 series lengths, Accept, Cancel
+var series_game := 0                # dword_d29fb: the game of the play-off series to be played next (0..6)
+var context := 0                    # dword_ed35c (set_settings_context): 1 SETTING5 in settings_screen_b
+
+## settings_flags_to_buttons (0x7a88e): the bits of the buttons (dword_ed360): the pairs (music and
+## sound only with a sound card, speech only with digital sound), 0x200 / 0x400 / 0x800 the period
+## of 20 / 10 / 5 minutes, 0x1000 / 0x2000 / 0x4000 / 0x8000 a series of 1 / 3 / 5 / 7 games
+func _league_bits() -> int:
+	var f := Session.option_flags
+	var bits := _flags_to_bits(true)
+	match (f >> 12) & 7:
+		1:
+			bits |= 0x1000
+		3:
+			bits |= 0x2000
+		5:
+			bits |= 0x4000
+		7:
+			bits |= 0x8000
+	return bits
+
+## settings_draw_buttons (0x7aaaa): On / Off of each pair, the period length and the series length
+## pictures at the first rectangle of their group
+func _league_draw(bits: int) -> void:
+	var list := rects(LEAGUE_BUTTONS, 27)
+	_draw_pairs(list, bits, true)
+	var r: Rect2i = list[0x15]
+	var s := ""
+	match bits & 0xf000:
+		0x1000:
+			s = "pg01"
+		0x2000:
+			s = "pg03"
+		0x4000:
+			s = "pg05"
+		0x8000:
+			s = "pg07"
+	if s != "":
+		scr.drawshape(_shape(s), r.position.x + DX, r.position.y + DY)
+
+## settings_button_at (0x7a9c8): the button under the pointer, -1 none or one that cannot be used
+## (fighting; music and sound without a card; speech without digital sound; in a play-off series the
+## lengths its games played have passed)
+func _league_button_at(x: int, y: int) -> int:
+	var k := rect_at(rects(LEAGUE_BUTTONS, 27), x, y)
+	if k < 0 or k == 10 or k == 11:
+		return -1
+	if k >= 0xc and k < 0x10 and Session.sound_device == 0x10:
+		return -1
+	if (k == 0x10 or k == 0x11) and not Session.sound_enabled:
+		return -1
+	if Session.mode == 1 and ((k == 0x15 and series_game >= 1) or (k == 0x16 and series_game >= 3) or (k == 0x17 and series_game >= 5)):
+		return -1
+	return k
+
+## the labels of the pairs that cannot change on the wider dialogs
+func _dim_labels_wide(colour: int) -> void:
+	scr.settextcolor(colour, 0xff)
+	if Session.sound_device == 0x10:
+		scr.printstr_at("Music", 0x68, 0xaa)
+		scr.printstr_at("Sound", 0x68, 0xc0)
+	if not Session.sound_enabled:
+		scr.printstr_at("Digitized Speech", 0x68, 0xd6)
+
+## settings_dialog (0x7a6bd): SETTING3 (its greys turned into the colours 0x40..0x43 of EMBPAL for the
+## play-off tree), the labels that cannot change, in a play-off series the lengths already passed
+## greyed (na01 / na03 / na05), the title
+func settings_dialog(emb: bool) -> void:
+	var remap := PackedByteArray()
+	for i in 256:
+		remap.append(i)
+	if emb:
+		remap[0xfa] = 0x40
+		remap[0xf9] = 0x41
+		remap[0xf8] = 0x42
+		remap[0xf7] = 0x43
+	var b := fe.bank("setting3")
+	if b != null:
+		scr.drawshape_mapped(b.find("dbox"), DX, DY, remap)
+	_dim_labels_wide(0x42 if emb else 0xf8)
+	if Session.mode == 1 and series_game >= 1:
+		var na := "na05" if series_game >= 5 else ("na03" if series_game >= 3 else "na01")
+		scr.drawshape(_shape(na), 0x85, 0x125)
+	_title(3, 0x40 if emb else 0xfa)
+
+## settings_screen_b (0x7a57e): SETTING5 (context 1) or SETTING3 with the labels and the title
+func settings_screen_b() -> void:
+	var b := fe.bank("setting5" if context != 0 else "setting3")
+	if b != null:
+		scr.drawshape_remap(b.find("dbox"), DX, DY)
+	_dim_labels_wide(0xf8)
+	_title(5 if context != 0 else 3, 0xfa)
+
+## settings_menu (0x7add3): the buttons until Accept (the bits into option_flags, the music and the
+## sounds switched, the mode's GAME.SET written: reload_mode_settings), Cancel or Esc; `grey` sets the
+## dialogs' grey ramp first
+func settings_menu(grey: bool) -> void:
+	if grey:
+		_dialog_palette()
+	var bits := _league_bits()
+	_league_draw(bits)
+	ui.show_pointer(true)
+	ui.reset_events()
+	while true:
+		var e: Dictionary = await ui.wait_event()
+		var bt: int = e["buttons"]
+		if bt & 4:
+			break
+		if bt & 2 == 0:
+			continue
+		var k := _league_button_at(e["x"], e["y"])
+		if k < 0:
+			continue
+		if k < 0x12:
+			if k % 2 == 0:
+				bits |= 1 << (k / 2)
+			else:
+				bits &= ~(1 << (k / 2))
+		elif k < 0x15:
+			bits = (bits & 0xf1ff) | (1 << (k - 9))
+		elif k < 0x19:
+			bits = (bits & 0xfff) | (1 << (k - 9))
+		elif k == 0x19:
+			scr.drawshape(_shape("acpt"), 0x3f, 0x148)
+			var f := (Session.option_flags & ~0x3f) | (bits & 0x3f)
+			if Session.sound_device != 0x10:
+				f = (f & ~0xc0) | (bits & 0xc0)
+			if Session.sound_device & 0x22 != 0:
+				f = (f & ~0x100) | (bits & 0x100)
+			f &= ~0xc00
+			match bits & 0xe00:
+				0x200:
+					f |= 0x800
+				0x400:
+					f |= 0x400
+			f &= ~0x7000
+			match bits & 0xf000:
+				0x1000:
+					f |= 0x1000
+				0x2000:
+					f |= 0x3000
+				0x4000:
+					f |= 0x5000
+				0x8000:
+					f |= 0x7000
+			Session.option_flags = f
+			if f & 0x40:
+				if not fe.loop_playing() and fe.loop_name != "":
+					fe.play_loop(fe.loop_name)
+			else:
+				fe.stop_loop()
+			_reload_mode_settings()
+			break
+		else:
+			scr.drawshape(_shape("canc"), 0x89, 0x148)
+			break
+		_league_draw(bits)
+	ui.show_pointer(false)
+	await fe.ui.wait_ticks(15, false)
+
+## reload_mode_settings (0x8b92f): the settings into the GAME.SET of the mode (the league's or the
+## series' own, the exhibition's)
+func _reload_mode_settings() -> void:
+	fe.save_game_set()
+
+## settings_pointer_loop (0x7ac31): the dialog until a click or Esc (the grey ramp set)
+func settings_pointer_loop() -> void:
+	_dialog_palette()
+	ui.show_pointer(true)
+	ui.reset_events()
+	while true:
+		var e: Dictionary = await ui.wait_event()
+		if e["buttons"] & 6:
+			break
+	ui.show_pointer(false)
+
+## the dialog's place (BKGD) kept and given back
+func _with_dialog(body: Callable) -> void:
+	var behind := scr.grab(DX, DY, 0xe6, 0x152)
+	var pal := scr.getpalette()
+	await body.call()
+	scr.put(behind)
+	scr.setpalette(pal)
+
+## settings_screen_a (0x7a404): SETTING5 with the league's settings, to look at (the calendar's Show
+## League Settings ...)
+func settings_screen_a() -> int:
+	var b := fe.bank("setting5")
+	var behind := scr.grab(DX, DY, 0xe6, 0x13a)
+	var pal := scr.getpalette()
+	if b != null:
+		scr.drawshape_remap(b.find("dbox"), DX, DY)
+	_dim_labels_wide(0xf8)
+	_title(5, 0xfa)
+	_league_draw(_league_bits())
+	await settings_pointer_loop()
+	scr.put(behind)
+	scr.setpalette(pal)
+	return 0
+
+## menu_league_settings (0x7a335): the grid's League settings of a new league (settings_screen_b,
+## settings_menu)
+func menu_league_settings() -> int:
+	await _with_dialog(func():
+		settings_screen_b()
+		await settings_menu(true))
+	return 0
+
+## menu_show_league_settings (0x7a39f): the grid's Show League settings (settings_screen_b, to look at)
+func menu_show_league_settings() -> int:
+	await _with_dialog(func():
+		settings_screen_b()
+		_league_draw(_league_bits())
+		await settings_pointer_loop())
+	return 0
+
+## league_play_settings_screen (0x7a138): Change League Play Settings (every series length open)
+func league_play_settings_screen() -> int:
+	var keep := series_game
+	series_game = 0
+	await _with_dialog(func():
+		settings_dialog(false)
+		await settings_menu(true))
+	series_game = keep
+	return 0
+
+## menu_playoff_settings (0x7a1fc): the play-off tree's Settings (in the colours of EMBPAL)
+func menu_playoff_settings() -> int:
+	await _with_dialog(func():
+		settings_dialog(true)
+		await settings_menu(false))
+	return 0
+
+## league_settings_screen (0x7a29c): the desk's Play-Off Settings ...: the series' settings edited
+## (settings_playoff applied, then saved; the exhibition's back)
+func league_settings_screen(series_block: PackedByteArray) -> PackedByteArray:
+	var keep := Session.save_block()
+	if series_block.size() >= Session.SETTINGS_SIZE:
+		Session.apply_block(series_block)
+	await _with_dialog(func():
+		settings_dialog(false)
+		await settings_menu(true))
+	var out := Session.save_block()
+	Session.apply_block(keep)
+	return out
 
 # ---------------------------------------------------------------------------------------------
 # the controllers (menu_p1_controls_* / menu_p2_controls_*: controller_dialog,

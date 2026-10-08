@@ -108,42 +108,64 @@ func open_league(l: League) -> void:
 ## random), the databases (current or original), the human teams with their names and passwords,
 ## the league's settings; then the files are written and the league is open
 func new_league_mode() -> int:
-	fe.set_dialog_colors(0xf9, 0xfa, 0xf8, 0xfa, 0)
-	var name := (await fe.text_entry_dialog("Enter New League Name", 8, 0x30, 5)).to_upper()
-	if name == "" or fe.entry_key == 0x1b:
-		return 2
-	if League.list_leagues().has(name):
-		var r := await fe.message_dialog_buttons(["There is already a league with that name!",
-			"Do you want to replace it with a new league?"], FrontEnd.buttons_at(0xc7733, 2))
-		if r != 1:
-			return 2
-	var sched := await fe.message_dialog_buttons(["  Which schedule do you want to use?  "], FrontEnd.buttons_at(0xc77ae, 2))
-	if sched < 0:
-		return 2
-	var org := await fe.message_dialog_buttons(["Do you wish to use your", "Current database or the", "Original NHL database?"],
-		FrontEnd.buttons_at(0xc74b7, 2))
-	if org < 0:
-		return 2
-	var pinfo := League.pinfo_create([])
-	var chosen = await team_info_screen(1, "Select human controlled teams", pinfo)
-	if chosen == null:
-		return 2
-	League.delete(name)
-	var humans: Array = []
-	for t in 26:
-		if pinfo[0x20 + t * 0x1e + 0x17] == 1:
-			humans.append(t)
-	# new_league_mode: the league's settings: Rangers - Canucks, every option, 0x7800 the play-off
-	# series of 7, the first controller for player 1
+	# new_league_mode: settings_league's defaults applied (Rangers - Canucks, every option, 0x7800 the
+	# play-off series of 7, the first controller found for player 1 with the Rangers) for the whole
+	# dialog (the grid's League settings change them), set_settings_context(0); the exhibition's back
+	# at the end
 	var keep := Session.save_block()
 	Session.mode = 2
 	Session.home_team = 12
 	Session.away_team = 21
 	Session.option_flags = (Session.option_flags | (0x3ff if Session.sound_enabled else 0x2ff)) & 0x83ff | 0x7800
+	Session.p1_device = 0x10
+	for d in [2, 4, 8, 1]:
+		if Session.input_devices & d:
+			Session.p1_device = d
+			break
+	Session.p1_team = 12 if Session.p1_device != 0x10 else -1
+	Session.p2_device = 0x10
+	Session.p2_team = -2
+	Session.p1_side = 0
+	Session.p2_side = 1
+	fe.settings.context = 0
+	var l := await _new_league_dialog()
+	Session.apply_block(keep)
+	if l != null:
+		open_league(l)
+	fe.set_dialog_colors(0xf9, 0xfa, 0xf8, 0xfa, 0)
+	return 2
+
+## new_league_dialog (0x44dcf): the name, an old league of the name replaced at once, the schedule,
+## the databases, the grid; the league made with the settings of the session
+func _new_league_dialog() -> League:
+	fe.set_dialog_colors(0xf9, 0xfa, 0xf8, 0xfa, 0)
+	var name := (await fe.text_entry_dialog("Enter New League Name", 8, 0x30, 5)).to_upper()
+	if name == "" or fe.entry_key == 0x1b:
+		return null
+	if League.list_leagues().has(name):
+		var r := await fe.message_dialog_buttons(["There is already a league with that name!",
+			"Do you want to replace it with a new league?"], FrontEnd.buttons_at(0xc7733, 2))
+		if r != 1:
+			return null
+		League.delete(name)
 	Session.league_dir = name + ".LP"
 	Session.league_name = name
+	var sched := await fe.message_dialog_buttons(["  Which schedule do you want to use?  "], FrontEnd.buttons_at(0xc77ae, 2))
+	if sched < 0:
+		return null
+	var org := await fe.message_dialog_buttons(["Do you wish to use your", "Current database or the", "Original NHL database?"],
+		FrontEnd.buttons_at(0xc74b7, 2))
+	if org < 0:
+		return null
+	var pinfo := League.pinfo_create([])
+	var chosen = await team_info_screen(1, "Select human controlled teams", pinfo)
+	if chosen == null:
+		return null
+	var humans: Array = []
+	for t in 26:
+		if pinfo[0x20 + t * 0x1e + 0x17] == 1:
+			humans.append(t)
 	var settings := Session.save_block()
-	Session.apply_block(keep)
 	var lines := ["Creating league."]
 	await _busy(lines)
 	var l := League.create(name, sources(org == 1), humans, sched == 1, settings)
@@ -155,9 +177,8 @@ func new_league_mode() -> int:
 	for k in 11:
 		l.pinfo[0x15 + k] = pinfo[0x15 + k]
 	l.save()
-	open_league(l)
-	fe.set_dialog_colors(0xf9, 0xfa, 0xf8, 0xfa, 0)
-	return 2
+	fe.restore_dialog_background()
+	return l
 
 ## a message without buttons while the work is done (restore_dialog_background afterwards)
 func _busy(lines: Array) -> void:
@@ -620,19 +641,24 @@ func league_calendar_screen() -> int:
 	if humans.is_empty():
 		await fe.message_dialog(["This league has no human teams."])
 		return 2
-	var team: int = humans[0]
-	if humans.size() > 1:
-		var t = await team_info_screen(8, "Select a team to play.", l.pinfo)
-		if t == null:
-			return 2
-		team = t
-	if not await password_prompt(l, team):
-		return 2
-	Session.league_team = team
+	# league_calendar_screen: the league's settings (settings_league), set_settings_context(1): the
+	# grid's Show League settings looks at them
 	var keep := Session.save_block()
 	if l.game_set.size() >= Session.SETTINGS_SIZE:
 		Session.apply_block(l.game_set)
 	Session.mode = 2
+	fe.settings.context = 1
+	var team: int = humans[0]
+	if humans.size() > 1:
+		var t = await team_info_screen(8, "Select a team to play.", l.pinfo)
+		if t == null:
+			Session.apply_block(keep)
+			return 2
+		team = t
+	if not await password_prompt(l, team):
+		Session.apply_block(keep)
+		return 2
+	Session.league_team = team
 	fe.set_hub_title(2)
 	await _continue_saved(l)
 	while true:
@@ -952,34 +978,50 @@ func league_remove_team() -> int:
 		l.save()
 	return 2
 
-## Change League Play Settings: the settings dialog with the league's block
-## league_change_play_settings -> league_settings_flow (0x40f4e): the master password, then the settings
+## Change League Play Settings (league_change_play_settings 0x332f8): the league's settings applied,
+## the master password (league_settings_flow 0x40f4e), the settings dialog of a league
+## (league_play_settings_screen: Accept writes the league's GAME.SET), the exhibition's back
 func league_change_play_settings() -> int:
 	var l: League = Session.league
 	if l == null:
 		return 0
-	fe.set_dialog_colors(0xf9, 0xfa, 0xf8, 0xfa, 0)
-	if not await master_password_prompt(l):
-		return 0
 	var keep := Session.save_block()
 	if l.game_set.size() >= Session.SETTINGS_SIZE:
 		Session.apply_block(l.game_set)
-	var r: int = await fe.settings.menu_exhibition_settings()
-	l.game_set = Session.save_block()
-	l.option_flags = Session.option_flags
-	l.save()
+	fe.set_dialog_colors(0xf9, 0xfa, 0xf8, 0xfa, 0)
+	if await master_password_prompt(l):
+		await fe.settings.league_play_settings_screen()
 	Session.apply_block(keep)
-	return r
+	return 0
 
-## Show League Settings ... of the calendar (settings_screen_a), League settings of the grid
+## Show League Settings ... of the calendar (settings_screen_a: SETTING5, to look at)
 func settings_screen_a() -> int:
-	return await fe.settings.menu_exhibition_settings()
+	return await fe.settings.settings_screen_a()
 
+## the grid's Settings: League settings of a new league (editable), Show League settings of the team
+## to play (to look at)
 func menu_league_settings() -> int:
-	return await fe.settings.menu_exhibition_settings()
+	return await fe.settings.menu_league_settings()
 
 func menu_show_league_settings() -> int:
-	return await fe.settings.menu_exhibition_settings()
+	return await fe.settings.menu_show_league_settings()
+
+## Play-Off Settings ... of the desk with a series open (league_settings_screen 0x7a29c): the series'
+## settings in the dialog of a league, kept in its GAME.SET
+func league_settings_screen() -> int:
+	var l: League = Session.league
+	if l == null:
+		return 0
+	fe.settings.series_game = series_game(l)
+	l.game_set = await fe.settings.league_settings_screen(l.game_set)
+	if l.game_set.size() >= Session.SETTINGS_SIZE:
+		l.option_flags = l.game_set.decode_u32(0x59)
+	l.save()
+	return 0
+
+## dword_d29fb: the game of the series to be played next (the play-off games played, modulo 7)
+static func series_game(l: League) -> int:
+	return maxi(l.games_played() - League.SEASON_GAMES, 0) % 7
 
 ## Trade Players ... (league_trade_players 0x33523 -> statistics_menu 0x40183): no saved game waiting,
 ## before the trading deadline (the next game's date: March 22nd; April on; the play-offs), more than
@@ -1213,7 +1255,7 @@ func open_series(l: League) -> void:
 	Session.league_name = l.name
 	Session.stats_dir = l.dir
 	Menus.at(0xce56f).cb = "playoff_tree_screen"
-	Menus.at(0xce58f).cb = "menu_playoff_settings"
+	Menus.at(0xce58f).cb = "league_settings_screen"
 	Menus.at(0xce5af).cb = "playoff_highlights"
 
 ## the tree of the series (File: Play Next Game / Return; Settings; Statistics): the next game
@@ -1283,8 +1325,13 @@ func _tree_menu(l: League) -> int:
 	await fe.leave_screen(100)
 	return code
 
+## the play-off tree's Settings (menu_playoff_settings 0x7a1fc): the series' settings (applied by the
+## tree) in the dialog of a league in the colours of EMBPAL
 func menu_playoff_settings() -> int:
-	return await fe.settings.menu_exhibition_settings()
+	var l: League = Session.league
+	if l != null:
+		fe.settings.series_game = series_game(l)
+	return await fe.settings.menu_playoff_settings()
 
 ## Play-Off Hilights ...: the series' reels (league_highlights_flow)
 func playoff_highlights() -> int:
