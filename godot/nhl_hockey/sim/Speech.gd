@@ -83,10 +83,66 @@ static func star(index: int, abbrev: String, number: int) -> PackedStringArray:
 static func one_minute() -> PackedStringArray:
 	return PackedStringArray(["oneleft.cor"])
 
-## say_game_intro: "tonight at <arena>, an EA Sports game between <away> and <home>"
-static func game_intro(home: String, away: String) -> PackedStringArray:
-	return PackedStringArray(["tonight.bar", home + ".rnk", "easports.bar", "gamebtwn.bar",
-		away + ".awa", "and.bar", home + ".hom"])
+## say_game_intro (0x84b14): "tonight at <arena>, an EA Sports game between <away> and <home>"
+## (the arena: the home team's, Madison Square Garden for the all star game)
+static func game_intro(home: String, away: String, arena: String = "") -> PackedStringArray:
+	return PackedStringArray(["tonight.bar", (arena if arena != "" else home) + ".rnk", "easports.bar",
+		"gamebtwn.bar", away + ".awa", "and.bar", home + ".hom"])
+
+## speech_playoff_round2 / speech_playoff_round (0x84396 / 0x8430d): the clip of a play-off round
+## said rising in the sentence ("u") or at its end ("d"): the quarter, semi and conference final of
+## the east (conference 1) or the west (2), the Stanley Cup final (3); none for other values (the
+## original leaves its buffer as it was)
+static func playoff_round(conf: int, round: int, up: bool) -> String:
+	var s := "u" if up else "d"
+	if conf == 3:
+		return "stanley%s.bar" % s
+	if (conf == 1 or conf == 2) and round >= 1 and round <= 3:
+		return "%s%s%s.bar" % ["east" if conf == 1 else "west", ["qua", "sem", "fin"][round - 1], s]
+	return ""
+
+## the conference of a play-off game for the announcer (unk_c5581: 12 east, 3 west): 1 east, 2 west,
+## 3 the teams of the two conferences (the Stanley Cup final)
+static func playoff_conference(home: int, away: int) -> int:
+	var a := Exe.i32(0xc5581 + home * 4)
+	var b := Exe.i32(0xc5581 + away * 4)
+	if a != b:
+		return 3
+	return (a | b) % 2 + 1
+
+## the round of a play-off game by its league game number: 1 from 0x444, 2 from 0x47c, 3 from 0x498
+static func playoff_game_round(game_number: int) -> int:
+	if game_number >= 0x498:
+		return 3
+	return 2 if game_number >= 0x47c else 1
+
+## say_playoff_game_intro (0x84c41): "tonight at <arena>, an EA Sports game <n> of the <round>
+## between <away> and <home>"
+static func playoff_game_intro(home: String, away: String, game: int, conf: int, round: int) -> PackedStringArray:
+	return PackedStringArray(["tonight.bar", home + ".rnk", "easports.bar", "gamenum%d.bar" % game, "of.bar",
+		playoff_round(conf, round, true), "between.bar", away + ".awa", "and.bar", home + ".hom"])
+
+## say_series_result (0x8491c): "(in overtime) <team> have won (game <n> of) the <round>"; the
+## game number is left out when the cup was won (byte_ccca0)
+static func series_result(team: String, game: int, conf: int, round: int, overtime: bool, cup_won: bool) -> PackedStringArray:
+	var out := PackedStringArray()
+	if overtime:
+		out.append("overtime.bar")
+	out.append_array([team + ".awa", "havewon.bar"])
+	if not cup_won:
+		out.append_array(["gamenum.bar", "gamenum%d.bar" % game, "of.bar"])
+	out.append(playoff_round(conf, round, false))
+	return out
+
+## say_period_score_bar (0x84a7e): the score after a period: the game's ("thegame.bar"), after the
+## 1st to 3rd period, after the 1st to 3rd overtime of a play-off game or after an overtime
+## ("scortotp.bar"); "" for none
+static func period_score(period: int, overtime: bool, game: bool) -> String:
+	if game:
+		return "thegame.bar"
+	if overtime:
+		return "scor%dotp.bar" % period if period >= 1 and period <= 3 else "scortotp.bar"
+	return "scor%dper.bar" % period if period >= 1 and period <= 3 else ""
 
 ## say_highlight_intro (0x847da): "let's take you now to the highlight of the game between <away>
 ## and <home>" (the arena of the home team)

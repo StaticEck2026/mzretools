@@ -3805,11 +3805,36 @@ func speech_tests(bos: Database.TeamInfo, det: Database.TeamInfo, gf: Node) -> v
 		Speech.star(1, "BOS", 77),
 		Speech.one_minute(),
 		Speech.game_intro("BOS", "DET"),
+		Speech.game_intro("ASE", "ASW", "NYR"),
+		Speech.highlight_intro("MTL", "TOR"),
+		Speech.playoff_game_intro("BOS", "MTL", 3, 1, 1),
+		Speech.playoff_game_intro("CHI", "DET", 7, 2, 3),
+		Speech.playoff_game_intro("NYR", "VAN", 7, 3, 3),
+		Speech.series_result("NYR", 7, 3, 3, true, true),
+		Speech.series_result("PIT", 4, 1, 2, false, false),
+		PackedStringArray([Speech.period_score(1, false, false), Speech.period_score(3, false, false),
+			Speech.period_score(2, true, false), Speech.period_score(0, true, false), Speech.period_score(0, false, true),
+			"elsenhl.int", "nhl.int", "lineups.int", "goodnite.int"]),
 	]
 	for snt: PackedStringArray in sentences:
 		for c in snt:
-			if not viv.has(c):
+			# (say_series_result's "gamenum.bar" is not in the bank: the original skips it too)
+			if not viv.has(c) and c != "gamenum.bar":
 				fail("speech clip %s is not in the bank" % c)
+	var rounds := []
+	for conf in [1, 2, 3]:
+		for round in [1, 2, 3]:
+			rounds.append(Speech.playoff_round(conf, round, round != 2))
+	if str(rounds) != str(["eastquau.bar", "eastsemd.bar", "eastfinu.bar", "westquau.bar", "westsemd.bar", "westfinu.bar",
+			"stanleyu.bar", "stanleyd.bar", "stanleyu.bar"]) or Speech.playoff_round(1, 4, true) != "" \
+			or Speech.playoff_round(0, 1, true) != "":
+		fail("play-off round clips: %s" % str(rounds))
+	# unk_c5581: Boston and Buffalo in the east, Calgary and Chicago in the west
+	if Speech.playoff_conference(0, 1) != 1 or Speech.playoff_conference(2, 3) != 2 or Speech.playoff_conference(0, 2) != 3 \
+			or Speech.playoff_game_round(0x444) != 1 or Speech.playoff_game_round(0x47c) != 2 or Speech.playoff_game_round(0x4a6) != 3:
+		fail("play-off conference and round of the announcer")
+	if str(Speech.series_result("NYR", 7, 3, 3, true, true)) != str(PackedStringArray(["overtime.bar", "NYR.awa", "havewon.bar", "stanleyd.bar"])):
+		fail("series result: %s" % str(Speech.series_result("NYR", 7, 3, 3, true, true)))
 	for t in 28:
 		var a: String = Tables.team_abbrev[t]
 		if not viv.has(a + ".tea") or not viv.has(a + ".frm"):

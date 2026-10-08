@@ -37,6 +37,8 @@ var last_sim: Sim = null            # the simulation of the last game played to 
 var leagues: LeagueScreens
 var intro: IntroScreens
 var music: MusicPlayer = null        # the FM songs of the front end (the title song of the intro and the credits)
+var announcer: Announcer = null      # the announcer's sentences of the screens (XBRUCE2.VIV)
+var nhl_intro_pending := true        # dword_c588a: the title's "NHL.INT" not said yet
 
 func _ready() -> void:
 	layer = CanvasLayer.new()
@@ -181,19 +183,26 @@ func stop_song() -> void:
 func say_goodnight() -> void:
 	say_clip("goodnite.int")
 
-## a clip of the announcer with speech on (option_flags 0x100), when the speech bank has it (the
-## .int clips of say_goodnite_int / say_lineups_int are not in the bank of the floppy version)
+## a clip of the announcer (speech_say_clip) with sound and speech on (option_flags 0x100)
 func say_clip(clip: String) -> void:
+	say(PackedStringArray([clip]))
+
+## a sentence of the announcer (speech_play_sentence) with sound and speech on: its clips one
+## after the other, a new sentence interrupts the last (Speech.gd builds them)
+func say(clips: PackedStringArray) -> void:
 	if not Session.sound_enabled or Session.option_flags & 0x100 == 0:
 		return
-	var v := Viv.parse(GameFiles.read_raw("xbruce2.viv"))
-	if v == null or not v.has(clip):
-		return
-	var p := AudioStreamPlayer.new()
-	p.stream = v.stream(clip)
-	add_child(p)
-	p.finished.connect(p.queue_free)
-	p.play()
+	if announcer == null:
+		announcer = Announcer.new()
+		add_child(announcer)
+		announcer.setup(null, Viv.parse(GameFiles.read_raw("xbruce2.viv")))
+	announcer.say(clips)
+
+## speech_stop: the sentence being said ends
+func speech_stop() -> void:
+	if announcer != null:
+		announcer.stop()
+
 
 ## the screen fades to black with the recording (the usual way out of a screen)
 func leave_screen(ticks: int = 100) -> void:
@@ -607,6 +616,15 @@ func pause_menu(variant: int, m: Node) -> int:
 	ui.draw_menu_items(root, LIGHT, FACE, DARK)
 	play_loop("pause")
 	await scr.fade_in(pal, 16)
+	if variant == 2 and Session.game_number >= League.SEASON_GAMES and m != null:
+		# say_series_result: the winner of the game (the visitors on a tie), the series' game
+		var sim: Sim = m.sim
+		var h: int = sim.team_ids[0]
+		var a: int = sim.team_ids[1]
+		var winner := h if sim.teams[0].goals > sim.teams[1].goals else a
+		say(Speech.series_result(Tables.team_abbrev[winner], (Session.game_number - League.SEASON_GAMES) % 7 + 1,
+			Speech.playoff_conference(h, a), Speech.playoff_game_round(Session.game_number), sim.period_num > 3, sim.series_announce))
+		sim.series_announce = false
 	var redraw := func() -> void:
 		await scr.fade_out(16)
 		if desk != null:

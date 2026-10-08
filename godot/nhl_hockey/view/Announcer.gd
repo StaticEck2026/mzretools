@@ -7,6 +7,7 @@ extends Node
 ## busy, Sim.speech_busy holds the stoppage (penalty_box_update) and the cup presentation.
 ## The clips play on the digital driver's mixer, voices 0 and 1 in turn at 11025 Hz and full
 ## volume (playsample_raw / playsample_raw_loop), where the effects also take their voices.
+## The front end's screens have one without a simulation and pass their sentences to say().
 
 const TRIM_TICKS := 0x1a
 
@@ -28,10 +29,13 @@ func setup(s: Sim, bank: Viv) -> void:
 	player = AudioStreamPlayer.new()
 	add_child(player)
 
+## a sentence of the front end (speech_play_sentence), the running one interrupted
+func say(sentence: PackedStringArray) -> void:
+	if viv != null and enabled:
+		_start(sentence)
+
 func _process(delta: float) -> void:
-	if sim == null:
-		return
-	if not sim.announcer_queue.is_empty():
+	if sim != null and not sim.announcer_queue.is_empty():
 		var sentence: PackedStringArray = sim.announcer_queue[sim.announcer_queue.size() - 1]
 		sim.announcer_queue.clear()
 		if viv != null and enabled:
@@ -42,7 +46,8 @@ func _process(delta: float) -> void:
 			_next()
 	elif cooldown > 0.0:
 		cooldown -= delta
-	sim.speech_busy = playing or cooldown > 0.0
+	if sim != null:
+		sim.speech_busy = playing or cooldown > 0.0
 
 func _start(sentence: PackedStringArray) -> void:
 	clips = sentence
@@ -73,5 +78,6 @@ func stop() -> void:
 	player.stop()
 	playing = false
 	cooldown = 0.0
-	sim.announcer_queue.clear()
-	sim.speech_busy = false
+	if sim != null:
+		sim.announcer_queue.clear()
+		sim.speech_busy = false

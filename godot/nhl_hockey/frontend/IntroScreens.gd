@@ -95,14 +95,18 @@ func _ea_open() -> void:
 	await scr.fade_out(16)
 
 ## ea_sports_intro (0x15fe9): EASCRN "scrn" and TITLE.CMV with the title song (ADTITLE, MTTITLE
-## for the MT-32) until the video has run twice or a key is pressed (intro_skip_pressed after 0x23
-## frames); true when a key ended it. Without the CD the loading screen stands in for the title
-## (eight seconds).
+## for the MT-32), the first time with the announcer's NHL.INT, until the video has run twice or a
+## key is pressed (intro_skip_pressed after 0x23 frames); true when a key ended it. Without the CD
+## the loading screen stands in for the title (eight seconds).
 func ea_sports_intro() -> bool:
 	scr.clearclip()
 	fe.loading_shown = false
 	fe.play_song("MTTITLE" if Session.sound_device == 8 else "ADTITLE")
 	await fe.loading_screen(0)
+	# the title's first frame: the announcer's "NHL.INT", once (say_nhl_intro)
+	if Session.sound_enabled and fe.nhl_intro_pending:
+		fe.nhl_intro_pending = false
+		fe.say_clip("nhl.int")
 	var r: int = await ui.wait_ticks_or_input(800)
 	fe.stop_song()
 	await scr.fade_out(16)

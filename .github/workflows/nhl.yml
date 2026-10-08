@@ -50,7 +50,11 @@ jobs:
       - name: Import
         run: '"$HOME/godot/$GODOT" --headless --path godot/nhl_hockey --import'
       - name: Tests
-        run: '"$HOME/godot/$GODOT" --headless --path godot/nhl_hockey --script tests/run_tests.gd'
+        # a script error aborts the test it happens in without a failure: it fails the run here
+        run: |
+          set -o pipefail
+          "$HOME/godot/$GODOT" --headless --path godot/nhl_hockey --script tests/run_tests.gd 2>&1 | tee tests.log
+          ! grep -n "SCRIPT ERROR" tests.log
 
   native:
     name: OPL2 library from source
@@ -69,5 +73,7 @@ jobs:
           unzip -q godot.zip -d "$HOME/godot"
       - name: Tests with the library just built
         run: |
+          set -o pipefail
           "$HOME/godot/$GODOT" --headless --path godot/nhl_hockey --import
-          "$HOME/godot/$GODOT" --headless --path godot/nhl_hockey --script tests/run_tests.gd
+          "$HOME/godot/$GODOT" --headless --path godot/nhl_hockey --script tests/run_tests.gd 2>&1 | tee tests.log
+          ! grep -n "SCRIPT ERROR" tests.log

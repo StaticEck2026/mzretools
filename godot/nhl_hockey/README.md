@@ -59,7 +59,7 @@ behaviour matches the DOS game (see "Porting conventions" below).
 | Digital driver | `audio/DacDriver.gd` | `sbdac_*` and the software mixer `mix_*`: four voices at 11025 Hz with their 8 bit volume tables and clipping, the voice masks and priorities of the patch records, voice stealing, pitch bend; the effects, the crowd's roar (0x7d, voice 2) and murmur (0x7e, voice 3), the speech (voices 0 / 1), the stomp and the front end's recordings (voice 3) |
 | PC speaker | `audio/PcSpeaker.gd` | `pcspk_*`: one voice (as in the original), the timbre's envelope, LFO and note sequence moving the PIT divisor of the note, `pcspk_hw_update` |
 | MT-32 | `audio/Mt32.gd` | `mpu_drv_send_midi`: the MPU-401 byte stream (MT32HOCK.KMS's set-up, the MT* songs, the effects on the rhythm part), heard through a small stand-in synthesiser (see below) |
-| Speech | `loaders/Viv.gd`, `sim/Speech.gd`, `view/Announcer.gd` | `speech_load_bank` (XBRUCE2.VIV: byte pair packed clips and 4 bit Fibonacci delta coded ones), the sentences of `say_goal`, `say_penalty`, `say_penalty_shot`, `say_star`, `say_time_remaining`, `say_game_intro`, played back to back like the timer routine `speech_timer` |
+| Speech | `loaders/Viv.gd`, `sim/Speech.gd`, `view/Announcer.gd` | `speech_load_bank` (XBRUCE2.VIV: byte pair packed clips and 4 bit Fibonacci delta coded ones), the sentences of `say_goal`, `say_penalty`, `say_penalty_shot`, `say_star`, `say_time_remaining`, `say_highlight_intro`, played back to back like the timer routine `speech_timer`; on the front end's screens (`frontend/FrontEnd.gd` say) the title's NHL.INT (`say_nhl_intro`, once), tonight's game or the play-off game of the series on the scouting report (`say_game_intro`, `say_playoff_game_intro` with `speech_playoff_round2`), the line-ups, the score after the period or of the game on the scoring summary (`say_period_score_bar`), "elsewhere in the NHL" on the scores around the league (`say_elsenhl_int`), the series' result after a play-off game (`say_series_result` with `speech_playoff_round`), goodnight |
 | Music | `loaders/Kms.gd`, `audio/KmsPlayer.gd`, `audio/FmDriver.gd`, `audio/Opl2.gd`, `audio/DacDriver.gd`, `audio/MusicCues.gd`, `audio/MusicPlayer.gd` | `music_load_kms` (KMS + CFG), the sequencer of the 100 Hz timer (`sound_timer_tick`, `kms_track_tick`, the note table, `snd_play_patch` for the FM effects), the FM driver (`adlib_drv_*`, also YM30.BGP: voices, the timbres' envelopes, LFOs and step sequences, levels, frequencies), the YM3812 computed sample by sample at 49716 Hz (ROM tables, envelope generator, feedback, the YM3014 DAC; natively in `native/opl2` where the library is built, else in GDScript), each track sent to the driver of its program's record class (`kms_track_tick`), `load_music_banks` / `play_speech` (the home team's songs, three random ones, the anthem, the card's stomp) |
 | Fonts | `loaders/Vfn.gd` | `setfont` / `printstr`: 1 bpp VFN fonts (HILIGHT, WITTLE06, TEENY05...) |
 | Entities and teams | `sim/Entity.gd`, `sim/Team.gd` | the 17 x 0x80 byte entity records and the two team records (STRUCTURES.md) |
@@ -236,9 +236,8 @@ library built from source with the tests again.
 
 - The files that are on the CD only are replaced: the intro logos and the title video (the loading screen
   with the title song stands in), the credits' background and photographs (the NHL emblem), the calendar's
-  pictures (drawn cells), the play-off tree's logos (SRLOGO at half size), the mouse pointer (an arrow), the
-  front end recordings that the floppy files lack, and the .INT clips of the announcer (goodnight, the
-  line-ups).
+  pictures (drawn cells), the play-off tree's logos (SRLOGO at half size), the mouse pointer (an arrow) and
+  the front end recordings that the floppy files lack.
 - The multi-player league of the original (every human team plays from its own copy of the league files,
   `league_merge_files` puts them together) is folded into one set of files: the games of the computer
   teams are simulated after each human game, so there is nothing to merge.

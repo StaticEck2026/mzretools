@@ -330,6 +330,13 @@ func scouting_report_screen(home: int, away: int) -> int:
 	fe.buttons_draw_all(list)
 	fe.play_loop("scouting")
 	await scr.fade_in(pal, 16)
+	# the announcer: tonight's game (say_game_intro), in the play-offs the game of the series
+	# (say_playoff_game_intro)
+	if Session.game_number < League.SEASON_GAMES:
+		fe.say(Speech.game_intro(Tables.team_abbrev[home], Tables.team_abbrev[away], Tables.team_abbrev[0xc if home >= 0x1a else home]))
+	else:
+		fe.say(Speech.playoff_game_intro(Tables.team_abbrev[home], Tables.team_abbrev[away], (Session.game_number - League.SEASON_GAMES) % 7 + 1,
+			Speech.playoff_conference(home, away), Speech.playoff_game_round(Session.game_number)))
 	var result := 0
 	ui.show_pointer(true)
 	ui.reset_events()

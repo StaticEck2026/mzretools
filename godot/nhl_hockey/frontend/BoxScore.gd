@@ -176,6 +176,7 @@ func _clear_rows() -> void:
 ## the league are skipped then).
 func boxscore_screen(kind: int, from_period: int, to_period: int) -> int:
 	await fe.fade_loop(100)
+	fe.speech_stop()
 	ui.reset_events()
 	var data := summary()
 	var recs := Sim.summary_records(data)
@@ -257,6 +258,8 @@ func _summary_pages(kind: int, from_period: int, to_period: int, recs: Array, te
 				scr.print_text_at((500 - scr.textwidth("No Scoring.")) / 2 + 0x8c, 0x10b, "No Scoring.")
 			if not any_penalty and kind & 2:
 				scr.print_text_at((500 - scr.textwidth("No Penalties.")) / 2 + 0x8c, 0x10b, "No Penalties.")
+			if first and kind & 1 and kind & 0x24 == 0:
+				_say_score(from_period, to_period, recs)
 			if pi == 0:
 				await scr.fade_in(_pal, 16)
 			first = false
@@ -264,6 +267,27 @@ func _summary_pages(kind: int, from_period: int, to_period: int, recs: Array, te
 			if r >= 2:
 				return r
 	return r
+
+## the announcer on the first page of a scoring summary (say_period_score): the game's score after
+## the game (dword_c53f7, no game on the ice) or over several periods, else the score after the
+## period: an overtime of a play-off game still tied counted 1 to 3, any other overtime as such
+func _say_score(from_period: int, to_period: int, recs: Array) -> void:
+	if fe.game == null or from_period != to_period:
+		fe.say_clip(Speech.period_score(0, false, true))
+		return
+	var p := from_period
+	if p < 4:
+		fe.say_clip(Speech.period_score(p, false, false))
+		return
+	# the goals of the whole game (the summary's goal records by team)
+	var goals := [0, 0]
+	for rec: PackedByteArray in recs:
+		if rec[0] == 1 and rec[1] < 2:
+			goals[rec[1]] += 1
+	if p < 7 and goals[0] == goals[1] and Session.game_number >= League.SEASON_GAMES:
+		fe.say_clip(Speech.period_score(p - 3, true, false))
+	else:
+		fe.say_clip(Speech.period_score(0, true, false))
 
 func _team_abbrev(rec: PackedByteArray) -> String:
 	return Database.cstring(rec, 0, 5)
@@ -339,7 +363,7 @@ func _scratch_pages(teams: Array) -> int:
 ## lines of three in columns of 0x96 from x 0x91, clipped above y 0x154), the defence (three pairs
 ## in columns of 0xf0) and the scratches ("Injured" for a player hurt for the game), each page
 ## 1000 ticks or until a click; the first page fades in and the announcer says the line-ups
-## (say_lineups: LINEUPS.INT, in the CD's speech bank).
+## (say_lineups: LINEUPS.INT).
 ## TONIGHTS.IFF plays meanwhile. Returns the last wait: 2 a double click skips the rest, 3 (Esc
 ## or the right button) cancels the game; the loading screen follows unless cancelled.
 func lineups_screen(home: int, away: int) -> int:
@@ -459,6 +483,8 @@ func league_scores_pages() -> int:
 			t += " period"
 		scr.print_text_at(400, 0xf3, t)
 		if first:
+			# "elsewhere in the NHL" (say_elsenhl)
+			fe.say_clip("elsenhl.int")
 			await scr.fade_in(_pal, 16)
 			first = false
 		r = await ui.wait_ticks_or_input(1000)
