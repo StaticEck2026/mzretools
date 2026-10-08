@@ -566,61 +566,85 @@ func league_control_dialog(pinfo: PackedByteArray, count: int) -> void:
 	pinfo[6] = 0
 
 # ---------------------------------------------------------------------------------------------
-# Open ... (league_select_screen): the leagues of the directory
+# Open ... (league_select_screen 0x2b944): the saved games, play-off series and leagues
 # ---------------------------------------------------------------------------------------------
 
+## league_select_screen: the dialog (SelectDialog: scan_league_dirs' NAME.NHL saved exhibition games,
+## NAME.PO play-off series and NAME.LP leagues, 32 of each at most) over the screen, given back
+## afterwards; Open continues the saved game, opens the series (its tree) or the league
 func league_select_screen() -> int:
-	var names := League.list_leagues()
-	for n in League.list_leagues(".PO"):
-		names.append(n + " (Play-Offs)")
-	for n in SaveGame.list_saves():
-		names.append(n + " (Saved Game)")
-	if names.is_empty():
-		await fe.message_dialog(["There is nothing to open."])
+	var dlg := SelectDialog.new(fe, false)
+	var kinds := [SaveGame.list_saves(), League.list_leagues(".PO"), League.list_leagues(".LP")]
+	for k in 3:
+		var names: Array = Array(kinds[k]).slice(0, 0x20)
+		if not names.is_empty():
+			dlg.lists[k] = SelectDialog.make_list(names)
+	var behind := scr.grab(0xa, 0x13, 0xee, 0xc6)
+	var chosen := [-1, ""]
+	var on_open := func(kind: int, name: String) -> int:
+		chosen[0] = kind
+		chosen[1] = name
+		return 1
+	var r := await dlg.run(on_open, _league_name_prompt)
+	scr.put(behind)
+	if r == 0:
 		return 0
-	var lines: Array = ["Open which league or game?"]
-	var labels: Array = []
-	for n in names.slice(0, 6):
-		labels.append(n)
-	labels.append("Cancel")
-	var list: Array = []
-	var x := 16
-	var y := 0x20
-	for i in labels.size():
-		var w := maxi(scr.textwidth(labels[i]) + 16, 80)
-		if i == labels.size() - 1:
-			list.append(FrontEnd.UiButton.new(-16, -8, w, 20, labels[i], 2))
-		else:
-			list.append(FrontEnd.UiButton.new(16, y, 160, 20, labels[i], 5))
-			y += 24
-	lines.append_array(["", ""])
-	for i in labels.size() - 1:
-		lines.append("")
+	var name: String = chosen[1]
+	match chosen[0]:
+		0:
+			var path := SaveGame.saves_dir().path_join(name + ".NHL")
+			var data := SaveGame.read(path)
+			if data.is_empty():
+				await fe.message_dialog(["Error while reading the saved game!"])
+				return 0
+			DirAccess.remove_absolute(path)
+			var keep := Session.save_block()
+			await fe.games.continue_saved(data)
+			Session.apply_block(keep)
+			return 2
+		1, 2:
+			var l := League.open(name, ".PO" if chosen[0] == 1 else ".LP")
+			if l == null:
+				await fe.message_dialog(["Error while reading the league!"])
+				return 0
+			if chosen[0] == 1:
+				open_series(l)
+				return await playoff_tree_screen()
+			open_league(l)
+			return await league_calendar_screen()
+	return 0
+
+## league_name_prompt (0x2ce29): "Confirm Deletion of the" / "Exhibition Game Called:" ("Play-Off
+## Series Called:", "League Called:") / the name, NO / YES; the directory deleted (the open league or
+## series closed first) or the saved game's file
+func _league_name_prompt(kind: int, name: String) -> bool:
 	fe.set_dialog_colors(0xf9, 0xfa, 0xf8, 0xfa, 0)
-	var r := await fe.message_dialog_buttons(lines, list)
-	if r < 0 or r >= labels.size() - 1:
-		return 0
-	if labels[r].ends_with(" (Saved Game)"):
-		var path := SaveGame.saves_dir().path_join(labels[r].trim_suffix(" (Saved Game)") + ".NHL")
-		var data := SaveGame.read(path)
-		if data.is_empty():
-			await fe.message_dialog(["Error while reading the saved game!"])
-			return 0
+	var what: String = ["Exhibition Game Called:", "Play-Off Series Called:", "League Called:"][kind]
+	var r := await fe.message_dialog_buttons(["Confirm Deletion of the", what, name], FrontEnd.buttons_at(0xd2b38, 2))
+	if r != 1:
+		return false
+	if kind == 0:
+		var path := SaveGame.saves_dir().path_join(name + ".NHL")
+		if not FileAccess.file_exists(path):
+			return false
 		DirAccess.remove_absolute(path)
-		var keep := Session.save_block()
-		await fe.games.continue_saved(data)
-		Session.apply_block(keep)
-		return 2
-	var series: bool = labels[r].ends_with(" (Play-Offs)")
-	var l := League.open(labels[r].trim_suffix(" (Play-Offs)"), ".PO" if series else ".LP")
-	if l == null:
-		await fe.message_dialog(["Error while reading the league!"])
-		return 0
-	if series:
-		open_series(l)
-	else:
-		open_league(l)
-	return 2
+		return true
+	var ext: String = [".NHL", ".PO", ".LP"][kind]
+	var dir := League.root().path_join(name + ext)
+	if not DirAccess.dir_exists_absolute(dir):
+		return false
+	if Session.league_dir.to_upper() == (name + ext).to_upper():
+		if kind == 2:
+			activate_league_menus(false)
+		else:
+			for a in [0xce56f, 0xce58f, 0xce5af]:
+				Menus.at(a).cb = ""
+		Session.league = null
+		Session.league_dir = ""
+	for f in DirAccess.get_files_at(dir):
+		DirAccess.remove_absolute(dir.path_join(f))
+	DirAccess.remove_absolute(dir)
+	return true
 
 ## Export Databases ... (league_select_team: a team's files for its player on another computer)
 func league_select_team() -> int:

@@ -295,6 +295,13 @@ func run() -> int:
 	_draw()
 	var pb := fe.bank("embpal")
 	_pal = Screen8.shape_palette(pb.find("!pal")) if pb != null else FrontEnd._grey_palette()
+	# (PREZ2's palette is on the CD only: EMBPAL stands in, with the dialogs' greys 0xf8..0xfa of
+	# OPEN_BUT's palette, which the Load Database dialog's pictures and text use)
+	var ob := fe.bank("open_but")
+	if ob != null and ob.find("!pal") != null:
+		var op := Screen8.shape_palette(ob.find("!pal"))
+		for i in range(0xf8 * 3, 0xfb * 3):
+			_pal[i] = op[i]
 	await scr.fade_in(_pal, 16)
 	var handler := func(cb: String):
 		await _callback(cb)
@@ -397,8 +404,7 @@ func _callback(cb: String) -> void:
 		"new_database_dialog":
 			await _new_database_dialog()
 		"menu_load_database":
-			await _load_named()
-			_draw()
+			await _menu_load_database()
 		_:
 			await fe.dispatch(cb)
 
@@ -1134,7 +1140,7 @@ func _ratings_confirm_dialog(prompt: String) -> void:
 		ratings[0] = 0
 
 # ---------------------------------------------------------------------------------------------
-# not yet ported literally: the line editor, the databases by name
+# Edit Team Lines (the registry's line editor)
 # ---------------------------------------------------------------------------------------------
 
 ## dbedit_edit_team_lines (0x6df06) -> edit_lines_screen_a (0x737e1): the line editor of the
@@ -1172,6 +1178,10 @@ func _edit_lines(c: int) -> void:
 		_free_lists(c ^ 1)
 	_draw()
 	await scr.fade_in(_pal, 16)
+
+# ---------------------------------------------------------------------------------------------
+# the databases by name (Temporary Save, Load Database)
+# ---------------------------------------------------------------------------------------------
 
 ## the saved databases (Temporary Save): NAME.DBX directories as in the game directory
 const DBX_DIR := "user://databases"
@@ -1213,31 +1223,51 @@ func _database_disk_check(dir: String) -> void:
 			f.store_buffer(files[n])
 	dirty = false
 
-## Load Database ...: a copy saved with Temporary Save
-func _load_named() -> void:
-	var d := DirAccess.open("user://databases")
-	if d == null or d.get_directories().is_empty():
-		await fe.message_dialog(["No databases have been saved."])
-		return
-	var names: Array = Array(d.get_directories()).slice(0, 6)
-	var list: Array = []
-	var y := 0x20
-	for n in names:
-		list.append(FrontEnd.UiButton.new(16, y, 160, 20, n, 5))
-		y += 24
-	list.append(FrontEnd.UiButton.new(-16, -8, 80, 20, "Cancel", 2))
-	var lines: Array = ["Load which database?", ""]
-	for n in names:
-		lines.append("")
-	var r := await fe.message_dialog_buttons(lines, list)
-	if r < 0 or r >= names.size():
-		return
-	var dir := "user://databases".path_join(names[r])
+## menu_load_database (0x73703): the dialog (SelectDialog) with the kinds Current (the game's
+## databases), Original (the .ORG copies) and Temporary (the NAME.DBX directories, scan_database_files:
+## at most 16); Open loads them (database_load_selected / database_load_set: the name shown, not
+## changed) and the screen is built again; Delete takes a saved database away (database_dbx_check:
+## "Confirm deletion of the database:" NO / YES)
+func _menu_load_database() -> void:
+	var dlg := SelectDialog.new(fe, true)
+	dlg.lists[0] = SelectDialog.make_list(["CURRENT"])
+	if GameFiles.has("key.org"):
+		dlg.lists[1] = SelectDialog.make_list(["ORIGINAL"])
+	var saved: Array = []
+	for d in DirAccess.get_directories_at(DBX_DIR):
+		if d.to_upper().ends_with(".DBX") and saved.size() < 0x10:
+			saved.append(d.get_basename())
+	if not saved.is_empty():
+		dlg.lists[2] = SelectDialog.make_list(saved)
+	var behind := scr.grab(0xa, 0x13, 0xf3, 0xc6)
+	var on_open := func(kind: int, name: String) -> int:
+		_load_set(kind, name)
+		_free_lists(0)
+		_free_lists(1)
+		_draw()
+		return 1
+	var on_delete := func(_kind: int, name: String) -> bool:
+		var r := await fe.message_dialog_buttons(["Confirm deletion of the database:", name], FrontEnd.buttons_at(0xd2b38, 2))
+		if r != 1:
+			return false
+		var dir := DBX_DIR.path_join(name + ".DBX")
+		if not DirAccess.dir_exists_absolute(dir):
+			return false
+		_delete_directory(dir)
+		return true
+	if await dlg.run(on_open, on_delete) == 0:
+		scr.put(behind)
+
+## database_load_selected / database_load_set: Current (the game's .DB), Original (.ORG) or a saved
+## NAME.DBX; the databases are no longer changed
+func _load_set(kind: int, name: String) -> void:
 	for n in files:
-		var b := FileAccess.get_file_as_bytes(dir.path_join(n + ".DB"))
-		if not b.is_empty():
-			files[n] = b
-	db_name = names[r]
-	dirty = true
-	_free_lists(0)
-	_free_lists(1)
+		match kind:
+			0:
+				files[n] = GameFiles.read_raw(n.to_lower() + ".db")
+			1:
+				files[n] = GameFiles.read_original(n.to_lower() + ".org")
+			2:
+				files[n] = FileAccess.get_file_as_bytes(DBX_DIR.path_join(name + ".DBX").path_join(n + ".DB"))
+	db_name = ["Current", "Original", name][kind]
+	dirty = false
