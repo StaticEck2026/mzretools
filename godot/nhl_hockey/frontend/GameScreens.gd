@@ -49,13 +49,15 @@ var _bg_away_name: Image
 var _bg_title: Image
 var _pal := PackedByteArray()
 
-## locker_room_hub (0x80830): the room with both jerseys; returns 2 (the desk is drawn again)
+## locker_room_hub (0x80830): the room with both jerseys; returns 2 for an exhibition (the desk is
+## drawn again), else locker_room_menu's 0 (Done) or 3 (Cancel)
 func locker_room_hub() -> int:
 	await fe.leave_screen(100)
 	await fe.loading_screen()
 	await locker_room_screen()
-	await locker_room_menu()
-	return 2
+	var r := await locker_room_menu()
+	# an exhibition goes back to the desk (2); a play-off series learns of Done (0) or Cancel (3)
+	return 2 if Session.mode == 0 else r
 
 ## +5 on the 6 bit components below 0x3b, 0x3f above (the lighter palette of the room)
 static func _brighten(src: PackedByteArray, from: int, to: int, into: PackedByteArray, at: int) -> void:

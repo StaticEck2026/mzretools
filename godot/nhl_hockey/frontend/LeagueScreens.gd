@@ -1136,10 +1136,69 @@ func league_import_databases() -> int:
 # with the bracket of playoff_bracket_screen 0x8a652)
 # ---------------------------------------------------------------------------------------------
 
-## the name (NAME.PO), the databases, the two teams of the locker room; the bracket is seeded
-## and the series is open
+## stanley_cup_tree_screen (0x8669e): over EMBSCUP the name (NAME.PO), then settings_playoff's
+## defaults (a play-off series, Rangers - Canucks, every rule, the first controller found for player 1
+## with the Rangers), an old series of the name replaced, the databases (current or original), the
+## locker room; EMBSCUP again with "Please Wait. Setting Up Play-Offs." while the bracket is seeded
+## (cup_tree_seed_bracket) and the files are written; the series is open. The screen fades out, the
+## exhibition's settings and the dialog colours come back.
 func stanley_cup_tree_screen() -> int:
-	# EMBSCUP under the name entry (EMBPAL), colour 3 white for the cursor (0x40 XOR 0x43)
+	var dc := [fe.dlg_face, fe.dlg_light, fe.dlg_dark, fe.dlg_text, fe.dlg_shadow]
+	var keep := Session.save_block()
+	fe.set_dialog_colors(0x41, 0x40, 0x42, 0x40, 0x43)
+	await _cup_backdrop()
+	# colour 3 white for the cursor of the name (0x40 XOR 0x43)
+	scr.settextcolor(0x40, 0x41)
+	var c3 := scr.getpalette().slice(9, 12)
+	scr.setpalette(PackedByteArray([0x3f, 0x3f, 0x3f]), 3, 1)
+	var name := (await fe.text_entry_dialog("Please Enter New Play-Off Name", 8, 0x36, 5)).to_upper()
+	scr.setpalette(c3, 3, 1)
+	var l: League = null
+	if fe.entry_key != 0x1b and name != "":
+		Session.mode = 1
+		Session.home_team = 0xc
+		Session.away_team = 0x15
+		Session.option_flags = (Session.option_flags & 0x8000) | 0x79ff
+		Session.p1_device = 0x10
+		for d in [2, 4, 8, 1]:
+			if Session.input_devices & d:
+				Session.p1_device = d
+				break
+		Session.p1_team = 0xc if Session.p1_device != 0x10 else -1
+		Session.p2_device = 0x10
+		Session.p2_team = -2
+		Session.p1_side = 0
+		Session.p2_side = 1
+		var go := true
+		if League.list_leagues(".PO").has(name):
+			var r := await fe.message_dialog_buttons(["There is already a Play-Off with that name!",
+				"Do you want to replace it with a new Play-Off?"], FrontEnd.buttons_at(0xc7733, 2))
+			go = r != 0
+			if go:
+				League.delete(name, ".PO")
+		var org := -1
+		if go:
+			org = await fe.message_dialog_buttons(["Do you wish to use your", "Current database or the", "Original NHL database?"],
+				FrontEnd.buttons_at(0xc74b7, 2))
+		if go and org >= 0 and await fe.games.locker_room_hub() != 3:
+			Session.league_dir = name + ".PO"
+			Session.league_name = name
+			var settings := Session.save_block()
+			await _cup_backdrop()
+			fe.message_show(["Please Wait.", "Setting Up Play-Offs."])
+			await ui.frame()
+			l = League.create_series(name, sources(org == 1), settings, Session.home_team, Session.away_team)
+			l.save()
+			fe.restore_dialog_background()
+	await scr.fade_out(16)
+	Session.apply_block(keep)
+	if l != null:
+		open_series(l)
+	fe.set_dialog_colors(dc[0], dc[1], dc[2], dc[3], dc[4])
+	return 2
+
+## EMBSCUP faded in with EMBPAL
+func _cup_backdrop() -> void:
 	await scr.fade_out(16)
 	scr.clearclip()
 	var bg := fe.bank("embscup")
@@ -1147,42 +1206,6 @@ func stanley_cup_tree_screen() -> int:
 		scr.drawshape_remap(bg.find("bkgd"), 0, 0)
 	var pb := fe.bank("embpal")
 	await scr.fade_in(Screen8.shape_palette(pb.find("!pal")) if pb != null else FrontEnd._grey_palette(), 16)
-	scr.settextcolor(0x40, 0x41)
-	fe.set_dialog_colors(0x41, 0x40, 0x42, 0x40, 0x43)
-	var c3 := scr.getpalette().slice(9, 12)
-	scr.setpalette(PackedByteArray([0x3f, 0x3f, 0x3f]), 3, 1)
-	var name := (await fe.text_entry_dialog("Please Enter New Play-Off Name", 8, 0x36, 5)).to_upper()
-	scr.setpalette(c3, 3, 1)
-	if fe.entry_key == 0x1b or name == "":
-		return 2
-	if League.list_leagues(".PO").has(name):
-		var r := await fe.message_dialog_buttons(["There is already a Play-Off with that name!",
-			"Do you want to replace it with a new Play-Off?"], FrontEnd.buttons_at(0xc7733, 2))
-		if r != 1:
-			return 2
-	var org := await fe.message_dialog_buttons(["Do you wish to use your", "Current database or the", "Original NHL database?"],
-		FrontEnd.buttons_at(0xc74b7, 2))
-	if org < 0:
-		return 2
-	var keep := Session.save_block()
-	Session.mode = 1
-	if await fe.games.locker_room_hub() == 3:
-		Session.apply_block(keep)
-		return 2
-	# settings_playoff: the teams chosen, every rule, the play-off overtime
-	Session.option_flags = (Session.option_flags >> 8 & 0x80) << 8 | 0x79ff
-	Session.league_dir = name + ".PO"
-	Session.league_name = name
-	var settings := Session.save_block()
-	var home := Session.home_team
-	var away := Session.away_team
-	Session.apply_block(keep)
-	await _busy(["Seeding the play-offs."])
-	League.delete(name, ".PO")
-	var l := League.create_series(name, sources(org == 1), settings, home, away)
-	l.save()
-	open_series(l)
-	return 2
 
 func open_series(l: League) -> void:
 	Session.league = l
