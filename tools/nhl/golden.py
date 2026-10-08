@@ -4950,6 +4950,53 @@ def sort_cases(exe, count=600):
     return cases
 
 
+CMP_PLAYER_NAMES_B = 0x76a93                    # the line editor's entries (0x16 bytes), with qsort
+CMP_KEY_NAMES = 0x6d78b                         # the registry's lists (0x1b bytes), with shellsort_records
+SHELLSORT_RECORDS = 0x6d7ed
+
+
+def name_sort_cases(exe, count=300):
+    """The name sorts of the rosters: qsort with cmp_player_names_b on the line editor's 28 entries
+    (edit_lines_keys: +0 the position, +2 the roster slot, the last name at +6) and
+    shellsort_records with cmp_key_names on the registry's lists (dbedit_build_team_list: 28
+    entries; database_build_list: the free agents, 1 to 120; the last name at +0xb), with the
+    positions L, C, R, D, G, empty slots and odd letters, last names from a small set (many ties).
+    The entries' order after the sort is compared"""
+    emu = PortEmu(exe)
+    rnd = random.Random(0x4e41)
+    buf = emu.alloc(120 * 0x1b)
+    names = [b'Smith', b'Smyth', b'Brown', b'Lemieux', b'Bure', b'Gretzky', b'Roy', b'Hull', b'Hullx', b'B', b'']
+    cases = []
+    for k in range(count):
+        family = rnd.choice(('line_editor', 'team', 'free_agents'))
+        n = 28 if family != 'free_agents' else rnd.choice((1, 2, 5, 17, 28, 60, 120))
+        size = 0x16 if family == 'line_editor' else 0x1b
+        at = 6 if family == 'line_editor' else 0xb
+        entries = []
+        table = bytearray()
+        for i in range(n):
+            r = bytearray(size)
+            pos = rnd.choice(b'LLCCRRDDDGG') if rnd.random() < 0.85 else rnd.choice((0, 0, ord('X'), ord('Q')))
+            if family == 'free_agents' and pos == 0:
+                pos = ord('G')
+            name = rnd.choice(names)
+            r[0] = pos
+            r[1] = rnd.randrange(100)
+            r[2] = i & 0xff
+            struct.pack_into('<H', r, 4, i)
+            r[at:at + len(name)] = name
+            entries.append([pos, name.decode()])
+            table += r
+        emu.write(buf, bytes(table))
+        if family == 'line_editor':
+            emu.call(QSORT, eax=buf, edx=n, ebx=size, ecx=CMP_PLAYER_NAMES_B)
+        else:
+            emu.call(SHELLSORT_RECORDS, eax=buf, edx=n, ebx=size, ecx=CMP_KEY_NAMES)
+        out = emu.read(buf, n * size)
+        cases.append({'family': family, 'entries': entries,
+                      'sorted': [struct.unpack_from('<H', out, i * size + 4)[0] for i in range(n)]})
+    return cases
+
 STATS_TABLE = 0x25b24                          # stats_table(kind): the leaders, stopped before the drawing
 STATS_TABLE_DONE = 0x261e4
 TEAM_STATS_SCREEN = 0x235be                    # team_stats_screen(kind)
@@ -5178,6 +5225,149 @@ def stats_screen_cases(exe, count=360):
     return cases
 
 
+
+LOAD_AWARD_STATS = 0x1205d
+DOS_OPEN, DOS_CLOSE, DOS_READ = 0x90c71, 0x90c52, 0x90cea   # served from the case's files
+AWARD_KEYS = 0xd9558                            # 11 x 0x34: the key of each award's player
+AWARD_STATS = 0xc524f                           # 11 pointers: the record of each (0 for a team's)
+AWARD_EASN_SKATER = 0xc524d                     # the EASN award's record is a skater's (else a goalie's)
+AWARD_TEAMS = (0xd9270, 0xd8f88)                # the team records of the Presidents' Trophy, the Stanley Cup
+AWARD_TEAM_NAMES = 0xddac4                      # 26 x 0x15: the team names db_open_check reads
+
+
+def award_cases(exe, count=100):
+    """load_award_stats called case after case (the awards stay in static memory between the calls,
+    as they do between the seasons of the game) over TEAMS.DB / KEY.DB / SEASON.DB served from
+    random data: teams with few wins, losses, ties and play-off wins (many ties), their 25 skaters
+    and 3 goalies (KEY.DB offsets, now and then -1, a record past the end or another negative
+    offset), players of any position with small season numbers, rookies, games played around the
+    Jennings' 25; now and then a file cut short. Compared: the result, the keys and records of
+    the awards, the team records, the team names"""
+    emu = PortEmu(exe)
+    rnd = random.Random(0xa3a2)
+    files = {}
+    handles = {}
+
+    def reg(r):
+        return emu.uc.reg_read(r) & 0xffffffff
+
+    def cstr(a):
+        return emu.read(a, 80).split(b'\0')[0].decode('latin-1')
+
+    def on_open(eax):
+        name = os.path.basename(cstr(eax).replace('\\', '/')).lower()
+        h = len(handles) + 5
+        handles[h] = [name, 0]
+        emu.write(reg(UC_X86_REG_EBX), struct.pack('<I', h))
+        return 0
+
+    def on_lseek(eax):
+        h = handles[eax & 0xffff]
+        off = s32(reg(UC_X86_REG_EDX))
+        assert off >= 0
+        h[1] = off
+        return off
+
+    def on_read(eax):
+        h = handles[eax & 0xffff]
+        f = files.get(h[0], b'')
+        n = reg(UC_X86_REG_EDX)
+        got = max(0, min(n, len(f) - h[1]))
+        emu.write(reg(UC_X86_REG_EBX), bytes(f[h[1]:h[1] + got]))
+        h[1] += got
+        out = struct.unpack('<I', emu.read(reg(UC_X86_REG_ESP) + 4, 4))[0]
+        emu.write(out, struct.pack('<I', got))
+        return 0
+    hooks = [emu.stub(DOS_OPEN, on_open), emu.stub(C_LSEEK, on_lseek), emu.stub(DOS_READ, on_read, pop=4),
+             emu.stub(DOS_CLOSE, lambda eax: 0)]
+
+    def u16(n):
+        return n & 0xffff
+
+    def state():
+        ptrs = struct.unpack('<11I', emu.read(AWARD_STATS, 44))
+        easn = emu.read(AWARD_EASN_SKATER, 1)[0]
+        return {'keys': [emu.read(AWARD_KEYS + i * 0x34, 0x34).hex() for i in range(11)],
+                'records': [emu.read(p_, 0x36 if (i in (4, 5) or (i == 9 and easn != 1)) else 0x2f).hex()
+                            if p_ else '' for i, p_ in enumerate(ptrs)],
+                'easn_skater': easn,
+                'presidents': emu.read(AWARD_TEAMS[0], 0x2e8).hex(),
+                'stanley': emu.read(AWARD_TEAMS[1], 0x2e8).hex(),
+                'names': emu.read(AWARD_TEAM_NAMES, 26 * 0x15).hex()}
+    initial = state()
+    cases = []
+    for k in range(count):
+        spans = rnd.choice((0.3, 0.7, 1.0))
+        nplayers = rnd.randrange(20, 90)
+        # now and then one kind of trouble: odd offsets of the players' records, of the teams'
+        # players, or a file cut short
+        trouble = rnd.choice(('season', 'roster', 'cut')) if rnd.random() < 0.3 else ''
+        keys = bytearray()
+        season = bytearray()
+        players = []
+        for i in range(nplayers):
+            kr = bytearray(0x34)
+            kr[0] = rnd.randrange(26)
+            kr[1] = rnd.randrange(100)
+            kr[2] = ord(rnd.choice('LCRDDGGX'))
+            kr[3] = 0x41 + rnd.randrange(26)
+            kr[0x13:0x18] = bytes(0x61 + rnd.randrange(26) for j in range(5))
+            off = len(season)
+            r_ = rnd.random() if trouble == 'season' else 1
+            if r_ < 0.03:
+                off = -1
+            elif r_ < 0.04:
+                off = len(season) + 0x10000
+            struct.pack_into('<i', kr, 0x2c, off)
+            rec = bytearray(0x36)
+            gp = rnd.choice((0, 1, 2, 24, 25, 26, 40)) if rnd.random() < spans else 0
+            struct.pack_into('<H', rec, 0, gp)
+            for at in range(2, 0x36, 2):
+                v = rnd.randrange(4) if rnd.random() < spans else 0
+                if at == 0x10 and rnd.random() < 0.5:
+                    v = u16(rnd.randrange(-3, 4))
+                struct.pack_into('<H', rec, at, v)
+            rec[0x2e] = rnd.choice((0, 0, 1, 0xff))
+            players.append(len(keys))
+            keys += kr
+            season += rec
+        teams = bytearray()
+        for t in range(26):
+            r = bytearray(0x2e8)
+            r[5:5 + 0x15] = ('Team %d' % (k * 26 + t)).encode().ljust(0x15, b'\0')
+            for at in (0x29, 0x2a, 0x2b, 0x3b):
+                r[at] = rnd.randrange(4)
+            for i in range(28):
+                r_ = rnd.random()
+                if r_ < 0.15:
+                    off = -1
+                elif r_ < 0.16 and trouble == 'roster' and rnd.random() < 0.1:
+                    off = rnd.choice((-2, -0x34, len(keys) + 0x34 * rnd.randrange(3)))
+                else:
+                    off = rnd.choice(players)
+                struct.pack_into('<i', r, (0x4c + i * 4) if i < 25 else (0xb0 + (i - 25) * 4), off)
+            teams += r
+        cut = {}
+        if trouble == 'cut':
+            name = rnd.choice(('teams', 'key', 'season'))
+            f = {'teams': teams, 'key': keys, 'season': season}[name]
+            cut[name] = rnd.randrange(len(f) + 1)
+        files.clear()
+        handles.clear()
+        files['teams.db'] = bytes(teams[:cut.get('teams', len(teams))])
+        files['key.db'] = bytes(keys[:cut.get('key', len(keys))])
+        files['season.db'] = bytes(season[:cut.get('season', len(season))])
+        # the routine's buffers are on the stack: zeroed as the port's are
+        emu.write(STACK_TOP - 0x4000, b'\0' * (0x4000 - 0x104))
+        ret = emu.call(LOAD_AWARD_STATS)
+        case = {'teams': files['teams.db'].hex(), 'key': files['key.db'].hex(), 'season': files['season.db'].hex(),
+                'result': ret & 0xffffffff}
+        case.update(state())
+        cases.append(case)
+    for h in hooks:
+        emu.unstub(h)
+    return {'initial': initial, 'cases': cases}
+
 def main():
     if len(sys.argv) != 3:
         print(__doc__ or 'golden.py GAMEDIR OUTDIR')
@@ -5190,7 +5380,8 @@ def main():
                        ('league', {'league': league_cases(exe, gamedir), 'scores': scores_cases(exe),
                                    'playoffs': playoff_cases(exe, gamedir), 'rounds': round_cases(exe, gamedir),
                                    'records': record_cases(exe, gamedir), 'days': day_cases(exe, gamedir)}),
-                       ('sorts', {'stats': sort_cases(exe), 'screens': stats_screen_cases(exe)})):
+                       ('sorts', {'stats': sort_cases(exe), 'screens': stats_screen_cases(exe), 'names': name_sort_cases(exe)}),
+                       ('awards', award_cases(exe))):
         write_golden(outdir, name, data)
     write_ai(outdir, ai_cases(exe))
 

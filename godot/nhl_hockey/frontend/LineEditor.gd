@@ -114,19 +114,21 @@ func _roster_of(number: int) -> int:
 			return r
 	return -1
 
-## edit_lines_keys: the list of the roster, sorted by cmp_player_names_b (L, C, R, D, G, last name)
+## edit_lines_keys: the 28 entries of the roster (an empty slot without a position), sorted by
+## qsort with cmp_player_names_b; the empty ones, last, are left out
 func _load_entries() -> void:
 	entries.clear()
+	var all := []
 	for r in 28:
 		var p := info.player(r)
 		if p == null:
+			all.append(["", EMPTY, r, "", ""])
 			continue
-		entries.append([p.position, p.number, r, "%s. %s" % [p.first.left(1), p.last], p.last])
-	var rank := {"L": 0, "C": 1, "R": 2, "D": 3, "G": 4}
-	entries.sort_custom(func(a: Array, b: Array) -> bool:
-		if a[0] != b[0]:
-			return rank.get(a[0], 5) < rank.get(b[0], 5)
-		return a[4] < b[4])
+		all.append([p.position, p.number, r, "%s. %s" % [p.first.left(1), p.last], p.last])
+	Clib.qsort(all, NameSort.cmp_player_names_b, 0x16)
+	for e: Array in all:
+		if e[0] != "":
+			entries.append(e)
 
 ## EMBPAL with the team's colours in 0x80..0xff (load_homepals) and the LELOGO colours
 func _palette() -> PackedByteArray:

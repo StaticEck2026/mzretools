@@ -174,6 +174,39 @@ func play_song(name: String) -> void:
 	if m != null:
 		m.play_song(name)
 
+## a page of the awards (NHL_AWARDS_PAGE: 0..10 the awards, 11 the summary) over the game's TEAMS.DB
+## and KEY.DB with a season of random numbers and play-off wins (NHL_UI_SCRIPT
+## call:awards_preview, for screenshots)
+func awards_preview() -> int:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	var teams := GameFiles.read_raw("teams.db")
+	var key := GameFiles.read_raw("key.db")
+	var season := GameFiles.read_raw("season.db")
+	for k in key.size() / 0x34:
+		var at := key.decode_s32(k * 0x34 + 0x2c)
+		var size := 0x36 if key[k * 0x34 + 2] == 0x47 else 0x2f
+		if at < 0 or at + size > season.size():
+			continue
+		for o in range(0, size - 1, 2):
+			season.encode_u16(at + o, rng.randi_range(0, 30 if o < 0x24 else 3))
+		season.encode_u16(at + 0x10, rng.randi_range(0, 400) if size == 0x36 else rng.randi_range(0, 60))
+		season[at + 0x2e] = rng.randi_range(0, 1) if size == 0x2f else season[at + 0x2e]
+	for t in 26:
+		for o in [0x29, 0x2a, 0x2b, 0x3b]:
+			teams[t * 0x2e8 + o] = rng.randi_range(0, 40)
+	scr.setfont(font_kaufm)
+	var a := AwardsScreen.new(self)
+	Awards.load(teams, key, season)
+	var n := int(OS.get_environment("NHL_AWARDS_PAGE"))
+	var pal := a.page(n) if n < 11 else a.summary(bank("awardsi"))
+	await scr.fade_in(pal, 16)
+	return 0
+
+## the song still plays (kms_finished)
+func song_playing() -> bool:
+	return music != null and music.song_playing()
+
 ## stop_crowd_loop + kms_unload
 func stop_song() -> void:
 	if music != null:

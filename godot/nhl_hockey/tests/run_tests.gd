@@ -436,6 +436,7 @@ func asset_tests() -> void:
 	league_tests(gf)
 	league_golden(gf)
 	sorts_golden()
+	awards_golden()
 
 ## the sound cards (load_sound_config): the Sound Blaster's digital driver and its mixer (the
 ## effects on voices 0 / 1, the crowd's roar and murmur on 2 / 3), the AdLib's FM effects, the PC
@@ -2764,9 +2765,98 @@ func sorts_golden() -> void:
 		parts.append("%s %d/%d" % [n, per[n][0], per[n][0] + per[n][1]])
 	print("golden sorts: %d / %d (%s)" % [ok, cases.size(), ", ".join(parts)])
 	_stats_screens_golden(_golden("sorts").get("screens", []))
+	_name_sorts_golden(_golden("sorts").get("names", []))
+
+## the roster name sorts (sorts.json "names"): the line editor's entries by Clib.qsort with
+## NameSort.cmp_player_names_b, the registry's lists by Clib.shellsort with NameSort.cmp_key_names;
+## the entries' order compared
+func _name_sorts_golden(cases: Array) -> void:
+	if cases.is_empty():
+		fail("golden name sorts missing")
+		return
+	var per := {}
+	var ok := 0
+	var shown := 0
+	for c: Dictionary in cases:
+		var list := []
+		var i := 0
+		for e: Array in c["entries"]:
+			var pos := int(e[0])
+			list.append([char(pos) if pos != 0 else "", 0, i, "", str(e[1])])
+			i += 1
+		var family := str(c["family"])
+		if family == "line_editor":
+			Clib.qsort(list, NameSort.cmp_player_names_b, 0x16)
+		else:
+			Clib.shellsort(list, NameSort.cmp_key_names)
+		var order := list.map(func(e: Array) -> int: return e[2])
+		if not per.has(family):
+			per[family] = [0, 0]
+		if str(order) == str(_ints(c["sorted"])):
+			ok += 1
+			per[family][0] += 1
+		else:
+			per[family][1] += 1
+			if shown < 6:
+				shown += 1
+				fail("name sort %s: %s (original %s)" % [family, str(order), str(c["sorted"])])
+	var parts := []
+	for n in per:
+		parts.append("%s %d/%d" % [n, per[n][0], per[n][0] + per[n][1]])
+	print("golden name sorts: %d / %d (%s)" % [ok, cases.size(), ", ".join(parts)])
 
 static func _hex(v: Variant) -> PackedByteArray:
 	return str(v).hex_decode()
+
+## the season's awards (awards.json): Awards.load case after case from the state the executable
+## starts with (the awards stay between the calls); the result, the keys and records of the
+## awards, the team records and the team names compared
+func awards_golden() -> void:
+	var g := _golden("awards")
+	var cases: Array = g.get("cases", [])
+	if cases.is_empty():
+		fail("golden awards data missing")
+		return
+	Awards.reset()
+	var diff := _awards_diff(g["initial"])
+	if not diff.is_empty():
+		fail("awards initial state: %s" % ", ".join(diff))
+	var ok := 0
+	var shown := 0
+	for c: Dictionary in cases:
+		var ret := Awards.load(_hex(c["teams"]), _hex(c["key"]), _hex(c["season"]))
+		diff = _awards_diff(c)
+		if ret != int(c["result"]):
+			diff.push_front("result %d (original %d)" % [ret, int(c["result"])])
+		if diff.is_empty():
+			ok += 1
+		elif shown < 6:
+			shown += 1
+			fail("awards case %d: %s" % [cases.find(c), ", ".join(diff.slice(0, 4))])
+	print("golden awards: %d / %d" % [ok, cases.size()])
+	Awards.reset()
+
+func _awards_diff(c: Dictionary) -> Array:
+	var diff := []
+	for i in 11:
+		if Awards.keys[i].hex_encode() != str(c["keys"][i]):
+			diff.append("%s key %s (original %s)" % [Awards.NAMES[i], Awards.keys[i].hex_encode(), c["keys"][i]])
+		var want := str(c["records"][i])
+		var rec: PackedByteArray = Awards.easn_record() if i == 9 else Awards.stats[i]
+		if want != "" and rec.hex_encode() != want:
+			diff.append("%s record %s (original %s)" % [Awards.NAMES[i], rec.hex_encode(), want])
+	if int(Awards.easn_skater) != int(c["easn_skater"]):
+		diff.append("easn skater %d (original %d)" % [int(Awards.easn_skater), int(c["easn_skater"])])
+	if Awards.presidents.hex_encode() != str(c["presidents"]):
+		diff.append("presidents")
+	if Awards.stanley.hex_encode() != str(c["stanley"]):
+		diff.append("stanley")
+	var names := PackedByteArray()
+	for n: PackedByteArray in Awards.team_names:
+		names.append_array(n)
+	if names.hex_encode() != str(c["names"]):
+		diff.append("team names")
+	return diff
 
 ## the statistics screens up to their drawing (sorts.json "screens"): the leaders (stats_table), a
 ## team table (team_stats_screen) and a team's roster (player_stats_screen) gathered from the

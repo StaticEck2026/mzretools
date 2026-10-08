@@ -673,54 +673,12 @@ func _cal_menu_state() -> void:
 	Menus.at(0xc8602).cb = "" if _cal_month == 9 else "calendar_prev_month"
 
 # ---------------------------------------------------------------------------------------------
-# the awards after the play-offs (awards_screen 0x13320)
+# the awards after the play-offs (awards_screen 0x13320, AwardsScreen.gd)
 # ---------------------------------------------------------------------------------------------
 
-## the Stanley Cup winner and the season's leaders of the league
 func awards_screen() -> void:
 	var l: League = Session.league
-	await fe.leave_screen(100)
-	var b := fe.bank("embscup")
-	var pb := fe.bank("embpalp")
-	var pal := Screen8.shape_palette(pb.find("!pal")) if pb != null else FrontEnd._grey_palette()
-	scr.clearclip()
-	if b != null:
-		scr.drawshape_remap(b.find("bkgd"), 0, 0)
-	var po := l.file("SCHEDULE").slice(League.PLAYOFF_OFFSET, League.PLAYOFF_OFFSET + 0x276)
-	var champ := League.series_winner(po, 14, League.series_count(po, 14))
-	scr.setfont(fe.font_kaufm)
-	scr.set_text_colors(0x40, 0x43)
-	var lines := ["Stanley Cup Champions", team_name(champ) if champ >= 0 else "", ""]
-	var season := l.file("SEASON")
-	var best := [-1, -1, -1]
-	var bestv := [-1, -1, -1]
-	for t in 26:
-		for p in 25:
-			var k := l.key_of(t, p)
-			if k < 0:
-				continue
-			var s := l.key_i32(k, 0x2c)
-			var vals := [season.decode_u16(s + 6), season.decode_u16(s + 2), season.decode_u16(s + 4)]
-			for i in 3:
-				if vals[i] > bestv[i]:
-					bestv[i] = vals[i]
-					best[i] = k
-	var key := l.file("KEY")
-	var what := ["Points", "Goals", "Assists"]
-	for i in 3:
-		if best[i] >= 0:
-			lines.append("%s: %s %s %d" % [what[i], Database.cstring(key, best[i] + 3, 16), Database.cstring(key, best[i] + 0x13, 16), bestv[i]])
-	var y := 0x60
-	for i in lines.size():
-		if i == 3:
-			scr.setfont(fe.font_main)
-		scr.print_outlined((640 - scr.textwidth(lines[i])) / 2, y, lines[i])
-		y += 0x22 if i < 3 else 0x18
-	scr.setfont(fe.font_main)
-	fe.play_loop("leaguetm")
-	await scr.fade_in(pal, 16)
-	await ui.wait_ticks_or_input(3000)
-	await fe.leave_screen(100)
+	await AwardsScreen.new(fe).run(l.file("TEAMS"), l.file("KEY"), l.file("SEASON"))
 
 # ---------------------------------------------------------------------------------------------
 # the League Manager (unk_ce64f)

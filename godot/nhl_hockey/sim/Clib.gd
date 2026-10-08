@@ -1,14 +1,16 @@
 class_name Clib
 ## Routines of the Watcom C library the game's logic depends on, ported literally where their exact
-## behaviour shows: qsort (0x9244c), whose order of equal elements decides the three stars.
+## behaviour shows: qsort (0x9244c), whose order of equal elements decides the three stars, and
+## strcmp; with them the game's own shell sort of the registry's lists.
 
 ## qsort (0x9244c, with __qsort_med3 0x923f4) on an array of elements: below 16 elements an
 ## insertion sort with the gaps 3 and 1 (the gap 3 pass steps by 3); otherwise the pivot is the
 ## middle element, from 30 elements on the median of the first, middle and last, from 43 on the
 ## median of three medians of three; a three way partition keeps the elements equal to the pivot at
 ## both ends and swaps them to the middle, the larger part waits on a stack. `cmp(a, b)` > 0 when a
-## sorts after b.
-static func qsort(a: Array, cmp: Callable) -> void:
+## sorts after b. Elements of 4 bytes compare against a copy of the pivot; others (`size`) have the
+## pivot swapped to the front of the range first and compare against it there.
+static func qsort(a: Array, cmp: Callable, size: int = 4) -> void:
 	var stack_base: Array = []
 	var stack_n: Array = []
 	var b := 0
@@ -42,6 +44,9 @@ static func qsort(a: Array, cmp: Callable) -> void:
 					m = _med3(a, m - d, m, m + d, cmp)
 					hi = _med3(a, hi - 2 * d, hi - d, hi, cmp)
 				m = _med3(a, lo, m, hi, cmp)
+			if size != 4:
+				_swap(a, b, m)
+				m = b
 			var pv = a[m]
 			var pa := b
 			var pb := b
@@ -111,3 +116,27 @@ static func _swap(a: Array, i: int, j: int) -> void:
 static func _vecswap(a: Array, i: int, j: int, count: int) -> void:
 	for k in count:
 		_swap(a, i + k, j + k)
+
+## strcmp: the first differing character decides (its sign; 0 for equal strings)
+static func strcmp(a: String, b: String) -> int:
+	var n := mini(a.length(), b.length())
+	for i in n:
+		var d := a.unicode_at(i) - b.unicode_at(i)
+		if d != 0:
+			return d
+	return a.length() - b.length()
+
+## shellsort_records (0x6d7ed, the game's own): the gaps n / 2, n / 4 .. 1; an element moves down
+## its gap while the comparator does not put the one before it first (equal elements swap too)
+static func shellsort(a: Array, cmp: Callable) -> void:
+	var n := a.size()
+	var gap := n >> 1
+	while gap > 0:
+		for i in range(gap, n):
+			var j := i - gap
+			while j >= 0:
+				if int(cmp.call(a[j], a[j + gap])) < 0:
+					break
+				_swap(a, j, j + gap)
+				j -= gap
+		gap >>= 1

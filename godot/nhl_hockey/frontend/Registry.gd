@@ -69,14 +69,9 @@ static func _entry(key: PackedByteArray, off: int) -> Array:
 	var last := Database.cstring(key, 0x13, 16)
 	return [char(key[2]) if key[2] != 0 else "", key[1], off, (first.left(1) + ". " if first != "" else "") + last, last]
 
-static func _pos_rank(p: String) -> int:
-	return {"L": 0, "C": 1, "R": 2, "D": 3, "G": 4}.get(p, 5)
-
+## shellsort_records with cmp_key_names
 static func _sort(list: Array) -> void:
-	list.sort_custom(func(a, b):
-		if a[0] != b[0]:
-			return _pos_rank(a[0]) < _pos_rank(b[0])
-		return a[4] < b[4])
+	Clib.shellsort(list, NameSort.cmp_key_names)
 
 ## dbedit_build_team_roster / dbedit_build_free_agent_list
 func _build(c: int) -> void:
@@ -89,12 +84,16 @@ func _build(c: int) -> void:
 	else:
 		var teams: PackedByteArray = files["TEAMS"]
 		var base: int = column[c] * 0x2e8
+		# dbedit_build_team_list: the 28 slots, an empty one (-1) without a position
 		for i in 28:
 			var at := base + (0x4c + i * 4 if i < 25 else 0xb0 + (i - 25) * 4)
 			var off := teams.decode_s32(at)
 			if off >= 0 and off + 0x34 <= key.size():
 				out.append(_entry(key.slice(off, off + 0x34), off))
+			else:
+				out.append(["", 0x64, -1, "", ""])
 	_sort(out)
+	out = out.filter(func(e: Array) -> bool: return e[0] != "" or e[2] >= 0)
 	rows[c] = out
 	selected[c] = {}
 	if column[c] == 0xff:
