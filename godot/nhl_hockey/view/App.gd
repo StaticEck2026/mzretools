@@ -28,12 +28,13 @@ func _ready() -> void:
 		_run_script(OS.get_environment("NHL_UI_SCRIPT"))
 
 ## NHL_UI_SCRIPT: scripted input for screenshots of the front end, commands separated by ";":
-## wait:FRAMES, click:X,Y (a click of the mouse at X,Y of the 640x480 screen), key:enter|esc,
+## wait:FRAMES, click:X,Y (a click of the mouse at X,Y of the 640x480 screen), key:enter|esc (or
+## left|right|home|end|ins|del|bksp for the keyboard buffer),
 ## press:ACTION (an input action of the match, e.g. pause), shot:PATH (the window as PNG),
 ## simgame:PERIODS[,SECONDS] (the session's teams play that many periods without a view; the
 ## front end's screens then see it as the game on the ice), call:CALLBACK (a menu callback run
 ## like run_menu does, without waiting for it), scores:PERIOD (the scores around the league),
-## type:TEXT (keys and Enter for a text entry), quit
+## type:TEXT (keys and Enter for a text entry), keys:TEXT (the keys only), quit
 func _run_script(script: String) -> void:
 	for cmd in script.split(";", false):
 		var parts := cmd.strip_edges().split(":", true, 1)
@@ -54,9 +55,16 @@ func _run_script(script: String) -> void:
 				var ui := front.ui
 				if arg == "esc":
 					ui.push(3, 4)
-				else:
+					ui.push_key(0x1b)
+				elif arg == "enter":
 					ui.push(3, 1)
 					ui.push(3, 2)
+					ui.push_key(0xd)
+				else:
+					# a key of the keyboard buffer: left, right, home, end, ins, del, bksp
+					var codes := {"left": 0x4b00, "right": 0x4d00, "home": 0x4700, "end": 0x4f00,
+						"ins": 0x5200, "del": 0x5300, "bksp": 8}
+					ui.push_key(codes.get(arg, 0))
 				await get_tree().process_frame
 			"press":
 				Input.action_press(arg)
@@ -77,7 +85,14 @@ func _run_script(script: String) -> void:
 				# text for a text entry dialog, then Enter
 				for ch in arg:
 					front.ui.push(3, 0x20, ch.unicode_at(0))
+					front.ui.push_key(ch.unicode_at(0))
 				front.ui.push(3, 2)
+				front.ui.push_key(0xd)
+				await get_tree().process_frame
+			"keys":
+				# letters into the keyboard buffer only (no Enter)
+				for ch in arg:
+					front.ui.push_key(ch.unicode_at(0))
 				await get_tree().process_frame
 			"scores":
 				# the scores around the league after period ARG (end_match_from_period)

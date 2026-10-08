@@ -19,6 +19,7 @@ var pointer: Sprite2D
 var px := 320
 var py := 240
 var events: Array = []
+var keys: Array = []             # the keyboard buffer getkey reads: ASCII, the scan code << 8 for the others
 var active := true
 var held := 0                    # arrow_held_polls: polls the arrows have been held (acceleration)
 var _tick_acc := 0.0
@@ -70,6 +71,19 @@ func reset_events() -> void:
 func push(type: int, buttons: int, key: int = 0) -> void:
 	if events.size() < 32:
 		events.append({"type": type, "buttons": buttons, "x": px, "y": py, "key": key})
+
+## a key into the keyboard buffer (15 places, like the BIOS)
+func push_key(code: int) -> void:
+	if keys.size() < 15:
+		keys.append(code)
+
+## getkey (0xb39ed): the next key of the buffer, 0 when it is empty
+func getkey() -> int:
+	return keys.pop_front() if not keys.is_empty() else 0
+
+const SCAN_KEYS := {KEY_ENTER: 0xd, KEY_KP_ENTER: 0xd, KEY_ESCAPE: 0x1b, KEY_BACKSPACE: 8, KEY_TAB: 9,
+	KEY_HOME: 0x4700, KEY_UP: 0x4800, KEY_PAGEUP: 0x4900, KEY_LEFT: 0x4b00, KEY_RIGHT: 0x4d00,
+	KEY_END: 0x4f00, KEY_DOWN: 0x5000, KEY_PAGEDOWN: 0x5100, KEY_INSERT: 0x5200, KEY_DELETE: 0x5300}
 
 ## event_queue_pop + ui_poll_callback: the next event, or {} when the queue is empty
 func poll() -> Dictionary:
@@ -209,6 +223,12 @@ func _input(event: InputEvent) -> void:
 			push(3, 4)
 	elif event is InputEventKey:
 		var k: InputEventKey = event
+		if k.pressed:
+			# the keyboard buffer (with the typematic repeats)
+			if SCAN_KEYS.has(k.keycode):
+				push_key(SCAN_KEYS[k.keycode])
+			elif k.unicode >= 0x20 and k.unicode < 0x7f:
+				push_key(k.unicode)
 		if k.echo and k.keycode != KEY_BACKSPACE:
 			return
 		match k.keycode:

@@ -7,6 +7,7 @@ var last: int
 var def_width: int
 var height: int
 var spacing: int
+var cell: int                  # +9: the height of a line (byte_d42c5)
 var width_tab: int
 var height_tab: int
 var adv_tab: int
@@ -24,6 +25,7 @@ static func parse(d: PackedByteArray) -> Vfn:
 	f.def_width = d[6]
 	f.height = d[7]
 	f.spacing = d[8]
+	f.cell = d[9]
 	f.width_tab = d.decode_u16(0x12)
 	f.height_tab = d.decode_u16(0x14)
 	f.adv_tab = d.decode_u16(0x16)

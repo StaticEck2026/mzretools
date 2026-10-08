@@ -5539,6 +5539,25 @@ def trade_cases(exe, count=100):
         emu.unstub(h)
     return cases
 
+
+PASSWORD_SCRAMBLE = 0x3a597                     # (field, key): the 10 bytes XORed in place
+
+
+def scramble_cases(exe, count=200):
+    """password_scramble on random 11 byte fields (passwords of 0 to 10 letters and what follows
+    them) with the keys of the 26 teams and some larger: the field after it"""
+    emu = PortEmu(exe)
+    rnd = random.Random(0x5c4a)
+    buf = emu.alloc(16)
+    cases = []
+    for k in range(count):
+        field = bytes(rnd.randrange(256) for i in range(11))
+        key = rnd.randrange(26) if rnd.random() < 0.8 else rnd.randrange(1000)
+        emu.write(buf, field)
+        emu.call(PASSWORD_SCRAMBLE, eax=buf, edx=key)
+        cases.append([field.hex(), key, emu.read(buf, 11).hex()])
+    return cases
+
 def main():
     if len(sys.argv) != 3:
         print(__doc__ or 'golden.py GAMEDIR OUTDIR')
@@ -5552,7 +5571,7 @@ def main():
                                    'playoffs': playoff_cases(exe, gamedir), 'rounds': round_cases(exe, gamedir),
                                    'records': record_cases(exe, gamedir), 'days': day_cases(exe, gamedir)}),
                        ('sorts', {'stats': sort_cases(exe), 'screens': stats_screen_cases(exe), 'names': name_sort_cases(exe)}),
-                       ('awards', award_cases(exe)), ('trades', {'cases': trade_cases(exe)})):
+                       ('awards', award_cases(exe)), ('trades', {'cases': trade_cases(exe), 'scrambles': scramble_cases(exe)})):
         write_golden(outdir, name, data)
     write_ai(outdir, ai_cases(exe))
 

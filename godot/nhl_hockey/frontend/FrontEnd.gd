@@ -956,43 +956,243 @@ func edit_lines_for(team: int, pal: PackedByteArray) -> void:
 	scr.restore(keep)
 	await scr.fade_in(pal, 16)
 
-## text_entry_dialog (0x2fedf): a prompt over a field of `maxlen` characters; Enter takes the text,
-## Esc gives "" (the original returns 0x1b)
-func text_entry_dialog(prompt: String, maxlen: int, initial: String = "") -> String:
-	var lh := scr.font_height()
-	var w := maxi(scr.textwidth(prompt), scr.textwidth("W".repeat(maxlen))) + 0x20
-	var h := lh * 2 + 0x20
+var entry_key := 0                   # the key that ended the last text_entry_dialog: 0xd Enter, 0x1b Esc
+
+## text_entry_dialog (0x2fedf): a box (the dialog colours) with the prompt and under it a field as wide
+## as `maxlen` M's (at least `min_w`) + 0xc, the text typed into it (text_entry_loop); with `required`
+## an empty text is asked again unless Esc ended it. Flags: 1 letters and digits only, 2 a '.' for
+## each letter (passwords), 4 Esc ends it, 8 digits only, 0x10 letters and the space only. Returns
+## the text; entry_key holds the key that ended it.
+func text_entry_dialog(prompt: String, maxlen: int, min_w: int, flags: int = 0, required: bool = false) -> String:
+	var r: Array = await _text_entry(prompt, maxlen, min_w, flags, required, false, 0, 0)
+	return r[0]
+
+## text_entry_dialog with a range (its first stack argument set): the number of the text, asked again
+## until it is in lo..hi
+func number_entry_dialog(prompt: String, maxlen: int, min_w: int, lo: int, hi: int, flags: int = 0) -> int:
+	var r: Array = await _text_entry(prompt, maxlen, min_w, flags, false, true, lo, hi)
+	return r[1]
+
+func _text_entry(prompt: String, maxlen: int, min_w: int, flags: int, required: bool, numeric: bool, lo: int, hi: int) -> Array:
+	# ui_shutdown: the pointer away while the keys are read
+	var pointer_on := ui.pointer != null and ui.pointer.visible
+	ui.show_pointer(false)
+	var keep_fg := scr.text_fg
+	var keep_bg := scr.text_bg
+	var fw := maxi(scr.textwidth("M".repeat(maxlen)), min_w) + 0xc
+	var w := scr.textwidth(prompt) + 0x10
+	if w < fw:
+		w = fw + 0x10
+	var h := scr.font_height() * 2 + 0x20
 	var x := (640 - w) / 2
 	var y := (480 - h) / 2
 	var behind := scr.snapshot()
-	draw_dialog_frame(x, y, w, h, dlg_face, dlg_light, dlg_dark)
 	scr.set_text_colors(dlg_text, dlg_shadow)
-	scr.print_text_at(x + (w - scr.textwidth(prompt)) / 2, y + 8, prompt)
-	var fx := x + 0x10
-	var fy := y + lh + 0x10
-	var text := initial
+	draw_dialog_frame(x, y, w, h, dlg_face, dlg_light, dlg_dark)
+	scr.settextcolor(dlg_text, dlg_shadow)
+	scr.print_text_at(x + (w - scr.textwidth(prompt)) / 2, y + 7, prompt)
+	var fx := x + (w - fw) / 2
+	draw_dialog_frame(fx, y + 0x1f, fw, 0x12, dlg_shadow, dlg_dark, dlg_light)
+	scr.settextcolor(dlg_text, dlg_shadow)
+	await _entry_keys_up()
 	ui.reset_events()
-	var done := false
-	var ok := true
-	while not done:
-		draw_dialog_frame(fx - 2, fy - 2, w - 0x1c, lh + 4, dlg_face, dlg_dark, dlg_light)
-		scr.set_text_colors(dlg_text, dlg_shadow)
-		scr.print_text_at(fx, fy, text + "_")
-		var e: Dictionary = await ui.wait_event()
-		var bt: int = e["buttons"]
-		if bt & 4:
-			ok = false
-			done = true
-		elif bt & 2 and e["type"] == 3:
-			done = true
-		elif bt & 0x20:
-			var k: int = e["key"]
-			if k == KEY_BACKSPACE:
-				text = text.left(maxi(text.length() - 1, 0))
-			elif text.length() < maxlen and k > 0x20 and k < 0x7f:
-				text += char(k)
+	ui.keys.clear()
+	var buf := PackedByteArray()
+	buf.resize(maxlen + 2)
+	var text := ""
+	var value := 0
+	while true:
+		buf.fill(0)
+		var key: int = await _entry_loop(buf, maxlen, fw - 8, fx + 6, y + 0x20, flags)
+		text = buf.get_string_from_ascii()
+		if numeric:
+			# the number when the text is a number (a digit, or the first letter a space, '-' or none)
+			value = 0
+			for i in maxlen:
+				var c := buf[i]
+				if (c >= 0x30 and c <= 0x39) or buf[0] == 0x20 or buf[0] == 0 or buf[0] == 0x2d:
+					value = atoi(text)
+				else:
+					break
+			if value >= lo and value <= hi:
+				break
+		else:
+			value = key
+			if not required or text != "" or key == 0x1b:
+				break
+	entry_key = value if not numeric else 0xd
+	await _entry_keys_up()
+	ui.reset_events()
+	scr.settextcolor(keep_fg, keep_bg)
 	scr.restore(behind)
-	return text if ok else ""
+	ui.show_pointer(pointer_on)
+	return [text, value]
+
+## text_entry_dialog waits for Esc and Enter to be up
+func _entry_keys_up() -> void:
+	while Input.is_physical_key_pressed(KEY_ESCAPE) or Input.is_physical_key_pressed(KEY_ENTER):
+		await ui.frame()
+
+## text_entry_loop (0x3170d): the keys of the buffer (getkey) into the text at the cursor: overwriting
+## (a line under the letter) or inserting (Ins: a block over it); left, right, Home, End, Del and the
+## backspace; the cursor blinks every 4 ticks of the 20 Hz counter. Ends with Enter (or Esc, flag 4):
+## the key.
+func _entry_loop(buf: PackedByteArray, maxlen: int, width: int, x: int, y: int, flags: int) -> int:
+	var st := {"buf": buf, "max": maxlen, "w": width, "x": x, "y": y, "flags": flags, "pos": 0, "h": 1, "on": true}
+	_entry_draw(st)
+	_entry_cursor(st)
+	var insert := false
+	var blink := _ticks20() + 4
+	while true:
+		var k := ui.getkey()
+		if k == 0:
+			if _ticks20() < blink:
+				await ui.frame()
+				continue
+			blink = _ticks20() + 4
+			var was: bool = st["on"]
+			st["on"] = true
+			_entry_cursor(st)
+			st["on"] = not was
+			continue
+		if k == 0xd or (k == 0x1b and flags & 4):
+			_entry_cursor(st)
+			return k
+		var pos: int = st["pos"]
+		match k:
+			0x4d00:
+				if buf[pos] == 0:
+					continue
+				_entry_cursor(st)
+				if pos < maxlen:
+					st["pos"] = pos + 1
+			0x4b00:
+				_entry_cursor(st)
+				if pos != 0:
+					st["pos"] = pos - 1
+			0x4700:
+				_entry_cursor(st)
+				st["pos"] = 0
+			0x4f00:
+				_entry_cursor(st)
+				st["pos"] = _cstrlen(buf)
+			0x5200:
+				_entry_cursor(st)
+				insert = not insert
+				st["h"] = scr.font_height() if insert else 1
+			0x5300, 8:
+				if k == 0x5300 and (pos >= maxlen or buf[pos] == 0):
+					continue
+				if k == 8 and pos == 0:
+					continue
+				_entry_cursor(st)
+				if k == 8:
+					pos -= 1
+					st["pos"] = pos
+				for i in range(pos, maxlen):
+					buf[i] = buf[i + 1]
+				buf[maxlen - 1] = 0
+				_entry_draw(st)
+			_:
+				if not _entry_key_ok(k, flags, pos < maxlen):
+					continue
+				_entry_cursor(st)
+				if not insert:
+					if buf[pos] == 0:
+						buf[pos + 1] = 0
+				else:
+					for i in range(maxlen - 2, pos - 1, -1):
+						buf[i + 1] = buf[i]
+				buf[pos] = k
+				if pos < maxlen:
+					st["pos"] = pos + 1
+				_entry_draw(st)
+		_entry_cursor(st)
+	return 0
+
+## the 20 Hz counter of the timer interrupt (dword_d2fe0: every 5th tick of the 100 Hz timer)
+static func _ticks20() -> int:
+	return Time.get_ticks_msec() / 50
+
+static func _cstrlen(buf: PackedByteArray) -> int:
+	var n := 0
+	while n < buf.size() and buf[n] != 0:
+		n += 1
+	return n
+
+## text_entry_loop's letters: digits (flag 8), letters and the space (0x10), else ' '..'z' with room
+## left, only letters and digits with flag 1
+static func _entry_key_ok(k: int, flags: int, room: bool) -> bool:
+	if flags & 8:
+		return k >= 0x30 and k <= 0x39
+	if flags & 0x10:
+		return k == 0x20 or (k >= 0x41 and k <= 0x5a) or (k >= 0x61 and k <= 0x7a)
+	if k < 0x20 or k > 0x7a or not room:
+		return false
+	if flags & 1:
+		return (k >= 0x30 and k <= 0x39) or (k >= 0x41 and k <= 0x5a) or (k >= 0x61 and k <= 0x7a)
+	return true
+
+## text_entry_draw (0x31599): the text cut to the field's width, a '.' for each letter with flag 2, the
+## rest of the field cleared
+func _entry_draw(st: Dictionary) -> void:
+	var buf: PackedByteArray = st["buf"]
+	var flags: int = st["flags"]
+	var width: int = st["w"]
+	var dot := scr.textwidth(".")
+	var n := _cstrlen(buf)
+	if width != 0:
+		while n > 0 and ((n * dot) if flags & 2 else scr.textwidth(buf.slice(0, n).get_string_from_ascii())) > width:
+			n -= 1
+			buf[n] = 0
+	if n < st["pos"]:
+		st["pos"] = n
+	var text := buf.slice(0, n).get_string_from_ascii()
+	if flags & 2:
+		for i in n:
+			scr.printstr_at(".", st["x"] + dot * i, st["y"])
+	else:
+		scr.printstr_at(text, st["x"], st["y"])
+	if width != 0:
+		var tw := n * dot if flags & 2 else scr.textwidth(text)
+		if width - tw > 0:
+			scr.fillrect(st["x"] + tw, st["y"], width - tw, scr.font.cell - 2, scr.text_bg)
+
+## text_entry_draw_cursor (0x314b4): the letter's width (a space at the end) XORed in the text colour,
+## its last line or (inserting) the whole letter; drawing it twice takes it away
+func _entry_cursor(st: Dictionary) -> void:
+	if not st["on"]:
+		return
+	var buf: PackedByteArray = st["buf"]
+	var flags: int = st["flags"]
+	var dot := scr.textwidth(".")
+	var n := _cstrlen(buf)
+	if n < st["pos"]:
+		st["pos"] = n
+	var pos: int = st["pos"]
+	var cw := 0
+	if buf[pos] != 0:
+		cw = dot if flags & 2 else scr.textwidth(char(buf[pos]))
+	else:
+		cw = scr.textwidth(" ")
+	var cx: int = (pos * dot if flags & 2 else scr.textwidth(buf.slice(0, pos).get_string_from_ascii())) + st["x"]
+	var cy: int = scr.font.cell + st["y"] - st["h"] - 2
+	scr.xorrect(cx, cy, cw, st["h"], scr.text_fg)
+
+## atoi: spaces, a sign, the digits
+static func atoi(t: String) -> int:
+	var i := 0
+	while i < t.length() and t[i] == " ":
+		i += 1
+	var neg := false
+	if i < t.length() and (t[i] == "-" or t[i] == "+"):
+		neg = t[i] == "-"
+		i += 1
+	var n := 0
+	while i < t.length() and t.unicode_at(i) >= 0x30 and t.unicode_at(i) <= 0x39:
+		n = n * 10 + t.unicode_at(i) - 0x30
+		i += 1
+	return -n if neg else n
 
 ## load_nhl_cfg (0x8baaf): NHL.CFG (the copy of the port in user:// when the card was changed): the
 ## sound card as an index into the table at 0xd243a, the CD drive, the installed files

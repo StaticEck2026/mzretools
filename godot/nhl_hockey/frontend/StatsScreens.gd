@@ -914,8 +914,8 @@ func _menu_with_picker(root: Array, standings: bool) -> void:
 func menu_output_current_data() -> int:
 	var dc := [fe.dlg_face, fe.dlg_light, fe.dlg_dark, fe.dlg_text, fe.dlg_shadow]
 	fe.set_dialog_colors(0x41, 0x40, 0x42, 0x40, 0)
-	var name: String = await fe.text_entry_dialog("Please enter output file name", 8)
-	if name != "":
+	var name: String = await fe.text_entry_dialog("Please enter output file name", 8, 0x22, 5)
+	if fe.entry_key != 0x1b and name != "":
 		var path := "user://" + name.to_upper() + ".OUT"
 		var ok := true
 		if FileAccess.file_exists(path):

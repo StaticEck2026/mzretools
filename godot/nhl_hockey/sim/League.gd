@@ -157,6 +157,43 @@ static func pinfo_create(humans: Array) -> PackedByteArray:
 		p[e + 0x18] = 2
 	return p
 
+## password_scramble (0x3a597): the 10 bytes of a password field (`at`) XORed in place with
+## "NHLHockey" from the key's place (key % 9) on and with "NHLHockey" backwards from its end; the
+## same call undoes it. The teams' passwords take their team as the key, the master password the
+## controlling team.
+static func password_scramble(b: PackedByteArray, at: int, key: int) -> void:
+	var k := "NHLHockey".to_ascii_buffer()
+	var n := k.size()
+	var d := key % n
+	var e := 0
+	for i in 10:
+		b[at + i] = b[at + i] ^ k[d] ^ k[n - 1 - e]
+		d += 1
+		if d >= n:
+			d = 0
+		e += 1
+		if e >= n:
+			e = 0
+
+## a password typed (strcpy: the text and its 0 over the field, the rest as it was) and scrambled
+static func password_store(b: PackedByteArray, at: int, key: int, text: String) -> void:
+	var a := text.to_ascii_buffer()
+	for i in mini(a.size(), 10):
+		b[at + i] = a[i]
+	b[at + mini(a.size(), 10)] = 0
+	password_scramble(b, at, key)
+
+## the password of a field as typed (unscrambled up to its 0)
+static func password_text(b: PackedByteArray, at: int, key: int) -> String:
+	var c := b.slice(at, at + 11)
+	password_scramble(c, 0, key)
+	var s := ""
+	for i in 11:
+		if c[i] == 0:
+			break
+		s += char(c[i])
+	return s
+
 func human(team: int) -> bool:
 	return team >= 0 and team < 26 and pinfo.size() >= PINFO_SIZE and pinfo[0x20 + team * 0x1e + 0x17] == 1
 

@@ -525,8 +525,8 @@ func broadcast_booth_screen() -> int:
 	fe.set_dialog_colors(0xf9, 0xfa, 0xf8, 0xfa, 0)
 	var path := ""
 	if Session.mode == 0 or Session.league == null:
-		var name := (await fe.text_entry_dialog("Enter a name for the saved game", 8)).to_upper()
-		if name == "":
+		var name := (await fe.text_entry_dialog("Enter a name for the saved game", 8, 0x30, 5)).to_upper()
+		if name == "" or fe.entry_key == 0x1b:
 			return 0
 		path = SaveGame.saves_dir().path_join(name + ".NHL")
 	else:

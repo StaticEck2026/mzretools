@@ -109,8 +109,8 @@ func open_league(l: League) -> void:
 ## the league's settings; then the files are written and the league is open
 func new_league_mode() -> int:
 	fe.set_dialog_colors(0xf9, 0xfa, 0xf8, 0xfa, 0)
-	var name := (await fe.text_entry_dialog("Enter New League Name", 8)).to_upper()
-	if name == "":
+	var name := (await fe.text_entry_dialog("Enter New League Name", 8, 0x30, 5)).to_upper()
+	if name == "" or fe.entry_key == 0x1b:
 		return 2
 	if League.list_leagues().has(name):
 		var r := await fe.message_dialog_buttons(["There is already a league with that name!",
@@ -151,9 +151,12 @@ func new_league_mode() -> int:
 		for k in 0x1e:
 			l.pinfo[0x20 + t * 0x1e + k] = pinfo[0x20 + t * 0x1e + k]
 	l.pinfo.encode_u16(0, humans.size())
-	l.pinfo.encode_u16(2, humans[0] if not humans.is_empty() else 0)
+	l.pinfo.encode_u16(2, pinfo.decode_u16(2))
+	for k in 11:
+		l.pinfo[0x15 + k] = pinfo[0x15 + k]
 	l.save()
 	open_league(l)
+	fe.set_dialog_colors(0xf9, 0xfa, 0xf8, 0xfa, 0)
 	return 2
 
 ## a message without buttons while the work is done (restore_dialog_background afterwards)
@@ -173,48 +176,84 @@ func _busy(lines: Array) -> void:
 	await ui.frame()
 	await ui.frame()
 
-## password_scramble (0x3d3ec): the password XOR "NHLHockey"
-static func scramble(s: String) -> PackedByteArray:
-	var key := "NHLHockey".to_ascii_buffer()
-	var out := PackedByteArray()
-	out.resize(11)
-	var a := s.to_ascii_buffer()
-	for i in mini(a.size(), 10):
-		out[i] = a[i] ^ key[i % key.size()]
-	return out
-
 # ---------------------------------------------------------------------------------------------
 # the team grid (team_info_screen): 1 choose the human teams of a new league, 2 add one,
-# 4 remove one, 8 select the team to play
+# 4 remove one, 8 select a human team, 0x10 two human teams
 # ---------------------------------------------------------------------------------------------
 
-## team_grid_draw: the logos by division (rows of 6 and 7 teams), the names of the human teams
-static func grid_cell(team: int) -> Vector2i:
+var _grid := PackedByteArray()       # the 4 x 7 places of the grid (99 none)
+var _grid_pal := PackedByteArray()
+var _grid_back: Image = null         # team_grid_save_back: the place of a team under a dialog
+var _grid_back_at := Vector2i.ZERO
+
+## team_grid_draw's places: the logo of the place (c, r) at (c * 0x55 + 0x40, r * 0x5c + 0x58), the
+## last two divisions 0x2a pixels further left
+static func grid_origin(c: int, r: int) -> Vector2i:
+	return Vector2i(c * 0x55 + (0x40 if r < 2 else 0x16), r * 0x5c + 0x58)
+
+## the place [c, r] of a team in the grid, [-1, -1] none
+func grid_place(team: int) -> Array:
 	for r in 4:
 		for c in 7:
-			if Exe.u8(League.DIVISION_TEAMS + r * 7 + c) == team:
-				return Vector2i(c * 0x55 + (0x40 if r < 2 else 0x16), r * 0x5c + 0x58)
-	return Vector2i(-1, -1)
+			if _grid[r * 7 + c] == team:
+				return [c, r]
+	return [-1, -1]
 
-static func grid_team_at(x: int, y: int) -> int:
-	for t in 26:
-		var p := grid_cell(t)
-		if x >= p.x - 2 and x <= p.x + 0x4a and y >= p.y - 2 and y <= p.y + 0x3d:
-			return t
+## team_info_load_stats (0x384b8): the divisions of unk_c83c3, each in the order of its standings in
+## TEAMS.DB (exchange sort): more points (2 a win, 1 a tie), fewer games, more wins, more goals for,
+## fewer goals against
+static func grid_by_standings(teams: PackedByteArray) -> PackedByteArray:
+	var grid := Exe.bytes(League.DIVISION_TEAMS, 0x1c)
+	var key := func(t: int) -> Array:
+		var b := t * League.TEAM + 0x28
+		return [teams[b + 1] * 2 + teams[b + 3], teams[b], teams[b + 1], teams.decode_u16(b + 4), teams.decode_u16(b + 6)]
+	for r in 4:
+		var n := 6 if r < 2 else 7
+		for i in n - 1:
+			for j in range(i + 1, n):
+				var a: Array = key.call(grid[r * 7 + i])
+				var b: Array = key.call(grid[r * 7 + j])
+				var swap: bool = b[0] > a[0] \
+					or (b[0] == a[0] and b[1] < a[1]) \
+					or (b[0] == a[0] and b[1] == a[1] and b[2] > a[2]) \
+					or (b[0] == a[0] and b[1] == a[1] and b[2] == a[2] and b[3] > a[3]) \
+					or (b[0] == a[0] and b[1] == a[1] and b[2] == a[2] and b[3] == a[3] and b[4] < a[4])
+				if swap:
+					var k := grid[r * 7 + i]
+					grid[r * 7 + i] = grid[r * 7 + j]
+					grid[r * 7 + j] = k
+	return grid
+
+## team_grid_slot_at (0x37b9c): the team whose logo (0x47 x 0x3a from its origin) is at (x, y), -1 none
+func grid_team_at(x: int, y: int) -> int:
+	for r in 4:
+		for c in 7:
+			var p := grid_origin(c, r)
+			if x >= p.x and x <= p.x + 0x46 and y >= p.y and y <= p.y + 0x39:
+				var t := _grid[r * 7 + c]
+				return -1 if t == 99 else t
 	return -1
 
-var _grid_pal := PackedByteArray()
-
+## team_grid_draw_name (0x37c53): the name of a team's player under its logo (the background drawn
+## again under it first), in the dialog's text colours
 func _grid_name(team: int, pinfo: PackedByteArray) -> void:
-	var p := grid_cell(team)
-	var n := Database.cstring(pinfo, 0x20 + team * 0x1e, 11)
-	if pinfo[0x20 + team * 0x1e + 0x17] != 1:
+	var cr := grid_place(team)
+	if cr[0] < 0:
 		return
-	if n == "":
-		n = "Human"
-	scr.set_text_colors(0x40, 0x43)
-	scr.print_text_at(p.x + (0x4a - scr.textwidth(n)) / 2, p.y + 0x31, n)
+	var p := grid_origin(cr[0], cr[1])
+	var x := p.x - 7
+	var y := p.y + 0x3f
+	scr.setclip(x, y, x + 0x4d, y + scr.font_height() + 1)
+	var b := fe.bank("embnhl")
+	if b != null:
+		scr.drawshape_remap(b.find("bkgd"), 0, 0)
+	scr.clearclip()
+	scr.set_text_colors(fe.dlg_text, fe.dlg_shadow)
+	var n := Database.cstring(pinfo, 0x20 + team * 0x1e, 11)
+	scr.print_text_at(x + 0x2a - scr.textwidth(n) / 2, y, n)
 
+## team_grid_draw (0x37fba) with the background: the title, the logos (CALLOGO of the CD: the small
+## logos of SRLOGO stand in), the names of the human teams' players
 func _grid_draw(title: String, pinfo: PackedByteArray) -> void:
 	scr.clearclip()
 	var b := fe.bank("embnhl")
@@ -222,142 +261,299 @@ func _grid_draw(title: String, pinfo: PackedByteArray) -> void:
 		scr.drawshape_remap(b.find("bkgd"), 0, 0)
 	scr.setfont(fe.font_main)
 	scr.set_text_colors(0x40, 0x43)
-	scr.print_text_at((640 - scr.textwidth(title)) / 2, 0x28, title)
-	for t in 26:
-		var p := grid_cell(t)
-		small_logo(t, p.x + 0x25, p.y + 0x18, _grid_pal, true)
-		_grid_name(t, pinfo)
+	scr.print_centered_shadow(0x28, title)
+	for r in 4:
+		for c in 7:
+			var t := _grid[r * 7 + c]
+			if t == 99:
+				break
+			var p := grid_origin(c, r)
+			small_logo(t, p.x + 0x25, p.y + 0x18, _grid_pal, true)
+			if pinfo[0x20 + t * 0x1e + 0x17] == 1:
+				_grid_name(t, pinfo)
 
-## team_grid_highlight: two boxes of xor 0x80 around a logo
-func _grid_highlight(team: int) -> void:
-	if team < 0:
+## team_grid_highlight (0x37ea6): two boxes around a logo XORed with 0x80 (`on`), or drawn in colour 0
+func _grid_highlight(team: int, on: bool) -> void:
+	var cr := grid_place(team)
+	if cr[0] < 0:
 		return
-	var p := grid_cell(team)
-	for k in 2:
-		var x0 := p.x - 2 - k
-		var y0 := p.y - 2 - k
-		var x1 := p.x + 0x48 + k
-		var y1 := p.y + 0x3d + k
-		for x in range(x0, x1 + 1):
-			scr.putpixel(x, y0, scr.getpixel(x, y0) ^ 0x80)
-			scr.putpixel(x, y1, scr.getpixel(x, y1) ^ 0x80)
-		for y in range(y0 + 1, y1):
-			scr.putpixel(x0, y, scr.getpixel(x0, y) ^ 0x80)
-			scr.putpixel(x1, y, scr.getpixel(x1, y) ^ 0x80)
+	var p := grid_origin(cr[0], cr[1])
+	var boxes := [[p.x - 2, p.y - 2, p.x + 0x48, p.y + 0x3b], [p.x - 3, p.y - 3, p.x + 0x49, p.y + 0x3c]]
+	for bx in boxes:
+		var x0: int = bx[0]
+		var y0: int = bx[1]
+		var x1: int = bx[2]
+		var y1: int = bx[3]
+		if on:
+			scr.xorrect(x0, y0, x1 - x0 + 1, 1, 0x80)
+			scr.xorrect(x1, y0 + 1, 1, y1 - y0 - 1, 0x80)
+			scr.xorrect(x0, y0 + 1, 1, y1 - y0 - 1, 0x80)
+			scr.xorrect(x0, y1, x1 - x0 + 1, 1, 0x80)
+		else:
+			scr.fillrect(x0, y0, x1 - x0 + 1, 1, 0)
+			scr.fillrect(x1, y0 + 1, 1, y1 - y0 - 1, 0)
+			scr.fillrect(x0, y0 + 1, 1, y1 - y0 - 1, 0)
+			scr.fillrect(x0, y1, x1 - x0 + 1, 1, 0)
 
-## returns the team chosen (mode 8), the two teams chosen (mode 0x10: a human team clicked twice, then
-## another; [a, b], -1 for one not chosen when Done ends it), true when done (modes 1, 2, 4), null
-## when cancelled
-func team_info_screen(mode: int, title: String, pinfo: PackedByteArray):
+## team_grid_save_back (0x37d6a) / team_grid_restore_back (0x37e5b): the 0x4e x 0x41 pixels of a
+## team's place, kept while a dialog is over it
+func _grid_save_back(team: int) -> void:
+	var cr := grid_place(team)
+	var p := grid_origin(cr[0], cr[1])
+	_grid_back_at = Vector2i(p.x - 4, p.y - 4)
+	_grid_back = scr.grab(_grid_back_at.x, _grid_back_at.y, 0x4e, 0x41)
+
+func _grid_restore_back() -> void:
+	if _grid_back != null:
+		scr.put(_grid_back)
+		_grid_back = null
+
+## team_info_screen (0x38b4f): the teams by division (mode 1: unk_c83c3; else each division in the
+## order of its standings, team_info_load_stats) with the names of the human teams' players under the
+## logos; the menu Select (Done / Cancel) and for modes 1 and 8 Settings (League settings / Show
+## League settings). A click selects a team (the first place at the start), a second click on it:
+## modes 1 and 2 make a computer team human (the player's name, his password twice), mode 4 takes one
+## out (more than one human team, not the controller's: "Do you really want to remove", his password),
+## mode 8 chooses a human team, mode 0x10 a first human team and then a second. Done needs a human
+## team (modes 1, 2, 4), the selected team human (8), both human (0x10). After Done the screen stays
+## (the callers' dialogs come over it): mode 1 asks who controls the league (league_control_dialog),
+## team_info_confirm sets the teams' flags, and the teams go into `pinfo` (+0 the number of human
+## teams). Returns the team (mode 8), [first, second] (0x10), true (1, 2, 4), null for Cancel.
+func team_info_screen(mode: int, title: String, pinfo: PackedByteArray) -> Variant:
+	var count := 0 if mode == 1 else pinfo.decode_u16(0)
+	if mode & 1:
+		_grid = Exe.bytes(League.DIVISION_TEAMS, 0x1c)
+	else:
+		_grid = grid_by_standings((Session.league as League).file("TEAMS"))
+	if mode == 8 and count == 1:
+		var only := -1
+		for t in 26:
+			if pinfo[0x20 + t * 0x1e + 0x17] == 1:
+				only = t
+		return only
+	fe.set_dialog_colors(0x41, 0x40, 0x42, 0x40, 0)
 	await fe.leave_screen(100)
+	var work := pinfo.duplicate()      # TPI
 	var ts := fe.bank("tspal")
 	_grid_pal = Screen8.shape_palette(ts.find("!pal")) if ts != null else FrontEnd._grey_palette()
-	_grid_draw(title, pinfo)
+	_grid_draw(title, work)
+	Menus.at(0xc8798).sub = 0xc86fc if mode & 1 else (0xc86cc if mode & 8 else 0)
 	var root := Menus.list(0xc8778, 2 if mode & 9 else 1)
 	ui.draw_menu_items(root, 0x40, 0x41, 0x42)
+	var picks := [int(_grid[0]), -1]
+	var st := {"cur": 0, "count": count, "cancel": false}
+	_grid_highlight(picks[0], true)
 	fe.play_loop("leaguetm")
 	await scr.fade_in(_grid_pal, 16)
-	var state := {"sel": -1, "result": null, "picks": [-1, -1], "cur": 0}
 	var handler := func(cb: String):
 		match cb:
 			"dialog_done":
-				if mode == 0x10:
-					state["result"] = state["picks"].duplicate()
-				else:
-					state["result"] = true if mode != 8 else state["sel"]
-				return 1
+				var cur: int = st["cur"]
+				var human := func(t: int) -> bool:
+					return t >= 0 and work[0x20 + t * 0x1e + 0x17] == 1
+				if mode & 7 and st["count"] >= 1:
+					return 1
+				if mode & 8 and human.call(picks[cur]):
+					return 1
+				if mode & 0x10 and cur == 1 and human.call(picks[0]) and human.call(picks[1]):
+					return 1
+				return 0
 			"dialog_cancel":
-				state["result"] = null
+				st["cancel"] = true
 				return 1
 		return await fe.dispatch(cb)
 	var outside := func(e: Dictionary):
 		var t := grid_team_at(e["x"], e["y"])
+		var cur: int = st["cur"]
+		if mode == 0x10 and cur == 1 and t == picks[0]:
+			t = -1
 		if t < 0:
 			return 0
-		var human: bool = pinfo[0x20 + t * 0x1e + 0x17] == 1
-		if mode == 0x10 and state["cur"] == 1 and t == state["picks"][0]:
+		var was: int = picks[cur]
+		picks[cur] = t
+		if was != t:
+			if was >= 0:
+				_grid_highlight(was, true)
+			_grid_highlight(t, true)
 			return 0
-		if t != state["sel"]:
-			_grid_highlight(state["sel"])
-			state["sel"] = t
-			_grid_highlight(t)
+		var e0 := 0x20 + t * 0x1e
+		if mode & 0x18 and work[e0 + 0x17] == 1:
+			# the chosen team keeps its box (drawn, then XORed)
+			_grid_highlight(was, false)
+			_grid_highlight(t, true)
+			if cur == 0 and mode & 0x10:
+				st["cur"] = 1
+				picks[1] = -1
+				return 0
+			return 1
+		if mode & 4:
+			if st["count"] > 1 and work[e0 + 0x19] == 0 and work[e0 + 0x17] == 1:
+				_grid_save_back(t)
+				_grid_highlight(t, false)
+				_grid_highlight(t, true)
+				var name := Database.cstring(work, e0, 11)
+				var r := await fe.message_dialog_buttons(["Do you really want to remove", name], FrontEnd.buttons_at(0xc7870, 2))
+				if r == 0 and await _password_prompt_in(work, t):
+					work[e0 + 0x17] = 0
+					st["count"] -= 1
+					for k in 0x16:
+						work[e0 + k] = 0
+					_grid_restore_back()
+					_grid_name(t, work)
+				else:
+					_grid_restore_back()
 			return 0
-		# the selected team again
-		if mode == 0x10:
-			# the first pick stays lit while the second is made
-			if human:
-				state["picks"][state["cur"]] = t
-				if state["cur"] == 0:
-					state["cur"] = 1
-					state["sel"] = -1
-					return 0
-				state["result"] = state["picks"].duplicate()
-				return 1
-			return 0
-		if mode == 8:
-			if human:
-				state["result"] = t
-				return 1
-			return 0
-		if not human and mode & 3:
-			if await _make_human(t, pinfo):
-				_grid_draw(title, pinfo)
-				ui.draw_menu_items(root, 0x40, 0x41, 0x42)
-				_grid_highlight(t)
-		elif human and (mode & 5):
-			pinfo[0x20 + t * 0x1e + 0x17] = 0
-			for k in 0x16:
-				pinfo[0x20 + t * 0x1e + k] = 0
-			_grid_draw(title, pinfo)
-			ui.draw_menu_items(root, 0x40, 0x41, 0x42)
-			_grid_highlight(t)
+		if mode & 3 and work[e0 + 0x17] == 0:
+			_grid_save_back(t)
+			_grid_highlight(t, false)
+			_grid_highlight(t, true)
+			if await _make_human(t, work):
+				st["count"] += 1
+				_grid_restore_back()
+				_grid_name(t, work)
+			else:
+				_grid_restore_back()
+			ui.reset_events()
 		return 0
-	var code := await ui.run_menu(root, 0x40, 0x41, 0x42, handler, Callable(), [1], Callable(), outside)
+	await ui.run_menu(root, 0x40, 0x41, 0x42, handler, Callable(), [1], Callable(), outside)
 	ui.show_pointer(false)
-	await fe.leave_screen(100)
-	return state["result"]
+	var cur: int = st["cur"]
+	if st["cancel"]:
+		picks[cur] = -1
+		await fe.leave_screen(100)
+	pinfo.encode_u16(0, st["count"])
+	if picks[cur] < 0:
+		return null
+	if mode & 8 == 0:
+		if mode & 1:
+			await league_control_dialog(work, st["count"])
+			for k in 0x20:
+				pinfo[k] = work[k]
+			pinfo.encode_u16(0, st["count"])
+		_team_info_confirm(work, pinfo, mode)
+		for k in 0x30c:
+			pinfo[0x20 + k] = work[0x20 + k]
+	if mode == 8:
+		return picks[0]
+	if mode == 0x10:
+		return picks.duplicate()
+	return true
 
-## "Who will play the <team>?" (a name not used yet), the password twice
+## "Who will play the <team>?" (Esc: none), the name kept and compared with the other human teams'
+## ("That name has already been used!"), then the password twice (shown as dots; Esc: none), kept
+## scrambled with the team
 func _make_human(t: int, pinfo: PackedByteArray) -> bool:
-	fe.set_dialog_colors(0x41, 0x40, 0x42, 0x40, 0)
-	var name := ""
+	var e := 0x20 + t * 0x1e
+	for k in 0x16:
+		pinfo[e + k] = 0
 	while true:
-		name = await fe.text_entry_dialog("Who will play the %s?" % team_full_name(t), 10)
-		if name == "":
+		var name := await fe.text_entry_dialog("Who will play the %s?" % team_full_name(t), 10, 0x46, 4, true)
+		if fe.entry_key == 0x1b:
 			return false
+		var a := name.to_ascii_buffer()
+		for i in 11:
+			pinfo[e + i] = a[i] if i < a.size() and i < 10 else 0
 		var used := false
 		for k in 26:
 			if k != t and pinfo[0x20 + k * 0x1e + 0x17] == 1 and Database.cstring(pinfo, 0x20 + k * 0x1e, 11).to_lower() == name.to_lower():
+				await fe.message_dialog(["That name has already been used!"])
 				used = true
 		if not used:
 			break
-		await fe.message_dialog(["That name has already been used!"])
+	var name := Database.cstring(pinfo, e, 11)
 	var pw := ""
 	while true:
-		pw = await fe.text_entry_dialog("Enter password for " + name, 10)
-		var again := await fe.text_entry_dialog("Verify password for " + name, 10)
+		pw = await fe.text_entry_dialog("Enter password for " + name, 10, 0x3c, 6)
+		if fe.entry_key == 0x1b:
+			return false
+		var again := await fe.text_entry_dialog("Verify password for " + name, 10, 0x3c, 6)
+		if fe.entry_key == 0x1b:
+			return false
 		if pw == again:
 			break
 		await fe.message_dialog(["The password was entered differently", "the second time! Try again."])
-	var e := 0x20 + t * 0x1e
-	var a := name.to_ascii_buffer()
-	for i in 11:
-		pinfo[e + i] = a[i] if i < a.size() and i < 10 else 0
-	var s := scramble(pw)
-	for i in 11:
-		pinfo[e + 0xb + i] = s[i]
 	pinfo[e + 0x17] = 1
+	League.password_store(pinfo, e + 0xb, t, pw)
 	return true
 
-## password_prompt (0x3d2a7): the password of a human team (none asked when it is empty)
+## team_info_confirm (0x38386): the flags of the teams (+0x16, +0x18): 1 for the computer teams; a
+## human team new in the league (mode 1: one the controller's dialog left at 2, mode 2: one that was
+## not human before) is asked about when there is more than one human team: "Do you want to export
+## <name> to a floppy disk?", Yes making it 2 (the team plays on another computer, its databases
+## carried on a disk). The disk exchange of the original is not ported: the team stays here (1).
+func _team_info_confirm(work: PackedByteArray, old: PackedByteArray, mode: int) -> void:
+	for t in 26:
+		var e := 0x20 + t * 0x1e
+		var fresh := (mode & 1 and work[e + 0x17] == 1 and work[e + 0x18] == 2) \
+			or (mode & 2 and work[e + 0x17] == 1 and old[e + 0x17] == 0)
+		if fresh or work[e + 0x17] == 0:
+			work[e + 0x18] = 1
+			work[e + 0x16] = 1
+
+## password_prompt (0x3a395): "Enter password for <name>" (shown as dots; Esc gives up), three tries,
+## "Incorrect password!" after a wrong one; true when it was right
 func password_prompt(l: League, t: int) -> bool:
-	var e := 0x20 + t * 0x1e + 0xb
-	var stored := l.pinfo.slice(e, e + 11)
-	if stored == scramble(""):
-		return true
+	return await _password_prompt_in(l.pinfo, t)
+
+func _password_prompt_in(pinfo: PackedByteArray, t: int) -> bool:
+	var e := 0x20 + t * 0x1e
+	var name := Database.cstring(pinfo, e, 11)
+	for k in 3:
+		var pw := await fe.text_entry_dialog("Enter password for " + name, 10, 0x3c, 6)
+		if fe.entry_key == 0x1b:
+			return false
+		if pw == League.password_text(pinfo, e + 0xb, t):
+			return true
+		await fe.message_dialog(["Incorrect password!"])
+	return false
+
+## master_password_prompt (0x3a49e): "<name> enter master password." for the controlling team's
+## player (PINFO.DB +2), the master password (+0x15) checked as password_prompt does
+func master_password_prompt(l: League) -> bool:
+	var t := l.pinfo.decode_u16(2)
 	var name := Database.cstring(l.pinfo, 0x20 + t * 0x1e, 11)
-	var pw := await fe.text_entry_dialog("Enter password for " + name, 10)
-	return scramble(pw) == stored
+	for k in 3:
+		var pw := await fe.text_entry_dialog(name + " enter master password.", 10, 0x3c, 6)
+		if fe.entry_key == 0x1b:
+			return false
+		if pw == League.password_text(l.pinfo, 0x15, t):
+			return true
+		await fe.message_dialog(["Incorrect password!"])
+	return false
+
+## league_control_dialog (0x380e9): who controls the league (the human players by name in a list
+## when there is more than one human team), his team's flags (+0x18, +0x19), the master password
+## entered twice (shown as dots, no Esc) and kept scrambled with his team (+0x15); PINFO.DB +2 the
+## controlling team, +4, +6 and +0x13 cleared
+func league_control_dialog(pinfo: PackedByteArray, count: int) -> void:
+	var teams := []
+	var names := []
+	for t in 26:
+		var e := 0x20 + t * 0x1e
+		if pinfo[e + 0x17] == 1:
+			teams.append(t)
+			names.append(Database.cstring(pinfo, e, 11))
+	if teams.is_empty():
+		return
+	var k := 0
+	if count > 1:
+		k = await fe.listbox_dialog(names, "Who will control the league?", 0)
+	var t: int = teams[k]
+	var e := 0x20 + t * 0x1e
+	pinfo[e + 0x18] = 1
+	pinfo[e + 0x19] = 1
+	pinfo.encode_u16(2, t)
+	var pw := ""
+	while true:
+		pw = await fe.text_entry_dialog("Enter master controller password for " + names[k], 10, 0x3c, 2)
+		var again := await fe.text_entry_dialog("Verify master controller password for " + names[k], 10, 0x3c, 2)
+		if pw == again:
+			break
+		await fe.message_dialog(["The password was entered differently", "the second time! Try again."])
+	League.password_store(pinfo, 0x15, t, pw)
+	pinfo.encode_u16(0x13, 0)
+	pinfo.encode_u16(4, 0)
+	pinfo[6] = 0
 
 # ---------------------------------------------------------------------------------------------
 # Open ... (league_select_screen): the leagues of the directory
@@ -733,31 +929,48 @@ func league_update_team_databases() -> int:
 func league_rebuild_databases() -> int:
 	return await _update()
 
-## Add Team to League / Remove Team From League: the human teams in the grid
+## Add Team to League (select_human_team_dialog 0x408f9): "All the teams are already human" when
+## they are, else the grid (mode 2); PINFO.DB written when the number of human teams changed
 func league_add_team() -> int:
 	var l: League = Session.league
 	if l == null:
 		return 0
+	var count := l.pinfo.decode_u16(0)
+	if count >= 26:
+		fe.set_dialog_colors(0xf9, 0xfa, 0xf8, 0xfa, 0)
+		await fe.message_dialog(["All the teams are already human"])
+		return 0
 	var p := l.pinfo.duplicate()
-	if await team_info_screen(2, "Select human controlled teams", p) != null:
+	if await team_info_screen(2, "Select new human controlled team", p) != null and p.decode_u16(0) != count:
 		l.pinfo = p
 		l.save()
 	return 2
 
+## Remove Team From League (select_human_control_dialog 0x40c29): "There is only one human controlled
+## team!" for one, else the grid (mode 4); PINFO.DB written when the number changed
 func league_remove_team() -> int:
 	var l: League = Session.league
 	if l == null:
 		return 0
+	var count := l.pinfo.decode_u16(0)
+	if count <= 1:
+		fe.set_dialog_colors(0xf9, 0xfa, 0xf8, 0xfa, 0)
+		await fe.message_dialog(["There is only one human", "controlled team!"])
+		return 0
 	var p := l.pinfo.duplicate()
-	if await team_info_screen(4, "Select human controlled team to remove", p) != null:
+	if await team_info_screen(4, "Select human controlled team to remove", p) != null and p.decode_u16(0) != count:
 		l.pinfo = p
 		l.save()
 	return 2
 
 ## Change League Play Settings: the settings dialog with the league's block
+## league_change_play_settings -> league_settings_flow (0x40f4e): the master password, then the settings
 func league_change_play_settings() -> int:
 	var l: League = Session.league
 	if l == null:
+		return 0
+	fe.set_dialog_colors(0xf9, 0xfa, 0xf8, 0xfa, 0)
+	if not await master_password_prompt(l):
 		return 0
 	var keep := Session.save_block()
 	if l.game_set.size() >= Session.SETTINGS_SIZE:
@@ -823,8 +1036,7 @@ func _trade(l: League, a: int, b: int, shirts: PackedByteArray) -> int:
 		var k: PackedByteArray = keys[slot]
 		var team := (l.file("TEAMS") as PackedByteArray).slice((a if side == 0 else b) * Trade.TEAM + 0x1a, (a if side == 0 else b) * Trade.TEAM + 0x1a + 0x10)
 		await fe.message_dialog(["The jersey number %2d is already used on %s!" % [k[1], Trade._cstr(team, 0)]])
-		var t: String = await fe.text_entry_dialog("Enter jersey number for %s %s" % [Trade._cstr(k, 3), Trade._cstr(k, 0x13)], 2)
-		return int(t) if t.is_valid_int() else 0
+		return await fe.number_entry_dialog("Enter jersey number for %s %s" % [Trade._cstr(k, 3), Trade._cstr(k, 0x13)], 2, 0x16, 1, 99)
 	var r: Array = await Trade.edit(l.file("TEAMS").duplicate(), l.file("KEY").duplicate(), a, b, shirts, answer)
 	var f: Trade.Files = r[2]
 	if f != null:
@@ -938,9 +1150,21 @@ func league_import_databases() -> int:
 ## the name (NAME.PO), the databases, the two teams of the locker room; the bracket is seeded
 ## and the series is open
 func stanley_cup_tree_screen() -> int:
+	# EMBSCUP under the name entry (EMBPAL), colour 3 white for the cursor (0x40 XOR 0x43)
+	await scr.fade_out(16)
+	scr.clearclip()
+	var bg := fe.bank("embscup")
+	if bg != null:
+		scr.drawshape_remap(bg.find("bkgd"), 0, 0)
+	var pb := fe.bank("embpal")
+	await scr.fade_in(Screen8.shape_palette(pb.find("!pal")) if pb != null else FrontEnd._grey_palette(), 16)
+	scr.settextcolor(0x40, 0x41)
 	fe.set_dialog_colors(0x41, 0x40, 0x42, 0x40, 0x43)
-	var name := (await fe.text_entry_dialog("Please Enter New Play-Off Name", 8)).to_upper()
-	if name == "":
+	var c3 := scr.getpalette().slice(9, 12)
+	scr.setpalette(PackedByteArray([0x3f, 0x3f, 0x3f]), 3, 1)
+	var name := (await fe.text_entry_dialog("Please Enter New Play-Off Name", 8, 0x36, 5)).to_upper()
+	scr.setpalette(c3, 3, 1)
+	if fe.entry_key == 0x1b or name == "":
 		return 2
 	if League.list_leagues(".PO").has(name):
 		var r := await fe.message_dialog_buttons(["There is already a Play-Off with that name!",

@@ -2920,6 +2920,19 @@ func trades_golden() -> void:
 			shown += 1
 			fail("trade case %d: %s" % [cases.find(c), ", ".join(diff.slice(0, 4))])
 	print("golden trades: %d / %d" % [ok, cases.size()])
+	# password_scramble
+	var sc: Array = _golden("trades").get("scrambles", [])
+	var sok := 0
+	for c: Array in sc:
+		var f := _hex(c[0])
+		League.password_scramble(f, 0, int(c[1]))
+		if f.hex_encode() == str(c[2]):
+			sok += 1
+		elif sok + 5 > sc.size():
+			fail("password_scramble %s key %d: %s (original %s)" % [c[0], int(c[1]), f.hex_encode(), c[2]])
+	if sc.is_empty() or sok != sc.size():
+		fail("golden password_scramble: %d / %d" % [sok, sc.size()])
+	print("golden password_scramble: %d / %d" % [sok, sc.size()])
 
 func _awards_diff(c: Dictionary) -> Array:
 	var diff := []

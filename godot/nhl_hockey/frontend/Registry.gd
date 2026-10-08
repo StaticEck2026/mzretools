@@ -271,8 +271,8 @@ func _callback(cb: String):
 				await fe.message_dialog(["The databases are saved."])
 			return 0
 		"new_database_dialog":
-			var name := (await fe.text_entry_dialog("Enter a name for the database", 8)).to_upper()
-			if name != "":
+			var name := (await fe.text_entry_dialog("Enter a new database name:", 8, 0x30, 5)).to_upper()
+			if name != "" and fe.entry_key != 0x1b:
 				var d := "user://databases".path_join(name)
 				DirAccess.make_dir_recursive_absolute(d)
 				for n in files:
@@ -350,9 +350,8 @@ func _jersey_number(team: int, off: int) -> void:
 		if not taken:
 			return
 		var name := Database.cstring(key, off + 3, 16) + " " + Database.cstring(key, off + 0x13, 16)
-		var s := await fe.text_entry_dialog("The jersey number %d is already used. New number for %s:" % [key[off + 1], name], 2)
-		if s.is_valid_int() and int(s) >= 0 and int(s) <= 99:
-			key[off + 1] = int(s)
+		await fe.message_dialog(["The jersey number %2d is already used on %s!" % [key[off + 1], Exe.str_ptr(LeagueScreens.TEAM_NAMES + team * 4)]])
+		key[off + 1] = await fe.number_entry_dialog("Enter jersey number for %s" % name, 2, 0x16, 1, 99)
 
 ## the line table without holes: a place whose player left takes another of the team's players
 ## of the position (forwards and defencemen as the original's lines, any skater in the units)
@@ -404,14 +403,14 @@ func _repair_all_lines() -> void:
 ## create_player_menu / create_player_form: a new free agent: names, number, position; the
 ## ratings of an average player, empty statistics
 func _create_player() -> void:
-	var first := await fe.text_entry_dialog("First name of the new player", 15)
-	if first == "":
+	var first := await fe.text_entry_dialog("First name of the new player", 15, 0, 4)
+	if first == "" or fe.entry_key == 0x1b:
 		return
-	var last := await fe.text_entry_dialog("Last name of the new player", 15)
-	if last == "":
+	var last := await fe.text_entry_dialog("Last name of the new player", 15, 0, 4)
+	if last == "" or fe.entry_key == 0x1b:
 		return
-	var num := await fe.text_entry_dialog("Jersey number", 2)
-	var pos := (await fe.text_entry_dialog("Position (C, L, R, D or G)", 1)).to_upper()
+	var num := await fe.text_entry_dialog("Jersey number", 2, 0x16, 8)
+	var pos := (await fe.text_entry_dialog("Position (C, L, R, D or G)", 1, 0, 0x10)).to_upper()
 	if not ["C", "L", "R", "D", "G"].has(pos):
 		pos = "C"
 	var goalie := pos == "G"
@@ -455,8 +454,8 @@ func _create_player() -> void:
 
 ## Find Player ...: the roster of the team of a player found by his last name
 func _find_player(c: int) -> void:
-	var name := (await fe.text_entry_dialog("Last name of the player to find", 15)).to_lower()
-	if name == "":
+	var name := (await fe.text_entry_dialog("Last name of the player to find", 15, 0, 4)).to_lower()
+	if name == "" or fe.entry_key == 0x1b:
 		return
 	var key: PackedByteArray = files["KEY"]
 	for off in range(0, key.size() - 0x33, 0x34):

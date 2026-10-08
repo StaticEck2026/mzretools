@@ -96,6 +96,14 @@ func fillrect(x: int, y: int, w: int, h: int, index: int) -> void:
 	img.fill_rect(r, _c(index))
 	_dirty = true
 
+## fillrect2 (0x90f38): the rectangle XORed with the colour (fillrect2_clipped: inside the clip)
+func xorrect(x: int, y: int, w: int, h: int, index: int) -> void:
+	var r := Rect2i(x, y, w, h).intersection(clip)
+	for yy in range(r.position.y, r.end.y):
+		for xx in range(r.position.x, r.end.x):
+			img.set_pixel(xx, yy, _c(img.get_pixel(xx, yy).r8 ^ (index & 0xff)))
+	_dirty = true
+
 func putpixel(x: int, y: int, index: int) -> void:
 	if clip.has_point(Vector2i(x, y)):
 		img.set_pixel(x, y, _c(index))
