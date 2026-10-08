@@ -724,6 +724,8 @@ func _update_view() -> void:
 			var f: int = e.frame
 			var puck_e = ents[Entity.Slot.PUCK]
 			visible = false
+			# (drawn first, before the puck and the players: the puck covers it)
+			z = -401
 			if f >= 0x284 and f <= 0x288:
 				visible = true
 				force_mirror = e.xi < 0

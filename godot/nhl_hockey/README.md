@@ -26,7 +26,7 @@ and edited databases are kept under `user://` (`leagues/NAME.LP`, `leagues/NAME.
 `databases/NAME`), `GAME.SET` holds the settings of the desk. The commands of `NHL_UI_SCRIPT` are listed in
 `view/App.gd`.
 
-Controls (player 1, home team): arrows skate, Alt = A (pass / switch player), Space = B (shoot / body
+Controls (player 1, home team): arrows skate, X = A (pass / switch player), C = B (shoot / body
 check), Ctrl = C (hook, poke check). Player 2 (`NHL_USER2`): I J K L skate, U = A, O = B, P = C. At the
 faceoff hold a direction and press A when the puck drops. A or B skips the anthem.
 
@@ -268,6 +268,10 @@ library built from source with the tests again.
   exchange for teams that play on another computer: `team_info_confirm` does not ask "Do you want to
   export <name> to a floppy disk?" (with more than one human team) and keeps every team on this
   computer, as the answer No does; the League Manager's checks for unmerged databases are left out.
+  Next League Game therefore runs a simpler flow than `league_calendar_flow` (which reads and writes the
+  teams' copies, `league_player_id_check`, `league_import_export_check`, the merges): the human team to
+  play (the grid when there are several), its password, the calendar, the game, the day's other games;
+  it is not needed while every team plays on one computer.
 - Injuries do not carry over from one league game to the next; neither do they in the original, whose
   roster loader reads a return date (SEASON.DB +0x26 / +0x27) that nothing but the multi-player merge writes.
 - Sound: the MT-32's sound is its own (LA synthesis and the PCM samples of its ROMs, neither part of the
