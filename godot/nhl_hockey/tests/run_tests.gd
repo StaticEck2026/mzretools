@@ -35,6 +35,11 @@ func run_until_play(sim: Sim, limit: int) -> int:
 	return -1
 
 func run_tests() -> void:
+	if OS.get_environment("TEST_ONLY") != "":      # only this test (one without arguments)
+		call(OS.get_environment("TEST_ONLY"))
+		print("tests finished, failures: ", failures)
+		quit(1 if failures else 0)
+		return
 	if OS.get_environment("AI_STATE") != "":       # only the AI golden test
 		ai_golden()
 		print("tests finished, failures: ", failures)
@@ -430,6 +435,7 @@ func asset_tests() -> void:
 		golden_tests(gf)
 	league_tests(gf)
 	league_golden(gf)
+	sorts_golden()
 
 ## the sound cards (load_sound_config): the Sound Blaster's digital driver and its mixer (the
 ## effects on voices 0 / 1, the crowd's roar and murmur on 2 / 3), the AdLib's FM effects, the PC
@@ -725,18 +731,7 @@ func ai_golden() -> void:
 		return
 	var base: Array = data["base"]
 	var counts := []
-	if not Exe.ok:
-		# the highlight reads its tables from the executable (also when only the AI tests run)
-		var GF := load("res://autoload/GameFiles.gd")
-		var gf: Node = GF.new()
-		gf.use_data = false
-		var dir := OS.get_environment("NHL_GAME_DIR")
-		if dir == "" or not DirAccess.dir_exists_absolute(dir):
-			dir = GF.repository_game_dir()
-		if dir != "":
-			gf.set_game_dir(dir, false)
-		Exe.load_from(gf.read_raw("hockey.exe"))
-		gf.free()
+	_ensure_exe()        # the highlight reads its tables from the executable
 	var only_group := OS.get_environment("AI_GROUP")     # only this group (with AI_STATE set)
 	for group in data:
 		if group == "base" or (only_group != "" and group != only_group):
@@ -2710,6 +2705,176 @@ static func _byte_diff(a: PackedByteArray, b: PackedByteArray) -> Array:
 		else:
 			i += 1
 	return out
+
+## the executable's tables also when only some tests run (TEST_ONLY, AI_STATE)
+func _ensure_exe() -> void:
+	if Exe.ok:
+		return
+	var GF := load("res://autoload/GameFiles.gd")
+	var gf: Node = GF.new()
+	gf.use_data = false
+	var dir := OS.get_environment("NHL_GAME_DIR")
+	if dir == "" or not DirAccess.dir_exists_absolute(dir):
+		dir = GF.repository_game_dir()
+	if dir != "":
+		gf.set_game_dir(dir, false)
+	Exe.load_from(gf.read_raw("hockey.exe"))
+	gf.free()
+
+## the statistics screens' sorts (sorts.json): the library's qsort with the comparators of the team
+## tables and the leaders (StatsSort.gd) on random tables full of ties; the sorted order compared
+func sorts_golden() -> void:
+	_ensure_exe()
+	var cases: Array = _golden("sorts").get("stats", [])
+	if cases.is_empty():
+		fail("golden sorts data missing")
+		return
+	var per := {}
+	var ok := 0
+	var shown := 0
+	for c: Dictionary in cases:
+		var st := StatsSort.new()
+		st.playoffs = int(c["playoffs"]) != 0
+		var table := PackedByteArray(Array(str(c["table"]).hex_decode()))
+		var kind := int(c["kind"])
+		var team := str(c["family"]) == "team"
+		if team:
+			st.teams = table
+		elif kind >= 8:
+			st.goalies = table
+		else:
+			st.skaters = table
+		st.values = PackedInt32Array(_ints(c["values"]))
+		var order: Array = _ints(c["order"])
+		Clib.qsort(order, st.team_comparator(kind) if team else st.leader_comparator(kind))
+		var name := "%s %d" % [c["family"], kind]
+		if not per.has(name):
+			per[name] = [0, 0]
+		if str(order) == str(_ints(c["sorted"])):
+			ok += 1
+			per[name][0] += 1
+		else:
+			per[name][1] += 1
+			if shown < 8:
+				shown += 1
+				fail("sort %s (%d elements, play-offs %d): %s (original %s)" % [name, order.size(), int(c["playoffs"]),
+					str(order), str(c["sorted"])])
+	var parts := []
+	for n in per:
+		parts.append("%s %d/%d" % [n, per[n][0], per[n][0] + per[n][1]])
+	print("golden sorts: %d / %d (%s)" % [ok, cases.size(), ", ".join(parts)])
+	_stats_screens_golden(_golden("sorts").get("screens", []))
+
+static func _hex(v: Variant) -> PackedByteArray:
+	return str(v).hex_decode()
+
+## the statistics screens up to their drawing (sorts.json "screens"): the leaders (stats_table), a
+## team table (team_stats_screen) and a team's roster (player_stats_screen) gathered from the
+## case's files by StatsSort; the elements in their order, their records, keys and values compared
+func _stats_screens_golden(cases: Array) -> void:
+	if cases.is_empty():
+		fail("golden statistics screens missing")
+		return
+	var per := {}
+	var ok := 0
+	var shown := 0
+	for c: Dictionary in cases:
+		var league := int(c["league"]) != 0
+		var playoffs := int(c["playoffs"]) != 0
+		var compact := _hex(c["teams"])
+		var stride := 0x2e8 if league else 0x4c
+		var team_file := PackedByteArray()
+		team_file.resize(28 * stride)
+		for t in 28:
+			for i in 0x4c:
+				team_file[t * stride + i] = compact[t * 0x4c + i]
+		var keys := _hex(c["keys"])
+		var stats := _hex(c["stats"])
+		var screen := str(c["screen"])
+		var diff := []
+		var name := screen
+		match screen:
+			"leaders":
+				var kind := int(c["kind"])
+				name = "leaders %d" % kind
+				var r := StatsSort.leaders(kind, playoffs, league, team_file, keys, stats)
+				var st: StatsSort = r["sorter"]
+				var order: Array = r["order"]
+				if str(order) != str(_ints(c["order"])):
+					diff.append("order %s (original %s)" % [str(order), str(c["order"])])
+				else:
+					var size := 0x36 if kind >= 8 else 0x2f
+					var table := st.goalies if kind >= 8 else st.skaters
+					for i in order.size():
+						var e: int = order[i]
+						if (r["keys"][e] as PackedByteArray).hex_encode() != str(c["keys_out"][i]):
+							diff.append("key of %d" % e)
+						if table.slice(e * size, e * size + size).hex_encode() != str(c["records"][i]):
+							diff.append("record of %d" % e)
+						if kind == 7 and st.values[e] != int(c["values"][i]):
+							diff.append("value of %d: %d (original %d)" % [e, st.values[e], int(c["values"][i])])
+			"teams":
+				var kind := int(c["kind"])
+				name = "teams %d" % kind
+				var sched := PackedByteArray()
+				sched.resize(0x199c)
+				sched.append_array(_hex(c["sched"]))
+				var r := StatsSort.team_table(kind, playoffs, league, team_file, sched)
+				var st: StatsSort = r["sorter"]
+				var order: Array = r["order"]
+				var want: Array = _ints(c["order"])
+				if kind == 5 and not playoffs and not league:
+					want = range(want.size())        # (not sorted: the lists are the original's)
+				if str(order) != str(want):
+					diff.append("order %s (original %s)" % [str(order), str(c["order"])])
+				if str(r["teams"]) != str(_ints(c["team_list"])):
+					diff.append("teams %s (original %s)" % [str(r["teams"]), str(c["team_list"])])
+				if int(r["count"]) != int(c["count"]) and order.size() > 0:
+					diff.append("rows %d (original %d)" % [int(r["count"]), int(c["count"])])
+				for e in order.size():
+					if st.teams.slice(e * 0x4c, e * 0x4c + 0x4c).hex_encode() != str(c["records"][e]):
+						diff.append("record of %d" % e)
+					if kind >= 2 and st.values[e] != int(c["values"][e]):
+						diff.append("value of %d: %d (original %d)" % [e, st.values[e], int(c["values"][e])])
+				if kind == 5 and order.size() > 0:
+					var n := 8 if playoffs else (12 if league else 14)
+					for side in ["west", "east"]:
+						var got: Array = r[side]
+						var orig: Array = _ints(c[side])
+						var m := mini(n, got.size())
+						if str(got.slice(0, m)) != str(orig.slice(0, m)):
+							diff.append("%s %s (original %s)" % [side, str(got), str(orig.slice(0, n))])
+			"roster":
+				var team_rec := _hex(c["roster_teams"])
+				var r := StatsSort.roster(team_rec, playoffs, league, keys, stats)
+				var st: StatsSort = r["sorter"]
+				for k in ["skaters", "goalies", "skater_roster", "goalie_roster"]:
+					if str(r[k]) != str(_ints(c[k])):
+						diff.append("%s %s (original %s)" % [k, str(r[k]), str(c[k])])
+				for e in (r["skaters"] as Array).size():
+					if st.skaters.slice(e * 0x2f, e * 0x2f + 0x2f).hex_encode() != str(c["skater_records"][e]):
+						diff.append("skater record %d %s (original %s)" % [e, st.skaters.slice(e * 0x2f, e * 0x2f + 0x2f).hex_encode(), c["skater_records"][e]])
+				for e in (r["goalies"] as Array).size():
+					if st.goalies.slice(e * 0x36, e * 0x36 + 0x36).hex_encode() != str(c["goalie_records"][e]):
+						diff.append("goalie record %d %s (original %s)" % [e, st.goalies.slice(e * 0x36, e * 0x36 + 0x36).hex_encode(), c["goalie_records"][e]])
+				for rr in 28:
+					var kk = r["keys"][rr]
+					if kk != null and (kk as PackedByteArray).hex_encode() != str(c["keys_out"][rr]):
+						diff.append("key of roster %d" % rr)
+		if not per.has(name):
+			per[name] = [0, 0]
+		if diff.is_empty():
+			ok += 1
+			per[name][0] += 1
+		else:
+			per[name][1] += 1
+			if shown < 8:
+				shown += 1
+				fail("statistics screen %s (league %d, play-offs %d): %s" % [name, int(league), int(playoffs), ", ".join(diff.slice(0, 6))])
+	var parts := []
+	for n in per:
+		parts.append("%s %d/%d" % [n, per[n][0], per[n][0] + per[n][1]])
+	print("golden statistics screens: %d / %d (%s)" % [ok, cases.size(), ", ".join(parts)])
 
 ## league_sim_game (league.json): the statistical game of two computer teams on the league files
 ## the game ships, compared byte by byte (SEASON, CAREER, KEY, TEAMS, CARTEAMS), with the score, the

@@ -263,44 +263,20 @@ func _xor_rect(r: Rect2i, v: int) -> void:
 
 ## kind: 0 scoring, 1 defense, 2 penalty killing, 3 power play, 4 penalties, 5 standings by conference
 func team_stats_screen(kind: int) -> void:
-	var teams: Array = []
+	# the teams, their records and values, sorted as the original gathers them (StatsSort)
+	var sched := PackedByteArray()
+	if Session.stats_playoffs:
+		sched = data("schedule.db" if Session.stats_league else "lssched.db")
+	var table := StatsSort.team_table(kind, Session.stats_playoffs, Session.stats_league, team_file(), sched)
+	var st: StatsSort = table["sorter"]
+	var teams: Array = table["teams"]
 	var recs: Array = []
-	var d := team_file()
-	var stride := team_stride()
-	if not Session.stats_playoffs:
-		for t in 26:
-			teams.append(t)
-	else:
-		# the play-off teams: the first round of LSSCHED.DB (8 series, home and away)
-		var sched := data("lssched.db") if not Session.stats_league else data("schedule.db")
-		for k in 8:
-			var at := 2 + 0x199a + k * 0x2a
-			if b8(sched, at + 2) == 0xff:
-				teams.clear()
-				break
-			teams.append(b8(sched, at + 2))
-			teams.append(b8(sched, at + 3))
-	for t in teams:
-		recs.append(d.slice(t * stride, t * stride + 0x4c))
+	var value: Array = []
+	for e in teams.size():
+		recs.append(st.teams.slice(e * 0x4c, e * 0x4c + 0x4c))
+		value.append(st.values[e])
+	var order: Array = table["order"]
 	var blk := team_block(PackedByteArray())
-	var value := []
-	for r: PackedByteArray in recs:
-		var v := 0
-		match kind:
-			2:
-				var tsh := maxi(u16(r, blk + 0xe), u16(r, blk + 0xc))
-				v = 1000 - (u16(r, blk + 0xc) * 1000 + tsh / 2) / tsh if tsh != 0 else 0
-			3:
-				var adv := maxi(u16(r, blk + 0xa), u16(r, blk + 8))
-				v = (u16(r, blk + 8) * 1000 + adv / 2) / adv if adv != 0 else 0
-			4:
-				var gp := b8(r, blk)
-				v = (u16(r, blk + 0x10) * 10 + gp / 2) / gp if gp != 0 else 0
-			5:
-				v = b8(r, 0x27)
-		value.append(v)
-	var order: Array = range(recs.size())
-	order.sort_custom(func(a: int, b: int) -> bool: return _team_less(kind, recs[a], recs[b], value[a], value[b], a, b))
 	_background(_source_bank())
 	scr.capture_begin()
 	var titles := Exe.str_table(0xc6b70, 6)
@@ -333,7 +309,7 @@ func team_stats_screen(kind: int) -> void:
 		_p(0x21c, y, heads[kind * 4 + 3])
 	y += 0x10
 	if kind == 5:
-		_conference_table(recs, teams, order, y)
+		_conference_table(recs, teams, table, y)
 	else:
 		var rank := 1
 		for k in order:
@@ -373,82 +349,22 @@ func _team_name(r: PackedByteArray) -> String:
 func _pts(r: PackedByteArray, blk: int) -> int:
 	return b8(r, blk + 1) * 2 + b8(r, blk + 3)
 
-## cmp_team_standings / scoring / defense / penalty_killing / power_play / penalties
-func _team_less(kind: int, ra: PackedByteArray, rb: PackedByteArray, va: int, vb: int, a: int, b: int) -> bool:
-	var blk := team_block(ra)
-	var pa := _pts(ra, blk)
-	var pb := _pts(rb, blk)
-	match kind:
-		0:
-			if u16(ra, blk + 4) != u16(rb, blk + 4):
-				return u16(ra, blk + 4) > u16(rb, blk + 4)
-			if b8(ra, blk) != b8(rb, blk):
-				return b8(ra, blk) < b8(rb, blk)
-		1:
-			if u16(ra, blk + 6) != u16(rb, blk + 6):
-				return u16(ra, blk + 6) < u16(rb, blk + 6)
-			if b8(ra, blk) != b8(rb, blk):
-				return b8(ra, blk) > b8(rb, blk)
-		2, 3:
-			if va != vb:
-				return va > vb
-			var x := 0xc if kind == 2 else 8
-			var n := 0xe if kind == 2 else 0xa
-			var ca := u16(rb, blk + x) * u16(ra, blk + n)
-			var cb := u16(ra, blk + x) * u16(rb, blk + n)
-			if ca != cb:
-				return ca < cb if kind == 2 else ca > cb
-			if u16(ra, blk + n) != u16(rb, blk + n):
-				return u16(ra, blk + n) > u16(rb, blk + n)
-			if b8(ra, blk) != b8(rb, blk):
-				return b8(ra, blk) > b8(rb, blk)
-		4:
-			if va != vb:
-				return va < vb
-			if b8(ra, blk) != b8(rb, blk):
-				return b8(ra, blk) > b8(rb, blk)
-			if u16(ra, blk + 0x10) != u16(rb, blk + 0x10):
-				return u16(ra, blk + 0x10) < u16(rb, blk + 0x10)
-		5:
-			if pa != pb:
-				return pa > pb
-			if b8(ra, blk) != b8(rb, blk):
-				return b8(ra, blk) < b8(rb, blk)
-			if b8(ra, blk + 1) != b8(rb, blk + 1):
-				return b8(ra, blk + 1) > b8(rb, blk + 1)
-			if u16(ra, blk + 4) != u16(rb, blk + 4):
-				return u16(ra, blk + 4) > u16(rb, blk + 4)
-			if u16(ra, blk + 6) != u16(rb, blk + 6):
-				return u16(ra, blk + 6) < u16(rb, blk + 6)
-			return a < b
-	if pa != pb:
-		return pa > pb
-	if b8(ra, blk + 1) != b8(rb, blk + 1):
-		return b8(ra, blk + 1) > b8(rb, blk + 1)
-	return a < b
-
-## Team Standings by conference: the twelve teams of each conference (the order of the '93 - '94
-## standings comes from unk_c6af8 / unk_c6b30; a league sorts by points, the division leaders
-## first)
-func _conference_table(recs: Array, teams: Array, order: Array, y0: int) -> void:
+## Team Standings by conference: the teams of each conference (the order of the '93 - '94
+## standings comes from unk_c6af8 / unk_c6b30; a league's and the play-offs' are sorted, in a
+## league a team of the other division moved up to second: StatsSort.team_table)
+func _conference_table(recs: Array, teams: Array, table: Dictionary, y0: int) -> void:
 	var blk := team_block(PackedByteArray())
 	var west: Array = []
 	var east: Array = []
+	# the '93 - '94 lists name teams (99 none); a league's and the play-offs' name elements
 	if not Session.stats_playoffs and not Session.stats_league:
-		for i in 14:
-			var w := Exe.i32(0xc6af8 + i * 4)
-			var e := Exe.i32(0xc6b30 + i * 4)
-			if w < 26:
-				west.append(teams.find(w))
-			if e < 26:
-				east.append(teams.find(e))
+		for t in table["west"]:
+			west.append(teams.find(t) if t < 26 else -1)
+		for t in table["east"]:
+			east.append(teams.find(t) if t < 26 else -1)
 	else:
-		for k in order:
-			var t: int = teams[k]
-			if Exe.i32(0xc5581 + t * 4) == 3:
-				west.append(k)
-			else:
-				east.append(k)
+		west = table["west"]
+		east = table["east"]
 	for side in 2:
 		var list: Array = west if side == 0 else east
 		var x0 := 0 if side == 0 else 0x140
@@ -480,46 +396,19 @@ func _conference_table(recs: Array, teams: Array, order: Array, y0: int) -> void
 ## kind: 0 points, 1 goals, 2 assists, 3 power play goals, 4 short handed goals, 5 plus/minus,
 ## 6 penalty minutes, 7 shooting percentage, 8 goals against average, 9 wins, 10 save percentage
 func stats_table(kind: int) -> void:
-	var team_gp := []
+	# the 20 leaders as the original gathers them (StatsSort.leaders): [key record, stats block, value]
+	var goalie := kind >= 8
+	var res := StatsSort.leaders(kind, Session.stats_playoffs, Session.stats_league, team_file(), data("key.db"), stats_file())
+	var st: StatsSort = res["sorter"]
+	var size := 0x36 if goalie else 0x2f
+	var blk := (0x16 if goalie else 0x12) if Session.stats_playoffs else 0
+	var table := st.goalies if goalie else st.skaters
 	var td := team_file()
 	var stride := team_stride()
-	for t in 26:
-		team_gp.append(b8(td, t * stride + (0x3a if Session.stats_playoffs else 0x28)))
-	var keys := data("key.db")
-	var st := stats_file()
-	var goalie := kind >= 8
-	var rows: Array = []                # [key record, stats block, sort value]
-	var pos := 0
-	while pos + 0x34 <= keys.size():
-		var k := keys.slice(pos, pos + 0x34)
-		pos += 0x34
-		var team := k[0]
-		if team >= 0x1a:
-			continue
-		var is_goalie := k[2] == 0x47
-		if is_goalie != goalie:
-			continue
-		var off := stats_offset(k)
-		var n := 0x36 if goalie else 0x2f
-		var rec := st.slice(off, off + n) if off >= 0 else PackedByteArray()
-		var blk := (0x16 if goalie else 0x12) if Session.stats_playoffs else 0
-		var gp := u16(rec, blk)
-		if gp == 0:
-			continue
-		if goalie:
-			if (kind == 8 or kind == 10) and (team_gp[team] == 0 or gp * 100 / team_gp[team] < 0x1e):
-				continue
-			if kind == 9 and s16(rec, blk + 2) == 0:
-				continue
-		elif (kind == 5 or kind == 7) and (team_gp[team] == 0 or gp * 100 / team_gp[team] < 0x50):
-			continue
-		var v := 0
-		if kind == 7:
-			var shots := u16(rec, blk + 0xe)
-			v = (u16(rec, blk + 2) * 1000 + shots / 2) / shots if shots != 0 else 0
-		rows.append([k, rec.slice(blk, blk + (0x16 if goalie else 0x12)), v])
-	rows.sort_custom(func(a: Array, b: Array) -> bool: return _leader_less(kind, a, b))
-	rows = rows.slice(0, 20)
+	var rows: Array = []
+	for e: int in res["order"]:
+		var full := table.slice(e * size, e * size + size)
+		rows.append([res["keys"][e], full.slice(blk, blk + (0x16 if goalie else 0x12)), st.values[e]])
 	_background(_source_bank())
 	scr.capture_begin()
 	_title(source_title(Exe.str_ptr(0xc6c14 + kind * 4)))
@@ -591,38 +480,6 @@ func stats_table(kind: int) -> void:
 		y += 0xd
 	scr.capture_stop()
 
-## the comparators of the leaders (cmp_leaders_*)
-func _leader_less(kind: int, a: Array, b: Array) -> bool:
-	var ra: PackedByteArray = a[1]
-	var rb: PackedByteArray = b[1]
-	var field: int = [6, 2, 4, 8, 0xa, 0x10, 0xc, -1, 0x10, 2, 0x14][kind]
-	match kind:
-		7:
-			if a[2] != b[2]:
-				return a[2] > b[2]
-		8:
-			if u16(ra, 0x10) != u16(rb, 0x10):
-				return u16(ra, 0x10) < u16(rb, 0x10)
-			if u16(ra, 0xc) != u16(rb, 0xc):
-				return u16(ra, 0xc) > u16(rb, 0xc)
-		5:
-			if s16(ra, 0x10) != s16(rb, 0x10):
-				return s16(ra, 0x10) > s16(rb, 0x10)
-		_:
-			if u16(ra, field) != u16(rb, field):
-				return u16(ra, field) > u16(rb, field)
-	if kind < 8:
-		if u16(ra, 0) != u16(rb, 0):
-			return u16(ra, 0) < u16(rb, 0)
-		if u16(ra, 6) != u16(rb, 6):
-			return u16(ra, 6) > u16(rb, 6)
-		if u16(ra, 2) != u16(rb, 2):
-			return u16(ra, 2) > u16(rb, 2)
-		return s16(ra, 0x10) > s16(rb, 0x10)
-	if u16(ra, 0) != u16(rb, 0):
-		return u16(ra, 0) > u16(rb, 0)
-	return u16(ra, 0xc) > u16(rb, 0xc)
-
 # ---------------------------------------------------------------------------------------------
 # a team's roster (player_stats_screen 0x244e2)
 # ---------------------------------------------------------------------------------------------
@@ -632,30 +489,23 @@ func _leader_less(kind: int, a: Array, b: Array) -> bool:
 func player_stats_screen(team: int) -> void:
 	var teams := data("teams.db")
 	var rec := teams.slice(team * 0x2e8, (team + 1) * 0x2e8)
-	var keys := data("key.db")
-	var st := stats_file()
+	# the roster as the original gathers and sorts it (StatsSort.roster): [roster index, key, block]
+	var res := StatsSort.roster(rec, Session.stats_playoffs, Session.stats_league, data("key.db"), stats_file())
+	var sorter: StatsSort = res["sorter"]
 	roster_keys.clear()
+	for i in 28:
+		roster_keys.append(res["keys"][i] if res["keys"][i] != null else PackedByteArray())
 	var skaters: Array = []
 	var goalies: Array = []
-	for i in 28:
-		var key := rec.decode_s32(0x4c + i * 4) if i < 25 else rec.decode_s32(0xb0 + (i - 25) * 4)
-		if key < 0 or key + 0x34 > keys.size():
-			roster_keys.append(PackedByteArray())
-			continue
-		var k := keys.slice(key, key + 0x34)
-		roster_keys.append(k)
-		var off := stats_offset(k)
-		var n := 0x36 if i >= 25 else 0x2f
-		var r := st.slice(off, off + n) if off >= 0 else PackedByteArray()
-		r.resize(n)
-		var blk := ((0x16 if i >= 25 else 0x12) if Session.stats_playoffs else 0)
-		var row := [i, k, r.slice(blk, blk + (0x16 if i >= 25 else 0x12))]
-		if i >= 25:
-			goalies.append(row)
-		else:
-			skaters.append(row)
-	skaters.sort_custom(func(a: Array, b: Array) -> bool: return _leader_less(0, [a[1], a[2], 0], [b[1], b[2], 0]))
-	goalies.sort_custom(func(a: Array, b: Array) -> bool: return _leader_less(8, [a[1], a[2], 0], [b[1], b[2], 0]))
+	for g in 2:
+		var size := 0x36 if g == 1 else 0x2f
+		var blk := ((0x16 if g == 1 else 0x12) if Session.stats_playoffs else 0)
+		var table := sorter.goalies if g == 1 else sorter.skaters
+		var slots: Array = res["goalie_roster" if g == 1 else "skater_roster"]
+		for e: int in res["goalies" if g == 1 else "skaters"]:
+			var full := table.slice(e * size, e * size + size)
+			var i: int = slots[e]
+			(goalies if g == 1 else skaters).append([i, roster_keys[i], full.slice(blk, blk + (0x16 if g == 1 else 0x12))])
 	roster_order = skaters
 	goalie_order = goalies
 	var abbrev := cstr(rec, 0, 5)

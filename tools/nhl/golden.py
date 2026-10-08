@@ -43,7 +43,7 @@ import struct
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
-from leemu import LEEmu, STACK_TOP            # noqa: E402
+from leemu import LEEmu, STACK_TOP, RETURN    # noqa: E402
 
 from unicorn import UC_HOOK_CODE, UC_HOOK_INSN    # noqa: E402
 from unicorn.x86_const import (UC_X86_INS_IN, UC_X86_INS_OUT, UC_X86_REG_GDTR, UC_X86_REG_DS,  # noqa: E402
@@ -4873,6 +4873,311 @@ def day_cases(exe, gamedir):
     return chains
 
 
+QSORT = 0x9244c                                # (base, count, size, compare)
+STATS_PLAYOFFS = 0xc6956                       # stats_playoffs: the play-off blocks of the statistics
+STATS_TABLES = (0xdd108, 0xdd110, 0xdd114, 0xdd118)   # the teams, skaters, goalies, values per element
+TEAM_COMPARATORS = 0xc6ae0                     # funcptr_c6ae0: 6 team tables
+LEADER_COMPARATORS = 0xc6be8                   # funcptr_c6be8: 11 leaders' tables
+
+
+def sort_cases(exe, count=600):
+    """qsort with the comparators of the statistics screens (funcptr_c6ae0: the team tables,
+    funcptr_c6be8: the leaders, also a team's roster): random tables of teams (0x4c bytes, the
+    blocks at +0x28 and +0x3a), skaters (0x2f, +0 and +0x12) and goalies (0x36, +0 and +0x16) with
+    fields from small ranges (many ties), random values per element (dword_dd118), the season or the
+    play-offs; the elements (record numbers) shuffled, 2 to 120 of them. The sorted order is
+    compared"""
+    emu = PortEmu(exe)
+    rnd = random.Random(0x5047)
+    team_cmps = struct.unpack('<6I', emu.read(TEAM_COMPARATORS, 24))
+    leader_cmps = struct.unpack('<11I', emu.read(LEADER_COMPARATORS, 44))
+    most = 120
+    bufs = [emu.alloc(most * 0x4c), emu.alloc(most * 0x2f), emu.alloc(most * 0x36), emu.alloc(most * 4)]
+    for a, b in zip(STATS_TABLES, bufs):
+        emu.write(a, struct.pack('<I', b))
+    arr = emu.alloc(most * 4)
+
+    def words(fields, size, spans):
+        rec = bytearray(size)
+        for off, kind, lo, hi in fields:
+            v = rnd.randint(lo, hi) if rnd.random() < spans else lo
+            if kind == 'b':
+                rec[off] = v & 0xff
+            elif kind == 'h':
+                struct.pack_into('<h', rec, off, v)
+            else:
+                struct.pack_into('<H', rec, off, v)
+        return rec
+
+    team_fields = [(0, 'b', 0, 3), (1, 'b', 0, 2), (2, 'b', 0, 2), (3, 'b', 0, 1), (4, 'H', 0, 3), (6, 'H', 0, 3),
+                   (8, 'H', 0, 3), (0xa, 'H', 0, 3), (0xc, 'H', 0, 3), (0xe, 'H', 0, 3), (0x10, 'H', 0, 3)]
+    skater_fields = [(0, 'H', 0, 2), (2, 'H', 0, 2), (4, 'H', 0, 2), (6, 'H', 0, 3), (8, 'H', 0, 1), (0xa, 'H', 0, 1),
+                     (0xc, 'H', 0, 2), (0xe, 'H', 0, 3), (0x10, 'h', -1, 1)]
+    goalie_fields = [(0, 'H', 0, 2), (2, 'H', 0, 2), (4, 'H', 0, 2), (6, 'H', 0, 1), (0xc, 'H', 0, 2), (0xe, 'H', 0, 2),
+                     (0x10, 'H', 0, 2), (0x14, 'H', 0, 2)]
+    cases = []
+    for k in range(count):
+        family = rnd.choice(('team', 'leader', 'leader'))
+        kind = rnd.randrange(6) if family == 'team' else rnd.randrange(11)
+        playoffs = rnd.choice((0, 1))
+        n = rnd.choice((2, 3, 5, 8, 14, 15, 16, 17, 26, 29, 30, 31, 42, 43, 44, 60, 90, 120))
+        spans = rnd.choice((0.3, 0.7, 1.0))
+        if family == 'team':
+            recs = []
+            for i in range(n):
+                r = bytearray(0x4c)
+                for blk in (0x28, 0x3a):
+                    r[blk:blk + 0x12] = words(team_fields, 0x12, spans)
+                recs.append(bytes(r))
+            table, at = b''.join(recs), bufs[0]
+        elif kind >= 8:
+            recs = [words(goalie_fields, 0x16, spans) + words(goalie_fields, 0x16, spans) + bytes(0x36 - 0x2c) for i in range(n)]
+            table, at = b''.join(recs), bufs[2]
+        else:
+            recs = [words(skater_fields, 0x12, spans) + words(skater_fields, 0x12, spans) + bytes(0x2f - 0x24) for i in range(n)]
+            table, at = b''.join(recs), bufs[1]
+        values = [rnd.randrange(3) for i in range(n)]
+        order = list(range(n))
+        rnd.shuffle(order)
+        emu.write(at, table)
+        emu.write(bufs[3], struct.pack('<%di' % n, *values))
+        emu.write(arr, struct.pack('<%di' % n, *order))
+        emu.write(STATS_PLAYOFFS, struct.pack('<i', playoffs))
+        cmp = team_cmps[kind] if family == 'team' else leader_cmps[kind]
+        emu.call(QSORT, eax=arr, edx=n, ebx=4, ecx=cmp)
+        cases.append({'family': family, 'kind': kind, 'playoffs': playoffs, 'table': table.hex(), 'values': values,
+                      'order': order, 'sorted': list(struct.unpack('<%di' % n, emu.read(arr, 4 * n)))})
+    return cases
+
+
+STATS_TABLE = 0x25b24                          # stats_table(kind): the leaders, stopped before the drawing
+STATS_TABLE_DONE = 0x261e4
+TEAM_STATS_SCREEN = 0x235be                    # team_stats_screen(kind)
+TEAM_STATS_DONE = 0x23aa7
+PLAYER_STATS_SCREEN = 0x244e2                  # player_stats_screen(team)
+PLAYER_STATS_DONE = 0x24843
+C_OPEN, C_LSEEK, C_READ, C_CLOSE = 0x92068, 0x90ca8, 0x922b6, 0x923c9   # served from the case's files
+STATS_LEAGUE = 0xc695a                         # stats_league: a league's SEASON / TEAMS, else CAREER / CARTEAMS
+ROSTER_ORDERS = (0xdc6bc, 0xdc720)             # roster_skater_order, roster_goalie_order
+ROSTER_SLOTS = (0xdc754, 0xdc73c)              # the roster index of each skater / goalie slot
+STATS_KEYS = 0xdd11c                           # dword_dd11c: the KEY.DB records of the slots
+
+
+def stats_screen_cases(exe, count=360):
+    """The statistics screens up to their drawing (the harness stops them there): stats_table (the
+    20 leaders of a kind), team_stats_screen (a team table, the standings by conference) and
+    player_stats_screen (a team's roster by points and goals against average), with the files
+    they read served from random data: CARTEAMS / TEAMS (blocks with small numbers, many ties),
+    KEY.DB (players of random teams and positions, now and then a record past the end of the
+    statistics or a negative offset), CAREER / SEASON (the players' records), LSSCHED / SCHEDULE
+    (the play-offs' first round, now and then none); the season or the play-offs, the '93 - '94
+    statistics or a league's. Compared: the elements in their order, the records, keys and values
+    of the tables"""
+    emu = PortEmu(exe)
+    rnd = random.Random(0x5c2e)
+    files = {}
+    handles = {}
+    pool = [emu.alloc(0x1000) for i in range(10)]
+    big = emu.alloc(0x4000)
+    used = {'n': 0}
+
+    def reg(r):
+        return emu.uc.reg_read(r) & 0xffffffff
+
+    def arg(i):
+        return struct.unpack('<I', emu.read(reg(UC_X86_REG_ESP) + 4 + 4 * i, 4))[0]
+
+    def cstr(a):
+        return emu.read(a, 64).split(b'\0')[0].decode('latin-1')
+
+    def on_open(eax):
+        name = os.path.basename(cstr(arg(0)).replace('\\', '/')).lower()
+        h = len(handles) + 5
+        handles[h] = [name, 0]
+        return h
+
+    def on_lseek(eax):
+        h = handles[eax & 0xffffffff]
+        off = s32(reg(UC_X86_REG_EDX))
+        if off < 0:
+            return 0xffffffff
+        h[1] = off
+        return off
+
+    def on_read(eax):
+        h = handles[eax & 0xffffffff]
+        f = files.get(h[0], b'')
+        n = reg(UC_X86_REG_EBX)
+        got = max(0, min(n, len(f) - h[1]))
+        emu.write(reg(UC_X86_REG_EDX), bytes(f[h[1]:h[1] + got]))
+        h[1] += got
+        return got
+
+    def on_alloc(eax):
+        p_ = pool[used['n']]
+        used['n'] += 1
+        emu.write(p_, b'\0' * 0x1000)
+        return p_
+
+    def on_loadfile(eax):
+        name = os.path.basename(cstr(arg(0)).replace('\\', '/')).lower()
+        emu.write(big, bytes(files.get(name, b'')))
+        return big
+
+    stop = {}
+
+    def done(uc, address, size, user):
+        sp = reg(UC_X86_REG_ESP)
+        stop['sp'] = sp
+        uc.reg_write(UC_X86_REG_EIP, RETURN)
+    hooks = [emu.stub(C_OPEN, on_open), emu.stub(C_LSEEK, on_lseek), emu.stub(C_READ, on_read),
+             emu.stub(C_CLOSE, lambda eax: 0), emu.stub(ALLOCMEM, on_alloc), emu.stub(FREEMEM, lambda eax: None),
+             emu.stub(LOADFILE, on_loadfile)]
+    for a in (STATS_TABLE_DONE, TEAM_STATS_DONE, PLAYER_STATS_DONE):
+        hooks.append(emu.uc.hook_add(UC_HOOK_CODE, done, None, a, a))
+
+    def rand_block(goalie, spans):
+        b = bytearray(0x16 if goalie else 0x12)
+        for off, kind, lo, hi in ((0, 'H', 0, 3), (2, 'H', 0, 2), (4, 'H', 0, 2), (6, 'H', 0, 2), (8, 'H', 0, 2),
+                                  (0xa, 'H', 0, 1), (0xc, 'H', 0, 3), (0xe, 'H', 0, 3), (0x10, 'h', -1, 2),
+                                  (0x14, 'H', 0, 2)):
+            if off + 2 > len(b) or (not goalie and off == 0x14):
+                continue
+            v = rnd.randint(lo, hi) if rnd.random() < spans else lo
+            struct.pack_into('<' + kind, b, off, v)
+        return bytes(b)
+
+    def team_block(spans):
+        b = bytearray(0x12)
+        for i in range(4):
+            b[i] = rnd.randint(0, 3) if rnd.random() < spans else 0
+        for off in range(4, 0x12, 2):
+            struct.pack_into('<H', b, off, rnd.randint(0, 3) if rnd.random() < spans else 0)
+        return bytes(b)
+
+    cases = []
+    for k in range(count):
+        screen = rnd.choice(('leaders', 'leaders', 'teams', 'roster'))
+        league = rnd.choice((0, 1))
+        playoffs = rnd.choice((0, 1))
+        spans = rnd.choice((0.4, 0.8, 1.0))
+        stride = 0x2e8 if league else 0x4c
+        teams = bytearray()
+        for t in range(28):
+            r = bytearray(stride)
+            r[0x27] = rnd.randrange(4)
+            r[0x28:0x3a] = team_block(spans)
+            r[0x3a:0x4c] = team_block(spans)
+            teams += r
+        nplayers = rnd.randrange(10, 140)
+        keys = bytearray()
+        stats = bytearray()
+        for i in range(nplayers):
+            kr = bytearray(0x34)
+            kr[0] = rnd.choice(list(range(26)) * 6 + [26, 27, 0x1a, 0xff])
+            kr[1] = rnd.randrange(100)
+            kr[2] = ord(rnd.choice('LCRDDG'))
+            goalie = kr[2] == ord('G')
+            rec = rand_block(goalie, spans) + rand_block(goalie, spans)
+            rec += bytes((0x36 if goalie else 0x2f) - len(rec))
+            for at in (0x28, 0x2c):
+                off = len(stats) if rnd.random() < 0.95 else rnd.choice((-1, len(stats) + 0x4000))
+                struct.pack_into('<i', kr, at, off)
+            stats += rec
+            keys += kr
+        sched = bytearray(0x199c + 8 * 0x2a + 8)
+        po = rnd.sample(range(26), 16)
+        for s_ in range(8):
+            sched[0x199c + s_ * 0x2a] = po[2 * s_]
+            sched[0x199c + s_ * 0x2a + 1] = po[2 * s_ + 1]
+        if rnd.random() < 0.1:
+            sched[0x199c] = 0xff
+        # the roster screen's team: key offsets of KEY.DB records (or -1)
+        team = rnd.randrange(26)
+        if league or screen == 'roster':
+            r = bytearray(teams[team * stride:team * stride + stride]) if league else bytearray(0x2e8)
+            for i in range(28):
+                off = rnd.randrange(nplayers) * 0x34 if rnd.random() < 0.85 else -1
+                struct.pack_into('<i', r, (0x4c + i * 4) if i < 25 else (0xb0 + (i - 25) * 4), off)
+            roster_teams = bytearray(28 * 0x2e8)
+            if league:
+                teams[team * stride:team * stride + stride] = r
+                roster_teams = teams
+            else:
+                roster_teams[team * 0x2e8:team * 0x2e8 + 0x2e8] = r
+        else:
+            roster_teams = bytearray(28 * 0x2e8)
+        files.clear()
+        handles.clear()
+        used['n'] = 0
+        files['key.db'] = bytes(keys)
+        files['career.db' if not league else 'season.db'] = bytes(stats)
+        files['carteams.db' if not league else 'teams.db'] = bytes(teams)
+        if not league:
+            files['teams.db'] = bytes(roster_teams)
+        files['lssched.db' if not league else 'schedule.db'] = bytes(sched)
+        emu.write(STATS_LEAGUE, struct.pack('<i', league))
+        emu.write(STATS_PLAYOFFS, struct.pack('<i', playoffs))
+        # the routines' read buffers are on the stack: a first read past the end of a file leaves
+        # them as they were (uninitialized in the original), zeroed here as the port's are
+        emu.write(STACK_TOP - 0x4000, b'\0' * (0x4000 - 0x104))
+        stop.clear()
+        # (the screens read the first 0x4c bytes of a team's record: the case keeps those)
+        case = {'screen': screen, 'league': league, 'playoffs': playoffs,
+                'teams': b''.join(bytes(teams[t * stride:t * stride + 0x4c]) for t in range(28)).hex(),
+                'keys': bytes(keys).hex(), 'stats': bytes(stats).hex(), 'sched': bytes(sched[0x199c:]).hex()}
+        if screen == 'leaders':
+            kind = rnd.randrange(11)
+            emu.call(STATS_TABLE, eax=kind)
+            sp = stop['sp']
+            n = struct.unpack('<i', emu.read(sp + 0x258, 4))[0]
+            order = list(struct.unpack('<%di' % n, emu.read(sp + 0xc0, 4 * n)))
+            dd = {t: struct.unpack('<I', emu.read(t, 4))[0] for t in STATS_TABLES + (STATS_KEYS,)}
+            size = 0x36 if kind >= 8 else 0x2f
+            table = dd[STATS_TABLES[2] if kind >= 8 else STATS_TABLES[1]]
+            case.update({'kind': kind, 'order': order,
+                         'keys_out': [emu.read(dd[STATS_KEYS] + e * 0x34, 0x34).hex() for e in order],
+                         'records': [emu.read(table + e * size, size).hex() for e in order],
+                         'values': [struct.unpack('<i', emu.read(dd[STATS_TABLES[3]] + e * 4, 4))[0] for e in order]
+                         if kind == 7 else []})
+        elif screen == 'teams':
+            kind = rnd.randrange(6)
+            emu.call(TEAM_STATS_SCREEN, eax=kind)
+            sp = stop['sp']
+            n = 0 if (playoffs and sched[0x199c] == 0xff) else (16 if playoffs else 26)
+            order = list(struct.unpack('<%di' % n, emu.read(sp + 0xdc, 4 * n)))
+            dd = {t: struct.unpack('<I', emu.read(t, 4))[0] for t in STATS_TABLES}
+            case.update({'kind': kind, 'count': struct.unpack('<i', emu.read(sp + 0x258, 4))[0], 'order': order,
+                         'team_list': list(struct.unpack('<%di' % n, emu.read(sp + 0x74, 4 * n))),
+                         'records': [emu.read(dd[STATS_TABLES[0]] + e * 0x4c, 0x4c).hex() for e in range(n)],
+                         'values': [struct.unpack('<i', emu.read(dd[STATS_TABLES[3]] + e * 4, 4))[0] for e in range(n)]
+                         if kind >= 2 else []})
+            if kind == 5 and n:
+                case['west'] = list(struct.unpack('<14i', emu.read(sp + 4, 56)))
+                case['east'] = list(struct.unpack('<14i', emu.read(sp + 0x3c, 56)))
+        else:
+            for t, b in zip(STATS_TABLES + (STATS_KEYS,), pool[5:]):
+                emu.write(t, struct.pack('<I', b))
+                emu.write(b, b'\0' * 0x1000)
+            emu.call(PLAYER_STATS_SCREEN, eax=team)
+            sp = stop['sp']
+            ns = struct.unpack('<i', emu.read(sp + 0x3f0, 4))[0]
+            ng = struct.unpack('<i', emu.read(sp + 0x408, 4))[0]
+            dd = {t: struct.unpack('<I', emu.read(t, 4))[0] for t in STATS_TABLES + (STATS_KEYS,)}
+            case.update({'team': team, 'roster_teams': bytes(roster_teams[team * 0x2e8:team * 0x2e8 + 0x2e8]).hex(),
+                         'skaters': list(struct.unpack('<%di' % ns, emu.read(ROSTER_ORDERS[0], 4 * ns))),
+                         'goalies': list(struct.unpack('<%di' % ng, emu.read(ROSTER_ORDERS[1], 4 * ng))),
+                         'skater_roster': list(struct.unpack('<%di' % ns, emu.read(ROSTER_SLOTS[0], 4 * ns))),
+                         'goalie_roster': list(struct.unpack('<%di' % ng, emu.read(ROSTER_SLOTS[1], 4 * ng))),
+                         'skater_records': [emu.read(dd[STATS_TABLES[1]] + e * 0x2f, 0x2f).hex() for e in range(ns)],
+                         'goalie_records': [emu.read(dd[STATS_TABLES[2]] + e * 0x36, 0x36).hex() for e in range(ng)],
+                         'keys_out': [emu.read(dd[STATS_KEYS] + r * 0x34, 0x34).hex() for r in range(28)]})
+        cases.append(case)
+    for h in hooks:
+        emu.unstub(h)
+    return cases
+
+
 def main():
     if len(sys.argv) != 3:
         print(__doc__ or 'golden.py GAMEDIR OUTDIR')
@@ -4884,7 +5189,8 @@ def main():
                        ('pc_speaker', pc_cases(exe, gamedir)), ('physics', physics_cases(exe)),
                        ('league', {'league': league_cases(exe, gamedir), 'scores': scores_cases(exe),
                                    'playoffs': playoff_cases(exe, gamedir), 'rounds': round_cases(exe, gamedir),
-                                   'records': record_cases(exe, gamedir), 'days': day_cases(exe, gamedir)})):
+                                   'records': record_cases(exe, gamedir), 'days': day_cases(exe, gamedir)}),
+                       ('sorts', {'stats': sort_cases(exe), 'screens': stats_screen_cases(exe)})):
         write_golden(outdir, name, data)
     write_ai(outdir, ai_cases(exe))
 
