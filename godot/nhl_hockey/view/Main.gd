@@ -237,6 +237,7 @@ func _read_settings() -> void:
 		if not saved_highlight.is_empty():
 			anthem = false
 		sim.demo = demo
+		Logic94.apply(sim)
 		return
 	if OS.has_environment("NHL_HOME"):
 		home_team = int(OS.get_environment("NHL_HOME"))
@@ -249,6 +250,9 @@ func _read_settings() -> void:
 	sim.user1_team = user1_team
 	sim.user2_team = user2_team
 	sim.assign_users()
+	if OS.has_environment("NHL_LOGIC94"):
+		Logic94.enabled = OS.get_environment("NHL_LOGIC94") == "1"
+	Logic94.apply(sim)
 	shot_path = OS.get_environment("NHL_SCREENSHOT")
 	if OS.has_environment("NHL_SCREENSHOT_STEPS"):
 		shot_steps = int(OS.get_environment("NHL_SCREENSHOT_STEPS"))

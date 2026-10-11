@@ -42,6 +42,35 @@ Team indices (`NHL_HOME`, `NHL_AWAY`, or `match/home` and `match/away` in `user:
 2 CGY, 3 CHI, 4 DET, 5 EDM, 6 HFD, 7 LA, 8 DAL, 9 MTL, 10 NJ, 11 NYI, 12 NYR, 13 OTT, 14 PHI, 15 PIT, 16 QUE,
 17 STL, 18 SJ, 19 TB, 20 TOR, 21 VAN, 22 WSH, 23 WPG, 24 ANA, 25 FLA, 26/27 all stars.
 
+## NHL '94 logic (optional)
+
+Game > Gameplay Logic ... (an item of the port's own, after Sound Settings) switches the match from the PC
+game's rules to the Genesis NHL '94 ones (`sim/Logic94.gd`, after the disassembly in
+[abdulahmad/NHL94Genesis](https://github.com/abdulahmad/NHL94Genesis): `input94.asm`, `onetimer94.asm`,
+`goalie94.asm`), and each of the '94 changes on or off. Accept keeps the choice in `user://settings.cfg`
+(`[logic94]`); it holds from the next game on (`NHL_LOGIC94=1` turns it on for a match started with
+`NHL_HOME`). With NHL '94 Logic Off nothing changes: the PC game's rules, its golden tests unchanged.
+Only rules the '94 game has are changed; the graphics, sounds and everything else stay the PC game's.
+
+- One-Timers: a one-timer only when the receiver is a skater and the puck is on his attacking half; the
+  user's passer (or the receiver, pressing B as the pass comes) asks for it. Computer receivers one-time
+  on their attacking half always in the attacking zone, elsewhere one time in eight (`asspassrec`).
+- Saucer Pass: the carrier's C button (released, or held 15 steps) lifts the puck to a spot by his facing
+  (`OneTimerTarget` / `OneTimerPass`: from outside the zone a high lob across to the far side, inside it
+  a low one to the slot, a goalie's out to the side), for a team mate to one-time. The line change prompt
+  of the C button is then left to the hotkeys (F1-F8).
+- Top Shelf: in close, a shot aimed high on a goalie down in a pad stack (or on an empty net) is lifted
+  to go in under the bar (`prepshot` / `puckvzadj`).
+- Goalie Control: holding A (the switch button, X) for 17 steps without the puck takes the own goalie,
+  a tap switches back to the skater nearest the puck. The user's goalie skates (kept to his crease),
+  B makes a save towards the puck (the PC game's choice of save), C with a direction dives; with the
+  puck he passes with A as in the PC game, and holding it too long is a stoppage as for a computer
+  goalie. When he leaves the screen the computer plays him (`assgoaliectrl`); out of his zone the
+  whistle goes.
+
+The Genesis rink is larger than the PC one: the distances of these routines are scaled to the PC rink
+(x 160/136, y 264/298) and its 16 units of time a step.
+
 ## What is ported
 
 The simulation is translated routine by routine from `re/nhl_hockey/decomp/*.c`; the source routine of

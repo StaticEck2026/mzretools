@@ -1232,7 +1232,8 @@ static func pass_receiver(sim: Sim, e: Entity) -> void:
 		e.dir_timer = 0
 		var team_no := 2 if (e.flags & Entity.F_PLAYER2) else 1
 		sim.scratch_a = team_no
-		if sim.puck_carrier < 0 and sim.user1_team != team_no and team_no != sim.user2_team and one_timer_chance(sim, e):
+		if sim.puck_carrier < 0 and sim.user1_team != team_no and team_no != sim.user2_team \
+				and (Logic94.cpu_one_timer(sim, e) if sim.l94_one_timers else one_timer_chance(sim, e)):
 			sim.one_timer = true
 	if sim.one_timer:
 		sim.scratch_b &= 0xffaf          # no fake
@@ -1477,6 +1478,8 @@ static func goalie(sim: Sim, e: Entity) -> void:
 		e.want_dir = 8
 		e.dir_timer = 0
 		e.target_y = Sim._s16((e.target_y & 0xff) | 0xff00)      # the high byte only
+	if sim.l94_manual_goalie and Logic94.goalie_ctrl(sim, e):
+		return
 	var up := (e.flags & Entity.F_ATTACK_UP) != 0
 	var pred: Array = sim.goal_prediction[1 if up else 0]
 	if ay > 0xe4:

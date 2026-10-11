@@ -226,6 +226,99 @@ func game_settings_screen() -> int:
 	return await _settings(false)
 
 # ---------------------------------------------------------------------------------------------
+# Gameplay Logic ... (the port's own, the Game menu's last item): the PC game's rules or the Genesis
+# NHL '94 ones (Logic94), and each of the '94 changes on or off. The pause screen's settings dialog
+# (SETTING4.QFS) with its first five pairs relabelled and the rest covered
+# ---------------------------------------------------------------------------------------------
+
+const LOGIC_LABELS := ["NHL '94 Logic", "One-Timers", "Saucer Pass", "Top Shelf", "Goalie Control"]
+
+func _logic_bits() -> int:
+	var opts := [Logic94.enabled, Logic94.one_timers, Logic94.saucer_passes, Logic94.top_shelf, Logic94.manual_goalie]
+	var bits := 0
+	for k in opts.size():
+		if opts[k]:
+			bits |= 1 << k
+	return bits
+
+func _logic_draw(list: Array, bits: int, face: int) -> void:
+	scr.setfont(fe.font_main)
+	for k in LOGIC_LABELS.size():
+		var r: Rect2i = list[k * 2]
+		scr.drawshape(_shape("On  " if bits & (1 << k) else "Off "), r.position.x + DX, r.position.y + DY)
+		var x: int = list[k * 2 + 1].end.x + DX + 2
+		scr.fillrect(x, r.position.y + DY, 0xd2 - x, r.size.y, face)
+		scr.settextcolor(0xfa if k == 0 or bits & 1 else 0xf8, 0xff)
+		scr.printstr_at(LOGIC_LABELS[k], 0x60, r.position.y + DY + 1)
+
+## the Game menu's Gameplay Logic ...: Accept keeps the choice in settings.cfg; it holds from the
+## next game on
+func menu_gameplay_logic() -> int:
+	var behind := scr.snapshot()
+	var pal := scr.getpalette()
+	_dialog_palette()
+	var b := fe.bank("setting4")
+	if b != null:
+		scr.drawshape_remap(b.find("dbox"), DX, DY)
+	var list := rects(0xd16ac, 20)
+	var first: Rect2i = list[0]
+	var face := scr.getpixel(first.position.x + DX - 4, first.position.y + DY + 4)
+	# the title, the pairs after the fifth and their labels covered
+	scr.fillrect(DX + 12, DY + 0x14, 0xd2 - DX - 12, 0x13, face)
+	var r5: Rect2i = list[0xc]
+	var r7: Rect2i = list[0x11]
+	scr.fillrect(r5.position.x + DX, r5.position.y + DY, 0xd2 - r5.position.x - DX, r7.end.y - r5.position.y + 1, face)
+	scr.setfont(fe.font_main)
+	scr.settextcolor(0xfa, 0xff)
+	scr.printstr_at("Gameplay Logic", DX + 0x10, DY + 0x16)
+	scr.settextcolor(0xf8, 0xff)
+	scr.printstr_at("Off: the NHL '95 PC rules", r5.position.x + DX, r5.position.y + DY + 8)
+	scr.printstr_at("On: the Genesis NHL '94", r5.position.x + DX, r5.position.y + DY + 0x1e)
+	scr.printstr_at("rules picked above", r5.position.x + DX + 0x1c, r5.position.y + DY + 0x34)
+	var bits := _logic_bits()
+	_logic_draw(list, bits, face)
+	var ay := 0xf8
+	ui.show_pointer(true)
+	ui.reset_events()
+	var done := false
+	while not done:
+		var e: Dictionary = await ui.wait_event()
+		var bt: int = e["buttons"]
+		if bt & 4:
+			scr.drawshape(_shape("canc"), 0x81, ay)
+			break
+		if bt & 2 == 0:
+			continue
+		var k := rect_at(list, e["x"], e["y"])
+		if k < 0 or (k >= 10 and k < 0x12):
+			continue
+		if k < 10:
+			if k >= 2 and bits & 1 == 0:
+				continue
+			if k % 2 == 0:
+				bits |= 1 << (k / 2)
+			else:
+				bits &= ~(1 << (k / 2))
+			_logic_draw(list, bits, face)
+		elif k == 0x12:
+			scr.drawshape(_shape("acpt"), 0x37, ay)
+			Logic94.enabled = bits & 1 != 0
+			Logic94.one_timers = bits & 2 != 0
+			Logic94.saucer_passes = bits & 4 != 0
+			Logic94.top_shelf = bits & 8 != 0
+			Logic94.manual_goalie = bits & 0x10 != 0
+			Logic94.save_options()
+			done = true
+		else:
+			scr.drawshape(_shape("canc"), 0x81, ay)
+			done = true
+	ui.show_pointer(false)
+	await fe.ui.wait_ticks(15, false)
+	scr.restore(behind)
+	scr.setpalette(pal)
+	return 0
+
+# ---------------------------------------------------------------------------------------------
 # the settings of a league or a play-off series (settings_dialog 0x7a6bd, settings_screen_a 0x7a404,
 # settings_screen_b 0x7a57e, settings_menu 0x7add3, settings_pointer_loop 0x7ac31): SETTING3.QFS
 # (the on / off pairs, the period length, the length of a play-off series, Accept and Cancel) or

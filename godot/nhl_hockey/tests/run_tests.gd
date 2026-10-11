@@ -403,6 +403,7 @@ func asset_tests() -> void:
 		print("BOS - DET after 3000 steps: %d-%d, clock %d:%02d" % [sim.teams[0].goals, sim.teams[1].goals, sim.clock_seconds / 60, sim.clock_seconds % 60])
 		line_change_tests(bos, det)
 		match_rules_tests(bos, det)
+		logic94_tests(bos, det)
 		ceremony_tests(bos, det)
 		replay_tests(bos, det)
 		crowd_tests(bos, det)
@@ -3946,6 +3947,160 @@ func match_rules_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 		fail("a hit against the boards should use a board animation, got %x" % pinned.anim)
 
 ## the anthem, the goal panel, the end of the game, the three stars, overtime and the cup
+## TEST_ONLY=logic94_only: logic94_tests with the game files' Boston and Detroit
+func logic94_only() -> void:
+	var GF := load("res://autoload/GameFiles.gd")
+	var gf: Node = GF.new()
+	gf.use_data = false
+	var dir := OS.get_environment("NHL_GAME_DIR")
+	if dir == "" or not DirAccess.dir_exists_absolute(dir):
+		dir = GF.repository_game_dir()
+	if dir != "":
+		gf.set_game_dir(dir, false)
+	Exe.load_from(gf.read_raw("hockey.exe"))
+	var db := Database.open(gf.read_raw("teams.db"), gf.read_raw("key.db"), gf.read_raw("att.db"))
+	logic94_tests(db.load_team(0), db.load_team(4))
+	gf.free()
+
+## the Genesis NHL '94 rules (Logic94): off by default; the saucer pass, the goalie taken by
+## holding the switch button, the one-timer only on the attacking half, a game with all of them
+func logic94_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
+	var keep := [Logic94.enabled, Logic94.one_timers, Logic94.saucer_passes, Logic94.top_shelf, Logic94.manual_goalie]
+	var sim := Sim.new()
+	Logic94.enabled = false
+	Logic94.apply(sim)
+	if sim.l94_one_timers or sim.l94_saucer or sim.l94_top_shelf or sim.l94_manual_goalie:
+		fail("the '94 rules on with the '94 logic off")
+	Logic94.enabled = true
+	Logic94.one_timers = true
+	Logic94.saucer_passes = true
+	Logic94.top_shelf = true
+	Logic94.manual_goalie = true
+	# the saucer pass: the carrier lets the third button go, the puck lifts towards the slot
+	sim = Sim.new()
+	sim.set_teams(bos, det)
+	Logic94.apply(sim)
+	run_until_play(sim, 1200)
+	for i in 30:
+		sim.step(8, 8, 0, 0)
+	var e := sim.entities[sim.user1_slot]
+	var up := (e.flags & Entity.F_ATTACK_UP) != 0
+	e.set_pos(0x60, 0x90 if up else -0x90)
+	e.vx = 0
+	e.vy = 0
+	e.flags &= ~Entity.F_BUSY
+	e.flags2 &= ~Entity.F2_TURNING
+	sim.puck.set_pos(e.xi, e.yi)
+	PuckLogic.take_puck(sim, e)
+	sim.step(8 | 0x40, 8, 0, 0)
+	if sim.puck_carrier != e.slot:
+		fail("saucer pass: the puck left on the press of the button")
+	sim.step(8, 8, 0, 0)
+	if Entity.to_s8(sim.puck_carrier) >= 0 or sim.last_passer != e.slot or sim.puck.vz <= 0:
+		fail("saucer pass: carrier %d passer %d vz %d" % [sim.puck_carrier, sim.last_passer, sim.puck.vz])
+	else:
+		var top := 0
+		var land := Vector2i.ZERO
+		for i in 200:
+			sim.step(8, 8, 0, 0)
+			top = maxi(top, sim.puck.zi)
+			if sim.puck.zi <= 0 and i > 2:
+				land = Vector2i(sim.puck.xi, sim.puck.yi)
+				break
+			if Entity.to_s8(sim.puck_carrier) >= 0:
+				land = Vector2i(sim.puck.xi, sim.puck.yi)
+				break
+		var ay := land.y if up else -land.y
+		if top < 4 or ay < 0x80 or absi(land.x) > 0x50:
+			fail("saucer pass: up to %d, landed at %d,%d" % [top, land.x, land.y])
+		else:
+			print("saucer pass: up to %d, landed at %d,%d" % [top, land.x, land.y])
+	# the user holds the switch button 17 steps without the puck: he takes his goalie
+	sim = Sim.new()
+	sim.set_teams(bos, det)
+	Logic94.apply(sim)
+	run_until_play(sim, 1200)
+	for i in 30:
+		sim.step(8, 8, 0, 0)
+	var owner := sim.entities[sim.user1_slot]
+	var goalie := Logic94.own_goalie(sim, owner)
+	# the puck with a skater of the other team far from the user
+	var opp := sim.entities[6 if owner.slot < 6 else 0]
+	for k in 6:
+		var o := sim.entities[(6 if owner.slot < 6 else 0) + k]
+		if o.line_slot > 0:
+			opp = o
+	owner.set_pos(-0x60, 0)
+	owner.vx = 0
+	owner.vy = 0
+	opp.set_pos(0x60, 0x20)
+	sim.puck.set_pos(opp.xi, opp.yi)
+	PuckLogic.take_puck(sim, opp)
+	var taken := -1
+	for i in 40:
+		sim.step(8 | 0x10, 8, 0, 0)
+		if sim.user1_slot == goalie.slot:
+			taken = i
+			break
+	sim.step(8, 8, 0, 0)
+	if taken < 0:
+		fail("the goalie not taken by holding the switch button (user %d, goalie %d, carrier %d, stopped %s, blocked %s, hold %d)" % [sim.user1_slot,
+			goalie.slot, Entity.to_s8(sim.puck_carrier), sim.play_stopped, sim.controls_blocked, sim.l94_bhold[0]])
+	else:
+		# he moves as the user steers, not back to his crease by the computer
+		var x0 := goalie.xi
+		for i in 30:
+			sim.step(2, 8, 0, 0)
+		print("'94 goalie: taken after %d steps, steered from x %d to %d" % [taken, x0, goalie.xi])
+		if sim.user1_slot == goalie.slot and goalie.xi <= x0 and absi(goalie.xi - sim.camera_x) < Logic94.SCREEN_X \
+				and absi(goalie.yi - sim.camera_y) < Logic94.SCREEN_Y:
+			fail("the user's goalie did not skate right (x %d -> %d)" % [x0, goalie.xi])
+		# a tap switches back to a skater
+		sim.step(8 | 0x10, 8, 0, 0)
+		sim.step(8, 8, 0, 0)
+		if sim.user1_slot == goalie.slot:
+			fail("a tap of the switch button kept the user on the goalie")
+	# the one-timer: only on the attacking half
+	sim = Sim.new()
+	sim.set_teams(bos, det)
+	Logic94.apply(sim)
+	run_until_play(sim, 1200)
+	var r := sim.entities[sim.user1_slot]
+	up = (r.flags & Entity.F_ATTACK_UP) != 0
+	sim.puck.set_pos(0, 0x70 if up else -0x70)
+	if not Logic94.can_one_time(sim, r):
+		fail("no one-timer on the attacking half")
+	sim.puck.set_pos(0, -0x70 if up else 0x70)
+	if Logic94.can_one_time(sim, r):
+		fail("a one-timer on the own half")
+	r.set_pos(0, 0x90 if up else -0x90)
+	sim.puck.set_pos(0, 0x90 if up else -0x90)
+	if not Logic94.cpu_one_timer(sim, r):
+		fail("a computer receiver in the attacking zone should one-time")
+	# a game with all the '94 rules: the users press buttons at random, nothing is stuck
+	sim = Sim.new()
+	sim.set_teams(bos, det)
+	Logic94.apply(sim)
+	run_until_play(sim, 1200)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 94
+	var c1 := 8
+	var c2 := 8
+	for i in 6000:
+		if i % 9 == 0:
+			c1 = rng.randi_range(0, 8) | ([0, 0x10, 0x20, 0x40][rng.randi_range(0, 3)])
+			c2 = rng.randi_range(0, 8) | ([0, 0x10, 0x20, 0x40][rng.randi_range(0, 3)])
+		sim.step(c1, c2, 0, 0)
+	print("'94 rules game, users at random: %d-%d after 6000 steps, clock %d:%02d" % [sim.teams[0].goals,
+		sim.teams[1].goals, sim.clock_seconds / 60, sim.clock_seconds % 60])
+	if sim.clock_seconds == 300 and sim.period == 0:
+		fail("the '94 game did not go on")
+	Logic94.enabled = keep[0]
+	Logic94.one_timers = keep[1]
+	Logic94.saucer_passes = keep[2]
+	Logic94.top_shelf = keep[3]
+	Logic94.manual_goalie = keep[4]
+
 func ceremony_tests(bos: Database.TeamInfo, det: Database.TeamInfo) -> void:
 	# the anthem: blue lines, the US flag clip for Boston, then the opening faceoff
 	var sim := Sim.new()

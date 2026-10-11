@@ -889,6 +889,7 @@ static func shot_control(sim: Sim, e: Entity, dir: int, pressed: int, changed: i
 static func do_shot(sim: Sim, e: Entity) -> void:
 	var puck := sim.puck
 	shot_setup(sim, e)
+	var top_shelf := sim.l94_top_shelf and Logic94.top_shelf_shot(sim, e)
 	sim.last_shooter = e.slot
 	sim.action_shot = false
 	e.flags |= Entity.F_BUSY
@@ -966,6 +967,8 @@ static func do_shot(sim: Sim, e: Entity) -> void:
 		if lift > 0x1800:
 			lift = 0x1800
 		puck.vz = Sim._s16(lift)
+		if top_shelf and e.anim != 0xdd3 and e.anim != 0xe2b:
+			Logic94.puckvzadj(sim)
 	sim.play_sfx(sfx)
 	if sim.penalty_shot:
 		e.set_state(Entity.State.NEAREST)

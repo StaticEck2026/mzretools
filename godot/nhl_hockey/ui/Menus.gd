@@ -21,6 +21,7 @@ class Item:
 		return cb != "" or sub != 0
 
 static var _items: Dictionary = {}
+static var _extra: Dictionary = {}          # the port's own records after a list's: list address -> [Item]
 
 static func _load() -> void:
 	if not _items.is_empty():
@@ -68,7 +69,30 @@ static func list(addr: int, count: int) -> Array:
 		if it == null:
 			break
 		out.append(it)
+	if out.size() == count:
+		out.append_array(_extra.get(addr, []))
 	return out
+
+## a record of the port's own after the list at list_addr (count records of the game's): the Game
+## menu's Gameplay Logic
+static func append(list_addr: int, count: int, text: String, cb: String) -> Item:
+	_load()
+	var l: Array = _extra.get(list_addr, [])
+	for it: Item in l:
+		if it.cb == cb:
+			return it
+	var last: Item = _items[list_addr + (count - 1) * 32]
+	var it := Item.new()
+	it.addr = 0x1000000 + _extra.size() * 0x1000 + l.size() * 32
+	it.x0 = last.x0
+	it.x1 = last.x1
+	it.y0 = last.y1
+	it.y1 = last.y1 + (last.y1 - last.y0)
+	it.text = text
+	it.cb = cb
+	l.append(it)
+	_extra[list_addr] = l
+	return it
 
 ## the sub list of a record
 static func sub_list(it: Item) -> Array:

@@ -187,6 +187,13 @@ var action_pass := false            # action_flags bit 2
 var action_shot := false            # action_flags bit 3
 var action_hold_camera := false     # action_flags bit 6
 var one_timer := false              # dword_cc0f4
+# the NHL '94 (Genesis) rules of Logic94 (all off: the PC game's own)
+var l94_one_timers := false
+var l94_saucer := false
+var l94_top_shelf := false
+var l94_manual_goalie := false
+var l94_bhold := [0x11, 0x11]       # bholdtimer: the switch button held, per user
+var l94_ahold := [0, 0]             # aholdtimer: the carrier's third button held
 var breakaway := false              # dword_cc0f8
 var defenders_ahead := 0            # dword_cc124
 # ai_breakaway's lane (breakaway_pick_lane, breakaway_next_waypoint): the lane x and the y to skate
@@ -964,7 +971,10 @@ func control_player(e: Entity, player: int) -> void:
 	if e.flags & Entity.F_BUSY:
 		if Entity.to_s8(puck_carrier) == e.slot or controls_blocked:
 			return
-		if scratch_b & 0x10:
+		if l94_manual_goalie:
+			if Logic94.switch_input(self, e, 0 if player == 0 else 1):
+				return
+		elif scratch_b & 0x10:
 			switch_to_nearest(e, player)
 			return
 		if pass_target == e.slot:
@@ -975,6 +985,8 @@ func control_player(e: Entity, player: int) -> void:
 			return
 		var pt := entities[pass_target]
 		if pt.line_slot <= 0:
+			return
+		if l94_one_timers and (last_passer != e.slot or not Logic94.can_one_time(self, pt)):
 			return
 		_take_one_timer(e, pt)
 		return
@@ -993,10 +1005,15 @@ func control_player(e: Entity, player: int) -> void:
 			pending_dir = e.facing & 7
 			action_pass = true
 			return
-		if (scratch_b & 0x40) and not penalty_shot:
+		if l94_saucer:
+			if Logic94.saucer_input(self, e, 0 if player == 0 else 1):
+				return
+		elif (scratch_b & 0x40) and not penalty_shot:
 			Lines.request_line_change_button(self, e)
 			return
 		if e.line_slot == 0:
+			if l94_manual_goalie:
+				apply_skating(e, scratch_a)
 			return
 		if scratch_b & 0x20:
 			PuckLogic.start_shot(self, e)
@@ -1005,21 +1022,34 @@ func control_player(e: Entity, player: int) -> void:
 		return
 	if controls_blocked:
 		return
-	if scratch_b & 0x40:
-		PuckLogic.hook_button(self, e, player)
-		return
-	if scratch_b & 0x10:
-		switch_to_nearest(e, player)
-		return
+	if l94_manual_goalie:
+		var p := 0 if player == 0 else 1
+		if e.line_slot == 0:
+			if not Logic94.switch_input(self, e, p):
+				Logic94.user_goalie(self, e)
+			return
+		if scratch_b & 0x40:
+			PuckLogic.hook_button(self, e, player)
+			return
+		if Logic94.switch_input(self, e, p):
+			return
+	else:
+		if scratch_b & 0x40:
+			PuckLogic.hook_button(self, e, player)
+			return
+		if scratch_b & 0x10:
+			switch_to_nearest(e, player)
+			return
 	if e.line_slot == 0:
 		return
 	if e.slot == pass_target:
 		if scratch_b & 0x20:
-			PuckLogic.body_check(self, e)
+			if not (l94_one_timers and Logic94.receiver_one_timer(self, e)):
+				PuckLogic.body_check(self, e)
 		if one_timer:
 			pending_dir = scratch_a & 0xf
 			return
-		if scratch_b & 0x10:
+		if (scratch_b & 0x10) and not l94_manual_goalie:
 			switch_to_nearest(e, player)
 			return
 		if controls_blocked:
@@ -1027,8 +1057,10 @@ func control_player(e: Entity, player: int) -> void:
 		apply_skating(e, scratch_a)
 		return
 	if Entity.to_s8(puck_carrier) < 0 and (scratch_b & 0x20) and pass_target >= 0:
-		if _take_one_timer(e, entities[pass_target]):
-			return
+		var pt := entities[pass_target]
+		if not l94_one_timers or (last_passer == e.slot and Logic94.can_one_time(self, pt)):
+			if _take_one_timer(e, pt):
+				return
 	if scratch_b & 0x20:
 		PuckLogic.body_check(self, e)
 		return
